@@ -53,6 +53,7 @@ func (r *Repo) ListRoutineGroups(ctx context.Context, routineID string) ([]*trai
 			Mode:                        group.Mode,
 			RestBetweenExercisesSeconds: group.RestBetweenExercisesSeconds,
 			RestBetweenRoundsSeconds:    group.RestBetweenRoundsSeconds,
+			Rounds:                      group.Rounds,
 			Exercises:                   make([]training.RoutineExercise, 0, len(links)),
 		}
 		parsed = append(parsed, parsedGroup)
@@ -180,6 +181,7 @@ func setRoutineGroups(
 			Mode:                        omit.From(group.Mode),
 			RestBetweenExercisesSeconds: omit.From(group.RestBetweenExercisesSeconds),
 			RestBetweenRoundsSeconds:    omit.From(group.RestBetweenRoundsSeconds),
+			Rounds:                      omit.From(group.Rounds),
 		}).One(ctx, exec)
 		if err != nil {
 			return fmt.Errorf("routine group insert: %w", err)

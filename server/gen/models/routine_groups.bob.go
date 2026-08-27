@@ -36,6 +36,7 @@ type RoutineGroup struct {
 	RestBetweenExercisesSeconds int32                  `db:"rest_between_exercises_seconds" `
 	RestBetweenRoundsSeconds    int32                  `db:"rest_between_rounds_seconds" `
 	CreatedAt                   time.Time              `db:"created_at" `
+	Rounds                      int32                  `db:"rounds" `
 
 	R routineGroupR `db:"-" `
 
@@ -70,7 +71,7 @@ type routineGroupRLoaded struct {
 
 func buildRoutineGroupColumns(tableName string) routineGroupColumns {
 	columnsExpr := expr.NewColumnsExpr(
-		"id", "routine_id", "position", "mode", "rest_between_exercises_seconds", "rest_between_rounds_seconds", "created_at",
+		"id", "routine_id", "position", "mode", "rest_between_exercises_seconds", "rest_between_rounds_seconds", "created_at", "rounds",
 	)
 
 	if tableName != "" {
@@ -87,6 +88,7 @@ func buildRoutineGroupColumns(tableName string) routineGroupColumns {
 		RestBetweenExercisesSeconds: buildRoutineGroupColumn(tableName, "rest_between_exercises_seconds"),
 		RestBetweenRoundsSeconds:    buildRoutineGroupColumn(tableName, "rest_between_rounds_seconds"),
 		CreatedAt:                   buildRoutineGroupColumn(tableName, "created_at"),
+		Rounds:                      buildRoutineGroupColumn(tableName, "rounds"),
 	}
 }
 
@@ -100,6 +102,7 @@ type routineGroupColumns struct {
 	RestBetweenExercisesSeconds routineGroupColumn
 	RestBetweenRoundsSeconds    routineGroupColumn
 	CreatedAt                   routineGroupColumn
+	Rounds                      routineGroupColumn
 }
 
 // Alias returns the current table alias for the columns set.
@@ -152,10 +155,11 @@ type RoutineGroupSetter struct {
 	RestBetweenExercisesSeconds omit.Val[int32]                  `db:"rest_between_exercises_seconds" `
 	RestBetweenRoundsSeconds    omit.Val[int32]                  `db:"rest_between_rounds_seconds" `
 	CreatedAt                   omit.Val[time.Time]              `db:"created_at" `
+	Rounds                      omit.Val[int32]                  `db:"rounds" `
 }
 
 func (s RoutineGroupSetter) SetColumns() []string {
-	vals := make([]string, 0, 7)
+	vals := make([]string, 0, 8)
 	if s.ID.IsValue() {
 		vals = append(vals, "id")
 	}
@@ -176,6 +180,9 @@ func (s RoutineGroupSetter) SetColumns() []string {
 	}
 	if s.CreatedAt.IsValue() {
 		vals = append(vals, "created_at")
+	}
+	if s.Rounds.IsValue() {
+		vals = append(vals, "rounds")
 	}
 	return vals
 }
@@ -201,6 +208,9 @@ func (s RoutineGroupSetter) Overwrite(t *RoutineGroup) {
 	}
 	if s.CreatedAt.IsValue() {
 		t.CreatedAt = s.CreatedAt.MustGet()
+	}
+	if s.Rounds.IsValue() {
+		t.Rounds = s.Rounds.MustGet()
 	}
 }
 
@@ -245,6 +255,11 @@ func (s *RoutineGroupSetter) Apply(q *dialect.InsertQuery) {
 				return psql.Raw("DEFAULT").WriteSQL(ctx, w, d, start)
 			}
 			return psql.Arg(s.CreatedAt.MustGet()).WriteSQL(ctx, w, d, start)
+		}), bob.ExpressionFunc(func(ctx context.Context, w io.StringWriter, d bob.Dialect, start int) ([]any, error) {
+			if s.Rounds.IsUnset() {
+				return psql.Raw("DEFAULT").WriteSQL(ctx, w, d, start)
+			}
+			return psql.Arg(s.Rounds.MustGet()).WriteSQL(ctx, w, d, start)
 		}))
 }
 
@@ -253,7 +268,7 @@ func (s RoutineGroupSetter) UpdateMod() bob.Mod[*dialect.UpdateQuery] {
 }
 
 func (s RoutineGroupSetter) Expressions(prefix ...string) []bob.Expression {
-	exprs := make([]bob.Expression, 0, 7)
+	exprs := make([]bob.Expression, 0, 8)
 
 	if s.ID.IsValue() {
 		exprs = append(exprs, expr.Join{Sep: " = ", Exprs: []bob.Expression{
@@ -304,6 +319,13 @@ func (s RoutineGroupSetter) Expressions(prefix ...string) []bob.Expression {
 		}})
 	}
 
+	if s.Rounds.IsValue() {
+		exprs = append(exprs, expr.Join{Sep: " = ", Exprs: []bob.Expression{
+			psql.Quote(append(prefix, "rounds")...),
+			psql.Arg(s.Rounds),
+		}})
+	}
+
 	return exprs
 }
 
@@ -314,7 +336,7 @@ func routineGroupScanMapper(ctx context.Context, cols []string) (scan.BeforeFunc
 		idx int
 		dst func(o *RoutineGroup) any
 	}
-	targets := make([]target, 0, 7)
+	targets := make([]target, 0, 8)
 	for i, col := range cols {
 		switch col {
 		case "id":
@@ -331,6 +353,8 @@ func routineGroupScanMapper(ctx context.Context, cols []string) (scan.BeforeFunc
 			targets = append(targets, target{i, func(o *RoutineGroup) any { return &o.RestBetweenRoundsSeconds }})
 		case "created_at":
 			targets = append(targets, target{i, func(o *RoutineGroup) any { return &o.CreatedAt }})
+		case "rounds":
+			targets = append(targets, target{i, func(o *RoutineGroup) any { return &o.Rounds }})
 		}
 	}
 
@@ -788,6 +812,7 @@ type routineGroupWhere[Q psql.Filterable] struct {
 	RestBetweenExercisesSeconds psql.WhereMod[Q, int32]
 	RestBetweenRoundsSeconds    psql.WhereMod[Q, int32]
 	CreatedAt                   psql.WhereMod[Q, time.Time]
+	Rounds                      psql.WhereMod[Q, int32]
 	R                           routineGroupWhereR[Q]
 }
 
@@ -805,6 +830,7 @@ func buildRoutineGroupWhere[Q psql.Filterable](cols routineGroupColumns) routine
 		RestBetweenExercisesSeconds: psql.Where[Q, int32](cols.RestBetweenExercisesSeconds.Expression),
 		RestBetweenRoundsSeconds:    psql.Where[Q, int32](cols.RestBetweenRoundsSeconds.Expression),
 		CreatedAt:                   psql.Where[Q, time.Time](cols.CreatedAt.Expression),
+		Rounds:                      psql.Where[Q, int32](cols.Rounds.Expression),
 		R:                           routineGroupWhereR[Q]{cols: cols},
 	}
 }
@@ -855,6 +881,7 @@ type routineGroupPreloadBuf struct {
 	RestBetweenExercisesSeconds null.Val[int32]
 	RestBetweenRoundsSeconds    null.Val[int32]
 	CreatedAt                   null.Val[time.Time]
+	Rounds                      null.Val[int32]
 }
 
 // routineGroupScanMapperNullable maps the preloaded routineGroup
@@ -869,7 +896,7 @@ func routineGroupScanMapperNullable(prefix string) scan.Mapper[*RoutineGroup] {
 			idx int
 			dst func(b *routineGroupPreloadBuf) any
 		}
-		targets := make([]target, 0, 7)
+		targets := make([]target, 0, 8)
 		for i, col := range cols {
 			name, ok := strings.CutPrefix(col, prefix)
 			if !ok {
@@ -890,6 +917,8 @@ func routineGroupScanMapperNullable(prefix string) scan.Mapper[*RoutineGroup] {
 				targets = append(targets, target{i, func(b *routineGroupPreloadBuf) any { return &b.RestBetweenRoundsSeconds }})
 			case "created_at":
 				targets = append(targets, target{i, func(b *routineGroupPreloadBuf) any { return &b.CreatedAt }})
+			case "rounds":
+				targets = append(targets, target{i, func(b *routineGroupPreloadBuf) any { return &b.Rounds }})
 			}
 		}
 
@@ -918,7 +947,8 @@ func routineGroupScanMapperNullable(prefix string) scan.Mapper[*RoutineGroup] {
 					!(buf.Mode.IsValue()) &&
 					!(buf.RestBetweenExercisesSeconds.IsValue()) &&
 					!(buf.RestBetweenRoundsSeconds.IsValue()) &&
-					!(buf.CreatedAt.IsValue()) {
+					!(buf.CreatedAt.IsValue()) &&
+					!(buf.Rounds.IsValue()) {
 					return nil, nil
 				}
 
@@ -943,6 +973,9 @@ func routineGroupScanMapperNullable(prefix string) scan.Mapper[*RoutineGroup] {
 				}
 				if buf.CreatedAt.IsValue() {
 					o.CreatedAt = buf.CreatedAt.MustGet()
+				}
+				if buf.Rounds.IsValue() {
+					o.Rounds = buf.Rounds.MustGet()
 				}
 				return o, nil
 			}

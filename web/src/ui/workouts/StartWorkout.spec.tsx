@@ -126,13 +126,23 @@ const circuitRoutine = () =>
     }),
   })
 
+// The same circuit, prescribed for two rounds rather than run open-ended.
+const prescribedCircuitRoutine = (rounds: number) => {
+  const response = circuitRoutine()
+  const group = response.routine?.groups[0]
+  if (group) group.rounds = rounds
+  return response
+}
+
 const setField = (label: string) => screen.getByRole('textbox', { name: label })
 
 // The escape hatch in the tools shares its label, so the one inside the open
 // exercise is identified by being the form's submit.
 const primaryAction = () =>
   screen
-    .getAllByRole('button', { name: /Complete exercise|Complete set|Finish workout|Saving/ })
+    .getAllByRole('button', {
+      name: /Complete exercise|Complete set|Complete circuit|Finish workout|Saving/,
+    })
     .find((button) => button.getAttribute('type') === 'submit')!
 
 const restBanner = () => screen.queryByRole('region', { name: 'Rest timer' })
@@ -326,6 +336,94 @@ describe('StartWorkout', () => {
         squat.id,
       ])
       expect(primaryAction()).toHaveTextContent('Finish workout')
+    })
+
+    describe('prescribed for a number of rounds', () => {
+      beforeEach(() => {
+        mocked.getRoutine.mockResolvedValue(prescribedCircuitRoutine(2))
+      })
+
+      test('counts towards the rounds it was prescribed', async () => {
+        await renderWorkout()
+
+        expect(screen.getByText('Round 1 of 2 · exercise 1 of 2')).toBeInTheDocument()
+        expect(screen.getByText('Round 1 of 2')).toBeInTheDocument()
+      })
+
+      // The block is laid out in front of you: a row per round is the session
+      // as prescribed, not a row for a round nobody has reached.
+      test('opens on a row for every round', async () => {
+        await renderWorkout()
+
+        expect(setField('Bench Press set 1 weight')).toBeVisible()
+        expect(setField('Bench Press set 2 weight')).toBeVisible()
+        expect(
+          screen.queryByRole('textbox', { name: 'Bench Press set 3 weight' }),
+        ).not.toBeInTheDocument()
+      })
+
+      // The last set of the last round ends the block, so the button that logs
+      // it says what it is about to do.
+      test('closes itself as the last round is walked out of', async () => {
+        const user = userEvent.setup()
+        await renderWorkout()
+
+        await completeBothExercises(user)
+        expect(screen.getByText('Round 2 of 2 · exercise 1 of 2')).toBeInTheDocument()
+
+        await user.type(setField('Bench Press set 2 weight'), '80')
+        await user.type(setField('Bench Press set 2 reps'), '8')
+        await user.click(primaryAction())
+
+        await user.type(await screen.findByRole('textbox', { name: 'Squat set 2 weight' }), '100')
+        await user.type(setField('Squat set 2 reps'), '5')
+        expect(primaryAction()).toHaveTextContent('Complete circuit')
+
+        await user.click(primaryAction())
+        expect(useWorkoutStore.getState().workouts[routineID]?.completedExerciseIds).toEqual([
+          benchPress.id,
+          squat.id,
+        ])
+      })
+
+      // Two controls saying "Complete circuit" side by side is one too many:
+      // the primary is already the end of the block.
+      test('drops the end-it-here button once the primary ends it', async () => {
+        const user = userEvent.setup()
+        await renderWorkout()
+
+        expect(
+          screen.getByRole('button', { name: 'Complete circuit', hidden: false }),
+        ).toHaveAttribute('type', 'button')
+
+        await completeBothExercises(user)
+        await user.type(setField('Bench Press set 2 weight'), '80')
+        await user.type(setField('Bench Press set 2 reps'), '8')
+        await user.click(primaryAction())
+        await user.type(await screen.findByRole('textbox', { name: 'Squat set 2 weight' }), '100')
+        await user.type(setField('Squat set 2 reps'), '5')
+
+        expect(
+          screen
+            .getAllByRole('button', { name: 'Complete circuit' })
+            .map((button) => button.getAttribute('type')),
+        ).toEqual(['submit'])
+      })
+
+      // Stopping short stays possible: the prescription is a target, and an
+      // athlete who has had enough ends the block where they are.
+      test('still lets the session stop short of the prescription', async () => {
+        const user = userEvent.setup()
+        await renderWorkout()
+
+        await logFirstSet(user)
+        await user.click(screen.getByRole('button', { name: 'Complete circuit' }))
+
+        expect(useWorkoutStore.getState().workouts[routineID]?.completedExerciseIds).toEqual([
+          benchPress.id,
+          squat.id,
+        ])
+      })
     })
 
     // Ending a circuit is a decision to make while you are in one.

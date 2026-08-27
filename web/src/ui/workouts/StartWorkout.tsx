@@ -75,6 +75,7 @@ import {
   finishBlocker,
   loggedSetCount,
   nextCircuitStep,
+  nextStationOutsideGroup,
   nextUnfinishedStation,
   restExtensionSeconds,
   sessionGroups,
@@ -119,12 +120,14 @@ const focusNextSetInput = (panel: HTMLElement | null, suppress: RefObject<boolea
 }
 
 /**
- * Gives every station the row it opens on, and the shape it had last time.
+ * Gives every station the row it opens on, and the shape it is being worked to.
  *
  * Straight sets open on as many rows as the exercise took last session, which
- * is the session being repeated. A circuit opens on one: its rows are rounds
- * nobody has walked yet, and a row for a round you have not reached takes the
- * emphasis that says "type here next" when what comes next is another exercise.
+ * is the session being repeated. A prescribed circuit opens on a row per round,
+ * because that is the block laid out in front of you. One prescribed for no
+ * rounds opens on a single row: its rows are rounds nobody has walked yet, and a
+ * row for a round you have not reached takes the emphasis that says "type here
+ * next" when what comes next is another exercise.
  */
 const fillEmptySets = (
   routineID: string,
@@ -137,9 +140,12 @@ const fillEmptySets = (
   blocks.forEach((block) => {
     block.stations.forEach(({ key, exercise }) => {
       store().addEmptySetIfNone(routineID, key, exercise.metrics, weightUnit, distanceUnit)
-      if (block.mode === 'circuit') return
 
-      const rows = previous.find((entry) => entry.exercise?.id === exercise.id)?.sets.length ?? 0
+      const rows =
+        block.mode === 'circuit'
+          ? block.rounds
+          : (previous.find((entry) => entry.exercise?.id === exercise.id)?.sets.length ?? 0)
+
       for (let index = selectSets(store(), routineID, key).length; index < rows; index += 1) {
         store().addEmptySet(routineID, key, weightUnit, distanceUnit)
       }
@@ -413,19 +419,28 @@ export const StartWorkout = () => {
     inCircuit && activeBlock && activeStation
       ? nextCircuitStep(activeBlock, activeStation.key, completedRoundsOf(activeBlock))
       : undefined
+  // A circuit that closes here ticks off every exercise in it at once, so what
+  // comes next is the first station outside the block rather than the one below.
   const nextStation =
-    circuitStep && circuitStep.kind !== 'groupComplete'
-      ? stations.find((station) => station.key === circuitStep.key)
-      : stations[nextIndex]
+    circuitStep?.kind === 'groupComplete'
+      ? activeBlock && nextStationOutsideGroup(stations, activeBlock, completed)
+      : circuitStep
+        ? stations.find((station) => station.key === circuitStep.key)
+        : stations[nextIndex]
   const nextUpHint = nextStation
     ? t('workout.thenNext', { name: nextStation.exercise.name })
     : t('workout.thenFinish')
+  // The last set of the last round is the end of the block, not the way into
+  // another lap of it, so the button says so.
+  const closesCircuit = circuitStep?.kind === 'groupComplete'
   const primaryActionLabel = allExercisesComplete
     ? submitting
       ? t('common.saving')
       : t('workout.finish')
     : inCircuit
-      ? t('workout.completeSet')
+      ? closesCircuit
+        ? t('workout.completeCircuit')
+        : t('workout.completeSet')
       : t('workout.completeExercise')
 
   const setsFor = (key: string) => selectSets(useWorkoutStore.getState(), routineID, key)
@@ -888,11 +903,17 @@ export const StartWorkout = () => {
               <h1>{session?.name ?? t('workout.loading')}</h1>
               <p className={styles.sessionProgress}>
                 {inCircuit && activeBlock
-                  ? t('workout.circuitPosition', {
-                      round: activeRound,
-                      current: activeIndexInBlock + 1,
-                      total: activeBlock.stations.length,
-                    })
+                  ? t(
+                      activeBlock.rounds > 0
+                        ? 'workout.circuitPositionOfRounds'
+                        : 'workout.circuitPosition',
+                      {
+                        round: activeRound,
+                        rounds: activeBlock.rounds,
+                        current: activeIndexInBlock + 1,
+                        total: activeBlock.stations.length,
+                      },
+                    )
                   : t('workout.exercisePosition', {
                       current: Math.min(activeStationIndex + 1, stations.length),
                       total: stations.length,
@@ -946,7 +967,12 @@ export const StartWorkout = () => {
             {block.mode === 'circuit' && (
               <div className={styles.circuitBand}>
                 <strong>{t('workout.circuit')}</strong>
-                <span>{t('workout.roundPosition', { round: roundOf(block) })}</span>
+                <span>
+                  {t(block.rounds > 0 ? 'workout.roundPositionOfRounds' : 'workout.roundPosition', {
+                    round: roundOf(block),
+                    rounds: block.rounds,
+                  })}
+                </span>
               </div>
             )}
             <ul>
@@ -1073,7 +1099,7 @@ export const StartWorkout = () => {
                                 takes, so ending it is a decision — and it
                                 belongs next to the button that takes another
                                 round, which is where that decision is made. */}
-                            {block.mode === 'circuit' && !completed[key] && (
+                            {block.mode === 'circuit' && !completed[key] && !closesCircuit && (
                               <AppButton
                                 type="button"
                                 colour="secondary"

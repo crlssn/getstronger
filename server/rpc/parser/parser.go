@@ -150,6 +150,7 @@ func RoutineGroupSlice(groups []*training.RoutineGroup) []*apiv1.RoutineGroup {
 			Mode:                        RoutineGroupModeToProto(group.Mode),
 			RestBetweenExercisesSeconds: group.RestBetweenExercisesSeconds,
 			RestBetweenRoundsSeconds:    group.RestBetweenRoundsSeconds,
+			Rounds:                      group.Rounds,
 			Exercises:                   RoutineExerciseSlice(group.Exercises),
 		})
 	}

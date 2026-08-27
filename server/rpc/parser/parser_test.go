@@ -146,6 +146,7 @@ func (s *parserSuite) TestRoutineWithGroups() {
 			Mode:                        training.RoutineGroupModeCircuit,
 			RestBetweenExercisesSeconds: 15,
 			RestBetweenRoundsSeconds:    90,
+			Rounds:                      3,
 			Exercises: []training.RoutineExercise{
 				{Exercise: exercises[1], RestSeconds: 90},
 				{Exercise: exercises[2], RestSeconds: 90},
@@ -171,6 +172,7 @@ func (s *parserSuite) TestRoutineWithGroups() {
 	s.Require().Equal(v1.RoutineGroupMode_ROUTINE_GROUP_MODE_CIRCUIT, circuit.GetMode())
 	s.Require().Equal(int32(15), circuit.GetRestBetweenExercisesSeconds())
 	s.Require().Equal(int32(90), circuit.GetRestBetweenRoundsSeconds())
+	s.Require().Equal(int32(3), circuit.GetRounds())
 	s.Require().Len(circuit.GetExercises(), 2)
 	s.Require().Equal(exercises[1].ID.String(), circuit.GetExercises()[0].GetExercise().GetId())
 	// Carried even in a circuit, which does not rest between sets: a group

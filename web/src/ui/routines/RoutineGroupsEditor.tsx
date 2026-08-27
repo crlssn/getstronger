@@ -9,13 +9,16 @@ import { AppDurationStepper } from '@/ui/components/AppDurationStepper'
 import { AppIconButton } from '@/ui/components/AppIconButton'
 import { AppOptionalAction } from '@/ui/components/AppOptionalAction'
 import { AppSegmented } from '@/ui/components/AppSegmented'
+import { AppStepper } from '@/ui/components/AppStepper'
 import { AppSwitch } from '@/ui/components/AppSwitch'
 import { AppValueChip } from '@/ui/components/AppValueChip'
 import { formatMeasurementDuration } from '@/utils/exerciseMeasurements'
 import {
   addGroup,
   defaultRoundRestSeconds,
+  defaultRounds,
   groupLetter,
+  maximumRounds,
   removeEntry,
   removeGroup,
   reorderEntry,
@@ -42,10 +45,12 @@ const setMode = (groups: DraftGroup[], groupId: string, mode: GroupMode) => {
   if (mode !== 'circuit') return withGroup(groups, groupId, { mode })
 
   // A circuit that has never been set up still arrives ready to run, with the
-  // rest that belongs to the round rather than to the set.
+  // rest that belongs to the round rather than to the set, and a prescription
+  // to go round more than once.
   return withGroup(groups, groupId, {
     mode,
     restBetweenRoundsSeconds: group?.restBetweenRoundsSeconds || defaultRoundRestSeconds,
+    rounds: group?.rounds || defaultRounds,
   })
 }
 
@@ -231,6 +236,43 @@ export const RoutineGroupsEditor = ({
                   rest timer and do not care how long: the lengths only appear
                   for somebody who came to change them. */}
               <div className={styles.settings}>
+                {/* Above the rest timers, and outside them: how many times the
+                    block is worked through is not a rest, and a circuit with
+                    its timer off is still prescribed for the rounds it says. */}
+                {circuit && (
+                  <div className={styles.settingRow}>
+                    <div className={styles.settingLabel}>
+                      {t('routine.form.groups.rounds')}
+                      {/* Zero is an answer of its own, and the one every
+                          circuit gave before one could be prescribed. */}
+                      <small>
+                        {group.rounds > 0
+                          ? t('routine.form.groups.roundsHint', { count: group.rounds })
+                          : t('routine.form.groups.roundsOpen')}
+                      </small>
+                    </div>
+                    <AppStepper
+                      label={
+                        grouped
+                          ? t('routine.form.groups.roundsAriaGroup', { letter })
+                          : t('routine.form.groups.roundsAria')
+                      }
+                      value={group.rounds}
+                      format={(rounds) =>
+                        rounds > 0 ? String(rounds) : t('routine.form.groups.roundsAny')
+                      }
+                      decreaseLabel={t('routine.form.groups.roundsDecrease', {
+                        label: t('routine.form.groups.rounds'),
+                      })}
+                      increaseLabel={t('routine.form.groups.roundsIncrease', {
+                        label: t('routine.form.groups.rounds'),
+                      })}
+                      max={maximumRounds}
+                      onChange={(rounds) => onChange(withGroup(groups, group.id, { rounds }))}
+                    />
+                  </div>
+                )}
+
                 <div className={styles.settingRow}>
                   <div className={styles.settingLabel}>
                     {t('routine.form.groups.restTimers')}

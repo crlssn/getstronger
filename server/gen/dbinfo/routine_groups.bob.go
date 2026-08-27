@@ -78,6 +78,15 @@ var RoutineGroups = Table[
 			Generated: false,
 			AutoIncr:  false,
 		},
+		Rounds: column{
+			Name:      "rounds",
+			DBType:    "integer",
+			Default:   "0",
+			Comment:   "",
+			Nullable:  false,
+			Generated: false,
+			AutoIncr:  false,
+		},
 	},
 	Indexes: routineGroupIndexes{
 		RoutineGroupsPkey: index{
@@ -168,6 +177,14 @@ var RoutineGroups = Table[
 			},
 			Expression: "((rest_between_rounds_seconds >= 0) AND (rest_between_rounds_seconds <= 3600))",
 		},
+		RoutineGroupsRoundsCheck: check{
+			constraint: constraint{
+				Name:    "routine_groups_rounds_check",
+				Columns: []string{"rounds"},
+				Comment: "",
+			},
+			Expression: "((rounds >= 0) AND (rounds <= 99))",
+		},
 	},
 	Comment: "",
 }
@@ -180,11 +197,12 @@ type routineGroupColumns struct {
 	RestBetweenExercisesSeconds column
 	RestBetweenRoundsSeconds    column
 	CreatedAt                   column
+	Rounds                      column
 }
 
 func (c routineGroupColumns) AsSlice() []column {
 	return []column{
-		c.ID, c.RoutineID, c.Position, c.Mode, c.RestBetweenExercisesSeconds, c.RestBetweenRoundsSeconds, c.CreatedAt,
+		c.ID, c.RoutineID, c.Position, c.Mode, c.RestBetweenExercisesSeconds, c.RestBetweenRoundsSeconds, c.CreatedAt, c.Rounds,
 	}
 }
 
@@ -223,10 +241,11 @@ type routineGroupChecks struct {
 	RoutineGroupsPositionCheck                    check
 	RoutineGroupsRestBetweenExercisesSecondsCheck check
 	RoutineGroupsRestBetweenRoundsSecondsCheck    check
+	RoutineGroupsRoundsCheck                      check
 }
 
 func (c routineGroupChecks) AsSlice() []check {
 	return []check{
-		c.RoutineGroupsPositionCheck, c.RoutineGroupsRestBetweenExercisesSecondsCheck, c.RoutineGroupsRestBetweenRoundsSecondsCheck,
+		c.RoutineGroupsPositionCheck, c.RoutineGroupsRestBetweenExercisesSecondsCheck, c.RoutineGroupsRestBetweenRoundsSecondsCheck, c.RoutineGroupsRoundsCheck,
 	}
 }

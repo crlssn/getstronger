@@ -1273,6 +1273,7 @@ func (s *repoSuite) TestCreateRoutineWithGroups() {
 				Mode:                        training.RoutineGroupModeCircuit,
 				RestBetweenExercisesSeconds: 15,
 				RestBetweenRoundsSeconds:    90,
+				Rounds:                      3,
 				Exercises:                   routineExercises(circuitIDs...),
 			},
 		},
@@ -1287,6 +1288,7 @@ func (s *repoSuite) TestCreateRoutineWithGroups() {
 	s.Require().Equal(training.RoutineGroupModeCircuit, groups[1].Mode)
 	s.Require().Equal(int32(15), groups[1].RestBetweenExercisesSeconds)
 	s.Require().Equal(int32(90), groups[1].RestBetweenRoundsSeconds)
+	s.Require().Equal(int32(3), groups[1].Rounds)
 
 	s.Require().Equal([][]string{{warmUpID}, circuitIDs}, s.routineGroupExerciseIDs(routine.ID.String()))
 	// The flat exercise order is the groups read end to end.

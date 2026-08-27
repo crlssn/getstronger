@@ -296,6 +296,7 @@ func (s *routineSuite) TestCreateRoutineWithGroups() {
 				Mode:                        apiv1.RoutineGroupMode_ROUTINE_GROUP_MODE_CIRCUIT,
 				RestBetweenExercisesSeconds: 15,
 				RestBetweenRoundsSeconds:    90,
+				Rounds:                      3,
 				Exercises:                   groupExercises(exerciseIDs[2], exerciseIDs[1]),
 			},
 		},
@@ -309,6 +310,9 @@ func (s *routineSuite) TestCreateRoutineWithGroups() {
 	s.Require().Equal(apiv1.RoutineGroupMode_ROUTINE_GROUP_MODE_CIRCUIT, circuit.GetMode())
 	s.Require().Equal(int32(15), circuit.GetRestBetweenExercisesSeconds())
 	s.Require().Equal(int32(90), circuit.GetRestBetweenRoundsSeconds())
+	// The prescription travels with the block: a circuit written as three
+	// rounds is read back as three rounds.
+	s.Require().Equal(int32(3), circuit.GetRounds())
 	s.Require().Equal(
 		[]string{exerciseIDs[2], exerciseIDs[1]},
 		[]string{

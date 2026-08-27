@@ -188,6 +188,23 @@ func TestCheckConstraintErrors(t *testing.T) {
 			t.Fatal("expected ErrCheckRoutineGroupsRestBetweenRoundsSecondsCheck.Is not to match different constraint")
 		}
 	})
+	t.Run("RoutineGroup_ErrCheckRoutineGroupsRoundsCheck", func(t *testing.T) {
+		matchingErr := newCheckErr("23514", "routine_groups_rounds_check")
+		if !errors.Is(RoutineGroupErrors.ErrCheckRoutineGroupsRoundsCheck, matchingErr) {
+			t.Fatalf("expected ErrCheckRoutineGroupsRoundsCheck to match constraint %q", "routine_groups_rounds_check")
+		}
+		if !RoutineGroupErrors.ErrCheckRoutineGroupsRoundsCheck.Is(matchingErr) {
+			t.Fatalf("expected ErrCheckRoutineGroupsRoundsCheck.Is to match constraint %q", "routine_groups_rounds_check")
+		}
+
+		nonMatchingErr := newCheckErr("23514", "other_constraint")
+		if errors.Is(RoutineGroupErrors.ErrCheckRoutineGroupsRoundsCheck, nonMatchingErr) {
+			t.Fatal("expected ErrCheckRoutineGroupsRoundsCheck not to match different constraint")
+		}
+		if RoutineGroupErrors.ErrCheckRoutineGroupsRoundsCheck.Is(nonMatchingErr) {
+			t.Fatal("expected ErrCheckRoutineGroupsRoundsCheck.Is not to match different constraint")
+		}
+	})
 
 	t.Run("Set_ErrCheckSetsDistanceNonNegative", func(t *testing.T) {
 		matchingErr := newCheckErr("23514", "sets_distance_non_negative")

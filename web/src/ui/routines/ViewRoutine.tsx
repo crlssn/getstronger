@@ -239,8 +239,19 @@ export const ViewRoutine = () => {
                     </span>
                     <div>
                       <strong>{t('routine.form.groups.groupName', { letter })}</strong>
+                      {/* A prescribed circuit says so here, beside what it
+                          is: how many times round is the first thing anyone
+                          reads off a circuit. */}
                       <small>
-                        {circuit ? t('routine.view.groupCircuit') : t('routine.view.groupStraight')}
+                        {circuit
+                          ? [
+                              t('routine.view.groupCircuit'),
+                              group.rounds > 0 &&
+                                t('routine.view.groupRounds', { count: group.rounds }),
+                            ]
+                              .filter(Boolean)
+                              .join(' · ')
+                          : t('routine.view.groupStraight')}
                       </small>
                     </div>
                   </header>

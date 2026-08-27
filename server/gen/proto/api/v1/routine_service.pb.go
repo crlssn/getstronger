@@ -24,8 +24,8 @@ const (
 )
 
 // How a group's exercises are worked through. Straight sets finish one exercise
-// before the next begins; a circuit takes one set of each in turn and repeats
-// until the session says it is done.
+// before the next begins; a circuit takes one set of each in turn and goes round
+// again, for the rounds it is prescribed or for as many as the session takes.
 type RoutineGroupMode int32
 
 const (
@@ -947,8 +947,12 @@ type RoutineGroup struct {
 	// Rest taken once a round closes, before the group starts again.
 	RestBetweenRoundsSeconds int32              `protobuf:"varint,5,opt,name=rest_between_rounds_seconds,json=restBetweenRoundsSeconds,proto3" json:"rest_between_rounds_seconds,omitempty"`
 	Exercises                []*RoutineExercise `protobuf:"bytes,7,rep,name=exercises,proto3" json:"exercises,omitempty"`
-	unknownFields            protoimpl.UnknownFields
-	sizeCache                protoimpl.SizeCache
+	// How many times a circuit is prescribed to go round; 0 runs it for as many
+	// rounds as the session takes. A target rather than a limit: the session may
+	// take another round or stop short of it. Ignored outside a circuit.
+	Rounds        int32 `protobuf:"varint,8,opt,name=rounds,proto3" json:"rounds,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *RoutineGroup) Reset() {
@@ -1014,6 +1018,13 @@ func (x *RoutineGroup) GetExercises() []*RoutineExercise {
 		return x.Exercises
 	}
 	return nil
+}
+
+func (x *RoutineGroup) GetRounds() int32 {
+	if x != nil {
+		return x.Rounds
+	}
+	return 0
 }
 
 // One exercise where a routine trains it. The same exercise in another group,
@@ -1904,7 +1915,7 @@ const file_api_v1_routine_service_proto_rawDesc = "" +
 	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x02id\x12\x1b\n" +
 	"\x04name\x18\x02 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x04name\x128\n" +
 	"\texercises\x18\x03 \x03(\v2\x10.api.v1.ExerciseB\b\xbaH\x05\x92\x01\x02\b\x01R\texercises\x12,\n" +
-	"\x06groups\x18\x04 \x03(\v2\x14.api.v1.RoutineGroupR\x06groups\"\xab\x02\n" +
+	"\x06groups\x18\x04 \x03(\v2\x14.api.v1.RoutineGroupR\x06groups\"\xce\x02\n" +
 	"\fRoutineGroup\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12,\n" +
 	"\x04mode\x18\x02 \x01(\x0e2\x18.api.v1.RoutineGroupModeR\x04mode\x12O\n" +
@@ -1912,7 +1923,8 @@ const file_api_v1_routine_service_proto_rawDesc = "" +
 	"\xbaH\a\x1a\x05\x18\x90\x1c(\x00R\x1brestBetweenExercisesSeconds\x12I\n" +
 	"\x1brest_between_rounds_seconds\x18\x05 \x01(\x05B\n" +
 	"\xbaH\a\x1a\x05\x18\x90\x1c(\x00R\x18restBetweenRoundsSeconds\x125\n" +
-	"\texercises\x18\a \x03(\v2\x17.api.v1.RoutineExerciseR\texercisesJ\x04\b\x03\x10\x04J\x04\b\x06\x10\a\"n\n" +
+	"\texercises\x18\a \x03(\v2\x17.api.v1.RoutineExerciseR\texercises\x12!\n" +
+	"\x06rounds\x18\b \x01(\x05B\t\xbaH\x06\x1a\x04\x18c(\x00R\x06roundsJ\x04\b\x03\x10\x04J\x04\b\x06\x10\a\"n\n" +
 	"\x0fRoutineExercise\x12,\n" +
 	"\bexercise\x18\x01 \x01(\v2\x10.api.v1.ExerciseR\bexercise\x12-\n" +
 	"\frest_seconds\x18\x02 \x01(\x05B\n" +
