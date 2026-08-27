@@ -3,8 +3,8 @@ import type { DraftGroup } from '@/utils/routineGroups'
 import { create } from '@bufbuild/protobuf'
 import { describe, expect, it } from 'vitest'
 
-import { RoutineGroupMode, RoutineGroupSchema } from '@/proto/api/v1/routine_service_pb'
-import { ExerciseMetric, ExerciseSchema } from '@/proto/api/v1/shared_pb'
+import { RoutineGroupSchema } from '@/proto/api/v1/routine_service_pb'
+import { ExerciseMetric, ExerciseSchema, RoutineGroupMode } from '@/proto/api/v1/shared_pb'
 import {
   addExerciseToGroup,
   addGroup,

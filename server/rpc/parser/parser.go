@@ -1,8 +1,12 @@
 package parser
 
 import (
+	"cmp"
 	"encoding/json"
 	"fmt"
+	"slices"
+
+	"github.com/gofrs/uuid/v5"
 
 	"google.golang.org/protobuf/types/known/timestamppb"
 
@@ -218,6 +222,15 @@ func WorkoutExerciseSets(sets models.SetSlice, personalBests models.SetSlice) Wo
 	}
 }
 
+// WorkoutBlocks adds how the session was trained to a workout being read back.
+func WorkoutBlocks(
+	records []repo.WorkoutGroupRecord, sets models.SetSlice, personalBests models.SetSlice,
+) WorkoutOpt {
+	return func(w *apiv1.Workout) {
+		w.Groups = WorkoutGroups(records, sets, personalBests)
+	}
+}
+
 // WorkoutIntensity reports the workout's tonnage; the API calls it intensity.
 func WorkoutIntensity(sets models.SetSlice) WorkoutOpt {
 	return func(w *apiv1.Workout) {
@@ -239,6 +252,7 @@ func Workout(workout *models.Workout, opts ...WorkoutOpt) *apiv1.Workout {
 		User:         nil,
 		Comments:     nil,
 		ExerciseSets: nil,
+		Groups:       nil,
 		Intensity:    0,
 		Note:         workout.Note.GetOrZero(),
 		RoutineId:    routineID,
@@ -292,6 +306,72 @@ func WorkoutComment(comment *models.WorkoutComment) *apiv1.WorkoutComment {
 	return c
 }
 
+// setsInLoggedOrder puts a workout's sets back in the order they were logged.
+// Every set of a workout is written in one transaction and so shares created_at
+// to the microsecond, which leaves the row order to the planner; position is
+// what records it. Sorting on position alone, and stably, leaves each exercise
+// where its first set arrived while ordering that exercise's own sets.
+func setsInLoggedOrder(sets models.SetSlice) models.SetSlice {
+	ordered := slices.Clone(sets)
+	slices.SortStableFunc(ordered, func(left, right *models.Set) int {
+		return cmp.Compare(left.Position, right.Position)
+	})
+
+	return ordered
+}
+
+// WorkoutGroups states the blocks a workout was trained in, each block's
+// exercises carrying the sets it logged there. A block's exercise that no
+// longer holds a set — every one of them edited away — is left out, because
+// there is nothing of it left to show.
+func WorkoutGroups(
+	records []repo.WorkoutGroupRecord, sets models.SetSlice, personalBests models.SetSlice,
+) []*apiv1.WorkoutGroup {
+	byOccurrence := make(map[uuid.UUID]models.SetSlice, len(sets))
+	for _, set := range setsInLoggedOrder(sets) {
+		if set.WorkoutGroupExerciseID.IsNull() {
+			continue
+		}
+
+		id := set.WorkoutGroupExerciseID.GetOrZero()
+		byOccurrence[id] = append(byOccurrence[id], set)
+	}
+
+	groups := make([]*apiv1.WorkoutGroup, 0, len(records))
+	for _, record := range records {
+		exercises := make([]*apiv1.WorkoutGroupExercise, 0, len(record.Exercises))
+		for _, occurrence := range record.Exercises {
+			logged := byOccurrence[occurrence.ID]
+			if len(logged) == 0 {
+				continue
+			}
+
+			exercises = append(exercises, &apiv1.WorkoutGroupExercise{
+				Exercise: Exercise(logged[0].R.Exercise),
+				// A record is a record wherever it is read: the trophy has to
+				// reach a circuit's rounds too.
+				Sets:     SetSlice(logged, personalBests),
+				SetCount: safe.Int32FromInt(len(logged)),
+			})
+		}
+
+		if len(exercises) == 0 {
+			continue
+		}
+
+		groups = append(groups, &apiv1.WorkoutGroup{
+			Id:                          record.Group.ID.String(),
+			Mode:                        RoutineGroupModeToProto(record.Group.Mode),
+			RestBetweenExercisesSeconds: record.Group.RestBetweenExercisesSeconds,
+			RestBetweenRoundsSeconds:    record.Group.RestBetweenRoundsSeconds,
+			Rounds:                      record.Group.Rounds,
+			Exercises:                   exercises,
+		})
+	}
+
+	return groups
+}
+
 type ExerciseSetsSliceOpt func(*apiv1.ExerciseSets)
 
 func ExerciseSetsPersonalBests(personalBests models.SetSlice) ExerciseSetsSliceOpt {
@@ -313,6 +393,7 @@ func ExerciseSetsPersonalBests(personalBests models.SetSlice) ExerciseSetsSliceO
 }
 
 func ExerciseSetsSlice(sets models.SetSlice, opts ...ExerciseSetsSliceOpt) []*apiv1.ExerciseSets {
+	sets = setsInLoggedOrder(sets)
 	exerciseOrder := make([]string, 0, len(sets))
 	mapExerciseSets := make(map[string]*apiv1.ExerciseSets)
 	for _, set := range sets {

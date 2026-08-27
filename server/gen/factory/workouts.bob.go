@@ -56,6 +56,7 @@ type WorkoutTemplate struct {
 type workoutR struct {
 	Sets            []*workoutRSetsR
 	WorkoutComments []*workoutRWorkoutCommentsR
+	WorkoutGroups   []*workoutRWorkoutGroupsR
 	Routine         *workoutRRoutineR
 	User            *workoutRUserR
 }
@@ -67,6 +68,10 @@ type workoutRSetsR struct {
 type workoutRWorkoutCommentsR struct {
 	number int
 	o      *WorkoutCommentTemplate
+}
+type workoutRWorkoutGroupsR struct {
+	number int
+	o      *WorkoutGroupTemplate
 }
 type workoutRRoutineR struct {
 	o *RoutineTemplate
@@ -113,6 +118,21 @@ func (t WorkoutTemplate) setModelRels(o *models.Workout) {
 		}
 		o.R.WorkoutComments = rel
 		o.R.Loaded.WorkoutComments = true
+	}
+
+	if t.r.WorkoutGroups != nil {
+		rel := models.WorkoutGroupSlice{}
+		for _, r := range t.r.WorkoutGroups {
+			related := r.o.BuildMany(r.number)
+			for _, rel := range related {
+				rel.WorkoutID = o.ID // h2
+				rel.R.Workout = o
+				rel.R.Loaded.Workout = true
+			}
+			rel = append(rel, related...)
+		}
+		o.R.WorkoutGroups = rel
+		o.R.Loaded.WorkoutGroups = true
 	}
 
 	if t.r.Routine != nil {
@@ -299,6 +319,26 @@ func (o *WorkoutTemplate) insertOptRels(ctx context.Context, exec bob.Executor, 
 		}
 	}
 
+	isWorkoutGroupsDone, _ := workoutRelWorkoutGroupsCtx.Value(ctx)
+	if !isWorkoutGroupsDone && o.r.WorkoutGroups != nil {
+		ctx = workoutRelWorkoutGroupsCtx.WithValue(ctx, true)
+		for _, r := range o.r.WorkoutGroups {
+			if r.o.alreadyPersisted {
+				m.R.WorkoutGroups = append(m.R.WorkoutGroups, r.o.Build())
+			} else {
+				rel2, err := r.o.CreateMany(ctx, exec, r.number)
+				if err != nil {
+					return err
+				}
+
+				err = m.AttachWorkoutGroups(ctx, exec, rel2...)
+				if err != nil {
+					return err
+				}
+			}
+		}
+	}
+
 	isRoutineDone, _ := workoutRelRoutineCtx.Value(ctx)
 	if !isRoutineDone && o.r.Routine != nil {
 		ctx = workoutRelRoutineCtx.WithValue(ctx, true)
@@ -306,12 +346,12 @@ func (o *WorkoutTemplate) insertOptRels(ctx context.Context, exec bob.Executor, 
 			m.R.Routine = o.r.Routine.o.Build()
 			m.R.Loaded.Routine = true
 		} else {
-			var rel2 *models.Routine
-			rel2, err = o.r.Routine.o.Create(ctx, exec)
+			var rel3 *models.Routine
+			rel3, err = o.r.Routine.o.Create(ctx, exec)
 			if err != nil {
 				return err
 			}
-			err = m.AttachRoutine(ctx, exec, rel2)
+			err = m.AttachRoutine(ctx, exec, rel3)
 			if err != nil {
 				return err
 			}
@@ -334,32 +374,32 @@ func (o *WorkoutTemplate) Create(ctx context.Context, exec bob.Executor) (*model
 	// This works regardless of NoBackReferencing since it only uses child-side metadata.
 	mInCreation, _ := modelsInCreationCtx.Value(ctx)
 
-	var rel3 *models.User
+	var rel4 *models.User
 
 	if o.r.User == nil {
 		if parentModel, found := mInCreation["users:workouts:workouts.workouts_user_id_fkey"]; found {
 			if pModel, ok := parentModel.(*models.User); ok {
-				rel3 = pModel
+				rel4 = pModel
 			}
 		}
 	}
 
-	if rel3 == nil {
+	if rel4 == nil {
 		if o.r.User == nil {
 			WorkoutMods.WithNewUser().Apply(ctx, o)
 		}
 
 		if o.r.User.o.alreadyPersisted {
-			rel3 = o.r.User.o.Build()
+			rel4 = o.r.User.o.Build()
 		} else {
-			rel3, err = o.r.User.o.Create(ctx, exec)
+			rel4, err = o.r.User.o.Create(ctx, exec)
 			if err != nil {
 				return nil, err
 			}
 		}
 	}
 
-	opt.UserID = omit.From(rel3.ID)
+	opt.UserID = omit.From(rel4.ID)
 
 	m, err := models.Workouts.Insert(opt).One(ctx, exec)
 	if err != nil {
@@ -376,10 +416,11 @@ func (o *WorkoutTemplate) Create(ctx context.Context, exec bob.Executor) (*model
 	}
 	newMInCreation["workouts:sets:sets.sets_workout_id_fkey"] = m
 	newMInCreation["workouts:workout_comments:workout_comments.workout_comments_workout_id_fkey"] = m
+	newMInCreation["workouts:workout_groups:workout_groups.workout_groups_workout_id_fkey"] = m
 
 	ctx = modelsInCreationCtx.WithValue(ctx, newMInCreation)
 
-	m.R.User = rel3
+	m.R.User = rel4
 	m.R.Loaded.User = true
 
 	if err := o.insertOptRels(ctx, exec, m); err != nil {
@@ -934,5 +975,53 @@ func (m workoutMods) AddExistingWorkoutComments(existingModels ...*models.Workou
 func (m workoutMods) WithoutWorkoutComments() WorkoutMod {
 	return WorkoutModFunc(func(ctx context.Context, o *WorkoutTemplate) {
 		o.r.WorkoutComments = nil
+	})
+}
+
+func (m workoutMods) WithWorkoutGroups(number int, related *WorkoutGroupTemplate) WorkoutMod {
+	return WorkoutModFunc(func(ctx context.Context, o *WorkoutTemplate) {
+		o.r.WorkoutGroups = []*workoutRWorkoutGroupsR{{
+			number: number,
+			o:      related,
+		}}
+	})
+}
+
+func (m workoutMods) WithNewWorkoutGroups(number int, mods ...WorkoutGroupMod) WorkoutMod {
+	return WorkoutModFunc(func(ctx context.Context, o *WorkoutTemplate) {
+		related := o.f.NewWorkoutGroupWithContext(ctx, mods...)
+		m.WithWorkoutGroups(number, related).Apply(ctx, o)
+	})
+}
+
+func (m workoutMods) AddWorkoutGroups(number int, related *WorkoutGroupTemplate) WorkoutMod {
+	return WorkoutModFunc(func(ctx context.Context, o *WorkoutTemplate) {
+		o.r.WorkoutGroups = append(o.r.WorkoutGroups, &workoutRWorkoutGroupsR{
+			number: number,
+			o:      related,
+		})
+	})
+}
+
+func (m workoutMods) AddNewWorkoutGroups(number int, mods ...WorkoutGroupMod) WorkoutMod {
+	return WorkoutModFunc(func(ctx context.Context, o *WorkoutTemplate) {
+		related := o.f.NewWorkoutGroupWithContext(ctx, mods...)
+		m.AddWorkoutGroups(number, related).Apply(ctx, o)
+	})
+}
+
+func (m workoutMods) AddExistingWorkoutGroups(existingModels ...*models.WorkoutGroup) WorkoutMod {
+	return WorkoutModFunc(func(ctx context.Context, o *WorkoutTemplate) {
+		for _, em := range existingModels {
+			o.r.WorkoutGroups = append(o.r.WorkoutGroups, &workoutRWorkoutGroupsR{
+				o: o.f.fromExistingWorkoutGroup(ctx, em),
+			})
+		}
+	})
+}
+
+func (m workoutMods) WithoutWorkoutGroups() WorkoutMod {
+	return WorkoutModFunc(func(ctx context.Context, o *WorkoutTemplate) {
+		o.r.WorkoutGroups = nil
 	})
 }

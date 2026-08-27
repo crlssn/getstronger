@@ -60,6 +60,12 @@ var _ bob.HookableType = &User{}
 // Make sure the type WorkoutComment runs hooks after queries
 var _ bob.HookableType = &WorkoutComment{}
 
+// Make sure the type WorkoutGroupExercise runs hooks after queries
+var _ bob.HookableType = &WorkoutGroupExercise{}
+
+// Make sure the type WorkoutGroup runs hooks after queries
+var _ bob.HookableType = &WorkoutGroup{}
+
 // Make sure the type Workout runs hooks after queries
 var _ bob.HookableType = &Workout{}
 

@@ -54,10 +54,11 @@ type ExerciseTemplate struct {
 }
 
 type exerciseR struct {
-	User              *exerciseRUserR
-	ExercisesRoutines []*exerciseRExercisesRoutinesR
-	Routines          []*exerciseRRoutinesR
-	Sets              []*exerciseRSetsR
+	User                  *exerciseRUserR
+	ExercisesRoutines     []*exerciseRExercisesRoutinesR
+	Routines              []*exerciseRRoutinesR
+	Sets                  []*exerciseRSetsR
+	WorkoutGroupExercises []*exerciseRWorkoutGroupExercisesR
 }
 
 type exerciseRUserR struct {
@@ -75,6 +76,10 @@ type exerciseRRoutinesR struct {
 type exerciseRSetsR struct {
 	number int
 	o      *SetTemplate
+}
+type exerciseRWorkoutGroupExercisesR struct {
+	number int
+	o      *WorkoutGroupExerciseTemplate
 }
 
 // Apply mods to the ExerciseTemplate
@@ -136,6 +141,21 @@ func (t ExerciseTemplate) setModelRels(o *models.Exercise) {
 		}
 		o.R.Sets = rel
 		o.R.Loaded.Sets = true
+	}
+
+	if t.r.WorkoutGroupExercises != nil {
+		rel := models.WorkoutGroupExerciseSlice{}
+		for _, r := range t.r.WorkoutGroupExercises {
+			related := r.o.BuildMany(r.number)
+			for _, rel := range related {
+				rel.ExerciseID = o.ID // h2
+				rel.R.Exercise = o
+				rel.R.Loaded.Exercise = true
+			}
+			rel = append(rel, related...)
+		}
+		o.R.WorkoutGroupExercises = rel
+		o.R.Loaded.WorkoutGroupExercises = true
 	}
 }
 
@@ -315,6 +335,26 @@ func (o *ExerciseTemplate) insertOptRels(ctx context.Context, exec bob.Executor,
 		}
 	}
 
+	isWorkoutGroupExercisesDone, _ := exerciseRelWorkoutGroupExercisesCtx.Value(ctx)
+	if !isWorkoutGroupExercisesDone && o.r.WorkoutGroupExercises != nil {
+		ctx = exerciseRelWorkoutGroupExercisesCtx.WithValue(ctx, true)
+		for _, r := range o.r.WorkoutGroupExercises {
+			if r.o.alreadyPersisted {
+				m.R.WorkoutGroupExercises = append(m.R.WorkoutGroupExercises, r.o.Build())
+			} else {
+				rel4, err := r.o.CreateMany(ctx, exec, r.number)
+				if err != nil {
+					return err
+				}
+
+				err = m.AttachWorkoutGroupExercises(ctx, exec, rel4...)
+				if err != nil {
+					return err
+				}
+			}
+		}
+	}
+
 	return err
 }
 
@@ -372,6 +412,7 @@ func (o *ExerciseTemplate) Create(ctx context.Context, exec bob.Executor) (*mode
 	}
 	newMInCreation["exercises:exercises_routines:exercises_routines.routine_exercises_exercise_id_fkey"] = m
 	newMInCreation["exercises:sets:sets.sets_exercise_id_fkey"] = m
+	newMInCreation["exercises:workout_group_exercises:workout_group_exercises.workout_group_exercises_exercise_id_fkey"] = m
 
 	ctx = modelsInCreationCtx.WithValue(ctx, newMInCreation)
 
@@ -895,5 +936,53 @@ func (m exerciseMods) AddExistingSets(existingModels ...*models.Set) ExerciseMod
 func (m exerciseMods) WithoutSets() ExerciseMod {
 	return ExerciseModFunc(func(ctx context.Context, o *ExerciseTemplate) {
 		o.r.Sets = nil
+	})
+}
+
+func (m exerciseMods) WithWorkoutGroupExercises(number int, related *WorkoutGroupExerciseTemplate) ExerciseMod {
+	return ExerciseModFunc(func(ctx context.Context, o *ExerciseTemplate) {
+		o.r.WorkoutGroupExercises = []*exerciseRWorkoutGroupExercisesR{{
+			number: number,
+			o:      related,
+		}}
+	})
+}
+
+func (m exerciseMods) WithNewWorkoutGroupExercises(number int, mods ...WorkoutGroupExerciseMod) ExerciseMod {
+	return ExerciseModFunc(func(ctx context.Context, o *ExerciseTemplate) {
+		related := o.f.NewWorkoutGroupExerciseWithContext(ctx, mods...)
+		m.WithWorkoutGroupExercises(number, related).Apply(ctx, o)
+	})
+}
+
+func (m exerciseMods) AddWorkoutGroupExercises(number int, related *WorkoutGroupExerciseTemplate) ExerciseMod {
+	return ExerciseModFunc(func(ctx context.Context, o *ExerciseTemplate) {
+		o.r.WorkoutGroupExercises = append(o.r.WorkoutGroupExercises, &exerciseRWorkoutGroupExercisesR{
+			number: number,
+			o:      related,
+		})
+	})
+}
+
+func (m exerciseMods) AddNewWorkoutGroupExercises(number int, mods ...WorkoutGroupExerciseMod) ExerciseMod {
+	return ExerciseModFunc(func(ctx context.Context, o *ExerciseTemplate) {
+		related := o.f.NewWorkoutGroupExerciseWithContext(ctx, mods...)
+		m.AddWorkoutGroupExercises(number, related).Apply(ctx, o)
+	})
+}
+
+func (m exerciseMods) AddExistingWorkoutGroupExercises(existingModels ...*models.WorkoutGroupExercise) ExerciseMod {
+	return ExerciseModFunc(func(ctx context.Context, o *ExerciseTemplate) {
+		for _, em := range existingModels {
+			o.r.WorkoutGroupExercises = append(o.r.WorkoutGroupExercises, &exerciseRWorkoutGroupExercisesR{
+				o: o.f.fromExistingWorkoutGroupExercise(ctx, em),
+			})
+		}
+	})
+}
+
+func (m exerciseMods) WithoutWorkoutGroupExercises() ExerciseMod {
+	return ExerciseModFunc(func(ctx context.Context, o *ExerciseTemplate) {
+		o.r.WorkoutGroupExercises = nil
 	})
 }

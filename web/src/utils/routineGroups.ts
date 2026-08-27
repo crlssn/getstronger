@@ -1,8 +1,7 @@
 import type { RoutineGroup } from '@/proto/api/v1/routine_service_pb'
 import type { Exercise } from '@/proto/api/v1/shared_pb'
 
-import { RoutineGroupMode } from '@/proto/api/v1/routine_service_pb'
-import { ExerciseMetric } from '@/proto/api/v1/shared_pb'
+import { ExerciseMetric, RoutineGroupMode } from '@/proto/api/v1/shared_pb'
 
 /**
  * How a group's exercises are worked through: straight sets finish one exercise

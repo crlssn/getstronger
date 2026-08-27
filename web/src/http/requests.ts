@@ -1,6 +1,8 @@
 import { type FieldMask } from '@bufbuild/protobuf/wkt'
 import type { RoutineExercise, RoutineGroup } from '@/proto/api/v1/routine_service_pb'
 import type { DistanceUnit, Exercise, WeightUnit } from '@/proto/api/v1/shared_pb'
+
+import { RoutineGroupMode } from '@/proto/api/v1/shared_pb'
 import type { DraftGroup } from '@/utils/routineGroups'
 
 import { create } from '@bufbuild/protobuf'
@@ -61,7 +63,6 @@ import {
   type ListRoutinesResponse,
   PauseActivePlanRequestSchema,
   type PauseActivePlanResponse,
-  RoutineGroupMode,
   SetActivePlanRequestSchema,
   type SetActivePlanResponse,
   SkipPlanRoutineRequestSchema,

@@ -537,7 +537,14 @@ test.describe('routine lifecycle', () => {
       await page.getByRole('button', { name: 'Finish workout' }).first().click()
       await page.getByRole('dialog').getByRole('button', { name: 'Finish and save' }).click()
       await expect(page).toHaveURL(/\/workouts\//)
-      await expect(page.getByText(/25\s*kg/).first()).toBeVisible()
+
+      // The saved workout reads as the block it was trained in, round by round,
+      // rather than as two unrelated exercises each with its sets.
+      await expect(page.getByText('Circuit · 2 rounds')).toBeVisible()
+      await expect(page.getByRole('heading', { name: 'Round 1' })).toBeVisible()
+      await expect(page.getByRole('heading', { name: 'Round 2' })).toBeVisible()
+      await expect(page.getByText('25 kg · 8').first()).toBeVisible()
+      await expect(page.getByText('30 kg · 6').first()).toBeVisible()
 
       await page.getByRole('button', { name: 'Workout actions' }).click()
       await page.getByRole('menuitem', { name: 'Delete workout' }).click()

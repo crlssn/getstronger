@@ -18,21 +18,23 @@ import (
 )
 
 type Factory struct {
-	baseAuthMods             AuthModSlice
-	baseEventMods            EventModSlice
-	baseExerciseMods         ExerciseModSlice
-	baseExercisesRoutineMods ExercisesRoutineModSlice
-	baseFollowerMods         FollowerModSlice
-	baseNotificationMods     NotificationModSlice
-	basePlanRoutineMods      PlanRoutineModSlice
-	basePlanMods             PlanModSlice
-	baseRoutineGroupMods     RoutineGroupModSlice
-	baseRoutineMods          RoutineModSlice
-	baseSetMods              SetModSlice
-	baseTraceMods            TraceModSlice
-	baseUserMods             UserModSlice
-	baseWorkoutCommentMods   WorkoutCommentModSlice
-	baseWorkoutMods          WorkoutModSlice
+	baseAuthMods                 AuthModSlice
+	baseEventMods                EventModSlice
+	baseExerciseMods             ExerciseModSlice
+	baseExercisesRoutineMods     ExercisesRoutineModSlice
+	baseFollowerMods             FollowerModSlice
+	baseNotificationMods         NotificationModSlice
+	basePlanRoutineMods          PlanRoutineModSlice
+	basePlanMods                 PlanModSlice
+	baseRoutineGroupMods         RoutineGroupModSlice
+	baseRoutineMods              RoutineModSlice
+	baseSetMods                  SetModSlice
+	baseTraceMods                TraceModSlice
+	baseUserMods                 UserModSlice
+	baseWorkoutCommentMods       WorkoutCommentModSlice
+	baseWorkoutGroupExerciseMods WorkoutGroupExerciseModSlice
+	baseWorkoutGroupMods         WorkoutGroupModSlice
+	baseWorkoutMods              WorkoutModSlice
 }
 
 func New() *Factory {
@@ -171,6 +173,9 @@ func (f *Factory) fromExistingExercise(ctx context.Context, m *models.Exercise) 
 	}
 	if len(m.R.Sets) > 0 {
 		ExerciseMods.AddExistingSets(m.R.Sets...).Apply(ctx, o)
+	}
+	if len(m.R.WorkoutGroupExercises) > 0 {
+		ExerciseMods.AddExistingWorkoutGroupExercises(m.R.WorkoutGroupExercises...).Apply(ctx, o)
 	}
 
 	return o
@@ -562,6 +567,8 @@ func (f *Factory) fromExistingSet(ctx context.Context, m *models.Set) *SetTempla
 	o.DurationSeconds = func() int32 { return m.DurationSeconds }
 	o.WeightUnit = func() string { return m.WeightUnit }
 	o.DistanceUnit = func() string { return m.DistanceUnit }
+	o.WorkoutGroupExerciseID = func() null.Val[uuid.UUID] { return m.WorkoutGroupExerciseID }
+	o.Position = func() int32 { return m.Position }
 
 	if visited, ok := factoryVisitedCtx.Value(ctx); ok {
 		ptr := uintptr(unsafe.Pointer(m))
@@ -572,6 +579,9 @@ func (f *Factory) fromExistingSet(ctx context.Context, m *models.Set) *SetTempla
 	}
 	if m.R.Exercise != nil {
 		SetMods.WithExistingExercise(m.R.Exercise).Apply(ctx, o)
+	}
+	if m.R.WorkoutGroupExercise != nil {
+		SetMods.WithExistingWorkoutGroupExercise(m.R.WorkoutGroupExercise).Apply(ctx, o)
 	}
 	if m.R.Workout != nil {
 		SetMods.WithExistingWorkout(m.R.Workout).Apply(ctx, o)
@@ -730,6 +740,107 @@ func (f *Factory) fromExistingWorkoutComment(ctx context.Context, m *models.Work
 	return o
 }
 
+func (f *Factory) NewWorkoutGroupExercise(mods ...WorkoutGroupExerciseMod) *WorkoutGroupExerciseTemplate {
+	return f.NewWorkoutGroupExerciseWithContext(context.Background(), mods...)
+}
+
+func (f *Factory) NewWorkoutGroupExerciseWithContext(ctx context.Context, mods ...WorkoutGroupExerciseMod) *WorkoutGroupExerciseTemplate {
+	o := &WorkoutGroupExerciseTemplate{f: f}
+
+	if f != nil {
+		f.baseWorkoutGroupExerciseMods.Apply(ctx, o)
+	}
+
+	WorkoutGroupExerciseModSlice(mods).Apply(ctx, o)
+
+	return o
+}
+
+func (f *Factory) FromExistingWorkoutGroupExercise(ctx context.Context, m *models.WorkoutGroupExercise) *WorkoutGroupExerciseTemplate {
+	visited := make(map[uintptr]struct{})
+	ctx = factoryVisitedCtx.WithValue(ctx, visited)
+	return f.fromExistingWorkoutGroupExercise(ctx, m)
+}
+
+func (f *Factory) fromExistingWorkoutGroupExercise(ctx context.Context, m *models.WorkoutGroupExercise) *WorkoutGroupExerciseTemplate {
+	o := &WorkoutGroupExerciseTemplate{f: f, alreadyPersisted: true}
+
+	o.ID = func() uuid.UUID { return m.ID }
+	o.WorkoutGroupID = func() uuid.UUID { return m.WorkoutGroupID }
+	o.ExerciseID = func() uuid.UUID { return m.ExerciseID }
+	o.Position = func() int32 { return m.Position }
+
+	if visited, ok := factoryVisitedCtx.Value(ctx); ok {
+		ptr := uintptr(unsafe.Pointer(m))
+		if _, seen := visited[ptr]; seen {
+			return o
+		}
+		visited[ptr] = struct{}{}
+	}
+	if len(m.R.Sets) > 0 {
+		WorkoutGroupExerciseMods.AddExistingSets(m.R.Sets...).Apply(ctx, o)
+	}
+	if m.R.Exercise != nil {
+		WorkoutGroupExerciseMods.WithExistingExercise(m.R.Exercise).Apply(ctx, o)
+	}
+	if m.R.WorkoutGroup != nil {
+		WorkoutGroupExerciseMods.WithExistingWorkoutGroup(m.R.WorkoutGroup).Apply(ctx, o)
+	}
+
+	return o
+}
+
+func (f *Factory) NewWorkoutGroup(mods ...WorkoutGroupMod) *WorkoutGroupTemplate {
+	return f.NewWorkoutGroupWithContext(context.Background(), mods...)
+}
+
+func (f *Factory) NewWorkoutGroupWithContext(ctx context.Context, mods ...WorkoutGroupMod) *WorkoutGroupTemplate {
+	o := &WorkoutGroupTemplate{f: f}
+
+	if f != nil {
+		f.baseWorkoutGroupMods.Apply(ctx, o)
+	}
+
+	WorkoutGroupModSlice(mods).Apply(ctx, o)
+
+	return o
+}
+
+func (f *Factory) FromExistingWorkoutGroup(ctx context.Context, m *models.WorkoutGroup) *WorkoutGroupTemplate {
+	visited := make(map[uintptr]struct{})
+	ctx = factoryVisitedCtx.WithValue(ctx, visited)
+	return f.fromExistingWorkoutGroup(ctx, m)
+}
+
+func (f *Factory) fromExistingWorkoutGroup(ctx context.Context, m *models.WorkoutGroup) *WorkoutGroupTemplate {
+	o := &WorkoutGroupTemplate{f: f, alreadyPersisted: true}
+
+	o.ID = func() uuid.UUID { return m.ID }
+	o.WorkoutID = func() uuid.UUID { return m.WorkoutID }
+	o.Position = func() int32 { return m.Position }
+	o.Mode = func() enums.RoutineGroupMode { return m.Mode }
+	o.RestBetweenExercisesSeconds = func() int32 { return m.RestBetweenExercisesSeconds }
+	o.RestBetweenRoundsSeconds = func() int32 { return m.RestBetweenRoundsSeconds }
+	o.Rounds = func() int32 { return m.Rounds }
+	o.CreatedAt = func() time.Time { return m.CreatedAt }
+
+	if visited, ok := factoryVisitedCtx.Value(ctx); ok {
+		ptr := uintptr(unsafe.Pointer(m))
+		if _, seen := visited[ptr]; seen {
+			return o
+		}
+		visited[ptr] = struct{}{}
+	}
+	if len(m.R.WorkoutGroupExercises) > 0 {
+		WorkoutGroupMods.AddExistingWorkoutGroupExercises(m.R.WorkoutGroupExercises...).Apply(ctx, o)
+	}
+	if m.R.Workout != nil {
+		WorkoutGroupMods.WithExistingWorkout(m.R.Workout).Apply(ctx, o)
+	}
+
+	return o
+}
+
 func (f *Factory) NewWorkout(mods ...WorkoutMod) *WorkoutTemplate {
 	return f.NewWorkoutWithContext(context.Background(), mods...)
 }
@@ -776,6 +887,9 @@ func (f *Factory) fromExistingWorkout(ctx context.Context, m *models.Workout) *W
 	}
 	if len(m.R.WorkoutComments) > 0 {
 		WorkoutMods.AddExistingWorkoutComments(m.R.WorkoutComments...).Apply(ctx, o)
+	}
+	if len(m.R.WorkoutGroups) > 0 {
+		WorkoutMods.AddExistingWorkoutGroups(m.R.WorkoutGroups...).Apply(ctx, o)
 	}
 	if m.R.Routine != nil {
 		WorkoutMods.WithExistingRoutine(m.R.Routine).Apply(ctx, o)
@@ -897,6 +1011,22 @@ func (f *Factory) ClearBaseWorkoutCommentMods() {
 
 func (f *Factory) AddBaseWorkoutCommentMod(mods ...WorkoutCommentMod) {
 	f.baseWorkoutCommentMods = append(f.baseWorkoutCommentMods, mods...)
+}
+
+func (f *Factory) ClearBaseWorkoutGroupExerciseMods() {
+	f.baseWorkoutGroupExerciseMods = nil
+}
+
+func (f *Factory) AddBaseWorkoutGroupExerciseMod(mods ...WorkoutGroupExerciseMod) {
+	f.baseWorkoutGroupExerciseMods = append(f.baseWorkoutGroupExerciseMods, mods...)
+}
+
+func (f *Factory) ClearBaseWorkoutGroupMods() {
+	f.baseWorkoutGroupMods = nil
+}
+
+func (f *Factory) AddBaseWorkoutGroupMod(mods ...WorkoutGroupMod) {
+	f.baseWorkoutGroupMods = append(f.baseWorkoutGroupMods, mods...)
 }
 
 func (f *Factory) ClearBaseWorkoutMods() {

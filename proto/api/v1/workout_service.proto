@@ -25,6 +25,12 @@ message CreateWorkoutRequest {
   string note = 5;
   string plan_id = 6;
   string workout_name = 7;
+  // Optional. The blocks the session was trained in, which say how to read the
+  // sets rather than carrying them: a block states how many of each exercise's
+  // sets it took, and the groups are matched against exercise_sets in the order
+  // they are listed. A request that names none is stored ungrouped, which is
+  // what every client sent before blocks were recorded.
+  repeated WorkoutGroup groups = 8;
 }
 message CreateWorkoutResponse {
   string workout_id = 1;
@@ -77,6 +83,38 @@ message Workout {
   // Empty for quick workouts and for workouts recorded before routines were
   // linked, which only kept the routine's name.
   string routine_id = 10;
+  // How the session was trained, as it was trained: the workout keeps its own
+  // copy rather than reading the routine's, so a routine edited later cannot
+  // rewrite what happened. Groups partition the same sets exercise_sets holds;
+  // a client that does not care how the session was blocked keeps reading only
+  // that. Empty for every workout logged before blocks were recorded.
+  repeated WorkoutGroup groups = 11;
+}
+
+// One block of a finished workout, as it was actually trained.
+message WorkoutGroup {
+  // Server-assigned; requests leave it empty.
+  string id = 1;
+  RoutineGroupMode mode = 2;
+  int32 rest_between_exercises_seconds = 3 [(buf.validate.field).int32 = {gte: 0, lte: 3600}];
+  int32 rest_between_rounds_seconds = 4 [(buf.validate.field).int32 = {gte: 0, lte: 3600}];
+  // The rounds the routine prescribed, which the session may have gone over or
+  // stopped short of; 0 is an open-ended circuit. How many were actually worked
+  // is read off the sets.
+  int32 rounds = 5 [(buf.validate.field).int32 = {gte: 0, lte: 99}];
+  repeated WorkoutGroupExercise exercises = 6;
+}
+
+// One exercise where a block trained it, and the sets it took there. The same
+// exercise in another block is a different occurrence with sets of its own.
+message WorkoutGroupExercise {
+  Exercise exercise = 1;
+  // Read back with the workout; a request leaves it empty and states set_count,
+  // because the sets themselves travel in exercise_sets and one copy of them on
+  // the wire is enough.
+  repeated Set sets = 2;
+  // Requests only: how many of this exercise's sets the block took.
+  int32 set_count = 3 [(buf.validate.field).int32.gte = 0];
 }
 
 message WorkoutComment {

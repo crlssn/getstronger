@@ -17,36 +17,40 @@ import (
 var Preload = getPreloaders()
 
 type preloaders struct {
-	Auth             authPreloader
-	Exercise         exercisePreloader
-	ExercisesRoutine exercisesRoutinePreloader
-	Follower         followerPreloader
-	Notification     notificationPreloader
-	PlanRoutine      planRoutinePreloader
-	Plan             planPreloader
-	RoutineGroup     routineGroupPreloader
-	Routine          routinePreloader
-	Set              setPreloader
-	User             userPreloader
-	WorkoutComment   workoutCommentPreloader
-	Workout          workoutPreloader
+	Auth                 authPreloader
+	Exercise             exercisePreloader
+	ExercisesRoutine     exercisesRoutinePreloader
+	Follower             followerPreloader
+	Notification         notificationPreloader
+	PlanRoutine          planRoutinePreloader
+	Plan                 planPreloader
+	RoutineGroup         routineGroupPreloader
+	Routine              routinePreloader
+	Set                  setPreloader
+	User                 userPreloader
+	WorkoutComment       workoutCommentPreloader
+	WorkoutGroupExercise workoutGroupExercisePreloader
+	WorkoutGroup         workoutGroupPreloader
+	Workout              workoutPreloader
 }
 
 func getPreloaders() preloaders {
 	return preloaders{
-		Auth:             buildAuthPreloader(),
-		Exercise:         buildExercisePreloader(),
-		ExercisesRoutine: buildExercisesRoutinePreloader(),
-		Follower:         buildFollowerPreloader(),
-		Notification:     buildNotificationPreloader(),
-		PlanRoutine:      buildPlanRoutinePreloader(),
-		Plan:             buildPlanPreloader(),
-		RoutineGroup:     buildRoutineGroupPreloader(),
-		Routine:          buildRoutinePreloader(),
-		Set:              buildSetPreloader(),
-		User:             buildUserPreloader(),
-		WorkoutComment:   buildWorkoutCommentPreloader(),
-		Workout:          buildWorkoutPreloader(),
+		Auth:                 buildAuthPreloader(),
+		Exercise:             buildExercisePreloader(),
+		ExercisesRoutine:     buildExercisesRoutinePreloader(),
+		Follower:             buildFollowerPreloader(),
+		Notification:         buildNotificationPreloader(),
+		PlanRoutine:          buildPlanRoutinePreloader(),
+		Plan:                 buildPlanPreloader(),
+		RoutineGroup:         buildRoutineGroupPreloader(),
+		Routine:              buildRoutinePreloader(),
+		Set:                  buildSetPreloader(),
+		User:                 buildUserPreloader(),
+		WorkoutComment:       buildWorkoutCommentPreloader(),
+		WorkoutGroupExercise: buildWorkoutGroupExercisePreloader(),
+		WorkoutGroup:         buildWorkoutGroupPreloader(),
+		Workout:              buildWorkoutPreloader(),
 	}
 }
 
@@ -57,36 +61,40 @@ var (
 )
 
 type thenLoaders[Q orm.Loadable] struct {
-	Auth             authThenLoader[Q]
-	Exercise         exerciseThenLoader[Q]
-	ExercisesRoutine exercisesRoutineThenLoader[Q]
-	Follower         followerThenLoader[Q]
-	Notification     notificationThenLoader[Q]
-	PlanRoutine      planRoutineThenLoader[Q]
-	Plan             planThenLoader[Q]
-	RoutineGroup     routineGroupThenLoader[Q]
-	Routine          routineThenLoader[Q]
-	Set              setThenLoader[Q]
-	User             userThenLoader[Q]
-	WorkoutComment   workoutCommentThenLoader[Q]
-	Workout          workoutThenLoader[Q]
+	Auth                 authThenLoader[Q]
+	Exercise             exerciseThenLoader[Q]
+	ExercisesRoutine     exercisesRoutineThenLoader[Q]
+	Follower             followerThenLoader[Q]
+	Notification         notificationThenLoader[Q]
+	PlanRoutine          planRoutineThenLoader[Q]
+	Plan                 planThenLoader[Q]
+	RoutineGroup         routineGroupThenLoader[Q]
+	Routine              routineThenLoader[Q]
+	Set                  setThenLoader[Q]
+	User                 userThenLoader[Q]
+	WorkoutComment       workoutCommentThenLoader[Q]
+	WorkoutGroupExercise workoutGroupExerciseThenLoader[Q]
+	WorkoutGroup         workoutGroupThenLoader[Q]
+	Workout              workoutThenLoader[Q]
 }
 
 func getThenLoaders[Q orm.Loadable]() thenLoaders[Q] {
 	return thenLoaders[Q]{
-		Auth:             buildAuthThenLoader[Q](),
-		Exercise:         buildExerciseThenLoader[Q](),
-		ExercisesRoutine: buildExercisesRoutineThenLoader[Q](),
-		Follower:         buildFollowerThenLoader[Q](),
-		Notification:     buildNotificationThenLoader[Q](),
-		PlanRoutine:      buildPlanRoutineThenLoader[Q](),
-		Plan:             buildPlanThenLoader[Q](),
-		RoutineGroup:     buildRoutineGroupThenLoader[Q](),
-		Routine:          buildRoutineThenLoader[Q](),
-		Set:              buildSetThenLoader[Q](),
-		User:             buildUserThenLoader[Q](),
-		WorkoutComment:   buildWorkoutCommentThenLoader[Q](),
-		Workout:          buildWorkoutThenLoader[Q](),
+		Auth:                 buildAuthThenLoader[Q](),
+		Exercise:             buildExerciseThenLoader[Q](),
+		ExercisesRoutine:     buildExercisesRoutineThenLoader[Q](),
+		Follower:             buildFollowerThenLoader[Q](),
+		Notification:         buildNotificationThenLoader[Q](),
+		PlanRoutine:          buildPlanRoutineThenLoader[Q](),
+		Plan:                 buildPlanThenLoader[Q](),
+		RoutineGroup:         buildRoutineGroupThenLoader[Q](),
+		Routine:              buildRoutineThenLoader[Q](),
+		Set:                  buildSetThenLoader[Q](),
+		User:                 buildUserThenLoader[Q](),
+		WorkoutComment:       buildWorkoutCommentThenLoader[Q](),
+		WorkoutGroupExercise: buildWorkoutGroupExerciseThenLoader[Q](),
+		WorkoutGroup:         buildWorkoutGroupThenLoader[Q](),
+		Workout:              buildWorkoutThenLoader[Q](),
 	}
 }
 

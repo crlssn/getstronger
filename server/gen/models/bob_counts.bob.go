@@ -21,42 +21,50 @@ var (
 )
 
 type preloadCounts struct {
-	Exercise     exerciseCountPreloader
-	Plan         planCountPreloader
-	RoutineGroup routineGroupCountPreloader
-	Routine      routineCountPreloader
-	User         userCountPreloader
-	Workout      workoutCountPreloader
+	Exercise             exerciseCountPreloader
+	Plan                 planCountPreloader
+	RoutineGroup         routineGroupCountPreloader
+	Routine              routineCountPreloader
+	User                 userCountPreloader
+	WorkoutGroupExercise workoutGroupExerciseCountPreloader
+	WorkoutGroup         workoutGroupCountPreloader
+	Workout              workoutCountPreloader
 }
 
 func getPreloadCount() preloadCounts {
 	return preloadCounts{
-		Exercise:     buildExerciseCountPreloader(),
-		Plan:         buildPlanCountPreloader(),
-		RoutineGroup: buildRoutineGroupCountPreloader(),
-		Routine:      buildRoutineCountPreloader(),
-		User:         buildUserCountPreloader(),
-		Workout:      buildWorkoutCountPreloader(),
+		Exercise:             buildExerciseCountPreloader(),
+		Plan:                 buildPlanCountPreloader(),
+		RoutineGroup:         buildRoutineGroupCountPreloader(),
+		Routine:              buildRoutineCountPreloader(),
+		User:                 buildUserCountPreloader(),
+		WorkoutGroupExercise: buildWorkoutGroupExerciseCountPreloader(),
+		WorkoutGroup:         buildWorkoutGroupCountPreloader(),
+		Workout:              buildWorkoutCountPreloader(),
 	}
 }
 
 type thenLoadCounts[Q orm.Loadable] struct {
-	Exercise     exerciseCountThenLoader[Q]
-	Plan         planCountThenLoader[Q]
-	RoutineGroup routineGroupCountThenLoader[Q]
-	Routine      routineCountThenLoader[Q]
-	User         userCountThenLoader[Q]
-	Workout      workoutCountThenLoader[Q]
+	Exercise             exerciseCountThenLoader[Q]
+	Plan                 planCountThenLoader[Q]
+	RoutineGroup         routineGroupCountThenLoader[Q]
+	Routine              routineCountThenLoader[Q]
+	User                 userCountThenLoader[Q]
+	WorkoutGroupExercise workoutGroupExerciseCountThenLoader[Q]
+	WorkoutGroup         workoutGroupCountThenLoader[Q]
+	Workout              workoutCountThenLoader[Q]
 }
 
 func getThenLoadCount[Q orm.Loadable]() thenLoadCounts[Q] {
 	return thenLoadCounts[Q]{
-		Exercise:     buildExerciseCountThenLoader[Q](),
-		Plan:         buildPlanCountThenLoader[Q](),
-		RoutineGroup: buildRoutineGroupCountThenLoader[Q](),
-		Routine:      buildRoutineCountThenLoader[Q](),
-		User:         buildUserCountThenLoader[Q](),
-		Workout:      buildWorkoutCountThenLoader[Q](),
+		Exercise:             buildExerciseCountThenLoader[Q](),
+		Plan:                 buildPlanCountThenLoader[Q](),
+		RoutineGroup:         buildRoutineGroupCountThenLoader[Q](),
+		Routine:              buildRoutineCountThenLoader[Q](),
+		User:                 buildUserCountThenLoader[Q](),
+		WorkoutGroupExercise: buildWorkoutGroupExerciseCountThenLoader[Q](),
+		WorkoutGroup:         buildWorkoutGroupCountThenLoader[Q](),
+		Workout:              buildWorkoutCountThenLoader[Q](),
 	}
 }
 
