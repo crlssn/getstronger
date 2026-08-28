@@ -107,8 +107,8 @@ message Routine {
 }
 
 // How a group's exercises are worked through. Straight sets finish one exercise
-// before the next begins; a circuit takes one set of each in turn and repeats
-// until the session says it is done.
+// before the next begins; a circuit takes one set of each in turn and goes round
+// again, for the rounds it is prescribed or for as many as the session takes.
 enum RoutineGroupMode {
   ROUTINE_GROUP_MODE_UNSPECIFIED = 0;
   ROUTINE_GROUP_MODE_STRAIGHT = 1;
@@ -120,8 +120,7 @@ message RoutineGroup {
   // groups wholesale rather than matching them up by ID.
   string id = 1;
   RoutineGroupMode mode = 2;
-  // 3 held a round count. A circuit runs for as many rounds as the session
-  // takes, and is ended from the session rather than planned in the routine.
+  // 3 held a round count that was never a target, only a limit.
   reserved 3;
   // Rest taken on the way from one exercise to the next inside a round.
   int32 rest_between_exercises_seconds = 4 [(buf.validate.field).int32 = {gte: 0, lte: 3600}];
@@ -130,6 +129,10 @@ message RoutineGroup {
   // 6 held the exercises without the rest each of them takes in this group.
   reserved 6;
   repeated RoutineExercise exercises = 7;
+  // How many times a circuit is prescribed to go round; 0 runs it for as many
+  // rounds as the session takes. A target rather than a limit: the session may
+  // take another round or stop short of it. Ignored outside a circuit.
+  int32 rounds = 8 [(buf.validate.field).int32 = {gte: 0, lte: 99}];
 }
 
 // One exercise where a routine trains it. The same exercise in another group,

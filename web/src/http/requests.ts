@@ -369,6 +369,7 @@ const routineGroupMessages = (groups: readonly DraftGroup[] | undefined): Routin
         mode: group.mode === 'circuit' ? RoutineGroupMode.CIRCUIT : RoutineGroupMode.STRAIGHT,
         restBetweenExercisesSeconds: group.restBetweenExercisesSeconds,
         restBetweenRoundsSeconds: group.restBetweenRoundsSeconds,
+        rounds: group.rounds,
         exercises: group.entries.map(
           (entry) =>
             ({

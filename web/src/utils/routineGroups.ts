@@ -6,8 +6,8 @@ import { ExerciseMetric } from '@/proto/api/v1/shared_pb'
 
 /**
  * How a group's exercises are worked through: straight sets finish one exercise
- * before the next begins, a circuit takes one set of each in turn and repeats
- * for as long as the session keeps going round.
+ * before the next begins, a circuit takes one set of each in turn and goes round
+ * again, for the rounds it is prescribed or for as many as the session takes.
  */
 export type GroupMode = 'straight' | 'circuit'
 
@@ -17,7 +17,12 @@ export const defaultRestSeconds = 90
 /** The rest a new circuit takes once a round closes. */
 export const defaultRoundRestSeconds = 90
 
+/** How many times a new circuit is prescribed to go round. */
+export const defaultRounds = 3
+
 export const maximumRestSeconds = 3600
+
+export const maximumRounds = 99
 
 /**
  * How long an exercise rests between sets where a routine has just started
@@ -68,6 +73,15 @@ export interface DraftGroup {
   restTimers: boolean
   restBetweenExercisesSeconds: number
   restBetweenRoundsSeconds: number
+  /**
+   * How many times a circuit is prescribed to go round; zero runs it for as
+   * many rounds as the session takes.
+   *
+   * A target rather than a limit — the session may take another round or stop
+   * short of it — and a setting only a circuit has, so it is kept while the
+   * block is straight sets rather than cleared.
+   */
+  rounds: number
   entries: DraftEntry[]
 }
 
@@ -86,8 +100,10 @@ const straightGroup = (
   mode: 'straight',
   restTimers: true,
   restBetweenExercisesSeconds,
-  // A straight block is worked once through, so there is no round to close.
+  // A straight block is worked once through, so there is no round to close,
+  // and none to count.
   restBetweenRoundsSeconds: 0,
+  rounds: 0,
   entries,
 })
 
@@ -174,6 +190,7 @@ export const draftGroupsFromRoutine = (
       restBetweenRoundsSeconds: restTimers
         ? group.restBetweenRoundsSeconds
         : defaultRoundRestSeconds,
+      rounds: group.rounds,
       entries: group.exercises.map((entry) => ({
         key: newLocalId('entry'),
         exerciseId: entry.exercise?.id ?? '',
@@ -266,6 +283,7 @@ export const addGroup = (groups: readonly DraftGroup[]): DraftGroup[] => [
     restTimers: true,
     restBetweenExercisesSeconds: 0,
     restBetweenRoundsSeconds: defaultRoundRestSeconds,
+    rounds: defaultRounds,
     entries: [],
   },
 ]
@@ -299,8 +317,15 @@ export const removeGroup = (groups: readonly DraftGroup[], groupId: string): Dra
 const clampRest = (value: number) =>
   Math.min(Math.max(Number.isFinite(value) ? Math.round(value) : 0, 0), maximumRestSeconds)
 
+const clampRounds = (value: number) =>
+  Math.min(Math.max(Number.isFinite(value) ? Math.round(value) : 0, 0), maximumRounds)
+
 /** Keeps a group's settings inside what the API accepts. */
 export const clampGroup = (group: DraftGroup): DraftGroup => {
+  // Rounds are how the block is worked through rather than how it rests, so a
+  // block with its timer off is still prescribed for the rounds it says.
+  const rounds = group.mode === 'circuit' ? clampRounds(group.rounds) : 0
+
   // No timer is no rest: the lengths the draft is holding are what the switch
   // would hand back, not what this routine trains with.
   if (!group.restTimers) {
@@ -308,6 +333,7 @@ export const clampGroup = (group: DraftGroup): DraftGroup => {
       ...group,
       restBetweenExercisesSeconds: 0,
       restBetweenRoundsSeconds: 0,
+      rounds,
       entries: group.entries.map((entry) => ({ ...entry, restSeconds: 0 })),
     }
   }
@@ -321,12 +347,14 @@ export const clampGroup = (group: DraftGroup): DraftGroup => {
   }))
 
   // A straight block pauses on the way to the next exercise like a circuit
-  // does; what it has no use for is a round rest, having no rounds.
+  // does; what it has no use for is a round rest or a round count, having no
+  // rounds.
   if (group.mode !== 'circuit') {
     return {
       ...group,
       restBetweenExercisesSeconds: clampRest(group.restBetweenExercisesSeconds),
       restBetweenRoundsSeconds: 0,
+      rounds,
       entries,
     }
   }
@@ -335,6 +363,7 @@ export const clampGroup = (group: DraftGroup): DraftGroup => {
     ...group,
     restBetweenExercisesSeconds: clampRest(group.restBetweenExercisesSeconds),
     restBetweenRoundsSeconds: clampRest(group.restBetweenRoundsSeconds),
+    rounds,
     entries,
   }
 }

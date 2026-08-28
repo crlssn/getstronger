@@ -8,20 +8,32 @@ import (
 	"github.com/crlssn/getstronger/server/training"
 )
 
-// What a save means is decided in one place, so this is where the rules live:
-// only the owner's exercises, no empty groups, repeats allowed across groups,
-// and settings inside what the schema accepts.
-func TestNormalizeRoutineGroups(t *testing.T) {
+// normalizeCase is one save, and what it is worth saving as. The groups are as
+// the request describes them; ordered is the exercises the routine's owner has.
+type normalizeCase struct {
+	name     string
+	groups   []training.RoutineGroupDraft
+	ordered  []string
+	expected []training.RoutineGroupDraft
+}
+
+func runNormalizeCases(t *testing.T, tests []normalizeCase) {
+	t.Helper()
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+			require.Equal(t, test.expected, training.NormalizeRoutineGroups(test.groups, test.ordered))
+		})
+	}
+}
+
+// Which exercises a save puts where: only the owner's, no empty groups, and
+// repeats allowed between groups but not inside one.
+func TestNormalizeRoutineGroupMembership(t *testing.T) {
 	t.Parallel()
 
-	tests := []struct {
-		name string
-		// The groups as the request describes them, and the exercises the
-		// routine's owner actually has.
-		groups   []training.RoutineGroupDraft
-		ordered  []string
-		expected []training.RoutineGroupDraft
-	}{
+	runNormalizeCases(t, []normalizeCase{
 		{
 			name:    "no groups becomes one straight group",
 			ordered: []string{"a", "b"},
@@ -95,6 +107,20 @@ func TestNormalizeRoutineGroups(t *testing.T) {
 				{Mode: training.RoutineGroupModeCircuit, Exercises: exercises("b")},
 			},
 		},
+		{
+			name:     "a routine with no exercises has no groups",
+			ordered:  nil,
+			expected: []training.RoutineGroupDraft{},
+		},
+	})
+}
+
+// What a save's settings are worth storing as: the mode decides which of them
+// the block has at all, and each is pulled into the range the schema takes.
+func TestNormalizeRoutineGroupSettings(t *testing.T) {
+	t.Parallel()
+
+	runNormalizeCases(t, []normalizeCase{
 		{
 			name: "settings outside the supported range are pulled back into it",
 			groups: []training.RoutineGroupDraft{
@@ -232,6 +258,43 @@ func TestNormalizeRoutineGroups(t *testing.T) {
 			},
 		},
 		{
+			// A circuit is prescribed for a number of rounds, and a straight
+			// block has no round to run.
+			name: "a straight group drops the rounds it was given",
+			groups: []training.RoutineGroupDraft{
+				{Mode: training.RoutineGroupModeStraight, Rounds: 3, Exercises: exercises("a")},
+			},
+			ordered: []string{"a"},
+			expected: []training.RoutineGroupDraft{
+				{Mode: training.RoutineGroupModeStraight, Exercises: exercises("a")},
+			},
+		},
+		{
+			name: "a circuit keeps the rounds it is prescribed for",
+			groups: []training.RoutineGroupDraft{
+				{Mode: training.RoutineGroupModeCircuit, Rounds: 3, Exercises: exercises("a")},
+			},
+			ordered: []string{"a"},
+			expected: []training.RoutineGroupDraft{
+				{Mode: training.RoutineGroupModeCircuit, Rounds: 3, Exercises: exercises("a")},
+			},
+		},
+		{
+			// Zero is an answer of its own: the circuit runs for as many rounds
+			// as the session takes, which is what every circuit did before one
+			// could be prescribed.
+			name: "a round count outside the supported range is pulled back into it",
+			groups: []training.RoutineGroupDraft{
+				{Mode: training.RoutineGroupModeCircuit, Rounds: -1, Exercises: exercises("a")},
+				{Mode: training.RoutineGroupModeCircuit, Rounds: 999, Exercises: exercises("b")},
+			},
+			ordered: []string{"a", "b"},
+			expected: []training.RoutineGroupDraft{
+				{Mode: training.RoutineGroupModeCircuit, Rounds: 0, Exercises: exercises("a")},
+				{Mode: training.RoutineGroupModeCircuit, Rounds: 99, Exercises: exercises("b")},
+			},
+		},
+		{
 			name: "a group with no mode is straight sets",
 			groups: []training.RoutineGroupDraft{
 				{Exercises: exercises("a")},
@@ -241,19 +304,7 @@ func TestNormalizeRoutineGroups(t *testing.T) {
 				{Mode: training.RoutineGroupModeStraight, Exercises: exercises("a")},
 			},
 		},
-		{
-			name:     "a routine with no exercises has no groups",
-			ordered:  nil,
-			expected: []training.RoutineGroupDraft{},
-		},
-	}
-
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			t.Parallel()
-			require.Equal(t, test.expected, training.NormalizeRoutineGroups(test.groups, test.ordered))
-		})
-	}
+	})
 }
 
 // exercises names a group's exercises, none of them saying anything about rest

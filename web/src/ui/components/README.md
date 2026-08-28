@@ -26,6 +26,7 @@ aspirational.
 | A text field                   | `<AppInput>` / `<AppTextarea>`                      |
 | A number or a duration         | `<AppNumberField>` / `<AppDurationInput>`           |
 | A duration nudged in steps     | `<AppDurationStepper>`                              |
+| A count nudged in steps        | `<AppStepper>`                                      |
 | On or off                      | `<AppSwitch>`                                       |
 | A field the user searches with | `<AppSearchField>`                                  |
 | The next page of a list        | `<AppLoadMore>`                                     |
@@ -141,13 +142,21 @@ Both are `type="text"` with an `inputMode`, not `type="number"`: a spinner on a
 set row is a mis-tap waiting to happen, and a scroll wheel over one silently
 changes what was logged.
 
+### `<AppStepper>`
+
+A number nudged in steps, shown between a − and a + as a `spinbutton`. For a
+value that is read and adjusted rather than typed exactly — how many rounds a
+circuit is prescribed for. `format` decides how the value reads, on the screen
+and to a screen reader; `decreaseLabel` and `increaseLabel` name the two buttons
+after the field they adjust, so a card holding several steppers still reads
+unambiguously.
+
 ### `<AppDurationStepper>`
 
-A duration nudged in coarse steps, shown as `m:ss` between a − and a +. For a
-rest that is read off a clock and adjusted in half-minutes rather than typed
-exactly — every rest in the routine builder. `label` names the control and is
-what the two buttons build their own names from, so a card holding several of
-them still reads unambiguously to a screen reader.
+`<AppStepper>` over a rest: the value reads as `m:ss` and the buttons say how
+many seconds they move. For a rest read off a clock and adjusted in half-minutes
+— every rest in the routine builder. `label` names the control and is what the
+two buttons build their own names from.
 
 The value is shown, not typed: a field in the middle of the control asked every
 screen holding one to carry a border, a focus ring and a keyboard for an edit

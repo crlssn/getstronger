@@ -447,6 +447,7 @@ func (f *Factory) fromExistingRoutineGroup(ctx context.Context, m *models.Routin
 	o.RestBetweenExercisesSeconds = func() int32 { return m.RestBetweenExercisesSeconds }
 	o.RestBetweenRoundsSeconds = func() int32 { return m.RestBetweenRoundsSeconds }
 	o.CreatedAt = func() time.Time { return m.CreatedAt }
+	o.Rounds = func() int32 { return m.Rounds }
 
 	if visited, ok := factoryVisitedCtx.Value(ctx); ok {
 		ptr := uintptr(unsafe.Pointer(m))

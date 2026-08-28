@@ -11,6 +11,7 @@ import {
   collapseToSingleGroup,
   defaultRestSeconds,
   defaultRoundRestSeconds,
+  defaultRounds,
   draftGroupsFromRoutine,
   groupExerciseIds,
   isGrouped,
@@ -123,6 +124,7 @@ describe('draftGroupsFromRoutine', () => {
           mode: RoutineGroupMode.CIRCUIT,
           restBetweenExercisesSeconds: 15,
           restBetweenRoundsSeconds: 90,
+          rounds: 3,
           exercises: [trains('a'), trains('b')],
         }),
       ],
@@ -134,6 +136,7 @@ describe('draftGroupsFromRoutine', () => {
       mode: 'circuit',
       restBetweenExercisesSeconds: 15,
       restBetweenRoundsSeconds: 90,
+      rounds: 3,
     })
     // The same exercise in two groups is two entries, each with its own key.
     expect(groupExerciseIds(groups)).toEqual(['a', 'a', 'b'])
@@ -234,6 +237,7 @@ describe('addGroup', () => {
       mode: 'circuit',
       entries: [],
       restBetweenRoundsSeconds: defaultRoundRestSeconds,
+      rounds: defaultRounds,
     })
     expect(groups[1]?.id).not.toBe(groups[0]?.id)
   })
@@ -286,6 +290,22 @@ describe('saveableGroups', () => {
     const circuit = { ...groups[1]!, entries: groups[0]!.entries, restBetweenRoundsSeconds: 99999 }
 
     expect(saveableGroups([circuit])[0]?.restBetweenRoundsSeconds).toBe(3600)
+  })
+
+  // A straight block is worked once through, so a round count on one is a
+  // setting the draft is holding rather than one the routine trains with.
+  it('drops the round count of a straight group', () => {
+    const groups = singleStraightGroup(['a']).map((group) => ({ ...group, rounds: 3 }))
+
+    expect(saveableGroups(groups)[0]?.rounds).toBe(0)
+  })
+
+  it('pulls the round count of a circuit back into the range the API takes', () => {
+    const groups = addGroup(singleStraightGroup(['a']))
+    const entries = groups[0]!.entries
+
+    expect(saveableGroups([{ ...groups[1]!, entries, rounds: 999 }])[0]?.rounds).toBe(99)
+    expect(saveableGroups([{ ...groups[1]!, entries, rounds: -1 }])[0]?.rounds).toBe(0)
   })
 
   it("keeps a straight group's per-exercise rests, pulled into range", () => {

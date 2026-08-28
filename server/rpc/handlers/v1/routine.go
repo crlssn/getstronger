@@ -209,6 +209,7 @@ func routineGroupDrafts(groups []*apiv1.RoutineGroup) []training.RoutineGroupDra
 			Mode:                        parser.RoutineGroupModeFromProto(group.GetMode()),
 			RestBetweenExercisesSeconds: group.GetRestBetweenExercisesSeconds(),
 			RestBetweenRoundsSeconds:    group.GetRestBetweenRoundsSeconds(),
+			Rounds:                      group.GetRounds(),
 			Exercises:                   exercises,
 		})
 	}

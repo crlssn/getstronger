@@ -18,6 +18,9 @@ const (
 
 	// A rest longer than an hour is a different session, not a longer rest.
 	routineGroupMaxRestSeconds = 3600
+
+	// A hundred rounds is a different sport.
+	routineGroupMaxRounds = 99
 )
 
 // RoutineGroup is one block of a routine: the exercises it holds, in training
@@ -27,7 +30,11 @@ type RoutineGroup struct {
 	Mode                        RoutineGroupMode
 	RestBetweenExercisesSeconds int32
 	RestBetweenRoundsSeconds    int32
-	Exercises                   []RoutineExercise
+	// Rounds is how many times a circuit is prescribed to go round; zero runs
+	// it for as many rounds as the session takes. It is a target rather than a
+	// limit: the session may take another round or stop short of it.
+	Rounds    int32
+	Exercises []RoutineExercise
 }
 
 // RoutineExercise is one exercise where a routine trains it. The same exercise
@@ -47,6 +54,7 @@ type RoutineGroupDraft struct {
 	Mode                        RoutineGroupMode
 	RestBetweenExercisesSeconds int32
 	RestBetweenRoundsSeconds    int32
+	Rounds                      int32
 	Exercises                   []RoutineExerciseDraft
 }
 
@@ -147,7 +155,7 @@ func normalizeRoutineGroup(group RoutineGroupDraft, exercises []RoutineExerciseD
 			continue
 		}
 
-		rest := clampInt32(*exercise.RestSeconds, 0, routineGroupMaxRestSeconds)
+		rest := clampInt32(*exercise.RestSeconds, routineGroupMaxRestSeconds)
 		normalized.Exercises[index].RestSeconds = &rest
 	}
 
@@ -155,19 +163,22 @@ func normalizeRoutineGroup(group RoutineGroupDraft, exercises []RoutineExerciseD
 	// that rest. A circuit rests between the sets of nothing — it rotates
 	// instead — but the set rest is kept rather than cleared, so a group
 	// switched back to straight sets rests as it did before.
-	normalized.RestBetweenExercisesSeconds = clampInt32(group.RestBetweenExercisesSeconds, 0, routineGroupMaxRestSeconds)
+	normalized.RestBetweenExercisesSeconds = clampInt32(group.RestBetweenExercisesSeconds, routineGroupMaxRestSeconds)
 
-	// Only a circuit has a lap to close.
+	// Only a circuit has a lap to close, or a number of them to run.
 	if normalized.Mode == RoutineGroupModeCircuit {
-		normalized.RestBetweenRoundsSeconds = clampInt32(group.RestBetweenRoundsSeconds, 0, routineGroupMaxRestSeconds)
+		normalized.RestBetweenRoundsSeconds = clampInt32(group.RestBetweenRoundsSeconds, routineGroupMaxRestSeconds)
+		normalized.Rounds = clampInt32(group.Rounds, routineGroupMaxRounds)
 	}
 
 	return normalized
 }
 
-func clampInt32(value, minimum, maximum int32) int32 {
-	if value < minimum {
-		return minimum
+// clampInt32 pulls a group setting into the range the schema takes. Every one
+// of them floors at zero — no rest, no rounds — so only the ceiling varies.
+func clampInt32(value, maximum int32) int32 {
+	if value < 0 {
+		return 0
 	}
 	if value > maximum {
 		return maximum

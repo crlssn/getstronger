@@ -14,6 +14,7 @@ import {
   incompleteSetCount,
   loggedSetCount,
   nextCircuitStep,
+  nextStationOutsideGroup,
   nextUnfinishedStation,
   sessionGroups,
 } from './workoutSession'
@@ -133,12 +134,18 @@ describe('nextUnfinishedStation', () => {
   })
 })
 
-const circuit = (id: string, exerciseIds: string[], rests: (number | undefined)[] = []) =>
+const circuit = (
+  id: string,
+  exerciseIds: string[],
+  rests: (number | undefined)[] = [],
+  rounds = 0,
+) =>
   create(RoutineGroupSchema, {
     id,
     mode: RoutineGroupMode.CIRCUIT,
     restBetweenExercisesSeconds: 15,
     restBetweenRoundsSeconds: 90,
+    rounds,
     exercises: exerciseIds.map((exerciseId, index) => trains(exerciseId, rests[index])),
   })
 
@@ -168,6 +175,7 @@ describe('sessionGroups', () => {
       mode: 'circuit',
       restBetweenExercisesSeconds: 15,
       restBetweenRoundsSeconds: 90,
+      rounds: 0,
     })
     expect(groups[1]?.stations.map((station) => station.exercise.id)).toEqual(['b', 'c'])
   })
@@ -232,6 +240,34 @@ describe('sessionGroups', () => {
 
     expect(groups[1]?.stations.map((station) => station.restSeconds)).toEqual([defaultRestSeconds])
   })
+
+  test('carries the rounds a circuit is prescribed for', () => {
+    const groups = sessionGroups([circuit('two', ['a', 'b'], [], 3)], [lift('a'), lift('b')])
+
+    expect(groups[0]?.rounds).toBe(3)
+  })
+})
+
+describe('nextStationOutsideGroup', () => {
+  const blocks = () =>
+    sessionGroups(
+      [circuit('two', ['a', 'b']), straight('one', ['c'])],
+      [lift('a'), lift('b'), lift('c')],
+    )
+
+  test('skips the block being finished with', () => {
+    const [block] = blocks()
+    const stations = blocks().flatMap((group) => group.stations)
+
+    expect(nextStationOutsideGroup(stations, block!, {})?.key).toBe('c')
+  })
+
+  test('is nothing when everything outside it is done', () => {
+    const [block] = blocks()
+    const stations = blocks().flatMap((group) => group.stations)
+
+    expect(nextStationOutsideGroup(stations, block!, { c: true })).toBeUndefined()
+  })
 })
 
 describe('circuitRound', () => {
@@ -284,5 +320,41 @@ describe('nextCircuitStep', () => {
 
   test('finishes the group when the station is not in it', () => {
     expect(nextCircuitStep(group(), 'missing', 1)).toEqual({ kind: 'groupComplete' })
+  })
+
+  // A prescribed circuit closes itself: the last set of the last round is the
+  // end of the block, not the way into another lap of it.
+  describe('prescribed for a number of rounds', () => {
+    const prescribed = () =>
+      sessionGroups([circuit('two', ['a', 'b'], [], 2)], [lift('a'), lift('b')])[0]!
+
+    test('walks the rounds it was given', () => {
+      expect(nextCircuitStep(prescribed(), 'b', 1)).toEqual({
+        kind: 'nextRound',
+        key: 'a',
+        round: 2,
+        restSeconds: 90,
+      })
+    })
+
+    test('finishes the group as the last round closes', () => {
+      expect(nextCircuitStep(prescribed(), 'b', 2)).toEqual({ kind: 'groupComplete' })
+    })
+
+    // Reopened and taken round again: the prescription is a target, so a block
+    // past it still ends rather than starting another lap on its own.
+    test('finishes a group that has gone past its prescription', () => {
+      expect(nextCircuitStep(prescribed(), 'b', 5)).toEqual({ kind: 'groupComplete' })
+    })
+
+    // Inside a round nothing has closed yet, so the walk carries on to the next
+    // exercise however many rounds have been taken.
+    test('still walks to the next exercise inside the last round', () => {
+      expect(nextCircuitStep(prescribed(), 'a', 2)).toEqual({
+        kind: 'nextStation',
+        key: 'b',
+        restSeconds: 15,
+      })
+    })
   })
 })

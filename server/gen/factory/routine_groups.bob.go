@@ -44,6 +44,7 @@ type RoutineGroupTemplate struct {
 	RestBetweenExercisesSeconds func() int32
 	RestBetweenRoundsSeconds    func() int32
 	CreatedAt                   func() time.Time
+	Rounds                      func() int32
 
 	r routineGroupR
 	f *Factory
@@ -131,6 +132,10 @@ func (o RoutineGroupTemplate) BuildSetter() *models.RoutineGroupSetter {
 		val := o.CreatedAt()
 		m.CreatedAt = omit.From(val)
 	}
+	if o.Rounds != nil {
+		val := o.Rounds()
+		m.Rounds = omit.From(val)
+	}
 
 	return m
 }
@@ -173,6 +178,9 @@ func (o RoutineGroupTemplate) Build() *models.RoutineGroup {
 	}
 	if o.CreatedAt != nil {
 		m.CreatedAt = o.CreatedAt()
+	}
+	if o.Rounds != nil {
+		m.Rounds = o.Rounds()
 	}
 
 	o.setModelRels(m)
@@ -376,6 +384,7 @@ func (m routineGroupMods) RandomizeAllColumns(f *faker.Faker) RoutineGroupMod {
 		RoutineGroupMods.RandomRestBetweenExercisesSeconds(f),
 		RoutineGroupMods.RandomRestBetweenRoundsSeconds(f),
 		RoutineGroupMods.RandomCreatedAt(f),
+		RoutineGroupMods.RandomRounds(f),
 	}
 }
 
@@ -592,6 +601,37 @@ func (m routineGroupMods) RandomCreatedAt(f *faker.Faker) RoutineGroupMod {
 	return RoutineGroupModFunc(func(_ context.Context, o *RoutineGroupTemplate) {
 		o.CreatedAt = func() time.Time {
 			return random_time_Time(f)
+		}
+	})
+}
+
+// Set the model columns to this value
+func (m routineGroupMods) Rounds(val int32) RoutineGroupMod {
+	return RoutineGroupModFunc(func(_ context.Context, o *RoutineGroupTemplate) {
+		o.Rounds = func() int32 { return val }
+	})
+}
+
+// Set the Column from the function
+func (m routineGroupMods) RoundsFunc(f func() int32) RoutineGroupMod {
+	return RoutineGroupModFunc(func(_ context.Context, o *RoutineGroupTemplate) {
+		o.Rounds = f
+	})
+}
+
+// Clear any values for the column
+func (m routineGroupMods) UnsetRounds() RoutineGroupMod {
+	return RoutineGroupModFunc(func(_ context.Context, o *RoutineGroupTemplate) {
+		o.Rounds = nil
+	})
+}
+
+// Generates a random value for the column using the given faker
+// if faker is nil, a default faker is used
+func (m routineGroupMods) RandomRounds(f *faker.Faker) RoutineGroupMod {
+	return RoutineGroupModFunc(func(_ context.Context, o *RoutineGroupTemplate) {
+		o.Rounds = func() int32 {
+			return random_int32(f)
 		}
 	})
 }

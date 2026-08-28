@@ -123,6 +123,11 @@ export interface SessionGroup {
   mode: GroupMode
   restBetweenExercisesSeconds: number
   restBetweenRoundsSeconds: number
+  /**
+   * How many times the routine prescribes going round; zero is the open-ended
+   * circuit that runs for as many rounds as the session takes.
+   */
+  rounds: number
   stations: SessionStation[]
 }
 
@@ -167,6 +172,8 @@ export const sessionGroups = (
       mode: circuit ? 'circuit' : 'straight',
       restBetweenExercisesSeconds: group.restBetweenExercisesSeconds,
       restBetweenRoundsSeconds: group.restBetweenRoundsSeconds,
+      // Only a circuit goes round, so only a circuit is prescribed rounds.
+      rounds: circuit ? group.rounds : 0,
       stations,
     })
   }
@@ -192,6 +199,7 @@ export const sessionGroups = (
       mode: 'straight',
       restBetweenExercisesSeconds: 0,
       restBetweenRoundsSeconds: 0,
+      rounds: 0,
       stations: trailing,
     })
   }
@@ -200,11 +208,28 @@ export const sessionGroups = (
 }
 
 /**
+ * The station the session moves to once a block is finished with.
+ *
+ * The first unfinished one outside it: completing a circuit ticks off every
+ * exercise in the block at once, so the block's own stations are not where the
+ * session goes next even while nothing has ticked them off yet.
+ */
+export const nextStationOutsideGroup = (
+  stations: readonly SessionStation[],
+  group: SessionGroup,
+  completed: Record<string, boolean>,
+): SessionStation | undefined => {
+  const inside = new Set(group.stations.map((station) => station.key))
+  return stations.find((station) => !inside.has(station.key) && !completed[station.key])
+}
+
+/**
  * The round a circuit is on, read off what has been logged.
  *
  * The round only turns over once every exercise in it has taken its set, so an
- * athlete part-way round is still in the round they are walking through. There
- * is no last one: a circuit goes round until the session says it is done.
+ * athlete part-way round is still in the round they are walking through. It can
+ * run past the rounds the routine prescribed: the prescription is a target, and
+ * a reopened block keeps counting.
  */
 export const circuitRound = (group: SessionGroup, loggedCounts: Record<string, number>): number =>
   completedCircuitRounds(group, loggedCounts) + 1
@@ -230,9 +255,11 @@ export type CircuitStep =
  *
  * Along the group inside a round, and back to the top when the round closes.
  * Each step carries the rest that belongs to it: the shorter one on the way to
- * the next exercise, the longer one on the way into the next round. A circuit
- * has no last round to walk out of — it ends when the session says so, which is
- * the only thing that returns `groupComplete`.
+ * the next exercise, the longer one on the way into the next round.
+ *
+ * A circuit prescribed for a number of rounds walks out of its last one, and
+ * that is where `groupComplete` comes from. One prescribed for none has no last
+ * round: it ends when the session says so.
  *
  * `completedRounds` is how many rounds the whole group has been through, which
  * is what numbers the round being started. The round on the header is already
@@ -246,6 +273,8 @@ export const nextCircuitStep = (
   const index = group.stations.findIndex((station) => station.key === key)
   if (index < 0) return { kind: 'groupComplete' }
 
+  // Inside the round nothing has closed yet, so the walk carries on to the next
+  // exercise however many rounds the block has already been through.
   const next = group.stations[index + 1]
   if (next) {
     return {
@@ -257,6 +286,12 @@ export const nextCircuitStep = (
 
   const first = group.stations[0]
   if (!first) return { kind: 'groupComplete' }
+
+  // The round just walked is already counted, so a prescription this many
+  // rounds in has been worked through and there is no next round to start.
+  if (group.rounds > 0 && completedRounds >= group.rounds) {
+    return { kind: 'groupComplete' }
+  }
 
   return {
     kind: 'nextRound',

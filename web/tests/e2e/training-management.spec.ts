@@ -46,6 +46,15 @@ const stepRest = async (
   }
 }
 
+// The rounds a circuit is prescribed for, nudged by the same kind of stepper as
+// the rests beside it.
+const stepRounds = async (page: Parameters<typeof logIn>[0], by: 'Add' | 'Subtract', times = 1) => {
+  const label = by === 'Add' ? 'Add a round to Rounds' : 'Subtract a round from Rounds'
+  for (let step = 0; step < times; step += 1) {
+    await page.getByRole('button', { name: label, exact: true }).click()
+  }
+}
+
 // The rest a routine gives an exercise reads as a chip on its row, and the
 // chip is what unfolds the stepper.
 const restChip = (page: Parameters<typeof logIn>[0], name: string, value: string) =>
@@ -413,8 +422,9 @@ test.describe('routine lifecycle', () => {
     await expect(page).toHaveURL(/\/routines$/)
   })
 
-  // The whole circuit, end to end: built in groups, saved, read back, and then
-  // trained one set at a time with the rounds counting up.
+  // The whole circuit, end to end: built in groups and prescribed for a number
+  // of rounds, saved, read back, and then trained one set at a time until the
+  // last round walks the block out.
   //
   // It brings its own exercises rather than borrowing seeded ones: a saved
   // workout becomes the previous session for whatever it was logged against,
@@ -443,6 +453,9 @@ test.describe('routine lifecycle', () => {
       await page.getByRole('button', { name: 'Circuit', exact: true }).click()
       await stepRest(page, 'Rest after each exercise in group A', 'Subtract', 2)
       await stepRest(page, 'Rest after each round in group A', 'Add')
+      // A new circuit arrives prescribed for three rounds; two is enough here.
+      await expect(page.getByRole('spinbutton', { name: 'Rounds in group A' })).toHaveText('3')
+      await stepRounds(page, 'Subtract')
       await page.getByRole('button', { name: 'Create routine' }).click()
 
       await expect(page).toHaveURL(/\/routines$/)
@@ -450,8 +463,8 @@ test.describe('routine lifecycle', () => {
       await page.getByRole('heading', { name: routineName }).click()
 
       // Saved, read back from the API, and described in the words it was built
-      // with.
-      await expect(page.getByText('Circuit', { exact: true })).toBeVisible()
+      // with — the prescription included.
+      await expect(page.getByText('Circuit · 2 rounds', { exact: true })).toBeVisible()
       await expect(
         page.getByText('Rest 30s between exercises · Rest 120s between rounds'),
       ).toBeVisible()
@@ -468,6 +481,7 @@ test.describe('routine lifecycle', () => {
         'aria-pressed',
         'true',
       )
+      await expect(page.getByRole('spinbutton', { name: 'Rounds in group A' })).toHaveText('2')
       await expect(routineExercises(page)).toHaveCount(2)
 
       await stepRest(page, 'Rest after each round in group A', 'Subtract', 3)
@@ -478,16 +492,16 @@ test.describe('routine lifecycle', () => {
       ).toBeVisible()
 
       await page.getByRole('link', { name: 'Start workout' }).click()
-      await expect(page.getByText('Round 1 · exercise 1 of 2')).toBeVisible()
+      await expect(page.getByText('Round 1 of 2 · exercise 1 of 2')).toBeVisible()
 
       const complete = page.locator('button[type="submit"]')
       await expect(complete).toHaveText('Complete set')
 
-      // One row: a circuit has no round count to lay them out from, so the next
-      // one arrives as this one is filled in.
+      // A row per round: the block is laid out in front of you, because the
+      // routine says how many times round it goes.
       await expect(
         page.getByRole('textbox', { name: `${first} set 2 weight`, exact: true }),
-      ).toHaveCount(0)
+      ).toBeVisible()
 
       await page.getByRole('textbox', { name: `${first} set 1 weight`, exact: true }).fill('25')
       await page.getByRole('textbox', { name: `${first} set 1 reps`, exact: true }).fill('8')
@@ -496,7 +510,7 @@ test.describe('routine lifecycle', () => {
       await expect(page.getByRole('region', { name: 'Rest timer' })).toHaveCount(0)
 
       await complete.click()
-      await expect(page.getByText('Round 1 · exercise 2 of 2')).toBeVisible()
+      await expect(page.getByText('Round 1 of 2 · exercise 2 of 2')).toBeVisible()
       await expect(page.getByRole('region', { name: 'Rest timer' })).toBeVisible()
 
       await page.getByRole('textbox', { name: `${second} set 1 weight`, exact: true }).fill('30')
@@ -504,16 +518,19 @@ test.describe('routine lifecycle', () => {
       await complete.click()
 
       // The round only turns over once every exercise in it has taken its set.
-      await expect(page.getByText('Round 2 · exercise 1 of 2')).toBeVisible()
-      await expect(
-        page.getByRole('textbox', { name: `${first} set 2 weight`, exact: true }),
-      ).toBeVisible()
+      await expect(page.getByText('Round 2 of 2 · exercise 1 of 2')).toBeVisible()
 
-      // Two rounds is enough: a circuit ends when the session says so, and that
-      // ticks off every exercise in it.
       await page.getByRole('textbox', { name: `${first} set 2 weight`, exact: true }).fill('25')
       await page.getByRole('textbox', { name: `${first} set 2 reps`, exact: true }).fill('8')
-      await page.getByRole('button', { name: 'Complete circuit' }).click()
+      await complete.click()
+
+      // The last set of the last round is the end of the block, so the button
+      // that logs it says so — and pressing it ticks off every exercise at once.
+      await page.getByRole('textbox', { name: `${second} set 2 weight`, exact: true }).fill('30')
+      await page.getByRole('textbox', { name: `${second} set 2 reps`, exact: true }).fill('6')
+      await expect(complete).toHaveText('Complete circuit')
+
+      await complete.click()
       await expect(page.getByRole('button', { name: 'Complete circuit' })).toHaveCount(0)
       await expect(complete).toHaveText('Finish workout')
 
