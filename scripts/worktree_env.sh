@@ -237,8 +237,9 @@ set_env() {
 # Keys a person adds to the main checkout's .env by hand, which a worktree
 # copied from .env.example would otherwise never see. Carried by name: copying
 # the file would bring a cloud DB_HOST across with them and point this
-# worktree's backend at production.
-carried_keys=(SCW_SCREENSHOTS_BUCKET_NAME AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY)
+# worktree's backend at production. The screenshot bucket is deliberately not
+# here — .env.example names it, so every worktree gets the same one.
+carried_keys=(AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY)
 
 carry_env() {
   local source=$1 target=$2 key value
@@ -403,11 +404,11 @@ worktree's database.
 SUMMARY
 
 # 'mise run pr:screenshots' publishes a UI change's before/after images into
-# its pull request, and .env.example leaves its three keys commented out —
+# its pull request, and .env.example leaves its two keys commented out —
 # rightly, they are credentials. Say so here rather than let the task fail at
 # publish time, when the pull request is already open without its evidence.
 missing_keys="$(
-  for key in SCW_SCREENSHOTS_BUCKET_NAME AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY; do
+  for key in AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY; do
     grep -q "^$key=." "$root/.env" || printf '  %s\n' "$key"
   done
 )"
@@ -419,8 +420,7 @@ if [[ -n "$missing_keys" ]]; then
 without these in .env:
 
 $missing_keys
-The bucket is the SCW_SCREENSHOTS_BUCKET_NAME repository variable and the keys
-are the getstronger-deploy API key; see the README's Scaleway section.
+They are the getstronger-deploy API key; see the README's Scaleway section.
 KEYS
 fi
 
