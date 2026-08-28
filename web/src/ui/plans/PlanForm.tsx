@@ -25,6 +25,7 @@ import { AppOptionalAction } from '@/ui/components/AppOptionalAction'
 import { AppSheet } from '@/ui/components/AppSheet'
 import { AppSkeleton } from '@/ui/components/AppSkeleton'
 import { useSortable } from '@/utils/useSortable'
+import { formatDateTime } from '@/utils/datetime'
 import styles from './PlanForm.module.css'
 
 interface Props {
@@ -277,7 +278,7 @@ export const PlanForm = ({ planId }: Props) => {
                   <small>
                     {[
                       t('home.exerciseCount', { count: routine.exercises.length }),
-                      lastPerformedIn(routineLastPerformed, routine.id)?.toRelative(),
+                      formatDateTime(lastPerformedIn(routineLastPerformed, routine.id)),
                     ]
                       .filter(Boolean)
                       .join(' · ')}

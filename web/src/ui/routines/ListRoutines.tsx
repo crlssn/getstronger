@@ -24,6 +24,7 @@ import { ExerciseTags } from '@/ui/exercises/ExerciseTags'
 import { TrainingTabs } from '@/ui/features/TrainingTabs'
 import { groupByRoutineActivity } from '@/utils/activityGroups'
 import { appendPage } from '@/utils/appendPage'
+import { formatDateTime } from '@/utils/datetime'
 import { usePagination } from '@/utils/usePagination'
 import styles from './ListRoutines.module.css'
 
@@ -126,7 +127,9 @@ export const ListRoutines = () => {
             <div className={styles.routineGrid}>
               {group.items.map((routine) => {
                 const tags = routineTags(routine)
-                const performed = lastPerformedIn(routineLastPerformed, routine.id)?.toRelative()
+                const performed = formatDateTime(
+                  lastPerformedIn(routineLastPerformed, routine.id),
+                )
 
                 return (
                   <article key={routine.id} className={styles.routineCard}>

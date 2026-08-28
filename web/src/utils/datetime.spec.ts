@@ -2,7 +2,9 @@ import type { Timestamp } from '@bufbuild/protobuf/wkt'
 
 import { afterEach, describe, expect, test, vi } from 'vitest'
 
-import { formatMoment, formatTimestamp, formatUnixTimestamp } from './datetime'
+import { DateTime } from 'luxon'
+
+import { formatDateTime, formatMoment, formatTimestamp, formatUnixTimestamp } from './datetime'
 
 // 2026-03-17T09:30:00Z, a Tuesday.
 const seconds = 1773739800n
@@ -20,6 +22,20 @@ afterEach(() => {
 // One rule everywhere a timestamp sits on a row. The feed alone used to mix
 // "Just now", "25 seconds ago", "7 days ago", "Wed, 8 July · 14:15" and
 // "26 Aug 2026".
+// The two lists that reached for Luxon's own toRelative() instead had neither
+// the just-now floor nor the week-long cutoff.
+describe('formatDateTime', () => {
+  test('follows the same rule as a timestamp', () => {
+    expect(formatDateTime(DateTime.now().minus({ seconds: 20 }))).toBe('Just now')
+    expect(formatDateTime(DateTime.now().minus({ days: 2 }))).toBe('2 days ago')
+    expect(formatDateTime(DateTime.fromISO('2026-08-21T10:00:00'))).toMatch(/21 Aug/)
+  })
+
+  test('says nothing about a date it was not given', () => {
+    expect(formatDateTime(undefined)).toBe('')
+  })
+})
+
 describe('formatTimestamp', () => {
   test.each([
     ['exactly now', '2026-03-17T09:30:00Z'],
