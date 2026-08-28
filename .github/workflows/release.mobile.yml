@@ -166,11 +166,19 @@ jobs:
         with:
           bun-version: '1.4.0'
 
+      # Gradle downloads its distribution and every Android dependency on a cold
+      # runner, which is most of this job. The key follows the two lockfiles as
+      # well as the build scripts, because a dependency bump moves only those.
       - name: Set up Java
         uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: '21'
+          cache: gradle
+          cache-dependency-path: |
+            mobile/android/**/*.gradle
+            mobile/android/**/*.lockfile
+            mobile/android/gradle/wrapper/gradle-wrapper.properties
 
       - name: Download web bundle
         uses: actions/download-artifact@v8
