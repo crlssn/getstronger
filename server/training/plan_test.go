@@ -156,7 +156,8 @@ func TestValidatePlanRoutine(t *testing.T) {
 	userID := uuid.Must(uuid.NewV4())
 
 	require.NoError(t, training.ValidatePlanRoutine(
-		&models.Routine{UserID: userID}, userID.String()))
+		&models.Routine{UserID: userID}, userID.String(),
+	))
 
 	require.ErrorIs(t,
 		training.ValidatePlanRoutine(&models.Routine{UserID: uuid.Must(uuid.NewV4())}, userID.String()),

@@ -583,7 +583,8 @@ func (s *workoutSuite) TestPostComment() {
 		// comment without a second round trip.
 		s.Require().Equal(commenter.ID.String(), res.Msg.GetComment().GetUser().GetId())
 
-		comment, err := s.repo.GetWorkoutComment(context.Background(),
+		comment, err := s.repo.GetWorkoutComment(
+			context.Background(),
 			repo.GetWorkoutCommentWithID(res.Msg.GetComment().GetId()),
 			repo.GetWorkoutCommentWithWorkout(),
 		)

@@ -2237,7 +2237,8 @@ func (s *repoSuite) TestListPageTokens() {
 		s.factory.NewExercise(factory.ExerciseUserID(user.ID), factory.ExerciseCreatedAt(now))
 		older := s.factory.NewExercise(factory.ExerciseUserID(user.ID), factory.ExerciseCreatedAt(now.Add(-2*time.Hour)))
 
-		listed, listErr := s.repo.ListExercises(ctx,
+		listed, listErr := s.repo.ListExercises(
+			ctx,
 			repo.ListExercisesWithUserID(user.ID.String()),
 			repo.ListExercisesWithPageToken(token),
 		)
@@ -2253,7 +2254,8 @@ func (s *repoSuite) TestListPageTokens() {
 		s.factory.NewWorkout(factory.WorkoutUserID(user.ID), factory.WorkoutCreatedAt(now))
 		older := s.factory.NewWorkout(factory.WorkoutUserID(user.ID), factory.WorkoutCreatedAt(now.Add(-2*time.Hour)))
 
-		listed, listErr := s.repo.ListWorkouts(ctx,
+		listed, listErr := s.repo.ListWorkouts(
+			ctx,
 			repo.ListWorkoutsWithUserIDs(user.ID.String()),
 			repo.ListWorkoutsWithPageToken(token),
 		)
@@ -2269,7 +2271,8 @@ func (s *repoSuite) TestListPageTokens() {
 		s.factory.NewNotification(factory.NotificationUserID(user.ID), factory.NotificationCreatedAt(now))
 		older := s.factory.NewNotification(factory.NotificationUserID(user.ID), factory.NotificationCreatedAt(now.Add(-2*time.Hour)))
 
-		listed, listErr := s.repo.ListNotifications(ctx,
+		listed, listErr := s.repo.ListNotifications(
+			ctx,
 			repo.ListNotificationsWithUserID(user.ID.String()),
 			repo.ListNotificationsWithPageToken(token),
 		)
@@ -2286,7 +2289,8 @@ func (s *repoSuite) TestListPageTokens() {
 		s.factory.NewSet(factory.SetUserID(user.ID), factory.SetExerciseID(exercise.ID), factory.SetCreatedAt(now))
 		older := s.factory.NewSet(factory.SetUserID(user.ID), factory.SetExerciseID(exercise.ID), factory.SetCreatedAt(now.Add(-2*time.Hour)))
 
-		listed, listErr := s.repo.ListSets(ctx,
+		listed, listErr := s.repo.ListSets(
+			ctx,
 			repo.ListSetsWithExerciseID(exercise.ID.String()),
 			repo.ListSetsWithPageToken(token),
 		)
@@ -2297,7 +2301,6 @@ func (s *repoSuite) TestListPageTokens() {
 		_, listErr = s.repo.ListSets(ctx, repo.ListSetsWithPageToken(malformed))
 		s.Require().Error(listErr)
 	})
-
 }
 
 // A page whose last item cannot be turned into a cursor is an error, not a page
@@ -2356,7 +2359,8 @@ func (s *repoSuite) TestListExercisesWithNoIDsDoesNotFilter() {
 	user := s.factory.NewUser()
 	s.factory.NewExercise(factory.ExerciseUserID(user.ID))
 
-	listed, err := s.repo.ListExercises(ctx,
+	listed, err := s.repo.ListExercises(
+		ctx,
 		repo.ListExercisesWithUserID(user.ID.String()),
 		repo.ListExercisesWithIDs(nil),
 	)
@@ -2370,14 +2374,16 @@ func (s *repoSuite) TestCountNotificationsCountsReadOnesToo() {
 	s.factory.NewNotification(factory.NotificationUserID(user.ID))
 	s.factory.NewNotification(factory.NotificationUserID(user.ID), factory.NotificationRead())
 
-	unread, err := s.repo.CountNotifications(ctx,
+	unread, err := s.repo.CountNotifications(
+		ctx,
 		repo.CountNotificationsWithUserID(user.ID.String()),
 		repo.CountNotificationsWithUnreadOnly(true),
 	)
 	s.Require().NoError(err)
 	s.Require().Equal(int64(1), unread)
 
-	all, err := s.repo.CountNotifications(ctx,
+	all, err := s.repo.CountNotifications(
+		ctx,
 		repo.CountNotificationsWithUserID(user.ID.String()),
 		repo.CountNotificationsWithUnreadOnly(false),
 	)
@@ -2394,7 +2400,35 @@ func (s *repoSuite) TestListWorkoutGroupsOfNothing() {
 }
 
 // An exercise the save names but logs nothing for is dropped rather than
-// written as an exercise with no sets, which nothing can render.
+// written as an exercise with no sets, which nothing can render. Both the
+// first save of a workout and every one after it have to agree on that.
+func (s *repoSuite) TestWorkoutSavesDropAnExerciseWithNoSets() {
+	ctx := context.Background()
+	user := s.factory.NewUser()
+	routine := s.factory.NewRoutine(factory.RoutineUserID(user.ID))
+	logged := s.factory.NewExercise(factory.ExerciseUserID(user.ID))
+	empty := s.factory.NewExercise(factory.ExerciseUserID(user.ID))
+
+	workout, err := s.repo.CreateWorkout(ctx, repo.CreateWorkoutParams{
+		Name:      "Session",
+		UserID:    user.ID.String(),
+		RoutineID: routine.ID.String(),
+		ExerciseSets: []repo.ExerciseSet{
+			{ExerciseID: logged.ID.String(), Sets: []repo.Set{{Reps: 5, Weight: 50}}},
+			{ExerciseID: empty.ID.String(), Sets: nil},
+		},
+		StartedAt:  time.Now().UTC(),
+		FinishedAt: time.Now().UTC().Add(time.Hour),
+	})
+	s.Require().NoError(err)
+
+	created, err := s.repo.ListSets(ctx, repo.ListSetsWithExerciseID(logged.ID.String(), empty.ID.String()))
+	s.Require().NoError(err)
+	s.Require().Len(created, 1)
+	s.Require().Equal(logged.ID, created[0].ExerciseID)
+	s.Require().Equal(workout.ID, created[0].WorkoutID)
+}
+
 func (s *repoSuite) TestUpdateWorkoutSetsDropsAnExerciseWithNoSets() {
 	ctx := context.Background()
 	user := s.factory.NewUser()
