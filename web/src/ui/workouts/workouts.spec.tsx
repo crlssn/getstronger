@@ -197,14 +197,16 @@ describe('EditWorkout', () => {
     expect(await screen.findByText('workout')).toBeInTheDocument()
   })
 
+  // Counted by their remove controls: the editor renders the runner's table
+  // now, where the row is a row rather than a block under a "SET 1" heading.
   test('adds and removes sets', async () => {
     render()
 
     await userEvent.click((await screen.findAllByRole('button', { name: 'Add set' }))[0]!)
-    expect(screen.getAllByText(/^Set \d$/)).toHaveLength(3)
+    expect(screen.getAllByRole('button', { name: /^Remove set/ })).toHaveLength(3)
 
-    await userEvent.click(screen.getByRole('button', { name: 'Remove set 2' }))
-    expect(screen.getAllByText(/^Set \d$/)).toHaveLength(2)
+    await userEvent.click(screen.getAllByRole('button', { name: 'Remove set 2' })[0]!)
+    expect(screen.getAllByRole('button', { name: /^Remove set/ })).toHaveLength(2)
   })
 
   // A half-filled set is not a real one, and an exercise with nothing left in
@@ -213,11 +215,28 @@ describe('EditWorkout', () => {
     render()
 
     await userEvent.click((await screen.findAllByRole('button', { name: 'Add set' }))[0]!)
-    await userEvent.type(screen.getAllByRole('textbox', { name: 'Weight' })[1]!, '90')
+    // Every field names its own row now, where the stacked block called each
+    // one of them "Weight" and left a screen reader to count.
+    await userEvent.type(screen.getByRole('textbox', { name: 'Bench press set 2 weight' }), '90')
     await userEvent.click(screen.getByRole('button', { name: 'Update workout' }))
 
     await waitFor(() => expect(mocked.updateWorkout).toHaveBeenCalled())
     expect(mocked.updateWorkout.mock.calls[0]?.[0]?.exerciseSets[0]?.sets).toHaveLength(1)
+  })
+
+  // Logging a set is the app's most-used interaction, so correcting one is the
+  // same table: the columns the runner logs into, with the previous session's
+  // column carrying the way to take a set out instead.
+  test('corrects a workout in the table the session was logged in', async () => {
+    render()
+
+    await screen.findByText('Bench press')
+    expect(screen.getAllByText('Set').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Weight').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Reps').length).toBeGreaterThan(0)
+    // There is no previous session to point at when correcting one.
+    expect(screen.queryByText('Previous')).not.toBeInTheDocument()
+    expect(screen.getAllByRole('button', { name: /^Remove set/ })[0]).toBeVisible()
   })
 
   test('reorders the exercises', async () => {

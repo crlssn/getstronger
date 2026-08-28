@@ -26,7 +26,7 @@ const roles = {
     'shell/AppRestTimerBanner.module.css',
     'shell/AppToaster.module.css',
     'workouts/WorkoutRestBanner.module.css',
-    'workouts/WorkoutSetGrid.module.css',
+    'workouts/SetTable.module.css',
   ],
   // Destructive only. Not a notification count, and not a way out of a
   // session. The two auth and input cases are invalid-field states, which is
@@ -44,7 +44,7 @@ const roles = {
     'routines/ViewRoutine.module.css',
     'shell/AppToaster.module.css',
     'workouts/StartWorkout.module.css',
-    'workouts/WorkoutSetGrid.module.css',
+    'workouts/SetTable.module.css',
     'workouts/WorkoutView.module.css',
   ],
   // A personal record. Nothing else.

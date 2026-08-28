@@ -17,6 +17,20 @@
   display: none;
 }
 
+/* Correcting a set has no previous session to point at, so that column
+   narrows to the control that takes the set out. */
+.setGrid.editing {
+  grid-template-columns:
+    2.25rem 2.75rem
+    repeat(var(--metric-count), minmax(4.25rem, 1fr));
+}
+
+/* Quiet: the minus carries the meaning, and a column of red circles beside
+   every set reads as a page full of errors. */
+.removeCell {
+  @apply justify-self-center text-text-subtle hover:text-danger-strong;
+}
+
 .setLabels {
   @apply pb-2 text-eyebrow font-semibold uppercase text-text-subtle;
 }
@@ -113,6 +127,11 @@
     @apply gap-1.5;
     grid-template-columns:
       2.25rem minmax(4.5rem, max-content)
+      repeat(var(--metric-count), minmax(5.5rem, 1fr));
+  }
+  .setGrid.editing {
+    grid-template-columns:
+      2.25rem 2.75rem
       repeat(var(--metric-count), minmax(5.5rem, 1fr));
   }
   .setLabels {
