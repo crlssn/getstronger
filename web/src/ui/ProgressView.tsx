@@ -89,7 +89,7 @@ export const ProgressView = () => {
             <div className={styles.chartHeading}>
               <div>
                 <h2>{t('progress.trainingVolume')}</h2>
-                <p className={styles.total}>
+                <p className={styles.total} id="training-volume">
                   {formatNumber(totalVolume(filtered))} {t('common.kg')}
                 </p>
               </div>

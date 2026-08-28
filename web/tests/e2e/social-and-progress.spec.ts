@@ -94,8 +94,10 @@ test.describe('profiles and notifications', () => {
     await expect(meNavigation).toContainText('2')
     await meNavigation.click()
 
-    const notificationsLink = page.getByRole('link', { name: 'Notifications' })
-    await expect(notificationsLink).toContainText('2')
+    // The count is in the control's own name now, not only in the red disc
+    // beside it — a colour says nothing to a reader who cannot see it.
+    const notificationsLink = page.getByRole('link', { name: 'Notifications, 2 unread' })
+    await expect(notificationsLink).toBeVisible()
     await notificationsLink.click()
     await expect(page).toHaveURL(/\/notifications$/)
     // Each row already carries a screen-reader-only "Unread notification"
@@ -182,8 +184,9 @@ test.describe('account progress', () => {
     await page.getByRole('link', { name: /Progress & records/ }).click()
     await expect(page.getByRole('heading', { name: 'Progress' })).toBeVisible()
     const periods = page.getByLabel('Progress period')
-    // The volume total is the only heading that ends in a unit.
-    const volumeHeading = page.getByRole('heading', { name: /kg$/ })
+    // The card's heading is "Training volume"; the figure under it is the
+    // value that heading names, so it is reached by its id.
+    const volumeHeading = page.locator('#training-volume')
     const volumes: number[] = []
     for (const period of ['7D', '4W', '3M', '1Y']) {
       await periods.getByRole('button', { name: period }).click()

@@ -680,8 +680,8 @@ test.describe('plan lifecycle', () => {
     await expect(order).toHaveCount(2)
     await order
       .nth(1)
-      .getByRole('button', { name: /Move .* up/ })
-      .click()
+      .getByRole('button', { name: /^Reorder / })
+      .press('ArrowUp')
     await page.getByRole('button', { name: 'Create plan' }).click()
 
     await expect(page.getByRole('heading', { name: planName })).toBeVisible()
@@ -697,7 +697,10 @@ test.describe('plan lifecycle', () => {
     await page.goto('/plans')
     const activePlanCard = page
       .locator('section')
-      .filter({ has: page.getByText('Active plan', { exact: true }) })
+      // The card's status pill. It used to be found by an "ACTIVE PLAN"
+      // eyebrow above the plan's name, which said the same thing as the pill
+      // beside it and is gone.
+      .filter({ has: page.getByText('Active', { exact: true }) })
     await expect(activePlanCard).toContainText(planName)
     await expect(activePlanCard).toContainText(secondRoutineName)
     await page.getByRole('button', { name: 'Pause' }).click()
