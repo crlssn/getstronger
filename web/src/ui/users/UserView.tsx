@@ -52,9 +52,7 @@ export const UserView = () => {
       // them you were looking at.
       usePageTitleStore
         .getState()
-        .setPageTitle(
-          loaded.id === signedInUserId ? t('profile.publicProfileTitle') : loaded.name,
-        )
+        .setPageTitle(loaded.id === signedInUserId ? t('profile.publicProfileTitle') : loaded.name)
 
       // Only the most recent workouts, which is all the chart plots.
       const res = await listWorkouts([loaded.id], new Uint8Array(0))

@@ -20,30 +20,30 @@ aspirational.
 
 ## Choosing
 
-| You need                       | Use                                                 |
-| ------------------------------ | --------------------------------------------------- |
-| Anything a user taps           | `<AppButton>` — or `<AppIconButton>` for icon-only  |
-| A text field                   | `<AppInput>` / `<AppTextarea>`                      |
-| A number or a duration         | `<AppNumberField>` / `<AppDurationInput>`           |
-| A duration nudged in steps     | `<AppDurationStepper>`                              |
-| A count nudged in steps        | `<AppStepper>`                                      |
-| On or off                      | `<AppSwitch>`                                       |
-| A field the user searches with | `<AppSearchField>`                                  |
-| The next page of a list        | `<AppLoadMore>`                                     |
-| A screen's title block         | `<AppPageHeader>`                                   |
-| A form's pinned submit         | `<AppFormFooter>`                                   |
-| A value a row can unfold       | `<AppValueChip>`                                    |
-| A panel around content         | `<AppCard>`, or the `card` utility inside a module  |
-| Rows of things                 | `<AppList>` + `<AppListItem>` / `<AppListItemLink>` |
-| A row with a value and a way on | `<AppListRow>`                                     |
-| A row that is one tap          | `<AppOptionRow>`                                    |
-| Nothing to show yet            | `<AppEmptyState>`                                   |
-| One section of it empty        | `<AppEmptyInline>`                                  |
-| A fetch that failed            | `<AppErrorState>`                                   |
-| Waiting for the API            | `<AppSkeleton>`                                     |
-| A modal decision or a picker   | `<AppSheet>` + `<SheetAction>`                      |
-| One of a few choices           | `<AppSegmented>` / `<AppSegmentedNav>`              |
-| A menu behind a ⋯              | `<DropdownButton>`                                  |
+| You need                        | Use                                                 |
+| ------------------------------- | --------------------------------------------------- |
+| Anything a user taps            | `<AppButton>` — or `<AppIconButton>` for icon-only  |
+| A text field                    | `<AppInput>` / `<AppTextarea>`                      |
+| A number or a duration          | `<AppNumberField>` / `<AppDurationInput>`           |
+| A duration nudged in steps      | `<AppDurationStepper>`                              |
+| A count nudged in steps         | `<AppStepper>`                                      |
+| On or off                       | `<AppSwitch>`                                       |
+| A field the user searches with  | `<AppSearchField>`                                  |
+| The next page of a list         | `<AppLoadMore>`                                     |
+| A screen's title block          | `<AppPageHeader>`                                   |
+| A form's pinned submit          | `<AppFormFooter>`                                   |
+| A value a row can unfold        | `<AppValueChip>`                                    |
+| A panel around content          | `<AppCard>`, or the `card` utility inside a module  |
+| Rows of things                  | `<AppList>` + `<AppListItem>` / `<AppListItemLink>` |
+| A row with a value and a way on | `<AppListRow>`                                      |
+| A row that is one tap           | `<AppOptionRow>`                                    |
+| Nothing to show yet             | `<AppEmptyState>`                                   |
+| One section of it empty         | `<AppEmptyInline>`                                  |
+| A fetch that failed             | `<AppErrorState>`                                   |
+| Waiting for the API             | `<AppSkeleton>`                                     |
+| A modal decision or a picker    | `<AppSheet>` + `<SheetAction>`                      |
+| One of a few choices            | `<AppSegmented>` / `<AppSegmentedNav>`              |
+| A menu behind a ⋯               | `<DropdownButton>`                                  |
 
 ## Actions
 

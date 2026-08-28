@@ -306,9 +306,7 @@ export const flows: Flow[] = [
           savedCircuitWorkout = new URL(page.url()).pathname
           // The card's own heading. "Session details" was the eyebrow above it,
           // and an eyebrow above a title is not a rank this app has any more.
-          await expect(
-            page.getByRole('heading', { name: 'Exercises', exact: true }),
-          ).toBeVisible()
+          await expect(page.getByRole('heading', { name: 'Exercises', exact: true })).toBeVisible()
         },
         name: 'finished',
       },

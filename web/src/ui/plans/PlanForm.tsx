@@ -1,11 +1,6 @@
 import type { Routine } from '@/proto/api/v1/routine_service_pb'
 
-import {
-  ArrowsUpDownIcon,
-  Bars3Icon,
-  MinusCircleIcon,
-  PlusIcon,
-} from '@heroicons/react/24/outline'
+import { ArrowsUpDownIcon, Bars3Icon, MinusCircleIcon, PlusIcon } from '@heroicons/react/24/outline'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'

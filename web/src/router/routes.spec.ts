@@ -2,13 +2,7 @@ import { describe, expect, test } from 'vitest'
 
 import { en } from '@/i18n/messages'
 import { isTabRoot, tabRootPaths } from './tabs'
-import {
-  flatRoutes,
-  hidesTabBarPath,
-  isFocusedShellPath,
-  routeByName,
-  routes,
-} from './routes'
+import { flatRoutes, hidesTabBarPath, isFocusedShellPath, routeByName, routes } from './routes'
 
 const all = flatRoutes()
 

@@ -147,62 +147,62 @@ export const EditWorkout = () => {
     >
       <ol ref={order}>
         {workout.exerciseSets.map((exerciseSet, exerciseIndex) => (
-        <li key={exerciseSet.exercise?.id}>
-          <div className={styles.exerciseHeading}>
-            <div>
-              <h2>{exerciseSet.exercise?.name}</h2>
-              <ExerciseTags compact tags={exerciseSet.exercise?.tags} />
+          <li key={exerciseSet.exercise?.id}>
+            <div className={styles.exerciseHeading}>
+              <div>
+                <h2>{exerciseSet.exercise?.name}</h2>
+                <ExerciseTags compact tags={exerciseSet.exercise?.tags} />
+              </div>
+              <div className={styles.moveActions}>
+                <AppIconButton
+                  className={styles.dragHandle}
+                  icon={Bars3Icon}
+                  label={t('training.planForm.reorder', { name: exerciseSet.exercise?.name })}
+                />
+              </div>
             </div>
-            <div className={styles.moveActions}>
-              <AppIconButton
-                className={styles.dragHandle}
-                icon={Bars3Icon}
-                label={t('training.planForm.reorder', { name: exerciseSet.exercise?.name })}
-              />
-            </div>
-          </div>
 
-          {/* The same table the session was logged in. It used to be a
+            {/* The same table the session was logged in. It used to be a
               stacked block per set — "SET 1" over a labelled Weight and a
               labelled Reps — at roughly three times the height, which made
               correcting a workout a screen nobody recognised. */}
-          <div className={styles.setTable}>
-            {exerciseSet.exercise && (
-              <SetTable
-                distanceUnit={normalizeDistanceUnit(workout.user?.distanceUnit)}
-                exercise={exerciseSet.exercise}
-                mode="edit"
-                sets={exerciseSet.sets}
-                weightUnit={normalizeWeightUnit(workout.user?.weightUnit)}
-                onChange={(setIndex, changes) =>
-                  updateSets(exerciseIndex, (sets) =>
-                    sets.map((candidate, index) =>
-                      index === setIndex ? { ...candidate, ...changes } : candidate,
-                    ),
-                  )
-                }
-                onRemove={(setIndex) =>
-                  updateSets(exerciseIndex, (sets) =>
-                    sets.filter((_, index) => index !== setIndex),
-                  )
+            <div className={styles.setTable}>
+              {exerciseSet.exercise && (
+                <SetTable
+                  distanceUnit={normalizeDistanceUnit(workout.user?.distanceUnit)}
+                  exercise={exerciseSet.exercise}
+                  mode="edit"
+                  sets={exerciseSet.sets}
+                  weightUnit={normalizeWeightUnit(workout.user?.weightUnit)}
+                  onChange={(setIndex, changes) =>
+                    updateSets(exerciseIndex, (sets) =>
+                      sets.map((candidate, index) =>
+                        index === setIndex ? { ...candidate, ...changes } : candidate,
+                      ),
+                    )
+                  }
+                  onRemove={(setIndex) =>
+                    updateSets(exerciseIndex, (sets) =>
+                      sets.filter((_, index) => index !== setIndex),
+                    )
+                  }
+                />
+              )}
+
+              <AppOptionalAction
+                label={t('workout.edit.addSet')}
+                onClick={() =>
+                  updateSets(exerciseIndex, (sets) => [
+                    ...sets,
+                    create(SetSchema, {
+                      weightUnit: normalizeWeightUnit(workout.user?.weightUnit),
+                      distanceUnit: normalizeDistanceUnit(workout.user?.distanceUnit),
+                    }),
+                  ])
                 }
               />
-            )}
-
-            <AppOptionalAction
-              label={t('workout.edit.addSet')}
-              onClick={() =>
-                updateSets(exerciseIndex, (sets) => [
-                  ...sets,
-                  create(SetSchema, {
-                    weightUnit: normalizeWeightUnit(workout.user?.weightUnit),
-                    distanceUnit: normalizeDistanceUnit(workout.user?.distanceUnit),
-                  }),
-                ])
-              }
-            />
-          </div>
-        </li>
+            </div>
+          </li>
         ))}
       </ol>
 

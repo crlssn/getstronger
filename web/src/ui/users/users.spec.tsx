@@ -116,9 +116,7 @@ describe('UserView', () => {
     mocked.getUser.mockResolvedValue(profile(false, me))
     render(`/users/${me}`)
 
-    await waitFor(() =>
-      expect(usePageTitleStore.getState().pageTitle).toBe('Your public profile'),
-    )
+    await waitFor(() => expect(usePageTitleStore.getState().pageTitle).toBe('Your public profile'))
   })
 
   test('links each tab to its section', async () => {

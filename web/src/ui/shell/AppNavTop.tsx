@@ -48,9 +48,7 @@ export const AppNavTop = () => {
   // screen before this one, and a public profile opened from the Me tab used
   // to promise "Home" because /users/... hangs off no tab in particular.
   const backLabel =
-    hasHistory && previousPageTitle
-      ? previousPageTitle
-      : t(tabLabelKeys[parentTab] ?? 'nav.home')
+    hasHistory && previousPageTitle ? previousPageTitle : t(tabLabelKeys[parentTab] ?? 'nav.home')
 
   return (
     <header className={styles.pageNav}>

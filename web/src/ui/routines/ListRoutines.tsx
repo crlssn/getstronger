@@ -127,9 +127,7 @@ export const ListRoutines = () => {
             <div className={styles.routineGrid}>
               {group.items.map((routine) => {
                 const tags = routineTags(routine)
-                const performed = formatDateTime(
-                  lastPerformedIn(routineLastPerformed, routine.id),
-                )
+                const performed = formatDateTime(lastPerformedIn(routineLastPerformed, routine.id))
 
                 return (
                   <article key={routine.id} className={styles.routineCard}>
