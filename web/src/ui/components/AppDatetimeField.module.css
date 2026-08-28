@@ -1,0 +1,20 @@
+@reference '../../assets/base.css';
+
+.field {
+  @apply card relative flex min-h-(--size-control) items-center justify-between gap-3 px-4 text-base text-text;
+}
+
+/* The focus ring the hidden input cannot show itself. */
+.field:focus-within {
+  @apply ring-2 ring-ink;
+}
+
+.edit {
+  @apply text-meta text-text-subtle;
+}
+
+/* The real control, stretched over the whole field: a tap anywhere opens the
+ * platform picker, and assistive tech lands on a native input. */
+.input {
+  @apply absolute inset-0 h-full w-full cursor-pointer opacity-0;
+}

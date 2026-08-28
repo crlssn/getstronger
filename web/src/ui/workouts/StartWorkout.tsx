@@ -911,7 +911,8 @@ export const StartWorkout = () => {
     if (logged) return t('workout.loggedSets', { count: logged })
 
     const previous = previousSetFor(station.exercise.id, 0)
-    if (previous) return `${t('common.previous')} ${formatExerciseSet(previous, station.exercise)}`
+    if (previous)
+      return t('workout.lastSet', { set: formatExerciseSet(previous, station.exercise) })
     return t('workout.notStarted')
   }
 
@@ -964,9 +965,14 @@ export const StartWorkout = () => {
                     })}
               </p>
             </div>
-            <span className={styles.elapsed} aria-label={t('workout.elapsed')}>
-              {elapsedLabel(elapsedSeconds)}
-            </span>
+            {/* Two dark clocks running at once compete; while resting, the
+                countdown is the one that matters, so the elapsed pill stands
+                down until it is over. */}
+            {restSeconds <= 0 && (
+              <span className={styles.elapsed} aria-label={t('workout.elapsed')}>
+                {elapsedLabel(elapsedSeconds)}
+              </span>
+            )}
           </div>
         </header>
 

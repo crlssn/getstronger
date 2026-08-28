@@ -64,8 +64,8 @@
   @apply card divide-y divide-border overflow-hidden;
 }
 
-.settingsCard a,
-.settingsCard button {
+.settingsCard > a,
+.settingsCard > button {
   @apply grid w-full grid-cols-[1fr_auto] items-center gap-3 p-4 transition hover:bg-ink-surface hover:text-ink-strong;
 }
 
@@ -83,27 +83,52 @@
   @apply mt-0.5 text-sm text-text-subtle;
 }
 
-/* Stacked on a phone. Squeezing a segmented control into what is left of a row
-   hides its second option behind a scroll nobody can see. */
-.preferencesCard {
-  @apply card flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between;
+/* A labelled group of settings: an uppercase kicker above the card, the way a
+   list names its buckets. */
+.settingsGroup > h2 {
+  @apply mb-2 px-1 text-eyebrow font-bold uppercase text-text-subtle;
 }
 
-.preferencesCard strong,
-.preferencesCard small {
+/* One card of preference rows, each control inline with its copy. The compact
+   segmented fits beside the label; the old full-width one forced every row to
+   stack. */
+.preferencesCard {
+  @apply card divide-y divide-border overflow-hidden;
+}
+
+.preferenceRow {
+  @apply flex items-center justify-between gap-4 p-4;
+}
+
+/* The control keeps its width whole — a compact segmented that gets squeezed
+   scrolls, and a scrolled "kg | lb…" reads as clipped. The copy is what gives. */
+.preferenceRow > :last-child {
+  @apply shrink-0;
+}
+
+.preferenceCopy {
+  @apply min-w-0;
+}
+
+.preferenceCopy strong,
+.preferenceCopy small {
   @apply block;
 }
 
-.preferencesCard strong {
+.preferenceCopy strong {
   @apply text-base font-semibold text-text;
 }
 
-.preferencesCard small {
+.preferenceCopy small {
   @apply mt-0.5 text-sm text-text-subtle;
 }
 
-/* A row that acts rather than navigates, in the shape of the ones that do:
-   the button role brings a height, a radius and a weight it does not want. */
-.accountAction {
-  @apply h-auto min-h-0 rounded-none text-left font-normal text-text;
+/* The delete block: consequence beside its button, the outlined red pill kept
+   inside the card that explains it. */
+.dangerRow {
+  @apply flex flex-col items-start gap-3 p-4;
+}
+
+.deleteAccount {
+  @apply border-danger/30;
 }

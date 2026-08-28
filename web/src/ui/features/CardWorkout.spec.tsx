@@ -184,15 +184,15 @@ describe('CardWorkout', () => {
     test('flags a session that set a personal best', () => {
       render(<CardWorkout compact workout={withSets()} />)
 
-      expect(screen.getByText('New PR')).toBeInTheDocument()
+      expect(screen.getByText('PR')).toBeInTheDocument()
     })
 
     // The detail page always counts them; what a session with none does not
-    // get is the badge that celebrates them.
+    // get is the chip that celebrates them.
     test('says nothing about records when there were none', () => {
       render(<CardWorkout compact workout={workout()} />)
 
-      expect(screen.queryByText(/\bnew PRs?\b/i)).not.toBeInTheDocument()
+      expect(screen.queryByText(/\bPR\b/)).not.toBeInTheDocument()
     })
 
     // Every card opens the workout, your own included: editing and deleting
@@ -243,7 +243,7 @@ describe('CardWorkout', () => {
       expect(screen.getByRole('button', { name: /Bench press/ })).toBeInTheDocument()
       expect(screen.getByRole('heading', { name: 'Round 1' })).toBeInTheDocument()
       expect(screen.getByRole('heading', { name: 'Round 2' })).toBeInTheDocument()
-      expect(screen.getByText('95 kg · 5')).toBeInTheDocument()
+      expect(screen.getByText('95 kg × 5')).toBeInTheDocument()
     })
 
     // A plain routine, a quick workout, and every session logged before blocks

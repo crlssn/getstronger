@@ -39,8 +39,8 @@ describe('CardWorkoutCircuit', () => {
     )
 
     expect(screen.getAllByRole('heading')).toHaveLength(2)
-    expect(within(round('Round 1')).getByText('60 kg · 8')).toBeInTheDocument()
-    expect(within(round('Round 2')).getByText('95 kg · 5')).toBeInTheDocument()
+    expect(within(round('Round 1')).getByText('60 kg × 8')).toBeInTheDocument()
+    expect(within(round('Round 2')).getByText('95 kg × 5')).toBeInTheDocument()
   })
 
   // The block ran for as many rounds as its longest-worked exercise; an athlete

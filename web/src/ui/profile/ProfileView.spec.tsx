@@ -194,8 +194,8 @@ describe('ProfileView', () => {
   })
 
   describe.each([
-    ['Preferred weight unit', 'Pounds', () => mocked.updateUserWeightUnit, WeightUnit.POUNDS],
-    ['Preferred distance unit', 'Miles', () => mocked.updateUserDistanceUnit, DistanceUnit.MILES],
+    ['Preferred weight unit', 'lbs', () => mocked.updateUserWeightUnit, WeightUnit.POUNDS],
+    ['Preferred distance unit', 'mi', () => mocked.updateUserDistanceUnit, DistanceUnit.MILES],
   ] as const)('%s', (label, option, request, expected) => {
     test('is applied straight away and then saved', async () => {
       render()
@@ -239,11 +239,12 @@ describe('ProfileView', () => {
     })
   })
 
+  // A boolean is a switch, not an Off/On segmented control.
   test('switches autofill on and off', async () => {
     render()
 
     await loaded()
-    await userEvent.click(group('Repeat my last set').getByRole('button', { name: 'On' }))
+    await userEvent.click(screen.getByRole('switch', { name: 'Repeat my last set' }))
 
     await waitFor(() => expect(mocked.updateUserAutofillSets).toHaveBeenCalledWith(true))
     expect(usePreferencesStore.getState().autofillSets).toBe(true)

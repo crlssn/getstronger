@@ -81,10 +81,7 @@ describe('CreateExercise', () => {
     render(<CreateExercise />)
 
     await waitFor(() => expect(mocked.listExerciseTags).toHaveBeenCalled())
-    expect(screen.getByRole('button', { name: 'Weight × reps' })).toHaveAttribute(
-      'aria-pressed',
-      'true',
-    )
+    expect(screen.getByRole('button', { name: 'Weight' })).toHaveAttribute('aria-pressed', 'true')
   })
 
   // How long an exercise rests belongs to the routine that trains it, so the
@@ -129,7 +126,7 @@ describe('CreateExercise', () => {
     render(<CreateExercise />)
 
     await userEvent.type(nameField(), 'Row')
-    await userEvent.click(screen.getByRole('button', { name: 'Distance × time' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Distance' }))
     await userEvent.type(
       screen.getByRole('combobox', { name: 'Add exercise tag' }),
       'Cardio{Enter}',

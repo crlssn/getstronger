@@ -127,12 +127,12 @@ test.describe('guest authentication and routing', () => {
     await expect(
       page
         .getByRole('group', { name: 'Preferred weight unit' })
-        .getByRole('button', { name: 'Kilograms' }),
+        .getByRole('button', { name: 'kg', exact: true }),
     ).toHaveAttribute('aria-pressed', 'true')
     await expect(
       page
         .getByRole('group', { name: 'Preferred distance unit' })
-        .getByRole('button', { name: 'Kilometers' }),
+        .getByRole('button', { name: 'km', exact: true }),
     ).toHaveAttribute('aria-pressed', 'true')
   })
 

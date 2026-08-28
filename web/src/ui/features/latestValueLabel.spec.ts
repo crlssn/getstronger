@@ -20,6 +20,9 @@ describe('latestValueLabel', () => {
       save: vi.fn(),
       restore: vi.fn(),
       fillText: vi.fn(),
+      beginPath: vi.fn(),
+      rect: vi.fn(),
+      fill: vi.fn(),
       measureText: () => ({ width: labelWidth }),
     }
     const chart = {
@@ -44,7 +47,13 @@ describe('latestValueLabel', () => {
       [1000, 2500],
     )
 
-    expect(ctx.fillText).toHaveBeenCalledWith('2,500', 30, 36)
+    expect(ctx.fillText).toHaveBeenCalledWith('2,500', 30, 31)
+  })
+
+  test('draws the pill the value sits in', () => {
+    const ctx = drawOn([{ x: 30, y: 40 }], [2500])
+
+    expect(ctx.fill).toHaveBeenCalled()
   })
 
   // The last bar sits at the right edge of the plot, so a centred label ran
@@ -53,13 +62,13 @@ describe('latestValueLabel', () => {
   test('keeps the label inside the plot at the right edge', () => {
     const ctx = drawOn([{ x: 300, y: 40 }], [8293], { left: 0, right: 300 }, 40)
 
-    expect(ctx.fillText).toHaveBeenCalledWith('8,293', 280, 36)
+    expect(ctx.fillText).toHaveBeenCalledWith('8,293', 272, 31)
   })
 
   test('keeps it inside at the left edge too', () => {
     const ctx = drawOn([{ x: 0, y: 40 }], [8293], { left: 0, right: 300 }, 40)
 
-    expect(ctx.fillText).toHaveBeenCalledWith('8,293', 20, 36)
+    expect(ctx.fillText).toHaveBeenCalledWith('8,293', 28, 31)
   })
 
   // A trailing zero would print a "0" floating over the axis, which reads as a

@@ -110,7 +110,7 @@ describe('ViewRoutine', () => {
     render()
 
     // The heaviest set of the two, not the last logged.
-    expect(await screen.findByText('2 sets · last 100 kg · 5')).toBeInTheDocument()
+    expect(await screen.findByText('2 sets · Last: 100 kg × 5')).toBeInTheDocument()
   })
 
   test('falls back to tags for an exercise never trained', async () => {
@@ -140,7 +140,7 @@ describe('ViewRoutine', () => {
         .mockResolvedValue(undefined)
       render()
 
-      await userEvent.click(await screen.findByRole('button', { name: /Make up next/ }))
+      await userEvent.click(await screen.findByRole('button', { name: /Set as up next/ }))
 
       expect(selectRoutine).toHaveBeenCalledWith('push')
       await waitFor(() =>
@@ -153,7 +153,7 @@ describe('ViewRoutine', () => {
       render()
 
       expect(await screen.findByText('Up next')).toBeInTheDocument()
-      expect(screen.queryByRole('button', { name: /Make up next/ })).not.toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: /Set as up next/ })).not.toBeInTheDocument()
     })
   })
 

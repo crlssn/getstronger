@@ -3,7 +3,7 @@ import type { Toast, ToastType } from '@/types/toast'
 import { create } from 'zustand'
 
 /** How long a toast stays on screen before it dismisses itself. */
-export const TOAST_DURATION_MS = 5000
+export const TOAST_DURATION_MS = 3000
 
 interface ToastState {
   toast: Toast | null

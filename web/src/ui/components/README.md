@@ -25,6 +25,7 @@ aspirational.
 | Anything a user taps            | `<AppButton>` — or `<AppIconButton>` for icon-only  |
 | A text field                    | `<AppInput>` / `<AppTextarea>`                      |
 | A number or a duration          | `<AppNumberField>` / `<AppDurationInput>`           |
+| A date and time                 | `<AppDatetimeField>`                                |
 | A duration nudged in steps      | `<AppDurationStepper>`                              |
 | A count nudged in steps         | `<AppStepper>`                                      |
 | On or off                       | `<AppSwitch>`                                       |
@@ -33,6 +34,8 @@ aspirational.
 | A screen's title block          | `<AppPageHeader>`                                   |
 | A form's pinned submit          | `<AppFormFooter>`                                   |
 | A value a row can unfold        | `<AppValueChip>`                                    |
+| A status pill beside a title    | `<AppChip>`                                         |
+| A row not yet seen              | `<AppUnreadDot>`                                    |
 | A panel around content          | `<AppCard>`, or the `card` utility inside a module  |
 | Rows of things                  | `<AppList>` + `<AppListItem>` / `<AppListItemLink>` |
 | A row with a value and a way on | `<AppListRow>`                                      |
@@ -146,6 +149,13 @@ Both are `type="text"` with an `inputMode`, not `type="number"`: a spinner on a
 set row is a mis-tap waiting to happen, and a scroll wheel over one silently
 changes what was logged.
 
+### `<AppDatetimeField>`
+
+A moment, shown as "Fri 28 Aug · 20:42" with an Edit affordance. The native
+datetime-local input is stretched invisibly over the field, so a tap opens the
+platform's own picker and assistive tech lands on a real control — but nobody
+reads a raw "2026-08-28T20:42" again.
+
 ### `<AppStepper>`
 
 A number nudged in steps, shown between a − and a + as a `spinbutton`. For a
@@ -257,6 +267,19 @@ A value on a row, and the way to the control that changes it: the rest a routine
 gives an exercise reads as a pill on the row and unfolds its stepper only when
 tapped. `label` is required — a duration on its own names nothing — and
 `expanded` says whether what it opens is showing.
+
+### `<AppChip>`
+
+A small pill of fact beside a title. `tone="record"` is the PR chip — the only
+gold in the product, worn wherever a personal record was set. The default
+neutral tone is a count ("5 exercises"). It states, never toggles: anything
+tappable is a button or a segment.
+
+### `<AppUnreadDot>`
+
+The ink dot at the right edge of a row not yet seen, before the chevron. It is
+`aria-hidden` — the row says "unread" in words to a screen reader, because a
+dot says nothing.
 
 ### `<AppEmptyState>`
 

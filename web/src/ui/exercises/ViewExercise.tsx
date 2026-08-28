@@ -13,6 +13,7 @@ import { usePageTitleStore } from '@/stores/pageTitle'
 import { useToastStore } from '@/stores/toasts'
 import { useWorkoutStore } from '@/stores/workout'
 import { AppButton } from '@/ui/components/AppButton'
+import { AppChip } from '@/ui/components/AppChip'
 import { AppLoadMore } from '@/ui/components/AppLoadMore'
 import { AppOptionRow } from '@/ui/components/AppOptionRow'
 import { AppSheet, SheetAction } from '@/ui/components/AppSheet'
@@ -216,9 +217,9 @@ export const ViewExercise = () => {
                   <small>{formatTimestamp(set.metadata?.createdAt)}</small>
                 </span>
                 {set.metadata?.personalBest && (
-                  <span className={styles.recordPill}>
+                  <AppChip tone="record">
                     <TrophyIcon aria-hidden="true" /> {t('exercise.view.prPill')}
-                  </span>
+                  </AppChip>
                 )}
                 <ChevronRightIcon aria-hidden="true" />
               </Link>

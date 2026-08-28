@@ -17,7 +17,7 @@ test.describe('seed personas', () => {
     await expect(page).toHaveURL(/\/login$/)
 
     await logInAs(page, 'active@getstronger.test', 'password123')
-    await expect(page.getByRole('article').filter({ hasText: '@janedoe' }).first()).toBeVisible()
+    await expect(page.getByRole('listitem').filter({ hasText: '@janedoe' }).first()).toBeVisible()
     await page.goto('/profile')
     await expect(page.getByRole('heading', { name: 'Alex Morgan' })).toBeVisible()
     await expect(page.getByLabel('Training summary')).not.toContainText('0workouts')

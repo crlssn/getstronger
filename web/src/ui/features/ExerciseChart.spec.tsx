@@ -66,7 +66,7 @@ describe('ExerciseChart', () => {
   test('offers a lift the measures a lift has', () => {
     renderWithProviders(<ExerciseChart sets={twoDays} exercise={lift} />)
 
-    expect(metrics()).toEqual(['Est. 1RM', 'Weight', 'Reps', 'Volume'])
+    expect(metrics()).toEqual(['1RM', 'kg', 'Reps', 'Vol'])
   })
 
   test('offers a distance-and-time exercise its own measures', () => {
@@ -86,7 +86,7 @@ describe('ExerciseChart', () => {
   test('plots the measure that was picked', async () => {
     renderWithProviders(<ExerciseChart sets={twoDays} exercise={lift} />)
 
-    await userEvent.click(screen.getByRole('button', { name: 'Weight' }))
+    await userEvent.click(screen.getByRole('button', { name: 'kg' }))
 
     expect(values()).toEqual([100, 110])
     expect(screen.getByText('110 kg')).toBeInTheDocument()

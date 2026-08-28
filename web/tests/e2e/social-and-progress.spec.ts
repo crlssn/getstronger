@@ -41,7 +41,7 @@ test.describe('social feed and discovery', () => {
   })
 
   test('opens a feed workout and posts a comment @mutation', async ({ page }) => {
-    const card = page.getByRole('article').filter({ hasText: '@janedoe' }).first()
+    const card = page.getByRole('listitem').filter({ hasText: '@janedoe' }).first()
     await expect(card).toBeVisible()
     await card.getByRole('link', { name: /View .* workout details/ }).click()
 
@@ -79,7 +79,7 @@ test.describe('social feed and discovery', () => {
     const failure = page.getByRole('alert').filter({ hasText: 'Latest workouts could not be' })
     await expect(failure).toBeVisible()
     await failure.getByRole('button', { name: 'Try again' }).click()
-    await expect(page.getByRole('article').first()).toBeVisible()
+    await expect(page.getByRole('listitem').filter({ hasText: '@' }).first()).toBeVisible()
     await scrollToListEnd(page, page.getByText(/all caught up/))
     await expect(page.getByText("You're all caught up")).toBeVisible()
   })
@@ -162,7 +162,7 @@ test.describe('profiles and notifications', () => {
     await expect(page.getByRole('link', { name: /@alex/ })).toBeVisible()
 
     await tabs.getByRole('link', { name: 'Followers', exact: true }).click()
-    await expect(page.getByText('Nothing here yet…')).toBeVisible()
+    await expect(page.getByText('No followers yet')).toBeVisible()
 
     // Put the seeded follow back for whatever runs next.
     await page.goto(profile)

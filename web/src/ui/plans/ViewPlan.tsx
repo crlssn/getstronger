@@ -145,14 +145,24 @@ export const ViewPlan = () => {
         </footer>
       </section>
 
-      <AppButton
-        type="button"
-        colour="destructive"
-        className={styles.deletePlan}
-        onClick={() => void remove()}
-      >
-        <TrashIcon className="size-5" aria-hidden="true" /> {t('training.planView.delete')}
-      </AppButton>
+      {/* The same danger pattern the routine editor set: the consequence in
+          words beside an outlined red pill, never a full-width red row. */}
+      <section className={styles.dangerZone}>
+        <div>
+          <h2>{t('training.planView.deleteTitle')}</h2>
+          <p>{t('training.planView.deleteBody')}</p>
+        </div>
+        <AppButton
+          type="button"
+          colour="destructive"
+          size="sm"
+          width="auto"
+          className={styles.deletePlan}
+          onClick={() => void remove()}
+        >
+          <TrashIcon className="size-5" aria-hidden="true" /> {t('common.delete')}
+        </AppButton>
+      </section>
     </div>
   )
 }

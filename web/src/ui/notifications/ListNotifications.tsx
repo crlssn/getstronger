@@ -7,9 +7,11 @@ import { listNotifications, markNotificationAsRead } from '@/http/requests'
 import { useNotificationStore } from '@/stores/notifications'
 import { cn } from '@/ui/cn'
 import { AppButton } from '@/ui/components/AppButton'
+import { AppEmptyState } from '@/ui/components/AppEmptyState'
 import { AppErrorState } from '@/ui/components/AppErrorState'
 import { AppList } from '@/ui/components/AppList'
 import { AppListItem } from '@/ui/components/AppListItem'
+import { AppUnreadDot } from '@/ui/components/AppUnreadDot'
 import { AppSkeleton } from '@/ui/components/AppSkeleton'
 import { PageNavAction } from '@/ui/components/PageNavAction'
 import { NotificationUserFollow } from '@/ui/features/NotificationUserFollow'
@@ -111,37 +113,45 @@ export const ListNotifications = () => {
         </PageNavAction>
       )}
 
-      <AppList canFetch={hasMorePages && !failed} onFetch={() => void fetchNotifications()}>
-        {notifications.map((notification) => (
-          <AppListItem
-            key={notification.id}
-            className={cn(styles.notificationItem, !notification.read && styles.unread)}
-            onClick={() => markAsRead(notification)}
-          >
-            {!notification.read && (
-              <span className="sr-only">{t('profile.unreadNotification')}</span>
-            )}
+      {notifications.length === 0 && !failed && (
+        <AppEmptyState
+          action="none"
+          body={t('notifications.emptyBody')}
+          title={t('notifications.emptyTitle')}
+        />
+      )}
 
-            {notification.type.case === 'userFollowed' && (
-              <NotificationUserFollow
-                actor={notification.type.value.actor}
-                timestamp={notification.notifiedAtUnix}
-              />
-            )}
-            {notification.type.case === 'workoutComment' && (
-              <NotificationWorkoutComment
-                actor={notification.type.value.actor}
-                workout={notification.type.value.workout}
-                timestamp={notification.notifiedAtUnix}
-              />
-            )}
+      {notifications.length > 0 && (
+        <AppList canFetch={hasMorePages && !failed} onFetch={() => void fetchNotifications()}>
+          {notifications.map((notification) => (
+            <AppListItem
+              key={notification.id}
+              className={cn(styles.notificationItem, !notification.read && styles.unread)}
+              onClick={() => markAsRead(notification)}
+            >
+              {!notification.read && (
+                <span className="sr-only">{t('profile.unreadNotification')}</span>
+              )}
 
-            {!notification.read && <span className={styles.unreadDot} aria-hidden="true" />}
-          </AppListItem>
-        ))}
+              {notification.type.case === 'userFollowed' && (
+                <NotificationUserFollow
+                  actor={notification.type.value.actor}
+                  timestamp={notification.notifiedAtUnix}
+                />
+              )}
+              {notification.type.case === 'workoutComment' && (
+                <NotificationWorkoutComment
+                  actor={notification.type.value.actor}
+                  workout={notification.type.value.workout}
+                  timestamp={notification.notifiedAtUnix}
+                />
+              )}
 
-        {notifications.length === 0 && <AppListItem>{t('notifications.empty')}</AppListItem>}
-      </AppList>
+              {!notification.read && <AppUnreadDot />}
+            </AppListItem>
+          ))}
+        </AppList>
+      )}
 
       {failed && <AppErrorState compact onRetry={() => void fetchNotifications()} />}
     </>

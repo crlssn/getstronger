@@ -19,8 +19,7 @@ import { usePageTitleStore } from '@/stores/pageTitle'
 import { AppButton } from '@/ui/components/AppButton'
 import { AppErrorState } from '@/ui/components/AppErrorState'
 import { AppFormFooter } from '@/ui/components/AppFormFooter'
-import { AppList } from '@/ui/components/AppList'
-import { AppListItemInput } from '@/ui/components/AppListItemInput'
+import { AppDatetimeField } from '@/ui/components/AppDatetimeField'
 import { AppOptionalAction } from '@/ui/components/AppOptionalAction'
 import { AppSkeleton } from '@/ui/components/AppSkeleton'
 import { ExerciseTags } from '@/ui/exercises/ExerciseTags'
@@ -206,39 +205,33 @@ export const EditWorkout = () => {
         ))}
       </ol>
 
-      {/* Each field is labelled by the row it fills, so the label that used
-          to float above it said the same thing twice. */}
-      <AppList>
-        <AppListItemInput
-          label={t('workout.edit.startTime')}
-          model={toLocalInput(workout.startedAt)}
-          type="datetime-local"
-          required
-          onUpdate={(value) =>
-            setWorkout((current) =>
-              current
-                ? { ...current, startedAt: timestampFromDate(DateTime.fromISO(value).toJSDate()) }
-                : current,
-            )
-          }
-        />
-      </AppList>
+      {/* The app's own date form with the platform picker behind it, not the
+          browser-default datetime row. */}
+      <AppDatetimeField
+        label={t('workout.edit.startTime')}
+        model={toLocalInput(workout.startedAt)}
+        required
+        onUpdate={(value) =>
+          setWorkout((current) =>
+            current
+              ? { ...current, startedAt: timestampFromDate(DateTime.fromISO(value).toJSDate()) }
+              : current,
+          )
+        }
+      />
 
-      <AppList>
-        <AppListItemInput
-          label={t('workout.edit.endTime')}
-          model={toLocalInput(workout.finishedAt)}
-          type="datetime-local"
-          required
-          onUpdate={(value) =>
-            setWorkout((current) =>
-              current
-                ? { ...current, finishedAt: timestampFromDate(DateTime.fromISO(value).toJSDate()) }
-                : current,
-            )
-          }
-        />
-      </AppList>
+      <AppDatetimeField
+        label={t('workout.edit.endTime')}
+        model={toLocalInput(workout.finishedAt)}
+        required
+        onUpdate={(value) =>
+          setWorkout((current) =>
+            current
+              ? { ...current, finishedAt: timestampFromDate(DateTime.fromISO(value).toJSDate()) }
+              : current,
+          )
+        }
+      />
 
       <AppTextarea
         autosize

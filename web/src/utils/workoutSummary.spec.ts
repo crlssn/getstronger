@@ -91,6 +91,6 @@ describe('workoutSummary', () => {
 
     expect(
       workoutSummary(workout({ finishedAt: timestampFromDate(lastYear) })).finishedMoment,
-    ).toMatch(/^Fri, 14 August · \d{2}:\d{2}$/)
+    ).toMatch(/^Fri 14 Aug · \d{2}:\d{2}$/)
   })
 })

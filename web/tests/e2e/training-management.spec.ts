@@ -180,7 +180,11 @@ test.describe('exercise library', () => {
       // Nothing logged yet, so a mistake made at creation time is correctable.
       await openForEditing(exerciseName)
       await expect(page.getByRole('group', { name: 'How do you track it?' })).toBeVisible()
-      await expect(page.getByRole('button', { name: 'Distance × time' })).toBeVisible()
+      await expect(
+        page
+          .getByRole('group', { name: 'Common measurement combinations' })
+          .getByRole('button', { name: 'Distance', exact: true }),
+      ).toBeVisible()
 
       await page.goto('/workouts/quick')
       await page.getByRole('button', { name: 'Choose exercise' }).click()
@@ -205,7 +209,9 @@ test.describe('exercise library', () => {
       await openForEditing(exerciseName)
       await expect(page.getByRole('list', { name: 'How do you track it?' })).toBeVisible()
       await expect(page.getByRole('group', { name: 'How do you track it?' })).toHaveCount(0)
-      await expect(page.getByRole('button', { name: 'Distance × time' })).toHaveCount(0)
+      await expect(
+        page.getByRole('group', { name: 'Common measurement combinations' }),
+      ).toHaveCount(0)
       await expect(
         page.getByText('Measurements stay as they are once sets are logged'),
       ).toBeVisible()
@@ -219,7 +225,7 @@ test.describe('exercise library', () => {
 
       // And the set is still the lift it was logged as.
       await expect(page.getByRole('heading', { name: 'Logged sets' })).toBeVisible()
-      await expect(page.getByText(/100\s*(kg|lbs)\s*·\s*5/)).toBeVisible()
+      await expect(page.getByText(/100\s*(kg|lbs)\s*×\s*5/)).toBeVisible()
     } finally {
       await deleteExercise(page, renamedExercise)
       await deleteExercise(page, exerciseName)
@@ -359,7 +365,7 @@ test.describe('routine lifecycle', () => {
     await page.getByRole('button', { name: 'Save changes' }).click()
 
     await expect(page.getByRole('heading', { name: updatedName })).toBeVisible()
-    await page.getByRole('button', { name: 'Make up next' }).click()
+    await page.getByRole('button', { name: 'Set as up next' }).click()
     await expect(page.getByRole('status')).toContainText(`${updatedName} is up next`)
 
     await page.getByRole('button', { name: 'Delete' }).click()
@@ -545,8 +551,8 @@ test.describe('routine lifecycle', () => {
       await expect(page.getByText('Circuit · 2 rounds')).toBeVisible()
       await expect(page.getByRole('heading', { name: 'Round 1' })).toBeVisible()
       await expect(page.getByRole('heading', { name: 'Round 2' })).toBeVisible()
-      await expect(page.getByText('25 kg · 8').first()).toBeVisible()
-      await expect(page.getByText('30 kg · 6').first()).toBeVisible()
+      await expect(page.getByText('25 kg × 8').first()).toBeVisible()
+      await expect(page.getByText('30 kg × 6').first()).toBeVisible()
 
       await page.getByRole('button', { name: 'Workout actions' }).click()
       await page.getByRole('menuitem', { name: 'Delete workout' }).click()
@@ -713,7 +719,7 @@ test.describe('plan lifecycle', () => {
     await page.getByRole('button', { name: 'Save changes' }).click()
     await expect(page.getByRole('heading', { name: updatedPlanName })).toBeVisible()
 
-    await page.getByRole('button', { name: 'Delete plan' }).click()
+    await page.getByRole('button', { name: 'Delete', exact: true }).click()
     await acceptConfirmDialog(page, 'Delete plan')
     await expect(page).toHaveURL(/\/plans$/)
     await expect(page.getByText(updatedPlanName)).toHaveCount(0)

@@ -1,0 +1,5 @@
+@reference '../../assets/base.css';
+
+.dot {
+  @apply inline-block size-2 shrink-0 rounded-pill bg-ink;
+}

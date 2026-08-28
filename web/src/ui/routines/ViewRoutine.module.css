@@ -65,7 +65,7 @@
    group badge was the loudest thing on a screen whose subject is the exercises
    under it — and three of these were defined at two sizes and two radii. */
 .groupBadge {
-  @apply grid size-8 shrink-0 place-items-center rounded-lg bg-info-surface text-sm font-semibold text-text-muted;
+  @apply grid size-8 shrink-0 place-items-center rounded-control bg-info-surface text-sm font-semibold text-text-muted;
 }
 
 .groupHeader strong {
@@ -89,7 +89,7 @@
 }
 
 .number {
-  @apply grid size-8 shrink-0 place-items-center rounded-lg bg-info-surface text-sm font-semibold text-text-muted;
+  @apply grid size-8 shrink-0 place-items-center rounded-control bg-info-surface text-sm font-semibold text-text-muted;
 }
 
 .exerciseCopy {

@@ -70,15 +70,22 @@ describe('formatTimestamp', () => {
     expect(formatTimestamp(timestamp)).toBe('3 days ago')
   })
 
-  // Past a week the day it fell on says more than the count of days.
+  // Past a week the day it fell on says more than the count of days. The year
+  // is noise while it is still this year.
   test('gives the date once it is a week old', () => {
     at('2026-03-25T09:30:00Z')
 
-    expect(formatTimestamp(timestamp)).toBe('17 Mar 2026')
+    expect(formatTimestamp(timestamp)).toBe('17 Mar')
   })
 
   test('gives the date for anything older', () => {
     at('2026-06-17T09:30:00Z')
+
+    expect(formatTimestamp(timestamp)).toBe('17 Mar')
+  })
+
+  test('adds the year only once it differs', () => {
+    at('2027-06-17T09:30:00Z')
 
     expect(formatTimestamp(timestamp)).toBe('17 Mar 2026')
   })
@@ -111,7 +118,7 @@ describe('formatUnixTimestamp', () => {
 // timestamp on a row.
 describe('formatMoment', () => {
   test('renders the weekday, the date and the time', () => {
-    expect(formatMoment(timestamp)).toMatch(/^Tue, 17 March · \d{2}:\d{2}$/)
+    expect(formatMoment(timestamp)).toMatch(/^Tue 17 Mar · \d{2}:\d{2}$/)
   })
 
   test('renders nothing without a timestamp', () => {

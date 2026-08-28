@@ -32,7 +32,7 @@
 }
 
 .menuItem {
-  @apply flex min-h-(--size-control-sm) w-full items-center rounded-lg px-3 text-left text-sm font-medium text-text-muted;
+  @apply flex min-h-(--size-control-sm) w-full items-center rounded-control px-3 text-left text-sm font-medium text-text-muted;
 }
 
 .menuItem.active {

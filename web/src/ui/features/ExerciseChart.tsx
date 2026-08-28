@@ -16,7 +16,7 @@ import { Line } from 'react-chartjs-2'
 import { useTranslation } from 'react-i18next'
 
 import { ExerciseMetric } from '@/proto/api/v1/shared_pb'
-import { borderColor, inkColor, subtleColor } from '@/ui/chartTokens'
+import { borderColor, chartFillColor, inkColor, subtleColor, surfaceColor } from '@/ui/chartTokens'
 import { AppSegmented } from '@/ui/components/AppSegmented'
 import { exerciseMetrics, formatDurationDisplay } from '@/utils/exerciseMeasurements'
 import { trendByDay, trendChange } from '@/utils/exerciseTrend'
@@ -25,9 +25,6 @@ import { usePrefersReducedMotion } from '@/utils/usePrefersReducedMotion'
 import styles from './ExerciseChart.module.css'
 
 ChartJS.register(Tooltip, LineElement, CategoryScale, LinearScale, Filler, PointElement)
-
-// The fill under the line, which has no token because nothing else uses it.
-const areaFill = 'rgba(37, 40, 45, 0.10)'
 
 interface Props {
   sets: Set[]
@@ -43,10 +40,12 @@ export const ExerciseChart = ({ sets, exercise }: Props) => {
     selected.includes(ExerciseMetric.WEIGHT) && selected.includes(ExerciseMetric.REPS)
 
   // Ordered as they are read: the headline measure first, the summed one last.
+  // Labels stay short enough that every one is visible at 390px — the working
+  // weight is named by its unit, the summed volume by its clipped word.
   const options: { key: TrendMetric; label: string }[] = [
     ...(hasWeightAndReps ? [{ key: 'oneRm' as const, label: t('exercise.chart.oneRmShort') }] : []),
     ...(selected.includes(ExerciseMetric.WEIGHT)
-      ? [{ key: 'weight' as const, label: t('common.weight') }]
+      ? [{ key: 'weight' as const, label: t('common.kg') }]
       : []),
     ...(selected.includes(ExerciseMetric.REPS)
       ? [{ key: 'reps' as const, label: t('common.reps') }]
@@ -57,7 +56,9 @@ export const ExerciseChart = ({ sets, exercise }: Props) => {
     ...(selected.includes(ExerciseMetric.TIME)
       ? [{ key: 'durationSeconds' as const, label: t('common.time') }]
       : []),
-    ...(hasWeightAndReps ? [{ key: 'volume' as const, label: t('common.volume') }] : []),
+    ...(hasWeightAndReps
+      ? [{ key: 'volume' as const, label: t('exercise.chart.volumeShort') }]
+      : []),
   ]
 
   const [metric, setMetric] = useState<TrendMetric>(options[0]?.key ?? 'weight')
@@ -95,15 +96,19 @@ export const ExerciseChart = ({ sets, exercise }: Props) => {
     maintainAspectRatio: false,
     responsive: true,
     scales: {
+      // The headline above the plot carries the latest value and its unit, so
+      // the y axis says nothing: one baseline hairline is all the scaffolding.
       x: {
+        border: { color: borderColor },
         grid: { display: false },
-        ticks: { color: subtleColor, maxTicksLimit: 6 },
+        ticks: { color: subtleColor, maxRotation: 0, maxTicksLimit: 6 },
       },
       y: {
         beginAtZero: false,
-        grid: { color: borderColor },
-        ticks: { color: subtleColor },
-        title: { color: subtleColor, display: true, text: details[metric].unit },
+        border: { display: false },
+        grid: { display: false },
+        ticks: { display: false },
+        title: { display: false },
       },
     },
     plugins: { legend: { display: false } },
@@ -135,16 +140,20 @@ export const ExerciseChart = ({ sets, exercise }: Props) => {
               labels: days.map((day) => day.label),
               datasets: [
                 {
-                  backgroundColor: areaFill,
+                  backgroundColor: chartFillColor,
                   borderColor: inkColor,
-                  borderWidth: 3,
+                  borderWidth: 2,
                   data: values,
                   fill: true,
                   label: details[metric].heading,
-                  pointBackgroundColor: '#ffffff',
+                  pointBackgroundColor: surfaceColor,
                   pointBorderColor: inkColor,
                   pointBorderWidth: 2,
-                  pointRadius: 4,
+                  // A dot on every point turns the line into beads; only the
+                  // latest one is marked. The hit radius keeps every point's
+                  // tooltip reachable.
+                  pointRadius: (context) => (context.dataIndex === values.length - 1 ? 4 : 0),
+                  pointHitRadius: 12,
                   tension: 0.35,
                 },
               ],
