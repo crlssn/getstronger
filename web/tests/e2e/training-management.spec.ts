@@ -407,8 +407,9 @@ test.describe('routine lifecycle', () => {
   })
 
   // The form's chrome: a save that a long routine cannot scroll away from, and
-  // a way out that is nowhere near the thumb building the routine.
-  test('keeps the save pinned and cancels from the header @mutation', async ({ page }) => {
+  // one way out — the nav bar's back row, which is the only one now that the
+  // form's own "Cancel" is gone from the slot right beside it.
+  test('keeps the save pinned and leaves by the back row @mutation', async ({ page }) => {
     await page.goto('/routines/create')
     await page.getByLabel('Routine name').fill(uniqueName('E2E Pinned'))
     for (let added = 0; added < 4; added += 1) await addRoutineExercise(page)
@@ -418,7 +419,8 @@ test.describe('routine lifecycle', () => {
     await page.evaluate(() => window.scrollTo(0, 0))
     await expect(page.getByRole('button', { name: 'Create routine' })).toBeInViewport()
 
-    await page.getByRole('link', { name: 'Cancel' }).click()
+    await expect(page.getByRole('link', { name: 'Cancel' })).toHaveCount(0)
+    await page.getByRole('button', { name: 'Training' }).click()
     await expect(page).toHaveURL(/\/routines$/)
   })
 

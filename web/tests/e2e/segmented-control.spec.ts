@@ -51,6 +51,10 @@ const pages = [
   { heading: /Föredragen viktenhet/, nav: /Träning|Training/, path: '/profile' },
   { heading: /Framsteg|Progress/, nav: /Träning|Training/, path: '/progress' },
   { heading: /Träning|Training/, nav: /Träning|Training/, path: '/routines' },
+  // The two the audit caught: four presets whose longest label is Distans ×
+  // tid, and the four profile tabs. Both are wider than 390px of screen, which
+  // is the case the control scrolls for.
+  { heading: /Hur mäter du övningen\?/, nav: /Träning|Training/, path: '/exercises/create' },
 ] as const
 
 test.describe('in Swedish', () => {
@@ -67,6 +71,24 @@ test.describe('in Swedish', () => {
         expect(await clipped(options), `${path} clips a segmented option`).toEqual([])
       }
     }
+  })
+})
+
+// The public profile's four tabs are the other row that has to survive 390px,
+// and its path carries an id, so it is reached the way a reader reaches it.
+test.describe('the public profile in Swedish', () => {
+  test.use({ locale: 'sv-SE' })
+
+  test('never clips one of its four tabs @responsive', async ({ page }) => {
+    await logInWhateverTheLanguage(page)
+    await page.goto('/profile')
+    await page.getByRole('link', { name: /Offentlig profil/ }).click()
+    await expect(page).toHaveURL(/\/users\//)
+
+    const tabs = page.getByRole('navigation', { name: /Profilsektioner/ }).getByRole('link')
+    await expect(tabs.first()).toBeVisible()
+
+    expect(await clipped(tabs), 'the public profile clips a tab').toEqual([])
   })
 })
 
