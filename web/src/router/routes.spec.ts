@@ -2,7 +2,13 @@ import { describe, expect, test } from 'vitest'
 
 import { en } from '@/i18n/messages'
 import { isTabRoot, tabRootPaths } from './tabs'
-import { flatRoutes, isFocusedShellPath, routeByName, routes } from './routes'
+import {
+  flatRoutes,
+  hidesTabBarPath,
+  isFocusedShellPath,
+  routeByName,
+  routes,
+} from './routes'
 
 const all = flatRoutes()
 
@@ -113,6 +119,45 @@ describe('routes', () => {
         'verify-email-pending',
       ].sort(),
     )
+  })
+})
+
+// Every route a person creates or edits something on. The tab bar plus a
+// sticky action bar stacked ~180px of permanent chrome onto an 844px screen,
+// with the form scrolling behind both of them.
+describe('a create or edit route is a focused task', () => {
+  test('every one of them hides the tab bar', () => {
+    const editing = all
+      .filter((route) => /^(create|edit|update)-/.test(route.name))
+      .filter((route) => !route.hidesTabBar)
+      .map((route) => route.name)
+
+    expect(editing, editing.join('\n')).toEqual([])
+  })
+
+  // The nav bar stays: it carries the title and the way back, which is how one
+  // of these is left. Hiding the whole shell would leave the form untitled.
+  test('keeps the nav bar above them', () => {
+    const alsoFocused = all
+      .filter((route) => route.hidesTabBar && route.focusedShell)
+      .map((route) => route.name)
+
+    expect(alsoFocused, alsoFocused.join('\n')).toEqual([])
+  })
+})
+
+describe('hidesTabBarPath', () => {
+  test.each([
+    ['/routines/create', true],
+    ['/routines/routine-1/edit', true],
+    ['/exercises/create', true],
+    ['/plans/plan-1/edit', true],
+    ['/workouts/workout-1/edit', true],
+    ['/routines/routine-1', false],
+    ['/workouts/workout-1', false],
+    ['/home', false],
+  ])('classifies %s as %s', (pathname, expected) => {
+    expect(hidesTabBarPath(pathname)).toBe(expected)
   })
 })
 

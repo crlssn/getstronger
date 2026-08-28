@@ -49,7 +49,7 @@ describe('AppDashboard', () => {
   )
 
   // A screen pushed on top of one gets the nav bar and a way back.
-  test.each(['/exercises/1', '/routines/1/edit', '/users/1/followers'])(
+  test.each(['/exercises/1', '/workouts/1', '/users/1/followers'])(
     'gives %s a back row and the tab bar',
     (route) => {
       renderAt(route)
@@ -58,6 +58,24 @@ describe('AppDashboard', () => {
       expect(backButton()).toBeInTheDocument()
     },
   )
+
+  // A create or edit screen is a task rather than a place: it keeps the way
+  // back and gives up the way sideways, so the form and its one sticky action
+  // bar are not sharing the screen with 180px of chrome nobody mid-form wants.
+  test.each([
+    '/exercises/create',
+    '/exercises/1/edit',
+    '/routines/create',
+    '/routines/1/edit',
+    '/plans/create',
+    '/plans/1/edit',
+    '/workouts/1/edit',
+  ])('gives %s a back row and no tab bar', (route) => {
+    renderAt(route)
+
+    expect(bottomNav()).not.toBeInTheDocument()
+    expect(backButton()).toBeInTheDocument()
+  })
 
   // An active workout takes over the screen: the tab bar would steal logging
   // space and invite accidental mid-workout navigation.

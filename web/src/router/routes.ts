@@ -25,6 +25,16 @@ export interface AppRoute {
   titleKey?: string
   /** Hides the usual chrome — the quick-workout screens run full-bleed. */
   focusedShell?: boolean
+  /**
+   * Hides the tab bar, keeping the nav bar above.
+   *
+   * Every route a person creates or edits something on. These carried the tab
+   * bar and a sticky action bar at once — around 180px of an 844px screen given
+   * over to permanent chrome, with the form scrolling behind both — and the tab
+   * bar was the half nobody in the middle of a form was reaching for. The nav
+   * bar stays, because its back row is how one of these is left.
+   */
+  hidesTabBar?: boolean
   children?: AppRoute[]
 }
 
@@ -64,6 +74,7 @@ export const routes: AppRoute[] = [
     path: '/workouts/:id/edit',
     access: 'auth',
     titleKey: 'pages.editWorkout',
+    hidesTabBar: true,
   },
   {
     name: 'workout-routine',
@@ -73,9 +84,21 @@ export const routes: AppRoute[] = [
   },
 
   { name: 'plans', path: '/plans', access: 'auth', titleKey: 'pages.training' },
-  { name: 'create-plan', path: '/plans/create', access: 'auth', titleKey: 'pages.newPlan' },
+  {
+    name: 'create-plan',
+    path: '/plans/create',
+    access: 'auth',
+    titleKey: 'pages.newPlan',
+    hidesTabBar: true,
+  },
   { name: 'plan', path: '/plans/:id', access: 'auth', titleKey: 'pages.plan' },
-  { name: 'edit-plan', path: '/plans/:planId/edit', access: 'auth', titleKey: 'pages.editPlan' },
+  {
+    name: 'edit-plan',
+    path: '/plans/:planId/edit',
+    access: 'auth',
+    titleKey: 'pages.editPlan',
+    hidesTabBar: true,
+  },
 
   { name: 'routines', path: '/routines', access: 'auth', titleKey: 'pages.routines' },
   {
@@ -83,6 +106,7 @@ export const routes: AppRoute[] = [
     path: '/routines/create',
     access: 'auth',
     titleKey: 'pages.createRoutine',
+    hidesTabBar: true,
   },
   { name: 'routine', path: '/routines/:id', access: 'auth', titleKey: 'pages.routine' },
   {
@@ -90,6 +114,7 @@ export const routes: AppRoute[] = [
     path: '/routines/:id/edit',
     access: 'auth',
     titleKey: 'pages.updateRoutine',
+    hidesTabBar: true,
   },
 
   { name: 'exercises', path: '/exercises', access: 'auth', titleKey: 'pages.exercises' },
@@ -98,6 +123,7 @@ export const routes: AppRoute[] = [
     path: '/exercises/create',
     access: 'auth',
     titleKey: 'pages.createExercise',
+    hidesTabBar: true,
   },
   {
     name: 'view-exercise',
@@ -110,6 +136,7 @@ export const routes: AppRoute[] = [
     path: '/exercises/:id/edit',
     access: 'auth',
     titleKey: 'pages.updateExercise',
+    hidesTabBar: true,
   },
 
   { name: 'login', path: '/login', access: 'guest', titleKey: 'pages.login' },
@@ -150,6 +177,12 @@ export const flatRoutes = (from: AppRoute[] = routes): AppRoute[] =>
 export const routeByName = (name: string): AppRoute | undefined =>
   flatRoutes().find((route) => route.name === name)
 
+const matches = (pathname: string, path: string): boolean => {
+  if (!path.includes(':')) return pathname === path
+  // '/workouts/routine/:routine_id' matches any single segment in its place.
+  return new RegExp(`^${path.replace(/:[^/]+/g, '[^/]+')}$`).test(pathname)
+}
+
 /**
  * Whether a path runs full-bleed, without the app's usual chrome.
  *
@@ -159,8 +192,16 @@ export const routeByName = (name: string): AppRoute | undefined =>
 export const isFocusedShellPath = (pathname: string): boolean =>
   flatRoutes()
     .filter((route) => route.focusedShell)
-    .some(({ path }) => {
-      if (!path.includes(':')) return pathname === path
-      // '/workouts/routine/:routine_id' matches any single segment in its place.
-      return new RegExp(`^${path.replace(/:[^/]+/g, '[^/]+')}$`).test(pathname)
-    })
+    .some(({ path }) => matches(pathname, path))
+
+/**
+ * Whether a path is a task rather than a place, and so hides the tab bar.
+ *
+ * Read off the route table for the same reason the focused shell is: the
+ * shell, the form footer and the native wrapper cannot disagree about which
+ * screens these are.
+ */
+export const hidesTabBarPath = (pathname: string): boolean =>
+  flatRoutes()
+    .filter((route) => route.hidesTabBar)
+    .some(({ path }) => matches(pathname, path))

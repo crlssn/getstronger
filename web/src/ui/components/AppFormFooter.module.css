@@ -1,10 +1,11 @@
 @reference '../../assets/base.css';
 
-/* Above the tab bar, whose own height is 4.5rem plus whatever the device puts
- * below it. Frosted rather than opaque, so the form reads as continuing under
- * it instead of ending at it. */
+/* Above the tab bar, whose height the shell publishes — 4.5rem where there is
+ * one, nothing on a create or edit screen, which has given it up. Frosted
+ * rather than opaque, so the form reads as continuing under it instead of
+ * ending at it. */
 .footer {
-  bottom: calc(4.5rem + env(safe-area-inset-bottom));
+  bottom: calc(var(--tab-bar-height, 4.5rem) + env(safe-area-inset-bottom));
   @apply fixed inset-x-0 z-30 border-t border-border bg-surface-sunken/90 backdrop-blur;
 }
 
