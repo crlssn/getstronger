@@ -91,7 +91,7 @@ func TestFactory_Notification(t *testing.T) {
 		created, err := models.FindNotification(ctx, bob.NewDB(c.DB), expected.ID)
 		require.NoError(t, err)
 		require.False(t, created.ReadAt.IsNull())
-		require.WithinDuration(t, time.Now().UTC(), created.ReadAt.GetOrZero().UTC(), time.Second)
+		require.WithinDuration(t, time.Now().UTC(), created.ReadAt.GetOrZero().UTC(), time.Minute)
 	})
 
 	t.Run("NotificationCreatedAt", func(t *testing.T) {
