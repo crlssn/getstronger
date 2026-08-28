@@ -21,6 +21,7 @@ import { AppSegmented } from '@/ui/components/AppSegmented'
 import { exerciseMetrics, formatDurationDisplay } from '@/utils/exerciseMeasurements'
 import { trendByDay, trendChange } from '@/utils/exerciseTrend'
 import { formatNumber } from '@/utils/numbers'
+import { usePrefersReducedMotion } from '@/utils/usePrefersReducedMotion'
 import styles from './ExerciseChart.module.css'
 
 ChartJS.register(Tooltip, LineElement, CategoryScale, LinearScale, Filler, PointElement)
@@ -70,6 +71,7 @@ export const ExerciseChart = ({ sets, exercise }: Props) => {
     durationSeconds: { heading: t('exercise.chart.longestTime'), unit: '' },
   }
 
+  const stillness = usePrefersReducedMotion()
   const days = useMemo(() => trendByDay(sets), [sets])
   const values = days.map((day) => day[metric])
   const latest = values[values.length - 1] ?? 0
@@ -88,6 +90,8 @@ export const ExerciseChart = ({ sets, exercise }: Props) => {
         : `${percentage > 0 ? '+' : ''}${percentage}%`
 
   const chartOptions: ChartOptions<'line'> = {
+    // A canvas animation is still an animation, and no media query reaches one.
+    animation: stillness ? false : undefined,
     maintainAspectRatio: false,
     responsive: true,
     scales: {
