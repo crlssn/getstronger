@@ -1,5 +1,7 @@
 import type { ReactNode } from 'react'
 
+import { cloneElement, isValidElement, useId } from 'react'
+
 import { cn } from '@/ui/cn'
 import { useKeyboardOpen } from '@/utils/useKeyboardOpen'
 import styles from './AppFormFooter.module.css'
@@ -9,6 +11,13 @@ interface Props {
   className?: string
   /** A way out, beside the primary action rather than under it. */
   secondary?: ReactNode
+  /**
+   * What is still missing, for a form whose submit is disabled.
+   *
+   * Required in the editorial sense rather than the type sense: a blocked
+   * submit without one is a control that refuses and will not say why.
+   */
+  hint?: string
 }
 
 /**
@@ -26,8 +35,16 @@ interface Props {
  * action anybody is reaching for mid-word. The spacer keeps the same room in
  * the scroll either way, so the page does not jump as it goes.
  */
-export const AppFormFooter = ({ children, className, secondary }: Props) => {
+export const AppFormFooter = ({ children, className, secondary, hint }: Props) => {
   const keyboardOpen = useKeyboardOpen()
+  const hintId = useId()
+
+  // The hint is the action's description, not a line that happens to sit above
+  // it: a reader who never sees the bar still hears why the button refuses.
+  const action =
+    hint && isValidElement<{ 'aria-describedby'?: string }>(children)
+      ? cloneElement(children, { 'aria-describedby': hintId })
+      : children
 
   return (
     <>
@@ -35,7 +52,12 @@ export const AppFormFooter = ({ children, className, secondary }: Props) => {
       {!keyboardOpen && (
         <div className={cn(styles.footer, className)}>
           <div className={styles.inner}>
-            <div className={styles.primary}>{children}</div>
+            {hint && (
+              <p id={hintId} className={styles.hint}>
+                {hint}
+              </p>
+            )}
+            <div className={styles.primary}>{action}</div>
             {secondary}
           </div>
         </div>

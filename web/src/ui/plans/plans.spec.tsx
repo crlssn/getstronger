@@ -253,6 +253,22 @@ describe('PlanForm', () => {
     expect(save).toBeEnabled()
   })
 
+  // A save that refuses and says nothing leaves the reader to guess which of
+  // the form's two requirements is the one holding it shut.
+  test('names what the save is still waiting for', async () => {
+    render()
+
+    const save = await screen.findByRole('button', { name: 'Create plan' })
+    expect(screen.getByText('Add a name and one routine')).toBeVisible()
+
+    await userEvent.type(screen.getByRole('textbox'), 'Upper lower')
+    expect(screen.getByText('Add one routine')).toBeVisible()
+
+    await addRoutine(/Push day/)
+    expect(screen.queryByText('Add one routine')).not.toBeInTheDocument()
+    expect(save).not.toHaveAttribute('aria-describedby')
+  })
+
   // Parked at the end of the scroll the save was sliced in half by the tab
   // bar. The pinned footer is the only thing in the app that stands down for
   // the keyboard, so its absence while one is up says the save is in one.

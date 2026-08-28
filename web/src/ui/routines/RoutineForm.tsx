@@ -80,8 +80,20 @@ export const RoutineForm = ({
   const [pickerGroupId, setPickerGroupId] = useState('')
 
   const exerciseIds = groupExerciseIds(groups)
+  const needsName = name.trim().length === 0
+  const needsExercise = exerciseIds.length === 0
   // A routine with no name or no exercises is not a routine yet.
-  const canSubmit = name.trim().length > 0 && exerciseIds.length > 0 && !saving
+  const canSubmit = !needsName && !needsExercise && !saving
+
+  // Read off the same two conditions the submit is, so the line can never name
+  // a requirement the button is not actually waiting for.
+  const missing = needsName
+    ? needsExercise
+      ? t('routine.form.needsNameAndExercise')
+      : t('routine.form.needsName')
+    : needsExercise
+      ? t('routine.form.needsExercise')
+      : undefined
 
   // Turning grouping off keeps the exercises, in order, and drops the structure
   // — the one thing a single block cannot express.
@@ -154,7 +166,7 @@ export const RoutineForm = ({
 
       {/* Pinned rather than parked at the end of the scroll, where a routine
           with ten exercises hid it. */}
-      <AppFormFooter>
+      <AppFormFooter hint={missing}>
         <AppButton type="submit" colour="primary" size="lg" disabled={!canSubmit}>
           {saving ? t('training.planForm.saving') : submitLabel}
         </AppButton>

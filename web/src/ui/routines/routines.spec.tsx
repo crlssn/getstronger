@@ -251,6 +251,22 @@ describe('CreateRoutine', () => {
     expect(save).toBeEnabled()
   })
 
+  // A save that refuses and says nothing leaves the reader to guess which of
+  // the form's two requirements is the one holding it shut.
+  test('names what the save is still waiting for', async () => {
+    render()
+
+    const save = await screen.findByRole('button', { name: 'Create routine' })
+    expect(screen.getByText('Add a name and one exercise')).toBeVisible()
+
+    await userEvent.type(screen.getByLabelText('Routine name'), 'Upper body')
+    expect(screen.getByText('Add one exercise')).toBeVisible()
+
+    await addExercise(/Bench press/)
+    expect(screen.queryByText('Add one exercise')).not.toBeInTheDocument()
+    expect(save).not.toHaveAttribute('aria-describedby')
+  })
+
   test('saves the name and the exercises that were picked', async () => {
     render()
 

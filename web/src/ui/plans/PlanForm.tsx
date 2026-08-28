@@ -74,7 +74,19 @@ export const PlanForm = ({ planId }: Props) => {
   const selectedIds = new Set(selected.map((routine) => routine.id))
   const available = routines.filter((routine) => !selectedIds.has(routine.id))
 
-  const canSave = name.trim().length > 0 && selected.length > 0
+  const needsName = name.trim().length === 0
+  const needsRoutine = selected.length === 0
+  const canSave = !needsName && !needsRoutine
+
+  // Read off the same two conditions the submit is, so the line can never name
+  // a requirement the button is not actually waiting for.
+  const missing = needsName
+    ? needsRoutine
+      ? t('training.planForm.needsNameAndRoutine')
+      : t('training.planForm.needsName')
+    : needsRoutine
+      ? t('training.planForm.needsRoutine')
+      : undefined
 
   const moveRoutine = (index: number, direction: -1 | 1) => {
     const target = index + direction
@@ -219,7 +231,7 @@ export const PlanForm = ({ planId }: Props) => {
 
             {/* Pinned rather than parked at the end of the scroll, where the
                 tab bar sliced it in half. */}
-            <AppFormFooter>
+            <AppFormFooter hint={missing}>
               <AppButton type="submit" colour="primary" size="lg" disabled={!canSave || saving}>
                 {saving
                   ? t('training.planForm.saving')
