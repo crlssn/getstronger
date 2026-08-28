@@ -108,9 +108,14 @@ const GroupEntries = ({ groups, group, restBetweenSets, nameOf, onChange }: Entr
               <span className={styles.exerciseName}>{name}</span>
 
               {/* The rest reads as a value on the row and unfolds its stepper
-                  only for somebody tuning it. */}
+                  only for somebody tuning it. It is captioned because the
+                  control above the list is a different rest — this one is
+                  between an exercise's sets, that one is after the exercise —
+                  and unlabelled they were two 1:30s that looked like one
+                  setting and its default. */}
               {restBetweenSets && (
                 <AppValueChip
+                  caption={t('routine.form.groups.restSetCaption')}
                   label={t('routine.form.groups.restSetChip', { name, value: rest })}
                   value={rest}
                   expanded={open}

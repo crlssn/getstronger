@@ -8,7 +8,14 @@
 }
 
 .pill {
-  @apply rounded-pill bg-ink-surface px-2.5 py-1 text-meta font-bold tabular-nums text-text-muted transition;
+  @apply flex items-center gap-1 rounded-pill bg-ink-surface px-2.5 py-1 text-meta font-bold tabular-nums text-text-muted transition;
+}
+
+/* Quieter than the value it qualifies — by weight, not by opacity. Fading it
+ * to 70% put it at 3.1:1 on the chip's own surface; the regular weight reads
+ * as the qualifier it is and stays at 5.9:1. */
+.caption {
+  @apply font-medium;
 }
 
 .chip:hover .pill {
