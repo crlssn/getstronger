@@ -58,6 +58,15 @@ worktree. The local stack is not shared, so set it up before running anything.
   container, server, or port that belongs to another worktree. The tasks that
   create, wipe, or remove state refuse to run in a worktree that has not been
   given its own — they name `mise run worktree:env` when they do.
+- Nothing this worktree runs is meant to outlive the work. `mise run
+  worktree:clean` stops its servers and containers without deleting anything,
+  and a SessionEnd hook runs it, so an ended chat leaves no backend and no
+  database behind. A SessionStart hook sweeps in the background for what that
+  cannot catch — a session that ended without its hook, and a pull request that
+  merged on GitHub — freeing the worktrees that are gone or merged;
+  `mise run worktree:sweep` is the same sweep by hand. Both stop and kill only:
+  removing a container is still `mise run worktree:prune -- --force`, and the
+  last few runs are logged to `.git/worktree-cleanup.log`.
 - Confine all changes to this worktree. Do not edit files in another worktree or
   in the main checkout.
 

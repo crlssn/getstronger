@@ -544,6 +544,14 @@ description = "List the containers left behind by removed worktrees, or remove t
 usage = 'flag "--force" help="Remove the containers instead of listing them"'
 run = "./scripts/worktree_prune.sh"
 
+[tasks."worktree:clean"]
+description = "Stop this worktree's servers and containers, keeping its data"
+run = "./scripts/worktree_clean.sh"
+
+[tasks."worktree:sweep"]
+description = "Free the worktrees whose directory is gone or whose pull request has merged"
+run = "./scripts/worktree_sweep.sh"
+
 [tasks.setup]
 description = "Set up and run the local development environment"
 run = [
