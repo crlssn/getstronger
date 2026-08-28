@@ -11,6 +11,7 @@ import { useConfirmationStore } from '@/stores/confirmation'
 import { selectActivePlan, selectNextRoutine, useDashboardStore } from '@/stores/dashboard'
 import { usePlanStore } from '@/stores/plans'
 import { AppButton } from '@/ui/components/AppButton'
+import { AppEmptyInline } from '@/ui/components/AppEmptyInline'
 import { AppList } from '@/ui/components/AppList'
 import { AppListRow } from '@/ui/components/AppListRow'
 import { AppPageHeader } from '@/ui/components/AppPageHeader'
@@ -220,7 +221,9 @@ export const WorkoutView = () => {
             </AppButton>
           </div>
         ) : workouts.length === 0 ? (
-          <div className={styles.historyEmpty}>{t('workout.historyEmpty')}</div>
+          <AppEmptyInline className={styles.historyEmpty}>
+            {t('workout.historyEmpty')}
+          </AppEmptyInline>
         ) : loading ? (
           <div className={styles.historyStatus} aria-live="polite">
             <span className={styles.historySpinner} /> {t('workout.loadingMoreHistory')}

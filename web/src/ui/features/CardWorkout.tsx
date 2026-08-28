@@ -11,6 +11,7 @@ import { RoutineGroupMode } from '@/proto/api/v1/shared_pb'
 import { useToastStore } from '@/stores/toasts'
 import { useAuthStore } from '@/stores/auth'
 import { useConfirmationStore } from '@/stores/confirmation'
+import { AppEmptyInline } from '@/ui/components/AppEmptyInline'
 import { AppButton } from '@/ui/components/AppButton'
 import { AppTextarea } from '@/ui/components/AppTextarea'
 import { PageNavAction } from '@/ui/components/PageNavAction'
@@ -352,7 +353,7 @@ export const CardWorkout = ({ workout, compact }: Props) => {
               ))}
             </div>
           ) : (
-            <p className={styles.noComments}>{t('workout.card.noComments')}</p>
+            <AppEmptyInline>{t('workout.card.noComments')}</AppEmptyInline>
           )}
 
           <form className={styles.commentForm} onSubmit={(event) => void postComment(event)}>

@@ -6,6 +6,7 @@ import { useParams } from 'react-router-dom'
 
 import { listWorkouts } from '@/http/requests'
 import { AppErrorState } from '@/ui/components/AppErrorState'
+import { AppEmptyInline } from '@/ui/components/AppEmptyInline'
 import { AppList } from '@/ui/components/AppList'
 import { AppListItem } from '@/ui/components/AppListItem'
 import { AppSkeleton } from '@/ui/components/AppSkeleton'
@@ -72,7 +73,9 @@ export const UserWorkouts = () => {
 
       {workouts.length === 0 && (
         <AppList>
-          <AppListItem>{t('common.nothingHere')}</AppListItem>
+          <AppListItem>
+            <AppEmptyInline className="w-full">{t('common.nothingHere')}</AppEmptyInline>
+          </AppListItem>
         </AppList>
       )}
     </>

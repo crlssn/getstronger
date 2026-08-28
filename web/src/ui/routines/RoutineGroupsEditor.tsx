@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next'
 
 import { AppButton } from '@/ui/components/AppButton'
 import { AppDurationStepper } from '@/ui/components/AppDurationStepper'
+import { AppEmptyInline } from '@/ui/components/AppEmptyInline'
 import { AppIconButton } from '@/ui/components/AppIconButton'
 import { AppOptionalAction } from '@/ui/components/AppOptionalAction'
 import { AppSegmented } from '@/ui/components/AppSegmented'
@@ -90,7 +91,7 @@ const GroupEntries = ({ groups, group, restBetweenSets, nameOf, onChange }: Entr
   )
 
   if (!group.entries.length) {
-    return <p className={styles.emptyGroup}>{t('routine.form.groups.empty')}</p>
+    return <AppEmptyInline>{t('routine.form.groups.empty')}</AppEmptyInline>
   }
 
   return (

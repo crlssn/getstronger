@@ -209,10 +209,6 @@
   @apply divide-y divide-border;
 }
 
-.noComments {
-  @apply text-meta font-medium text-text-subtle;
-}
-
 .commentForm {
   @apply mt-4 rounded-card bg-ink-surface p-3;
 }

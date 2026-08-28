@@ -17,6 +17,7 @@ import { lastPerformedIn, useActivityStore } from '@/stores/activity'
 import { usePlanStore } from '@/stores/plans'
 import { useToastStore } from '@/stores/toasts'
 import { AppButton } from '@/ui/components/AppButton'
+import { AppEmptyInline } from '@/ui/components/AppEmptyInline'
 import { AppFormFooter } from '@/ui/components/AppFormFooter'
 import { AppIconButton } from '@/ui/components/AppIconButton'
 import { AppInput } from '@/ui/components/AppInput'
@@ -160,10 +161,9 @@ export const PlanForm = ({ planId }: Props) => {
               </header>
 
               {selected.length === 0 ? (
-                <div className={styles.emptyOrder}>
-                  <strong>{t('training.planForm.emptyTitle')}</strong>
-                  <p>{t('training.planForm.emptyBody')}</p>
-                </div>
+                <AppEmptyInline className={styles.emptyOrder}>
+                  {t('training.planForm.emptyBody')}
+                </AppEmptyInline>
               ) : (
                 <ol>
                   {selected.map((routine, index) => (

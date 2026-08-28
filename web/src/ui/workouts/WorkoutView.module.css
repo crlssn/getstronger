@@ -94,7 +94,6 @@
 
 .historyStatus,
 .historyError,
-.historyEmpty,
 .historyEnd {
   @apply mt-3 flex min-h-14 items-center justify-center gap-2 rounded-control px-4 text-center text-xs text-text-subtle;
 }
@@ -104,7 +103,7 @@
 }
 
 .historyEmpty {
-  @apply card;
+  @apply card mt-3;
 }
 
 .historyEnd {

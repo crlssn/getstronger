@@ -6,6 +6,7 @@ import { useParams } from 'react-router-dom'
 
 import { getPersonalBests } from '@/http/requests'
 import { AppErrorState } from '@/ui/components/AppErrorState'
+import { AppEmptyInline } from '@/ui/components/AppEmptyInline'
 import { AppList } from '@/ui/components/AppList'
 import { AppListItem } from '@/ui/components/AppListItem'
 import { AppSkeleton } from '@/ui/components/AppSkeleton'
@@ -39,7 +40,11 @@ export const UserPersonalBests = () => {
 
   return (
     <AppList>
-      {personalBests.length === 0 && <AppListItem>{t('common.nothingHere')}</AppListItem>}
+      {personalBests.length === 0 && (
+        <AppListItem>
+          <AppEmptyInline className="w-full">{t('common.nothingHere')}</AppEmptyInline>
+        </AppListItem>
+      )}
       {personalBests.map((best) => (
         <RecordRow key={best.exercise?.id} record={best} />
       ))}

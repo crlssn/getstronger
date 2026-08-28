@@ -1,0 +1,7 @@
+@reference '../../assets/base.css';
+
+/* Centred and quiet, at the height of a list row, so an empty section keeps
+ * the shape of the full one rather than collapsing the card around it. */
+.empty {
+  @apply grid min-h-14 place-items-center px-4 py-6 text-center text-sm text-text-subtle;
+}

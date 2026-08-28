@@ -38,6 +38,7 @@ aspirational.
 | A row with a value and a way on | `<AppListRow>`                                     |
 | A row that is one tap          | `<AppOptionRow>`                                    |
 | Nothing to show yet            | `<AppEmptyState>`                                   |
+| One section of it empty        | `<AppEmptyInline>`                                  |
 | A fetch that failed            | `<AppErrorState>`                                   |
 | Waiting for the API            | `<AppSkeleton>`                                     |
 | A modal decision or a picker   | `<AppSheet>` + `<SheetAction>`                      |
@@ -260,6 +261,16 @@ tapped. `label` is required — a duration on its own names nothing — and
 Nothing to show, and what to do about it. `action` is required — not required
 to exist, required to be decided. A screen with genuinely nowhere to go writes
 `action="none"` in its own markup, where a reviewer sees the choice being made.
+
+### `<AppEmptyInline>`
+
+One muted line saying a section of a screen is empty, for a card that has
+plenty else around it. The difference from `<AppEmptyState>` is scope, and it
+decides which one a screen wants: that one is the whole screen and always
+offers a way forward, this one is a list inside a screen that is already
+working. Five screens said this five ways, from a bare "Nothing here yet…" row
+to a centred two-line block with its own heading — a heading that outranked the
+card's own.
 
 ### `<AppErrorState>`
 

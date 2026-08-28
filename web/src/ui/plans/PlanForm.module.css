@@ -57,12 +57,9 @@
   @apply text-sm text-text-subtle;
 }
 
+/* The line is AppEmptyInline's; the rule above it is the list's. */
 .emptyOrder {
-  @apply border-t border-border p-6 text-center;
-}
-
-.emptyOrder p {
-  @apply mt-1 text-sm text-text-subtle;
+  @apply border-t border-border;
 }
 
 .routineOrder ol {

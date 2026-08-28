@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next'
 import { useDashboardStore } from '@/stores/dashboard'
 import { useProgressStore } from '@/stores/progress'
 import { AppEmptyState } from '@/ui/components/AppEmptyState'
+import { AppEmptyInline } from '@/ui/components/AppEmptyInline'
 import { AppErrorState } from '@/ui/components/AppErrorState'
 import { AppList } from '@/ui/components/AppList'
 import { AppSegmented } from '@/ui/components/AppSegmented'
@@ -53,6 +54,10 @@ export const ProgressView = () => {
   // fit, so the chip beside the total says which grain is on screen.
   const granularity = useMemo(() => volumeSeries(filtered).granularity, [filtered])
   const personalBests = dashboard?.personalBests ?? []
+  // Nothing to chart and nothing to list is not two empty sections, it is an
+  // account with no training in it — and a "Personal records" card holding the
+  // words "Nothing to chart yet" reads as a header that lost its records.
+  const nothingYet = workouts.length === 0 && personalBests.length === 0
 
   return (
     <div className={styles.stack}>
@@ -114,7 +119,15 @@ export const ProgressView = () => {
         )
       )}
 
-      {loaded && (
+      {loaded && !failed && nothingYet && !dashboardFailed && (
+        <AppEmptyState
+          action={{ label: t('home.startWorkout'), to: '/workout' }}
+          body={t('progress.emptyBody')}
+          title={t('progress.emptyTitle')}
+        />
+      )}
+
+      {loaded && !nothingYet && (
         <section className={styles.recordsCard}>
           <div className={styles.sectionHeading}>
             <p className={styles.eyebrow}>{t('progress.bestLifts')}</p>
@@ -130,11 +143,9 @@ export const ProgressView = () => {
               ))}
             </AppList>
           ) : (
-            <AppEmptyState
-              action={{ label: t('home.startWorkout'), to: '/workout' }}
-              body={t('progress.emptyBody')}
-              title={t('progress.emptyTitle')}
-            />
+            // The screen has a chart on it, so this is one empty section
+            // rather than an empty account.
+            <AppEmptyInline>{t('progress.noRecordsYet')}</AppEmptyInline>
           )}
         </section>
       )}
