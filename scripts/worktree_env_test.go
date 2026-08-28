@@ -183,6 +183,33 @@ func TestItReportsContainersLeftByAnEarlierConfiguration(t *testing.T) {
 	require.Contains(t, result.output, "getstronger-feature-a\n")
 }
 
+// A fresh worktree copies .env from .env.example, which leaves the screenshot
+// credentials commented out. Discovering that at publish time means a pull
+// request already open without the evidence a UI change owes its reviewer.
+func TestItNamesTheCredentialsScreenshotPublishingWillNeed(t *testing.T) {
+	main := newCheckout(t)
+	tree := addWorktree(t, main, "feature-a")
+
+	result := runEnv(t, tree, nil)
+
+	require.Equal(t, 0, result.exitCode, result.output)
+	require.Contains(t, result.output, "pr:screenshots")
+	require.Contains(t, result.output, "SCW_SCREENSHOTS_BUCKET_NAME")
+	require.Contains(t, result.output, "AWS_ACCESS_KEY_ID")
+	require.Contains(t, result.output, "AWS_SECRET_ACCESS_KEY")
+}
+
+func TestItStaysQuietWhenTheScreenshotCredentialsAreAlreadyThere(t *testing.T) {
+	main := newCheckout(t)
+	tree := addWorktree(t, main, "feature-a")
+	write(t, tree, ".env", "SCW_SCREENSHOTS_BUCKET_NAME=bucket\nAWS_ACCESS_KEY_ID=key\nAWS_SECRET_ACCESS_KEY=secret\n")
+
+	result := runEnv(t, tree, nil)
+
+	require.Equal(t, 0, result.exitCode, result.output)
+	require.NotContains(t, result.output, "pr:screenshots")
+}
+
 func TestItFailsRatherThanDoubleBookingWhenEverySlotIsClaimed(t *testing.T) {
 	main := newCheckout(t)
 	tree := addWorktree(t, main, "feature-a")

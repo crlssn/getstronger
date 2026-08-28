@@ -378,6 +378,28 @@ Run 'mise run db:init && mise run db:migrate && mise run db:seed' to create this
 worktree's database.
 SUMMARY
 
+# 'mise run pr:screenshots' publishes a UI change's before/after images into
+# its pull request, and .env.example leaves its three keys commented out —
+# rightly, they are credentials. Say so here rather than let the task fail at
+# publish time, when the pull request is already open without its evidence.
+missing_keys="$(
+  for key in SCW_SCREENSHOTS_BUCKET_NAME AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY; do
+    grep -q "^$key=." "$root/.env" || printf '  %s\n' "$key"
+  done
+)"
+
+if [[ -n "$missing_keys" ]]; then
+  cat <<KEYS
+
+ℹ️  'mise run pr:screenshots' cannot publish a UI change's before/after images
+without these in .env:
+
+$missing_keys
+The bucket is the SCW_SCREENSHOTS_BUCKET_NAME repository variable and the keys
+are the getstronger-deploy API key; see the README's Scaleway section.
+KEYS
+fi
+
 if [[ -n "$stale" ]]; then
   cat <<STALE
 

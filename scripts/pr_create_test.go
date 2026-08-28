@@ -20,9 +20,13 @@ const stubGh = `#!/bin/sh
 echo "https://github.com/crlssn/getstronger/pull/999"
 `
 
-// Stands in for the base branch lookup: GIT_EXIT makes the branch missing.
+// Stands in for the base branch lookup and the diff behind the screenshot
+// reminder: GIT_EXIT makes the branch missing, GIT_DIFF names the changed files.
 const stubGit = `#!/bin/sh
-printf '%s\n' "$@" > "$GIT_LOG"
+printf '%s\n' "$@" >> "$GIT_LOG"
+case "$1" in
+  diff) printf '%s' "${GIT_DIFF:-}" ;;
+esac
 exit "${GIT_EXIT:-0}"
 `
 
@@ -181,6 +185,45 @@ func TestPRCreateRefusesABaseThatIsNotOnTheRemote(t *testing.T) {
 	require.False(t, result.ghRan, "GitHub is never called")
 	require.Contains(t, result.stderr, "claude/never-pushed")
 	require.Contains(t, result.stderr, "push it first")
+}
+
+// The screenshots can only be published once the number exists, so this is the
+// first moment anything can name the command in full — issue #1219, where two
+// pull requests changing a page were opened with words alone.
+func TestPRCreateAsksForScreenshotsWhenTheBranchChangesTheUI(t *testing.T) {
+	t.Parallel()
+
+	_, keyPath := writeKey(t)
+
+	result := runPRCreate(t, []string{"feat: a rounds control", bodyFile(t)}, map[string]string{
+		"GH_APP_ID":              testAppID,
+		"GH_APP_INSTALLATION_ID": testInstallationID,
+		"GH_APP_PRIVATE_KEY":     keyPath,
+		"GIT_DIFF":               "web/src/pages/RoutineBuilder.tsx\n",
+	})
+
+	require.Equal(t, 0, result.exitCode, result.stderr)
+	require.Contains(t, result.stdout, "https://github.com/crlssn/getstronger/pull/999",
+		"the pull request's URL still reaches whoever ran this")
+	require.Contains(t, result.stdout, "mise run pr:screenshots 999 --append")
+}
+
+// A diff cannot tell that a page's appearance moved, so the reminder is only
+// ever a prompt — and one nothing outside web/src earns.
+func TestPRCreateStaysQuietWhenNoPageCouldHaveMoved(t *testing.T) {
+	t.Parallel()
+
+	_, keyPath := writeKey(t)
+
+	result := runPRCreate(t, []string{"fix: a query", bodyFile(t)}, map[string]string{
+		"GH_APP_ID":              testAppID,
+		"GH_APP_INSTALLATION_ID": testInstallationID,
+		"GH_APP_PRIVATE_KEY":     keyPath,
+		"GIT_DIFF":               "server/rpc/v1/workout.go\nweb/src/pages/RoutineBuilder.spec.tsx\n",
+	})
+
+	require.Equal(t, 0, result.exitCode, result.stderr)
+	require.NotContains(t, result.stdout, "pr:screenshots")
 }
 
 // The regression this script exists for: an empty GH_TOKEN does not stop gh,

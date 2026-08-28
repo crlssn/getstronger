@@ -52,4 +52,32 @@ token=$("$(dirname "$0")/gh_app_token.sh")
 
 # Without --base gh targets the default branch, which is right for everything
 # but a stacked pull request, so the flag is only passed when one was given.
-GH_TOKEN="$token" gh pr create --title "$TITLE" --body-file "$BODY_FILE" ${base:+--base "$base"}
+url=$(GH_TOKEN="$token" gh pr create --title "$TITLE" --body-file "$BODY_FILE" ${base:+--base "$base"})
+status=$?
+[ -z "$url" ] || printf '%s\n' "$url"
+[ "$status" -eq 0 ] || exit "$status"
+
+# 'pr:screenshots' needs the number, which only exists now, so this is the
+# first moment anything can name the command in full — and the last before the
+# pull request is read. A diff cannot tell that a page's appearance moved, so
+# this prompts rather than refuses.
+number="${url##*/}"
+case "$number" in
+  "" | *[!0-9]*) exit 0 ;;
+esac
+
+# Read into a variable rather than tested as a pipeline: 'grep -q' exits on
+# the first match, and the SIGPIPE that gives the stage above it would fail the
+# whole pipeline under pipefail exactly when there was something to report.
+moved="$(git diff --name-only "origin/${base:-main}...HEAD" 2>/dev/null |
+  grep -E '^web/src/.*\.(tsx|css)$' | grep -v '\.spec\.tsx$')"
+
+if [ -n "$moved" ]; then
+  cat <<REMINDER
+
+This branch changes what a page looks like. Publish its before/after evidence
+into the body, or the reviewer on GitHub gets words:
+
+  mise run pr:screenshots $number --append
+REMINDER
+fi

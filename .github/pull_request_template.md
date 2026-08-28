@@ -23,8 +23,8 @@ is read. -->
 ## Verification
 
 <!-- One line: commands run and tests added. Expand only for a failure or a
-flake. For a UI change, say in words what moved; the before/after screenshots
-go to the user in the reply, not here. -->
+flake. For a UI change, say in words what moved, then publish the before/after
+images here with `mise run pr:screenshots <number> --append`. -->
 
 ## Notes for the reviewer
 
