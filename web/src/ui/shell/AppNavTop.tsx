@@ -26,6 +26,7 @@ export const AppNavTop = () => {
   const navigate = useNavigate()
 
   const pageTitle = usePageTitleStore((state) => state.pageTitle)
+  const previousPageTitle = usePageTitleStore((state) => state.previousPageTitle)
   const action = useActionButton((state) => state.action)
   const icon = useActionButton((state) => state.icon)
   const actionActive = useActionButton(selectActionButtonActive)
@@ -35,10 +36,19 @@ export const AppNavTop = () => {
   // This bar only renders on a screen pushed onto a tab, so there is always
   // somewhere to go back to — but not always a history entry to go back
   // through, because the screen may have been opened from a link or a bookmark.
+  const hasHistory = window.history.state?.idx > 0
+
   const goBack = () => {
-    if (window.history.state?.idx > 0) navigate(-1)
+    if (hasHistory) navigate(-1)
     else navigate(parentTab)
   }
+
+  // Named after where it actually goes. The tab is only right when there is no
+  // history and back really does land on it; with history it lands on the
+  // screen before this one, and a public profile opened from the Me tab used
+  // to promise "Home" because /users/... hangs off no tab in particular.
+  const backLabel =
+    hasHistory && previousPageTitle ? previousPageTitle : t(tabLabelKeys[parentTab] ?? 'nav.home')
 
   return (
     <header className={styles.pageNav}>
@@ -52,8 +62,7 @@ export const AppNavTop = () => {
         className={styles.back}
         onClick={goBack}
       >
-        <ChevronLeftIcon className="size-5" aria-hidden="true" />{' '}
-        {t(tabLabelKeys[parentTab] ?? 'nav.home')}
+        <ChevronLeftIcon className="size-5" aria-hidden="true" /> {backLabel}
       </AppButton>
 
       <div className={styles.titleRow}>

@@ -1,4 +1,4 @@
-import { ExclamationTriangleIcon } from '@heroicons/react/24/outline'
+import { ExclamationCircleIcon } from '@heroicons/react/24/outline'
 import { useTranslation } from 'react-i18next'
 
 import { cn } from '@/ui/cn'
@@ -24,6 +24,11 @@ interface Props {
  * list, which is the more confident of the two claims and the harder one to
  * argue with. `onRetry` is required for the same reason `action` is over
  * there — a dead end is not a state.
+ *
+ * It stays a card in the content area rather than becoming a toast, because a
+ * load that failed is a state of the screen and not a thing that just
+ * happened. What it borrows is the toast's icon and its danger tokens, so a
+ * failure reads the same whichever of the two containers reports it.
  */
 export const AppErrorState = ({ title, body, compact, className, onRetry }: Props) => {
   const { t } = useTranslation()
@@ -54,7 +59,7 @@ export const AppErrorState = ({ title, body, compact, className, onRetry }: Prop
   return (
     <div className={cn(styles.errorState, className)} role="alert">
       <span className={styles.errorIcon}>
-        <ExclamationTriangleIcon aria-hidden="true" />
+        <ExclamationCircleIcon aria-hidden="true" />
       </span>
       <h2>{title ?? t('common.loadFailed')}</h2>
       <p>{body ?? t('common.loadFailedBody')}</p>

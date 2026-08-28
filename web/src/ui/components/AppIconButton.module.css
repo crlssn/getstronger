@@ -18,12 +18,16 @@
   @apply size-5;
 }
 
-.iconButton:disabled {
-  @apply cursor-not-allowed opacity-60;
-}
-
 .default {
   @apply text-text-subtle hover:bg-ink-surface hover:text-text;
+}
+
+/* A control with nothing around it to say it is one: the home search, the
+ * overflow menu, the notification bell. All three drew this themselves — two
+ * of them by overriding this component from the outside, which is the thing a
+ * screen is not allowed to do, and the third not at all. */
+.raised {
+  @apply border-border bg-white text-text-subtle shadow-card hover:border-ink-border hover:bg-ink-surface hover:text-ink-strong;
 }
 
 .strong {
@@ -32,4 +36,12 @@
 
 .danger {
   @apply text-danger hover:bg-danger-surface hover:text-danger-strong;
+}
+
+/* An icon with nothing behind it, so unlike AppButton there is no fill for the
+ * opacity to take the glyph down with — `strong` is the only tone that has one
+ * and nothing disables it. Last in the file so it beats each tone's hover. */
+.iconButton:disabled,
+.iconButton:disabled:hover {
+  @apply cursor-not-allowed bg-transparent opacity-40;
 }

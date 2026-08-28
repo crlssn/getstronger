@@ -1,20 +1,19 @@
-import { ArrowTrendingUpIcon, ChevronRightIcon, TrophyIcon } from '@heroicons/react/24/outline'
+import { ArrowTrendingUpIcon, TrophyIcon } from '@heroicons/react/24/outline'
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link } from 'react-router-dom'
 
 import { useDashboardStore } from '@/stores/dashboard'
 import { useProgressStore } from '@/stores/progress'
 import { AppEmptyState } from '@/ui/components/AppEmptyState'
+import { AppEmptyInline } from '@/ui/components/AppEmptyInline'
 import { AppErrorState } from '@/ui/components/AppErrorState'
+import { AppList } from '@/ui/components/AppList'
 import { AppSegmented } from '@/ui/components/AppSegmented'
 import { AppSkeleton } from '@/ui/components/AppSkeleton'
 import { PageNavAction } from '@/ui/components/PageNavAction'
-import { ExerciseTags } from '@/ui/exercises/ExerciseTags'
+import { RecordRow } from '@/ui/features/RecordRow'
 import { WorkoutChart } from '@/ui/features/WorkoutChart'
 import { totalVolume, volumeSeries, withinDays, type VolumeGranularity } from '@/utils/dailyVolume'
-import { formatTimestamp } from '@/utils/datetime'
-import { formatExerciseSet } from '@/utils/exerciseMeasurements'
 import { formatNumber } from '@/utils/numbers'
 import styles from './ProgressView.module.css'
 
@@ -55,6 +54,10 @@ export const ProgressView = () => {
   // fit, so the chip beside the total says which grain is on screen.
   const granularity = useMemo(() => volumeSeries(filtered).granularity, [filtered])
   const personalBests = dashboard?.personalBests ?? []
+  // Nothing to chart and nothing to list is not two empty sections, it is an
+  // account with no training in it — and a "Personal records" card holding the
+  // words "Nothing to chart yet" reads as a header that lost its records.
+  const nothingYet = workouts.length === 0 && personalBests.length === 0
 
   return (
     <div className={styles.stack}>
@@ -85,10 +88,10 @@ export const ProgressView = () => {
           <section className={styles.chartCard}>
             <div className={styles.chartHeading}>
               <div>
-                <p className={styles.eyebrow}>{t('progress.trainingVolume')}</p>
-                <h2>
+                <h2>{t('progress.trainingVolume')}</h2>
+                <p className={styles.total} id="training-volume">
                   {formatNumber(totalVolume(filtered))} {t('common.kg')}
-                </h2>
+                </p>
               </div>
               <span>
                 <ArrowTrendingUpIcon aria-hidden="true" /> {t(totalsLabel[granularity])}
@@ -116,44 +119,32 @@ export const ProgressView = () => {
         )
       )}
 
-      {loaded && (
+      {loaded && !failed && nothingYet && !dashboardFailed && (
+        <AppEmptyState
+          action={{ label: t('home.startWorkout'), to: '/workout' }}
+          body={t('progress.emptyBody')}
+          title={t('progress.emptyTitle')}
+        />
+      )}
+
+      {loaded && !nothingYet && (
         <section className={styles.recordsCard}>
           <div className={styles.sectionHeading}>
-            <p className={styles.eyebrow}>{t('progress.bestLifts')}</p>
             <h2>{t('progress.personalRecords')}</h2>
           </div>
 
           {dashboardFailed && personalBests.length === 0 ? (
             <AppErrorState onRetry={load} />
           ) : personalBests.length > 0 ? (
-            <div className={styles.recordList}>
+            <AppList className={styles.recordList}>
               {personalBests.map((personalBest) => (
-                <Link key={personalBest.set?.id} to={`/exercises/${personalBest.exercise?.id}`}>
-                  <span className={styles.recordIcon}>
-                    <TrophyIcon aria-hidden="true" />
-                  </span>
-                  <span className="min-w-0">
-                    <strong>{personalBest.exercise?.name}</strong>
-                    <ExerciseTags compact tags={personalBest.exercise?.tags} />
-                    {personalBest.set?.metadata?.createdAt && (
-                      <small>{formatTimestamp(personalBest.set.metadata.createdAt)}</small>
-                    )}
-                  </span>
-                  <span className={styles.recordValue}>
-                    {personalBest.set
-                      ? formatExerciseSet(personalBest.set, personalBest.exercise)
-                      : ''}
-                  </span>
-                  <ChevronRightIcon className={styles.chevron} aria-hidden="true" />
-                </Link>
+                <RecordRow key={personalBest.set?.id} record={personalBest} />
               ))}
-            </div>
+            </AppList>
           ) : (
-            <AppEmptyState
-              action={{ label: t('home.startWorkout'), to: '/workout' }}
-              body={t('progress.emptyBody')}
-              title={t('progress.emptyTitle')}
-            />
+            // The screen has a chart on it, so this is one empty section
+            // rather than an empty account.
+            <AppEmptyInline>{t('progress.noRecordsYet')}</AppEmptyInline>
           )}
         </section>
       )}

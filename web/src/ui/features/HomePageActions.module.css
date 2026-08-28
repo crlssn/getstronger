@@ -8,10 +8,6 @@
   @apply w-full;
 }
 
-.searchTrigger {
-  @apply border-border bg-white shadow-card hover:border-ink-border hover:text-text;
-}
-
 .searchPanel {
   @apply w-full;
 }

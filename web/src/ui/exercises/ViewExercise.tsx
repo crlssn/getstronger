@@ -130,7 +130,7 @@ export const ViewExercise = () => {
   const isOwner = userId === exercise.userId
 
   const exerciseActions: DropdownItem[] = [
-    { href: `/exercises/${id}/edit`, title: t('exercise.update') },
+    { href: `/exercises/${id}/edit`, title: t('exercise.edit') },
     {
       destructive: true,
       func: async () => {
@@ -194,7 +194,7 @@ export const ViewExercise = () => {
 
       {sets.length > 0 && (
         <section className={styles.chartCard}>
-          <p className={styles.eyebrow}>{t('exercise.trend')}</p>
+          <h2 className={styles.chartTitle}>{t('exercise.trend')}</h2>
           <ExerciseChart sets={downSample(sets, maxChartPoints)} exercise={exercise} />
         </section>
       )}
@@ -202,7 +202,6 @@ export const ViewExercise = () => {
       <section className={styles.setsCard}>
         <header>
           <div>
-            <p className={styles.eyebrow}>{t('exercise.history')}</p>
             <h2>{t('exercise.loggedSets')}</h2>
           </div>
           <span>{sets.length}</span>

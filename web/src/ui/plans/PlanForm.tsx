@@ -1,12 +1,6 @@
 import type { Routine } from '@/proto/api/v1/routine_service_pb'
 
-import {
-  ArrowDownIcon,
-  ArrowsUpDownIcon,
-  ArrowUpIcon,
-  PlusIcon,
-  TrashIcon,
-} from '@heroicons/react/24/outline'
+import { ArrowsUpDownIcon, Bars3Icon, MinusCircleIcon, PlusIcon } from '@heroicons/react/24/outline'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
@@ -17,6 +11,7 @@ import { lastPerformedIn, useActivityStore } from '@/stores/activity'
 import { usePlanStore } from '@/stores/plans'
 import { useToastStore } from '@/stores/toasts'
 import { AppButton } from '@/ui/components/AppButton'
+import { AppEmptyInline } from '@/ui/components/AppEmptyInline'
 import { AppFormFooter } from '@/ui/components/AppFormFooter'
 import { AppIconButton } from '@/ui/components/AppIconButton'
 import { AppInput } from '@/ui/components/AppInput'
@@ -24,6 +19,8 @@ import { AppOptionRow } from '@/ui/components/AppOptionRow'
 import { AppOptionalAction } from '@/ui/components/AppOptionalAction'
 import { AppSheet } from '@/ui/components/AppSheet'
 import { AppSkeleton } from '@/ui/components/AppSkeleton'
+import { useSortable } from '@/utils/useSortable'
+import { formatDateTime } from '@/utils/datetime'
 import styles from './PlanForm.module.css'
 
 interface Props {
@@ -74,17 +71,43 @@ export const PlanForm = ({ planId }: Props) => {
   const selectedIds = new Set(selected.map((routine) => routine.id))
   const available = routines.filter((routine) => !selectedIds.has(routine.id))
 
-  const canSave = name.trim().length > 0 && selected.length > 0
+  const needsName = name.trim().length === 0
+  const needsRoutine = selected.length === 0
+  const canSave = !needsName && !needsRoutine
 
-  const moveRoutine = (index: number, direction: -1 | 1) => {
-    const target = index + direction
-    if (target < 0 || target >= selected.length) return
+  // Read off the same two conditions the submit is, so the line can never name
+  // a requirement the button is not actually waiting for.
+  const missing = needsName
+    ? needsRoutine
+      ? t('training.planForm.needsNameAndRoutine')
+      : t('training.planForm.needsName')
+    : needsRoutine
+      ? t('training.planForm.needsRoutine')
+      : undefined
 
-    const next = [...selected]
-    const [routine] = next.splice(index, 1)
-    if (routine) next.splice(target, 0, routine)
-    setSelected(next)
-  }
+  const moveRoutine = (from: number, to: number) =>
+    setSelected((current) => {
+      if (to < 0 || to >= current.length) return current
+
+      const next = [...current]
+      const [routine] = next.splice(from, 1)
+      if (routine) next.splice(to, 0, routine)
+      return next
+    })
+
+  // The same handle the routine builder and the routine view use, dragged or
+  // moved with the arrow keys. Up and down buttons were a second way to do the
+  // one thing, and two more controls on a row.
+  const order = useSortable<HTMLOListElement>(
+    {
+      handle: `.${styles.dragHandle}`,
+      ghostClass: styles.sortableGhost,
+      dragClass: styles.sortableDrag,
+      animation: 150,
+      onReorder: moveRoutine,
+    },
+    selected.length > 1,
+  )
 
   const save = async () => {
     if (!canSave || saving) return
@@ -115,10 +138,9 @@ export const PlanForm = ({ planId }: Props) => {
           void save()
         }}
       >
-        <header className={styles.pageIntro}>
-          <p className={styles.eyebrow}>{t('training.planForm.eyebrow')}</p>
-          <p>{t('training.planForm.intro')}</p>
-        </header>
+        {/* The nav bar above already says "New plan"; an uppercase "PLAN
+            BUILDER" under it was the same claim in a second voice. */}
+        <p className={styles.intro}>{t('training.planForm.intro')}</p>
 
         {loading ? (
           <AppSkeleton />
@@ -141,19 +163,17 @@ export const PlanForm = ({ planId }: Props) => {
             <section className={styles.routineOrder}>
               <header>
                 <div>
-                  <p className={styles.eyebrow}>{t('training.planForm.orderEyebrow')}</p>
                   <h2>{t('common.routines')}</h2>
                 </div>
                 <span>{t('training.planForm.routineCount', { count: selected.length })}</span>
               </header>
 
               {selected.length === 0 ? (
-                <div className={styles.emptyOrder}>
-                  <strong>{t('training.planForm.emptyTitle')}</strong>
-                  <p>{t('training.planForm.emptyBody')}</p>
-                </div>
+                <AppEmptyInline className={styles.emptyOrder}>
+                  {t('training.planForm.emptyBody')}
+                </AppEmptyInline>
               ) : (
-                <ol>
+                <ol ref={order}>
                   {selected.map((routine, index) => (
                     <li key={routine.id}>
                       <span className={styles.position}>{index + 1}</span>
@@ -164,27 +184,22 @@ export const PlanForm = ({ planId }: Props) => {
                         </small>
                       </div>
                       <div className={styles.orderActions}>
+                        {/* Quiet: taking a routine out of a plan is undone by
+                            putting it back, and a column of red bins reads as
+                            a page full of errors. */}
                         <AppIconButton
-                          icon={ArrowUpIcon}
-                          disabled={index === 0}
-                          label={t('training.planForm.moveUp', { name: routine.name })}
-                          onClick={() => moveRoutine(index, -1)}
-                        />
-                        <AppIconButton
-                          icon={ArrowDownIcon}
-                          disabled={index === selected.length - 1}
-                          label={t('training.planForm.moveDown', { name: routine.name })}
-                          onClick={() => moveRoutine(index, 1)}
-                        />
-                        <AppIconButton
-                          icon={TrashIcon}
-                          tone="danger"
+                          icon={MinusCircleIcon}
                           label={t('training.planForm.remove', { name: routine.name })}
                           onClick={() =>
                             setSelected((current) =>
                               current.filter((_, position) => position !== index),
                             )
                           }
+                        />
+                        <AppIconButton
+                          className={styles.dragHandle}
+                          icon={Bars3Icon}
+                          label={t('training.planForm.reorder', { name: routine.name })}
                         />
                       </div>
                     </li>
@@ -219,12 +234,12 @@ export const PlanForm = ({ planId }: Props) => {
 
             {/* Pinned rather than parked at the end of the scroll, where the
                 tab bar sliced it in half. */}
-            <AppFormFooter>
+            <AppFormFooter hint={missing}>
               <AppButton type="submit" colour="primary" size="lg" disabled={!canSave || saving}>
                 {saving
                   ? t('training.planForm.saving')
                   : editing
-                    ? t('training.planForm.saveChanges')
+                    ? t('common.saveChanges')
                     : t('training.planForm.createPlan')}
               </AppButton>
             </AppFormFooter>
@@ -258,7 +273,7 @@ export const PlanForm = ({ planId }: Props) => {
                   <small>
                     {[
                       t('home.exerciseCount', { count: routine.exercises.length }),
-                      lastPerformedIn(routineLastPerformed, routine.id)?.toRelative(),
+                      formatDateTime(lastPerformedIn(routineLastPerformed, routine.id)),
                     ]
                       .filter(Boolean)
                       .join(' · ')}

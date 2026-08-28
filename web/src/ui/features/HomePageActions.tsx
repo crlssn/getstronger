@@ -168,9 +168,9 @@ export const HomePageActions = ({ open, onOpenChange }: Props) => {
     <div className={cn(styles.homeActions, open && styles.searching)}>
       {!open && (
         <AppIconButton
-          className={styles.searchTrigger}
           icon={MagnifyingGlassIcon}
           label={t('search.open')}
+          tone="raised"
           onClick={() => onOpenChange(true)}
         />
       )}

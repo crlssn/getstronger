@@ -11,6 +11,7 @@ import { RoutineGroupMode } from '@/proto/api/v1/shared_pb'
 import { useToastStore } from '@/stores/toasts'
 import { useAuthStore } from '@/stores/auth'
 import { useConfirmationStore } from '@/stores/confirmation'
+import { AppEmptyInline } from '@/ui/components/AppEmptyInline'
 import { AppButton } from '@/ui/components/AppButton'
 import { AppTextarea } from '@/ui/components/AppTextarea'
 import { PageNavAction } from '@/ui/components/PageNavAction'
@@ -256,7 +257,6 @@ export const CardWorkout = ({ workout, compact }: Props) => {
       <section className={styles.detailSection}>
         <header className={styles.sectionHeading}>
           <div>
-            <p className={styles.eyebrow}>{t('workout.sessionDetails')}</p>
             <h2>{t('common.exercises')}</h2>
           </div>
           <span>{t('home.exerciseCount', { count: workout.exerciseSets.length })}</span>
@@ -334,7 +334,6 @@ export const CardWorkout = ({ workout, compact }: Props) => {
         <section className={styles.commentsCard}>
           <header className={styles.sectionHeading}>
             <div>
-              <p className={styles.eyebrow}>{t('workout.card.community')}</p>
               <h2>{t('workout.card.comments')}</h2>
             </div>
             <span>{comments.length}</span>
@@ -352,7 +351,7 @@ export const CardWorkout = ({ workout, compact }: Props) => {
               ))}
             </div>
           ) : (
-            <p className={styles.noComments}>{t('workout.card.noComments')}</p>
+            <AppEmptyInline>{t('workout.card.noComments')}</AppEmptyInline>
           )}
 
           <form className={styles.commentForm} onSubmit={(event) => void postComment(event)}>

@@ -8,10 +8,36 @@
   @apply flex gap-x-1;
 }
 
-.setLabel {
-  @apply mb-2 block text-sm font-semibold uppercase text-text-muted;
+/* The card the table sits in, matching the list panels around it. */
+.setTable {
+  @apply card mb-4 px-4 py-3;
 }
 
 .note {
   @apply mb-4 min-h-20 w-full resize-none overflow-hidden rounded-control border-border py-3 text-base focus:border-ink-muted focus:ring-ink-muted;
+}
+
+/* An exercise's name is a title, not a caption. It was set as an uppercase
+   eyebrow, which is the treatment this app gives a list's group labels. */
+.exerciseHeading h2 {
+  @apply text-body-lg font-semibold text-text;
+}
+
+/* The same grip every other reorderable list in the app uses. */
+.dragHandle {
+  @apply cursor-grab text-ink-border active:cursor-grabbing;
+}
+
+.dragHandle svg {
+  @apply size-4;
+}
+
+/* SortableJS puts these on the DOM itself, so the hashed names are handed to
+   it rather than written in the markup. */
+.sortableGhost {
+  @apply opacity-30;
+}
+
+.sortableDrag {
+  @apply rounded-control border border-ink-border bg-surface shadow-raised;
 }

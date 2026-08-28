@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { AppErrorState } from '@/ui/components/AppErrorState'
+import { AppEmptyInline } from '@/ui/components/AppEmptyInline'
 import { AppList } from '@/ui/components/AppList'
 import { AppListItem, AppListItemLink } from '@/ui/components/AppListItem'
 import { AppSkeleton } from '@/ui/components/AppSkeleton'
@@ -41,7 +42,11 @@ export const UserList = ({ fetchUsers }: Props) => {
 
   return (
     <AppList>
-      {users.length === 0 && <AppListItem>{t('common.nothingHere')}</AppListItem>}
+      {users.length === 0 && (
+        <AppListItem>
+          <AppEmptyInline className="w-full">{t('common.nothingHere')}</AppEmptyInline>
+        </AppListItem>
+      )}
       {users.map((user) => (
         <AppListItemLink key={user.id} to={`/users/${user.id}`}>
           <span>

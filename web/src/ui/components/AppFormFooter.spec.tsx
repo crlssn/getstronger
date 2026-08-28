@@ -55,6 +55,41 @@ describe('AppFormFooter', () => {
     expect(screen.getByRole('button', { name: 'Cancel' })).toBeVisible()
   })
 
+  // A disabled submit that says nothing is a dead end: the reader is left to
+  // guess which of the form's fields is the one holding it shut.
+  describe('the hint', () => {
+    test('names what is missing, and describes the action it blocks', () => {
+      renderWithProviders(
+        <AppFormFooter hint="Add a name and one exercise">
+          <AppButton type="submit" colour="primary" disabled>
+            Create routine
+          </AppButton>
+        </AppFormFooter>,
+      )
+
+      const hint = screen.getByText('Add a name and one exercise')
+      expect(hint).toBeVisible()
+      expect(screen.getByRole('button', { name: 'Create routine' })).toHaveAttribute(
+        'aria-describedby',
+        hint.id,
+      )
+    })
+
+    test('says nothing once nothing is missing', () => {
+      renderWithProviders(
+        <AppFormFooter>
+          <AppButton type="submit" colour="primary">
+            Create routine
+          </AppButton>
+        </AppFormFooter>,
+      )
+
+      expect(screen.getByRole('button', { name: 'Create routine' })).not.toHaveAttribute(
+        'aria-describedby',
+      )
+    })
+  })
+
   // A bar floating on the keyboard covers the field being typed into.
   test('stands down while the keyboard is up', () => {
     openKeyboard()

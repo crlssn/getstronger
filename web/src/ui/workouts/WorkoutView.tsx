@@ -11,6 +11,10 @@ import { useConfirmationStore } from '@/stores/confirmation'
 import { selectActivePlan, selectNextRoutine, useDashboardStore } from '@/stores/dashboard'
 import { usePlanStore } from '@/stores/plans'
 import { AppButton } from '@/ui/components/AppButton'
+import { AppEmptyInline } from '@/ui/components/AppEmptyInline'
+import { AppList } from '@/ui/components/AppList'
+import { AppListRow } from '@/ui/components/AppListRow'
+import { AppPageHeader } from '@/ui/components/AppPageHeader'
 import { AppSkeleton } from '@/ui/components/AppSkeleton'
 import { formatTimestamp } from '@/utils/datetime'
 import { formatNumber } from '@/utils/numbers'
@@ -124,10 +128,7 @@ export const WorkoutView = () => {
 
   return (
     <div className={styles.workoutPage}>
-      <header className={styles.pageIntro}>
-        <h1>{t('workout.heading')}</h1>
-        <p>{t('workout.subtitle')}</p>
-      </header>
+      <AppPageHeader lead={t('workout.subtitle')} title={t('workout.heading')} />
 
       {nextRoutine ? (
         <section className={styles.nextCard}>
@@ -187,22 +188,20 @@ export const WorkoutView = () => {
 
       <section className={styles.workoutHistory}>
         <header>
-          <p className={styles.eyebrow}>{t('workout.history')}</p>
           <h2>{t('workout.previous')}</h2>
         </header>
 
         {workouts.length > 0 && (
-          <div className={styles.historyList}>
+          <AppList className={styles.historyList}>
             {workouts.map((workout) => (
-              <Link key={workout.id} to={`/workouts/${workout.id}`}>
-                <span>
-                  <strong>{workout.name}</strong>
-                  <small>{workoutMeta(workout)}</small>
-                </span>
-                <ChevronRightIcon aria-hidden="true" />
-              </Link>
+              <AppListRow
+                key={workout.id}
+                meta={<small>{workoutMeta(workout)}</small>}
+                title={workout.name}
+                to={`/workouts/${workout.id}`}
+              />
             ))}
-          </div>
+          </AppList>
         )}
 
         {!loaded ? (
@@ -221,7 +220,9 @@ export const WorkoutView = () => {
             </AppButton>
           </div>
         ) : workouts.length === 0 ? (
-          <div className={styles.historyEmpty}>{t('workout.historyEmpty')}</div>
+          <AppEmptyInline className={styles.historyEmpty}>
+            {t('workout.historyEmpty')}
+          </AppEmptyInline>
         ) : loading ? (
           <div className={styles.historyStatus} aria-live="polite">
             <span className={styles.historySpinner} /> {t('workout.loadingMoreHistory')}

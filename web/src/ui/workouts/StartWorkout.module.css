@@ -74,16 +74,19 @@
 
 /* One connected list rather than a card per exercise: the session is a single
    stack, and only the exercise being logged spends the screen's height. */
+/* A header row on the card, not a band across the top of it. Inverted, it
+   read as the screen's subject — and the screen's subject is the exercise
+   being logged under it. */
 .circuitBand {
-  @apply flex items-center justify-between gap-3 rounded-t-card bg-ink px-4 py-2 text-white;
+  @apply flex items-center justify-between gap-3 border-b border-border px-4 py-3;
 }
 
 .circuitBand strong {
-  @apply text-eyebrow font-bold uppercase tracking-wider;
+  @apply text-body-lg font-semibold text-text;
 }
 
 .circuitBand span {
-  @apply text-sm font-semibold tabular-nums;
+  @apply text-meta font-semibold tabular-nums text-text-subtle;
 }
 
 .exerciseList {

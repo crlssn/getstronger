@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 
 import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 const { create, destroy } = vi.hoisted(() => ({ create: vi.fn(), destroy: vi.fn() }))
@@ -70,6 +71,61 @@ describe('useSortable', () => {
     render(<List onReorder={vi.fn()} enabled={false} />)
 
     expect(create).not.toHaveBeenCalled()
+  })
+
+  // The handle is the only reordering affordance in the app, so it has to be
+  // one a keyboard can use: two screens offered up/down buttons instead, which
+  // was a second way to do one thing.
+  describe('the arrow keys', () => {
+    const KeyboardList = ({ onReorder }: { onReorder: (from: number, to: number) => void }) => {
+      const list = useSortable<HTMLUListElement>({ handle: '.handle', onReorder })
+
+      return (
+        <ul ref={list} data-testid="list">
+          {['one', 'two', 'three'].map((name) => (
+            <li key={name}>
+              <button type="button" className="handle">
+                Reorder {name}
+              </button>
+            </li>
+          ))}
+        </ul>
+      )
+    }
+
+    test('moves the row whose handle has focus', async () => {
+      const onReorder = vi.fn()
+      render(<KeyboardList onReorder={onReorder} />)
+
+      screen.getByRole('button', { name: 'Reorder two' }).focus()
+      await userEvent.keyboard('{ArrowUp}')
+
+      expect(onReorder).toHaveBeenCalledWith(1, 0)
+    })
+
+    test('will not move the first row up or the last row down', async () => {
+      const onReorder = vi.fn()
+      render(<KeyboardList onReorder={onReorder} />)
+
+      screen.getByRole('button', { name: 'Reorder one' }).focus()
+      await userEvent.keyboard('{ArrowUp}')
+      screen.getByRole('button', { name: 'Reorder three' }).focus()
+      await userEvent.keyboard('{ArrowDown}')
+
+      expect(onReorder).not.toHaveBeenCalled()
+    })
+
+    // The rest of the row is still a row: a chip or a field in it keeps its
+    // own arrow-key behaviour.
+    test('ignores an arrow pressed anywhere but the handle', async () => {
+      const onReorder = vi.fn()
+      render(<KeyboardList onReorder={onReorder} />)
+
+      screen.getByTestId('list').focus()
+      await userEvent.keyboard('{ArrowDown}')
+
+      expect(onReorder).not.toHaveBeenCalled()
+    })
   })
 
   test('lets go of the element when it unmounts', () => {

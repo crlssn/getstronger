@@ -30,7 +30,7 @@ export const CreateRoutine = () => {
 
   return (
     <RoutineForm
-      submitLabel={t('home.createRoutine')}
+      submitLabel={t('routine.form.create')}
       saving={saving}
       onSave={(name, exerciseIds, groups) => void onSave(name, exerciseIds, groups)}
     />

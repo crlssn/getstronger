@@ -10,6 +10,7 @@ import { borderColor, inkColor, inkMutedColor, subtleColor } from '@/ui/chartTok
 import { latestValueLabel } from '@/ui/features/latestValueLabel'
 import { volumeSeries } from '@/utils/dailyVolume'
 import { formatNumber } from '@/utils/numbers'
+import { usePrefersReducedMotion } from '@/utils/usePrefersReducedMotion'
 import styles from './WorkoutChart.module.css'
 
 ChartJS.register(Tooltip, BarElement, CategoryScale, LinearScale)
@@ -33,6 +34,7 @@ export const WorkoutChart = ({ workouts }: Props) => {
   const { t } = useTranslation()
 
   const { granularity, points } = useMemo(() => volumeSeries(workouts), [workouts])
+  const stillness = usePrefersReducedMotion()
 
   if (points.length === 0) return null
 
@@ -54,6 +56,8 @@ export const WorkoutChart = ({ workouts }: Props) => {
   }
 
   const options: ChartOptions<'bar'> = {
+    // A canvas animation is still an animation, and no media query reaches one.
+    animation: stillness ? false : undefined,
     maintainAspectRatio: false,
     responsive: true,
     layout: {

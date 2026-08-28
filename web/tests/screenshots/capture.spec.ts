@@ -32,7 +32,17 @@ const freezeClock = async (context: BrowserContext) => {
 }
 
 const newContext = async (browser: Browser) => {
-  const context = await browser.newContext()
+  // Chart.js grows its bars and lines out of the axis over about a second, on a
+  // canvas — where Playwright's `animations: 'disabled'`, which only reaches
+  // CSS, cannot follow. Photographed after the usual settle, every chart in
+  // this set was a third of the way through that: an empty plot with the
+  // latest value pinned to the baseline, and a line that looked flat beside a
+  // header saying it had dropped 26%. A whole design audit read those pictures
+  // as a broken chart.
+  //
+  // Asking for stillness is what the charts answer, so the picture is of the
+  // chart rather than of its entrance.
+  const context = await browser.newContext({ reducedMotion: 'reduce' })
   await freezeClock(context)
 
   return context

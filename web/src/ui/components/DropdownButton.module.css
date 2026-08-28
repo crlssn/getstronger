@@ -1,7 +1,10 @@
 @reference '../../assets/base.css';
 
+/* The same square the home search and the notification bell are, composed
+   from the one definition rather than restated here — headlessui renders the
+   trigger itself, so this is how it wears AppIconButton's clothes. */
 .menuTrigger {
-  @apply grid size-11 place-items-center rounded-control border border-border bg-white text-text-subtle transition hover:border-ink-border hover:bg-ink-surface hover:text-ink-strong;
+  composes: iconButton sm raised from './AppIconButton.module.css';
 }
 
 .menuTrigger svg {

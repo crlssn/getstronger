@@ -4,16 +4,9 @@
   @apply space-y-5;
 }
 
-.pageIntro {
-  @apply px-1;
-}
-
-.eyebrow {
-  @apply text-eyebrow font-bold uppercase text-text-subtle;
-}
-
-.pageIntro > p:last-child {
-  @apply mt-2 text-sm text-text-subtle;
+/* The one line under the nav bar's title, saying what a plan is for. */
+.intro {
+  @apply px-1 text-sm text-text-subtle;
 }
 
 .routineOrder {
@@ -57,12 +50,9 @@
   @apply text-sm text-text-subtle;
 }
 
+/* The line is AppEmptyInline's; the rule above it is the list's. */
 .emptyOrder {
-  @apply border-t border-border p-6 text-center;
-}
-
-.emptyOrder p {
-  @apply mt-1 text-sm text-text-subtle;
+  @apply border-t border-border;
 }
 
 .routineOrder ol {
@@ -121,4 +111,24 @@
 
 .pickerEmpty {
   @apply py-6 text-center text-sm text-text-subtle;
+}
+
+/* The same grip the routine builder and the routine view use: short strokes
+   that read as something to hold rather than as three lines of anything. */
+.dragHandle {
+  @apply cursor-grab text-ink-border active:cursor-grabbing;
+}
+
+.dragHandle svg {
+  @apply size-4;
+}
+
+/* SortableJS puts these on the DOM itself, so the hashed names are handed to
+   it rather than written in the markup. */
+.sortableGhost {
+  @apply opacity-30;
+}
+
+.sortableDrag {
+  @apply rounded-control border border-ink-border bg-surface shadow-raised;
 }

@@ -4,20 +4,8 @@
   @apply space-y-4;
 }
 
-.pageIntro {
-  @apply px-1;
-}
-
 .eyebrow {
   @apply text-eyebrow font-bold uppercase text-text-subtle;
-}
-
-.pageIntro h1 {
-  @apply mt-1 text-display font-bold text-text;
-}
-
-.pageIntro > p:last-child {
-  @apply mt-1 text-sm text-text-subtle;
 }
 
 .nextCard {
@@ -99,38 +87,13 @@
   @apply mt-1 text-title font-extrabold text-text;
 }
 
+/* AppList is the card and AppListRow the row. */
 .historyList {
-  @apply card overflow-hidden;
-}
-
-.historyList > a {
-  @apply flex min-h-16 items-center justify-between gap-4 border-b border-border px-4 py-3 transition last:border-b-0 hover:text-ink-strong;
-}
-
-.historyList > a > span {
-  @apply min-w-0;
-}
-
-.historyList strong,
-.historyList small {
-  @apply block truncate;
-}
-
-.historyList strong {
-  @apply text-body-lg font-semibold text-text;
-}
-
-.historyList small {
-  @apply mt-0.5 text-meta text-text-subtle;
-}
-
-.historyList > a > svg {
-  @apply size-5 shrink-0 text-text-subtle;
+  @apply mb-0;
 }
 
 .historyStatus,
 .historyError,
-.historyEmpty,
 .historyEnd {
   @apply mt-3 flex min-h-14 items-center justify-center gap-2 rounded-control px-4 text-center text-xs text-text-subtle;
 }
@@ -140,7 +103,7 @@
 }
 
 .historyEmpty {
-  @apply card;
+  @apply card mt-3;
 }
 
 .historyEnd {

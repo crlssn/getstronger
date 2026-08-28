@@ -1,7 +1,7 @@
 import { Outlet, useLocation } from 'react-router-dom'
 
 import { isTabRoot } from '@/router/tabs'
-import { isFocusedShellPath } from '@/router/routes'
+import { hidesTabBarPath, isFocusedShellPath } from '@/router/routes'
 import { cn } from '@/ui/cn'
 import { AppNavBottom } from '@/ui/shell/AppNavBottom'
 import { AppNavTop } from '@/ui/shell/AppNavTop'
@@ -22,15 +22,26 @@ export const AppDashboard = () => {
   // Split by depth, not by name. A tab root opens with its own large title; a
   // screen pushed on top of one gets the nav bar and a way back.
   const showsTopNavigation = !focusedShell && !isTabRoot(pathname)
+  // A create or edit screen is a task rather than a place, so it keeps the way
+  // back and gives up the way sideways: the tab bar and a sticky action bar
+  // together took around 180px of an 844px screen, and the form scrolled
+  // behind both of them.
+  const tabBarHidden = focusedShell || hidesTabBarPath(pathname)
 
   return (
-    <div className={cn(styles.dashboardShell, focusedShell && styles.focusedShell)}>
+    <div
+      className={cn(
+        styles.dashboardShell,
+        focusedShell && styles.focusedShell,
+        tabBarHidden && styles.noTabBar,
+      )}
+    >
       <AppRestTimerBanner />
       <main className={styles.main}>
         {showsTopNavigation && <AppNavTop />}
         <Outlet />
       </main>
-      {!focusedShell && <AppNavBottom />}
+      {!tabBarHidden && <AppNavBottom />}
     </div>
   )
 }

@@ -55,5 +55,7 @@ export const onNavigate = (routeName: string, previousRouteName?: string) => {
  * the screen set its own.
  */
 export const applyPageTitle = (titleKey?: string) => {
-  usePageTitleStore.getState().setPageTitle(titleKey ? i18n.t(titleKey) : '')
+  // enterPage rather than setPageTitle: this runs once per navigation, which is
+  // exactly when the screen being left becomes the one back is named after.
+  usePageTitleStore.getState().enterPage(titleKey ? i18n.t(titleKey) : '')
 }

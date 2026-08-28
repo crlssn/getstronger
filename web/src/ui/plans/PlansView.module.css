@@ -58,8 +58,10 @@
   @apply mt-5 text-xs leading-5 text-text-subtle;
 }
 
+/* Only the status pill is left in here now that the eyebrow above the plan's
+   name is gone, and a lone pill belongs at the start of its row. */
 .activePlan > header {
-  @apply flex items-center justify-between gap-3;
+  @apply flex items-center gap-3;
 }
 
 .activePlan > header span {

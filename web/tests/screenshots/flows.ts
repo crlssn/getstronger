@@ -136,7 +136,7 @@ export const flows: Flow[] = [
       },
       {
         act: async (page) => {
-          await page.getByRole('button', { name: 'Save Exercise' }).click()
+          await page.getByRole('button', { name: 'Create exercise' }).click()
           await expect(page).toHaveURL(/\/exercises$/)
         },
         name: 'saved',
@@ -304,7 +304,9 @@ export const flows: Flow[] = [
           }
           await expect(page).toHaveURL(/\/workouts\/[0-9a-f-]{36}$/)
           savedCircuitWorkout = new URL(page.url()).pathname
-          await expect(page.getByText('Session details')).toBeVisible()
+          // The card's own heading. "Session details" was the eyebrow above it,
+          // and an eyebrow above a title is not a rank this app has any more.
+          await expect(page.getByRole('heading', { name: 'Exercises', exact: true })).toBeVisible()
         },
         name: 'finished',
       },

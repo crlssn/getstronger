@@ -24,6 +24,9 @@
 
 /* The inline form: one row under content that did arrive, so it announces the
    gap rather than replacing what is on screen. */
+/* The toast's own tokens: same border weight, same surface, same darker step
+   on the text, so a failure reads the same whether it arrives as a card here
+   or as a message floating over the app. */
 .compactError {
-  @apply flex min-h-14 items-center justify-between gap-3 rounded-card border border-danger/20 bg-danger-surface px-4 text-sm text-danger;
+  @apply flex min-h-14 items-center justify-between gap-3 rounded-card border border-danger/30 bg-danger-surface px-4 text-sm font-semibold text-danger-strong;
 }

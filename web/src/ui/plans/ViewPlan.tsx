@@ -113,7 +113,6 @@ export const ViewPlan = () => {
       </section>
 
       <header className={styles.orderHeading}>
-        <p className={styles.eyebrow}>{t('training.planView.orderEyebrow')}</p>
         <h2>{t('training.planView.orderTitle')}</h2>
       </header>
 

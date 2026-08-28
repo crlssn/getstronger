@@ -529,7 +529,7 @@ test.describe('weight units', () => {
         .getByRole('button', { name: /Distance/ }),
     ).toContainText('km')
     await page.getByRole('button', { name: 'Distance × time' }).click()
-    await page.getByRole('button', { name: 'Save Exercise' }).click()
+    await page.getByRole('button', { name: 'Create exercise' }).click()
     await expect(page).toHaveURL(/\/exercises$/)
 
     try {

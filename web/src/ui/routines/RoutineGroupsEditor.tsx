@@ -1,11 +1,12 @@
 import type { DraftGroup, GroupMode } from '@/utils/routineGroups'
 
-import { Bars3Icon, PlusIcon, TrashIcon } from '@heroicons/react/24/outline'
+import { Bars3Icon, MinusCircleIcon, PlusIcon } from '@heroicons/react/24/outline'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { AppButton } from '@/ui/components/AppButton'
 import { AppDurationStepper } from '@/ui/components/AppDurationStepper'
+import { AppEmptyInline } from '@/ui/components/AppEmptyInline'
 import { AppIconButton } from '@/ui/components/AppIconButton'
 import { AppOptionalAction } from '@/ui/components/AppOptionalAction'
 import { AppSegmented } from '@/ui/components/AppSegmented'
@@ -90,7 +91,7 @@ const GroupEntries = ({ groups, group, restBetweenSets, nameOf, onChange }: Entr
   )
 
   if (!group.entries.length) {
-    return <p className={styles.emptyGroup}>{t('routine.form.groups.empty')}</p>
+    return <AppEmptyInline>{t('routine.form.groups.empty')}</AppEmptyInline>
   }
 
   return (
@@ -107,9 +108,14 @@ const GroupEntries = ({ groups, group, restBetweenSets, nameOf, onChange }: Entr
               <span className={styles.exerciseName}>{name}</span>
 
               {/* The rest reads as a value on the row and unfolds its stepper
-                  only for somebody tuning it. */}
+                  only for somebody tuning it. It is captioned because the
+                  control above the list is a different rest — this one is
+                  between an exercise's sets, that one is after the exercise —
+                  and unlabelled they were two 1:30s that looked like one
+                  setting and its default. */}
               {restBetweenSets && (
                 <AppValueChip
+                  caption={t('routine.form.groups.restSetCaption')}
                   label={t('routine.form.groups.restSetChip', { name, value: rest })}
                   value={rest}
                   expanded={open}
@@ -117,11 +123,12 @@ const GroupEntries = ({ groups, group, restBetweenSets, nameOf, onChange }: Entr
                 />
               )}
 
-              {/* Quiet, unlike the group's own bin: taking an exercise out of a
-                  block is undone by adding it again, and a column of red would
-                  shout the list down. */}
+              {/* A circled minus, which is what taking one row out of a list
+                  looks like everywhere in the app. Quiet, too: removing an
+                  exercise from a block is undone by adding it again, and a
+                  column of red would shout the list down. */}
               <AppIconButton
-                icon={TrashIcon}
+                icon={MinusCircleIcon}
                 label={t('routine.form.groups.removeExercise', { name })}
                 onClick={() => onChange(removeEntry(groups, entry.key))}
               />

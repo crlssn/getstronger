@@ -19,10 +19,6 @@
   @apply text-center no-underline;
 }
 
-.button:disabled {
-  @apply cursor-not-allowed opacity-60;
-}
-
 .sm {
   @apply control-sm px-3;
 }
@@ -56,4 +52,24 @@
 
 .destructive {
   @apply text-danger hover:bg-danger-surface hover:text-danger-strong;
+}
+
+/* One disabled treatment for all four roles, and it is a light fill with muted
+ * text rather than the ink fill at reduced opacity.
+ *
+ * Fading the whole button faded the white label with it: ink at 60% over the
+ * form footer is #706f70, and the label it carried came out #c6c5c6 — 2.9:1,
+ * under any threshold there is, and reading as a filled button in a second
+ * brand colour rather than as one that is waiting. This is 5.1:1, and it is
+ * plainly not a button you can press.
+ *
+ * The border stays drawn rather than cleared: the workout dock's way out is a
+ * secondary, and without a border its disabled state was grey on grey and read
+ * as a caption rather than as a control.
+ *
+ * Last in the file and matched on hover as well, so it beats each role's own
+ * colours and the hover state that would otherwise paint over it. */
+.button:disabled,
+.button:disabled:hover {
+  @apply cursor-not-allowed border-ink-border bg-ink-tint text-text-muted;
 }

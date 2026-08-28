@@ -4,6 +4,7 @@ import { act, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
+import { useBottomChrome } from '@/stores/bottomChrome'
 import { TOAST_DURATION_MS, useToastStore } from '@/stores/toasts'
 import { renderWithProviders } from '@/ui/testing'
 import { AppToaster } from './AppToaster'
@@ -16,6 +17,29 @@ const user = () => userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
 const wait = (ms: number) => act(() => void vi.advanceTimersByTime(ms))
 
 describe('AppToaster', () => {
+  // Pinned 0.75rem off the bottom edge, it covered the tab bar on Exercises
+  // and a routine's save on the screen reporting the routine had been saved.
+  test('floats above whatever is pinned to the bottom', () => {
+    useBottomChrome.setState({ pinned: { 'form-footer': 107 } })
+    useToastStore.getState().success('Routine created')
+
+    renderWithProviders(<AppToaster />)
+
+    expect(screen.getByText('Routine created').closest('[style]')).toBeTruthy()
+    const region = document.querySelector<HTMLElement>('[style*="--bottom-chrome"]')
+    expect(region?.style.getPropertyValue('--bottom-chrome')).toBe('107px')
+  })
+
+  test('sits on the edge when nothing is pinned there', () => {
+    useBottomChrome.setState({ pinned: {} })
+    useToastStore.getState().success('Saved')
+
+    renderWithProviders(<AppToaster />)
+
+    const region = document.querySelector<HTMLElement>('[style*="--bottom-chrome"]')
+    expect(region?.style.getPropertyValue('--bottom-chrome')).toBe('0px')
+  })
+
   beforeEach(() => {
     // userEvent waits on timers of its own, so the clock keeps ticking with it.
     vi.useFakeTimers({ shouldAdvanceTime: true })

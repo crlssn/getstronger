@@ -10,6 +10,7 @@ import { AppList } from '@/ui/components/AppList'
 import { AppListItemInput } from '@/ui/components/AppListItemInput'
 import { ExerciseMeasurementSettings } from '@/ui/exercises/ExerciseMeasurementSettings'
 import { ExerciseTagsInput } from '@/ui/exercises/ExerciseTagsInput'
+import styles from './ExerciseForm.module.css'
 
 export interface ExerciseFormValues {
   name: string
@@ -56,7 +57,8 @@ export const ExerciseForm = ({
         onSubmit()
       }}
     >
-      <h6>{t('exercise.name')}</h6>
+      {/* The field carries this label itself, and the measurement card carries
+          its own heading, so neither needs one floating above it. */}
       <AppList>
         <AppListItemInput
           label={t('exercise.name')}
@@ -67,16 +69,15 @@ export const ExerciseForm = ({
         />
       </AppList>
 
-      <h6>{t('exercise.form.tracking')}</h6>
       <ExerciseMeasurementSettings
         metrics={values.metrics}
         onMetricsChange={(metrics) => update({ metrics })}
         metricsLocked={metricsLocked}
       />
 
-      <h6>
+      <h2 className={styles.sectionTitle}>
         {t('exercise.form.tags')} <small>{t('common.optional')}</small>
-      </h6>
+      </h2>
       <ExerciseTagsInput
         value={values.tags}
         onChange={(tags) => update({ tags })}

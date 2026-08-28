@@ -74,7 +74,7 @@ import { AppTextarea } from '@/ui/components/AppTextarea'
 import { ExerciseTags } from '@/ui/exercises/ExerciseTags'
 import { ExercisePickerSheet } from '@/ui/workouts/ExercisePickerSheet'
 import { WorkoutRestBanner } from '@/ui/workouts/WorkoutRestBanner'
-import { WorkoutSetGrid } from '@/ui/workouts/WorkoutSetGrid'
+import { SetTable } from '@/ui/workouts/SetTable'
 import blurActiveElement from '@/utils/blurActiveElement'
 import { convertDistance, normalizeDistanceUnit } from '@/utils/distanceUnits'
 import { formatExerciseSet, isExerciseSetComplete } from '@/utils/exerciseMeasurements'
@@ -1080,8 +1080,9 @@ export const StartWorkout = () => {
                           </div>
                         )}
 
-                        <WorkoutSetGrid
+                        <SetTable
                           exercise={exercise}
+                          mode="log"
                           sets={sets}
                           previousSets={previousSetsFor(exercise.id)}
                           activeIndex={activeSetIndex(sets, exercise)}

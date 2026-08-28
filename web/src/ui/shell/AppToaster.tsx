@@ -5,11 +5,14 @@ import {
   InformationCircleIcon,
   XMarkIcon,
 } from '@heroicons/react/24/outline'
+import type { CSSProperties } from 'react'
+
 import { useTranslation } from 'react-i18next'
 
 import type { ToastType } from '@/types/toast'
 
 import { AppIconButton } from '@/ui/components/AppIconButton'
+import { selectBottomChrome, useBottomChrome } from '@/stores/bottomChrome'
 import { useToastStore } from '@/stores/toasts'
 import { cn } from '@/ui/cn'
 import styles from './AppToaster.module.css'
@@ -33,11 +36,18 @@ const interrupts = (type: ToastType) => type === 'error' || type === 'warning'
 export const AppToaster = () => {
   const { t } = useTranslation()
   const toast = useToastStore((state) => state.toast)
+  const bottomChrome = useBottomChrome(selectBottomChrome)
 
   const Icon = toast ? icons[toast.type] : null
 
   return (
-    <div className={styles.toastRegion}>
+    <div
+      className={styles.toastRegion}
+      // Above whatever is pinned down there rather than a fixed distance off
+      // the edge: it used to cover the tab bar on Exercises, and a routine's
+      // save and delete on the screen reporting that it had been saved.
+      style={{ '--bottom-chrome': `${bottomChrome}px` } as CSSProperties}
+    >
       {toast && Icon && (
         // Keyed so a new message replaces the card rather than editing it,
         // which is what makes a screen reader announce the second one.

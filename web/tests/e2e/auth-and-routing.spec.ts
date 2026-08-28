@@ -318,7 +318,7 @@ test.describe('account deletion', () => {
     await page.goto('/exercises/create')
     const exercise = uniqueName('Leaver Press')
     await page.locator('form input[type="text"]').first().fill(exercise)
-    await page.getByRole('button', { name: 'Save Exercise' }).click()
+    await page.getByRole('button', { name: 'Create exercise' }).click()
     await expect(page).toHaveURL(/\/exercises$/)
     await expect(page.getByText(exercise)).toBeVisible()
 

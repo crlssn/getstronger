@@ -25,7 +25,15 @@
   @apply mb-5 flex flex-wrap items-end justify-between gap-3;
 }
 
+/* The card's own title, in the one shape a heading inside a card takes. */
 .chartHeading h2 {
+  @apply text-body-lg font-semibold text-text;
+}
+
+/* The number the card exists for, under the title that names it. It used to
+   be the h2 with an uppercase caption above it, which set a label and a value
+   at two ranks that neither of them was. */
+.total {
   @apply mt-1 text-display font-bold text-text;
 }
 
@@ -52,54 +60,10 @@
 }
 
 .sectionHeading h2 {
-  @apply mt-1 text-title font-extrabold text-text;
+  @apply text-title font-extrabold text-text;
 }
 
+/* The card holds the shared rows; the divider is theirs. */
 .recordList {
-  @apply divide-y divide-border;
-}
-
-.recordList a {
-  @apply grid grid-cols-[auto_1fr_auto_auto] items-center gap-3 py-4 transition first:pt-0 last:pb-0 hover:text-ink-strong;
-}
-
-.recordIcon {
-  @apply grid size-11 place-items-center rounded-control bg-record-surface text-record;
-}
-
-.recordIcon svg,
-.chevron {
-  @apply size-5;
-}
-
-.recordList strong,
-.recordList small {
-  @apply block truncate;
-}
-
-.recordList small {
-  @apply mt-1 text-sm text-text-subtle;
-}
-
-.recordValue {
-  @apply text-right text-sm font-semibold text-text;
-}
-
-.chevron {
-  @apply text-text-subtle;
-}
-
-@media (max-width: 520px) {
-  .recordList a {
-    @apply grid-cols-[auto_1fr_auto];
-  }
-  .recordIcon {
-    @apply row-span-2;
-  }
-  .recordValue {
-    @apply col-start-2 row-start-2 text-left;
-  }
-  .chevron {
-    @apply col-start-3 row-span-2 row-start-1;
-  }
+  @apply mb-0 border-0 shadow-none;
 }

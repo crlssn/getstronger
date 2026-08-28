@@ -181,12 +181,27 @@ describe('ProgressView', () => {
     expect(record).toHaveTextContent('Push')
   })
 
-  test('offers a first workout when there are no records yet', async () => {
+  // Nothing charted and nothing listed is an account with no training in it,
+  // not two empty sections: the empty state used to sit inside a card headed
+  // "Personal records", so a new reader met a records header with no records.
+  test('offers a first workout when there is nothing to show at all', async () => {
     seed([])
     renderWithProviders(<ProgressView />)
 
     await waitFor(() => expect(screen.getByText('Nothing to chart yet')).toBeInTheDocument())
     expect(screen.getByRole('link', { name: 'Start workout' })).toHaveAttribute('href', '/workout')
+    expect(screen.queryByRole('heading', { name: 'Personal records' })).not.toBeInTheDocument()
+  })
+
+  // With a chart on screen the account is training; only this one list is
+  // empty, so it says so in a line under the heading it belongs to.
+  test('says only the records are empty when there is a chart above them', async () => {
+    seed([workout(1, 1000)])
+    renderWithProviders(<ProgressView />)
+
+    expect(await screen.findByRole('heading', { name: 'Personal records' })).toBeInTheDocument()
+    expect(screen.getByText('Your first personal best will appear here.')).toBeVisible()
+    expect(screen.queryByText('Nothing to chart yet')).not.toBeInTheDocument()
   })
 
   // The store has always set this flag; the view used to ignore it, so a failed

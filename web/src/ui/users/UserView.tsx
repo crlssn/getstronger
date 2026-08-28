@@ -47,9 +47,12 @@ export const UserView = () => {
       const loaded = await fetchUser()
       if (!loaded) return
 
+      // Not "Me": that is the tab, and this is the page other people see. Two
+      // screens with one name left no way to tell from the header which of
+      // them you were looking at.
       usePageTitleStore
         .getState()
-        .setPageTitle(loaded.id === signedInUserId ? t('nav.me') : loaded.name)
+        .setPageTitle(loaded.id === signedInUserId ? t('profile.publicProfileTitle') : loaded.name)
 
       // Only the most recent workouts, which is all the chart plots.
       const res = await listWorkouts([loaded.id], new Uint8Array(0))
@@ -107,12 +110,10 @@ export const UserView = () => {
       {/* The chart decides what it can honestly draw: a figure under three
           points, bars above. */}
       {workouts.length > 0 && (
-        <div>
-          <h6>{t('profile.trend')}</h6>
-          <AppCard className="p-2">
-            <WorkoutChart workouts={workouts} />
-          </AppCard>
-        </div>
+        <AppCard className={styles.trendCard}>
+          <h2>{t('profile.trend')}</h2>
+          <WorkoutChart workouts={workouts} />
+        </AppCard>
       )}
 
       {user ? (

@@ -20,28 +20,30 @@ aspirational.
 
 ## Choosing
 
-| You need                       | Use                                                 |
-| ------------------------------ | --------------------------------------------------- |
-| Anything a user taps           | `<AppButton>` — or `<AppIconButton>` for icon-only  |
-| A text field                   | `<AppInput>` / `<AppTextarea>`                      |
-| A number or a duration         | `<AppNumberField>` / `<AppDurationInput>`           |
-| A duration nudged in steps     | `<AppDurationStepper>`                              |
-| A count nudged in steps        | `<AppStepper>`                                      |
-| On or off                      | `<AppSwitch>`                                       |
-| A field the user searches with | `<AppSearchField>`                                  |
-| The next page of a list        | `<AppLoadMore>`                                     |
-| A screen's title block         | `<AppPageHeader>`                                   |
-| A form's pinned submit         | `<AppFormFooter>`                                   |
-| A value a row can unfold       | `<AppValueChip>`                                    |
-| A panel around content         | `<AppCard>`, or the `card` utility inside a module  |
-| Rows of things                 | `<AppList>` + `<AppListItem>` / `<AppListItemLink>` |
-| A row that is one tap          | `<AppOptionRow>`                                    |
-| Nothing to show yet            | `<AppEmptyState>`                                   |
-| A fetch that failed            | `<AppErrorState>`                                   |
-| Waiting for the API            | `<AppSkeleton>`                                     |
-| A modal decision or a picker   | `<AppSheet>` + `<SheetAction>`                      |
-| One of a few choices           | `<AppSegmented>` / `<AppSegmentedNav>`              |
-| A menu behind a ⋯              | `<DropdownButton>`                                  |
+| You need                        | Use                                                 |
+| ------------------------------- | --------------------------------------------------- |
+| Anything a user taps            | `<AppButton>` — or `<AppIconButton>` for icon-only  |
+| A text field                    | `<AppInput>` / `<AppTextarea>`                      |
+| A number or a duration          | `<AppNumberField>` / `<AppDurationInput>`           |
+| A duration nudged in steps      | `<AppDurationStepper>`                              |
+| A count nudged in steps         | `<AppStepper>`                                      |
+| On or off                       | `<AppSwitch>`                                       |
+| A field the user searches with  | `<AppSearchField>`                                  |
+| The next page of a list         | `<AppLoadMore>`                                     |
+| A screen's title block          | `<AppPageHeader>`                                   |
+| A form's pinned submit          | `<AppFormFooter>`                                   |
+| A value a row can unfold        | `<AppValueChip>`                                    |
+| A panel around content          | `<AppCard>`, or the `card` utility inside a module  |
+| Rows of things                  | `<AppList>` + `<AppListItem>` / `<AppListItemLink>` |
+| A row with a value and a way on | `<AppListRow>`                                      |
+| A row that is one tap           | `<AppOptionRow>`                                    |
+| Nothing to show yet             | `<AppEmptyState>`                                   |
+| One section of it empty         | `<AppEmptyInline>`                                  |
+| A fetch that failed             | `<AppErrorState>`                                   |
+| Waiting for the API             | `<AppSkeleton>`                                     |
+| A modal decision or a picker    | `<AppSheet>` + `<SheetAction>`                      |
+| One of a few choices            | `<AppSegmented>` / `<AppSegmentedNav>`              |
+| A menu behind a ⋯               | `<DropdownButton>`                                  |
 
 ## Actions
 
@@ -63,8 +65,10 @@ them are; `width="auto"` shrinks one to its content.
 ### `<AppIconButton>`
 
 A button whose whole label is its icon, so `label` is required and becomes the
-`aria-label`. `tone` is `default`, `strong` (filled ink) or `danger`. Anything
-with visible text belongs in `<AppButton>` instead.
+`aria-label`. `tone` is `default`, `raised` (the white square, for a control
+with nothing around it to say it is one — the home search, the overflow menu,
+the notification bell), `strong` (filled ink) or `danger`. Anything with
+visible text belongs in `<AppButton>` instead.
 
 ### `<ActionButton>`
 
@@ -227,6 +231,19 @@ An unordered list that fetches its next page when the bottom scrolls into view.
 A row, and a row that is a link. `is="danger"` for a destructive row,
 `is="header"` for a section label.
 
+### `<AppListRow>`
+
+A tile, what the row is, what it says, and what it is worth. Four screens drew
+this by hand — the exercise library, the workout history, and the same personal
+best twice — at two type scales, two paddings, and two answers to whether a
+link shows where it goes. `to` is that answer now: **a row that navigates
+always shows the chevron**, so tappable is something the row looks rather than
+something the reader finds out.
+
+Below 520px the `trailing` value drops under the title instead of competing
+with it: on a 390px screen a long exercise name and its heaviest set cannot
+both have the room they need on one line.
+
 ### `<AppOptionRow>`
 
 A whole row that is one tap: an optional `leading` tile, the copy, an optional
@@ -246,6 +263,16 @@ tapped. `label` is required — a duration on its own names nothing — and
 Nothing to show, and what to do about it. `action` is required — not required
 to exist, required to be decided. A screen with genuinely nowhere to go writes
 `action="none"` in its own markup, where a reviewer sees the choice being made.
+
+### `<AppEmptyInline>`
+
+One muted line saying a section of a screen is empty, for a card that has
+plenty else around it. The difference from `<AppEmptyState>` is scope, and it
+decides which one a screen wants: that one is the whole screen and always
+offers a way forward, this one is a list inside a screen that is already
+working. Five screens said this five ways, from a bare "Nothing here yet…" row
+to a centred two-line block with its own heading — a heading that outranked the
+card's own.
 
 ### `<AppErrorState>`
 

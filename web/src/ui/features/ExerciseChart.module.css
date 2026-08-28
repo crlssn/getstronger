@@ -12,8 +12,10 @@
   @apply grid gap-1;
 }
 
+/* Sentence case and quiet: it labels the figure under it rather than heading
+   the card, which the card's own title above it does. */
 .exerciseChart header small {
-  @apply text-eyebrow font-bold uppercase text-text-subtle;
+  @apply text-meta font-medium text-text-subtle;
 }
 
 .exerciseChart header strong {

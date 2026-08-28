@@ -138,7 +138,6 @@ export const PlansView = () => {
           {activePlan ? (
             <section className={styles.activePlan}>
               <header>
-                <p className={styles.eyebrow}>{t('training.activePlan')}</p>
                 <span>{t('training.active')}</span>
               </header>
               <h2>{activePlan.name}</h2>
@@ -211,7 +210,6 @@ export const PlansView = () => {
           {otherPlans.length > 0 && (
             <section className={styles.otherPlans}>
               <header>
-                <p className={styles.eyebrow}>{t('training.yourPlans')}</p>
                 <h2>{activePlan ? t('training.otherPlans') : t('training.choosePlan')}</h2>
               </header>
               {otherPlans.map((plan) => (

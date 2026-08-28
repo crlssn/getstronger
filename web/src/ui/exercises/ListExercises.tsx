@@ -1,15 +1,16 @@
 import type { Exercise } from '@/proto/api/v1/shared_pb'
 
-import { ChevronRightIcon, PlusIcon } from '@heroicons/react/24/outline'
+import { PlusIcon } from '@heroicons/react/24/outline'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link } from 'react-router-dom'
 
 import { listExercises } from '@/http/requests'
 import { lastPerformedIn, useActivityStore } from '@/stores/activity'
 import { AppEmptyState } from '@/ui/components/AppEmptyState'
 import { AppErrorState } from '@/ui/components/AppErrorState'
 import { AppButton } from '@/ui/components/AppButton'
+import { AppList } from '@/ui/components/AppList'
+import { AppListRow } from '@/ui/components/AppListRow'
 import { AppLoadMore } from '@/ui/components/AppLoadMore'
 import { AppPageHeader } from '@/ui/components/AppPageHeader'
 import { AppSearchField } from '@/ui/components/AppSearchField'
@@ -103,17 +104,16 @@ export const ListExercises = () => {
           {groups.map((group) => (
             <section key={group.bucket} className={styles.exerciseGroup}>
               <h2>{t(group.labelKey)}</h2>
-              <div className={styles.exerciseGroupCard}>
+              <AppList className={styles.exerciseGroupCard}>
                 {group.items.map((exercise) => (
-                  <Link key={exercise.id} to={`/exercises/${exercise.id}`}>
-                    <span className={styles.exerciseCopy}>
-                      <strong>{exercise.name}</strong>
-                      <small>{exerciseMeta(exercise)}</small>
-                    </span>
-                    <ChevronRightIcon aria-hidden="true" />
-                  </Link>
+                  <AppListRow
+                    key={exercise.id}
+                    meta={<small>{exerciseMeta(exercise)}</small>}
+                    title={exercise.name}
+                    to={`/exercises/${exercise.id}`}
+                  />
                 ))}
-              </div>
+              </AppList>
             </section>
           ))}
 

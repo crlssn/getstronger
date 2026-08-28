@@ -1,12 +1,11 @@
 import type { Workout } from '@/proto/api/v1/workout_service_pb'
-import type { SetChanges } from '@/ui/workouts/SetMeasurementInputs'
 import { AppIconButton } from '@/ui/components/AppIconButton'
 import { AppTextarea } from '@/ui/components/AppTextarea'
 import type { Timestamp } from '@bufbuild/protobuf/wkt'
 
 import { create } from '@bufbuild/protobuf'
 import { timestampFromDate } from '@bufbuild/protobuf/wkt'
-import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/outline'
+import { Bars3Icon } from '@heroicons/react/24/outline'
 import { DateTime } from 'luxon'
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -21,14 +20,14 @@ import { AppButton } from '@/ui/components/AppButton'
 import { AppErrorState } from '@/ui/components/AppErrorState'
 import { AppFormFooter } from '@/ui/components/AppFormFooter'
 import { AppList } from '@/ui/components/AppList'
-import { AppListItem } from '@/ui/components/AppListItem'
 import { AppListItemInput } from '@/ui/components/AppListItemInput'
 import { AppOptionalAction } from '@/ui/components/AppOptionalAction'
 import { AppSkeleton } from '@/ui/components/AppSkeleton'
 import { ExerciseTags } from '@/ui/exercises/ExerciseTags'
-import { SetMeasurementInputs } from '@/ui/workouts/SetMeasurementInputs'
+import { SetTable } from '@/ui/workouts/SetTable'
 import { normalizeDistanceUnit } from '@/utils/distanceUnits'
 import { isExerciseSetComplete } from '@/utils/exerciseMeasurements'
+import { useSortable } from '@/utils/useSortable'
 import { normalizeWeightUnit } from '@/utils/weightUnits'
 import styles from './EditWorkout.module.css'
 
@@ -109,18 +108,30 @@ export const EditWorkout = () => {
       return { ...current, exerciseSets }
     })
 
-  const moveExercise = (index: number, direction: -1 | 1) =>
+  const moveExercise = (from: number, to: number) =>
     setWorkout((current) => {
       if (!current) return current
-
-      const target = index + direction
-      if (target < 0 || target >= current.exerciseSets.length) return current
+      if (to < 0 || to >= current.exerciseSets.length) return current
 
       const exerciseSets = [...current.exerciseSets]
-      const [moved] = exerciseSets.splice(index, 1)
-      if (moved) exerciseSets.splice(target, 0, moved)
+      const [moved] = exerciseSets.splice(from, 1)
+      if (moved) exerciseSets.splice(to, 0, moved)
       return { ...current, exerciseSets }
     })
+
+  // The same handle every other reorderable list in the app uses, dragged or
+  // moved with the arrow keys. A pair of chevrons on the section header was a
+  // third way of saying "this can move".
+  const order = useSortable<HTMLOListElement>(
+    {
+      handle: `.${styles.dragHandle}`,
+      ghostClass: styles.sortableGhost,
+      dragClass: styles.sortableDrag,
+      animation: 150,
+      onReorder: moveExercise,
+    },
+    (workout?.exerciseSets.length ?? 0) > 1,
+  )
 
   // The form is only mounted with the workout in hand, so without this the
   // screen keeps pulsating at a fetch that is never coming back.
@@ -134,57 +145,49 @@ export const EditWorkout = () => {
         void onSubmit()
       }}
     >
-      {workout.exerciseSets.map((exerciseSet, exerciseIndex) => (
-        <div key={exerciseSet.exercise?.id}>
-          <div className={styles.exerciseHeading}>
-            <div>
-              <h6>{exerciseSet.exercise?.name}</h6>
-              <ExerciseTags compact tags={exerciseSet.exercise?.tags} />
-            </div>
-            <div className={styles.moveActions}>
-              {exerciseIndex > 0 && (
+      <ol ref={order}>
+        {workout.exerciseSets.map((exerciseSet, exerciseIndex) => (
+          <li key={exerciseSet.exercise?.id}>
+            <div className={styles.exerciseHeading}>
+              <div>
+                <h2>{exerciseSet.exercise?.name}</h2>
+                <ExerciseTags compact tags={exerciseSet.exercise?.tags} />
+              </div>
+              <div className={styles.moveActions}>
                 <AppIconButton
-                  icon={ChevronUpIcon}
-                  label={t('training.planForm.moveUp', { name: exerciseSet.exercise?.name })}
-                  onClick={() => moveExercise(exerciseIndex, -1)}
+                  className={styles.dragHandle}
+                  icon={Bars3Icon}
+                  label={t('training.planForm.reorder', { name: exerciseSet.exercise?.name })}
                 />
-              )}
-              {exerciseIndex < workout.exerciseSets.length - 1 && (
-                <AppIconButton
-                  icon={ChevronDownIcon}
-                  label={t('training.planForm.moveDown', { name: exerciseSet.exercise?.name })}
-                  onClick={() => moveExercise(exerciseIndex, 1)}
-                />
-              )}
+              </div>
             </div>
-          </div>
 
-          <AppList>
-            <AppListItem className="flex flex-col">
-              {exerciseSet.sets.map((set, setIndex) => (
-                <div key={setIndex} className="w-full">
-                  <label className={styles.setLabel}>
-                    {t('common.set')} {setIndex + 1}
-                  </label>
-                  <SetMeasurementInputs
-                    set={set}
-                    exercise={exerciseSet.exercise}
-                    removeLabel={t('workout.removeSet', { number: setIndex + 1 })}
-                    onChange={(changes: SetChanges) =>
-                      updateSets(exerciseIndex, (sets) =>
-                        sets.map((candidate, index) =>
-                          index === setIndex ? { ...candidate, ...changes } : candidate,
-                        ),
-                      )
-                    }
-                    onRemove={() =>
-                      updateSets(exerciseIndex, (sets) =>
-                        sets.filter((_, index) => index !== setIndex),
-                      )
-                    }
-                  />
-                </div>
-              ))}
+            {/* The same table the session was logged in. It used to be a
+              stacked block per set — "SET 1" over a labelled Weight and a
+              labelled Reps — at roughly three times the height, which made
+              correcting a workout a screen nobody recognised. */}
+            <div className={styles.setTable}>
+              {exerciseSet.exercise && (
+                <SetTable
+                  distanceUnit={normalizeDistanceUnit(workout.user?.distanceUnit)}
+                  exercise={exerciseSet.exercise}
+                  mode="edit"
+                  sets={exerciseSet.sets}
+                  weightUnit={normalizeWeightUnit(workout.user?.weightUnit)}
+                  onChange={(setIndex, changes) =>
+                    updateSets(exerciseIndex, (sets) =>
+                      sets.map((candidate, index) =>
+                        index === setIndex ? { ...candidate, ...changes } : candidate,
+                      ),
+                    )
+                  }
+                  onRemove={(setIndex) =>
+                    updateSets(exerciseIndex, (sets) =>
+                      sets.filter((_, index) => index !== setIndex),
+                    )
+                  }
+                />
+              )}
 
               <AppOptionalAction
                 label={t('workout.edit.addSet')}
@@ -198,12 +201,13 @@ export const EditWorkout = () => {
                   ])
                 }
               />
-            </AppListItem>
-          </AppList>
-        </div>
-      ))}
+            </div>
+          </li>
+        ))}
+      </ol>
 
-      <h6>{t('workout.edit.startTime')}</h6>
+      {/* Each field is labelled by the row it fills, so the label that used
+          to float above it said the same thing twice. */}
       <AppList>
         <AppListItemInput
           label={t('workout.edit.startTime')}
@@ -220,7 +224,6 @@ export const EditWorkout = () => {
         />
       </AppList>
 
-      <h6>{t('workout.edit.endTime')}</h6>
       <AppList>
         <AppListItemInput
           label={t('workout.edit.endTime')}
@@ -237,9 +240,9 @@ export const EditWorkout = () => {
         />
       </AppList>
 
-      <h6>{t('workout.edit.note')}</h6>
       <AppTextarea
         autosize
+        aria-label={t('workout.edit.note')}
         className={styles.note}
         placeholder={t('workout.notePlaceholder')}
         rows={3}
@@ -263,7 +266,7 @@ export const EditWorkout = () => {
         }
       >
         <AppButton type="submit" colour="primary" size="lg">
-          {t('workout.edit.submit')}
+          {t('common.saveChanges')}
         </AppButton>
       </AppFormFooter>
     </form>

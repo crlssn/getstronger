@@ -1,0 +1,66 @@
+@reference '../../assets/base.css';
+
+.row {
+  @apply min-w-0;
+}
+
+/* One row shape: the tap floor plus a line of breathing room, the copy taking
+ * whatever is left, and everything on either side of it shrink-wrapped. */
+.inner {
+  @apply flex min-h-16 items-center gap-3 px-4 py-3 text-text transition hover:text-ink-strong;
+}
+
+.leading {
+  @apply grid size-11 shrink-0 place-items-center rounded-control;
+}
+
+.leading svg {
+  @apply size-5;
+}
+
+/* Wraps rather than divides: a long name and the load it was lifted at cannot
+ * both have the room they need on one line of a 390px screen, so below 520px
+ * the copy takes the whole line and the value goes under it. */
+.body {
+  @apply flex min-w-0 flex-1 flex-wrap items-center gap-x-3;
+}
+
+.copy {
+  @apply min-w-0 flex-1;
+}
+
+.copy > strong {
+  @apply block truncate text-body-lg font-semibold text-text;
+}
+
+.meta {
+  @apply mt-0.5 block min-w-0 text-meta text-text-subtle;
+}
+
+/* A meta line built from a single string truncates; one holding its own
+ * elements — a row of tags — keeps them.
+ *
+ * The size is set again rather than inherited: <small> carries a UA
+ * `font-size: smaller`, which took the line to 10.4px and under the screenshot
+ * harness's floor for legible text. */
+.meta small {
+  @apply block truncate text-meta;
+}
+
+.trailing {
+  @apply shrink-0 text-right text-sm font-semibold text-text;
+}
+
+.chevron {
+  @apply size-5 shrink-0 text-text-subtle;
+}
+
+@media (max-width: 520px) {
+  .copy {
+    @apply basis-full;
+  }
+
+  .trailing {
+    @apply mt-1 text-left;
+  }
+}

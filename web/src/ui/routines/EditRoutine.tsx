@@ -68,7 +68,7 @@ export const EditRoutine = () => {
 
   return (
     <RoutineForm
-      submitLabel={t('training.planForm.saveChanges')}
+      submitLabel={t('common.saveChanges')}
       initialName={name}
       initialExercises={exercises}
       initialGroups={groups}

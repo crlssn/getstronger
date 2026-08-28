@@ -7,3 +7,14 @@
 .formStatus h1 {
   @apply text-title font-extrabold text-text;
 }
+
+/* A section's own bold title, the shape every card heading takes. The
+   qualifier beside it is still part of the label, so it keeps the type and
+   gives up only the weight. */
+.sectionTitle {
+  @apply mb-2 px-1 text-body-lg font-semibold text-text;
+}
+
+.sectionTitle small {
+  @apply text-body-lg font-normal text-text-subtle;
+}

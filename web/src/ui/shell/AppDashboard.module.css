@@ -1,7 +1,16 @@
 @reference '../../assets/base.css';
 
+/* The tab bar's own height, published so anything pinned above it — the form
+   footer, the toaster — clears exactly what is there rather than assuming. */
 .dashboardShell {
+  --tab-bar-height: 4.5rem;
   padding-bottom: calc(5.25rem + env(safe-area-inset-bottom));
+}
+
+/* A screen with no tab bar has nothing there to clear. */
+.dashboardShell.noTabBar {
+  --tab-bar-height: 0rem;
+  padding-bottom: calc(0.75rem + env(safe-area-inset-bottom));
 }
 
 /* No tab bar to clear in the focused shell; the workout view reserves its own

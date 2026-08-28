@@ -7,3 +7,13 @@
 .profileTabs {
   @apply mb-4;
 }
+
+/* The chart's label belongs inside the card it names rather than floating
+   above it as an uppercase caption. */
+.trendCard {
+  @apply mb-4 p-4;
+}
+
+.trendCard h2 {
+  @apply mb-2 text-body-lg font-semibold text-text;
+}

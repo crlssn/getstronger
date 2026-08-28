@@ -35,6 +35,17 @@ const relativeToNow = (date: DateTime): string => {
   return localized(date).toLocaleString(DateTime.DATE_MED)
 }
 
+/**
+ * The same rule, for a date the app already holds as a DateTime.
+ *
+ * Two lists reached for Luxon's own `toRelative()` instead, which has neither
+ * the just-now floor nor the week-long cutoff: a routine last trained a
+ * fortnight ago read "14 days ago" on the routine list and "26 Aug 2026" three
+ * lines further down the same screen.
+ */
+export const formatDateTime = (date: DateTime | undefined): string =>
+  date ? relativeToNow(date) : ''
+
 export const formatTimestamp = (date: Timestamp | undefined): string => {
   if (!date) return ''
   return relativeToNow(DateTime.fromSeconds(Number(date.seconds)))

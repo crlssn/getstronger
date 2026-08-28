@@ -133,11 +133,11 @@ test('keeps icon-only controls above the tap-target floor @responsive', async ({
   const routineName = (await firstOption.locator('strong').innerText()).trim()
   await firstOption.click()
 
-  // The reorder controls are named after the routine they act on, which is a
-  // steadier handle than the row they happen to sit in.
+  // The row's two controls, named after the routine they act on, which is a
+  // steadier handle than the row they happen to sit in. Up and down buttons
+  // used to be here; the drag handle replaced both and takes the arrow keys.
   const reorder = [
-    page.getByRole('button', { name: `Move ${routineName} up` }),
-    page.getByRole('button', { name: `Move ${routineName} down` }),
+    page.getByRole('button', { name: `Reorder ${routineName}` }),
     page.getByRole('button', { name: `Remove ${routineName}` }),
   ]
   await expect(reorder[0]).toBeVisible()

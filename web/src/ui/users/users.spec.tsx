@@ -109,13 +109,14 @@ describe('UserView', () => {
     await waitFor(() => expect(usePageTitleStore.getState().pageTitle).toBe('Alex Morgan'))
   })
 
-  // Your own profile is "Me" wherever it appears, not your own name read back
-  // to you.
-  test('titles your own profile as Me', async () => {
+  // Not your own name read back to you — and not "Me" either, which is the tab
+  // this screen is not. One name across both left no way to tell from the
+  // header which of them you had open.
+  test('titles your own profile as the public one it is', async () => {
     mocked.getUser.mockResolvedValue(profile(false, me))
     render(`/users/${me}`)
 
-    await waitFor(() => expect(usePageTitleStore.getState().pageTitle).toBe('Me'))
+    await waitFor(() => expect(usePageTitleStore.getState().pageTitle).toBe('Your public profile'))
   })
 
   test('links each tab to its section', async () => {
