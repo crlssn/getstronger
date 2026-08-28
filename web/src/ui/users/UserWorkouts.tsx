@@ -6,9 +6,8 @@ import { useParams } from 'react-router-dom'
 
 import { listWorkouts } from '@/http/requests'
 import { AppErrorState } from '@/ui/components/AppErrorState'
-import { AppEmptyInline } from '@/ui/components/AppEmptyInline'
+import { AppEmptyState } from '@/ui/components/AppEmptyState'
 import { AppList } from '@/ui/components/AppList'
-import { AppListItem } from '@/ui/components/AppListItem'
 import { AppSkeleton } from '@/ui/components/AppSkeleton'
 import { CardWorkout } from '@/ui/features/CardWorkout'
 import { useInfiniteScroll } from '@/utils/useInfiniteScroll'
@@ -61,9 +60,13 @@ export const UserWorkouts = () => {
 
   return (
     <>
-      {workouts.map((workout) => (
-        <CardWorkout key={workout.id} compact workout={workout} />
-      ))}
+      {workouts.length > 0 && (
+        <AppList>
+          {workouts.map((workout) => (
+            <CardWorkout key={workout.id} compact workout={workout} />
+          ))}
+        </AppList>
+      )}
 
       {failed ? (
         <AppErrorState compact onRetry={() => void fetchWorkouts()} />
@@ -72,11 +75,11 @@ export const UserWorkouts = () => {
       )}
 
       {workouts.length === 0 && (
-        <AppList>
-          <AppListItem>
-            <AppEmptyInline className="w-full">{t('common.nothingHere')}</AppEmptyInline>
-          </AppListItem>
-        </AppList>
+        <AppEmptyState
+          action="none"
+          body={t('profile.workoutsEmptyBody')}
+          title={t('profile.workoutsEmptyTitle')}
+        />
       )}
     </>
   )

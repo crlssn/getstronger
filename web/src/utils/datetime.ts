@@ -32,7 +32,9 @@ const relativeToNow = (date: DateTime): string => {
     return localized(date).toRelative({ unit: ['days', 'hours', 'minutes'] }) ?? ''
   }
 
-  return localized(date).toLocaleString(DateTime.DATE_MED)
+  // "24 Jul" — the year is noise until it differs from the current one.
+  const day = localized(date)
+  return day.toFormat(day.year === DateTime.now().year ? 'd LLL' : 'd LLL yyyy')
 }
 
 /**
@@ -64,5 +66,5 @@ export const formatUnixTimestamp = (timestamp: bigint | undefined): string => {
  */
 export const formatMoment = (date: Timestamp | undefined): string => {
   if (!date) return ''
-  return localized(DateTime.fromSeconds(Number(date.seconds))).toFormat('ccc, d LLLL · HH:mm')
+  return localized(DateTime.fromSeconds(Number(date.seconds))).toFormat('ccc d LLL · HH:mm')
 }

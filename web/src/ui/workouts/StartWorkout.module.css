@@ -154,7 +154,7 @@
    green disc against each finished exercise and made the column read as a
    status light; where an exercise stands is said in words on its own line. */
 .exerciseIndex {
-  @apply grid size-8 place-items-center rounded-lg bg-info-surface text-xs font-semibold text-text-muted;
+  @apply grid size-8 place-items-center rounded-control bg-info-surface text-xs font-semibold text-text-muted;
 }
 
 .exerciseItem.completed .workoutTools {

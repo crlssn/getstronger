@@ -52,7 +52,7 @@
 }
 
 .setNumber {
-  @apply grid size-7 place-items-center rounded-lg bg-ink-surface text-xs font-bold tabular-nums text-text-muted;
+  @apply grid size-7 place-items-center rounded-control bg-ink-surface text-xs font-bold tabular-nums text-text-muted;
 }
 
 /* Gold is for records, nowhere else — and it tints the row rather than the

@@ -87,8 +87,19 @@
   @apply border-t border-border bg-ink-surface p-4 text-sm text-text-muted;
 }
 
-/* Destructive stays a text-only role, but it reads from a card surface: the
-   danger red only clears AA contrast on white, not on the sunken canvas. */
+/* The danger pattern: explainer card, outlined red pill inside it. */
+.dangerZone {
+  @apply card flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between;
+}
+
+.dangerZone h2 {
+  @apply text-title font-extrabold text-text;
+}
+
+.dangerZone p {
+  @apply mt-1 text-sm text-text-subtle;
+}
+
 .deletePlan {
-  @apply card;
+  @apply shrink-0 border-danger/30;
 }

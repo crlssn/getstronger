@@ -100,7 +100,7 @@
 }
 
 .completedMark {
-  @apply grid size-6 shrink-0 place-items-center rounded-lg bg-ink text-white;
+  @apply grid size-6 shrink-0 place-items-center rounded-control bg-ink text-white;
 }
 
 .completedBand.record .completedMark {
@@ -109,14 +109,6 @@
 
 .completedMark svg {
   @apply size-3.5 stroke-[2.5];
-}
-
-.personalBestBadge {
-  @apply inline-flex shrink-0 items-center gap-1.5 rounded-pill bg-record-strong px-2.5 py-1 text-meta font-bold text-white;
-}
-
-.personalBestBadge svg {
-  @apply size-3.5;
 }
 
 /* Four numbers, divided by hairlines and set in tabular figures so a column of
@@ -197,7 +189,7 @@
    group badge was the loudest thing on a screen whose subject is the exercises
    under it — and three of these were defined at two sizes and two radii. */
 .blockBadge {
-  @apply grid size-8 shrink-0 place-items-center rounded-lg bg-info-surface text-sm font-semibold text-text-muted;
+  @apply grid size-8 shrink-0 place-items-center rounded-control bg-info-surface text-sm font-semibold text-text-muted;
 }
 
 .summaryNote {
@@ -234,26 +226,16 @@
   @apply pl-2 text-meta font-semibold tabular-nums text-text-subtle;
 }
 
-/* A card firms its edge under the pointer rather than lifting off the page:
-   a feed of cards that rise as the cursor crosses them is a feed that moves. */
-.feedSummaryCard {
-  @apply relative mb-3 overflow-hidden transition hover:border-ink-border;
+/* One row of the feed's list card. A hover firms the paper, not the edge:
+   rows share their edges with their neighbours. */
+.feedItem {
+  @apply relative transition hover:bg-ink-surface/50;
 }
 
-/* A session that set a record, said by the card rather than by a pill on it.
-   Gold is for records, nowhere else. */
-.feedSummaryCard.feedRecord {
-  @apply border-record-border bg-record-surface;
-}
-
-.feedRecord .avatar {
-  @apply bg-record-border/50 text-record-strong;
-}
-
-/* The whole feed card is one link, with the controls sitting above it so a tap
+/* The whole feed row is one link, with the controls sitting above it so a tap
    on the author or the menu still reaches them. */
 .feedCardLink {
-  @apply absolute inset-0 z-10 rounded-card;
+  @apply absolute inset-0 z-10;
 }
 
 .feedCardControl {

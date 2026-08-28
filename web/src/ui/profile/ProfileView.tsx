@@ -32,10 +32,11 @@ import { AppPageHeader } from '@/ui/components/AppPageHeader'
 import { AppSegmented } from '@/ui/components/AppSegmented'
 import { AppSheet, SheetAction } from '@/ui/components/AppSheet'
 import { AppSkeleton } from '@/ui/components/AppSkeleton'
-import { normalizeDistanceUnit } from '@/utils/distanceUnits'
+import { AppSwitch } from '@/ui/components/AppSwitch'
+import { distanceUnitLabel, normalizeDistanceUnit } from '@/utils/distanceUnits'
 import { handle, initials } from '@/utils/names'
 import { formatNumber } from '@/utils/numbers'
-import { normalizeWeightUnit } from '@/utils/weightUnits'
+import { normalizeWeightUnit, weightUnitLabel } from '@/utils/weightUnits'
 import styles from './ProfileView.module.css'
 
 // Past this the badge is wider than the icon it sits on.
@@ -205,21 +206,16 @@ export const ProfileView = () => {
   // swapping in under a screen that no longer has a user to ask about.
   if (!user) return <AppSkeleton />
 
-  const preference = <T,>(
-    title: string,
-    body: string,
-    options: { value: T; label: string }[],
-    current: T,
-    busy: boolean,
-    onPick: (value: T) => void,
-  ): ReactNode => (
-    <section className={styles.preferencesCard}>
-      <div>
+  // One grouped card of rows, each with its control inline: a compact
+  // segmented for a genuine choice of unit, a switch for a boolean.
+  const preferenceRow = (title: string, body: string, control: ReactNode): ReactNode => (
+    <div className={styles.preferenceRow}>
+      <div className={styles.preferenceCopy}>
         <strong>{title}</strong>
         <small>{body}</small>
       </div>
-      <AppSegmented busy={busy} label={title} options={options} value={current} onChange={onPick} />
-    </section>
+      {control}
+    </div>
   )
 
   return (
@@ -315,107 +311,134 @@ export const ProfileView = () => {
         </Link>
       </section>
 
-      {preference(
-        t('profile.weightUnit'),
-        t('profile.weightUnitBody'),
-        [
-          { value: WeightUnit.KILOGRAMS, label: t('auth.kilograms') },
-          { value: WeightUnit.POUNDS, label: t('auth.pounds') },
-        ],
-        normalizeWeightUnit(weightUnit),
-        saving === 'weight',
-        (unit) =>
-          void savePreference(
-            'weight',
-            normalizeWeightUnit(weightUnit),
-            unit,
-            usePreferencesStore.getState().setWeightUnit,
-            () => updateUserWeightUnit(unit),
-            {
-              updated: t('profile.weightUnitUpdated'),
-              failed: t('profile.weightUnitUpdateFailed'),
-            },
-          ),
-      )}
+      <section className={styles.settingsGroup}>
+        <h2>{t('profile.preferencesSection')}</h2>
+        <div className={styles.preferencesCard}>
+          {preferenceRow(
+            t('profile.weightUnit'),
+            t('profile.weightUnitBody'),
+            <AppSegmented
+              busy={saving === 'weight'}
+              density="compact"
+              label={t('profile.weightUnit')}
+              options={[
+                { value: WeightUnit.KILOGRAMS, label: weightUnitLabel(WeightUnit.KILOGRAMS) },
+                { value: WeightUnit.POUNDS, label: weightUnitLabel(WeightUnit.POUNDS) },
+              ]}
+              value={normalizeWeightUnit(weightUnit)}
+              onChange={(unit) =>
+                void savePreference(
+                  'weight',
+                  normalizeWeightUnit(weightUnit),
+                  unit,
+                  usePreferencesStore.getState().setWeightUnit,
+                  () => updateUserWeightUnit(unit),
+                  {
+                    updated: t('profile.weightUnitUpdated'),
+                    failed: t('profile.weightUnitUpdateFailed'),
+                  },
+                )
+              }
+            />,
+          )}
 
-      {preference(
-        t('profile.distanceUnit'),
-        t('profile.distanceUnitBody'),
-        [
-          { value: DistanceUnit.KILOMETERS, label: t('auth.kilometers') },
-          { value: DistanceUnit.MILES, label: t('auth.miles') },
-        ],
-        normalizeDistanceUnit(distanceUnit),
-        saving === 'distance',
-        (unit) =>
-          void savePreference(
-            'distance',
-            normalizeDistanceUnit(distanceUnit),
-            unit,
-            usePreferencesStore.getState().setDistanceUnit,
-            () => updateUserDistanceUnit(unit),
-            {
-              updated: t('profile.distanceUnitUpdated'),
-              failed: t('profile.distanceUnitUpdateFailed'),
-            },
-          ),
-      )}
+          {preferenceRow(
+            t('profile.distanceUnit'),
+            t('profile.distanceUnitBody'),
+            <AppSegmented
+              busy={saving === 'distance'}
+              density="compact"
+              label={t('profile.distanceUnit')}
+              options={[
+                {
+                  value: DistanceUnit.KILOMETERS,
+                  label: distanceUnitLabel(DistanceUnit.KILOMETERS),
+                },
+                { value: DistanceUnit.MILES, label: distanceUnitLabel(DistanceUnit.MILES) },
+              ]}
+              value={normalizeDistanceUnit(distanceUnit)}
+              onChange={(unit) =>
+                void savePreference(
+                  'distance',
+                  normalizeDistanceUnit(distanceUnit),
+                  unit,
+                  usePreferencesStore.getState().setDistanceUnit,
+                  () => updateUserDistanceUnit(unit),
+                  {
+                    updated: t('profile.distanceUnitUpdated'),
+                    failed: t('profile.distanceUnitUpdateFailed'),
+                  },
+                )
+              }
+            />,
+          )}
 
-      {preference(
-        t('profile.autofillSets'),
-        t('profile.autofillSetsBody'),
-        [
-          { value: false, label: t('profile.autofillSetsOff') },
-          { value: true, label: t('profile.autofillSetsOn') },
-        ],
-        autofillSets,
-        saving === 'autofill',
-        (enabled) =>
-          void savePreference(
-            'autofill',
-            autofillSets,
-            enabled,
-            usePreferencesStore.getState().setAutofillSets,
-            () => updateUserAutofillSets(enabled),
-            {
-              updated: t('profile.autofillSetsUpdated'),
-              failed: t('profile.autofillSetsUpdateFailed'),
-            },
-          ),
-      )}
+          {/* A boolean is a switch, not an Off/On segmented: two segments
+              spelling out a yes and a no is a control wearing the costume of a
+              choice between things. */}
+          {preferenceRow(
+            t('profile.autofillSets'),
+            t('profile.autofillSetsBody'),
+            <AppSwitch
+              checked={autofillSets}
+              disabled={saving === 'autofill'}
+              label={t('profile.autofillSets')}
+              onChange={(enabled) =>
+                void savePreference(
+                  'autofill',
+                  autofillSets,
+                  enabled,
+                  usePreferencesStore.getState().setAutofillSets,
+                  () => updateUserAutofillSets(enabled),
+                  {
+                    updated: t('profile.autofillSetsUpdated'),
+                    failed: t('profile.autofillSetsUpdateFailed'),
+                  },
+                )
+              }
+            />,
+          )}
+        </div>
+      </section>
 
-      {/* Two plain rows, in the shape every other settings row takes. Between
-          them these carried three levels of alarm — the app's only filled red
-          button, in a tinted red card, under a red-outlined log out — for
-          things done once or never. The red waits in the confirmation, which
-          is where it means something.
+      {/* The red waits in the button's outline and the confirmation — the row
+          it replaced carried three levels of alarm for things done once or
+          never. The delete block says its consequence beside its button, the
+          one danger pattern the app has.
 
           Both app stores require an account made in the app to be deletable
           from inside it, which is why deleting sits on the profile rather than
           behind a support email. */}
-      <section className={styles.settingsCard} aria-label={t('profile.accountSection')}>
-        <Link to="/logout">
-          <span>
-            <strong>{t('auth.logout')}</strong>
-            <small>{t('profile.logoutBody')}</small>
-          </span>
-          <ChevronRightIcon aria-hidden="true" />
-        </Link>
-        <AppButton
-          type="button"
-          colour="ghost"
-          className={styles.accountAction}
-          onClick={() => {
-            setDeleteError(undefined)
-            setDeletePassword('')
-          }}
-        >
-          <span>
-            <strong>{t('profile.deleteAccount')}</strong>
-            <small>{t('profile.deleteAccountBody')}</small>
-          </span>
-          <ChevronRightIcon aria-hidden="true" />
-        </AppButton>
+      <section className={styles.settingsGroup} aria-label={t('profile.accountSection')}>
+        <h2>{t('profile.accountSection')}</h2>
+        <div className={styles.settingsCard}>
+          <Link to="/logout">
+            <span>
+              <strong>{t('auth.logout')}</strong>
+              <small>{t('profile.logoutBody')}</small>
+            </span>
+            <ChevronRightIcon aria-hidden="true" />
+          </Link>
+          <div className={styles.dangerRow}>
+            <span>
+              <strong>{t('profile.deleteAccount')}</strong>
+              <small>{t('profile.deleteAccountBody')}</small>
+            </span>
+            <AppButton
+              type="button"
+              colour="destructive"
+              size="sm"
+              width="auto"
+              className={styles.deleteAccount}
+              onClick={() => {
+                setDeleteError(undefined)
+                setDeletePassword('')
+              }}
+            >
+              {t('profile.deleteAccount')}
+            </AppButton>
+          </div>
+        </div>
       </section>
 
       {draft !== undefined && (

@@ -261,10 +261,7 @@ test.describe('quick workout lifecycle', () => {
     await expect(weight).toHaveValue('')
 
     await page.goto('/profile')
-    await page
-      .getByRole('group', { name: 'Repeat my last set' })
-      .getByRole('button', { name: 'On' })
-      .click()
+    await page.getByRole('switch', { name: 'Repeat my last set' }).click()
     await expect(page.getByRole('status')).toContainText('Set prefill updated')
 
     await page.goto('/workouts/quick')
@@ -396,12 +393,12 @@ test.describe('weight units', () => {
     // Switch the preference from profile settings.
     await page.goto('/profile')
     const unit = page.getByRole('group', { name: 'Preferred weight unit' })
-    await expect(unit.getByRole('button', { name: 'Kilograms' })).toHaveAttribute(
+    await expect(unit.getByRole('button', { name: 'kg', exact: true })).toHaveAttribute(
       'aria-pressed',
       'true',
     )
-    await unit.getByRole('button', { name: 'Pounds' }).click()
-    await expect(unit.getByRole('button', { name: 'Pounds' })).toHaveAttribute(
+    await unit.getByRole('button', { name: 'lbs', exact: true }).click()
+    await expect(unit.getByRole('button', { name: 'lbs', exact: true })).toHaveAttribute(
       'aria-pressed',
       'true',
     )
@@ -436,8 +433,8 @@ test.describe('weight units', () => {
     // historical display stays correct even after the preference changes.
     await page.goto('/profile')
     const kgAgain = page.getByRole('group', { name: 'Preferred weight unit' })
-    await kgAgain.getByRole('button', { name: 'Kilograms' }).click()
-    await expect(kgAgain.getByRole('button', { name: 'Kilograms' })).toHaveAttribute(
+    await kgAgain.getByRole('button', { name: 'kg', exact: true }).click()
+    await expect(kgAgain.getByRole('button', { name: 'kg', exact: true })).toHaveAttribute(
       'aria-pressed',
       'true',
     )
@@ -462,7 +459,8 @@ test.describe('weight units', () => {
     await page.goto('/profile')
     await expect(
       page.getByRole('group', { name: 'Preferred weight unit' }).getByRole('button', {
-        name: 'Kilograms',
+        name: 'kg',
+        exact: true,
       }),
     ).toHaveAttribute('aria-pressed', 'true')
   })
@@ -486,7 +484,7 @@ test.describe('weight units', () => {
     await page.goto('/profile')
     await page
       .getByRole('group', { name: 'Preferred weight unit' })
-      .getByRole('button', { name: 'Pounds' })
+      .getByRole('button', { name: 'lbs', exact: true })
       .click()
     await expect(page.getByRole('status')).toContainText('Weight unit updated')
 
@@ -508,7 +506,7 @@ test.describe('weight units', () => {
     await page.goto('/profile')
     await page
       .getByRole('group', { name: 'Preferred weight unit' })
-      .getByRole('button', { name: 'Kilograms' })
+      .getByRole('button', { name: 'kg', exact: true })
       .click()
     await expect(page.getByRole('status')).toContainText('Weight unit updated')
   })
@@ -528,19 +526,22 @@ test.describe('weight units', () => {
         .getByRole('group', { name: 'How do you track it?' })
         .getByRole('button', { name: /Distance/ }),
     ).toContainText('km')
-    await page.getByRole('button', { name: 'Distance × time' }).click()
+    await page
+      .getByRole('group', { name: 'Common measurement combinations' })
+      .getByRole('button', { name: 'Distance', exact: true })
+      .click()
     await page.getByRole('button', { name: 'Create exercise' }).click()
     await expect(page).toHaveURL(/\/exercises$/)
 
     try {
       await page.goto('/profile')
       const unit = page.getByRole('group', { name: 'Preferred distance unit' })
-      await expect(unit.getByRole('button', { name: 'Kilometers' })).toHaveAttribute(
+      await expect(unit.getByRole('button', { name: 'km', exact: true })).toHaveAttribute(
         'aria-pressed',
         'true',
       )
-      await unit.getByRole('button', { name: 'Miles' }).click()
-      await expect(unit.getByRole('button', { name: 'Miles' })).toHaveAttribute(
+      await unit.getByRole('button', { name: 'mi', exact: true }).click()
+      await expect(unit.getByRole('button', { name: 'mi', exact: true })).toHaveAttribute(
         'aria-pressed',
         'true',
       )
@@ -579,7 +580,7 @@ test.describe('weight units', () => {
       // Switching back to kilometers must not rewrite the set logged in
       // miles: historical display stays in the unit it was entered in.
       await page.goto('/profile')
-      await unit.getByRole('button', { name: 'Kilometers' }).click()
+      await unit.getByRole('button', { name: 'km', exact: true }).click()
       await expect(page.getByRole('status')).toContainText('Distance unit updated')
 
       await page.goto(workoutUrl)
@@ -588,10 +589,11 @@ test.describe('weight units', () => {
       await page.goto('/profile')
       const unit = page.getByRole('group', { name: 'Preferred distance unit' })
       if (
-        (await unit.getByRole('button', { name: 'Kilometers' }).getAttribute('aria-pressed')) !==
-        'true'
+        (await unit
+          .getByRole('button', { name: 'km', exact: true })
+          .getAttribute('aria-pressed')) !== 'true'
       ) {
-        await unit.getByRole('button', { name: 'Kilometers' }).click()
+        await unit.getByRole('button', { name: 'km', exact: true }).click()
         await expect(page.getByRole('status')).toContainText('Distance unit updated')
       }
 
@@ -671,7 +673,7 @@ test.describe('planned workouts and history', () => {
     await acceptConfirmDialog(page, 'Pause')
     await expect(page.getByRole('heading', { name: 'No active plan' })).toBeVisible()
     await page.goto(planUrl)
-    await page.getByRole('button', { name: 'Delete plan' }).click()
+    await page.getByRole('button', { name: 'Delete', exact: true }).click()
     await acceptConfirmDialog(page, 'Delete plan')
     await expect(page).toHaveURL(/\/plans$/)
   })

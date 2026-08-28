@@ -80,5 +80,5 @@
 
 .routineMenu > div a,
 .routineMenu > div button {
-  @apply flex min-h-(--size-control-sm) w-full items-center justify-start rounded-lg px-3 text-left text-sm font-medium text-text-muted hover:bg-ink-surface;
+  @apply flex min-h-(--size-control-sm) w-full items-center justify-start rounded-control px-3 text-left text-sm font-medium text-text-muted hover:bg-ink-surface;
 }

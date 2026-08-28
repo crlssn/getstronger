@@ -17,6 +17,8 @@ import { AppSkeleton } from '@/ui/components/AppSkeleton'
 import { DropdownButton } from '@/ui/components/DropdownButton'
 import { PageNavAction } from '@/ui/components/PageNavAction'
 import { WorkoutChart } from '@/ui/features/WorkoutChart'
+import { totalVolume } from '@/utils/dailyVolume'
+import { formatNumber } from '@/utils/numbers'
 import styles from './UserView.module.css'
 
 /**
@@ -112,6 +114,11 @@ export const UserView = () => {
       {workouts.length > 0 && (
         <AppCard className={styles.trendCard}>
           <h2>{t('profile.trend')}</h2>
+          {/* The number the card exists for, big in the header rather than
+              floating in the plot. */}
+          <p className={styles.trendTotal}>
+            {formatNumber(totalVolume(workouts))} {t('common.kg')}
+          </p>
           <WorkoutChart workouts={workouts} />
         </AppCard>
       )}

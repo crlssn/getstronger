@@ -63,6 +63,12 @@
   --color-badge: #dc2626;
   --color-info: #4c4943;
   --color-info-surface: #f1efec;
+  /* Charts. The one neutral every bar that is not the current period wears,
+   * and the shallow ink pool under a trend line. Data wears no hue: the
+   * current period is full ink, everything else steps back to these. */
+  --color-chart-bar: #dbd8ce;
+  --color-chart-fill: rgb(23 23 26 / 0.06);
+
   /* Gold is for personal records, nowhere else. Champagne surface, its border,
    * and a darker text step that clears contrast on that surface. */
   --color-record: #ad7b1f;

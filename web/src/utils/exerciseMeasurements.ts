@@ -95,23 +95,29 @@ export const formatSetPace = (set: Partial<Set>): string | undefined => {
 const number = (value: number) => formatNumber(value, 2)
 
 export const formatExerciseSet = (set: Partial<Set>, exercise?: Pick<Exercise, 'metrics'>) => {
-  const formatted = measurementsForExercise(exercise)
-    .map(({ field }) => {
-      const value = Number(set[field] ?? 0)
-      switch (field) {
-        case 'weight':
-          return `${number(value)} ${weightUnitLabel(set.weightUnit)}`
-        // The bare count: "92 kg · 3" — wherever this renders, the column
-        // header or the unit-carrying value beside it already says reps.
-        case 'reps':
-          return number(value)
-        case 'distance':
-          return `${number(value)} ${distanceUnitLabel(set.distanceUnit)}`
-        case 'durationSeconds':
-          return formatDurationDisplay(value)
-      }
-    })
-    .join(' · ')
+  const measurements = measurementsForExercise(exercise).map(({ field }) => {
+    const value = Number(set[field] ?? 0)
+    switch (field) {
+      case 'weight':
+        return { field, text: `${number(value)} ${weightUnitLabel(set.weightUnit)}` }
+      // The bare count: "92 kg × 7" — the unit-carrying weight before it
+      // says what the count multiplies.
+      case 'reps':
+        return { field, text: number(value) }
+      case 'distance':
+        return { field, text: `${number(value)} ${distanceUnitLabel(set.distanceUnit)}` }
+      case 'durationSeconds':
+        return { field, text: formatDurationDisplay(value) }
+    }
+  })
+
+  // Weight meets reps with the multiplication sign; every other seam between
+  // two facts stays a middle dot. The pair is adjacent by definition order.
+  const formatted = measurements.reduce((joined, { field }, index) => {
+    if (!index) return measurements[0].text
+    const separator = field === 'reps' && measurements[index - 1].field === 'weight' ? ' × ' : ' · '
+    return `${joined}${separator}${measurements[index].text}`
+  }, '')
 
   const pace = isDistanceTimeExercise(exercise) ? formatSetPace(set) : undefined
   return pace ? `${formatted} (${pace})` : formatted

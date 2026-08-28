@@ -15,5 +15,10 @@
 }
 
 .trendCard h2 {
-  @apply mb-2 text-body-lg font-semibold text-text;
+  @apply text-body-lg font-semibold text-text;
+}
+
+/* The number the card exists for, under the title that names it. */
+.trendTotal {
+  @apply mb-2 mt-1 text-display font-bold text-text;
 }

@@ -41,6 +41,11 @@ const roles = {
     'components/AppSheet.module.css',
     'components/DropdownButton.module.css',
     'exercises/ExerciseTagsInput.module.css',
+    // The danger pattern: an outlined red pill inside the card that explains
+    // the consequence — the routine editor set it, plans and the profile
+    // follow it.
+    'plans/ViewPlan.module.css',
+    'profile/ProfileView.module.css',
     'routines/ViewRoutine.module.css',
     'shell/AppToaster.module.css',
     'workouts/StartWorkout.module.css',
@@ -50,7 +55,8 @@ const roles = {
   // A personal record. Nothing else.
   record: [
     'ProgressView.module.css',
-    'exercises/ViewExercise.module.css',
+    // The one PR chip, shared: gold worn as a pill beside a title.
+    'components/AppChip.module.css',
     'features/CardWorkout.module.css',
     // A circuit is read round by round rather than as a table of sets, so the
     // trophy that marks a record has to travel with it.

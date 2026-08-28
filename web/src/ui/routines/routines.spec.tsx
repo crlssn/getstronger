@@ -146,7 +146,7 @@ describe('ListRoutines', () => {
     )!
     expect(within(card).getByText('Up next')).toBeInTheDocument()
     // Already up next, so the menu has nothing to offer but editing.
-    expect(within(card).queryByRole('button', { name: 'Make up next' })).not.toBeInTheDocument()
+    expect(within(card).queryByRole('button', { name: 'Set as up next' })).not.toBeInTheDocument()
   })
 
   test('makes a routine up next from its menu', async () => {
@@ -158,7 +158,7 @@ describe('ListRoutines', () => {
     const card = (await screen.findByRole('heading', { name: 'Push day', level: 3 })).closest(
       'article',
     )!
-    await userEvent.click(within(card).getByRole('button', { name: 'Make up next' }))
+    await userEvent.click(within(card).getByRole('button', { name: 'Set as up next' }))
 
     expect(selectRoutine).toHaveBeenCalledWith('push')
   })

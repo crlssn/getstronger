@@ -6,7 +6,7 @@ import { useMemo } from 'react'
 import { Bar } from 'react-chartjs-2'
 import { useTranslation } from 'react-i18next'
 
-import { borderColor, inkColor, inkMutedColor, subtleColor } from '@/ui/chartTokens'
+import { borderColor, chartBarColor, inkColor, subtleColor } from '@/ui/chartTokens'
 import { latestValueLabel } from '@/ui/features/latestValueLabel'
 import { volumeSeries } from '@/utils/dailyVolume'
 import { formatNumber } from '@/utils/numbers'
@@ -61,19 +61,32 @@ export const WorkoutChart = ({ workouts }: Props) => {
     maintainAspectRatio: false,
     responsive: true,
     layout: {
-      // Room for the value label above the tallest bar.
-      padding: { top: 14 },
+      // Room for the value pill above the tallest bar.
+      padding: { top: 28 },
     },
     scales: {
+      // The value label above the current bar carries the number, so the y
+      // axis says nothing: no labels, no title, no gridlines. One baseline
+      // hairline under the bars is all the scaffolding the trend needs.
       x: {
+        border: { color: borderColor },
         grid: { display: false },
-        ticks: { display: true, maxTicksLimit: 7, color: subtleColor },
+        ticks: {
+          display: true,
+          maxTicksLimit: 7,
+          // Horizontal always — a rotated label is unreadable at a glance —
+          // and the current period reads in ink where the rest stay subtle.
+          maxRotation: 0,
+          color: (context) => (context.index === points.length - 1 ? inkColor : subtleColor),
+          font: (context) => (context.index === points.length - 1 ? { weight: 700 } : {}),
+        },
         title: { display: false },
       },
       y: {
-        grid: { color: borderColor },
-        ticks: { display: true, color: subtleColor },
-        title: { display: true, text: t('progress.volumeAxis'), color: subtleColor },
+        border: { display: false },
+        grid: { display: false },
+        ticks: { display: false },
+        title: { display: false },
         beginAtZero: true,
       },
     },
@@ -87,10 +100,10 @@ export const WorkoutChart = ({ workouts }: Props) => {
     datasets: [
       {
         // The latest bar is picked out by weight, not by hue: it takes full
-        // ink and the rest step back to the muted one. Green was saying "this
-        // week" here as well as four other things.
+        // ink and the rest step back to the pale neutral. Green was saying
+        // "this week" here as well as four other things.
         backgroundColor: points.map((_, index) =>
-          index === points.length - 1 ? inkColor : inkMutedColor,
+          index === points.length - 1 ? inkColor : chartBarColor,
         ),
         borderRadius: 8,
         data: points.map((point) => point.volume),

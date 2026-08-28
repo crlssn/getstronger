@@ -319,7 +319,7 @@ export const flows: Flow[] = [
       if (!(await present(plan))) return
 
       await plan.click()
-      await page.getByRole('button', { name: 'Delete plan' }).click()
+      await page.getByRole('button', { name: 'Delete', exact: true }).click()
       await acceptConfirmation(page)
       await expect(page).toHaveURL(/\/plans$/)
     },

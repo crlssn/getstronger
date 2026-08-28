@@ -17,6 +17,9 @@ import { useToastStore } from '@/stores/toasts'
 import { cn } from '@/ui/cn'
 import styles from './AppToaster.module.css'
 
+// DS-TODO: the design system wants toasts success-only, with errors rendered
+// inline where they happened. Every error surface would have to grow an inline
+// slot first, so the error and warning variants stay until that lands.
 const icons = {
   success: CheckCircleIcon,
   error: ExclamationCircleIcon,

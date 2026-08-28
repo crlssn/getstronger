@@ -11,6 +11,7 @@ import { RoutineGroupMode } from '@/proto/api/v1/shared_pb'
 import { useToastStore } from '@/stores/toasts'
 import { useAuthStore } from '@/stores/auth'
 import { useConfirmationStore } from '@/stores/confirmation'
+import { AppChip } from '@/ui/components/AppChip'
 import { AppEmptyInline } from '@/ui/components/AppEmptyInline'
 import { AppButton } from '@/ui/components/AppButton'
 import { AppTextarea } from '@/ui/components/AppTextarea'
@@ -121,10 +122,10 @@ export const CardWorkout = ({ workout, compact }: Props) => {
   if (deleted) return null
 
   const personalBestBadge = personalBestCount > 0 && (
-    <span className={styles.personalBestBadge}>
+    <AppChip tone="record">
       <TrophyIcon aria-hidden="true" />
       {t('workout.card.prBadge', { count: personalBestCount })}
-    </span>
+    </AppChip>
   )
 
   const metric = (label: string, value: string) => (
@@ -154,18 +155,12 @@ export const CardWorkout = ({ workout, compact }: Props) => {
   )
 
   if (compact) {
-    // One row, about 150px, so three fit a phone screen. It carried a byline
-    // row, a title band and a 2x2 stat grid — around 340px, and a phone showed
-    // one and a half. Two of those four numbers never earned it: PRS repeated
-    // the badge beside the title, and DURATION was 60 min on nearly every card.
+    // One row of the feed's list card, so the feed reads as one collection
+    // rather than a stack of floating cards. The row carried a byline row, a
+    // title band and a 2x2 stat grid — around 340px, and a phone showed one
+    // and a half.
     return (
-      <article
-        className={cn(
-          styles.summaryCard,
-          styles.feedSummaryCard,
-          personalBestCount > 0 && styles.feedRecord,
-        )}
-      >
+      <li className={styles.feedItem}>
         <Link
           to={`/workouts/${workout.id}`}
           className={styles.feedCardLink}
@@ -185,6 +180,9 @@ export const CardWorkout = ({ workout, compact }: Props) => {
                 it was, not on a row of its own. */}
             <div className={cn(styles.feedTitle, styles.feedCardControl)}>
               <h2>{workout.name}</h2>
+              {/* Gold worn by the row that earned it, not by the whole card:
+                  the tinted card said "record" only to sighted readers. */}
+              {personalBestCount > 0 && <AppChip tone="record">{t('common.pr')}</AppChip>}
               <Link to={`/users/${workout.user?.id}`}>{handle(workout.user?.username)}</Link>
             </div>
 
@@ -201,19 +199,11 @@ export const CardWorkout = ({ workout, compact }: Props) => {
             </p>
           </div>
 
-          {/* The card's amber is the record, so the count is said only to a
-              screen reader — a colour on its own tells them nothing. */}
-          {personalBestCount > 0 && (
-            <span className="sr-only">
-              {t('workout.card.prBadge', { count: personalBestCount })}
-            </span>
-          )}
-
           {/* Every card opens the workout, including your own: editing and
               deleting live in the nav bar once it is open. */}
           <ChevronRightIcon className={styles.feedChevron} aria-hidden="true" />
         </div>
-      </article>
+      </li>
     )
   }
 

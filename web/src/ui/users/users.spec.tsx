@@ -229,7 +229,7 @@ describe('UserWorkouts', () => {
   test('says so when there are none', async () => {
     render()
 
-    expect(await screen.findByText('Nothing here yet…')).toBeInTheDocument()
+    expect(await screen.findByText('No workouts yet')).toBeInTheDocument()
   })
 
   // A profile with fifty workouts and no connection used to read as a profile
@@ -239,7 +239,7 @@ describe('UserWorkouts', () => {
     render()
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Something went wrong')
-    expect(screen.queryByText('Nothing here yet…')).not.toBeInTheDocument()
+    expect(screen.queryByText('No workouts yet')).not.toBeInTheDocument()
 
     mocked.listWorkouts.mockResolvedValue(workoutsPage([workout('w1', '2026-08-14T08:00:00Z')]))
     await userEvent.click(screen.getByRole('button', { name: 'Try again' }))
@@ -269,14 +269,14 @@ describe('UserPersonalBests', () => {
 
     const row = await screen.findByRole('link', { name: /Bench press/ })
     expect(row).toHaveAttribute('href', '/exercises/bench')
-    expect(row).toHaveTextContent('100 kg · 5')
+    expect(row).toHaveTextContent('100 kg × 5')
     expect(row).toHaveTextContent('Chest')
   })
 
   test('says so when there are none', async () => {
     render(`/users/${them}/personal-bests`)
 
-    expect(await screen.findByText('Nothing here yet…')).toBeInTheDocument()
+    expect(await screen.findByText('No personal bests yet')).toBeInTheDocument()
   })
 
   test('says the fetch failed rather than that there are no bests', async () => {
@@ -284,7 +284,7 @@ describe('UserPersonalBests', () => {
     render(`/users/${them}/personal-bests`)
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Something went wrong')
-    expect(screen.queryByText('Nothing here yet…')).not.toBeInTheDocument()
+    expect(screen.queryByText('No personal bests yet')).not.toBeInTheDocument()
   })
 })
 
@@ -304,10 +304,12 @@ describe.each([
     expect(row).toHaveTextContent('Sam Doe')
   })
 
+  const emptyTitle = path === 'followers' ? 'No followers yet' : 'Not following anyone yet'
+
   test('says so when there is nobody', async () => {
     render(`/users/${them}/${path}`)
 
-    expect(await screen.findByText('Nothing here yet…')).toBeInTheDocument()
+    expect(await screen.findByText(emptyTitle)).toBeInTheDocument()
   })
 
   test('says the fetch failed, and retries it', async () => {
@@ -315,7 +317,7 @@ describe.each([
     render(`/users/${them}/${path}`)
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Something went wrong')
-    expect(screen.queryByText('Nothing here yet…')).not.toBeInTheDocument()
+    expect(screen.queryByText(emptyTitle)).not.toBeInTheDocument()
 
     mock().mockResolvedValue(
       create(schema, { [field]: [{ id: 'user-1', username: 'sam', name: 'Sam Doe' }] }),

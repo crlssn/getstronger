@@ -90,7 +90,7 @@ describe('ListNotifications', () => {
   test('says so when there is nothing to catch up on', async () => {
     render()
 
-    expect(await screen.findByText('Your notifications will appear here')).toBeInTheDocument()
+    expect(await screen.findByText('No notifications yet')).toBeInTheDocument()
   })
 
   test('says the fetch failed rather than that there is nothing', async () => {
@@ -99,7 +99,7 @@ describe('ListNotifications', () => {
 
     const failure = await screen.findByRole('alert')
     expect(failure).toHaveTextContent('Something went wrong')
-    expect(screen.queryByText('Your notifications will appear here')).not.toBeInTheDocument()
+    expect(screen.queryByText('No notifications yet')).not.toBeInTheDocument()
 
     mocked.listNotifications.mockResolvedValue(page([follow('n1')]))
     await userEvent.click(within(failure).getByRole('button'))

@@ -896,7 +896,7 @@ describe('StartWorkout', () => {
     test('shows the previous session values inside the set rows', async () => {
       await renderWorkout()
 
-      expect(screen.getByText('42.5 kg · 8')).toBeInTheDocument()
+      expect(screen.getByText('42.5 kg × 8')).toBeInTheDocument()
     })
 
     test('leaves an empty field empty on focus unless the account asked for the prefill', async () => {

@@ -10,6 +10,7 @@ import { dateLocale } from '@/i18n'
 import { selectActivePlan, selectNextRoutine, useDashboardStore } from '@/stores/dashboard'
 import { cn } from '@/ui/cn'
 import { AppButton } from '@/ui/components/AppButton'
+import { AppList } from '@/ui/components/AppList'
 import { AppOptionRow } from '@/ui/components/AppOptionRow'
 import { AppPageHeader } from '@/ui/components/AppPageHeader'
 import { AppEmptyState } from '@/ui/components/AppEmptyState'
@@ -170,11 +171,11 @@ export const HomeView = () => {
                     {activePlan && (
                       <>
                         <strong>{activePlan.name}</strong>
-                        <span aria-hidden="true">•</span>
+                        <span aria-hidden="true">·</span>
                       </>
                     )}
                     {t('home.exerciseCount', { count: nextRoutine.exercises.length })}
-                    <span aria-hidden="true">•</span>
+                    <span aria-hidden="true">·</span>
                     {t('home.aboutMinutes', { count: estimatedMinutes })}
                   </p>
                 </div>
@@ -225,9 +226,13 @@ export const HomeView = () => {
                 <h2>{t('home.latestWorkouts')}</h2>
               </header>
 
-              {feedWorkouts.map((workout) => (
-                <CardWorkout key={workout.id} compact workout={workout} />
-              ))}
+              {feedWorkouts.length > 0 && (
+                <AppList>
+                  {feedWorkouts.map((workout) => (
+                    <CardWorkout key={workout.id} compact workout={workout} />
+                  ))}
+                </AppList>
+              )}
 
               {!feedLoaded ? (
                 <AppSkeleton />

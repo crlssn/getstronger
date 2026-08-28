@@ -47,9 +47,9 @@ describe('RichMessage', () => {
 
   test('renders a message with no placeholders at all', () => {
     const { container } = renderWithProviders(
-      <RichMessage i18nKey="notifications.empty" nodes={{}} />,
+      <RichMessage i18nKey="notifications.emptyTitle" nodes={{}} />,
     )
 
-    expect(container).toHaveTextContent('Your notifications will appear here')
+    expect(container).toHaveTextContent('No notifications yet')
   })
 })

@@ -26,7 +26,3 @@
 .notificationItem.unread a > div > div {
   @apply text-text;
 }
-
-.unreadDot {
-  @apply size-2 shrink-0 rounded-full bg-ink;
-}

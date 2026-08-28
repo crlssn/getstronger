@@ -6,9 +6,8 @@ import { useParams } from 'react-router-dom'
 
 import { getPersonalBests } from '@/http/requests'
 import { AppErrorState } from '@/ui/components/AppErrorState'
-import { AppEmptyInline } from '@/ui/components/AppEmptyInline'
+import { AppEmptyState } from '@/ui/components/AppEmptyState'
 import { AppList } from '@/ui/components/AppList'
-import { AppListItem } from '@/ui/components/AppListItem'
 import { AppSkeleton } from '@/ui/components/AppSkeleton'
 import { RecordRow } from '@/ui/features/RecordRow'
 
@@ -37,14 +36,18 @@ export const UserPersonalBests = () => {
 
   if (!loaded) return <AppSkeleton />
   if (failed) return <AppErrorState onRetry={() => void load()} />
+  if (personalBests.length === 0) {
+    return (
+      <AppEmptyState
+        action="none"
+        body={t('profile.personalBestsEmptyBody')}
+        title={t('profile.personalBestsEmptyTitle')}
+      />
+    )
+  }
 
   return (
     <AppList>
-      {personalBests.length === 0 && (
-        <AppListItem>
-          <AppEmptyInline className="w-full">{t('common.nothingHere')}</AppEmptyInline>
-        </AppListItem>
-      )}
       {personalBests.map((best) => (
         <RecordRow key={best.exercise?.id} record={best} />
       ))}

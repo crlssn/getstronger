@@ -361,7 +361,8 @@ describe('WorkoutView', () => {
     const row = await screen.findByRole('link', { name: /Push day/ })
     expect(row).toHaveAttribute('href', '/workouts/workout-1')
     expect(row).toHaveTextContent('4,200 kg')
-    expect(row).toHaveTextContent('60 min')
+    // Duration was "60 min" on nearly every row; it lives on the detail view.
+    expect(row).not.toHaveTextContent('min')
   })
 
   test('says so when there is no history yet', async () => {

@@ -68,8 +68,17 @@ describe('formatExerciseSet', () => {
     ).toBe('5 km · 30 min 12 sec (6:02 min/km)')
   })
 
+  it('joins weight and reps with the multiplication sign', () => {
+    expect(formatExerciseSet({ weight: 92.5, reps: 3 }, { metrics: [] })).toBe('92.5 kg × 3')
+    expect(
+      formatExerciseSet(
+        { weight: 60, reps: 8, distance: 1, distanceUnit: DistanceUnit.KILOMETERS },
+        { metrics: [ExerciseMetric.WEIGHT, ExerciseMetric.REPS, ExerciseMetric.DISTANCE] },
+      ),
+    ).toBe('60 kg × 8 · 1 km')
+  })
+
   it('leaves other metric combinations without a pace', () => {
-    expect(formatExerciseSet({ weight: 92.5, reps: 3 }, { metrics: [] })).toBe('92.5 kg · 3')
     expect(
       formatExerciseSet(
         { distance: 1, durationSeconds: 90, reps: 4, distanceUnit: DistanceUnit.KILOMETERS },

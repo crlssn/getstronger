@@ -216,7 +216,7 @@ describe('ViewPlan', () => {
     const remove = vi.spyOn(usePlanStore.getState(), 'remove').mockResolvedValue(true)
     render()
 
-    await userEvent.click(await screen.findByRole('button', { name: /Delete plan/ }))
+    await userEvent.click(await screen.findByRole('button', { name: /^Delete$/ }))
     await accept()
 
     await waitFor(() => expect(remove).toHaveBeenCalledWith('plan-1'))

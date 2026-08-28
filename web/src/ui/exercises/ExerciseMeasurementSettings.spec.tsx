@@ -83,7 +83,7 @@ describe('ExerciseMeasurementSettings', () => {
   test('a preset replaces the selection rather than adding to it', async () => {
     renderWithProviders(<Harness />)
 
-    await userEvent.click(preset('Distance × time'))
+    await userEvent.click(preset('Distance'))
 
     expect(measurement('Distance')).toHaveAttribute('aria-pressed', 'true')
     expect(measurement('Time')).toHaveAttribute('aria-pressed', 'true')
@@ -95,7 +95,7 @@ describe('ExerciseMeasurementSettings', () => {
     renderWithProviders(<Harness metrics={[ExerciseMetric.TIME]} />)
 
     expect(preset('Timed')).toHaveAttribute('aria-pressed', 'true')
-    expect(preset('Weight × reps')).toHaveAttribute('aria-pressed', 'false')
+    expect(preset('Weight')).toHaveAttribute('aria-pressed', 'false')
   })
 
   // A logged set is stored in the columns the exercise measured by at the time,

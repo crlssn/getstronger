@@ -11,6 +11,7 @@ import { useConfirmationStore } from '@/stores/confirmation'
 import { selectActivePlan, selectNextRoutine, useDashboardStore } from '@/stores/dashboard'
 import { usePlanStore } from '@/stores/plans'
 import { AppButton } from '@/ui/components/AppButton'
+import { AppChip } from '@/ui/components/AppChip'
 import { AppEmptyInline } from '@/ui/components/AppEmptyInline'
 import { AppList } from '@/ui/components/AppList'
 import { AppListRow } from '@/ui/components/AppListRow'
@@ -113,15 +114,16 @@ export const WorkoutView = () => {
     }
   }
 
-  // The row earns its space with the stats that matter: date, volume, duration.
+  // The row earns its space with the stats that matter: date, volume, sets.
+  // Duration was "60 min" on nearly every row; it lives on the detail view.
   const workoutMeta = (workout: Workout) => {
-    const { durationMinutes } = workoutSummary(workout)
+    const { setCount } = workoutSummary(workout)
     const parts = [formatTimestamp(workout.finishedAt)]
 
     if (workout.intensity > 0) {
       parts.push(`${formatNumber(workout.intensity)} ${t('common.kg')}`)
     }
-    if (durationMinutes > 0) parts.push(`${durationMinutes} ${t('common.min')}`)
+    if (setCount > 0) parts.push(t('workout.setsCompact', { count: setCount }))
 
     return parts.join(' · ')
   }
@@ -197,7 +199,15 @@ export const WorkoutView = () => {
               <AppListRow
                 key={workout.id}
                 meta={<small>{workoutMeta(workout)}</small>}
-                title={workout.name}
+                title={
+                  workoutSummary(workout).personalBestCount > 0 ? (
+                    <>
+                      {workout.name} <AppChip tone="record">{t('common.pr')}</AppChip>
+                    </>
+                  ) : (
+                    workout.name
+                  )
+                }
                 to={`/workouts/${workout.id}`}
               />
             ))}
