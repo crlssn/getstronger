@@ -468,7 +468,7 @@ Playwright starts isolated HTTP instances of the backend and web app on ports `1
 
 ## Mobile screenshots
 
-`mise run screenshots` reseeds the database and photographs every page of the app at a phone-sized viewport (390 × 844, retina density) for each seeded persona:
+`mise run screenshots` reseeds the database, takes a snapshot of what it seeded, and photographs every page of the app at a phone-sized viewport (390 × 844, retina density) for each seeded persona:
 
 ```bash
 mise run screenshots
@@ -517,7 +517,9 @@ To find out what a change actually moved, compare a run against the one before i
 mise run screenshots:diff
 ```
 
-The run reports the pages that moved, records them in the manifest, and writes a highlighted image of each difference to `web/screenshots/changes/`, alongside a `pages.tsv` naming every page it found and how it moved — added, removed, resized, or changed. A one-line change to `.auth-eyebrow`, for example, reports login, signup, forgot password, reset password, and the verification notice — including the pages nobody thought to check. Pass a pattern to compare a subset, as `screenshots:page` does. This form deliberately leaves the database alone: the seed randomises names, so reseeding would move nearly every page and bury the change being looked at.
+The run reports the pages that moved, records them in the manifest, and writes a highlighted image of each difference to `web/screenshots/changes/`, alongside a `pages.tsv` naming every page it found and how it moved — added, removed, resized, or changed. A one-line change to `.auth-eyebrow`, for example, reports login, signup, forgot password, reset password, and the verification notice — including the pages nobody thought to check. Pass a pattern to compare a subset, as `screenshots:page` does.
+
+The seed is never run again — it randomises names, so reseeding would move nearly every page and bury the change being looked at. Instead the run puts back the snapshot `mise run screenshots` took, so the comparison photographs the data the baseline photographed. Without it the flows' own exercises, routines and workouts carry from one run into the next, and pages nobody touched report a difference — twenty of them, for a change to one. Both runs also render relative times against the moment the snapshot was taken rather than against the wall clock, so a page does not move because "just now" became "three minutes ago". Two runs over an unchanged working tree therefore report nothing, which is what makes a run that reports something worth reading.
 
 Like the end-to-end suite, the run starts its own backend and web server — on ports `18280` and `15273` by default — so it neither depends on nor disturbs the local development services.
 

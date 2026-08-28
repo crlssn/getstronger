@@ -18,6 +18,12 @@ export const contactSheetPath = join(outputRoot, 'index.html')
 // inside the directory being copied.
 export const baselineRoot = fileURLToPath(new URL('../../.screenshots-baseline/', import.meta.url))
 
+// The moment the snapshot of the seeded data was taken. Every run renders
+// relative times against it rather than against the wall clock, so a page does
+// not differ from its baseline only because "1 minute ago" became "3 minutes
+// ago" while the comparison was being set up.
+export const clockPath = fileURLToPath(new URL('../../.screenshots-clock', import.meta.url))
+
 export const changesRoot = join(outputRoot, 'changes')
 
 // Every page the comparison found had moved, one 'kind<tab>image' line each.
