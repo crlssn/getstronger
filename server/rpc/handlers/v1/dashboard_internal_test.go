@@ -24,24 +24,32 @@ var errCountUnavailable = errors.New("connection reset")
 // stubSources answers every dashboard question with nothing, so a test only has
 // to say how the one source it is about behaves.
 type stubSources struct {
-	workoutCount    int64
-	workoutCountErr error
+	workoutCount     int64
+	workoutCountErr  error
+	listRoutinesErr  error
+	listWorkoutsErr  error
+	activePlanErr    error
+	personalBestsErr error
 }
 
 func (s stubSources) ListRoutines(_ context.Context, _ ...repo.ListRoutineOpt) (models.RoutineSlice, error) {
-	return nil, nil
+	return nil, s.listRoutinesErr
 }
 
 func (s stubSources) ListWorkouts(_ context.Context, _ ...repo.ListWorkoutsOpt) (models.WorkoutSlice, error) {
-	return nil, nil
+	return nil, s.listWorkoutsErr
 }
 
 func (s stubSources) GetActivePlan(_ context.Context, _ string) (*training.Plan, error) {
+	if s.activePlanErr != nil {
+		return nil, s.activePlanErr
+	}
+
 	return nil, sql.ErrNoRows
 }
 
 func (s stubSources) GetPersonalBests(_ context.Context, _ ...string) (models.SetSlice, error) {
-	return nil, nil
+	return nil, s.personalBestsErr
 }
 
 func (s stubSources) CountWorkouts(_ context.Context, _ string) (int64, error) {
@@ -73,4 +81,39 @@ func TestDashboardCapsAWorkoutCountTheFieldCannotHold(t *testing.T) {
 	res, err := handler.GetDashboard(ctx, connect.NewRequest(&apiv1.GetDashboardRequest{}))
 	require.NoError(t, err)
 	require.Equal(t, int32(math.MaxInt32), res.Msg.GetWorkoutCount())
+}
+
+// An athlete with no active plan is an ordinary dashboard; only a plan that
+// cannot be read at all is a failure.
+func TestDashboardFailsOnlyWhenASourceCannotAnswer(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name    string
+		sources stubSources
+	}{
+		{name: "routines", sources: stubSources{listRoutinesErr: errCountUnavailable}},
+		{name: "active_plan", sources: stubSources{activePlanErr: errCountUnavailable}},
+		{name: "workouts", sources: stubSources{listWorkoutsErr: errCountUnavailable}},
+		{name: "personal_bests", sources: stubSources{personalBestsErr: errCountUnavailable}},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+			ctx, handler := dashboardOf(t, test.sources)
+
+			_, err := handler.GetDashboard(ctx, connect.NewRequest(&apiv1.GetDashboardRequest{}))
+			require.Equal(t, connect.CodeInternal, connect.CodeOf(err))
+		})
+	}
+
+	t.Run("no_active_plan_is_not_a_failure", func(t *testing.T) {
+		t.Parallel()
+		ctx, handler := dashboardOf(t, stubSources{})
+
+		res, err := handler.GetDashboard(ctx, connect.NewRequest(&apiv1.GetDashboardRequest{}))
+		require.NoError(t, err)
+		require.Nil(t, res.Msg.GetActivePlan())
+	})
 }

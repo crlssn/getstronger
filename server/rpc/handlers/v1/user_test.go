@@ -5,9 +5,11 @@ import (
 	"log"
 	"strings"
 	"testing"
+	"time"
 
 	"connectrpc.com/connect"
 	"github.com/google/uuid"
+	"github.com/stephenafamo/bob"
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/zap"
 
@@ -15,6 +17,8 @@ import (
 	"github.com/crlssn/getstronger/server/gen/models"
 	v1 "github.com/crlssn/getstronger/server/gen/proto/api/v1"
 	"github.com/crlssn/getstronger/server/gen/proto/api/v1/apiv1connect"
+	"github.com/crlssn/getstronger/server/pubsub"
+	"github.com/crlssn/getstronger/server/pubsub/events"
 	"github.com/crlssn/getstronger/server/repo"
 	"github.com/crlssn/getstronger/server/rpc"
 	handlers "github.com/crlssn/getstronger/server/rpc/handlers/v1"
@@ -45,7 +49,12 @@ func (s *userSuite) SetupSuite() {
 	s.container = container.NewContainer(ctx)
 	s.factory = factory.NewFactory(s.container.DB)
 	s.repo = repo.New(s.container.DB)
-	s.handler = handlers.NewUserHandler(s.repo, nil)
+	// FollowUser publishes, so the suite needs a real bus: nothing subscribes,
+	// which leaves the event persisted and buffered, exactly as a dropped one is.
+	s.handler = handlers.NewUserHandler(s.repo, pubsub.New(pubsub.Params{
+		Log:   zap.NewExample(),
+		Store: s.repo,
+	}))
 
 	s.T().Cleanup(func() {
 		if err := s.container.Terminate(ctx); err != nil {
@@ -479,4 +488,121 @@ func (s *userSuite) TestSearchUsersFailsOnAMalformedPageToken() {
 		},
 	})
 	s.Require().Equal(connect.CodeInternal, connect.CodeOf(err))
+}
+
+func (s *userSuite) TestFollowUser() {
+	s.Run("ok_follow_is_recorded_and_announced", func() {
+		follower := s.factory.NewUser()
+		followee := s.factory.NewUser()
+		ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
+		ctx = xcontext.WithUserID(ctx, follower.ID.String())
+
+		_, err := s.handler.FollowUser(ctx, &connect.Request[v1.FollowUserRequest]{
+			Msg: &v1.FollowUserRequest{FollowId: followee.ID.String()},
+		})
+		s.Require().NoError(err)
+
+		followed, err := s.repo.IsUserFollowedByUserID(ctx, followee, follower.ID.String())
+		s.Require().NoError(err)
+		s.Require().True(followed)
+
+		s.Require().Eventually(func() bool {
+			count, countErr := models.Events.Query(
+				models.SelectWhere.Events.Topic.EQ(events.TopicFollowedUser),
+			).Count(context.Background(), bob.NewDB(s.container.DB))
+			return countErr == nil && count > 0
+		}, 5*time.Second, 50*time.Millisecond)
+	})
+
+	s.Run("err_following_the_same_person_twice", func() {
+		follower := s.factory.NewUser()
+		followee := s.factory.NewUser()
+		ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
+		ctx = xcontext.WithUserID(ctx, follower.ID.String())
+
+		req := &connect.Request[v1.FollowUserRequest]{
+			Msg: &v1.FollowUserRequest{FollowId: followee.ID.String()},
+		}
+		_, err := s.handler.FollowUser(ctx, req)
+		s.Require().NoError(err)
+
+		res, err := s.handler.FollowUser(ctx, req)
+		s.Require().Nil(res)
+		s.Require().Equal(connect.NewError(connect.CodeInternal, nil).Error(), err.Error())
+	})
+
+	s.Run("err_following_somebody_who_does_not_exist", func() {
+		follower := s.factory.NewUser()
+		ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
+		ctx = xcontext.WithUserID(ctx, follower.ID.String())
+
+		res, err := s.handler.FollowUser(ctx, &connect.Request[v1.FollowUserRequest]{
+			Msg: &v1.FollowUserRequest{FollowId: uuid.NewString()},
+		})
+		s.Require().Nil(res)
+		s.Require().Equal(connect.NewError(connect.CodeInternal, nil).Error(), err.Error())
+	})
+}
+
+func (s *userSuite) TestUnfollowUser() {
+	s.Run("ok_follow_is_removed", func() {
+		follower := s.factory.NewUser()
+		followee := s.factory.NewUser()
+		ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
+		ctx = xcontext.WithUserID(ctx, follower.ID.String())
+		s.Require().NoError(s.repo.Follow(ctx, repo.FollowParams{
+			FollowerID: follower.ID.String(),
+			FolloweeID: followee.ID.String(),
+		}))
+
+		_, err := s.handler.UnfollowUser(ctx, &connect.Request[v1.UnfollowUserRequest]{
+			Msg: &v1.UnfollowUserRequest{UnfollowId: followee.ID.String()},
+		})
+		s.Require().NoError(err)
+
+		followed, err := s.repo.IsUserFollowedByUserID(ctx, followee, follower.ID.String())
+		s.Require().NoError(err)
+		s.Require().False(followed)
+	})
+
+	// Deleting nothing is not an error: the client's view of who it follows may
+	// simply be behind, and the end state it asked for is the one it gets.
+	s.Run("ok_unfollowing_somebody_never_followed", func() {
+		follower := s.factory.NewUser()
+		ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
+		ctx = xcontext.WithUserID(ctx, follower.ID.String())
+
+		_, err := s.handler.UnfollowUser(ctx, &connect.Request[v1.UnfollowUserRequest]{
+			Msg: &v1.UnfollowUserRequest{UnfollowId: uuid.NewString()},
+		})
+		s.Require().NoError(err)
+	})
+}
+
+// The flag is about the reader, not the profile: the same profile is followed
+// for one viewer and not for another.
+func (s *userSuite) TestGetUserReportsWhetherTheViewerFollows() {
+	ctx, follower, user, _ := s.followGraph()
+	stranger := s.factory.NewUser()
+
+	res, err := s.handler.GetUser(xcontext.WithUserID(ctx, follower.ID.String()),
+		&connect.Request[v1.GetUserRequest]{Msg: &v1.GetUserRequest{Id: user.ID.String()}})
+	s.Require().NoError(err)
+	s.Require().True(res.Msg.GetUser().GetFollowed())
+
+	res, err = s.handler.GetUser(xcontext.WithUserID(ctx, stranger.ID.String()),
+		&connect.Request[v1.GetUserRequest]{Msg: &v1.GetUserRequest{Id: user.ID.String()}})
+	s.Require().NoError(err)
+	s.Require().False(res.Msg.GetUser().GetFollowed())
+}
+
+func (s *userSuite) TestGetUserNotFound() {
+	ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
+	ctx = xcontext.WithUserID(ctx, uuid.NewString())
+
+	res, err := s.handler.GetUser(ctx, &connect.Request[v1.GetUserRequest]{
+		Msg: &v1.GetUserRequest{Id: uuid.NewString()},
+	})
+	s.Require().Nil(res)
+	s.Require().Equal(connect.NewError(connect.CodeNotFound, nil).Error(), err.Error())
 }

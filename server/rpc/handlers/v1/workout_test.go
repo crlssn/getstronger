@@ -2,6 +2,7 @@ package v1_test
 
 import (
 	"context"
+	"database/sql"
 	"log"
 	"testing"
 	"time"
@@ -17,6 +18,8 @@ import (
 	"github.com/crlssn/getstronger/server/gen/models"
 	apiv1 "github.com/crlssn/getstronger/server/gen/proto/api/v1"
 	"github.com/crlssn/getstronger/server/gen/proto/api/v1/apiv1connect"
+	"github.com/crlssn/getstronger/server/pubsub"
+	"github.com/crlssn/getstronger/server/pubsub/events"
 	"github.com/crlssn/getstronger/server/repo"
 	handlers "github.com/crlssn/getstronger/server/rpc/handlers/v1"
 	"github.com/crlssn/getstronger/server/testing/container"
@@ -28,6 +31,7 @@ import (
 type workoutSuite struct {
 	suite.Suite
 
+	repo    *repo.Repo
 	handler apiv1connect.WorkoutServiceHandler
 
 	factory   *factory.Factory
@@ -43,7 +47,13 @@ func (s *workoutSuite) SetupSuite() {
 	ctx := context.Background()
 	s.container = container.NewContainer(ctx)
 	s.factory = factory.NewFactory(s.container.DB)
-	s.handler = handlers.NewWorkoutHandler(repo.New(s.container.DB), nil)
+	s.repo = repo.New(s.container.DB)
+	// PostComment publishes, so the suite needs a real bus: nothing subscribes,
+	// which leaves the event persisted and buffered, exactly as a dropped one is.
+	s.handler = handlers.NewWorkoutHandler(s.repo, pubsub.New(pubsub.Params{
+		Log:   zap.NewExample(),
+		Store: s.repo,
+	}))
 
 	s.T().Cleanup(func() {
 		if err := s.container.Terminate(ctx); err != nil {
@@ -447,4 +457,271 @@ func (s *workoutSuite) TestCreateQuickWorkoutWithoutRoutine() {
 	workout, err := models.FindWorkout(context.Background(), bob.NewDB(s.container.DB), nativeUUID(response.Msg.GetWorkoutId()))
 	s.Require().NoError(err)
 	s.Require().Equal("Quick Workout", workout.Name)
+}
+
+func (s *workoutSuite) TestGetWorkoutNotFound() {
+	ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
+	ctx = xcontext.WithUserID(ctx, uuid.NewString())
+
+	res, err := s.handler.GetWorkout(ctx, connect.NewRequest(&apiv1.GetWorkoutRequest{
+		Id: uuid.NewString(),
+	}))
+	s.Require().Nil(res)
+	s.Require().Equal(connect.NewError(connect.CodeNotFound, nil).Error(), err.Error())
+}
+
+func (s *workoutSuite) TestListWorkoutsPaginates() {
+	user := s.factory.NewUser()
+	// Created a second apart so the page token, which is a timestamp, orders them.
+	for i := range 3 {
+		s.factory.NewWorkout(
+			factory.WorkoutUserID(user.ID),
+			factory.WorkoutCreatedAt(time.Now().UTC().Add(-time.Duration(i)*time.Second)),
+		)
+	}
+
+	ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
+	ctx = xcontext.WithUserID(ctx, user.ID.String())
+
+	first, err := s.handler.ListWorkouts(ctx, connect.NewRequest(&apiv1.ListWorkoutsRequest{
+		UserIds:    []string{user.ID.String()},
+		Pagination: &apiv1.PaginationRequest{PageLimit: 2},
+	}))
+	s.Require().NoError(err)
+	s.Require().Len(first.Msg.GetWorkouts(), 2)
+	s.Require().NotEmpty(first.Msg.GetPagination().GetNextPageToken())
+
+	second, err := s.handler.ListWorkouts(ctx, connect.NewRequest(&apiv1.ListWorkoutsRequest{
+		UserIds: []string{user.ID.String()},
+		Pagination: &apiv1.PaginationRequest{
+			PageLimit: 2,
+			PageToken: first.Msg.GetPagination().GetNextPageToken(),
+		},
+	}))
+	s.Require().NoError(err)
+	s.Require().Len(second.Msg.GetWorkouts(), 1)
+	s.Require().Empty(second.Msg.GetPagination().GetNextPageToken())
+}
+
+func (s *workoutSuite) TestListWorkoutsRejectsAMalformedPageToken() {
+	ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
+	ctx = xcontext.WithUserID(ctx, uuid.NewString())
+
+	res, err := s.handler.ListWorkouts(ctx, connect.NewRequest(&apiv1.ListWorkoutsRequest{
+		UserIds:    []string{uuid.NewString()},
+		Pagination: &apiv1.PaginationRequest{PageLimit: 2, PageToken: []byte("not a token")},
+	}))
+	s.Require().Nil(res)
+	s.Require().Equal(connect.NewError(connect.CodeInternal, nil).Error(), err.Error())
+}
+
+func (s *workoutSuite) TestDeleteWorkout() {
+	s.Run("ok_workout_and_its_sets_deleted", func() {
+		user := s.factory.NewUser()
+		workout := s.factory.NewWorkout(factory.WorkoutUserID(user.ID))
+		s.factory.NewSet(factory.SetWorkoutID(workout.ID), factory.SetUserID(user.ID))
+
+		ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
+		ctx = xcontext.WithUserID(ctx, user.ID.String())
+
+		_, err := s.handler.DeleteWorkout(ctx, connect.NewRequest(&apiv1.DeleteWorkoutRequest{
+			Id: workout.ID.String(),
+		}))
+		s.Require().NoError(err)
+
+		_, err = s.repo.GetWorkout(context.Background(), repo.GetWorkoutWithID(workout.ID.String()))
+		s.Require().ErrorIs(err, sql.ErrNoRows)
+	})
+
+	s.Run("err_another_athletes_workout_is_not_deletable", func() {
+		owner := s.factory.NewUser()
+		intruder := s.factory.NewUser()
+		workout := s.factory.NewWorkout(factory.WorkoutUserID(owner.ID))
+
+		ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
+		ctx = xcontext.WithUserID(ctx, intruder.ID.String())
+
+		res, err := s.handler.DeleteWorkout(ctx, connect.NewRequest(&apiv1.DeleteWorkoutRequest{
+			Id: workout.ID.String(),
+		}))
+		s.Require().Nil(res)
+		s.Require().Equal(connect.NewError(connect.CodeFailedPrecondition, nil).Error(), err.Error())
+
+		// The owner still has it.
+		_, err = s.repo.GetWorkout(context.Background(), repo.GetWorkoutWithID(workout.ID.String()))
+		s.Require().NoError(err)
+	})
+
+	s.Run("err_workout_not_found", func() {
+		ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
+		ctx = xcontext.WithUserID(ctx, uuid.NewString())
+
+		res, err := s.handler.DeleteWorkout(ctx, connect.NewRequest(&apiv1.DeleteWorkoutRequest{
+			Id: uuid.NewString(),
+		}))
+		s.Require().Nil(res)
+		s.Require().Equal(connect.NewError(connect.CodeFailedPrecondition, nil).Error(), err.Error())
+	})
+}
+
+func (s *workoutSuite) TestPostComment() {
+	s.Run("ok_comment_carries_its_author_and_raises_an_event", func() {
+		owner := s.factory.NewUser()
+		commenter := s.factory.NewUser()
+		workout := s.factory.NewWorkout(factory.WorkoutUserID(owner.ID))
+
+		ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
+		ctx = xcontext.WithUserID(ctx, commenter.ID.String())
+
+		res, err := s.handler.PostComment(ctx, connect.NewRequest(&apiv1.PostCommentRequest{
+			WorkoutId: workout.ID.String(),
+			Comment:   "Strong session.",
+		}))
+		s.Require().NoError(err)
+		s.Require().Equal("Strong session.", res.Msg.GetComment().GetComment())
+		// Loaded by the post-create option, so the client can render the
+		// comment without a second round trip.
+		s.Require().Equal(commenter.ID.String(), res.Msg.GetComment().GetUser().GetId())
+
+		comment, err := s.repo.GetWorkoutComment(context.Background(),
+			repo.GetWorkoutCommentWithID(res.Msg.GetComment().GetId()),
+			repo.GetWorkoutCommentWithWorkout(),
+		)
+		s.Require().NoError(err)
+		s.Require().Equal(workout.ID, comment.R.Workout.ID)
+
+		s.Require().Eventually(func() bool {
+			count, countErr := models.Events.Query(
+				models.SelectWhere.Events.Topic.EQ(events.TopicWorkoutCommentPosted),
+			).Count(context.Background(), bob.NewDB(s.container.DB))
+			return countErr == nil && count > 0
+		}, 5*time.Second, 50*time.Millisecond)
+	})
+
+	s.Run("err_comment_on_a_workout_that_does_not_exist", func() {
+		ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
+		ctx = xcontext.WithUserID(ctx, s.factory.NewUser().ID.String())
+
+		res, err := s.handler.PostComment(ctx, connect.NewRequest(&apiv1.PostCommentRequest{
+			WorkoutId: uuid.NewString(),
+			Comment:   "Nobody's session.",
+		}))
+		s.Require().Nil(res)
+		s.Require().Equal(connect.NewError(connect.CodeInternal, nil).Error(), err.Error())
+	})
+}
+
+func (s *workoutSuite) TestUpdateWorkout() {
+	startedAt := time.Now().UTC().Truncate(time.Second)
+	finishedAt := startedAt.Add(time.Hour)
+
+	s.Run("ok_name_note_period_and_sets_updated", func() {
+		user := s.factory.NewUser()
+		workout := s.factory.NewWorkout(factory.WorkoutUserID(user.ID))
+		exercise := s.factory.NewExercise(factory.ExerciseUserID(user.ID))
+		s.factory.NewSet(factory.SetWorkoutID(workout.ID), factory.SetUserID(user.ID), factory.SetExerciseID(exercise.ID))
+
+		ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
+		ctx = xcontext.WithUserID(ctx, user.ID.String())
+
+		_, err := s.handler.UpdateWorkout(ctx, connect.NewRequest(&apiv1.UpdateWorkoutRequest{
+			Workout: &apiv1.Workout{
+				Id:         workout.ID.String(),
+				Name:       "Renamed",
+				Note:       "Felt heavy",
+				StartedAt:  timestamppb.New(startedAt),
+				FinishedAt: timestamppb.New(finishedAt),
+				ExerciseSets: []*apiv1.ExerciseSets{{
+					Exercise: &apiv1.Exercise{Id: exercise.ID.String()},
+					Sets:     []*apiv1.Set{{Reps: 12, Weight: 42.5}},
+				}},
+			},
+		}))
+		s.Require().NoError(err)
+
+		updated, err := s.handler.GetWorkout(ctx, connect.NewRequest(&apiv1.GetWorkoutRequest{
+			Id: workout.ID.String(),
+		}))
+		s.Require().NoError(err)
+		s.Require().Equal("Renamed", updated.Msg.GetWorkout().GetName())
+		s.Require().Equal("Felt heavy", updated.Msg.GetWorkout().GetNote())
+		s.Require().Equal(startedAt, updated.Msg.GetWorkout().GetStartedAt().AsTime())
+		s.Require().Equal(finishedAt, updated.Msg.GetWorkout().GetFinishedAt().AsTime())
+		s.Require().Len(updated.Msg.GetWorkout().GetExerciseSets(), 1)
+		s.Require().Len(updated.Msg.GetWorkout().GetExerciseSets()[0].GetSets(), 1)
+		s.Require().Equal(int32(12), updated.Msg.GetWorkout().GetExerciseSets()[0].GetSets()[0].GetReps())
+	})
+
+	s.Run("err_workout_cannot_start_after_it_finishes", func() {
+		user := s.factory.NewUser()
+		workout := s.factory.NewWorkout(factory.WorkoutUserID(user.ID))
+
+		ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
+		ctx = xcontext.WithUserID(ctx, user.ID.String())
+
+		res, err := s.handler.UpdateWorkout(ctx, connect.NewRequest(&apiv1.UpdateWorkoutRequest{
+			Workout: &apiv1.Workout{
+				Id:         workout.ID.String(),
+				StartedAt:  timestamppb.New(finishedAt),
+				FinishedAt: timestamppb.New(startedAt),
+			},
+		}))
+		s.Require().Nil(res)
+		s.Require().Equal(connect.CodeInvalidArgument, connect.CodeOf(err))
+	})
+
+	s.Run("err_workout_not_found", func() {
+		ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
+		ctx = xcontext.WithUserID(ctx, uuid.NewString())
+
+		res, err := s.handler.UpdateWorkout(ctx, connect.NewRequest(&apiv1.UpdateWorkoutRequest{
+			Workout: &apiv1.Workout{
+				Id:         uuid.NewString(),
+				StartedAt:  timestamppb.New(startedAt),
+				FinishedAt: timestamppb.New(finishedAt),
+			},
+		}))
+		s.Require().Nil(res)
+		s.Require().Equal(connect.NewError(connect.CodeFailedPrecondition, nil).Error(), err.Error())
+	})
+
+	s.Run("err_another_athletes_workout_is_not_editable", func() {
+		owner := s.factory.NewUser()
+		intruder := s.factory.NewUser()
+		workout := s.factory.NewWorkout(factory.WorkoutUserID(owner.ID), factory.WorkoutName("Untouched"))
+
+		ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
+		ctx = xcontext.WithUserID(ctx, intruder.ID.String())
+
+		res, err := s.handler.UpdateWorkout(ctx, connect.NewRequest(&apiv1.UpdateWorkoutRequest{
+			Workout: &apiv1.Workout{
+				Id:         workout.ID.String(),
+				Name:       "Renamed by a stranger",
+				StartedAt:  timestamppb.New(startedAt),
+				FinishedAt: timestamppb.New(finishedAt),
+			},
+		}))
+		s.Require().Nil(res)
+		s.Require().Equal(connect.NewError(connect.CodePermissionDenied, nil).Error(), err.Error())
+
+		unchanged, err := s.repo.GetWorkout(context.Background(), repo.GetWorkoutWithID(workout.ID.String()))
+		s.Require().NoError(err)
+		s.Require().Equal("Untouched", unchanged.Name)
+	})
+}
+
+// A plan workout is a routine's turn in a rotation, so one that names a plan
+// and no routine is not a quick workout — it is a request that lost its routine.
+func (s *workoutSuite) TestCreateWorkoutRejectsAPlanWithoutARoutine() {
+	user := s.factory.NewUser()
+	ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
+	ctx = xcontext.WithUserID(ctx, user.ID.String())
+
+	res, err := s.handler.CreateWorkout(ctx, connect.NewRequest(&apiv1.CreateWorkoutRequest{
+		PlanId:     uuid.NewString(),
+		StartedAt:  timestamppb.Now(),
+		FinishedAt: timestamppb.New(time.Now().Add(time.Hour)),
+	}))
+	s.Require().Nil(res)
+	s.Require().Equal(connect.CodeInvalidArgument, connect.CodeOf(err))
 }

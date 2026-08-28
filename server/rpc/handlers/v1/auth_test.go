@@ -1054,3 +1054,15 @@ func (s *authSuite) TestUpdatePassword() {
 		})
 	}
 }
+
+// The refresh token arrives as a cookie the interceptor puts on the context, so
+// a request without one never reaches the store.
+func (s *authSuite) TestRefreshTokenWithoutACookie() {
+	ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
+
+	res, err := s.handler.RefreshToken(ctx, &connect.Request[v1.RefreshTokenRequest]{
+		Msg: &v1.RefreshTokenRequest{},
+	})
+	s.Require().Nil(res)
+	s.Require().Equal(connect.CodeUnauthenticated, connect.CodeOf(err))
+}
