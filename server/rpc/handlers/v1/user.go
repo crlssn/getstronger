@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"time"
 
 	"connectrpc.com/connect"
 	"github.com/google/uuid"
@@ -73,18 +72,20 @@ func (h *userHandler) SearchUsers(ctx context.Context, req *connect.Request[apiv
 	log := xcontext.MustExtractLogger(ctx)
 
 	limit := int(req.Msg.GetPagination().GetPageLimit())
+	query := req.Msg.GetQuery()
 	users, err := h.repo.ListUsers(
 		ctx,
 		repo.ListUsersWithLimit(limit+1),
-		repo.ListUsersWithNameMatching(req.Msg.GetQuery()),
+		repo.ListUsersWithNameMatching(query),
+		repo.ListUsersWithPageToken(query, req.Msg.GetPagination().GetPageToken()),
 	)
 	if err != nil {
 		log.Error("Search users", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	pagination, err := repo.PaginateSlice(users, limit, func(user *models.User) time.Time {
-		return user.CreatedAt
+	pagination, err := repo.PaginateSliceWithToken(users, limit, func(user *models.User) any {
+		return repo.UserSearchPageToken{ID: user.ID.String()}
 	})
 	if err != nil {
 		log.Error("Paginate user search results", zap.Error(err))

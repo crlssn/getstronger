@@ -3,6 +3,7 @@ package v1_test
 import (
 	"context"
 	"log"
+	"strings"
 	"testing"
 
 	"connectrpc.com/connect"
@@ -391,4 +392,91 @@ func (s *userSuite) TestListFollowees() {
 	s.Require().NoError(err)
 	s.Require().Len(res.Msg.GetFollowees(), 1)
 	s.Require().Equal(followee.ID.String(), res.Msg.GetFollowees()[0].GetId())
+}
+
+// searchable returns a query no other test's users can match, and the users
+// that do match it. Their names are identical, so similarity cannot order them
+// and the tiebreak is what has to keep the pages disjoint.
+func (s *userSuite) searchable(count int) (string, map[string]bool) {
+	query := strings.ReplaceAll(uuid.NewString(), "-", "")
+	ids := make(map[string]bool, count)
+	for range count {
+		user := s.factory.NewUser(factory.UserName(query + " lifter"))
+		ids[user.ID.String()] = true
+	}
+
+	return query, ids
+}
+
+func (s *userSuite) searchUsers(ctx context.Context, query string, limit int32, token []byte) *v1.SearchUsersResponse {
+	res, err := s.handler.SearchUsers(ctx, &connect.Request[v1.SearchUsersRequest]{
+		Msg: &v1.SearchUsersRequest{
+			Query: query,
+			Pagination: &v1.PaginationRequest{
+				PageLimit: limit,
+				PageToken: token,
+			},
+		},
+	})
+	s.Require().NoError(err)
+
+	return res.Msg
+}
+
+func (s *userSuite) TestSearchUsersReturnsTheNextPage() {
+	ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
+	query, expected := s.searchable(3)
+
+	first := s.searchUsers(ctx, query, 2, nil)
+	s.Require().Len(first.GetUsers(), 2)
+	s.Require().NotEmpty(first.GetPagination().GetNextPageToken())
+
+	second := s.searchUsers(ctx, query, 2, first.GetPagination().GetNextPageToken())
+	s.Require().Len(second.GetUsers(), 1)
+	s.Require().Empty(second.GetPagination().GetNextPageToken())
+
+	seen := make(map[string]bool, len(expected))
+	for _, user := range append(first.GetUsers(), second.GetUsers()...) {
+		s.Require().False(seen[user.GetId()], "user %s returned on both pages", user.GetId())
+		seen[user.GetId()] = true
+	}
+	s.Require().Equal(expected, seen)
+}
+
+// Pages are cut out of the similarity ranking, not out of a re-sorted first
+// page: the further a name drifts from the query, the later it must appear.
+func (s *userSuite) TestSearchUsersPagesInRankOrder() {
+	ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
+	query := strings.ReplaceAll(uuid.NewString(), "-", "")
+
+	ranked := make([]string, 0, 3)
+	for _, suffix := range []string{"", " a", " a much longer trailing name"} {
+		ranked = append(ranked, s.factory.NewUser(factory.UserName(query+suffix)).ID.String())
+	}
+
+	got := make([]string, 0, len(ranked))
+	var token []byte
+	for range ranked {
+		page := s.searchUsers(ctx, query, 1, token)
+		s.Require().Len(page.GetUsers(), 1)
+		got = append(got, page.GetUsers()[0].GetId())
+		token = page.GetPagination().GetNextPageToken()
+	}
+
+	s.Require().Equal(ranked, got)
+	s.Require().Empty(token)
+}
+
+// A token the server did not issue must fail rather than quietly fall back to
+// the first page, which is what an opt with nowhere to put its error did.
+func (s *userSuite) TestSearchUsersFailsOnAMalformedPageToken() {
+	ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
+
+	_, err := s.handler.SearchUsers(ctx, &connect.Request[v1.SearchUsersRequest]{
+		Msg: &v1.SearchUsersRequest{
+			Query:      "anyone",
+			Pagination: &v1.PaginationRequest{PageLimit: 2, PageToken: []byte("not json")},
+		},
+	})
+	s.Require().Equal(connect.CodeInternal, connect.CodeOf(err))
 }

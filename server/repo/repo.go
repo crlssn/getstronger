@@ -1361,46 +1361,108 @@ func (r *Repo) GetUser(ctx context.Context, opts ...GetUserOpt) (*models.User, e
 	return user, nil
 }
 
-type ListUsersOpt func() []bob.Mod[*dialect.SelectQuery]
+type ListUsersOpt func() ([]bob.Mod[*dialect.SelectQuery], error)
 
 func ListUsersWithIDs(ids []string) ListUsersOpt {
-	return func() []bob.Mod[*dialect.SelectQuery] {
+	return func() ([]bob.Mod[*dialect.SelectQuery], error) {
 		return []bob.Mod[*dialect.SelectQuery]{
 			models.SelectWhere.Users.ID.In(uuidsFromStrings(ids)...),
-		}
+		}, nil
 	}
+}
+
+// userSearchRank scores a name and a username against the search query. The
+// ordering and the page token's cursor are both built from it, so the two
+// cannot drift into describing different rankings.
+func userSearchRank(name, username any, query string) bob.Expression {
+	return psql.F(
+		"greatest",
+		psql.F("similarity", name, psql.Arg(query)),
+		psql.F("similarity", username, psql.Arg(query)),
+	)
 }
 
 // ListUsersWithNameMatching matches the query against both the name and the
 // username, closest name matches first. Both stored values are lowercase.
 func ListUsersWithNameMatching(query string) ListUsersOpt {
-	return func() []bob.Mod[*dialect.SelectQuery] {
+	return func() ([]bob.Mod[*dialect.SelectQuery], error) {
 		pattern := psql.Arg(fmt.Sprintf("%%%s%%", strings.ToLower(query)))
 		return []bob.Mod[*dialect.SelectQuery]{
 			sm.Where(models.Users.Columns.FullNameSearch.Like(pattern).Or(
 				models.Users.Columns.Username.Like(pattern),
 			)),
-			sm.OrderBy(psql.F(
-				"greatest",
-				psql.F("similarity", models.Users.Columns.FullNameSearch, psql.Arg(query)),
-				psql.F("similarity", models.Users.Columns.Username, psql.Arg(query)),
+			sm.OrderBy(userSearchRank(
+				models.Users.Columns.FullNameSearch, models.Users.Columns.Username, query,
 			)).Desc(),
+			// Equal scores are common, so the ID breaks the tie: without a
+			// total order a page token names a group of rows rather than one.
+			sm.OrderBy(models.Users.Columns.ID).Desc(),
+		}, nil
+	}
+}
+
+// userSearchCursor aliases the copy of the users table the page token scores,
+// keeping its columns apart from the row being ranked.
+const userSearchCursor = "cursor"
+
+// UserSearchPageToken is a place in one search's ranking. The ranking depends
+// on the query, so the token names the last user of the page and the next query
+// re-scores that user, rather than carrying a score no other query agrees with.
+type UserSearchPageToken struct {
+	ID string `json:"id"`
+}
+
+// ListUsersWithPageToken resumes a name search after the user the token names.
+// It must be given the query the token was issued for; ordering by any other
+// ranking would make the cursor meaningless. A cursor whose user has since been
+// deleted scores NULL and ends the list, rather than repeating a page.
+func ListUsersWithPageToken(query string, token []byte) ListUsersOpt {
+	return func() ([]bob.Mod[*dialect.SelectQuery], error) {
+		if len(token) == 0 {
+			return nil, nil
 		}
+
+		var pt UserSearchPageToken
+		if err := json.Unmarshal(token, &pt); err != nil {
+			return nil, fmt.Errorf("page token unmarshal: %w", err)
+		}
+
+		cursorID := psql.Arg(uuidFromString(pt.ID))
+		cursorRank := psql.Select(
+			sm.Columns(userSearchRank(
+				psql.Quote(userSearchCursor, models.Users.Columns.FullNameSearch.Name()),
+				psql.Quote(userSearchCursor, models.Users.Columns.Username.Name()),
+				query,
+			)),
+			sm.From("users").As(userSearchCursor),
+			sm.Where(psql.Quote(userSearchCursor, models.Users.Columns.ID.Name()).EQ(cursorID)),
+		)
+
+		rank := userSearchRank(models.Users.Columns.FullNameSearch, models.Users.Columns.Username, query)
+
+		return []bob.Mod[*dialect.SelectQuery]{
+			sm.Where(psql.Group(rank, models.Users.Columns.ID).
+				LT(psql.Group(psql.Group(cursorRank), cursorID))),
+		}, nil
 	}
 }
 
 func ListUsersWithLimit(limit int) ListUsersOpt {
-	return func() []bob.Mod[*dialect.SelectQuery] {
+	return func() ([]bob.Mod[*dialect.SelectQuery], error) {
 		return []bob.Mod[*dialect.SelectQuery]{
 			sm.Limit(limit),
-		}
+		}, nil
 	}
 }
 
 func (r *Repo) ListUsers(ctx context.Context, opts ...ListUsersOpt) (models.UserSlice, error) {
 	query := make([]bob.Mod[*dialect.SelectQuery], 0, len(opts))
 	for _, opt := range opts {
-		query = append(query, opt()...)
+		q, err := opt()
+		if err != nil {
+			return nil, fmt.Errorf("user list opt: %w", err)
+		}
+		query = append(query, q...)
 	}
 
 	users, err := models.Users.Query(query...).All(ctx, r.bobExec())
