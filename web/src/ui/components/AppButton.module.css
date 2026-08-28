@@ -63,9 +63,13 @@
  * brand colour rather than as one that is waiting. This is 5.1:1, and it is
  * plainly not a button you can press.
  *
+ * The border stays drawn rather than cleared: the workout dock's way out is a
+ * secondary, and without a border its disabled state was grey on grey and read
+ * as a caption rather than as a control.
+ *
  * Last in the file and matched on hover as well, so it beats each role's own
  * colours and the hover state that would otherwise paint over it. */
 .button:disabled,
 .button:disabled:hover {
-  @apply cursor-not-allowed border-transparent bg-ink-tint text-text-muted;
+  @apply cursor-not-allowed border-ink-border bg-ink-tint text-text-muted;
 }

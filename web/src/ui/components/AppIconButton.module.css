@@ -30,10 +30,10 @@
   @apply text-danger hover:bg-danger-surface hover:text-danger-strong;
 }
 
-/* The same disabled treatment AppButton uses, for the same reason: reduced
- * opacity took the icon down with the fill. Last in the file and matched on
- * hover, so it beats each tone's own colours. */
+/* An icon with nothing behind it, so unlike AppButton there is no fill for the
+ * opacity to take the glyph down with — `strong` is the only tone that has one
+ * and nothing disables it. Last in the file so it beats each tone's hover. */
 .iconButton:disabled,
 .iconButton:disabled:hover {
-  @apply cursor-not-allowed border-transparent bg-transparent text-text-subtle/50;
+  @apply cursor-not-allowed bg-transparent opacity-40;
 }
