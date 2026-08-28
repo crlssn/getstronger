@@ -3,7 +3,7 @@ import type { ReactNode } from 'react'
 
 import { BellIcon, ChevronRightIcon, PencilSquareIcon } from '@heroicons/react/24/outline'
 import { Code, ConnectError } from '@connectrpc/connect'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useNavigate } from 'react-router-dom'
 
@@ -24,6 +24,7 @@ import { useNotificationStore } from '@/stores/notifications'
 import { usePreferencesStore } from '@/stores/preferences'
 import { useToastStore } from '@/stores/toasts'
 import { AppButton } from '@/ui/components/AppButton'
+import { AppErrorState } from '@/ui/components/AppErrorState'
 import { AppPasswordInput } from '@/ui/components/AppPasswordInput'
 import { AppInput } from '@/ui/components/AppInput'
 import { AppSegmented } from '@/ui/components/AppSegmented'
@@ -54,36 +55,45 @@ export const ProfileView = () => {
   const autofillSets = usePreferencesStore((state) => state.autofillSets)
 
   const [user, setUser] = useState<User>()
+  const [failed, setFailed] = useState(false)
   const [saving, setSaving] = useState<'weight' | 'distance' | 'autofill' | 'profile'>()
   const [draft, setDraft] = useState<{ name: string; username: string }>()
   const [deletePassword, setDeletePassword] = useState<string>()
   const [deleteError, setDeleteError] = useState<string>()
   const [deleting, setDeleting] = useState(false)
 
-  useEffect(() => {
-    const load = async () => {
-      // Deleting the account swaps the signed-in shell for the guest one, which
-      // remounts this screen under it before the app has left /profile. There
-      // is no longer a user to ask about, and asking for an empty id answers
-      // with a validation error the person reads as a failed deletion.
-      const { userId } = useAuthStore.getState()
-      if (!userId) return
+  const load = useCallback(async () => {
+    // Deleting the account swaps the signed-in shell for the guest one, which
+    // remounts this screen under it before the app has left /profile. There
+    // is no longer a user to ask about, and asking for an empty id answers
+    // with a validation error the person reads as a failed deletion.
+    const { userId } = useAuthStore.getState()
+    if (!userId) return
 
-      const [response] = await Promise.all([
-        getCurrentUser(userId),
-        useDashboardStore.getState().load(),
-        useNotificationStore.getState().refreshUnreadNotifications(),
-      ])
-      if (!response?.user) return
-
-      setUser(response.user)
-      const preferences = usePreferencesStore.getState()
-      preferences.setWeightUnit(response.user.weightUnit)
-      preferences.setDistanceUnit(response.user.distanceUnit)
-      preferences.setAutofillSets(response.user.autofillSets)
+    const [response] = await Promise.all([
+      getCurrentUser(userId),
+      useDashboardStore.getState().load(),
+      useNotificationStore.getState().refreshUnreadNotifications(),
+    ])
+    if (!response?.user) {
+      setFailed(true)
+      return
     }
-    void load()
+
+    setFailed(false)
+    setUser(response.user)
+    const preferences = usePreferencesStore.getState()
+    preferences.setWeightUnit(response.user.weightUnit)
+    preferences.setDistanceUnit(response.user.distanceUnit)
+    preferences.setAutofillSets(response.user.autofillSets)
   }, [])
+
+  useEffect(() => {
+    const initialLoad = async () => {
+      await load()
+    }
+    void initialLoad()
+  }, [load])
 
   /**
    * Applies a preference straight away, then tells the server.
@@ -186,6 +196,11 @@ export const ProfileView = () => {
     void navigate('/login')
   }
 
+  // The tab has no list to fall back to, so an unanswered fetch used to leave
+  // the whole page pulsating with no way to ask again.
+  if (failed) return <AppErrorState onRetry={() => void load()} />
+  // Still fetching — or the account was just deleted, and the guest shell is
+  // swapping in under a screen that no longer has a user to ask about.
   if (!user) return <AppSkeleton />
 
   const preference = <T,>(

@@ -111,6 +111,28 @@ describe('ProfileView', () => {
     expect(screen.getByText('AM')).toBeInTheDocument()
   })
 
+  // The tab has no list to fall back to, so the skeleton was the whole page:
+  // a fetch that failed left it pulsating with no way to ask again.
+  describe('when the profile does not load', () => {
+    test('offers a retry rather than a skeleton that never resolves', async () => {
+      mocked.getCurrentUser.mockResolvedValue(undefined)
+      render()
+
+      expect(await screen.findByRole('alert')).toHaveTextContent('Something went wrong')
+      expect(screen.getByRole('button', { name: 'Try again' })).toBeInTheDocument()
+    })
+
+    test('shows the profile once the retry lands', async () => {
+      mocked.getCurrentUser.mockResolvedValueOnce(undefined)
+      render()
+
+      await userEvent.click(await screen.findByRole('button', { name: 'Try again' }))
+
+      expect(await screen.findByRole('heading', { name: 'Alex Morgan' })).toBeInTheDocument()
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+    })
+  })
+
   test('summarises how training is going', async () => {
     useDashboardStore.setState({
       dashboard: create(GetDashboardResponseSchema, {

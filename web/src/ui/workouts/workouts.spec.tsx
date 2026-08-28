@@ -152,6 +152,20 @@ describe('EditWorkout', () => {
     )
   })
 
+  // The form is only mounted with the workout in hand, so a fetch that failed
+  // left the screen pulsating with nothing to press.
+  test('offers a retry when the workout does not load', async () => {
+    mocked.getWorkout.mockResolvedValue(undefined)
+    render()
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Something went wrong')
+
+    mocked.getWorkout.mockResolvedValue(create(GetWorkoutResponseSchema, { workout: withSets() }))
+    await userEvent.click(screen.getByRole('button', { name: 'Try again' }))
+
+    expect(await screen.findByDisplayValue('100')).toBeInTheDocument()
+  })
+
   // Refused here as well as by the API, so the form is never shown for one.
   test('will not edit someone else’s workout', async () => {
     useAuthStore.setState({ userId: 'someone-else' })

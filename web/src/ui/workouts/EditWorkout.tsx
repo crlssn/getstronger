@@ -8,7 +8,7 @@ import { create } from '@bufbuild/protobuf'
 import { timestampFromDate } from '@bufbuild/protobuf/wkt'
 import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/outline'
 import { DateTime } from 'luxon'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useParams } from 'react-router-dom'
 
@@ -18,6 +18,7 @@ import { useToastStore } from '@/stores/toasts'
 import { useAuthStore } from '@/stores/auth'
 import { usePageTitleStore } from '@/stores/pageTitle'
 import { AppButton } from '@/ui/components/AppButton'
+import { AppErrorState } from '@/ui/components/AppErrorState'
 import { AppFormFooter } from '@/ui/components/AppFormFooter'
 import { AppList } from '@/ui/components/AppList'
 import { AppListItem } from '@/ui/components/AppListItem'
@@ -45,25 +46,34 @@ export const EditWorkout = () => {
   const { id = '' } = useParams()
 
   const [workout, setWorkout] = useState<Workout>()
+  const [failed, setFailed] = useState(false)
+
+  const load = useCallback(async () => {
+    const res = await getWorkout(id)
+    if (!res) {
+      setFailed(true)
+      return
+    }
+
+    // Editing someone else's workout is refused here as well as by the API,
+    // so the form is never shown for one.
+    if (res.workout?.user?.id !== useAuthStore.getState().userId) {
+      useToastStore.getState().error(t('workout.edit.noPermission'))
+      await navigate('/home')
+      return
+    }
+
+    setFailed(false)
+    setWorkout(res.workout)
+    usePageTitleStore.getState().setPageTitle(res.workout.name)
+  }, [id, t, navigate])
 
   useEffect(() => {
-    const load = async () => {
-      const res = await getWorkout(id)
-      if (!res) return
-
-      // Editing someone else's workout is refused here as well as by the API,
-      // so the form is never shown for one.
-      if (res.workout?.user?.id !== useAuthStore.getState().userId) {
-        useToastStore.getState().error(t('workout.edit.noPermission'))
-        await navigate('/home')
-        return
-      }
-
-      setWorkout(res.workout)
-      usePageTitleStore.getState().setPageTitle(res.workout.name)
+    const initialLoad = async () => {
+      await load()
     }
-    void load()
-  }, [id, t, navigate])
+    void initialLoad()
+  }, [load])
 
   const onSubmit = async () => {
     if (!workout) return
@@ -112,6 +122,9 @@ export const EditWorkout = () => {
       return { ...current, exerciseSets }
     })
 
+  // The form is only mounted with the workout in hand, so without this the
+  // screen keeps pulsating at a fetch that is never coming back.
+  if (failed) return <AppErrorState onRetry={() => void load()} />
   if (!workout) return <AppSkeleton />
 
   return (
