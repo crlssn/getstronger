@@ -9,10 +9,24 @@ import { brandNameParts, brandSlogan } from '../src/brand'
 
 const html = readFileSync(join(__dirname, '..', 'index.html'), 'utf8')
 const css = /<style>([\s\S]*?)<\/style>/.exec(html)?.[1] ?? ''
+const theme = readFileSync(join(__dirname, '..', 'src', 'assets', 'theme.css'), 'utf8')
+
+// Collapsed, because the formatter is free to break a long value across lines
+// and a rule reads the same either way.
+const flat = (value: string) => value.replace(/\s+/g, ' ').trim()
 
 const declarationsFor = (selector: string) => {
   const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-  return new RegExp(`${escaped}\\s*\\{([^}]*)\\}`).exec(css)?.[1] ?? ''
+  return flat(new RegExp(`${escaped}\\s*\\{([^}]*)\\}`).exec(css)?.[1] ?? '')
+}
+
+// theme.css has not loaded yet when the splash paints, so the splash restates
+// the handful of values it needs. This reads them back out of the token layer,
+// which is the only thing that keeps the two from drifting apart.
+const token = (name: string) => {
+  const value = new RegExp(`--${name}:\\s*([^;]+);`).exec(theme)?.[1]
+  if (!value) throw new Error(`theme.css declares no --${name}`)
+  return flat(value)
 }
 
 // The sprite is a strip of frames behind a window one frame wide, so the count
@@ -32,6 +46,30 @@ describe('boot splash', () => {
 
   it('shows one frame at a time', () => {
     expect(declarationsFor('#boot-splash .boot-lifter')).toMatch(/overflow:\s*hidden/)
+  })
+
+  it('stands the lift on a card, the way every other surface is drawn', () => {
+    const stage = declarationsFor('#boot-splash .boot-stage')
+    expect(stage).toContain(`border-radius: ${token('radius-card')}`)
+    expect(stage).toContain(`background: ${token('color-surface')}`)
+    expect(stage).toContain(`border: 1px solid ${token('color-border')}`)
+    expect(stage).toContain(`box-shadow: ${token('shadow-card')}`)
+  })
+
+  it('restates the theme it cannot wait for', () => {
+    expect(declarationsFor('#boot-splash')).toContain(
+      `background: ${token('color-surface-sunken')}`,
+    )
+    expect(declarationsFor('#boot-splash .boot-mark')).toContain(
+      `background: ${token('color-ink')}`,
+    )
+    expect(declarationsFor('#boot-splash .boot-mark')).toContain(token('color-ink-border'))
+    expect(declarationsFor('#boot-splash .boot-copy > span')).toContain(
+      `color: ${token('color-text-subtle')}`,
+    )
+    expect(declarationsFor('#boot-splash .boot-ground')).toContain(
+      `fill: ${token('color-ink-tint')}`,
+    )
   })
 
   it('cuts from frame to frame rather than sliding between them', () => {

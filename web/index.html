@@ -34,7 +34,7 @@
         display: grid;
         place-items: center;
         align-content: center;
-        gap: 1.75rem;
+        gap: 2rem;
         background: #f5f4f2;
       }
       #boot-splash .boot-brand {
@@ -51,7 +51,9 @@
         height: 2.75rem;
         border-radius: 0.75rem;
         background: #17171a;
-        box-shadow: 0 1px 2px #d3d0c9;
+        box-shadow:
+          0 1px 2px #d3d0c9,
+          0 8px 20px -14px #d3d0c9;
       }
       #boot-splash .boot-mark img {
         width: 1.75rem;
@@ -81,6 +83,17 @@
       /* Six frames of a power clean, run behind a window one frame wide. The
          wait has no known length, so the loop reads as work rather than as
          progress towards a finish. */
+      #boot-splash .boot-stage {
+        display: grid;
+        place-items: center;
+        padding: 1.25rem;
+        border: 1px solid #edebe7;
+        border-radius: 1rem;
+        background: #ffffff;
+        box-shadow:
+          0 1px 2px rgb(23 23 26 / 0.05),
+          0 8px 20px -14px rgb(23 23 26 / 0.18);
+      }
       #boot-splash .boot-lifter {
         overflow: hidden;
         width: 7.5rem;
@@ -93,6 +106,13 @@
         height: 7.5rem;
         fill: currentColor;
         animation: boot-splash-clean 1.2s steps(6) infinite;
+      }
+      /* Pixels stay square; the floor under them is the one thing that curves. */
+      #boot-splash .boot-frame {
+        shape-rendering: crispEdges;
+      }
+      #boot-splash .boot-ground {
+        fill: #e4e2dd;
       }
       @keyframes boot-splash-clean {
         to {
@@ -117,40 +137,53 @@
           <span>Lift it. Log it. Beat it.</span>
         </span>
       </div>
-      <div class="boot-lifter">
-        <svg viewBox="0 0 240 40" shape-rendering="crispEdges">
-          <rect x="0" y="36" width="240" height="2" />
-          <path
-            class="boot-frame"
-            transform="translate(0 0)"
-            d="M19 15h5v5h-5zM14 18h5v9h-5zM12 19h2v11h-2zM10 20h2v9h-2zM19 20h1v6h-1zM8 21h2v7h-2zM7 22h1v6h-1zM20 23h1v3h-1zM14 27h3v1h-3zM19 27h3v3h-3zM9 28h1v1h-1zM14 28h2v2h-2zM18 28h1v7h-1zM22 28h1v7h-1zM11 29h1v1h-1zM17 29h1v5h-1zM23 29h1v5h-1zM13 30h2v6h-2zM16 30h1v3h-1zM21 30h1v6h-1zM24 30h1v3h-1zM12 32h1v4h-1zM19 32h2v4h-2zM15 33h1v3h-1zM11 34h1v2h-1zM16 35h1v1h-1z"
-          />
-          <path
-            class="boot-frame"
-            transform="translate(40 0)"
-            d="M19 11h5v5h-5zM14 14h5v8h-5zM12 15h2v14h-2zM11 16h1v12h-1zM19 16h1v7h-1zM10 17h1v10h-1zM8 18h2v7h-2zM7 19h1v6h-1zM20 19h1v4h-1zM14 22h2v5h-2zM17 22h2v2h-2zM16 24h1v1h-1zM19 24h3v3h-3zM9 25h1v1h-1zM18 25h1v7h-1zM22 25h1v7h-1zM17 26h1v5h-1zM23 26h1v5h-1zM14 27h1v9h-1zM16 27h1v3h-1zM21 27h1v6h-1zM24 27h1v3h-1zM13 29h1v7h-1zM19 29h2v4h-2zM15 30h1v6h-1zM12 32h1v4h-1zM16 32h1v4h-1zM11 34h1v2h-1zM17 34h3v2h-3z"
-          />
-          <path
-            class="boot-frame"
-            transform="translate(80 0)"
-            d="M14 4h5v5h-5zM14 9h2v13h-2zM11 11h3v7h-3zM16 11h1v9h-1zM17 13h1v6h-1zM18 15h1v4h-1zM19 16h1v2h-1zM12 18h2v4h-2zM19 19h3v3h-3zM18 20h1v7h-1zM22 20h1v7h-1zM17 21h1v5h-1zM23 21h1v5h-1zM13 22h2v3h-2zM16 22h1v3h-1zM21 22h1v6h-1zM24 22h1v3h-1zM19 24h2v4h-2zM14 25h2v10h-2zM16 27h1v9h-1zM17 28h2v3h-2zM17 31h1v5h-1zM18 34h2v2h-2zM15 35h1v1h-1z"
-          />
-          <path
-            class="boot-frame"
-            transform="translate(120 0)"
-            d="M12 11h5v5h-5zM12 16h3v16h-3zM10 17h2v14h-2zM15 17h1v3h-1zM19 17h3v3h-3zM18 18h1v7h-1zM22 18h1v7h-1zM17 19h1v5h-1zM23 19h1v5h-1zM16 20h1v3h-1zM21 20h1v6h-1zM24 20h1v3h-1zM9 22h1v9h-1zM19 22h2v4h-2zM15 23h1v13h-1zM16 25h1v1h-1zM17 26h2v10h-2zM22 26h1v7h-1zM16 27h1v9h-1zM19 27h3v6h-3zM13 32h2v4h-2zM19 33h1v3h-1zM12 34h1v2h-1zM20 34h1v2h-1z"
-          />
-          <path
-            class="boot-frame"
-            transform="translate(160 0)"
-            d="M14 5h5v5h-5zM14 10h3v3h-3zM12 11h2v16h-2zM17 11h1v1h-1zM19 12h3v3h-3zM14 13h2v2h-2zM18 13h1v7h-1zM22 13h1v7h-1zM17 14h1v5h-1zM23 14h1v5h-1zM14 15h1v21h-1zM16 15h1v3h-1zM21 15h1v6h-1zM24 15h1v3h-1zM19 17h2v4h-2zM15 18h1v18h-1zM16 20h1v16h-1zM17 21h2v2h-2zM22 21h1v3h-1zM19 22h3v2h-3zM17 23h1v9h-1zM13 27h1v9h-1zM12 34h1v2h-1zM17 34h4v2h-4z"
-          />
-          <path
-            class="boot-frame"
-            transform="translate(200 0)"
-            d="M19 12h5v5h-5zM14 15h5v8h-5zM13 16h1v20h-1zM12 17h1v12h-1zM19 17h1v5h-1zM10 18h2v9h-2zM9 19h1v7h-1zM8 20h1v6h-1zM20 20h1v2h-1zM14 23h3v1h-3zM19 23h3v3h-3zM14 24h2v2h-2zM18 24h1v7h-1zM22 24h1v7h-1zM17 25h1v5h-1zM23 25h1v5h-1zM14 26h1v10h-1zM16 26h1v3h-1zM21 26h1v6h-1zM24 26h1v3h-1zM11 27h1v1h-1zM19 28h2v4h-2zM15 29h1v7h-1zM16 31h1v5h-1zM12 32h1v4h-1zM17 32h1v1h-1zM11 34h1v2h-1zM17 34h3v2h-3z"
-          />
-        </svg>
+      <div class="boot-stage">
+        <div class="boot-lifter">
+          <svg viewBox="0 0 240 40">
+            <g transform="translate(0 0)">
+              <rect class="boot-ground" x="3" y="36" width="34" height="2" rx="1" />
+              <path
+                class="boot-frame"
+                d="M23 15h5v5h-5zM18 18h5v9h-5zM16 19h2v11h-2zM14 20h2v9h-2zM23 20h1v6h-1zM12 21h2v7h-2zM11 22h1v6h-1zM24 23h1v3h-1zM18 27h3v1h-3zM23 27h3v3h-3zM13 28h1v1h-1zM18 28h2v2h-2zM22 28h1v7h-1zM26 28h1v7h-1zM15 29h1v1h-1zM21 29h1v5h-1zM27 29h1v5h-1zM17 30h2v6h-2zM20 30h1v3h-1zM25 30h1v6h-1zM28 30h1v3h-1zM16 32h1v4h-1zM23 32h2v4h-2zM19 33h1v3h-1zM15 34h1v2h-1zM20 35h1v1h-1z"
+              />
+            </g>
+            <g transform="translate(40 0)">
+              <rect class="boot-ground" x="3" y="36" width="34" height="2" rx="1" />
+              <path
+                class="boot-frame"
+                d="M23 11h5v5h-5zM18 14h5v8h-5zM16 15h2v14h-2zM15 16h1v12h-1zM23 16h1v7h-1zM14 17h1v10h-1zM12 18h2v7h-2zM11 19h1v6h-1zM24 19h1v4h-1zM18 22h2v5h-2zM21 22h2v2h-2zM20 24h1v1h-1zM23 24h3v3h-3zM13 25h1v1h-1zM22 25h1v7h-1zM26 25h1v7h-1zM21 26h1v5h-1zM27 26h1v5h-1zM18 27h1v9h-1zM20 27h1v3h-1zM25 27h1v6h-1zM28 27h1v3h-1zM17 29h1v7h-1zM23 29h2v4h-2zM19 30h1v6h-1zM16 32h1v4h-1zM20 32h1v4h-1zM15 34h1v2h-1zM21 34h3v2h-3z"
+              />
+            </g>
+            <g transform="translate(80 0)">
+              <rect class="boot-ground" x="3" y="36" width="34" height="2" rx="1" />
+              <path
+                class="boot-frame"
+                d="M18 4h5v5h-5zM18 9h2v13h-2zM15 11h3v7h-3zM20 11h1v9h-1zM21 13h1v6h-1zM22 15h1v4h-1zM23 16h1v2h-1zM16 18h2v4h-2zM23 19h3v3h-3zM22 20h1v7h-1zM26 20h1v7h-1zM21 21h1v5h-1zM27 21h1v5h-1zM17 22h2v3h-2zM20 22h1v3h-1zM25 22h1v6h-1zM28 22h1v3h-1zM23 24h2v4h-2zM18 25h2v10h-2zM20 27h1v9h-1zM21 28h2v3h-2zM21 31h1v5h-1zM22 34h2v2h-2zM19 35h1v1h-1z"
+              />
+            </g>
+            <g transform="translate(120 0)">
+              <rect class="boot-ground" x="3" y="36" width="34" height="2" rx="1" />
+              <path
+                class="boot-frame"
+                d="M16 11h5v5h-5zM16 16h3v16h-3zM14 17h2v14h-2zM19 17h1v3h-1zM23 17h3v3h-3zM22 18h1v7h-1zM26 18h1v7h-1zM21 19h1v5h-1zM27 19h1v5h-1zM20 20h1v3h-1zM25 20h1v6h-1zM28 20h1v3h-1zM13 22h1v9h-1zM23 22h2v4h-2zM19 23h1v13h-1zM20 25h1v1h-1zM21 26h2v10h-2zM26 26h1v7h-1zM20 27h1v9h-1zM23 27h3v6h-3zM17 32h2v4h-2zM23 33h1v3h-1zM16 34h1v2h-1zM24 34h1v2h-1z"
+              />
+            </g>
+            <g transform="translate(160 0)">
+              <rect class="boot-ground" x="3" y="36" width="34" height="2" rx="1" />
+              <path
+                class="boot-frame"
+                d="M18 5h5v5h-5zM18 10h3v3h-3zM16 11h2v16h-2zM21 11h1v1h-1zM23 12h3v3h-3zM18 13h2v2h-2zM22 13h1v7h-1zM26 13h1v7h-1zM21 14h1v5h-1zM27 14h1v5h-1zM18 15h1v21h-1zM20 15h1v3h-1zM25 15h1v6h-1zM28 15h1v3h-1zM23 17h2v4h-2zM19 18h1v18h-1zM20 20h1v16h-1zM21 21h2v2h-2zM26 21h1v3h-1zM23 22h3v2h-3zM21 23h1v9h-1zM17 27h1v9h-1zM16 34h1v2h-1zM21 34h4v2h-4z"
+              />
+            </g>
+            <g transform="translate(200 0)">
+              <rect class="boot-ground" x="3" y="36" width="34" height="2" rx="1" />
+              <path
+                class="boot-frame"
+                d="M23 12h5v5h-5zM18 15h5v8h-5zM17 16h1v20h-1zM16 17h1v12h-1zM23 17h1v5h-1zM14 18h2v9h-2zM13 19h1v7h-1zM12 20h1v6h-1zM24 20h1v2h-1zM18 23h3v1h-3zM23 23h3v3h-3zM18 24h2v2h-2zM22 24h1v7h-1zM26 24h1v7h-1zM21 25h1v5h-1zM27 25h1v5h-1zM18 26h1v10h-1zM20 26h1v3h-1zM25 26h1v6h-1zM28 26h1v3h-1zM15 27h1v1h-1zM23 28h2v4h-2zM19 29h1v7h-1zM20 31h1v5h-1zM16 32h1v4h-1zM21 32h1v1h-1zM15 34h1v2h-1zM21 34h3v2h-3z"
+              />
+            </g>
+          </svg>
+        </div>
       </div>
     </div>
     <div id="root"></div>
