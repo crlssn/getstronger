@@ -54,7 +54,7 @@ jobs:
       # Excluded rules live in .squawk.toml at the repository root, which Squawk
       # picks up on its own; the action has no input for passing a config path.
       - name: Run Squawk
-        uses: sbdchd/squawk-action@88de415330adcae2214818f02e55c1817a717432 # v2.0.0
+        uses: sbdchd/squawk-action@8d113898e16c6cfd417ceba848b0edad97882be3 # v2.1.0
         with:
           files: ${{ steps.migrations.outputs.file_names }}
           assume-in-transaction: true
