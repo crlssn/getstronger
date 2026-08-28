@@ -36,12 +36,18 @@ describe('section headings', () => {
   // status kicker on a stat card; what it may not do is sit above a title.
   it('never puts an eyebrow directly above a heading', () => {
     const paired = collectFiles(ui, ['.tsx']).flatMap((file) => {
-      const lines = readSource(file).split('\n')
+      // Comments are stripped before pairing: a paragraph of reasoning between
+      // the eyebrow and the title it sits on does not make them further apart.
+      const lines = readSource(file)
+        .replace(/\{\/\*[\s\S]*?\*\/\}/g, '')
+        .split('\n')
+        .filter((line) => line.trim().length > 0)
+
       return lines
         .map((line, index) => ({ index, line, next: lines.slice(index + 1, index + 4).join(' ') }))
         .filter(({ line }) => /className=\{styles\.eyebrow\}/.test(line))
         .filter(({ next }) => /<h[1-4]>/.test(next))
-        .map(({ index }) => `${relative(ui, file)}:${index + 1}`)
+        .map(({ line }) => `${relative(ui, file)}: ${line.trim()}`)
     })
 
     expect(paired, paired.join('\n')).toEqual([])

@@ -22,6 +22,14 @@
   @apply text-text-subtle hover:bg-ink-surface hover:text-text;
 }
 
+/* A control with nothing around it to say it is one: the home search, the
+ * overflow menu, the notification bell. All three drew this themselves — two
+ * of them by overriding this component from the outside, which is the thing a
+ * screen is not allowed to do, and the third not at all. */
+.raised {
+  @apply border-border bg-white text-text-subtle shadow-card hover:border-ink-border hover:bg-ink-surface hover:text-ink-strong;
+}
+
 .strong {
   @apply border-ink bg-ink text-white hover:bg-ink-strong;
 }

@@ -34,12 +34,10 @@
   @apply -ml-3 mt-2;
 }
 
-.notificationLink {
-  @apply relative grid size-14 place-items-center rounded-control text-text-muted transition hover:bg-ink-tint hover:text-text;
-}
-
-.notificationLink > svg {
-  @apply size-8;
+/* The badge hangs off the button's corner, so the slot around it is what the
+   badge is positioned against. */
+.notificationSlot {
+  @apply relative inline-grid;
 }
 
 .notificationBadge {

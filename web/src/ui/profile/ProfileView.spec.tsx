@@ -160,24 +160,36 @@ describe('ProfileView', () => {
     test('stays away at zero', async () => {
       render()
 
+      // Named without a count, and nothing drawn on it: the exact name is the
+      // assertion, because the stats strip below has its own zeroes.
       const link = await screen.findByRole('link', { name: 'Notifications' })
       expect(link).toHaveAttribute('href', '/notifications')
-      expect(link).toHaveTextContent('')
+      expect(link.parentElement).toHaveTextContent('')
     })
 
+    // The count is in the control's name as well as on it: a red disc says
+    // nothing to a reader who cannot see it.
     test('counts what is unread', async () => {
       useNotificationStore.setState({ unreadCount: 7 })
       render()
 
-      expect(await screen.findByRole('link', { name: 'Notifications' })).toHaveTextContent('7')
+      expect(
+        await screen.findByRole('link', { name: 'Notifications, 7 unread' }),
+      ).toBeInTheDocument()
+      expect(screen.getByText('7')).toBeVisible()
     })
 
-    // Past this the badge is wider than the icon it sits on.
+    // Past this the badge is wider than the icon it sits on. The name still
+    // says the real number — it is the disc that runs out of room, not the
+    // sentence.
     test('caps at 99+', async () => {
       useNotificationStore.setState({ unreadCount: 250 })
       render()
 
-      expect(await screen.findByRole('link', { name: 'Notifications' })).toHaveTextContent('99+')
+      expect(
+        await screen.findByRole('link', { name: 'Notifications, 250 unread' }),
+      ).toBeInTheDocument()
+      expect(screen.getByText('99+')).toBeVisible()
     })
   })
 

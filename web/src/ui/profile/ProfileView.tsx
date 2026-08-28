@@ -26,6 +26,7 @@ import { useToastStore } from '@/stores/toasts'
 import { AppButton } from '@/ui/components/AppButton'
 import { AppErrorState } from '@/ui/components/AppErrorState'
 import { AppPasswordInput } from '@/ui/components/AppPasswordInput'
+import { AppIconButton } from '@/ui/components/AppIconButton'
 import { AppInput } from '@/ui/components/AppInput'
 import { AppPageHeader } from '@/ui/components/AppPageHeader'
 import { AppSegmented } from '@/ui/components/AppSegmented'
@@ -230,7 +231,6 @@ export const ProfileView = () => {
       <section className={styles.profileCard}>
         <div className={styles.avatar}>{initials(user.name)}</div>
         <div className="min-w-0">
-          <p className={styles.eyebrow}>{t('profile.account')}</p>
           {/* One action for the card rather than a pencil per field: two of
               them sat under the tap-target floor, and the one pinned after the
               name squeezed the heading into a column narrow enough to truncate
@@ -249,18 +249,27 @@ export const ProfileView = () => {
             <PencilSquareIcon className="size-4" aria-hidden="true" /> {t('profile.editProfile')}
           </AppButton>
         </div>
-        <Link
-          to="/notifications"
-          className={styles.notificationLink}
-          aria-label={t('profile.notifications')}
-        >
-          <BellIcon aria-hidden="true" />
+        {/* The same square the search and the overflow menu are. It was the
+            one control in the app with no container at all — a bare glyph with
+            a red disc on it — and the count it carries belongs in its name,
+            not only in the colour. */}
+        <span className={styles.notificationSlot}>
+          <AppIconButton
+            icon={BellIcon}
+            label={
+              unreadCount > 0
+                ? t('profile.notificationsUnread', { count: unreadCount })
+                : t('profile.notifications')
+            }
+            to="/notifications"
+            tone="raised"
+          />
           {unreadCount > 0 && (
-            <span className={styles.notificationBadge}>
+            <span className={styles.notificationBadge} aria-hidden="true">
               {unreadCount > maxBadgeCount ? `${maxBadgeCount}+` : unreadCount}
             </span>
           )}
-        </Link>
+        </span>
       </section>
 
       <section className={styles.statsStrip} aria-label={t('profile.trainingSummary')}>

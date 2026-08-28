@@ -601,7 +601,6 @@ export const en = {
   },
   profile: {
     heading: 'Me',
-    account: 'Your account',
     trainingSummary: 'Training summary',
     workouts: 'workouts',
     records: 'records',
@@ -609,6 +608,8 @@ export const en = {
     progress: 'Progress & records',
     progressBody: 'Volume trends and personal bests',
     notifications: 'Notifications',
+    notificationsUnread_one: 'Notifications, {count} unread',
+    notificationsUnread_other: 'Notifications, {count} unread',
     notificationsBody: 'Comments and new followers',
     unreadNotification: 'Unread notification',
     markAllAsRead: 'Mark all read',
@@ -1369,7 +1370,6 @@ export const sv = {
   },
   profile: {
     heading: 'Jag',
-    account: 'Ditt konto',
     trainingSummary: 'Träningssammanfattning',
     workouts: 'träningspass',
     records: 'rekord',
@@ -1377,6 +1377,8 @@ export const sv = {
     progress: 'Framsteg och rekord',
     progressBody: 'Volymtrender och personliga rekord',
     notifications: 'Aviseringar',
+    notificationsUnread_one: 'Aviseringar, {count} oläst',
+    notificationsUnread_other: 'Aviseringar, {count} olästa',
     notificationsBody: 'Kommentarer och nya följare',
     unreadNotification: 'Oläst avisering',
     markAllAsRead: 'Markera alla lästa',

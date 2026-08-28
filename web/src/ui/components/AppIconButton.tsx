@@ -5,10 +5,10 @@ import { Link } from 'react-router-dom'
 import { cn } from '@/ui/cn'
 import styles from './AppIconButton.module.css'
 
-// Quiet by default, `strong` for an ink fill, `danger` for a destructive one.
-// Same three steps as AppButton's roles, minus the ones a bare icon cannot
-// carry legibly.
-export type IconButtonTone = 'default' | 'strong' | 'danger'
+// Quiet by default, `raised` for the white square that reads as a control on
+// its own, `strong` for an ink fill, `danger` for a destructive one. Same steps
+// as AppButton's roles, minus the ones a bare icon cannot carry legibly.
+export type IconButtonTone = 'default' | 'raised' | 'strong' | 'danger'
 
 interface Shared {
   /** The button's accessible name. A bare icon has no other one. */

@@ -16,8 +16,10 @@
   @apply flex flex-wrap items-baseline gap-x-2;
 }
 
+/* A floor on both axes. It had one only on the height, so a short handle was
+   a 40px-wide target in a line of text. */
 .commentMeta a {
-  @apply -my-3 inline-flex min-h-(--size-control-sm) items-center py-3 text-sm font-semibold text-text hover:text-ink-strong;
+  @apply -my-3 inline-flex min-h-(--size-control-sm) min-w-(--size-control-sm) items-center justify-center py-3 text-sm font-semibold text-text hover:text-ink-strong;
 }
 
 .commentMeta time {
