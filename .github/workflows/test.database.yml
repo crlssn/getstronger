@@ -51,11 +51,16 @@ jobs:
             core.setOutput('file_names', files.join(' '));
             console.log('Modified migrations:', files.join(' '));
 
-      # Excluded rules live in .squawk.toml at the repository root, which Squawk
-      # picks up on its own; the action has no input for passing a config path.
+      # Excluded rules live in .squawk.toml at the repository root; v2.1.0 added
+      # an input for the path, so the job names the file it enforces rather than
+      # relying on Squawk to find it. A violation fails the check now too — a
+      # comment on a green branch is advice nobody has to take. A migration that
+      # genuinely warrants an exception carries `-- squawk-ignore <rule>`.
       - name: Run Squawk
         uses: sbdchd/squawk-action@8d113898e16c6cfd417ceba848b0edad97882be3 # v2.1.0
         with:
           files: ${{ steps.migrations.outputs.file_names }}
+          config: .squawk.toml
           assume-in-transaction: true
           pg-version: '16.4'
+          fail-on-violations: true
