@@ -37,9 +37,13 @@
 }
 
 /* A meta line built from a single string truncates; one holding its own
- * elements — a row of tags — keeps them. */
-.meta > small {
-  @apply block truncate;
+ * elements — a row of tags — keeps them.
+ *
+ * The size is set again rather than inherited: <small> carries a UA
+ * `font-size: smaller`, which took the line to 10.4px and under the screenshot
+ * harness's floor for legible text. */
+.meta small {
+  @apply block truncate text-meta;
 }
 
 .trailing {
