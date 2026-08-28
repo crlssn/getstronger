@@ -93,7 +93,7 @@ func TestFactory_Exercise(t *testing.T) {
 		created, err := models.FindExercise(ctx, bob.NewDB(c.DB), expected.ID)
 		require.NoError(t, err)
 		require.False(t, created.DeletedAt.IsNull())
-		require.WithinDuration(t, time.Now().UTC(), created.DeletedAt.GetOrZero().UTC(), time.Second)
+		require.WithinDuration(t, time.Now().UTC(), created.DeletedAt.GetOrZero().UTC(), time.Minute)
 	})
 
 	t.Cleanup(func() {

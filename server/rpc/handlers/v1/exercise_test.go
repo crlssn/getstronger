@@ -724,6 +724,12 @@ func (s *exerciseSuite) TestListExercises() { //nolint:maintidx
 					return exercises[i].CreatedAt.Before(exercises[j].CreatedAt)
 				})
 
+				// Both of these carry the one timestamp, so the ID tie-break is what
+				// decides which the page opens with. See repo.newestFirst.
+				sort.Slice(t.expected.res.GetExercises(), func(i, j int) bool {
+					return t.expected.res.GetExercises()[i].GetId() > t.expected.res.GetExercises()[j].GetId()
+				})
+
 				nextPageToken, err := json.Marshal(repo.PageTokenCreatedAt(exercises[0].CreatedAt))
 				s.Require().NoError(err)
 				t.expected.res.Pagination.NextPageToken = nextPageToken
