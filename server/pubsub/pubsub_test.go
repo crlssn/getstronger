@@ -2,10 +2,13 @@ package pubsub_test
 
 import (
 	"context"
+	"errors"
 	"sync"
+	"sync/atomic"
 	"testing"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/mock/gomock"
 	"go.uber.org/zap"
@@ -104,4 +107,68 @@ func (s *pubSubSuite) TestPublish() {
 			wg.Wait()
 		})
 	}
+}
+
+// stubStore records what was published without a database behind it.
+type stubStore struct {
+	err       error
+	published atomic.Int64
+}
+
+func (s *stubStore) PublishEvent(context.Context, events.Topic, []byte) error {
+	if s.err != nil {
+		return s.err
+	}
+	s.published.Add(1)
+
+	return nil
+}
+
+var errStorePublish = errors.New("store unavailable")
+
+// Nothing a publisher does on the request path is allowed to fail the request,
+// so each of the three ways a publish can go wrong is a log and a return.
+func TestPublishNeverFailsTheCaller(t *testing.T) {
+	t.Parallel()
+
+	t.Run("unmarshalable_payload_is_not_stored", func(t *testing.T) {
+		t.Parallel()
+		store := new(stubStore)
+		ps := pubsub.New(pubsub.Params{Log: zap.NewExample(), Store: store})
+
+		// A channel has no JSON representation.
+		ps.Publish(context.Background(), events.TopicFollowedUser, make(chan int))
+		require.Zero(t, store.published.Load())
+	})
+
+	t.Run("store_failure_is_swallowed", func(t *testing.T) {
+		t.Parallel()
+		ps := pubsub.New(pubsub.Params{
+			Log:   zap.NewExample(),
+			Store: &stubStore{err: errStorePublish},
+		})
+
+		require.NotPanics(t, func() {
+			ps.Publish(context.Background(), events.TopicFollowedUser, events.UserFollowed{
+				EventID: uuid.NewString(),
+			})
+		})
+	})
+
+	// With nothing draining the channel, the buffer fills and further events are
+	// dropped from dispatch — but every one of them is still persisted.
+	t.Run("a_full_buffer_drops_dispatch_not_the_event", func(t *testing.T) {
+		t.Parallel()
+		store := new(stubStore)
+		ps := pubsub.New(pubsub.Params{Log: zap.NewExample(), Store: store})
+
+		const overflow = 1100
+		for range overflow {
+			ps.Publish(context.Background(), events.TopicFollowedUser, events.UserFollowed{
+				EventID: uuid.NewString(),
+			})
+		}
+
+		require.Equal(t, int64(overflow), store.published.Load())
+	})
 }

@@ -3,6 +3,8 @@ package email
 import (
 	"context"
 	"encoding/json"
+	"errors"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -87,3 +89,71 @@ func scalewayConfig() *config.Config {
 		},
 	}
 }
+
+func TestScalewaySendFailsWhenTheEndpointIsUnreachable(t *testing.T) {
+	t.Parallel()
+
+	server := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {}))
+	client := server.Client()
+	url := server.URL
+	server.Close()
+
+	provider, err := newScaleway(scalewayConfig(), client, url)
+	require.NoError(t, err)
+
+	err = provider.SendVerification(context.Background(), SendVerification{
+		Name:  "John Doe",
+		Email: "john@example.com",
+		Token: "token",
+	})
+	require.ErrorContains(t, err, "send Scaleway email")
+}
+
+// A refusal whose body cannot be read still names the status: the caller has to
+// be told the send failed even when the reason cannot be quoted back.
+func TestScalewaySendReportsAnUnreadableErrorBody(t *testing.T) {
+	t.Parallel()
+
+	client := &http.Client{Transport: unreadableBodyTransport{}}
+	provider, err := newScaleway(scalewayConfig(), client, "https://example.invalid")
+	require.NoError(t, err)
+
+	err = provider.SendVerification(context.Background(), SendVerification{
+		Name:  "John Doe",
+		Email: "john@example.com",
+		Token: "token",
+	})
+	require.ErrorContains(t, err, "read response")
+}
+
+// An endpoint the request builder cannot parse fails before anything is sent.
+func TestScalewaySendFailsOnAnUnbuildableRequest(t *testing.T) {
+	t.Parallel()
+
+	provider, err := newScaleway(scalewayConfig(), http.DefaultClient, "https://example.com/\x7f")
+	require.NoError(t, err)
+
+	err = provider.SendVerification(context.Background(), SendVerification{
+		Name:  "John Doe",
+		Email: "john@example.com",
+		Token: "token",
+	})
+	require.ErrorContains(t, err, "create Scaleway email request")
+}
+
+type unreadableBodyTransport struct{}
+
+func (unreadableBodyTransport) RoundTrip(*http.Request) (*http.Response, error) {
+	return &http.Response{
+		Status:     "403 Forbidden",
+		StatusCode: http.StatusForbidden,
+		Body:       io.NopCloser(errReader{}),
+		Header:     make(http.Header),
+	}, nil
+}
+
+var errUnreadableBody = errors.New("body unreadable")
+
+type errReader struct{}
+
+func (errReader) Read([]byte) (int, error) { return 0, errUnreadableBody }

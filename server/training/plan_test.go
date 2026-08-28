@@ -3,7 +3,9 @@ package training_test
 import (
 	"fmt"
 	"testing"
+	"time"
 
+	"github.com/aarondl/opt/null"
 	"github.com/gofrs/uuid/v5"
 	"github.com/stretchr/testify/require"
 
@@ -144,4 +146,24 @@ func TestValidatePlanRotation(t *testing.T) {
 	require.ErrorIs(t, training.ValidatePlanRotation(nil), training.ErrPlanRequiresRoutine)
 	require.ErrorIs(t, training.ValidatePlanRotation([]string{}), training.ErrPlanRequiresRoutine)
 	require.ErrorIs(t, training.ValidatePlanRotation([]string{"a", "a"}), training.ErrPlanRoutineDuplicate)
+}
+
+// A rotation may only hold routines its athlete still has, so the two ways that
+// can be untrue are named separately: the caller turns one into a permission
+// answer and the other into a stale-client one.
+func TestValidatePlanRoutine(t *testing.T) {
+	t.Parallel()
+	userID := uuid.Must(uuid.NewV4())
+
+	require.NoError(t, training.ValidatePlanRoutine(
+		&models.Routine{UserID: userID}, userID.String()))
+
+	require.ErrorIs(t,
+		training.ValidatePlanRoutine(&models.Routine{UserID: uuid.Must(uuid.NewV4())}, userID.String()),
+		training.ErrPlanRoutineBelongsToAnotherUser)
+
+	deleted := &models.Routine{UserID: userID, DeletedAt: null.From(time.Now().UTC())}
+	require.ErrorIs(t,
+		training.ValidatePlanRoutine(deleted, userID.String()),
+		training.ErrPlanRoutineDeleted)
 }
