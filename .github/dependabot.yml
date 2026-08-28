@@ -18,6 +18,14 @@ updates:
     schedule:
       interval: "monthly"
     open-pull-requests-limit: 20
+  # mobile/ locks with bun.lock like the other two and CI installs it with
+  # --frozen-lockfile, but it had no entry at all, so the Capacitor packages
+  # wrapping the app went unwatched while web's were updated monthly.
+  - package-ecosystem: "bun"
+    directory: "mobile"
+    schedule:
+      interval: "monthly"
+    open-pull-requests-limit: 10
   - package-ecosystem: "gomod"
     directory: "/"
     schedule:
