@@ -3,7 +3,6 @@ import type { RouteAccess } from '@/router/routes'
 import { i18n } from '@/i18n'
 import { useActionButton } from '@/stores/actionButton'
 import { useAuthStore } from '@/stores/auth'
-import { useNavTabs } from '@/stores/navTabs'
 import { usePageTitleStore } from '@/stores/pageTitle'
 
 export const loginPath = '/login'
@@ -38,12 +37,10 @@ export const redirectForRoute = (access: RouteAccess) => redirectFor(access, isS
 /**
  * The bookkeeping every navigation does.
  *
- * The tabs belong to a screen, so they only reset when the screen changes;
- * the action button belongs to a view of a screen and resets on every
+ * The action button belongs to a view of a screen, so it resets on every
  * navigation, including between a parent route's children.
  */
-export const onNavigate = (routeName: string, previousRouteName?: string) => {
-  if (routeName !== previousRouteName) useNavTabs.getState().reset()
+export const onNavigate = () => {
   useActionButton.getState().reset()
 }
 

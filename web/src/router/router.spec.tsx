@@ -13,7 +13,6 @@ import { routes } from '@/router/routes'
 import { screens } from '@/router/screens'
 import { useActionButton } from '@/stores/actionButton'
 import { useAuthStore } from '@/stores/auth'
-import { useNavTabs } from '@/stores/navTabs'
 import { usePageTitleStore } from '@/stores/pageTitle'
 
 const label =
@@ -66,7 +65,6 @@ describe('buildRouteObjects', () => {
   beforeEach(() => {
     useAuthStore.setState({ userId: '', accessToken: '' })
     usePageTitleStore.getState().setPageTitle('')
-    useNavTabs.getState().reset()
     useActionButton.getState().reset()
   })
 
@@ -122,33 +120,7 @@ describe('buildRouteObjects', () => {
     expect(screen.getByText('their followers')).toBeInTheDocument()
   })
 
-  // The tabs belong to the screen, so moving between its own views must not
-  // take them back to the first one.
-  test('leaves the tab bar alone while moving within one screen', async () => {
-    signIn()
-    const router = renderAt('/users/user-1')
-    await screen.findByText('their workouts')
-
-    useNavTabs.getState().set([{ name: 'Followers', href: '/users/user-1/followers' }])
-    await router.navigate('/users/user-1/followers')
-    await screen.findByText('their followers')
-
-    expect(useNavTabs.getState().tabs).toHaveLength(1)
-  })
-
-  test('resets the tab bar when the screen itself changes', async () => {
-    signIn()
-    const router = renderAt('/users/user-1')
-    await screen.findByText('their workouts')
-
-    useNavTabs.getState().set([{ name: 'Followers', href: '/users/user-1/followers' }])
-    await router.navigate('/home')
-    await screen.findByText('home screen')
-
-    expect(useNavTabs.getState().tabs).toEqual([])
-  })
-
-  test('clears the action button on every navigation, tabs included', async () => {
+  test('clears the action button on every navigation', async () => {
     signIn()
     const router = renderAt('/users/user-1')
     await screen.findByText('their workouts')
