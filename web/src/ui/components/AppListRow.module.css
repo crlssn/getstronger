@@ -5,15 +5,9 @@
 }
 
 /* One row shape: the tap floor plus a line of breathing room, the copy taking
- * whatever is left, and everything after it shrink-wrapped. */
+ * whatever is left, and everything on either side of it shrink-wrapped. */
 .inner {
-  @apply grid min-h-16 grid-cols-[auto_minmax(0,1fr)_auto_auto] items-center gap-3 px-4 py-3 text-text transition hover:text-ink-strong;
-}
-
-/* Without a tile the copy starts in the first column rather than leaving an
- * empty one where a tile would have been. */
-.noLeading .inner {
-  @apply grid-cols-[minmax(0,1fr)_auto_auto];
+  @apply flex min-h-16 items-center gap-3 px-4 py-3 text-text transition hover:text-ink-strong;
 }
 
 .leading {
@@ -24,8 +18,15 @@
   @apply size-5;
 }
 
+/* Wraps rather than divides: a long name and the load it was lifted at cannot
+ * both have the room they need on one line of a 390px screen, so below 520px
+ * the copy takes the whole line and the value goes under it. */
+.body {
+  @apply flex min-w-0 flex-1 flex-wrap items-center gap-x-3;
+}
+
 .copy {
-  @apply min-w-0;
+  @apply min-w-0 flex-1;
 }
 
 .copy > strong {
@@ -54,30 +55,12 @@
   @apply size-5 shrink-0 text-text-subtle;
 }
 
-/* A long name and the load it was lifted at cannot both have the room they
- * need on one line, so the value takes the line under the copy. */
 @media (max-width: 520px) {
-  .inner {
-    @apply grid-cols-[auto_minmax(0,1fr)_auto];
-  }
-
-  .noLeading .inner {
-    @apply grid-cols-[minmax(0,1fr)_auto];
-  }
-
-  .leading {
-    @apply row-span-2;
+  .copy {
+    @apply basis-full;
   }
 
   .trailing {
-    @apply col-start-2 row-start-2 text-left;
-  }
-
-  .noLeading .trailing {
-    @apply col-start-1;
-  }
-
-  .chevron {
-    @apply row-span-2 row-start-1;
+    @apply mt-1 text-left;
   }
 }

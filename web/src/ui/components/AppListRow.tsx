@@ -39,17 +39,22 @@ export const AppListRow = ({ leading, title, meta, trailing, to, className }: Pr
   const content = (
     <>
       {leading && <span className={styles.leading}>{leading}</span>}
-      <span className={styles.copy}>
-        <strong>{title}</strong>
-        {meta && <span className={styles.meta}>{meta}</span>}
+      {/* Copy and value share one wrapping box rather than two grid columns:
+          below 520px the copy takes the full width and the value wraps under
+          it, which no amount of column arithmetic has to know about. */}
+      <span className={styles.body}>
+        <span className={styles.copy}>
+          <strong>{title}</strong>
+          {meta && <span className={styles.meta}>{meta}</span>}
+        </span>
+        {trailing && <span className={styles.trailing}>{trailing}</span>}
       </span>
-      {trailing && <span className={styles.trailing}>{trailing}</span>}
       {to && <ChevronRightIcon className={styles.chevron} aria-hidden="true" />}
     </>
   )
 
   return (
-    <li className={cn(styles.row, !leading && styles.noLeading, className)}>
+    <li className={cn(styles.row, className)}>
       {to ? (
         <Link className={styles.inner} to={to}>
           {content}

@@ -3,7 +3,7 @@ import type { Set } from '@/types/workout'
 import type { MeasurementField } from '@/utils/exerciseMeasurements'
 import type { CSSProperties } from 'react'
 
-import { CheckIcon, MinusIcon } from '@heroicons/react/24/outline'
+import { CheckIcon, MinusCircleIcon, MinusIcon } from '@heroicons/react/24/outline'
 import { useTranslation } from 'react-i18next'
 
 import { cn } from '@/ui/cn'
@@ -132,9 +132,12 @@ export const SetTable = ({
                 {previous ? formatExerciseSet(previous, exercise) : '—'}
               </span>
             ) : (
+              // Circled, not the bare minus the log row hides in its corner: in
+              // a column of its own a plain dash reads as the "no previous
+              // session" placeholder it sits exactly where.
               <AppIconButton
                 className={styles.removeCell}
-                icon={MinusIcon}
+                icon={MinusCircleIcon}
                 label={removeLabel}
                 onClick={() => onRemove(index)}
               />
