@@ -220,7 +220,11 @@ export const flows: Flow[] = [
           await expect(page).toHaveURL(/\/routines$/)
           await page.getByLabel('Search routines').fill(circuitName)
           await page.getByRole('heading', { name: circuitName }).click()
-          await expect(page.getByText('Circuit', { exact: true }).first()).toBeVisible()
+          // Matched loosely on purpose. These waits exist to say the page has
+          // arrived, and pinning them to the exact wording makes the harness
+          // break on precisely the copy changes it is here to photograph — a
+          // round count appended to "Circuit" already did it once.
+          await expect(page.getByText(/^Circuit\b/).first()).toBeVisible()
         },
         name: 'saved',
       },
@@ -229,7 +233,7 @@ export const flows: Flow[] = [
         // one set rather than for the exercise to be finished with.
         act: async (page) => {
           await page.getByRole('link', { name: 'Start workout' }).click()
-          await expect(page.getByText('Round 1 · exercise 1 of 2')).toBeVisible()
+          await expect(page.getByText(/^Round 1\b.*exercise 1 of 2$/)).toBeVisible()
         },
         name: 'session',
       },
