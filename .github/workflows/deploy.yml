@@ -78,10 +78,12 @@ jobs:
       # usually spans several merges, and a label is asking to see that branch
       # on beta — neither wants an environment running half of one revision and
       # half of another. A push deploys by path, and a manual run by its inputs,
-      # which is why these are left empty for it.
+      # which is why these are left empty for it. A label reseeds too: it asks
+      # for that branch on a beta nobody has been poking at.
       web: ${{ (github.event_name == 'release' || github.event_name == 'pull_request') && 'true' || steps.changes.outputs.web }}
       server: ${{ (github.event_name == 'release' || github.event_name == 'pull_request') && 'true' || steps.changes.outputs.server }}
       database: ${{ (github.event_name == 'release' || github.event_name == 'pull_request') && 'true' || steps.changes.outputs.database }}
+      seed: ${{ (github.event_name == 'release' || github.event_name == 'pull_request') && 'true' || steps.changes.outputs.seed }}
 
     steps:
       - name: Resolve the target environment
@@ -123,6 +125,7 @@ jobs:
             web: ['web/**']
             server: ['server/**', 'Dockerfile', '.dockerignore', 'go.mod', 'go.sum', 'mise.toml']
             database: ['database/**']
+            seed: ['server/testing/factory/**']
 
   database:
     needs: init
@@ -166,10 +169,12 @@ jobs:
             -database "postgresql://${DB_MIGRATION_USER}:${DB_MIGRATION_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=require" \
             -verbose up
 
-  # Beta is a demo environment: every deploy that ships a component also
-  # reseeds it, so it shows the seed's personas rather than whatever the last
-  # person testing it left behind. The condition and the environment check
-  # confine the truncate to beta, and the seed refuses any ENV it may not wipe.
+  # Beta is a demo environment: a push that changes the seed reseeds it, so it
+  # shows the personas that commit describes rather than the ones the previous
+  # seed wrote. A push that leaves the seed alone leaves beta's data alone —
+  # reseeding is destructive, and an unchanged seed has nothing new to write.
+  # The condition and the environment check confine the truncate to beta, and
+  # the seed refuses any ENV it may not wipe.
   seed:
     needs: [init, database]
     runs-on: ubuntu-latest
@@ -179,7 +184,7 @@ jobs:
       needs.init.result == 'success' &&
       (needs.database.result == 'success' || needs.database.result == 'skipped') &&
       needs.init.outputs.environment == 'beta' &&
-      (github.event_name != 'push' || needs.init.outputs.web == 'true' || needs.init.outputs.server == 'true' || needs.init.outputs.database == 'true') &&
+      (github.event_name != 'push' || needs.init.outputs.seed == 'true') &&
       (github.event_name != 'workflow_dispatch' || inputs.seed)
     environment: ${{ needs.init.outputs.environment }}
 
