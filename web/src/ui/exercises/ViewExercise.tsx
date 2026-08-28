@@ -202,7 +202,6 @@ export const ViewExercise = () => {
       <section className={styles.setsCard}>
         <header>
           <div>
-            <p className={styles.eyebrow}>{t('exercise.history')}</p>
             <h2>{t('exercise.loggedSets')}</h2>
           </div>
           <span>{sets.length}</span>

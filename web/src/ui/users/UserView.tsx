@@ -112,12 +112,10 @@ export const UserView = () => {
       {/* The chart decides what it can honestly draw: a figure under three
           points, bars above. */}
       {workouts.length > 0 && (
-        <div>
-          <h6>{t('profile.trend')}</h6>
-          <AppCard className="p-2">
-            <WorkoutChart workouts={workouts} />
-          </AppCard>
-        </div>
+        <AppCard className={styles.trendCard}>
+          <h2>{t('profile.trend')}</h2>
+          <WorkoutChart workouts={workouts} />
+        </AppCard>
       )}
 
       {user ? (

@@ -25,7 +25,15 @@
   @apply mb-5 flex flex-wrap items-end justify-between gap-3;
 }
 
+/* The card's own title, in the one shape a heading inside a card takes. */
 .chartHeading h2 {
+  @apply text-body-lg font-semibold text-text;
+}
+
+/* The number the card exists for, under the title that names it. It used to
+   be the h2 with an uppercase caption above it, which set a label and a value
+   at two ranks that neither of them was. */
+.total {
   @apply mt-1 text-display font-bold text-text;
 }
 
@@ -52,7 +60,7 @@
 }
 
 .sectionHeading h2 {
-  @apply mt-1 text-title font-extrabold text-text;
+  @apply text-title font-extrabold text-text;
 }
 
 /* The card holds the shared rows; the divider is theirs. */

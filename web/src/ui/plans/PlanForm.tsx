@@ -154,7 +154,6 @@ export const PlanForm = ({ planId }: Props) => {
             <section className={styles.routineOrder}>
               <header>
                 <div>
-                  <p className={styles.eyebrow}>{t('training.planForm.orderEyebrow')}</p>
                   <h2>{t('common.routines')}</h2>
                 </div>
                 <span>{t('training.planForm.routineCount', { count: selected.length })}</span>

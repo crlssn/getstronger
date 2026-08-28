@@ -222,7 +222,6 @@ export const HomeView = () => {
 
             <section className={styles.followingFeed}>
               <header>
-                <p className={styles.eyebrow}>{t('home.following')}</p>
                 <h2>{t('home.latestWorkouts')}</h2>
               </header>
 

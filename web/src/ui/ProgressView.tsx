@@ -88,10 +88,10 @@ export const ProgressView = () => {
           <section className={styles.chartCard}>
             <div className={styles.chartHeading}>
               <div>
-                <p className={styles.eyebrow}>{t('progress.trainingVolume')}</p>
-                <h2>
+                <h2>{t('progress.trainingVolume')}</h2>
+                <p className={styles.total}>
                   {formatNumber(totalVolume(filtered))} {t('common.kg')}
-                </h2>
+                </p>
               </div>
               <span>
                 <ArrowTrendingUpIcon aria-hidden="true" /> {t(totalsLabel[granularity])}
@@ -130,7 +130,6 @@ export const ProgressView = () => {
       {loaded && !nothingYet && (
         <section className={styles.recordsCard}>
           <div className={styles.sectionHeading}>
-            <p className={styles.eyebrow}>{t('progress.bestLifts')}</p>
             <h2>{t('progress.personalRecords')}</h2>
           </div>
 

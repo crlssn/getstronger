@@ -257,7 +257,6 @@ export const CardWorkout = ({ workout, compact }: Props) => {
       <section className={styles.detailSection}>
         <header className={styles.sectionHeading}>
           <div>
-            <p className={styles.eyebrow}>{t('workout.sessionDetails')}</p>
             <h2>{t('common.exercises')}</h2>
           </div>
           <span>{t('home.exerciseCount', { count: workout.exerciseSets.length })}</span>
@@ -335,7 +334,6 @@ export const CardWorkout = ({ workout, compact }: Props) => {
         <section className={styles.commentsCard}>
           <header className={styles.sectionHeading}>
             <div>
-              <p className={styles.eyebrow}>{t('workout.card.community')}</p>
               <h2>{t('workout.card.comments')}</h2>
             </div>
             <span>{comments.length}</span>

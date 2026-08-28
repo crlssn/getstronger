@@ -188,7 +188,6 @@ export const WorkoutView = () => {
 
       <section className={styles.workoutHistory}>
         <header>
-          <p className={styles.eyebrow}>{t('workout.history')}</p>
           <h2>{t('workout.previous')}</h2>
         </header>
 

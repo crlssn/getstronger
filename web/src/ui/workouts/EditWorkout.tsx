@@ -136,7 +136,7 @@ export const EditWorkout = () => {
         <div key={exerciseSet.exercise?.id}>
           <div className={styles.exerciseHeading}>
             <div>
-              <h6>{exerciseSet.exercise?.name}</h6>
+              <h2>{exerciseSet.exercise?.name}</h2>
               <ExerciseTags compact tags={exerciseSet.exercise?.tags} />
             </div>
             <div className={styles.moveActions}>
@@ -200,7 +200,8 @@ export const EditWorkout = () => {
         </div>
       ))}
 
-      <h6>{t('workout.edit.startTime')}</h6>
+      {/* Each field is labelled by the row it fills, so the label that used
+          to float above it said the same thing twice. */}
       <AppList>
         <AppListItemInput
           label={t('workout.edit.startTime')}
@@ -217,7 +218,6 @@ export const EditWorkout = () => {
         />
       </AppList>
 
-      <h6>{t('workout.edit.endTime')}</h6>
       <AppList>
         <AppListItemInput
           label={t('workout.edit.endTime')}
@@ -234,9 +234,9 @@ export const EditWorkout = () => {
         />
       </AppList>
 
-      <h6>{t('workout.edit.note')}</h6>
       <AppTextarea
         autosize
+        aria-label={t('workout.edit.note')}
         className={styles.note}
         placeholder={t('workout.notePlaceholder')}
         rows={3}

@@ -16,3 +16,9 @@
 .note {
   @apply mb-4 min-h-20 w-full resize-none overflow-hidden rounded-control border-border py-3 text-base focus:border-ink-muted focus:ring-ink-muted;
 }
+
+/* An exercise's name is a title, not a caption. It was set as an uppercase
+   eyebrow, which is the treatment this app gives a list's group labels. */
+.exerciseHeading h2 {
+  @apply text-body-lg font-semibold text-text;
+}
