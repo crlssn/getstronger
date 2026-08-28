@@ -94,3 +94,9 @@
 .emptyCard p {
   @apply mt-2 text-sm text-text-subtle;
 }
+
+/* The card's own title. It was an uppercase eyebrow above the chart's own
+   uppercase metric label — two captions stacked, and neither a heading. */
+.chartTitle {
+  @apply mb-3 text-body-lg font-semibold text-text;
+}

@@ -194,7 +194,7 @@ export const ViewExercise = () => {
 
       {sets.length > 0 && (
         <section className={styles.chartCard}>
-          <p className={styles.eyebrow}>{t('exercise.trend')}</p>
+          <h2 className={styles.chartTitle}>{t('exercise.trend')}</h2>
           <ExerciseChart sets={downSample(sets, maxChartPoints)} exercise={exercise} />
         </section>
       )}
