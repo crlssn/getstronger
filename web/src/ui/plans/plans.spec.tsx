@@ -336,21 +336,31 @@ describe('PlanForm', () => {
     await addRoutine(/Pull day/)
     await addRoutine(/Leg day/)
 
-    await userEvent.click(screen.getByRole('button', { name: 'Move Leg day up' }))
+    // The handle is the one reordering affordance, and the arrow keys are how
+    // it is worked without a pointer.
+    screen.getByRole('button', { name: 'Reorder Leg day' }).focus()
+    await userEvent.keyboard('{ArrowUp}')
     await userEvent.click(screen.getByRole('button', { name: 'Remove Push day' }))
     await userEvent.click(screen.getByRole('button', { name: 'Create plan' }))
 
     await waitFor(() => expect(createPlan).toHaveBeenCalledWith('Upper lower', ['legs', 'pull']))
   })
 
-  test('cannot move the first routine up or the last one down', async () => {
+  test('will not move the first routine up or the last one down', async () => {
     render()
 
     await addRoutine(/Push day/)
     await addRoutine(/Pull day/)
 
-    expect(screen.getByRole('button', { name: 'Move Push day up' })).toBeDisabled()
-    expect(screen.getByRole('button', { name: 'Move Pull day down' })).toBeDisabled()
+    screen.getByRole('button', { name: 'Reorder Push day' }).focus()
+    await userEvent.keyboard('{ArrowUp}')
+    screen.getByRole('button', { name: 'Reorder Pull day' }).focus()
+    await userEvent.keyboard('{ArrowDown}')
+
+    expect(screen.getAllByRole('button', { name: /^Reorder/ }).map((b) => b.ariaLabel)).toEqual([
+      'Reorder Push day',
+      'Reorder Pull day',
+    ])
   })
 
   describe('editing', () => {

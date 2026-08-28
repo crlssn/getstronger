@@ -1,6 +1,6 @@
 import type { DraftGroup, GroupMode } from '@/utils/routineGroups'
 
-import { Bars3Icon, PlusIcon, TrashIcon } from '@heroicons/react/24/outline'
+import { Bars3Icon, MinusCircleIcon, PlusIcon } from '@heroicons/react/24/outline'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -123,11 +123,12 @@ const GroupEntries = ({ groups, group, restBetweenSets, nameOf, onChange }: Entr
                 />
               )}
 
-              {/* Quiet, unlike the group's own bin: taking an exercise out of a
-                  block is undone by adding it again, and a column of red would
-                  shout the list down. */}
+              {/* A circled minus, which is what taking one row out of a list
+                  looks like everywhere in the app. Quiet, too: removing an
+                  exercise from a block is undone by adding it again, and a
+                  column of red would shout the list down. */}
               <AppIconButton
-                icon={TrashIcon}
+                icon={MinusCircleIcon}
                 label={t('routine.form.groups.removeExercise', { name })}
                 onClick={() => onChange(removeEntry(groups, entry.key))}
               />

@@ -239,10 +239,14 @@ describe('EditWorkout', () => {
     expect(screen.getAllByRole('button', { name: /^Remove set/ })[0]).toBeVisible()
   })
 
+  // One handle per exercise, dragged or moved with the arrow keys — the same
+  // control the routine builder and the plan builder use. It was a pair of
+  // chevrons here, which was a third way of saying "this can move".
   test('reorders the exercises', async () => {
     render()
 
-    await userEvent.click(await screen.findByRole('button', { name: 'Move Row up' }))
+    ;(await screen.findByRole('button', { name: 'Reorder Row' })).focus()
+    await userEvent.keyboard('{ArrowUp}')
     await userEvent.click(screen.getByRole('button', { name: 'Save changes' }))
 
     await waitFor(() => expect(mocked.updateWorkout).toHaveBeenCalled())
@@ -251,12 +255,19 @@ describe('EditWorkout', () => {
     ).toEqual(['row', 'bench'])
   })
 
-  test('cannot move the first exercise up or the last one down', async () => {
+  test('will not move the first exercise up or the last one down', async () => {
     render()
 
-    await screen.findByRole('button', { name: 'Move Row up' })
-    expect(screen.queryByRole('button', { name: 'Move Bench press up' })).not.toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: 'Move Row down' })).not.toBeInTheDocument()
+    ;(await screen.findByRole('button', { name: 'Reorder Bench press' })).focus()
+    await userEvent.keyboard('{ArrowUp}')
+    screen.getByRole('button', { name: 'Reorder Row' }).focus()
+    await userEvent.keyboard('{ArrowDown}')
+    await userEvent.click(screen.getByRole('button', { name: 'Save changes' }))
+
+    await waitFor(() => expect(mocked.updateWorkout).toHaveBeenCalled())
+    expect(
+      mocked.updateWorkout.mock.calls[0]?.[0]?.exerciseSets.map((set) => set.exercise?.id),
+    ).toEqual(['bench', 'row'])
   })
 })
 

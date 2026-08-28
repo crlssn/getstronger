@@ -22,3 +22,22 @@
 .exerciseHeading h2 {
   @apply text-body-lg font-semibold text-text;
 }
+
+/* The same grip every other reorderable list in the app uses. */
+.dragHandle {
+  @apply cursor-grab text-ink-border active:cursor-grabbing;
+}
+
+.dragHandle svg {
+  @apply size-4;
+}
+
+/* SortableJS puts these on the DOM itself, so the hashed names are handed to
+   it rather than written in the markup. */
+.sortableGhost {
+  @apply opacity-30;
+}
+
+.sortableDrag {
+  @apply rounded-control border border-ink-border bg-surface shadow-raised;
+}

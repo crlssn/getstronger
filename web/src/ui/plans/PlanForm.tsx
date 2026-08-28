@@ -1,11 +1,10 @@
 import type { Routine } from '@/proto/api/v1/routine_service_pb'
 
 import {
-  ArrowDownIcon,
   ArrowsUpDownIcon,
-  ArrowUpIcon,
+  Bars3Icon,
+  MinusCircleIcon,
   PlusIcon,
-  TrashIcon,
 } from '@heroicons/react/24/outline'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -25,6 +24,7 @@ import { AppOptionRow } from '@/ui/components/AppOptionRow'
 import { AppOptionalAction } from '@/ui/components/AppOptionalAction'
 import { AppSheet } from '@/ui/components/AppSheet'
 import { AppSkeleton } from '@/ui/components/AppSkeleton'
+import { useSortable } from '@/utils/useSortable'
 import styles from './PlanForm.module.css'
 
 interface Props {
@@ -89,15 +89,29 @@ export const PlanForm = ({ planId }: Props) => {
       ? t('training.planForm.needsRoutine')
       : undefined
 
-  const moveRoutine = (index: number, direction: -1 | 1) => {
-    const target = index + direction
-    if (target < 0 || target >= selected.length) return
+  const moveRoutine = (from: number, to: number) =>
+    setSelected((current) => {
+      if (to < 0 || to >= current.length) return current
 
-    const next = [...selected]
-    const [routine] = next.splice(index, 1)
-    if (routine) next.splice(target, 0, routine)
-    setSelected(next)
-  }
+      const next = [...current]
+      const [routine] = next.splice(from, 1)
+      if (routine) next.splice(to, 0, routine)
+      return next
+    })
+
+  // The same handle the routine builder and the routine view use, dragged or
+  // moved with the arrow keys. Up and down buttons were a second way to do the
+  // one thing, and two more controls on a row.
+  const order = useSortable<HTMLOListElement>(
+    {
+      handle: `.${styles.dragHandle}`,
+      ghostClass: styles.sortableGhost,
+      dragClass: styles.sortableDrag,
+      animation: 150,
+      onReorder: moveRoutine,
+    },
+    selected.length > 1,
+  )
 
   const save = async () => {
     if (!canSave || saving) return
@@ -128,10 +142,9 @@ export const PlanForm = ({ planId }: Props) => {
           void save()
         }}
       >
-        <header className={styles.pageIntro}>
-          <p className={styles.eyebrow}>{t('training.planForm.eyebrow')}</p>
-          <p>{t('training.planForm.intro')}</p>
-        </header>
+        {/* The nav bar above already says "New plan"; an uppercase "PLAN
+            BUILDER" under it was the same claim in a second voice. */}
+        <p className={styles.intro}>{t('training.planForm.intro')}</p>
 
         {loading ? (
           <AppSkeleton />
@@ -164,7 +177,7 @@ export const PlanForm = ({ planId }: Props) => {
                   {t('training.planForm.emptyBody')}
                 </AppEmptyInline>
               ) : (
-                <ol>
+                <ol ref={order}>
                   {selected.map((routine, index) => (
                     <li key={routine.id}>
                       <span className={styles.position}>{index + 1}</span>
@@ -175,27 +188,22 @@ export const PlanForm = ({ planId }: Props) => {
                         </small>
                       </div>
                       <div className={styles.orderActions}>
+                        {/* Quiet: taking a routine out of a plan is undone by
+                            putting it back, and a column of red bins reads as
+                            a page full of errors. */}
                         <AppIconButton
-                          icon={ArrowUpIcon}
-                          disabled={index === 0}
-                          label={t('training.planForm.moveUp', { name: routine.name })}
-                          onClick={() => moveRoutine(index, -1)}
-                        />
-                        <AppIconButton
-                          icon={ArrowDownIcon}
-                          disabled={index === selected.length - 1}
-                          label={t('training.planForm.moveDown', { name: routine.name })}
-                          onClick={() => moveRoutine(index, 1)}
-                        />
-                        <AppIconButton
-                          icon={TrashIcon}
-                          tone="danger"
+                          icon={MinusCircleIcon}
                           label={t('training.planForm.remove', { name: routine.name })}
                           onClick={() =>
                             setSelected((current) =>
                               current.filter((_, position) => position !== index),
                             )
                           }
+                        />
+                        <AppIconButton
+                          className={styles.dragHandle}
+                          icon={Bars3Icon}
+                          label={t('training.planForm.reorder', { name: routine.name })}
                         />
                       </div>
                     </li>
