@@ -1299,13 +1299,9 @@ func followeeIDsOf(userID string) bob.Expression {
 	)
 }
 
-type ListFollowersOpt func() bob.Mod[*dialect.SelectQuery]
-
-func (r *Repo) ListFollowers(ctx context.Context, userID string, opts ...ListFollowersOpt) (models.UserSlice, error) {
-	query := make([]bob.Mod[*dialect.SelectQuery], 0, len(opts)+1)
-	query = append(query, sm.Where(models.Users.Columns.ID.In(followerIDsOf(userID))))
-	for _, opt := range opts {
-		query = append(query, opt())
+func (r *Repo) ListFollowers(ctx context.Context, userID string) (models.UserSlice, error) {
+	query := []bob.Mod[*dialect.SelectQuery]{
+		sm.Where(models.Users.Columns.ID.In(followerIDsOf(userID))),
 	}
 
 	users, err := models.Users.Query(query...).All(ctx, r.bobExec())
@@ -1316,13 +1312,9 @@ func (r *Repo) ListFollowers(ctx context.Context, userID string, opts ...ListFol
 	return users, nil
 }
 
-type ListFolloweesOpt func() bob.Mod[*dialect.SelectQuery]
-
-func (r *Repo) ListFollowees(ctx context.Context, userID string, opts ...ListFolloweesOpt) (models.UserSlice, error) {
-	query := make([]bob.Mod[*dialect.SelectQuery], 0, len(opts)+1)
-	query = append(query, sm.Where(models.Users.Columns.ID.In(followeeIDsOf(userID))))
-	for _, opt := range opts {
-		query = append(query, opt())
+func (r *Repo) ListFollowees(ctx context.Context, userID string) (models.UserSlice, error) {
+	query := []bob.Mod[*dialect.SelectQuery]{
+		sm.Where(models.Users.Columns.ID.In(followeeIDsOf(userID))),
 	}
 
 	users, err := models.Users.Query(query...).All(ctx, r.bobExec())
@@ -1711,12 +1703,6 @@ func (r *Repo) IsUserFollowedByUserID(ctx context.Context, user *models.User, us
 }
 
 type GetAuthOpt func() bob.Mod[*dialect.SelectQuery]
-
-func GetAuthByID(id string) GetAuthOpt {
-	return func() bob.Mod[*dialect.SelectQuery] {
-		return models.SelectWhere.Auths.ID.EQ(uuidFromString(id))
-	}
-}
 
 func GetAuthByEmail(email string) GetAuthOpt {
 	return func() bob.Mod[*dialect.SelectQuery] {
