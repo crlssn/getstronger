@@ -45,8 +45,23 @@ const planName = 'Screenshot Plan'
 const pickExercise = async (page: Page, optionIndex = 0, groupIndex = 0) => {
   await page.getByRole('button', { name: 'Add exercise' }).nth(groupIndex).click()
   const sheet = page.getByRole('dialog')
-  await pickerOptions(page, sheet).nth(optionIndex).click()
+  const option = pickerOptions(page, sheet).nth(optionIndex)
+  // The session labels its set inputs after the exercise, so what was picked
+  // here is what a step training it has to ask for.
+  const name = (await option.locator('strong').innerText()).trim()
+  await option.click()
   await expect(sheet).toBeHidden()
+
+  return name
+}
+
+// One set of a session, filled in. The block decides what the button that logs
+// it is called, so the caller presses it.
+const logSet = async (page: Page, exercise: string, set: number, weight: string, reps: string) => {
+  await page
+    .getByRole('textbox', { name: `${exercise} set ${set} weight`, exact: true })
+    .fill(weight)
+  await page.getByRole('textbox', { name: `${exercise} set ${set} reps`, exact: true }).fill(reps)
 }
 // A rest is stepped rather than typed, and the two buttons quote the value's own
 // name so a screen reader can tell one row's from another's.
@@ -75,6 +90,11 @@ const acceptConfirmation = (page: Page) =>
 // and the workout that was saved, so the cleanup can find it again.
 let chosenExercise = ''
 let savedWorkout = ''
+
+// The circuit's own two exercises and the workout it finishes, carried between
+// its steps the same way.
+let circuitExercises: string[] = []
+let savedCircuitWorkout = ''
 
 // Cleanup runs against a list that is still loading, and isVisible() answers
 // immediately: asking it first would report the entity as already gone and
@@ -178,6 +198,20 @@ export const flows: Flow[] = [
   },
   {
     cleanup: async (page) => {
+      // The workout first: it is what the pages photographed after this flow
+      // would otherwise show as the athlete's latest session.
+      if (savedCircuitWorkout !== '') {
+        await page.goto(savedCircuitWorkout)
+        const actions = page.getByRole('button', { name: 'Workout actions' }).first()
+        if (await present(actions)) {
+          await actions.click()
+          await page.getByRole('menuitem', { name: 'Delete workout' }).click()
+          await acceptConfirmation(page)
+          await expect(page).toHaveURL(/\/home$/)
+        }
+        savedCircuitWorkout = ''
+      }
+
       await page.goto('/routines')
       await page.getByLabel('Search routines').fill(circuitName)
       const routine = page.getByRole('heading', { name: circuitName }).first()
@@ -199,8 +233,7 @@ export const flows: Flow[] = [
         act: async (page) => {
           await page.goto('/routines/create')
           await page.getByLabel('Routine name').fill(circuitName)
-          await pickExercise(page, 0)
-          await pickExercise(page, 1)
+          circuitExercises = [await pickExercise(page, 0), await pickExercise(page, 1)]
 
           await page.getByRole('button', { name: 'Advanced', exact: true }).click()
           await page.getByRole('button', { name: 'Circuit', exact: true }).click()
@@ -220,7 +253,11 @@ export const flows: Flow[] = [
           await expect(page).toHaveURL(/\/routines$/)
           await page.getByLabel('Search routines').fill(circuitName)
           await page.getByRole('heading', { name: circuitName }).click()
-          await expect(page.getByText('Circuit', { exact: true }).first()).toBeVisible()
+          // Matched loosely on purpose. These waits exist to say the page has
+          // arrived, and pinning them to the exact wording makes the harness
+          // break on precisely the copy changes it is here to photograph — a
+          // round count appended to "Circuit" already did it once.
+          await expect(page.getByText(/^Circuit\b/).first()).toBeVisible()
         },
         name: 'saved',
       },
@@ -229,9 +266,47 @@ export const flows: Flow[] = [
         // one set rather than for the exercise to be finished with.
         act: async (page) => {
           await page.getByRole('link', { name: 'Start workout' }).click()
-          await expect(page.getByText('Round 1 · exercise 1 of 2')).toBeVisible()
+          await expect(page.getByText(/^Round 1\b.*exercise 1 of 2$/)).toBeVisible()
         },
         name: 'session',
+      },
+      {
+        // Trained out and saved, because a finished circuit is a page of its
+        // own: the session is read round by round rather than as one list of
+        // exercises, and nothing else in the set photographs it.
+        act: async (page) => {
+          const [press, squat] = circuitExercises
+          const complete = page.locator('button[type="submit"]')
+
+          // Two rounds, so the saved workout shows the block going round rather
+          // than a single pass indistinguishable from straight sets.
+          for (const round of [1, 2]) {
+            await logSet(page, press ?? '', round, '60', '8')
+            await complete.click()
+            await logSet(page, squat ?? '', round, '90', '5')
+            await complete.click()
+          }
+
+          // The block is prescribed for more rounds than were taken, so ending
+          // it here is the session's decision to make.
+          const endBlock = page.getByRole('button', { name: 'Complete circuit' })
+          if (await present(endBlock)) await endBlock.first().click()
+
+          // Group B trains one exercise straight through, and the session is
+          // not finished until it is done with too.
+          await logSet(page, press ?? '', 1, '70', '6')
+          await complete.click()
+
+          await page.getByRole('button', { name: 'Finish workout' }).first().click()
+          const dialog = page.getByRole('dialog')
+          if (await present(dialog)) {
+            await dialog.getByRole('button', { name: /Finish and save|Finish/ }).click()
+          }
+          await expect(page).toHaveURL(/\/workouts\/[0-9a-f-]{36}$/)
+          savedCircuitWorkout = new URL(page.url()).pathname
+          await expect(page.getByText('Session details')).toBeVisible()
+        },
+        name: 'finished',
       },
     ],
   },
