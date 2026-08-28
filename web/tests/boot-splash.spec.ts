@@ -15,11 +15,29 @@ const declarationsFor = (selector: string) => {
   return new RegExp(`${escaped}\\s*\\{([^}]*)\\}`).exec(css)?.[1] ?? ''
 }
 
+// The sprite is a strip of frames behind a window one frame wide, so the count
+// has to agree in three places: the drawing, the window, and the step.
+const frames = 6
+
 describe('boot splash', () => {
   const document = new DOMParser().parseFromString(html, 'text/html')
 
-  it('shows a progress bar under the brand', () => {
-    expect(document.querySelector('#boot-splash .boot-progress')).not.toBeNull()
+  it('lifts under the brand', () => {
+    expect(document.querySelector('#boot-splash .boot-lifter svg')).not.toBeNull()
+  })
+
+  it('draws every frame of the lift', () => {
+    expect(document.querySelectorAll('#boot-splash .boot-lifter .boot-frame')).toHaveLength(frames)
+  })
+
+  it('shows one frame at a time', () => {
+    expect(declarationsFor('#boot-splash .boot-lifter')).toMatch(/overflow:\s*hidden/)
+  })
+
+  it('cuts from frame to frame rather than sliding between them', () => {
+    expect(declarationsFor('#boot-splash .boot-lifter svg')).toMatch(
+      new RegExp(`animation:[^;]*\\bsteps\\(${frames}\\)[^;]*\\binfinite\\b`),
+    )
   })
 
   // The splash cannot import from src, so it restates the lockup by hand.
@@ -34,12 +52,6 @@ describe('boot splash', () => {
     expect(declarationsFor('#boot-splash .boot-copy strong span')).toMatch(/font-weight:\s*600/)
   })
 
-  it('swings the bar back and forth forever, the wait having no known length', () => {
-    expect(declarationsFor('#boot-splash .boot-progress span')).toMatch(
-      /animation:[^;]*\binfinite\b[^;]*\balternate\b/,
-    )
-  })
-
   it('leaves the brand itself still', () => {
     for (const selector of [
       '#boot-splash',
@@ -50,9 +62,9 @@ describe('boot splash', () => {
       expect(declarationsFor(selector)).not.toMatch(/animation/)
   })
 
-  it('holds the bar still for a reader who asked for less motion', () => {
+  it('holds the lift still for a reader who asked for less motion', () => {
     const reducedMotion = /@media \(prefers-reduced-motion: reduce\) \{([\s\S]*?)\n {6}\}/.exec(css)
-    expect(reducedMotion?.[1]).toContain('.boot-progress')
+    expect(reducedMotion?.[1]).toContain('.boot-lifter')
     expect(reducedMotion?.[1]).toMatch(/animation:\s*none/)
   })
 })

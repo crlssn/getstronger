@@ -78,40 +78,31 @@
         font-weight: 700;
         color: #6e6b65;
       }
-      #boot-splash .boot-progress {
-        position: relative;
-        overflow: hidden;
-        width: 8rem;
-        height: 0.1875rem;
-        border-radius: 999px;
-        background: rgba(23, 23, 26, 0.12);
-      }
-      #boot-splash .boot-progress span {
-        position: absolute;
-        top: 0;
-        bottom: 0;
-        left: 0;
-        width: 40%;
-        border-radius: inherit;
-        background: #17171a;
-        animation: boot-splash-swing 1.1s ease-in-out infinite alternate;
-      }
-      /* Swings between the ends of the track rather than looping in one
-         direction: the wait has no known length, so nothing should read as
+      /* Six frames of a power clean, run behind a window one frame wide. The
+         wait has no known length, so the loop reads as work rather than as
          progress towards a finish. */
-      @keyframes boot-splash-swing {
-        from {
-          transform: translateX(0);
-        }
+      #boot-splash .boot-lifter {
+        overflow: hidden;
+        width: 7.5rem;
+        height: 7.5rem;
+        color: #17171a;
+      }
+      #boot-splash .boot-lifter svg {
+        display: block;
+        width: 45rem;
+        height: 7.5rem;
+        fill: currentColor;
+        animation: boot-splash-clean 1.2s steps(6) infinite;
+      }
+      @keyframes boot-splash-clean {
         to {
-          transform: translateX(150%);
+          transform: translateX(-45rem);
         }
       }
-      /* A full-width bar would read as finished, so with the motion gone the
-         indicator simply parks mid-track. */
+      /* With the motion gone, the lift parks on the frame it finishes in. */
       @media (prefers-reduced-motion: reduce) {
-        #boot-splash .boot-progress span {
-          left: 30%;
+        #boot-splash .boot-lifter svg {
+          transform: translateX(-30rem);
           animation: none;
         }
       }
@@ -126,7 +117,41 @@
           <span>Lift it. Log it. Beat it.</span>
         </span>
       </div>
-      <div class="boot-progress"><span></span></div>
+      <div class="boot-lifter">
+        <svg viewBox="0 0 240 40" shape-rendering="crispEdges">
+          <rect x="0" y="36" width="240" height="2" />
+          <path
+            class="boot-frame"
+            transform="translate(0 0)"
+            d="M19 15h5v5h-5zM14 18h5v9h-5zM12 19h2v11h-2zM10 20h2v9h-2zM19 20h1v6h-1zM8 21h2v7h-2zM7 22h1v6h-1zM20 23h1v3h-1zM14 27h3v1h-3zM19 27h3v3h-3zM9 28h1v1h-1zM14 28h2v2h-2zM18 28h1v7h-1zM22 28h1v7h-1zM11 29h1v1h-1zM17 29h1v5h-1zM23 29h1v5h-1zM13 30h2v6h-2zM16 30h1v3h-1zM21 30h1v6h-1zM24 30h1v3h-1zM12 32h1v4h-1zM19 32h2v4h-2zM15 33h1v3h-1zM11 34h1v2h-1zM16 35h1v1h-1z"
+          />
+          <path
+            class="boot-frame"
+            transform="translate(40 0)"
+            d="M19 11h5v5h-5zM14 14h5v8h-5zM12 15h2v14h-2zM11 16h1v12h-1zM19 16h1v7h-1zM10 17h1v10h-1zM8 18h2v7h-2zM7 19h1v6h-1zM20 19h1v4h-1zM14 22h2v5h-2zM17 22h2v2h-2zM16 24h1v1h-1zM19 24h3v3h-3zM9 25h1v1h-1zM18 25h1v7h-1zM22 25h1v7h-1zM17 26h1v5h-1zM23 26h1v5h-1zM14 27h1v9h-1zM16 27h1v3h-1zM21 27h1v6h-1zM24 27h1v3h-1zM13 29h1v7h-1zM19 29h2v4h-2zM15 30h1v6h-1zM12 32h1v4h-1zM16 32h1v4h-1zM11 34h1v2h-1zM17 34h3v2h-3z"
+          />
+          <path
+            class="boot-frame"
+            transform="translate(80 0)"
+            d="M14 4h5v5h-5zM14 9h2v13h-2zM11 11h3v7h-3zM16 11h1v9h-1zM17 13h1v6h-1zM18 15h1v4h-1zM19 16h1v2h-1zM12 18h2v4h-2zM19 19h3v3h-3zM18 20h1v7h-1zM22 20h1v7h-1zM17 21h1v5h-1zM23 21h1v5h-1zM13 22h2v3h-2zM16 22h1v3h-1zM21 22h1v6h-1zM24 22h1v3h-1zM19 24h2v4h-2zM14 25h2v10h-2zM16 27h1v9h-1zM17 28h2v3h-2zM17 31h1v5h-1zM18 34h2v2h-2zM15 35h1v1h-1z"
+          />
+          <path
+            class="boot-frame"
+            transform="translate(120 0)"
+            d="M12 11h5v5h-5zM12 16h3v16h-3zM10 17h2v14h-2zM15 17h1v3h-1zM19 17h3v3h-3zM18 18h1v7h-1zM22 18h1v7h-1zM17 19h1v5h-1zM23 19h1v5h-1zM16 20h1v3h-1zM21 20h1v6h-1zM24 20h1v3h-1zM9 22h1v9h-1zM19 22h2v4h-2zM15 23h1v13h-1zM16 25h1v1h-1zM17 26h2v10h-2zM22 26h1v7h-1zM16 27h1v9h-1zM19 27h3v6h-3zM13 32h2v4h-2zM19 33h1v3h-1zM12 34h1v2h-1zM20 34h1v2h-1z"
+          />
+          <path
+            class="boot-frame"
+            transform="translate(160 0)"
+            d="M14 5h5v5h-5zM14 10h3v3h-3zM12 11h2v16h-2zM17 11h1v1h-1zM19 12h3v3h-3zM14 13h2v2h-2zM18 13h1v7h-1zM22 13h1v7h-1zM17 14h1v5h-1zM23 14h1v5h-1zM14 15h1v21h-1zM16 15h1v3h-1zM21 15h1v6h-1zM24 15h1v3h-1zM19 17h2v4h-2zM15 18h1v18h-1zM16 20h1v16h-1zM17 21h2v2h-2zM22 21h1v3h-1zM19 22h3v2h-3zM17 23h1v9h-1zM13 27h1v9h-1zM12 34h1v2h-1zM17 34h4v2h-4z"
+          />
+          <path
+            class="boot-frame"
+            transform="translate(200 0)"
+            d="M19 12h5v5h-5zM14 15h5v8h-5zM13 16h1v20h-1zM12 17h1v12h-1zM19 17h1v5h-1zM10 18h2v9h-2zM9 19h1v7h-1zM8 20h1v6h-1zM20 20h1v2h-1zM14 23h3v1h-3zM19 23h3v3h-3zM14 24h2v2h-2zM18 24h1v7h-1zM22 24h1v7h-1zM17 25h1v5h-1zM23 25h1v5h-1zM14 26h1v10h-1zM16 26h1v3h-1zM21 26h1v6h-1zM24 26h1v3h-1zM11 27h1v1h-1zM19 28h2v4h-2zM15 29h1v7h-1zM16 31h1v5h-1zM12 32h1v4h-1zM17 32h1v1h-1zM11 34h1v2h-1zM17 34h3v2h-3z"
+          />
+        </svg>
+      </div>
     </div>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
