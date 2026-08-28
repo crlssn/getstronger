@@ -18,10 +18,6 @@
   @apply size-5;
 }
 
-.iconButton:disabled {
-  @apply cursor-not-allowed opacity-60;
-}
-
 .default {
   @apply text-text-subtle hover:bg-ink-surface hover:text-text;
 }
@@ -32,4 +28,12 @@
 
 .danger {
   @apply text-danger hover:bg-danger-surface hover:text-danger-strong;
+}
+
+/* The same disabled treatment AppButton uses, for the same reason: reduced
+ * opacity took the icon down with the fill. Last in the file and matched on
+ * hover, so it beats each tone's own colours. */
+.iconButton:disabled,
+.iconButton:disabled:hover {
+  @apply cursor-not-allowed border-transparent bg-transparent text-text-subtle/50;
 }
