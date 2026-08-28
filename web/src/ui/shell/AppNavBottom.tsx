@@ -18,6 +18,7 @@ import { Link, useLocation } from 'react-router-dom'
 
 import { useNotificationStore } from '@/stores/notifications'
 import { cn } from '@/ui/cn'
+import { usePinnedHeight } from '@/utils/usePinnedHeight'
 import { useActiveWorkout } from '@/utils/useActiveWorkout'
 import { workoutTabTimer } from '@/utils/workoutClock'
 import styles from './AppNavBottom.module.css'
@@ -38,6 +39,10 @@ export const AppNavBottom = () => {
   const { t } = useTranslation()
   const { pathname } = useLocation()
   const now = useNow()
+
+  // Measured while it is on screen, so the toaster floats above whatever is
+  // actually there. A create screen has no tab bar at all.
+  const pinned = usePinnedHeight('tab-bar')
 
   const unreadCount = useNotificationStore((state) => state.unreadCount)
   const { savedHref, savedWorkout, savedWorkoutStartedAtMs, savedRestTimerEndsAtMs } =
@@ -102,7 +107,7 @@ export const AppNavBottom = () => {
   ]
 
   return (
-    <nav className={styles.bottomNav} aria-label={t('nav.primary')}>
+    <nav ref={pinned} className={styles.bottomNav} aria-label={t('nav.primary')}>
       <div className={styles.bottomNavInner}>
         {navigation.map((item) => {
           const Icon = item.active ? item.iconActive : item.icon

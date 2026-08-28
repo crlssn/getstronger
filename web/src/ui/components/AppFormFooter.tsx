@@ -4,6 +4,7 @@ import { cloneElement, isValidElement, useId } from 'react'
 
 import { cn } from '@/ui/cn'
 import { useKeyboardOpen } from '@/utils/useKeyboardOpen'
+import { usePinnedHeight } from '@/utils/usePinnedHeight'
 import styles from './AppFormFooter.module.css'
 
 interface Props {
@@ -38,6 +39,10 @@ interface Props {
 export const AppFormFooter = ({ children, className, secondary, hint }: Props) => {
   const keyboardOpen = useKeyboardOpen()
   const hintId = useId()
+  // Measured, and only while the bar is drawn: it is 76px with a button in it
+  // and 107px once it is also naming what the submit is waiting for, and it
+  // stands down entirely while the keyboard is up.
+  const pinned = usePinnedHeight('form-footer')
 
   // The hint is the action's description, not a line that happens to sit above
   // it: a reader who never sees the bar still hears why the button refuses.
@@ -50,7 +55,7 @@ export const AppFormFooter = ({ children, className, secondary, hint }: Props) =
     <>
       <div className={styles.spacer} aria-hidden="true" />
       {!keyboardOpen && (
-        <div className={cn(styles.footer, className)}>
+        <div ref={pinned} className={cn(styles.footer, className)}>
           <div className={styles.inner}>
             {hint && (
               <p id={hintId} className={styles.hint}>
