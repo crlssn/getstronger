@@ -659,6 +659,20 @@ describe('EditRoutine', () => {
     )
   })
 
+  // A routine that did not load is not an empty routine. Handing the builder
+  // nothing offered to save the routine as whatever was typed over it.
+  test('offers a retry rather than an empty builder when the routine does not load', async () => {
+    mocked.getRoutine.mockResolvedValueOnce(undefined)
+    render()
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Something went wrong')
+    expect(screen.queryByRole('button', { name: 'Save changes' })).not.toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole('button', { name: 'Try again' }))
+
+    expect(await screen.findByDisplayValue('Push day')).toBeInTheDocument()
+  })
+
   test('opens on the grouping controls when the routine is already grouped', async () => {
     mocked.getRoutine.mockResolvedValue(
       create(GetRoutineResponseSchema, {
