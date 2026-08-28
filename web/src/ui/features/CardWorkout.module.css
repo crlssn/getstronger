@@ -193,8 +193,11 @@
   @apply block text-meta text-text-subtle;
 }
 
+/* The same quiet square a position takes, with a letter in it. Inverted, a
+   group badge was the loudest thing on a screen whose subject is the exercises
+   under it — and three of these were defined at two sizes and two radii. */
 .blockBadge {
-  @apply grid size-7 shrink-0 place-items-center rounded-lg bg-text text-xs font-extrabold text-surface;
+  @apply grid size-8 shrink-0 place-items-center rounded-lg bg-info-surface text-sm font-semibold text-text-muted;
 }
 
 .summaryNote {
