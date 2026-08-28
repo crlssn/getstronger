@@ -136,7 +136,7 @@ export const flows: Flow[] = [
       },
       {
         act: async (page) => {
-          await page.getByRole('button', { name: 'Save Exercise' }).click()
+          await page.getByRole('button', { name: 'Create exercise' }).click()
           await expect(page).toHaveURL(/\/exercises$/)
         },
         name: 'saved',

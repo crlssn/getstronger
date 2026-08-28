@@ -39,7 +39,7 @@ export const CreateExercise = () => {
       values={values}
       onChange={setValues}
       onSubmit={() => void onSubmit()}
-      submitLabel={t('exercise.save')}
+      submitLabel={t('exercise.create')}
     />
   )
 }

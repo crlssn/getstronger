@@ -214,7 +214,7 @@ export const HomeView = () => {
               <AppErrorState onRetry={() => void useDashboardStore.getState().load()} />
             ) : (
               <AppEmptyState
-                action={{ label: t('home.createRoutine'), to: '/routines/create' }}
+                action={{ label: t('training.newRoutine'), to: '/routines/create' }}
                 body={t('home.createFirstRoutineBody')}
                 title={t('home.createFirstRoutine')}
               />

@@ -54,7 +54,7 @@ test.describe('authenticated journeys', () => {
     await tagInput.press('Enter')
     await tagInput.fill('Pull')
     await tagInput.press('Enter')
-    await page.getByRole('button', { name: 'Save Exercise' }).click()
+    await page.getByRole('button', { name: 'Create exercise' }).click()
 
     await expect(page).toHaveURL(/\/exercises$/)
     await page.getByLabel('Search exercises').fill(exerciseName)
@@ -63,9 +63,9 @@ test.describe('authenticated journeys', () => {
     await expect(page.getByText('Pull', { exact: true })).toBeVisible()
 
     await openExerciseActions(page)
-    await page.getByRole('menuitem', { name: 'Update exercise' }).click()
+    await page.getByRole('menuitem', { name: 'Edit exercise' }).click()
     await page.locator('form input[type="text"]').first().fill(updatedName)
-    await page.getByRole('button', { name: 'Update Exercise' }).click()
+    await page.getByRole('button', { name: 'Save changes' }).click()
     await expect(page.getByText(updatedName, { exact: true })).toBeVisible()
 
     await openExerciseActions(page)
@@ -119,7 +119,7 @@ test.describe('authenticated journeys', () => {
     await page.keyboard.press('Escape')
     const profileTabs = page.getByRole('navigation', { name: 'Profile sections' })
     await expect(profileTabs.getByRole('link', { name: 'Workouts' })).toBeVisible()
-    await expect(profileTabs.getByRole('link', { name: 'Personal Bests' })).toBeVisible()
+    await expect(profileTabs.getByRole('link', { name: 'Personal bests' })).toBeVisible()
     await expect(profileTabs.getByRole('link', { name: 'Follows', exact: true })).toBeVisible()
     await expect(profileTabs.getByRole('link', { name: 'Followers' })).toBeVisible()
   })

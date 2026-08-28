@@ -82,6 +82,31 @@ describe('messages', () => {
     expect(piped, piped.join('\n')).toEqual([])
   })
 
+  // A screen's title and the control that opens it are the same promise, and
+  // they used to disagree: "New exercise" opened "Create exercise", "New
+  // routine" opened "Create routine".
+  it.each(['en', 'sv'] as const)('names a create screen after its way in, in %s', (locale) => {
+    const messages = { en, sv }[locale]
+
+    expect(messages.pages.createExercise).toBe(messages.exercise.new)
+    expect(messages.pages.createRoutine).toBe(messages.training.newRoutine)
+    expect(messages.pages.newPlan).toBe(messages.training.newPlan)
+  })
+
+  // Sentence case, everywhere. "Save Exercise" was the app's only title-cased
+  // button, beside "Create routine", "Create plan" and "Start workout".
+  it.each(['en'] as const)('title-cases nothing in %s', (locale) => {
+    const messages = { en, sv }[locale]
+    const shouting = flattenEntries(messages as unknown as Messages)
+      // Proper nouns and initialisms are their own case; the rule is about the
+      // second word of a label being capitalised for no reason.
+      .filter(([key]) => !/brand|slogan|subtitle/i.test(key))
+      .filter(([, value]) => /^[A-Z][a-z]+ [A-Z][a-z]+$/.test(value))
+      .map(([key, value]) => `${key}: ${value}`)
+
+    expect(shouting, shouting.join('\n')).toEqual([])
+  })
+
   it.each(['en', 'sv'] as const)('localises the email verification notice in %s', (locale) => {
     const messages = { en, sv }[locale]
     const keys = flatten(messages.auth.verification as unknown as Messages)

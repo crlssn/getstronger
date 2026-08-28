@@ -133,7 +133,7 @@ test.describe('profiles and notifications', () => {
     await expect(page.getByRole('button', { name: 'Profile actions' })).toBeVisible()
 
     const tabs = page.getByRole('navigation', { name: 'Profile sections' })
-    for (const tab of ['Personal Bests', 'Follows', 'Followers', 'Workouts']) {
+    for (const tab of ['Personal bests', 'Follows', 'Followers', 'Workouts']) {
       await tabs.getByRole('link', { name: tab, exact: true }).click()
       await expect(tabs.getByRole('link', { name: tab, exact: true })).toHaveAttribute(
         'aria-current',

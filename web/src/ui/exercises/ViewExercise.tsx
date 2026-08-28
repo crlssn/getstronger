@@ -130,7 +130,7 @@ export const ViewExercise = () => {
   const isOwner = userId === exercise.userId
 
   const exerciseActions: DropdownItem[] = [
-    { href: `/exercises/${id}/edit`, title: t('exercise.update') },
+    { href: `/exercises/${id}/edit`, title: t('exercise.edit') },
     {
       destructive: true,
       func: async () => {

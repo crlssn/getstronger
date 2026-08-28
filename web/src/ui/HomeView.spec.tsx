@@ -158,7 +158,7 @@ describe('HomeView', () => {
       render()
 
       expect(await screen.findByText('Create your first routine')).toBeInTheDocument()
-      expect(screen.getByRole('link', { name: 'Create routine' })).toHaveAttribute(
+      expect(screen.getByRole('link', { name: 'New routine' })).toHaveAttribute(
         'href',
         '/routines/create',
       )

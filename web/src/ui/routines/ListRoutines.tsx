@@ -207,7 +207,7 @@ export const ListRoutines = () => {
         ))
       ) : (
         <AppEmptyState
-          action={search ? 'none' : { label: t('home.createRoutine'), to: '/routines/create' }}
+          action={search ? 'none' : { label: t('training.newRoutine'), to: '/routines/create' }}
           body={search ? t('exercise.tryAnotherSearch') : t('routine.list.emptyBody')}
           title={search ? t('training.noMatchingRoutines') : t('training.noRoutines')}
           actionIcon={<PlusIcon />}

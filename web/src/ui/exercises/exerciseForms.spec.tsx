@@ -106,7 +106,7 @@ describe('CreateExercise', () => {
 
     await waitFor(() => expect(mocked.listExerciseTags).toHaveBeenCalled())
     await waitFor(() =>
-      expect(screen.queryByRole('button', { name: 'Save Exercise' })).not.toBeInTheDocument(),
+      expect(screen.queryByRole('button', { name: 'Create exercise' })).not.toBeInTheDocument(),
     )
   })
 
@@ -114,7 +114,7 @@ describe('CreateExercise', () => {
     render(<CreateExercise />)
 
     await userEvent.type(nameField(), 'Overhead press')
-    await userEvent.click(submit('Save Exercise'))
+    await userEvent.click(submit('Create exercise'))
 
     await waitFor(() => expect(mocked.createExercise).toHaveBeenCalled())
     expect(mocked.createExercise.mock.calls[0]?.[0]).toMatchObject({
@@ -134,7 +134,7 @@ describe('CreateExercise', () => {
       screen.getByRole('combobox', { name: 'Add exercise tag' }),
       'Cardio{Enter}',
     )
-    await userEvent.click(submit('Save Exercise'))
+    await userEvent.click(submit('Create exercise'))
 
     await waitFor(() => expect(mocked.createExercise).toHaveBeenCalled())
     expect(mocked.createExercise.mock.calls[0]?.[0]).toMatchObject({
@@ -149,7 +149,7 @@ describe('CreateExercise', () => {
     render(<CreateExercise />)
 
     await userEvent.type(nameField(), 'Row')
-    await userEvent.click(submit('Save Exercise'))
+    await userEvent.click(submit('Create exercise'))
 
     await waitFor(() => expect(mocked.createExercise).toHaveBeenCalled())
     expect(screen.queryByText('list')).not.toBeInTheDocument()
@@ -172,7 +172,7 @@ describe('UpdateExercise', () => {
     const field = await screen.findByDisplayValue('Bench press')
     await userEvent.clear(field)
     await userEvent.type(field, 'Incline press')
-    await userEvent.click(submit('Update exercise'))
+    await userEvent.click(submit('Save changes'))
 
     await waitFor(() => expect(mocked.updateExercise).toHaveBeenCalled())
     expect(mocked.updateExercise.mock.calls[0]?.[0]).toMatchObject({
@@ -209,7 +209,7 @@ describe('UpdateExercise', () => {
     mocked.getExercise.mockReturnValue(new Promise(() => {}))
     render(<UpdateExercise />, '/exercises/exercise-1/edit')
 
-    expect(screen.queryByRole('button', { name: 'Update exercise' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Save changes' })).not.toBeInTheDocument()
   })
 
   test('offers a way back when the exercise is gone', async () => {

@@ -120,7 +120,7 @@ test.describe('exercise library', () => {
       await page.locator('form input[type="text"]').first().fill(sourceName)
       await page.getByLabel('Add exercise tag').fill(sharedTag)
       await page.getByLabel('Add exercise tag').press('Enter')
-      await page.getByRole('button', { name: 'Save Exercise' }).click()
+      await page.getByRole('button', { name: 'Create exercise' }).click()
       await expect(page).toHaveURL(/\/exercises$/)
 
       await page.goto('/exercises/create')
@@ -143,7 +143,7 @@ test.describe('exercise library', () => {
       await expect(page.getByLabel('Exercise tags').locator(':scope > button')).toHaveCount(10)
       await expect(page.getByLabel('Add exercise tag')).toHaveCount(0)
 
-      await page.getByRole('button', { name: 'Save Exercise' }).click()
+      await page.getByRole('button', { name: 'Create exercise' }).click()
       await page.getByLabel('Search exercises').fill(sharedTag)
       await expect(page.getByRole('link').filter({ hasText: sourceName })).toBeVisible()
       await expect(page.getByRole('link').filter({ hasText: targetName })).toBeVisible()
@@ -165,7 +165,7 @@ test.describe('exercise library', () => {
     try {
       await page.goto('/exercises/create')
       await page.locator('form input[type="text"]').first().fill(exerciseName)
-      await page.getByRole('button', { name: 'Save Exercise' }).click()
+      await page.getByRole('button', { name: 'Create exercise' }).click()
       await expect(page).toHaveURL(/\/exercises$/)
 
       const openForEditing = async (name: string) => {
@@ -173,7 +173,7 @@ test.describe('exercise library', () => {
         await page.getByLabel('Search exercises').fill(name)
         await page.getByRole('link').filter({ hasText: name }).first().click()
         await openExerciseActions(page)
-        await page.getByRole('menuitem', { name: 'Update exercise' }).click()
+        await page.getByRole('menuitem', { name: 'Edit exercise' }).click()
         await expect(page).toHaveURL(/\/exercises\/[0-9a-f-]+\/edit$/)
       }
 
@@ -213,7 +213,7 @@ test.describe('exercise library', () => {
 
       // The name is not a unit of the recorded history, so it still saves.
       await page.locator('form input[type="text"]').first().fill(renamedExercise)
-      await page.getByRole('button', { name: 'Update exercise' }).click()
+      await page.getByRole('button', { name: 'Save changes' }).click()
       await expect(page).toHaveURL(/\/exercises\/[0-9a-f-]+$/)
       await expect(page.getByText('Exercise updated')).toBeVisible()
 
@@ -234,7 +234,7 @@ test.describe('exercise library', () => {
     // Create the exercise and log it once so there is history to preserve.
     await page.goto('/exercises/create')
     await page.locator('form input[type="text"]').first().fill(exerciseName)
-    await page.getByRole('button', { name: 'Save Exercise' }).click()
+    await page.getByRole('button', { name: 'Create exercise' }).click()
     await expect(page).toHaveURL(/\/exercises$/)
 
     await page.goto('/workouts/quick')
@@ -440,7 +440,7 @@ test.describe('routine lifecycle', () => {
       for (const exercise of [first, second]) {
         await page.goto('/exercises/create')
         await page.locator('form input[type="text"]').first().fill(exercise)
-        await page.getByRole('button', { name: 'Save Exercise' }).click()
+        await page.getByRole('button', { name: 'Create exercise' }).click()
         await expect(page).toHaveURL(/\/exercises$/)
       }
 
@@ -579,7 +579,7 @@ test.describe('routine lifecycle', () => {
       for (const name of [lift, second]) {
         await page.goto('/exercises/create')
         await page.locator('form input[type="text"]').first().fill(name)
-        await page.getByRole('button', { name: 'Save Exercise' }).click()
+        await page.getByRole('button', { name: 'Create exercise' }).click()
         await expect(page).toHaveURL(/\/exercises$/)
       }
 

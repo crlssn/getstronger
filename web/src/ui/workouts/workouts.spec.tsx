@@ -137,7 +137,7 @@ describe('EditWorkout', () => {
   test('offers the way back beside the update rather than under it', async () => {
     render()
 
-    expect(await screen.findByRole('button', { name: 'Update workout' })).toBeVisible()
+    expect(await screen.findByRole('button', { name: 'Save changes' })).toBeVisible()
     expect(screen.getByRole('link', { name: 'Cancel' })).toBeVisible()
   })
 
@@ -148,7 +148,7 @@ describe('EditWorkout', () => {
     render()
 
     await waitFor(() =>
-      expect(screen.queryByRole('button', { name: 'Update workout' })).not.toBeInTheDocument(),
+      expect(screen.queryByRole('button', { name: 'Save changes' })).not.toBeInTheDocument(),
     )
   })
 
@@ -189,7 +189,7 @@ describe('EditWorkout', () => {
     const weight = await screen.findByDisplayValue('100')
     await userEvent.clear(weight)
     await userEvent.type(weight, '110')
-    await userEvent.click(screen.getByRole('button', { name: 'Update workout' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Save changes' }))
 
     await waitFor(() => expect(mocked.updateWorkout).toHaveBeenCalled())
     const saved = mocked.updateWorkout.mock.calls[0]?.[0]
@@ -218,7 +218,7 @@ describe('EditWorkout', () => {
     // Every field names its own row now, where the stacked block called each
     // one of them "Weight" and left a screen reader to count.
     await userEvent.type(screen.getByRole('textbox', { name: 'Bench press set 2 weight' }), '90')
-    await userEvent.click(screen.getByRole('button', { name: 'Update workout' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Save changes' }))
 
     await waitFor(() => expect(mocked.updateWorkout).toHaveBeenCalled())
     expect(mocked.updateWorkout.mock.calls[0]?.[0]?.exerciseSets[0]?.sets).toHaveLength(1)
@@ -243,7 +243,7 @@ describe('EditWorkout', () => {
     render()
 
     await userEvent.click(await screen.findByRole('button', { name: 'Move Row up' }))
-    await userEvent.click(screen.getByRole('button', { name: 'Update workout' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Save changes' }))
 
     await waitFor(() => expect(mocked.updateWorkout).toHaveBeenCalled())
     expect(

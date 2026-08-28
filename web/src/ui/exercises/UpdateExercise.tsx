@@ -66,7 +66,7 @@ export const UpdateExercise = () => {
         onChange={setValues}
         metricsLocked={metricsLocked}
         onSubmit={() => void onSubmit()}
-        submitLabel={t('exercise.update')}
+        submitLabel={t('common.saveChanges')}
       />
     )
   }

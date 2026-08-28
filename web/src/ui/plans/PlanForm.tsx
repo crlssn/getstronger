@@ -236,7 +236,7 @@ export const PlanForm = ({ planId }: Props) => {
                 {saving
                   ? t('training.planForm.saving')
                   : editing
-                    ? t('training.planForm.saveChanges')
+                    ? t('common.saveChanges')
                     : t('training.planForm.createPlan')}
               </AppButton>
             </AppFormFooter>

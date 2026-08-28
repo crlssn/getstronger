@@ -260,7 +260,7 @@ export const EditWorkout = () => {
         }
       >
         <AppButton type="submit" colour="primary" size="lg">
-          {t('workout.edit.submit')}
+          {t('common.saveChanges')}
         </AppButton>
       </AppFormFooter>
     </form>
