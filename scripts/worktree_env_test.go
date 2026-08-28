@@ -210,6 +210,52 @@ func TestItStaysQuietWhenTheScreenshotCredentialsAreAlreadyThere(t *testing.T) {
 	require.NotContains(t, result.output, "pr:screenshots")
 }
 
+// A worktree's .env comes from .env.example, so the credentials a person added
+// to the main checkout's by hand stay behind — and the screenshot publishing
+// they are for fails on a pull request that is already open.
+func TestItCarriesTheScreenshotCredentialsFromTheMainCheckout(t *testing.T) {
+	main := newCheckout(t)
+	write(t, main, ".env", "SCW_SCREENSHOTS_BUCKET_NAME=bucket\nAWS_ACCESS_KEY_ID=key\nAWS_SECRET_ACCESS_KEY=secret\n")
+	tree := addWorktree(t, main, "feature-a")
+
+	result := runEnv(t, tree, nil)
+
+	require.Equal(t, 0, result.exitCode, result.output)
+	env := readFile(t, filepath.Join(tree, ".env"))
+	require.Contains(t, env, "SCW_SCREENSHOTS_BUCKET_NAME=bucket")
+	require.Contains(t, env, "AWS_ACCESS_KEY_ID=key")
+	require.Contains(t, env, "AWS_SECRET_ACCESS_KEY=secret")
+	require.NotContains(t, result.output, "pr:screenshots", "nothing is missing, so nothing is said")
+}
+
+// By name, never by copying the file: a cloud DB_HOST appended to the main
+// checkout's .env would silently point this worktree's backend at production.
+func TestItCarriesNothingButTheNamedKeys(t *testing.T) {
+	main := newCheckout(t)
+	write(t, main, ".env", "DB_HOST=db.production.example\nDB_NAME=production\nAWS_ACCESS_KEY_ID=key\n")
+	tree := addWorktree(t, main, "feature-a")
+
+	result := runEnv(t, tree, nil)
+
+	require.Equal(t, 0, result.exitCode, result.output)
+	env := readFile(t, filepath.Join(tree, ".env"))
+	require.Contains(t, env, "AWS_ACCESS_KEY_ID=key")
+	require.NotContains(t, env, "production")
+}
+
+// A worktree that has already been given its own key keeps it.
+func TestItKeepsACredentialTheWorktreeAlreadyHas(t *testing.T) {
+	main := newCheckout(t)
+	write(t, main, ".env", "AWS_ACCESS_KEY_ID=main\n")
+	tree := addWorktree(t, main, "feature-a")
+	write(t, tree, ".env", "AWS_ACCESS_KEY_ID=mine\n")
+
+	result := runEnv(t, tree, nil)
+
+	require.Equal(t, 0, result.exitCode, result.output)
+	require.Contains(t, readFile(t, filepath.Join(tree, ".env")), "AWS_ACCESS_KEY_ID=mine")
+}
+
 func TestItFailsRatherThanDoubleBookingWhenEverySlotIsClaimed(t *testing.T) {
 	main := newCheckout(t)
 	tree := addWorktree(t, main, "feature-a")

@@ -234,6 +234,27 @@ set_env() {
   fi
 }
 
+# Keys a person adds to the main checkout's .env by hand, which a worktree
+# copied from .env.example would otherwise never see. Carried by name: copying
+# the file would bring a cloud DB_HOST across with them and point this
+# worktree's backend at production.
+carried_keys=(SCW_SCREENSHOTS_BUCKET_NAME AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY)
+
+carry_env() {
+  local source=$1 target=$2 key value
+  [[ -f "$source" && "$source" != "$target" ]] || return 0
+  for key in "${carried_keys[@]}"; do
+    # A value this worktree already has is its own, and stays.
+    if grep -q "^$key=." "$target"; then
+      continue
+    fi
+    value="$(sed -n "s/^$key=//p" "$source" | tail -n 1)"
+    if [[ -n "$value" ]]; then
+      set_env "$target" "$key" "$value"
+    fi
+  done
+}
+
 claimed=""
 merge_claims
 
@@ -319,8 +340,12 @@ PLAYWRIGHT_REPORT_PORT = "$playwright_report_port"
 PLAYWRIGHT_UI_PORT = "$playwright_ui_port"
 TOML
 
+main_root="$(dirname "$(git rev-parse --path-format=absolute --git-common-dir)")"
+
 test -f "$root/.env" || cp "$root/.env.example" "$root/.env"
 test -f "$root/web/.env" || cp "$root/web/.env.example" "$root/web/.env"
+
+carry_env "$main_root/.env" "$root/.env"
 
 set_env "$root/.env" DB_PORT "$db_port"
 set_env "$root/.env" SERVER_PORT "$server_port"
@@ -338,7 +363,6 @@ write_launch_json "$web_port"
 # Seed node_modules from the main checkout so the first lint, test, or pre-push
 # run works without a full 'bun install'. cp -c clones via APFS copy-on-write,
 # so the copy is nearly instant; other filesystems fall back to a plain copy.
-main_root="$(dirname "$(git rev-parse --path-format=absolute --git-common-dir)")"
 for dir in . web mobile; do
   src="$main_root/$dir/node_modules"
   dst="$root/$dir/node_modules"
