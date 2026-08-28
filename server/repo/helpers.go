@@ -31,6 +31,16 @@ type Pagination[Item ModelItem, Slice ModelSlice[Item]] struct {
 func PaginateSlice[Item ModelItem, Slice ModelSlice[Item]](
 	items Slice, limit int, createdAt func(Item) time.Time,
 ) (*Pagination[Item, Slice], error) {
+	return PaginateSliceWithToken(items, limit, func(item Item) any {
+		return PageTokenCreatedAt(createdAt(item))
+	})
+}
+
+// PaginateSliceWithToken trims the page and mints the token from its last item.
+// Lists ordered by anything other than creation time supply their own cursor.
+func PaginateSliceWithToken[Item ModelItem, Slice ModelSlice[Item]](
+	items Slice, limit int, token func(Item) any,
+) (*Pagination[Item, Slice], error) {
 	if len(items) <= limit {
 		return &Pagination[Item, Slice]{
 			Items:         items,
@@ -39,7 +49,7 @@ func PaginateSlice[Item ModelItem, Slice ModelSlice[Item]](
 	}
 
 	items = items[:limit]
-	nextPageToken, err := json.Marshal(PageTokenCreatedAt(createdAt(items[len(items)-1])))
+	nextPageToken, err := json.Marshal(token(items[len(items)-1]))
 	if err != nil {
 		return nil, fmt.Errorf("marshal page token: %w", err)
 	}
