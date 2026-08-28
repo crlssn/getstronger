@@ -184,6 +184,15 @@ func credentials() map[string]string {
 	}
 }
 
+// writeChangesIndex lays down the index 'screenshots:diff' leaves beside the
+// difference images, naming every page it found had moved.
+func writeChangesIndex(t *testing.T, root string, lines ...string) {
+	t.Helper()
+
+	path := filepath.Join(root, "web", "screenshots", "changes", "pages.tsv")
+	require.NoError(t, os.WriteFile(path, []byte(strings.Join(lines, "\n")+"\n"), 0o600))
+}
+
 // The default run publishes what 'screenshots:diff' left behind: the page as it
 // was, the page as it is, and the highlighted difference between them.
 func TestPRScreenshotsUploadsTheChangedPages(t *testing.T) {
@@ -274,6 +283,73 @@ func TestPRScreenshotsPublishesWithoutABaseline(t *testing.T) {
 	require.Contains(t, result.stdout, "| Page | Screenshot |")
 	require.Contains(t, result.stdout,
 		"https://getstronger-pull-requests.s3.fr-par.scw.cloud/pr/1209/abc1234/active/home.png")
+}
+
+// The page a change actually moved was the one missing from the report: it grew
+// past one fold, so one image became two and neither side had a counterpart to
+// difference against.
+func TestPRScreenshotsPublishesAPageThatGainedAFold(t *testing.T) {
+	t.Parallel()
+
+	root := screenshotsCheckout(
+		t,
+		"screenshots/active/38-circuit-1.png",
+		"screenshots/active/38-circuit-2.png",
+		".screenshots-baseline/active/38-circuit.png",
+	)
+	writeChangesIndex(
+		t, root,
+		"added\tactive/38-circuit-1.png",
+		"added\tactive/38-circuit-2.png",
+		"removed\tactive/38-circuit.png",
+	)
+
+	result := runPRScreenshots(t, root, []string{"1209"}, credentials())
+
+	const prefix = "https://getstronger-pull-requests.s3.fr-par.scw.cloud/pr/1209/abc1234/"
+	require.Equal(t, 0, result.exitCode, result.stderr)
+	require.Contains(t, result.stdout, prefix+"after/active/38-circuit-1.png")
+	require.Contains(t, result.stdout, prefix+"after/active/38-circuit-2.png")
+	require.Contains(t, result.stdout, prefix+"before/active/38-circuit.png")
+	require.NotContains(t, result.stdout, prefix+"difference/",
+		"there is no difference to draw, and a broken image is worse than a word")
+	require.Contains(t, result.stdout, "nothing to compare")
+}
+
+// A page whose pixels moved still has its difference published, and the index
+// is what says which pages the report is about.
+func TestPRScreenshotsPublishesTheDifferenceTheIndexNames(t *testing.T) {
+	t.Parallel()
+
+	root := screenshotsCheckout(
+		t,
+		"screenshots/changes/active/home.png",
+		"screenshots/active/home.png",
+		".screenshots-baseline/active/home.png",
+		"screenshots/active/plans.png",
+	)
+	writeChangesIndex(t, root, "changed\tactive/home.png")
+
+	result := runPRScreenshots(t, root, []string{"1209"}, credentials())
+
+	const prefix = "https://getstronger-pull-requests.s3.fr-par.scw.cloud/pr/1209/abc1234/"
+	require.Equal(t, 0, result.exitCode, result.stderr)
+	require.Contains(t, result.stdout, prefix+"difference/active/home.png")
+	require.NotContains(t, result.stdout, "active/plans", "an unchanged page is not the report")
+}
+
+// An index naming nothing is a run that found nothing, not a report to publish.
+func TestPRScreenshotsRefusesAnEmptyIndex(t *testing.T) {
+	t.Parallel()
+
+	root := screenshotsCheckout(t, ".screenshots-baseline/active/home.png")
+	writeChangesIndex(t, root)
+
+	result := runPRScreenshots(t, root, []string{"1209"}, credentials())
+
+	require.NotEqual(t, 0, result.exitCode)
+	require.Contains(t, result.stderr, "no images")
+	require.False(t, result.awsRan, "nothing is uploaded")
 }
 
 func TestPRScreenshotsUploadsAnotherDirectoryUnderScreenshots(t *testing.T) {

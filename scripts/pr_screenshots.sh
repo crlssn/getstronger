@@ -67,10 +67,35 @@ case "$directory" in
   *) fail "$path is outside web/screenshots/, and only what was photographed from the seeded database may go to a public bucket" ;;
 esac
 
+# 'screenshots:diff' leaves the previous set in web/.screenshots-baseline/ and
+# the highlighted differences in web/screenshots/changes/, so a default run can
+# show a redesign as the two states side by side. The baseline is the same
+# seeded photographs one run older, which is why publishing it is safe although
+# a --path may never name it.
+baseline="$(cd "$root/web/.screenshots-baseline" 2>/dev/null && pwd -P)"
+comparing=""
+if [ "$directory" = "$publishable/changes" ] && [ -n "$baseline" ]; then
+  comparing=1
+fi
+
+# The pages to publish come from the index 'screenshots:diff' writes rather than
+# from the difference images beside it: a page that gained or lost a fold has an
+# image on one side only and no difference to draw, and reading the folder alone
+# left it out of the very report meant to show it.
 images=()
-while IFS= read -r image; do
-  images+=("${image#"$directory"/}")
-done < <(find "$directory" -type f -name '*.png' | LC_ALL=C sort)
+kinds=()
+if [ -n "$comparing" ] && [ -f "$directory/pages.tsv" ]; then
+  while IFS=$'\t' read -r kind image; do
+    [ -n "$image" ] || continue
+    kinds+=("$kind")
+    images+=("$image")
+  done < <(LC_ALL=C sort -k2 "$directory/pages.tsv")
+else
+  while IFS= read -r image; do
+    kinds+=(changed)
+    images+=("${image#"$directory"/}")
+  done < <(find "$directory" -type f -name '*.png' | LC_ALL=C sort)
+fi
 
 [ "${#images[@]}" -gt 0 ] ||
   fail "no images under $path; 'mise run screenshots:diff' writes the pages a change moved"
@@ -92,17 +117,6 @@ sha="$(git rev-parse --short HEAD 2>/dev/null)"
 readonly sha
 
 readonly PREFIX="pr/$NUMBER/$sha"
-
-# 'screenshots:diff' leaves the previous set in web/.screenshots-baseline/ and
-# the highlighted differences in web/screenshots/changes/, so a default run can
-# show a redesign as the two states side by side. The baseline is the same
-# seeded photographs one run older, which is why publishing it is safe although
-# a --path may never name it.
-baseline="$(cd "$root/web/.screenshots-baseline" 2>/dev/null && pwd -P)"
-comparing=""
-if [ "$directory" = "$publishable/changes" ] && [ -n "$baseline" ]; then
-  comparing=1
-fi
 
 # public-read on each object rather than a policy on the bucket: GitHub's image
 # proxy fetches anonymously, and an ACL makes exactly what this task uploaded
@@ -151,7 +165,8 @@ if [ -n "$comparing" ]; then
   block+="| Page | Before | After | Difference |
 | --- | --- | --- | --- |
 "
-  for image in "${images[@]}"; do
+  for position in "${!images[@]}"; do
+    image="${images[$position]}"
     page="${image%.png}"
     # A third of the 780 px the phone-sized viewport renders at, so the three
     # states sit side by side in a pull request's column.
@@ -159,8 +174,12 @@ if [ -n "$comparing" ]; then
     [ -f "$baseline/$image" ] && before="$(image_tag "before/$image" 260 "$page before")"
     after="_removed_"
     [ -f "$publishable/$image" ] && after="$(image_tag "after/$image" 260 "$page after")"
+    # A page with only one state has nothing to overlay, and a word says so
+    # better than a link to an object that was never uploaded.
+    difference="_${kinds[$position]}, nothing to compare_"
+    [ -f "$directory/$image" ] && difference="$(image_tag "difference/$image" 260 "$page difference")"
 
-    block+="| \`$page\` | $before | $after | $(image_tag "difference/$image" 260 "$page difference") |
+    block+="| \`$page\` | $before | $after | $difference |
 "
   done
 else

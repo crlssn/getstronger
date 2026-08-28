@@ -20,6 +20,11 @@ export const baselineRoot = fileURLToPath(new URL('../../.screenshots-baseline/'
 
 export const changesRoot = join(outputRoot, 'changes')
 
+// Every page the comparison found had moved, one 'kind<tab>image' line each.
+// Some kinds have no difference image to draw, so the folder alone does not say
+// what a run found; 'pr:screenshots' reads this instead.
+export const changesIndexPath = join(changesRoot, 'pages.tsv')
+
 export type Change = {
   // What the comparison found: an image only the previous run had, one only
   // this run has, one whose page grew or shrank, or one whose pixels moved.

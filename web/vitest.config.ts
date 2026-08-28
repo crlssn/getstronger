@@ -8,7 +8,9 @@ export default mergeConfig(
     test: {
       environment: 'jsdom',
       setupFiles: ['./vitest.setup.ts'],
-      exclude: [...configDefaults.exclude, 'tests/e2e/**', 'tests/screenshots/**'],
+      // Only the capture run itself is a Playwright spec; the rest of the
+      // screenshot harness is ordinary code with ordinary unit tests.
+      exclude: [...configDefaults.exclude, 'tests/e2e/**', 'tests/screenshots/capture.spec.ts'],
       root: fileURLToPath(new URL('./', import.meta.url)),
       coverage: {
         provider: 'v8',

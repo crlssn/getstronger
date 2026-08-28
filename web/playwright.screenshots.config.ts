@@ -34,6 +34,8 @@ export default defineConfig({
   reporter: [['list']],
   retries: 0,
   testDir: './tests/screenshots',
+  // The one spec that photographs; the harness beside it is unit tested.
+  testMatch: 'capture.spec.ts',
   timeout: 60_000,
   use: { baseURL },
   webServer: [
