@@ -468,7 +468,7 @@ Playwright starts isolated HTTP instances of the backend and web app on ports `1
 
 ## Mobile screenshots
 
-`mise run screenshots` reseeds the database and photographs every page of the app at a phone-sized viewport (390 × 844, retina density) for each seeded persona:
+`mise run screenshots` reseeds the database, takes a snapshot of what it seeded, and photographs every page of the app at a phone-sized viewport (390 × 844, retina density) for each seeded persona:
 
 ```bash
 mise run screenshots
@@ -517,7 +517,9 @@ To find out what a change actually moved, compare a run against the one before i
 mise run screenshots:diff
 ```
 
-The run reports the pages that moved, records them in the manifest, and writes a highlighted image of each difference to `web/screenshots/changes/`. A one-line change to `.auth-eyebrow`, for example, reports login, signup, forgot password, reset password, and the verification notice — including the pages nobody thought to check. Pass a pattern to compare a subset, as `screenshots:page` does. This form deliberately leaves the database alone: the seed randomises names, so reseeding would move nearly every page and bury the change being looked at.
+The run reports the pages that moved, records them in the manifest, and writes a highlighted image of each difference to `web/screenshots/changes/`, alongside a `pages.tsv` naming every page it found and how it moved — added, removed, resized, or changed. A one-line change to `.auth-eyebrow`, for example, reports login, signup, forgot password, reset password, and the verification notice — including the pages nobody thought to check. Pass a pattern to compare a subset, as `screenshots:page` does.
+
+The seed is never run again — it randomises names, so reseeding would move nearly every page and bury the change being looked at. Instead the run puts back the snapshot `mise run screenshots` took, so the comparison photographs the data the baseline photographed. Without it the flows' own exercises, routines and workouts carry from one run into the next, and pages nobody touched report a difference — twenty of them, for a change to one. Both runs also render relative times against the moment the snapshot was taken rather than against the wall clock, so a page does not move because "just now" became "three minutes ago". Two runs over an unchanged working tree therefore report nothing, which is what makes a run that reports something worth reading.
 
 Like the end-to-end suite, the run starts its own backend and web server — on ports `18280` and `15273` by default — so it neither depends on nor disturbs the local development services.
 
@@ -534,7 +536,7 @@ The first prints the block to paste; the second also appends it to the pull requ
 
 The number only exists once the pull request is open, so `mise run pr:create` closes the loop from the other end: a branch that touched a component or stylesheet under `web/src/` gets the command printed back with its number filled in.
 
-For every page in `web/screenshots/changes/` — the pages `screenshots:diff` found had moved — it publishes three images: the page as it was, from the baseline that run kept in `web/.screenshots-baseline/`; the page as it is now; and the highlighted difference. The block is a row per page, so a redesign is read as before, after and what moved. Without a baseline to compare against, it publishes the differences alone, and `--path web/screenshots/active` publishes a folder of the set as it is. Objects land under `pr/<number>/<short-sha>/`, so re-photographing a branch adds a set rather than replacing the one a reviewer is reading.
+For every page in that run's `pages.tsv` it publishes three images: the page as it was, from the baseline that run kept in `web/.screenshots-baseline/`; the page as it is now; and the highlighted difference. A page that gained or lost a fold has an image on one side only and no difference to draw — one image becoming two — and the row says so rather than linking an object that was never uploaded; reading the folder of differences alone used to leave that page out of the report meant to show it. The block is a row per page, so a redesign is read as before, after and what moved. Without a baseline to compare against, it publishes the differences alone, and `--path web/screenshots/active` publishes a folder of the set as it is. Objects land under `pr/<number>/<short-sha>/`, so re-photographing a branch adds a set rather than replacing the one a reviewer is reading.
 
 Anything outside `web/screenshots/` is refused, symlinks included; the baseline is the one exception, and only because the task reaches for it itself — it holds the same seeded photographs, one run older. Each object is uploaded world-readable so GitHub's image proxy can fetch it, and that directory is photographed from the seeded database by construction — the guard is what keeps real data out of a public bucket.
 
@@ -562,4 +564,4 @@ gh variable set SCW_SCREENSHOTS_BUCKET_NAME --body getstronger-pull-requests
 
 The bucket itself stays private: only the objects the task uploads are readable, and only for thirty days.
 
-`SCW_SCREENSHOTS_BUCKET_NAME` is a repository variable rather than a value written into the task, so nothing publishes to a bucket it was not pointed at. Locally it comes from `.env`, alongside `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` — the `getstronger-deploy` API key from step 7 already carries the Object Storage permission sets the upload needs. Without either, the task fails and uploads nothing.
+`SCW_SCREENSHOTS_BUCKET_NAME` is a repository variable rather than a value written into the task, so nothing publishes to a bucket it was not pointed at. Locally it comes from `.env`, alongside `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` — the `getstronger-deploy` API key from step 7 already carries the Object Storage permission sets the upload needs. Without either, the task fails and uploads nothing. `mise run worktree:env` carries those three keys from the main checkout's `.env` into a new worktree's, by name — a worktree whose `.env` came from `.env.example` alone could not publish anything. Nothing else crosses: a cloud `DB_HOST` added to the main file would point a worktree's backend at production.

@@ -1,5 +1,6 @@
 import { execFileSync } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
+import { captureSnapshot, dropSnapshot, restoreSnapshot } from '../snapshot'
 
 const repositoryRoot = fileURLToPath(new URL('../../../', import.meta.url))
 
@@ -38,13 +39,12 @@ export const seedDatabase = () => {
     `-new-email=${process.env.NEW_USER_EMAIL ?? 'new@getstronger.test'}`,
     `-new-name=${process.env.NEW_USER_NAME ?? 'Sam Taylor'}`,
   ])
-  runCommand('server/testing/factory/snapshot/main.go', ['-mode=capture'])
+  captureSnapshot()
 }
 
 // The copies belong to the run, not to the database: whoever opens the app or
 // regenerates the models next should not find them.
-export const dropSeedSnapshot = () =>
-  runCommand('server/testing/factory/snapshot/main.go', ['-mode=drop'])
+export const dropSeedSnapshot = dropSnapshot
 
 // Every spec file calls this before its own tests, so a suite that mutates
 // seeded data cannot decide whether the next spec — or the next browser
@@ -52,5 +52,5 @@ export const dropSeedSnapshot = () =>
 export const resetSeedData = () => {
   if (!ownsSeedData) return
 
-  runCommand('server/testing/factory/snapshot/main.go', ['-mode=restore'])
+  restoreSnapshot()
 }

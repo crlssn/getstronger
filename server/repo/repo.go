@@ -458,9 +458,9 @@ type ListExercisesOpt func() ([]bob.Mod[*dialect.SelectQuery], error)
 
 func ListExercisesWithPageToken(pageToken []byte) ListExercisesOpt {
 	return func() ([]bob.Mod[*dialect.SelectQuery], error) {
-		newestFirst := sm.OrderBy(models.Exercises.Columns.CreatedAt).Desc()
+		ordered := newestFirst(models.Exercises.Columns.CreatedAt, models.Exercises.Columns.ID)
 		if pageToken == nil {
-			return []bob.Mod[*dialect.SelectQuery]{newestFirst}, nil
+			return ordered, nil
 		}
 
 		var pt PageToken
@@ -468,10 +468,9 @@ func ListExercisesWithPageToken(pageToken []byte) ListExercisesOpt {
 			return nil, fmt.Errorf("page token unmarshal: %w", err)
 		}
 
-		return []bob.Mod[*dialect.SelectQuery]{
+		return append([]bob.Mod[*dialect.SelectQuery]{
 			models.SelectWhere.Exercises.CreatedAt.LT(pt.CreatedAt),
-			newestFirst,
-		}, nil
+		}, ordered...), nil
 	}
 }
 
@@ -683,6 +682,19 @@ func GetRoutineWithExercises() GetRoutineOpt {
 	}
 }
 
+// newestFirst orders a paged list by creation time, breaking ties on the primary key. created_at
+// alone is not a total order — the seed writes one timestamp across every row it creates in a
+// transaction, and two rows written in the same millisecond tie in production too — and Postgres is
+// then free to hand tied rows back in whatever order they physically sit in, which any write to the
+// table changes. Whichever routine comes back first is the one the app offers up next, so a tie
+// moves the home, workout and training screens at once. See stableExerciseOrder.
+func newestFirst(createdAt, id any) []bob.Mod[*dialect.SelectQuery] {
+	return []bob.Mod[*dialect.SelectQuery]{
+		sm.OrderBy(createdAt).Desc(),
+		sm.OrderBy(id).Desc(),
+	}
+}
+
 // stableExerciseOrder orders a routine's exercise load by the position recorded on the
 // relationship table, which the load's join makes available to ORDER BY. Positions may have gaps
 // after removals; only their relative order matters. The exercise ID keeps the sort total in case
@@ -731,9 +743,9 @@ type ListRoutineOpt func() ([]bob.Mod[*dialect.SelectQuery], error)
 
 func ListRoutinesWithPageToken(pageToken []byte) ListRoutineOpt {
 	return func() ([]bob.Mod[*dialect.SelectQuery], error) {
-		newestFirst := sm.OrderBy(models.Routines.Columns.CreatedAt).Desc()
+		ordered := newestFirst(models.Routines.Columns.CreatedAt, models.Routines.Columns.ID)
 		if pageToken == nil {
-			return []bob.Mod[*dialect.SelectQuery]{newestFirst}, nil
+			return ordered, nil
 		}
 
 		var pt PageToken
@@ -741,10 +753,9 @@ func ListRoutinesWithPageToken(pageToken []byte) ListRoutineOpt {
 			return nil, fmt.Errorf("page token unmarshal: %w", err)
 		}
 
-		return []bob.Mod[*dialect.SelectQuery]{
+		return append([]bob.Mod[*dialect.SelectQuery]{
 			models.SelectWhere.Routines.CreatedAt.LT(pt.CreatedAt),
-			newestFirst,
-		}, nil
+		}, ordered...), nil
 	}
 }
 
@@ -947,9 +958,9 @@ func ListWorkoutsWithLimit(size int) ListWorkoutsOpt {
 
 func ListWorkoutsWithPageToken(token []byte) ListWorkoutsOpt {
 	return func() ([]bob.Mod[*dialect.SelectQuery], error) {
-		newestFirst := sm.OrderBy(models.Workouts.Columns.CreatedAt).Desc()
+		ordered := newestFirst(models.Workouts.Columns.CreatedAt, models.Workouts.Columns.ID)
 		if token == nil {
-			return []bob.Mod[*dialect.SelectQuery]{newestFirst}, nil
+			return ordered, nil
 		}
 
 		var pt PageToken
@@ -957,10 +968,9 @@ func ListWorkoutsWithPageToken(token []byte) ListWorkoutsOpt {
 			return nil, fmt.Errorf("page token unmarshal: %w", err)
 		}
 
-		return []bob.Mod[*dialect.SelectQuery]{
+		return append([]bob.Mod[*dialect.SelectQuery]{
 			models.SelectWhere.Workouts.CreatedAt.LT(pt.CreatedAt),
-			newestFirst,
-		}, nil
+		}, ordered...), nil
 	}
 }
 
@@ -1536,9 +1546,9 @@ func ListNotificationsWithUserID(userID string) ListNotificationsOpt {
 
 func ListNotificationsWithPageToken(token []byte) ListNotificationsOpt {
 	return func() ([]bob.Mod[*dialect.SelectQuery], error) {
-		newestFirst := sm.OrderBy(models.Notifications.Columns.CreatedAt).Desc()
+		ordered := newestFirst(models.Notifications.Columns.CreatedAt, models.Notifications.Columns.ID)
 		if len(token) == 0 {
-			return []bob.Mod[*dialect.SelectQuery]{newestFirst}, nil
+			return ordered, nil
 		}
 
 		var pageToken PageToken
@@ -1546,10 +1556,9 @@ func ListNotificationsWithPageToken(token []byte) ListNotificationsOpt {
 			return nil, fmt.Errorf("page token unmarshal: %w", err)
 		}
 
-		return []bob.Mod[*dialect.SelectQuery]{
+		return append([]bob.Mod[*dialect.SelectQuery]{
 			models.SelectWhere.Notifications.CreatedAt.LT(pageToken.CreatedAt),
-			newestFirst,
-		}, nil
+		}, ordered...), nil
 	}
 }
 

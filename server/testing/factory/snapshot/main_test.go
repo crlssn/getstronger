@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"slices"
 	"testing"
 
 	"github.com/stephenafamo/bob"
@@ -54,6 +55,48 @@ func TestCaptureAndRestore(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, restoredWorkouts, 1)
 	require.Equal(t, workout.ID, restoredWorkouts[0].ID)
+}
+
+// A restore has to lay the rows down in a defined order, not in whatever order a scan of the copy
+// happens to return. Two runs of the screenshot harness compare page by page, and a list the app
+// reads without a total order of its own — the people an athlete follows, among others — comes back
+// in the order the rows physically sit in. Left to the scan, that order differs from one restore to
+// the next and pages nobody touched report a difference.
+func TestRestoreWritesTheRowsInADefinedOrder(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	c := container.NewContainer(ctx)
+	t.Cleanup(func() {
+		require.NoError(t, c.Terminate(ctx))
+	})
+
+	f := factory.NewFactory(c.DB)
+	user := f.NewUser()
+	for range 20 {
+		f.NewRoutine(factory.RoutineUserID(user.ID))
+	}
+
+	require.NoError(t, capture(ctx, c.DB))
+	require.NoError(t, restore(ctx, c.DB))
+
+	// ctid is a row's physical location, so this is the order an unordered read returns.
+	rows, err := c.DB.QueryContext(ctx, `SELECT id::text FROM public.routines ORDER BY ctid`)
+	require.NoError(t, err)
+	defer func() { _ = rows.Close() }()
+
+	var written []string
+	for rows.Next() {
+		var id string
+		require.NoError(t, rows.Scan(&id))
+		written = append(written, id)
+	}
+	require.NoError(t, rows.Err())
+	require.Len(t, written, 20)
+
+	// The routines were created in no particular order, so a restore that kept the order it found
+	// them in would not come back sorted.
+	require.True(t, slices.IsSorted(written), "a restore left the rows in the order the copy held them")
 }
 
 func TestRestoreRepeatedly(t *testing.T) {

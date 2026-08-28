@@ -2,11 +2,28 @@ import { mkdir, readFile, readdir, writeFile } from 'node:fs/promises'
 import { dirname, join, relative } from 'node:path'
 import pixelmatch from 'pixelmatch'
 import { PNG } from 'pngjs'
-import { baselineRoot, changesRoot, outputRoot, type Change } from './paths'
+import { baselineRoot, changesIndexPath, changesRoot, outputRoot, type Change } from './paths'
 
 // Anti-aliasing aside, two runs of the same page render identically, so any
 // remaining difference is a change somebody made rather than noise.
 const perPixelTolerance = 0.15
+
+// Where the two sets, the highlighted differences, and the index naming them
+// live. A parameter rather than a constant so the comparator can be exercised
+// against a throwaway set instead of the one in web/screenshots.
+export type Roots = {
+  baseline: string
+  changes: string
+  index: string
+  output: string
+}
+
+const defaultRoots: Roots = {
+  baseline: baselineRoot,
+  changes: changesRoot,
+  index: changesIndexPath,
+  output: outputRoot,
+}
 
 const readPng = async (file: string) => {
   const contents = await readFile(file).catch(() => undefined)
@@ -20,49 +37,82 @@ const pngsUnder = async (root: string): Promise<string[]> => {
     .map((entry) => relative(root, join(entry.parentPath, entry.name)))
 }
 
-const compare = async (image: string): Promise<Change | undefined> => {
+// pixelmatch compares two buffers of one size, so a page that grew is laid on
+// a canvas big enough for both. The padding is transparent, which pixelmatch
+// reads as white, so the ground a page gained is part of its difference.
+const onCanvas = (source: PNG, width: number, height: number) => {
+  if (source.width === width && source.height === height) return source
+
+  const canvas = new PNG({ height, width })
+  for (let row = 0; row < source.height; row += 1) {
+    const start = row * source.width * 4
+    source.data.copy(canvas.data, row * width * 4, start, start + source.width * 4)
+  }
+
+  return canvas
+}
+
+const compare = async (image: string, roots: Roots): Promise<Change | undefined> => {
   const [before, after] = await Promise.all([
-    readPng(join(baselineRoot, image)),
-    readPng(join(outputRoot, image)),
+    readPng(join(roots.baseline, image)),
+    readPng(join(roots.output, image)),
   ])
 
   if (!after) return { image, kind: 'removed' }
   if (!before) return { image, kind: 'added' }
 
-  if (before.height !== after.height || before.width !== after.width) {
-    return {
-      detail: `${before.width}×${before.height} → ${after.width}×${after.height}`,
-      image,
-      kind: 'resized',
-    }
-  }
+  const width = Math.max(before.width, after.width)
+  const height = Math.max(before.height, after.height)
+  const resized = before.width !== after.width || before.height !== after.height
 
-  const diff = new PNG({ height: after.height, width: after.width })
-  const pixels = pixelmatch(before.data, after.data, diff.data, after.width, after.height, {
-    threshold: perPixelTolerance,
-  })
-  if (pixels === 0) return undefined
+  const diff = new PNG({ height, width })
+  const pixels = pixelmatch(
+    onCanvas(before, width, height).data,
+    onCanvas(after, width, height).data,
+    diff.data,
+    width,
+    height,
+    { threshold: perPixelTolerance },
+  )
+  if (pixels === 0 && !resized) return undefined
 
-  const file = join(changesRoot, image)
+  const file = join(roots.changes, image)
   await mkdir(dirname(file), { recursive: true })
   await writeFile(file, PNG.sync.write(diff))
 
-  const share = (pixels / (after.width * after.height)) * 100
+  const share = (pixels / (width * height)) * 100
   return {
-    detail: `${pixels} pixels, ${share.toFixed(2)}% of the image`,
-    diff: relative(outputRoot, file),
+    detail: resized
+      ? `${before.width}×${before.height} → ${after.width}×${after.height}, ${pixels} pixels`
+      : `${pixels} pixels, ${share.toFixed(2)}% of the image`,
+    diff: relative(roots.output, file),
     image,
-    kind: 'changed',
+    kind: resized ? 'resized' : 'changed',
   }
+}
+
+// 'pr:screenshots' publishes the pages this names rather than the difference
+// images beside it. A page that gained or lost a fold has an image on one side
+// only and no difference to draw, and reading the folder alone left it out of
+// the very report meant to show it.
+const writeIndex = async (changes: Change[], roots: Roots) => {
+  await mkdir(roots.changes, { recursive: true })
+  await writeFile(
+    roots.index,
+    changes.map((change) => `${change.kind}\t${change.image}\n`).join(''),
+  )
 }
 
 // Compares this run against the copy taken before it started. Images the run
 // did not re-photograph compare equal to themselves, so a filtered run reports
 // only what it touched.
-export const changesSince = async (images: string[]): Promise<Change[]> => {
+export const changesSince = async (images: string[], roots = defaultRoots): Promise<Change[]> => {
   const captured = new Set(images)
-  const removed = (await pngsUnder(baselineRoot)).filter((image) => !captured.has(image))
-  const changes = await Promise.all([...images, ...removed].map(compare))
+  const removed = (await pngsUnder(roots.baseline)).filter((image) => !captured.has(image))
+  const compared = await Promise.all([...images, ...removed].map((image) => compare(image, roots)))
+  const changes = compared.filter((change) => change !== undefined)
 
-  return changes.filter((change) => change !== undefined)
+  await writeIndex(changes, roots)
+
+  return changes
 }

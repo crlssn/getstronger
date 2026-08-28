@@ -265,6 +265,10 @@ run = [
 
 [tasks.screenshots]
 description = "Capture mobile screenshots of every page for the seeded personas"
+# The snapshot is taken after the seed and before the flows mutate it, so a
+# later 'screenshots:diff' can put the same data back and compare like with
+# like. The clock the run renders relative times against is written with it.
+env = { SCREENSHOT_SNAPSHOT = "capture" }
 run = [
     { task = "db:seed" },
     "cd web && npm run screenshots",
@@ -282,9 +286,12 @@ run = 'cd web && npm run screenshots -- --grep "$usage_pattern"'
 [tasks."screenshots:diff"]
 description = "Re-capture and report which pages a change moved, compared with the previous run"
 usage = 'arg "<pattern>" help="Pages to re-capture, defaulting to all of them" default="."'
-# The database is left alone: the seed randomises names, so a reseed would move
-# every page and drown out the change being looked at.
-env = { SCREENSHOT_DIFF = "1", SCREENSHOT_KEEP = "1" }
+# The seed is never run again: it randomises names, so reseeding would move
+# every page and drown out the change being looked at. The snapshot 'screenshots'
+# took is put back instead, which is the same data under the same names — and
+# without it the flows' own exercises, routines and workouts leak from one run
+# into the next, and pages nobody touched report a difference.
+env = { SCREENSHOT_DIFF = "1", SCREENSHOT_KEEP = "1", SCREENSHOT_SNAPSHOT = "restore" }
 run = 'cd web && npm run screenshots -- --grep "$usage_pattern"'
 
 [tasks."screenshots:open"]

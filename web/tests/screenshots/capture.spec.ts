@@ -1,5 +1,5 @@
-import { expect, test, type BrowserContext, type Page } from '@playwright/test'
-import { appendFile, mkdir, readdir, rm } from 'node:fs/promises'
+import { expect, test, type Browser, type BrowserContext, type Page } from '@playwright/test'
+import { appendFile, mkdir, readdir, readFile, rm } from 'node:fs/promises'
 import { dirname, join, relative } from 'node:path'
 import {
   authenticatedPages,
@@ -11,7 +11,7 @@ import {
 } from './catalogue'
 import { flows, recordName } from './flows'
 import { inspect } from './inspect'
-import { outputRoot, recordsPath, viewport, type PageRecord } from './paths'
+import { clockPath, outputRoot, recordsPath, viewport, type PageRecord } from './paths'
 
 // A page is photographed one screen at a time rather than as a single tall
 // image: a fold is what a phone actually shows, it keeps sticky headers and the
@@ -21,9 +21,48 @@ const maxFolds = Number(process.env.SCREENSHOT_MAX_FOLDS ?? 4)
 // A fold shorter than this is a sliver of the previous one, not a screen.
 const foldTolerance = 120
 
+// Every context renders against the moment the seeded data was captured rather
+// than against the wall clock. Two runs minutes apart otherwise differ on the
+// relative timestamps alone — "just now" becoming "3 minutes ago" moved 26 of
+// 58 pages — and a workout's elapsed time, counted from a Date.now() the same
+// clock now answers, holds still with it.
+const freezeClock = async (context: BrowserContext) => {
+  const recorded = (await readFile(clockPath, 'utf8').catch(() => '')).trim()
+  if (recorded) await context.clock.setFixedTime(new Date(recorded))
+}
+
+const newContext = async (browser: Browser) => {
+  const context = await browser.newContext()
+  await freezeClock(context)
+
+  return context
+}
+
+// A page keeps growing after its first paint: a list appends the page of results
+// that was in flight, and an endless one appends again on every scroll. Two
+// measurements at the same height is the end of it.
+const stopGrowing = async (page: Page) => {
+  let previous = -1
+  for (;;) {
+    const height = await page.evaluate(() => document.documentElement.scrollHeight)
+    if (height === previous) return
+    previous = height
+    await page.waitForTimeout(250)
+  }
+}
+
 const settle = async (page: Page) => {
+  // The boot splash is swept away the frame the app mounts, and a lazy route's
+  // chunk arrives after that, so a page can be blank with nothing loading on
+  // it. The first page of a run pays for the dev server's first transform, and
+  // it was photographed empty.
+  await page.waitForFunction(() => {
+    const root = document.getElementById('root')
+    return !document.getElementById('boot-splash') && (root?.innerText.trim().length ?? 0) > 0
+  })
   await expect(page.locator('.loading-card')).toHaveCount(0)
   await page.evaluate(() => document.fonts.ready)
+  await stopGrowing(page)
   // Charts and list transitions render a frame after their data arrives.
   await page.waitForTimeout(300)
 }
@@ -47,7 +86,11 @@ const captureFolds = async (page: Page, folder: string, prefix: string) => {
   for (let fold = 0; fold < folds; fold += 1) {
     if (fold > 0) {
       await page.evaluate((offset) => window.scrollTo(0, offset), fold * viewport.height)
-      await page.waitForTimeout(200)
+      // Scrolling into an endless list starts the next page loading, and the
+      // document grows under a scroll position the browser clamps to its
+      // height. Photographed mid-load, the same fold shows a different part of
+      // the same list from one run to the next.
+      await settle(page)
     }
 
     const file = join(
@@ -119,7 +162,7 @@ test.describe('guest', () => {
   let page: Page
 
   test.beforeAll(async ({ browser }) => {
-    context = await browser.newContext()
+    context = await newContext(browser)
     page = await context.newPage()
   })
 
@@ -143,7 +186,7 @@ personas.forEach((persona) => {
     let page: Page
 
     test.beforeAll(async ({ browser }) => {
-      context = await browser.newContext()
+      context = await newContext(browser)
       page = await context.newPage()
       await logIn(page, persona.email, persona.password)
       ids = await resolveIds(page, settle)

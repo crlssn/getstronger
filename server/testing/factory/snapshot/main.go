@@ -138,10 +138,15 @@ func restore(ctx context.Context, database *sql.DB) error {
 		"SET LOCAL session_replication_role = replica",
 		fmt.Sprintf("TRUNCATE TABLE %s RESTART IDENTITY CASCADE", strings.Join(qualified, ", ")),
 	}
+	// Ordered, so every restore lays the rows down in the same physical order. A list the app reads
+	// without a total order of its own comes back in the order the rows sit in, and a scan of the
+	// copy is free to return them differently each time — which the screenshot harness sees as a
+	// page moving between two runs that photographed the same data.
 	for _, snapshotTable := range snapshot {
 		statements = append(statements, fmt.Sprintf(
-			`INSERT INTO public.%q (%s) SELECT %s FROM %s.%q`,
-			snapshotTable.name, snapshotTable.columnList(), snapshotTable.columnList(), snapshotSchema, snapshotTable.name,
+			`INSERT INTO public.%q (%s) SELECT %s FROM %s.%q ORDER BY %s`,
+			snapshotTable.name, snapshotTable.columnList(), snapshotTable.columnList(),
+			snapshotSchema, snapshotTable.name, snapshotTable.columnList(),
 		))
 	}
 

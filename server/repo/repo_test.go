@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -1111,6 +1112,64 @@ func (s *repoSuite) TestUpdateRoutine() {
 			s.Require().ErrorIs(err, t.expected.err)
 		})
 	}
+}
+
+// TestListsBreakTiesOnID guards against a paged list changing order between two loads of the same
+// rows. Ordering by created_at alone is not a total order — the seed writes one timestamp across
+// every row of an account — and Postgres is then free to return tied rows in whatever order they
+// physically sit in, which any write to the table changes. Whichever routine comes back first is the
+// one the app offers as up next, so a tie moves the home, workout and training screens at once.
+func (s *repoSuite) TestListsBreakTiesOnID() {
+	ctx := context.Background()
+	userID := s.factory.NewUser().ID.String()
+
+	// Written in ascending id order, so a list that fell back to the order the rows were written in
+	// would hand them back the other way round from one ordered by id descending.
+	ids := make([]string, 0, 5)
+	for range 5 {
+		ids = append(ids, uuid.NewString())
+	}
+	slices.Sort(ids)
+
+	createdAt := time.Now()
+	for _, id := range ids {
+		s.factory.NewRoutine(factory.RoutineID(id), factory.RoutineUserID(userID))
+		s.factory.NewWorkout(
+			factory.WorkoutID(id),
+			factory.WorkoutUserID(userID),
+			factory.WorkoutCreatedAt(createdAt),
+		)
+	}
+	_, err := s.container.DB.ExecContext(ctx,
+		`UPDATE public.routines SET created_at = $2 WHERE user_id = $1`, userID, createdAt)
+	s.Require().NoError(err)
+
+	newestFirst := slices.Clone(ids)
+	slices.Reverse(newestFirst)
+
+	routines, err := s.repo.ListRoutines(
+		ctx,
+		repo.ListRoutinesWithUserID(userID),
+		repo.ListRoutinesWithPageToken(nil),
+	)
+	s.Require().NoError(err)
+	routineIDs := make([]string, 0, len(routines))
+	for _, routine := range routines {
+		routineIDs = append(routineIDs, routine.ID.String())
+	}
+	s.Require().Equal(newestFirst, routineIDs)
+
+	workouts, err := s.repo.ListWorkouts(
+		ctx,
+		repo.ListWorkoutsWithUserIDs(userID),
+		repo.ListWorkoutsWithPageToken(nil),
+	)
+	s.Require().NoError(err)
+	workoutIDs := make([]string, 0, len(workouts))
+	for _, workout := range workouts {
+		workoutIDs = append(workoutIDs, workout.ID.String())
+	}
+	s.Require().Equal(newestFirst, workoutIDs)
 }
 
 // TestGetRoutineExercisesAreStablyOrdered guards against the routine detail page showing a
