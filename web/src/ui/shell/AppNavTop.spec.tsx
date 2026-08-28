@@ -13,8 +13,9 @@ const Icon = () => null
 
 describe('AppNavTop', () => {
   beforeEach(() => {
-    usePageTitleStore.setState({ pageTitle: 'Exercises' })
+    usePageTitleStore.setState({ pageTitle: 'Exercises', previousPageTitle: '' })
     useActionButton.setState({ action: () => {}, icon: undefined })
+    window.history.replaceState({ idx: 0 }, '', '/')
   })
 
   test('shows the title the route set', () => {
@@ -35,6 +36,19 @@ describe('AppNavTop', () => {
     renderWithProviders(<AppNavTop />, { route })
 
     expect(screen.getByRole('button', { name: label })).toBeInTheDocument()
+  })
+
+  // The tab is the fallback, not the answer. Reached from somewhere, back is
+  // named after that somewhere: the public profile opened from the Me tab used
+  // to say "Home", because /users/... hangs off no tab in particular.
+  test('names the screen actually left behind', () => {
+    usePageTitleStore.setState({ pageTitle: 'Me', previousPageTitle: 'Me' })
+    window.history.pushState({ idx: 1 }, '', '/users/1')
+
+    renderWithProviders(<AppNavTop />, { route: '/users/1' })
+
+    expect(screen.getByRole('button', { name: 'Me' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Home' })).not.toBeInTheDocument()
   })
 
   // A screen opened from a link or a bookmark has no history to go back
