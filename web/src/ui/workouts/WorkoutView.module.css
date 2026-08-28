@@ -4,20 +4,8 @@
   @apply space-y-4;
 }
 
-.pageIntro {
-  @apply px-1;
-}
-
 .eyebrow {
   @apply text-eyebrow font-bold uppercase text-text-subtle;
-}
-
-.pageIntro h1 {
-  @apply mt-1 text-display font-bold text-text;
-}
-
-.pageIntro > p:last-child {
-  @apply mt-1 text-sm text-text-subtle;
 }
 
 .nextCard {

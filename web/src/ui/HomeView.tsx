@@ -11,6 +11,7 @@ import { selectActivePlan, selectNextRoutine, useDashboardStore } from '@/stores
 import { cn } from '@/ui/cn'
 import { AppButton } from '@/ui/components/AppButton'
 import { AppOptionRow } from '@/ui/components/AppOptionRow'
+import { AppPageHeader } from '@/ui/components/AppPageHeader'
 import { AppEmptyState } from '@/ui/components/AppEmptyState'
 import { AppErrorState } from '@/ui/components/AppErrorState'
 import { AppSheet } from '@/ui/components/AppSheet'
@@ -125,17 +126,20 @@ export const HomeView = () => {
   return (
     <>
       <div className={styles.dashboardStack}>
-        <section className={cn(styles.welcomeRow, searchOpen && styles.searching)}>
-          {!searchOpen && (
-            <div>
-              <p className={styles.eyebrow}>
-                {DateTime.now().setLocale(dateLocale).toFormat('EEEE, d LLLL')}
-              </p>
-              <h1>{t(greetingKey(DateTime.now().hour))}</h1>
-            </div>
-          )}
-          <HomePageActions open={searchOpen} onOpenChange={setSearchOpen} />
-        </section>
+        {/* Searching gives the whole row to the panel; otherwise the screen
+            opens with the same title block as every other tab root, and the
+            magnifier is that header's one trailing action. */}
+        {searchOpen ? (
+          <section className={cn(styles.welcomeRow, styles.searching)}>
+            <HomePageActions open onOpenChange={setSearchOpen} />
+          </section>
+        ) : (
+          <AppPageHeader
+            action={<HomePageActions open={false} onOpenChange={setSearchOpen} />}
+            eyebrow={DateTime.now().setLocale(dateLocale).toFormat('EEEE, d LLLL')}
+            title={t(greetingKey(DateTime.now().hour))}
+          />
+        )}
 
         {!searchOpen && (
           <>

@@ -103,6 +103,9 @@ describe('ProfileView', () => {
   test('leads with who you are', async () => {
     render()
 
+    // A tab root opens with the page header's h1, and the account card's name
+    // sits under it as an h2 rather than as a second title.
+    expect(await screen.findByRole('heading', { name: 'Me', level: 1 })).toBeInTheDocument()
     expect(await screen.findByRole('heading', { name: 'Alex Morgan' })).toBeInTheDocument()
     // Rendered through handle(), so a missing username is not a lone '@'.
     expect(screen.getByText('@alex')).toBeInTheDocument()

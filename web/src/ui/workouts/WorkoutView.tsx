@@ -11,6 +11,7 @@ import { useConfirmationStore } from '@/stores/confirmation'
 import { selectActivePlan, selectNextRoutine, useDashboardStore } from '@/stores/dashboard'
 import { usePlanStore } from '@/stores/plans'
 import { AppButton } from '@/ui/components/AppButton'
+import { AppPageHeader } from '@/ui/components/AppPageHeader'
 import { AppSkeleton } from '@/ui/components/AppSkeleton'
 import { formatTimestamp } from '@/utils/datetime'
 import { formatNumber } from '@/utils/numbers'
@@ -124,10 +125,7 @@ export const WorkoutView = () => {
 
   return (
     <div className={styles.workoutPage}>
-      <header className={styles.pageIntro}>
-        <h1>{t('workout.heading')}</h1>
-        <p>{t('workout.subtitle')}</p>
-      </header>
+      <AppPageHeader lead={t('workout.subtitle')} title={t('workout.heading')} />
 
       {nextRoutine ? (
         <section className={styles.nextCard}>

@@ -27,6 +27,7 @@ import { AppButton } from '@/ui/components/AppButton'
 import { AppErrorState } from '@/ui/components/AppErrorState'
 import { AppPasswordInput } from '@/ui/components/AppPasswordInput'
 import { AppInput } from '@/ui/components/AppInput'
+import { AppPageHeader } from '@/ui/components/AppPageHeader'
 import { AppSegmented } from '@/ui/components/AppSegmented'
 import { AppSheet, SheetAction } from '@/ui/components/AppSheet'
 import { AppSkeleton } from '@/ui/components/AppSkeleton'
@@ -224,9 +225,7 @@ export const ProfileView = () => {
     <div className={styles.profileStack}>
       {/* A tab root opens with its own large title. This one used to open
           straight onto a card, which left it the only tab without one. */}
-      <header className={styles.pageIntro}>
-        <h1>{t('profile.heading')}</h1>
-      </header>
+      <AppPageHeader title={t('profile.heading')} />
 
       <section className={styles.profileCard}>
         <div className={styles.avatar}>{initials(user.name)}</div>

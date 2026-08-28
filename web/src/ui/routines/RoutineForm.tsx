@@ -10,7 +10,6 @@ import { AppButton } from '@/ui/components/AppButton'
 import { AppFormFooter } from '@/ui/components/AppFormFooter'
 import { AppInput } from '@/ui/components/AppInput'
 import { AppSegmented } from '@/ui/components/AppSegmented'
-import { PageNavAction } from '@/ui/components/PageNavAction'
 import { RoutineGroupsEditor } from '@/ui/routines/RoutineGroupsEditor'
 import { ExercisePickerSheet } from '@/ui/workouts/ExercisePickerSheet'
 import {
@@ -112,14 +111,6 @@ export const RoutineForm = ({
         if (canSubmit) submit()
       }}
     >
-      {/* Out of the way of the thumb that is building the routine, and out of
-          reach of the one that saves it. */}
-      <PageNavAction>
-        <AppButton type="link" to="/routines" colour="ghost" size="sm" width="auto">
-          {t('common.cancel')}
-        </AppButton>
-      </PageNavAction>
-
       {/* The field carries its own label, and is the panel rather than a
           control inside one: three grey section captions above three different
           controls said only that a form was underneath. */}

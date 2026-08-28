@@ -16,10 +16,6 @@
   @apply text-eyebrow font-bold uppercase text-text-subtle;
 }
 
-.welcomeRow h1 {
-  @apply mt-1 text-display font-bold text-text;
-}
-
 .nextSession {
   @apply grid gap-5 rounded-sheet bg-surface-inverse p-5 text-white shadow-raised sm:grid-cols-[1fr_auto] sm:items-end sm:p-6;
 }
