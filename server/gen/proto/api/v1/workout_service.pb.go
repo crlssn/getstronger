@@ -25,14 +25,20 @@ const (
 )
 
 type CreateWorkoutRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	RoutineId     string                 `protobuf:"bytes,1,opt,name=routine_id,json=routineId,proto3" json:"routine_id,omitempty"`
-	ExerciseSets  []*ExerciseSets        `protobuf:"bytes,2,rep,name=exercise_sets,json=exerciseSets,proto3" json:"exercise_sets,omitempty"`
-	StartedAt     *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=started_at,json=startedAt,proto3" json:"started_at,omitempty"`
-	FinishedAt    *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=finished_at,json=finishedAt,proto3" json:"finished_at,omitempty"`
-	Note          string                 `protobuf:"bytes,5,opt,name=note,proto3" json:"note,omitempty"`
-	PlanId        string                 `protobuf:"bytes,6,opt,name=plan_id,json=planId,proto3" json:"plan_id,omitempty"`
-	WorkoutName   string                 `protobuf:"bytes,7,opt,name=workout_name,json=workoutName,proto3" json:"workout_name,omitempty"`
+	state        protoimpl.MessageState `protogen:"open.v1"`
+	RoutineId    string                 `protobuf:"bytes,1,opt,name=routine_id,json=routineId,proto3" json:"routine_id,omitempty"`
+	ExerciseSets []*ExerciseSets        `protobuf:"bytes,2,rep,name=exercise_sets,json=exerciseSets,proto3" json:"exercise_sets,omitempty"`
+	StartedAt    *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=started_at,json=startedAt,proto3" json:"started_at,omitempty"`
+	FinishedAt   *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=finished_at,json=finishedAt,proto3" json:"finished_at,omitempty"`
+	Note         string                 `protobuf:"bytes,5,opt,name=note,proto3" json:"note,omitempty"`
+	PlanId       string                 `protobuf:"bytes,6,opt,name=plan_id,json=planId,proto3" json:"plan_id,omitempty"`
+	WorkoutName  string                 `protobuf:"bytes,7,opt,name=workout_name,json=workoutName,proto3" json:"workout_name,omitempty"`
+	// Optional. The blocks the session was trained in, which say how to read the
+	// sets rather than carrying them: a block states how many of each exercise's
+	// sets it took, and the groups are matched against exercise_sets in the order
+	// they are listed. A request that names none is stored ungrouped, which is
+	// what every client sent before blocks were recorded.
+	Groups        []*WorkoutGroup `protobuf:"bytes,8,rep,name=groups,proto3" json:"groups,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -114,6 +120,13 @@ func (x *CreateWorkoutRequest) GetWorkoutName() string {
 		return x.WorkoutName
 	}
 	return ""
+}
+
+func (x *CreateWorkoutRequest) GetGroups() []*WorkoutGroup {
+	if x != nil {
+		return x.Groups
+	}
+	return nil
 }
 
 type CreateWorkoutResponse struct {
@@ -621,7 +634,13 @@ type Workout struct {
 	Note         string                 `protobuf:"bytes,9,opt,name=note,proto3" json:"note,omitempty"`
 	// Empty for quick workouts and for workouts recorded before routines were
 	// linked, which only kept the routine's name.
-	RoutineId     string `protobuf:"bytes,10,opt,name=routine_id,json=routineId,proto3" json:"routine_id,omitempty"`
+	RoutineId string `protobuf:"bytes,10,opt,name=routine_id,json=routineId,proto3" json:"routine_id,omitempty"`
+	// How the session was trained, as it was trained: the workout keeps its own
+	// copy rather than reading the routine's, so a routine edited later cannot
+	// rewrite what happened. Groups partition the same sets exercise_sets holds;
+	// a client that does not care how the session was blocked keeps reading only
+	// that. Empty for every workout logged before blocks were recorded.
+	Groups        []*WorkoutGroup `protobuf:"bytes,11,rep,name=groups,proto3" json:"groups,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -726,6 +745,168 @@ func (x *Workout) GetRoutineId() string {
 	return ""
 }
 
+func (x *Workout) GetGroups() []*WorkoutGroup {
+	if x != nil {
+		return x.Groups
+	}
+	return nil
+}
+
+// One block of a finished workout, as it was actually trained.
+type WorkoutGroup struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Server-assigned; requests leave it empty.
+	Id                          string           `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Mode                        RoutineGroupMode `protobuf:"varint,2,opt,name=mode,proto3,enum=api.v1.RoutineGroupMode" json:"mode,omitempty"`
+	RestBetweenExercisesSeconds int32            `protobuf:"varint,3,opt,name=rest_between_exercises_seconds,json=restBetweenExercisesSeconds,proto3" json:"rest_between_exercises_seconds,omitempty"`
+	RestBetweenRoundsSeconds    int32            `protobuf:"varint,4,opt,name=rest_between_rounds_seconds,json=restBetweenRoundsSeconds,proto3" json:"rest_between_rounds_seconds,omitempty"`
+	// The rounds the routine prescribed, which the session may have gone over or
+	// stopped short of; 0 is an open-ended circuit. How many were actually worked
+	// is read off the sets.
+	Rounds        int32                   `protobuf:"varint,5,opt,name=rounds,proto3" json:"rounds,omitempty"`
+	Exercises     []*WorkoutGroupExercise `protobuf:"bytes,6,rep,name=exercises,proto3" json:"exercises,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *WorkoutGroup) Reset() {
+	*x = WorkoutGroup{}
+	mi := &file_api_v1_workout_service_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *WorkoutGroup) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*WorkoutGroup) ProtoMessage() {}
+
+func (x *WorkoutGroup) ProtoReflect() protoreflect.Message {
+	mi := &file_api_v1_workout_service_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use WorkoutGroup.ProtoReflect.Descriptor instead.
+func (*WorkoutGroup) Descriptor() ([]byte, []int) {
+	return file_api_v1_workout_service_proto_rawDescGZIP(), []int{13}
+}
+
+func (x *WorkoutGroup) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *WorkoutGroup) GetMode() RoutineGroupMode {
+	if x != nil {
+		return x.Mode
+	}
+	return RoutineGroupMode_ROUTINE_GROUP_MODE_UNSPECIFIED
+}
+
+func (x *WorkoutGroup) GetRestBetweenExercisesSeconds() int32 {
+	if x != nil {
+		return x.RestBetweenExercisesSeconds
+	}
+	return 0
+}
+
+func (x *WorkoutGroup) GetRestBetweenRoundsSeconds() int32 {
+	if x != nil {
+		return x.RestBetweenRoundsSeconds
+	}
+	return 0
+}
+
+func (x *WorkoutGroup) GetRounds() int32 {
+	if x != nil {
+		return x.Rounds
+	}
+	return 0
+}
+
+func (x *WorkoutGroup) GetExercises() []*WorkoutGroupExercise {
+	if x != nil {
+		return x.Exercises
+	}
+	return nil
+}
+
+// One exercise where a block trained it, and the sets it took there. The same
+// exercise in another block is a different occurrence with sets of its own.
+type WorkoutGroupExercise struct {
+	state    protoimpl.MessageState `protogen:"open.v1"`
+	Exercise *Exercise              `protobuf:"bytes,1,opt,name=exercise,proto3" json:"exercise,omitempty"`
+	// Read back with the workout; a request leaves it empty and states set_count,
+	// because the sets themselves travel in exercise_sets and one copy of them on
+	// the wire is enough.
+	Sets []*Set `protobuf:"bytes,2,rep,name=sets,proto3" json:"sets,omitempty"`
+	// Requests only: how many of this exercise's sets the block took.
+	SetCount      int32 `protobuf:"varint,3,opt,name=set_count,json=setCount,proto3" json:"set_count,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *WorkoutGroupExercise) Reset() {
+	*x = WorkoutGroupExercise{}
+	mi := &file_api_v1_workout_service_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *WorkoutGroupExercise) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*WorkoutGroupExercise) ProtoMessage() {}
+
+func (x *WorkoutGroupExercise) ProtoReflect() protoreflect.Message {
+	mi := &file_api_v1_workout_service_proto_msgTypes[14]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use WorkoutGroupExercise.ProtoReflect.Descriptor instead.
+func (*WorkoutGroupExercise) Descriptor() ([]byte, []int) {
+	return file_api_v1_workout_service_proto_rawDescGZIP(), []int{14}
+}
+
+func (x *WorkoutGroupExercise) GetExercise() *Exercise {
+	if x != nil {
+		return x.Exercise
+	}
+	return nil
+}
+
+func (x *WorkoutGroupExercise) GetSets() []*Set {
+	if x != nil {
+		return x.Sets
+	}
+	return nil
+}
+
+func (x *WorkoutGroupExercise) GetSetCount() int32 {
+	if x != nil {
+		return x.SetCount
+	}
+	return 0
+}
+
 type WorkoutComment struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
@@ -738,7 +919,7 @@ type WorkoutComment struct {
 
 func (x *WorkoutComment) Reset() {
 	*x = WorkoutComment{}
-	mi := &file_api_v1_workout_service_proto_msgTypes[13]
+	mi := &file_api_v1_workout_service_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -750,7 +931,7 @@ func (x *WorkoutComment) String() string {
 func (*WorkoutComment) ProtoMessage() {}
 
 func (x *WorkoutComment) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_workout_service_proto_msgTypes[13]
+	mi := &file_api_v1_workout_service_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -763,7 +944,7 @@ func (x *WorkoutComment) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WorkoutComment.ProtoReflect.Descriptor instead.
 func (*WorkoutComment) Descriptor() ([]byte, []int) {
-	return file_api_v1_workout_service_proto_rawDescGZIP(), []int{13}
+	return file_api_v1_workout_service_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *WorkoutComment) GetId() string {
@@ -798,7 +979,7 @@ var File_api_v1_workout_service_proto protoreflect.FileDescriptor
 
 const file_api_v1_workout_service_proto_rawDesc = "" +
 	"\n" +
-	"\x1capi/v1/workout_service.proto\x12\x06api.v1\x1a\x13api/v1/shared.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1bbuf/validate/validate.proto\"\xd2\x02\n" +
+	"\x1capi/v1/workout_service.proto\x12\x06api.v1\x1a\x13api/v1/shared.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1bbuf/validate/validate.proto\"\x80\x03\n" +
 	"\x14CreateWorkoutRequest\x12\x1d\n" +
 	"\n" +
 	"routine_id\x18\x01 \x01(\tR\troutineId\x12C\n" +
@@ -809,7 +990,8 @@ const file_api_v1_workout_service_proto_rawDesc = "" +
 	"finishedAt\x12\x12\n" +
 	"\x04note\x18\x05 \x01(\tR\x04note\x12\x17\n" +
 	"\aplan_id\x18\x06 \x01(\tR\x06planId\x12!\n" +
-	"\fworkout_name\x18\a \x01(\tR\vworkoutName\"6\n" +
+	"\fworkout_name\x18\a \x01(\tR\vworkoutName\x12,\n" +
+	"\x06groups\x18\b \x03(\v2\x14.api.v1.WorkoutGroupR\x06groups\"6\n" +
 	"\x15CreateWorkoutResponse\x12\x1d\n" +
 	"\n" +
 	"workout_id\x18\x01 \x01(\tR\tworkoutId\"\x84\x01\n" +
@@ -838,7 +1020,7 @@ const file_api_v1_workout_service_proto_rawDesc = "" +
 	"\acomment\x18\x01 \x01(\v2\x16.api.v1.WorkoutCommentR\acomment\"I\n" +
 	"\x14UpdateWorkoutRequest\x121\n" +
 	"\aworkout\x18\x01 \x01(\v2\x0f.api.v1.WorkoutB\x06\xbaH\x03\xc8\x01\x01R\aworkout\"\x17\n" +
-	"\x15UpdateWorkoutResponse\"\xb4\x03\n" +
+	"\x15UpdateWorkoutResponse\"\xe2\x03\n" +
 	"\aWorkout\x12\x18\n" +
 	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x02id\x12\x1b\n" +
 	"\x04name\x18\x02 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x04name\x12(\n" +
@@ -853,7 +1035,21 @@ const file_api_v1_workout_service_proto_rawDesc = "" +
 	"\x04note\x18\t \x01(\tR\x04note\x12\x1d\n" +
 	"\n" +
 	"routine_id\x18\n" +
-	" \x01(\tR\troutineId\"\xba\x01\n" +
+	" \x01(\tR\troutineId\x12,\n" +
+	"\x06groups\x18\v \x03(\v2\x14.api.v1.WorkoutGroupR\x06groups\"\xc7\x02\n" +
+	"\fWorkoutGroup\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12,\n" +
+	"\x04mode\x18\x02 \x01(\x0e2\x18.api.v1.RoutineGroupModeR\x04mode\x12O\n" +
+	"\x1erest_between_exercises_seconds\x18\x03 \x01(\x05B\n" +
+	"\xbaH\a\x1a\x05\x18\x90\x1c(\x00R\x1brestBetweenExercisesSeconds\x12I\n" +
+	"\x1brest_between_rounds_seconds\x18\x04 \x01(\x05B\n" +
+	"\xbaH\a\x1a\x05\x18\x90\x1c(\x00R\x18restBetweenRoundsSeconds\x12!\n" +
+	"\x06rounds\x18\x05 \x01(\x05B\t\xbaH\x06\x1a\x04\x18c(\x00R\x06rounds\x12:\n" +
+	"\texercises\x18\x06 \x03(\v2\x1c.api.v1.WorkoutGroupExerciseR\texercises\"\x8b\x01\n" +
+	"\x14WorkoutGroupExercise\x12,\n" +
+	"\bexercise\x18\x01 \x01(\v2\x10.api.v1.ExerciseR\bexercise\x12\x1f\n" +
+	"\x04sets\x18\x02 \x03(\v2\v.api.v1.SetR\x04sets\x12$\n" +
+	"\tset_count\x18\x03 \x01(\x05B\a\xbaH\x04\x1a\x02(\x00R\bsetCount\"\xba\x01\n" +
 	"\x0eWorkoutComment\x12\x18\n" +
 	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x02id\x12(\n" +
 	"\x04user\x18\x02 \x01(\v2\f.api.v1.UserB\x06\xbaH\x03\xc8\x01\x01R\x04user\x12!\n" +
@@ -883,7 +1079,7 @@ func file_api_v1_workout_service_proto_rawDescGZIP() []byte {
 	return file_api_v1_workout_service_proto_rawDescData
 }
 
-var file_api_v1_workout_service_proto_msgTypes = make([]protoimpl.MessageInfo, 14)
+var file_api_v1_workout_service_proto_msgTypes = make([]protoimpl.MessageInfo, 16)
 var file_api_v1_workout_service_proto_goTypes = []any{
 	(*CreateWorkoutRequest)(nil),  // 0: api.v1.CreateWorkoutRequest
 	(*CreateWorkoutResponse)(nil), // 1: api.v1.CreateWorkoutResponse
@@ -898,47 +1094,58 @@ var file_api_v1_workout_service_proto_goTypes = []any{
 	(*UpdateWorkoutRequest)(nil),  // 10: api.v1.UpdateWorkoutRequest
 	(*UpdateWorkoutResponse)(nil), // 11: api.v1.UpdateWorkoutResponse
 	(*Workout)(nil),               // 12: api.v1.Workout
-	(*WorkoutComment)(nil),        // 13: api.v1.WorkoutComment
-	(*ExerciseSets)(nil),          // 14: api.v1.ExerciseSets
-	(*timestamppb.Timestamp)(nil), // 15: google.protobuf.Timestamp
-	(*PaginationRequest)(nil),     // 16: api.v1.PaginationRequest
-	(*PaginationResponse)(nil),    // 17: api.v1.PaginationResponse
-	(*User)(nil),                  // 18: api.v1.User
+	(*WorkoutGroup)(nil),          // 13: api.v1.WorkoutGroup
+	(*WorkoutGroupExercise)(nil),  // 14: api.v1.WorkoutGroupExercise
+	(*WorkoutComment)(nil),        // 15: api.v1.WorkoutComment
+	(*ExerciseSets)(nil),          // 16: api.v1.ExerciseSets
+	(*timestamppb.Timestamp)(nil), // 17: google.protobuf.Timestamp
+	(*PaginationRequest)(nil),     // 18: api.v1.PaginationRequest
+	(*PaginationResponse)(nil),    // 19: api.v1.PaginationResponse
+	(*User)(nil),                  // 20: api.v1.User
+	(RoutineGroupMode)(0),         // 21: api.v1.RoutineGroupMode
+	(*Exercise)(nil),              // 22: api.v1.Exercise
+	(*Set)(nil),                   // 23: api.v1.Set
 }
 var file_api_v1_workout_service_proto_depIdxs = []int32{
-	14, // 0: api.v1.CreateWorkoutRequest.exercise_sets:type_name -> api.v1.ExerciseSets
-	15, // 1: api.v1.CreateWorkoutRequest.started_at:type_name -> google.protobuf.Timestamp
-	15, // 2: api.v1.CreateWorkoutRequest.finished_at:type_name -> google.protobuf.Timestamp
-	16, // 3: api.v1.ListWorkoutsRequest.pagination:type_name -> api.v1.PaginationRequest
-	12, // 4: api.v1.ListWorkoutsResponse.workouts:type_name -> api.v1.Workout
-	17, // 5: api.v1.ListWorkoutsResponse.pagination:type_name -> api.v1.PaginationResponse
-	12, // 6: api.v1.GetWorkoutResponse.workout:type_name -> api.v1.Workout
-	13, // 7: api.v1.PostCommentResponse.comment:type_name -> api.v1.WorkoutComment
-	12, // 8: api.v1.UpdateWorkoutRequest.workout:type_name -> api.v1.Workout
-	18, // 9: api.v1.Workout.user:type_name -> api.v1.User
-	14, // 10: api.v1.Workout.exercise_sets:type_name -> api.v1.ExerciseSets
-	13, // 11: api.v1.Workout.comments:type_name -> api.v1.WorkoutComment
-	15, // 12: api.v1.Workout.started_at:type_name -> google.protobuf.Timestamp
-	15, // 13: api.v1.Workout.finished_at:type_name -> google.protobuf.Timestamp
-	18, // 14: api.v1.WorkoutComment.user:type_name -> api.v1.User
-	15, // 15: api.v1.WorkoutComment.created_at:type_name -> google.protobuf.Timestamp
-	0,  // 16: api.v1.WorkoutService.CreateWorkout:input_type -> api.v1.CreateWorkoutRequest
-	4,  // 17: api.v1.WorkoutService.GetWorkout:input_type -> api.v1.GetWorkoutRequest
-	2,  // 18: api.v1.WorkoutService.ListWorkouts:input_type -> api.v1.ListWorkoutsRequest
-	6,  // 19: api.v1.WorkoutService.DeleteWorkout:input_type -> api.v1.DeleteWorkoutRequest
-	8,  // 20: api.v1.WorkoutService.PostComment:input_type -> api.v1.PostCommentRequest
-	10, // 21: api.v1.WorkoutService.UpdateWorkout:input_type -> api.v1.UpdateWorkoutRequest
-	1,  // 22: api.v1.WorkoutService.CreateWorkout:output_type -> api.v1.CreateWorkoutResponse
-	5,  // 23: api.v1.WorkoutService.GetWorkout:output_type -> api.v1.GetWorkoutResponse
-	3,  // 24: api.v1.WorkoutService.ListWorkouts:output_type -> api.v1.ListWorkoutsResponse
-	7,  // 25: api.v1.WorkoutService.DeleteWorkout:output_type -> api.v1.DeleteWorkoutResponse
-	9,  // 26: api.v1.WorkoutService.PostComment:output_type -> api.v1.PostCommentResponse
-	11, // 27: api.v1.WorkoutService.UpdateWorkout:output_type -> api.v1.UpdateWorkoutResponse
-	22, // [22:28] is the sub-list for method output_type
-	16, // [16:22] is the sub-list for method input_type
-	16, // [16:16] is the sub-list for extension type_name
-	16, // [16:16] is the sub-list for extension extendee
-	0,  // [0:16] is the sub-list for field type_name
+	16, // 0: api.v1.CreateWorkoutRequest.exercise_sets:type_name -> api.v1.ExerciseSets
+	17, // 1: api.v1.CreateWorkoutRequest.started_at:type_name -> google.protobuf.Timestamp
+	17, // 2: api.v1.CreateWorkoutRequest.finished_at:type_name -> google.protobuf.Timestamp
+	13, // 3: api.v1.CreateWorkoutRequest.groups:type_name -> api.v1.WorkoutGroup
+	18, // 4: api.v1.ListWorkoutsRequest.pagination:type_name -> api.v1.PaginationRequest
+	12, // 5: api.v1.ListWorkoutsResponse.workouts:type_name -> api.v1.Workout
+	19, // 6: api.v1.ListWorkoutsResponse.pagination:type_name -> api.v1.PaginationResponse
+	12, // 7: api.v1.GetWorkoutResponse.workout:type_name -> api.v1.Workout
+	15, // 8: api.v1.PostCommentResponse.comment:type_name -> api.v1.WorkoutComment
+	12, // 9: api.v1.UpdateWorkoutRequest.workout:type_name -> api.v1.Workout
+	20, // 10: api.v1.Workout.user:type_name -> api.v1.User
+	16, // 11: api.v1.Workout.exercise_sets:type_name -> api.v1.ExerciseSets
+	15, // 12: api.v1.Workout.comments:type_name -> api.v1.WorkoutComment
+	17, // 13: api.v1.Workout.started_at:type_name -> google.protobuf.Timestamp
+	17, // 14: api.v1.Workout.finished_at:type_name -> google.protobuf.Timestamp
+	13, // 15: api.v1.Workout.groups:type_name -> api.v1.WorkoutGroup
+	21, // 16: api.v1.WorkoutGroup.mode:type_name -> api.v1.RoutineGroupMode
+	14, // 17: api.v1.WorkoutGroup.exercises:type_name -> api.v1.WorkoutGroupExercise
+	22, // 18: api.v1.WorkoutGroupExercise.exercise:type_name -> api.v1.Exercise
+	23, // 19: api.v1.WorkoutGroupExercise.sets:type_name -> api.v1.Set
+	20, // 20: api.v1.WorkoutComment.user:type_name -> api.v1.User
+	17, // 21: api.v1.WorkoutComment.created_at:type_name -> google.protobuf.Timestamp
+	0,  // 22: api.v1.WorkoutService.CreateWorkout:input_type -> api.v1.CreateWorkoutRequest
+	4,  // 23: api.v1.WorkoutService.GetWorkout:input_type -> api.v1.GetWorkoutRequest
+	2,  // 24: api.v1.WorkoutService.ListWorkouts:input_type -> api.v1.ListWorkoutsRequest
+	6,  // 25: api.v1.WorkoutService.DeleteWorkout:input_type -> api.v1.DeleteWorkoutRequest
+	8,  // 26: api.v1.WorkoutService.PostComment:input_type -> api.v1.PostCommentRequest
+	10, // 27: api.v1.WorkoutService.UpdateWorkout:input_type -> api.v1.UpdateWorkoutRequest
+	1,  // 28: api.v1.WorkoutService.CreateWorkout:output_type -> api.v1.CreateWorkoutResponse
+	5,  // 29: api.v1.WorkoutService.GetWorkout:output_type -> api.v1.GetWorkoutResponse
+	3,  // 30: api.v1.WorkoutService.ListWorkouts:output_type -> api.v1.ListWorkoutsResponse
+	7,  // 31: api.v1.WorkoutService.DeleteWorkout:output_type -> api.v1.DeleteWorkoutResponse
+	9,  // 32: api.v1.WorkoutService.PostComment:output_type -> api.v1.PostCommentResponse
+	11, // 33: api.v1.WorkoutService.UpdateWorkout:output_type -> api.v1.UpdateWorkoutResponse
+	28, // [28:34] is the sub-list for method output_type
+	22, // [22:28] is the sub-list for method input_type
+	22, // [22:22] is the sub-list for extension type_name
+	22, // [22:22] is the sub-list for extension extendee
+	0,  // [0:22] is the sub-list for field type_name
 }
 
 func init() { file_api_v1_workout_service_proto_init() }
@@ -953,7 +1160,7 @@ func file_api_v1_workout_service_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_api_v1_workout_service_proto_rawDesc), len(file_api_v1_workout_service_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   14,
+			NumMessages:   16,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

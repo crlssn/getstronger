@@ -158,6 +158,44 @@ func TestCreateExerciseWithSetsDoesNotDuplicateParent(t *testing.T) {
 	}
 }
 
+func TestCreateExerciseWithWorkoutGroupExercisesDoesNotDuplicateParent(t *testing.T) {
+	if testDB == nil {
+		t.Skip("skipping test, no DSN provided")
+	}
+
+	ctx, cancel := context.WithCancel(t.Context())
+	t.Cleanup(cancel)
+
+	tx, err := testDB.Begin(ctx)
+	if err != nil {
+		t.Fatalf("Error starting transaction: %v", err)
+	}
+
+	defer func() {
+		if err := tx.Rollback(ctx); err != nil {
+			t.Fatalf("Error rolling back transaction: %v", err)
+		}
+	}()
+
+	before, err := models.Exercises.Query().Count(ctx, tx)
+	if err != nil {
+		t.Fatalf("Error counting Exercises: %v", err)
+	}
+
+	if _, err := New().NewExerciseWithContext(ctx, ExerciseMods.WithNewWorkoutGroupExercises(2)).Create(ctx, tx); err != nil {
+		t.Fatalf("Error creating Exercise with WorkoutGroupExercises: %v", err)
+	}
+
+	after, err := models.Exercises.Query().Count(ctx, tx)
+	if err != nil {
+		t.Fatalf("Error counting Exercises: %v", err)
+	}
+
+	if got := after - before; got != 1 {
+		t.Fatalf("Expected Exercises to increase by 1, got %d", got)
+	}
+}
+
 func TestCreateExercisesRoutine(t *testing.T) {
 	if testDB == nil {
 		t.Skip("skipping test, no DSN provided")
@@ -878,6 +916,130 @@ func TestCreateWorkoutComment(t *testing.T) {
 	}
 }
 
+func TestCreateWorkoutGroupExercise(t *testing.T) {
+	if testDB == nil {
+		t.Skip("skipping test, no DSN provided")
+	}
+
+	ctx, cancel := context.WithCancel(t.Context())
+	t.Cleanup(cancel)
+
+	tx, err := testDB.Begin(ctx)
+	if err != nil {
+		t.Fatalf("Error starting transaction: %v", err)
+	}
+
+	defer func() {
+		if err := tx.Rollback(ctx); err != nil {
+			t.Fatalf("Error rolling back transaction: %v", err)
+		}
+	}()
+
+	if _, err := New().NewWorkoutGroupExerciseWithContext(ctx).Create(ctx, tx); err != nil {
+		t.Fatalf("Error creating WorkoutGroupExercise: %v", err)
+	}
+}
+
+func TestCreateWorkoutGroupExerciseWithSetsDoesNotDuplicateParent(t *testing.T) {
+	if testDB == nil {
+		t.Skip("skipping test, no DSN provided")
+	}
+
+	ctx, cancel := context.WithCancel(t.Context())
+	t.Cleanup(cancel)
+
+	tx, err := testDB.Begin(ctx)
+	if err != nil {
+		t.Fatalf("Error starting transaction: %v", err)
+	}
+
+	defer func() {
+		if err := tx.Rollback(ctx); err != nil {
+			t.Fatalf("Error rolling back transaction: %v", err)
+		}
+	}()
+
+	before, err := models.WorkoutGroupExercises.Query().Count(ctx, tx)
+	if err != nil {
+		t.Fatalf("Error counting WorkoutGroupExercises: %v", err)
+	}
+
+	if _, err := New().NewWorkoutGroupExerciseWithContext(ctx, WorkoutGroupExerciseMods.WithNewSets(2)).Create(ctx, tx); err != nil {
+		t.Fatalf("Error creating WorkoutGroupExercise with Sets: %v", err)
+	}
+
+	after, err := models.WorkoutGroupExercises.Query().Count(ctx, tx)
+	if err != nil {
+		t.Fatalf("Error counting WorkoutGroupExercises: %v", err)
+	}
+
+	if got := after - before; got != 1 {
+		t.Fatalf("Expected WorkoutGroupExercises to increase by 1, got %d", got)
+	}
+}
+
+func TestCreateWorkoutGroup(t *testing.T) {
+	if testDB == nil {
+		t.Skip("skipping test, no DSN provided")
+	}
+
+	ctx, cancel := context.WithCancel(t.Context())
+	t.Cleanup(cancel)
+
+	tx, err := testDB.Begin(ctx)
+	if err != nil {
+		t.Fatalf("Error starting transaction: %v", err)
+	}
+
+	defer func() {
+		if err := tx.Rollback(ctx); err != nil {
+			t.Fatalf("Error rolling back transaction: %v", err)
+		}
+	}()
+
+	if _, err := New().NewWorkoutGroupWithContext(ctx).Create(ctx, tx); err != nil {
+		t.Fatalf("Error creating WorkoutGroup: %v", err)
+	}
+}
+
+func TestCreateWorkoutGroupWithWorkoutGroupExercisesDoesNotDuplicateParent(t *testing.T) {
+	if testDB == nil {
+		t.Skip("skipping test, no DSN provided")
+	}
+
+	ctx, cancel := context.WithCancel(t.Context())
+	t.Cleanup(cancel)
+
+	tx, err := testDB.Begin(ctx)
+	if err != nil {
+		t.Fatalf("Error starting transaction: %v", err)
+	}
+
+	defer func() {
+		if err := tx.Rollback(ctx); err != nil {
+			t.Fatalf("Error rolling back transaction: %v", err)
+		}
+	}()
+
+	before, err := models.WorkoutGroups.Query().Count(ctx, tx)
+	if err != nil {
+		t.Fatalf("Error counting WorkoutGroups: %v", err)
+	}
+
+	if _, err := New().NewWorkoutGroupWithContext(ctx, WorkoutGroupMods.WithNewWorkoutGroupExercises(2)).Create(ctx, tx); err != nil {
+		t.Fatalf("Error creating WorkoutGroup with WorkoutGroupExercises: %v", err)
+	}
+
+	after, err := models.WorkoutGroups.Query().Count(ctx, tx)
+	if err != nil {
+		t.Fatalf("Error counting WorkoutGroups: %v", err)
+	}
+
+	if got := after - before; got != 1 {
+		t.Fatalf("Expected WorkoutGroups to increase by 1, got %d", got)
+	}
+}
+
 func TestCreateWorkout(t *testing.T) {
 	if testDB == nil {
 		t.Skip("skipping test, no DSN provided")
@@ -966,6 +1128,44 @@ func TestCreateWorkoutWithWorkoutCommentsDoesNotDuplicateParent(t *testing.T) {
 
 	if _, err := New().NewWorkoutWithContext(ctx, WorkoutMods.WithNewWorkoutComments(2)).Create(ctx, tx); err != nil {
 		t.Fatalf("Error creating Workout with WorkoutComments: %v", err)
+	}
+
+	after, err := models.Workouts.Query().Count(ctx, tx)
+	if err != nil {
+		t.Fatalf("Error counting Workouts: %v", err)
+	}
+
+	if got := after - before; got != 1 {
+		t.Fatalf("Expected Workouts to increase by 1, got %d", got)
+	}
+}
+
+func TestCreateWorkoutWithWorkoutGroupsDoesNotDuplicateParent(t *testing.T) {
+	if testDB == nil {
+		t.Skip("skipping test, no DSN provided")
+	}
+
+	ctx, cancel := context.WithCancel(t.Context())
+	t.Cleanup(cancel)
+
+	tx, err := testDB.Begin(ctx)
+	if err != nil {
+		t.Fatalf("Error starting transaction: %v", err)
+	}
+
+	defer func() {
+		if err := tx.Rollback(ctx); err != nil {
+			t.Fatalf("Error rolling back transaction: %v", err)
+		}
+	}()
+
+	before, err := models.Workouts.Query().Count(ctx, tx)
+	if err != nil {
+		t.Fatalf("Error counting Workouts: %v", err)
+	}
+
+	if _, err := New().NewWorkoutWithContext(ctx, WorkoutMods.WithNewWorkoutGroups(2)).Create(ctx, tx); err != nil {
+		t.Fatalf("Error creating Workout with WorkoutGroups: %v", err)
 	}
 
 	after, err := models.Workouts.Query().Count(ctx, tx)

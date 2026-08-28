@@ -213,6 +213,124 @@ func (s *workoutSuite) TestCreateWorkoutAdvancesActivePlan() {
 	s.Require().Equal(1, advanced.CurrentPosition)
 }
 
+// The whole point of the snapshot: a session trained in blocks is read back in
+// them, and an exercise trained in two blocks keeps its sets apart.
+func (s *workoutSuite) TestCreateWorkoutRecordsTheBlocksItWasTrainedIn() {
+	user := s.factory.NewUser()
+	routine := s.factory.NewRoutine(factory.RoutineUserID(user.ID))
+	press := s.factory.NewExercise(factory.ExerciseUserID(user.ID))
+	squat := s.factory.NewExercise(factory.ExerciseUserID(user.ID))
+
+	ctx := xcontext.WithUserID(context.Background(), user.ID.String())
+	ctx = xcontext.WithLogger(ctx, zap.NewExample())
+	created, err := s.handler.CreateWorkout(ctx, connect.NewRequest(&apiv1.CreateWorkoutRequest{
+		RoutineId: routine.ID.String(),
+		ExerciseSets: []*apiv1.ExerciseSets{
+			{
+				Exercise: &apiv1.Exercise{Id: press.ID.String()},
+				// Two in the warm-up, then two rounds of the circuit.
+				Sets: []*apiv1.Set{
+					{Reps: 10, Weight: 20},
+					{Reps: 10, Weight: 25},
+					{Reps: 8, Weight: 60},
+					{Reps: 8, Weight: 60},
+				},
+			},
+			{
+				Exercise: &apiv1.Exercise{Id: squat.ID.String()},
+				Sets:     []*apiv1.Set{{Reps: 5, Weight: 90}, {Reps: 5, Weight: 90}},
+			},
+		},
+		Groups: []*apiv1.WorkoutGroup{
+			{
+				Mode: apiv1.RoutineGroupMode_ROUTINE_GROUP_MODE_STRAIGHT,
+				Exercises: []*apiv1.WorkoutGroupExercise{
+					{Exercise: &apiv1.Exercise{Id: press.ID.String()}, SetCount: 2},
+				},
+			},
+			{
+				Mode:                        apiv1.RoutineGroupMode_ROUTINE_GROUP_MODE_CIRCUIT,
+				RestBetweenExercisesSeconds: 15,
+				RestBetweenRoundsSeconds:    90,
+				Rounds:                      2,
+				Exercises: []*apiv1.WorkoutGroupExercise{
+					{Exercise: &apiv1.Exercise{Id: press.ID.String()}, SetCount: 2},
+					{Exercise: &apiv1.Exercise{Id: squat.ID.String()}, SetCount: 2},
+				},
+			},
+		},
+		StartedAt:  timestamppb.Now(),
+		FinishedAt: timestamppb.New(time.Now().Add(time.Hour)),
+	}))
+	s.Require().NoError(err)
+
+	fetched, err := s.handler.GetWorkout(ctx, connect.NewRequest(&apiv1.GetWorkoutRequest{
+		Id: created.Msg.GetWorkoutId(),
+	}))
+	s.Require().NoError(err)
+
+	groups := fetched.Msg.GetWorkout().GetGroups()
+	s.Require().Len(groups, 2)
+
+	warmUp := groups[0]
+	s.Require().Equal(apiv1.RoutineGroupMode_ROUTINE_GROUP_MODE_STRAIGHT, warmUp.GetMode())
+	s.Require().Len(warmUp.GetExercises(), 1)
+	s.Require().Equal(press.ID.String(), warmUp.GetExercises()[0].GetExercise().GetId())
+	s.Require().Len(warmUp.GetExercises()[0].GetSets(), 2)
+	// The first two sets of the press, in the order they were logged.
+	s.Require().InDelta(20, warmUp.GetExercises()[0].GetSets()[0].GetWeight(), 0.01)
+	s.Require().InDelta(25, warmUp.GetExercises()[0].GetSets()[1].GetWeight(), 0.01)
+
+	circuit := groups[1]
+	s.Require().Equal(apiv1.RoutineGroupMode_ROUTINE_GROUP_MODE_CIRCUIT, circuit.GetMode())
+	s.Require().Equal(int32(15), circuit.GetRestBetweenExercisesSeconds())
+	s.Require().Equal(int32(90), circuit.GetRestBetweenRoundsSeconds())
+	s.Require().Equal(int32(2), circuit.GetRounds())
+	s.Require().Len(circuit.GetExercises(), 2)
+	// The block holds its exercises in the order it worked them.
+	s.Require().Equal(press.ID.String(), circuit.GetExercises()[0].GetExercise().GetId())
+	s.Require().Equal(squat.ID.String(), circuit.GetExercises()[1].GetExercise().GetId())
+	// The press's remaining two sets, not the warm-up's.
+	s.Require().Len(circuit.GetExercises()[0].GetSets(), 2)
+	s.Require().InDelta(60, circuit.GetExercises()[0].GetSets()[0].GetWeight(), 0.01)
+
+	// The flat list stays whole: a client that does not care how the session
+	// was blocked keeps reading only that.
+	s.Require().Len(fetched.Msg.GetWorkout().GetExerciseSets(), 2)
+
+	// A record is a record wherever it is read: the heaviest press is marked in
+	// the block that logged it, not only in the flat list.
+	s.Require().True(circuit.GetExercises()[0].GetSets()[0].GetMetadata().GetPersonalBest())
+}
+
+// Every workout logged before blocks were recorded, and every one saved by a
+// client that does not send them.
+func (s *workoutSuite) TestCreateWorkoutWithoutBlocksIsUngrouped() {
+	user := s.factory.NewUser()
+	routine := s.factory.NewRoutine(factory.RoutineUserID(user.ID))
+	exercise := s.factory.NewExercise(factory.ExerciseUserID(user.ID))
+
+	ctx := xcontext.WithUserID(context.Background(), user.ID.String())
+	ctx = xcontext.WithLogger(ctx, zap.NewExample())
+	created, err := s.handler.CreateWorkout(ctx, connect.NewRequest(&apiv1.CreateWorkoutRequest{
+		RoutineId: routine.ID.String(),
+		ExerciseSets: []*apiv1.ExerciseSets{{
+			Exercise: &apiv1.Exercise{Id: exercise.ID.String()},
+			Sets:     []*apiv1.Set{{Reps: 5, Weight: 50}},
+		}},
+		StartedAt:  timestamppb.Now(),
+		FinishedAt: timestamppb.New(time.Now().Add(time.Hour)),
+	}))
+	s.Require().NoError(err)
+
+	fetched, err := s.handler.GetWorkout(ctx, connect.NewRequest(&apiv1.GetWorkoutRequest{
+		Id: created.Msg.GetWorkoutId(),
+	}))
+	s.Require().NoError(err)
+	s.Require().Empty(fetched.Msg.GetWorkout().GetGroups())
+	s.Require().Len(fetched.Msg.GetWorkout().GetExerciseSets(), 1)
+}
+
 func (s *workoutSuite) TestCreateWorkoutLinksTheRoutine() {
 	user := s.factory.NewUser()
 	routine := s.factory.NewRoutine(factory.RoutineUserID(user.ID))

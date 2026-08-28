@@ -4,7 +4,7 @@
 
 import type { GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
 import { fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
-import type { ExerciseSets, PaginationRequest, PaginationResponse, User } from "./shared_pb";
+import type { Exercise, ExerciseSets, PaginationRequest, PaginationResponse, RoutineGroupMode, Set, User } from "./shared_pb";
 import { file_api_v1_shared } from "./shared_pb";
 import type { Timestamp } from "@bufbuild/protobuf/wkt";
 import { file_google_protobuf_timestamp } from "@bufbuild/protobuf/wkt";
@@ -15,7 +15,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file api/v1/workout_service.proto.
  */
 export const file_api_v1_workout_service: GenFile = /*@__PURE__*/
-  fileDesc("ChxhcGkvdjEvd29ya291dF9zZXJ2aWNlLnByb3RvEgZhcGkudjEihwIKFENyZWF0ZVdvcmtvdXRSZXF1ZXN0EhIKCnJvdXRpbmVfaWQYASABKAkSNQoNZXhlcmNpc2Vfc2V0cxgCIAMoCzIULmFwaS52MS5FeGVyY2lzZVNldHNCCLpIBZIBAggBEjYKCnN0YXJ0ZWRfYXQYAyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQga6SAPIAQESNwoLZmluaXNoZWRfYXQYBCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQga6SAPIAQESDAoEbm90ZRgFIAEoCRIPCgdwbGFuX2lkGAYgASgJEhQKDHdvcmtvdXRfbmFtZRgHIAEoCSIrChVDcmVhdGVXb3Jrb3V0UmVzcG9uc2USEgoKd29ya291dF9pZBgBIAEoCSJvChNMaXN0V29ya291dHNSZXF1ZXN0EiEKCHVzZXJfaWRzGAEgAygJQg+6SAySAQkIASIFcgOwAQESNQoKcGFnaW5hdGlvbhgCIAEoCzIZLmFwaS52MS5QYWdpbmF0aW9uUmVxdWVzdEIGukgDyAEBImkKFExpc3RXb3Jrb3V0c1Jlc3BvbnNlEiEKCHdvcmtvdXRzGAEgAygLMg8uYXBpLnYxLldvcmtvdXQSLgoKcGFnaW5hdGlvbhgCIAEoCzIaLmFwaS52MS5QYWdpbmF0aW9uUmVzcG9uc2UiKQoRR2V0V29ya291dFJlcXVlc3QSFAoCaWQYASABKAlCCLpIBXIDsAEBIjYKEkdldFdvcmtvdXRSZXNwb25zZRIgCgd3b3Jrb3V0GAEgASgLMg8uYXBpLnYxLldvcmtvdXQiLAoURGVsZXRlV29ya291dFJlcXVlc3QSFAoCaWQYASABKAlCCLpIBXIDsAEBIhcKFURlbGV0ZVdvcmtvdXRSZXNwb25zZSJMChJQb3N0Q29tbWVudFJlcXVlc3QSHAoKd29ya291dF9pZBgBIAEoCUIIukgFcgOwAQESGAoHY29tbWVudBgCIAEoCUIHukgEcgIQASI+ChNQb3N0Q29tbWVudFJlc3BvbnNlEicKB2NvbW1lbnQYASABKAsyFi5hcGkudjEuV29ya291dENvbW1lbnQiQAoUVXBkYXRlV29ya291dFJlcXVlc3QSKAoHd29ya291dBgBIAEoCzIPLmFwaS52MS5Xb3Jrb3V0Qga6SAPIAQEiFwoVVXBkYXRlV29ya291dFJlc3BvbnNlItkCCgdXb3Jrb3V0EhQKAmlkGAEgASgJQgi6SAVyA7ABARIVCgRuYW1lGAIgASgJQge6SARyAhABEiIKBHVzZXIYAyABKAsyDC5hcGkudjEuVXNlckIGukgDyAEBEjUKDWV4ZXJjaXNlX3NldHMYBCADKAsyFC5hcGkudjEuRXhlcmNpc2VTZXRzQgi6SAWSAQIIARIoCghjb21tZW50cxgFIAMoCzIWLmFwaS52MS5Xb3Jrb3V0Q29tbWVudBIuCgpzdGFydGVkX2F0GAYgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBI3CgtmaW5pc2hlZF9hdBgHIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBCBrpIA8gBARIRCglpbnRlbnNpdHkYCCABKAUSDAoEbm90ZRgJIAEoCRISCgpyb3V0aW5lX2lkGAogASgJIpwBCg5Xb3Jrb3V0Q29tbWVudBIUCgJpZBgBIAEoCUIIukgFcgOwAQESIgoEdXNlchgCIAEoCzIMLmFwaS52MS5Vc2VyQga6SAPIAQESGAoHY29tbWVudBgEIAEoCUIHukgEcgIQARI2CgpjcmVhdGVkX2F0GAUgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcEIGukgDyAEBMt4DCg5Xb3Jrb3V0U2VydmljZRJOCg1DcmVhdGVXb3Jrb3V0EhwuYXBpLnYxLkNyZWF0ZVdvcmtvdXRSZXF1ZXN0Gh0uYXBpLnYxLkNyZWF0ZVdvcmtvdXRSZXNwb25zZSIAEkUKCkdldFdvcmtvdXQSGS5hcGkudjEuR2V0V29ya291dFJlcXVlc3QaGi5hcGkudjEuR2V0V29ya291dFJlc3BvbnNlIgASSwoMTGlzdFdvcmtvdXRzEhsuYXBpLnYxLkxpc3RXb3Jrb3V0c1JlcXVlc3QaHC5hcGkudjEuTGlzdFdvcmtvdXRzUmVzcG9uc2UiABJOCg1EZWxldGVXb3Jrb3V0EhwuYXBpLnYxLkRlbGV0ZVdvcmtvdXRSZXF1ZXN0Gh0uYXBpLnYxLkRlbGV0ZVdvcmtvdXRSZXNwb25zZSIAEkgKC1Bvc3RDb21tZW50EhouYXBpLnYxLlBvc3RDb21tZW50UmVxdWVzdBobLmFwaS52MS5Qb3N0Q29tbWVudFJlc3BvbnNlIgASTgoNVXBkYXRlV29ya291dBIcLmFwaS52MS5VcGRhdGVXb3Jrb3V0UmVxdWVzdBodLmFwaS52MS5VcGRhdGVXb3Jrb3V0UmVzcG9uc2UiAEKXAQoKY29tLmFwaS52MUITV29ya291dFNlcnZpY2VQcm90b1ABWjtnaXRodWIuY29tL2NybHNzbi9nZXRzdHJvbmdlci9zZXJ2ZXIvZ2VuL3Byb3RvL2FwaS92MTthcGl2MaICA0FYWKoCBkFwaS5WMcoCBkFwaVxWMeICEkFwaVxWMVxHUEJNZXRhZGF0YeoCB0FwaTo6VjFiBnByb3RvMw", [file_api_v1_shared, file_google_protobuf_timestamp, file_buf_validate_validate]);
+  fileDesc("ChxhcGkvdjEvd29ya291dF9zZXJ2aWNlLnByb3RvEgZhcGkudjEirQIKFENyZWF0ZVdvcmtvdXRSZXF1ZXN0EhIKCnJvdXRpbmVfaWQYASABKAkSNQoNZXhlcmNpc2Vfc2V0cxgCIAMoCzIULmFwaS52MS5FeGVyY2lzZVNldHNCCLpIBZIBAggBEjYKCnN0YXJ0ZWRfYXQYAyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQga6SAPIAQESNwoLZmluaXNoZWRfYXQYBCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQga6SAPIAQESDAoEbm90ZRgFIAEoCRIPCgdwbGFuX2lkGAYgASgJEhQKDHdvcmtvdXRfbmFtZRgHIAEoCRIkCgZncm91cHMYCCADKAsyFC5hcGkudjEuV29ya291dEdyb3VwIisKFUNyZWF0ZVdvcmtvdXRSZXNwb25zZRISCgp3b3Jrb3V0X2lkGAEgASgJIm8KE0xpc3RXb3Jrb3V0c1JlcXVlc3QSIQoIdXNlcl9pZHMYASADKAlCD7pIDJIBCQgBIgVyA7ABARI1CgpwYWdpbmF0aW9uGAIgASgLMhkuYXBpLnYxLlBhZ2luYXRpb25SZXF1ZXN0Qga6SAPIAQEiaQoUTGlzdFdvcmtvdXRzUmVzcG9uc2USIQoId29ya291dHMYASADKAsyDy5hcGkudjEuV29ya291dBIuCgpwYWdpbmF0aW9uGAIgASgLMhouYXBpLnYxLlBhZ2luYXRpb25SZXNwb25zZSIpChFHZXRXb3Jrb3V0UmVxdWVzdBIUCgJpZBgBIAEoCUIIukgFcgOwAQEiNgoSR2V0V29ya291dFJlc3BvbnNlEiAKB3dvcmtvdXQYASABKAsyDy5hcGkudjEuV29ya291dCIsChREZWxldGVXb3Jrb3V0UmVxdWVzdBIUCgJpZBgBIAEoCUIIukgFcgOwAQEiFwoVRGVsZXRlV29ya291dFJlc3BvbnNlIkwKElBvc3RDb21tZW50UmVxdWVzdBIcCgp3b3Jrb3V0X2lkGAEgASgJQgi6SAVyA7ABARIYCgdjb21tZW50GAIgASgJQge6SARyAhABIj4KE1Bvc3RDb21tZW50UmVzcG9uc2USJwoHY29tbWVudBgBIAEoCzIWLmFwaS52MS5Xb3Jrb3V0Q29tbWVudCJAChRVcGRhdGVXb3Jrb3V0UmVxdWVzdBIoCgd3b3Jrb3V0GAEgASgLMg8uYXBpLnYxLldvcmtvdXRCBrpIA8gBASIXChVVcGRhdGVXb3Jrb3V0UmVzcG9uc2Ui/wIKB1dvcmtvdXQSFAoCaWQYASABKAlCCLpIBXIDsAEBEhUKBG5hbWUYAiABKAlCB7pIBHICEAESIgoEdXNlchgDIAEoCzIMLmFwaS52MS5Vc2VyQga6SAPIAQESNQoNZXhlcmNpc2Vfc2V0cxgEIAMoCzIULmFwaS52MS5FeGVyY2lzZVNldHNCCLpIBZIBAggBEigKCGNvbW1lbnRzGAUgAygLMhYuYXBpLnYxLldvcmtvdXRDb21tZW50Ei4KCnN0YXJ0ZWRfYXQYBiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEjcKC2ZpbmlzaGVkX2F0GAcgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcEIGukgDyAEBEhEKCWludGVuc2l0eRgIIAEoBRIMCgRub3RlGAkgASgJEhIKCnJvdXRpbmVfaWQYCiABKAkSJAoGZ3JvdXBzGAsgAygLMhQuYXBpLnYxLldvcmtvdXRHcm91cCLzAQoMV29ya291dEdyb3VwEgoKAmlkGAEgASgJEiYKBG1vZGUYAiABKA4yGC5hcGkudjEuUm91dGluZUdyb3VwTW9kZRIyCh5yZXN0X2JldHdlZW5fZXhlcmNpc2VzX3NlY29uZHMYAyABKAVCCrpIBxoFGJAcKAASLwobcmVzdF9iZXR3ZWVuX3JvdW5kc19zZWNvbmRzGAQgASgFQgq6SAcaBRiQHCgAEhkKBnJvdW5kcxgFIAEoBUIJukgGGgQYYygAEi8KCWV4ZXJjaXNlcxgGIAMoCzIcLmFwaS52MS5Xb3Jrb3V0R3JvdXBFeGVyY2lzZSJxChRXb3Jrb3V0R3JvdXBFeGVyY2lzZRIiCghleGVyY2lzZRgBIAEoCzIQLmFwaS52MS5FeGVyY2lzZRIZCgRzZXRzGAIgAygLMgsuYXBpLnYxLlNldBIaCglzZXRfY291bnQYAyABKAVCB7pIBBoCKAAinAEKDldvcmtvdXRDb21tZW50EhQKAmlkGAEgASgJQgi6SAVyA7ABARIiCgR1c2VyGAIgASgLMgwuYXBpLnYxLlVzZXJCBrpIA8gBARIYCgdjb21tZW50GAQgASgJQge6SARyAhABEjYKCmNyZWF0ZWRfYXQYBSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQga6SAPIAQEy3gMKDldvcmtvdXRTZXJ2aWNlEk4KDUNyZWF0ZVdvcmtvdXQSHC5hcGkudjEuQ3JlYXRlV29ya291dFJlcXVlc3QaHS5hcGkudjEuQ3JlYXRlV29ya291dFJlc3BvbnNlIgASRQoKR2V0V29ya291dBIZLmFwaS52MS5HZXRXb3Jrb3V0UmVxdWVzdBoaLmFwaS52MS5HZXRXb3Jrb3V0UmVzcG9uc2UiABJLCgxMaXN0V29ya291dHMSGy5hcGkudjEuTGlzdFdvcmtvdXRzUmVxdWVzdBocLmFwaS52MS5MaXN0V29ya291dHNSZXNwb25zZSIAEk4KDURlbGV0ZVdvcmtvdXQSHC5hcGkudjEuRGVsZXRlV29ya291dFJlcXVlc3QaHS5hcGkudjEuRGVsZXRlV29ya291dFJlc3BvbnNlIgASSAoLUG9zdENvbW1lbnQSGi5hcGkudjEuUG9zdENvbW1lbnRSZXF1ZXN0GhsuYXBpLnYxLlBvc3RDb21tZW50UmVzcG9uc2UiABJOCg1VcGRhdGVXb3Jrb3V0EhwuYXBpLnYxLlVwZGF0ZVdvcmtvdXRSZXF1ZXN0Gh0uYXBpLnYxLlVwZGF0ZVdvcmtvdXRSZXNwb25zZSIAQpcBCgpjb20uYXBpLnYxQhNXb3Jrb3V0U2VydmljZVByb3RvUAFaO2dpdGh1Yi5jb20vY3Jsc3NuL2dldHN0cm9uZ2VyL3NlcnZlci9nZW4vcHJvdG8vYXBpL3YxO2FwaXYxogIDQVhYqgIGQXBpLlYxygIGQXBpXFYx4gISQXBpXFYxXEdQQk1ldGFkYXRh6gIHQXBpOjpWMWIGcHJvdG8z", [file_api_v1_shared, file_google_protobuf_timestamp, file_buf_validate_validate]);
 
 /**
  * @generated from message api.v1.CreateWorkoutRequest
@@ -55,6 +55,17 @@ export type CreateWorkoutRequest = Message<"api.v1.CreateWorkoutRequest"> & {
    * @generated from field: string workout_name = 7;
    */
   workoutName: string;
+
+  /**
+   * Optional. The blocks the session was trained in, which say how to read the
+   * sets rather than carrying them: a block states how many of each exercise's
+   * sets it took, and the groups are matched against exercise_sets in the order
+   * they are listed. A request that names none is stored ungrouped, which is
+   * what every client sent before blocks were recorded.
+   *
+   * @generated from field: repeated api.v1.WorkoutGroup groups = 8;
+   */
+  groups: WorkoutGroup[];
 };
 
 /**
@@ -316,6 +327,17 @@ export type Workout = Message<"api.v1.Workout"> & {
    * @generated from field: string routine_id = 10;
    */
   routineId: string;
+
+  /**
+   * How the session was trained, as it was trained: the workout keeps its own
+   * copy rather than reading the routine's, so a routine edited later cannot
+   * rewrite what happened. Groups partition the same sets exercise_sets holds;
+   * a client that does not care how the session was blocked keeps reading only
+   * that. Empty for every workout logged before blocks were recorded.
+   *
+   * @generated from field: repeated api.v1.WorkoutGroup groups = 11;
+   */
+  groups: WorkoutGroup[];
 };
 
 /**
@@ -324,6 +346,92 @@ export type Workout = Message<"api.v1.Workout"> & {
  */
 export const WorkoutSchema: GenMessage<Workout> = /*@__PURE__*/
   messageDesc(file_api_v1_workout_service, 12);
+
+/**
+ * One block of a finished workout, as it was actually trained.
+ *
+ * @generated from message api.v1.WorkoutGroup
+ */
+export type WorkoutGroup = Message<"api.v1.WorkoutGroup"> & {
+  /**
+   * Server-assigned; requests leave it empty.
+   *
+   * @generated from field: string id = 1;
+   */
+  id: string;
+
+  /**
+   * @generated from field: api.v1.RoutineGroupMode mode = 2;
+   */
+  mode: RoutineGroupMode;
+
+  /**
+   * @generated from field: int32 rest_between_exercises_seconds = 3;
+   */
+  restBetweenExercisesSeconds: number;
+
+  /**
+   * @generated from field: int32 rest_between_rounds_seconds = 4;
+   */
+  restBetweenRoundsSeconds: number;
+
+  /**
+   * The rounds the routine prescribed, which the session may have gone over or
+   * stopped short of; 0 is an open-ended circuit. How many were actually worked
+   * is read off the sets.
+   *
+   * @generated from field: int32 rounds = 5;
+   */
+  rounds: number;
+
+  /**
+   * @generated from field: repeated api.v1.WorkoutGroupExercise exercises = 6;
+   */
+  exercises: WorkoutGroupExercise[];
+};
+
+/**
+ * Describes the message api.v1.WorkoutGroup.
+ * Use `create(WorkoutGroupSchema)` to create a new message.
+ */
+export const WorkoutGroupSchema: GenMessage<WorkoutGroup> = /*@__PURE__*/
+  messageDesc(file_api_v1_workout_service, 13);
+
+/**
+ * One exercise where a block trained it, and the sets it took there. The same
+ * exercise in another block is a different occurrence with sets of its own.
+ *
+ * @generated from message api.v1.WorkoutGroupExercise
+ */
+export type WorkoutGroupExercise = Message<"api.v1.WorkoutGroupExercise"> & {
+  /**
+   * @generated from field: api.v1.Exercise exercise = 1;
+   */
+  exercise?: Exercise | undefined;
+
+  /**
+   * Read back with the workout; a request leaves it empty and states set_count,
+   * because the sets themselves travel in exercise_sets and one copy of them on
+   * the wire is enough.
+   *
+   * @generated from field: repeated api.v1.Set sets = 2;
+   */
+  sets: Set[];
+
+  /**
+   * Requests only: how many of this exercise's sets the block took.
+   *
+   * @generated from field: int32 set_count = 3;
+   */
+  setCount: number;
+};
+
+/**
+ * Describes the message api.v1.WorkoutGroupExercise.
+ * Use `create(WorkoutGroupExerciseSchema)` to create a new message.
+ */
+export const WorkoutGroupExerciseSchema: GenMessage<WorkoutGroupExercise> = /*@__PURE__*/
+  messageDesc(file_api_v1_workout_service, 14);
 
 /**
  * @generated from message api.v1.WorkoutComment
@@ -355,7 +463,7 @@ export type WorkoutComment = Message<"api.v1.WorkoutComment"> & {
  * Use `create(WorkoutCommentSchema)` to create a new message.
  */
 export const WorkoutCommentSchema: GenMessage<WorkoutComment> = /*@__PURE__*/
-  messageDesc(file_api_v1_workout_service, 13);
+  messageDesc(file_api_v1_workout_service, 15);
 
 /**
  * @generated from service api.v1.WorkoutService

@@ -20,16 +20,13 @@ vi.mock('@/http/requests', async (importOriginal) => ({
 }))
 
 import * as requests from '@/http/requests'
-import {
-  GetRoutineResponseSchema,
-  RoutineGroupMode,
-  RoutineSchema,
-} from '@/proto/api/v1/routine_service_pb'
+import { GetRoutineResponseSchema, RoutineSchema } from '@/proto/api/v1/routine_service_pb'
 import {
   DistanceUnit,
   ExerciseMetric,
   ExerciseSchema,
   ExerciseSetsSchema,
+  RoutineGroupMode,
   WeightUnit,
 } from '@/proto/api/v1/shared_pb'
 import { GetUserResponseSchema } from '@/proto/api/v1/user_service_pb'

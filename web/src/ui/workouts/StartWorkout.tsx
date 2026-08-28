@@ -2,7 +2,12 @@ import type { RoutineGroup } from '@/proto/api/v1/routine_service_pb'
 import type { CreateWorkoutRequest } from '@/proto/api/v1/workout_service_pb'
 import type { Set as WorkoutSet } from '@/types/workout'
 import type { MeasurementField } from '@/utils/exerciseMeasurements'
-import type { SessionExercise, SessionGroup, SessionStation } from '@/utils/workoutSession'
+import type {
+  SavedGroup,
+  SessionExercise,
+  SessionGroup,
+  SessionStation,
+} from '@/utils/workoutSession'
 import type { RefObject } from 'react'
 
 import { create } from '@bufbuild/protobuf'
@@ -29,8 +34,18 @@ import {
   getRoutine,
 } from '@/http/requests'
 import posthog from '@/posthog'
-import { ExerciseSetsSchema, type Exercise, type ExerciseSets } from '@/proto/api/v1/shared_pb'
-import { CreateWorkoutRequestSchema, WorkoutService } from '@/proto/api/v1/workout_service_pb'
+import {
+  ExerciseSetsSchema,
+  RoutineGroupMode,
+  type Exercise,
+  type ExerciseSets,
+} from '@/proto/api/v1/shared_pb'
+import {
+  CreateWorkoutRequestSchema,
+  WorkoutGroupSchema,
+  WorkoutService,
+  type WorkoutGroup,
+} from '@/proto/api/v1/workout_service_pb'
 import { useActivityStore } from '@/stores/activity'
 import { useToastStore } from '@/stores/toasts'
 import { useAuthStore } from '@/stores/auth'
@@ -78,6 +93,7 @@ import {
   nextStationOutsideGroup,
   nextUnfinishedStation,
   restExtensionSeconds,
+  savedGroups,
   sessionGroups,
 } from '@/utils/workoutSession'
 import styles from './StartWorkout.module.css'
@@ -89,6 +105,23 @@ interface Session {
 }
 
 const setKey = (stationKey: string, index: number) => `${stationKey}:${index}`
+
+// The blocks the session was trained in. Each states how many of its exercise's
+// sets it took; the sets themselves travel in exercise_sets, and one copy of
+// them on the wire is enough.
+const workoutGroupMessages = (groups: readonly SavedGroup[]): WorkoutGroup[] =>
+  groups.map((group) =>
+    create(WorkoutGroupSchema, {
+      mode: group.mode === 'circuit' ? RoutineGroupMode.CIRCUIT : RoutineGroupMode.STRAIGHT,
+      restBetweenExercisesSeconds: group.restBetweenExercisesSeconds,
+      restBetweenRoundsSeconds: group.restBetweenRoundsSeconds,
+      rounds: group.rounds,
+      exercises: group.exercises.map((entry) => ({
+        exercise: { id: entry.exerciseId },
+        setCount: entry.setCount,
+      })),
+    }),
+  )
 
 const millisecondsOf = (iso: string | undefined) => {
   const time = Date.parse(iso ?? '')
@@ -664,21 +697,29 @@ export const StartWorkout = () => {
     moveToNextUnfinished()
   }
 
-  const buildWorkoutSets = () => {
+  /**
+   * The session as the save describes it: the sets against the exercises that
+   * took them, and the blocks that say how to read them.
+   *
+   * A workout records sets against an exercise, so the two stations of a
+   * repeated exercise are saved as one exercise's worth of work — walked in
+   * station order, which is what lets the blocks name their share of it.
+   */
+  const buildWorkout = () => {
     const stored = selectAllSets(useWorkoutStore.getState(), routineID)
-    if (!stored) return []
+    if (!stored) return { exerciseSets: [], groups: [] }
 
-    // A workout records sets against an exercise, so the two stations of a
-    // repeated exercise are saved as one exercise's worth of work.
     const byExercise = new Map<string, WorkoutSet[]>()
+    const setCounts: Record<string, number> = {}
     stations.forEach(({ key, exercise }) => {
       const sets = stored[key]?.filter((set) => isExerciseSetComplete(set, exercise)) ?? []
+      setCounts[key] = sets.length
       if (!sets.length) return
 
       byExercise.set(exercise.id, [...(byExercise.get(exercise.id) ?? []), ...sets])
     })
 
-    return [...byExercise].map(([exerciseId, sets]) =>
+    const exerciseSets = [...byExercise].map(([exerciseId, sets]) =>
       create(ExerciseSetsSchema, {
         exercise: { id: exerciseId },
         sets: sets.map((set) => ({
@@ -691,6 +732,8 @@ export const StartWorkout = () => {
         })),
       }),
     )
+
+    return { exerciseSets, groups: workoutGroupMessages(savedGroups(blocks, setCounts)) }
   }
 
   const openSavedWorkout = async (workoutId: string) => {
@@ -726,7 +769,7 @@ export const StartWorkout = () => {
       return
     }
 
-    const exerciseSets = buildWorkoutSets()
+    const { exerciseSets, groups } = buildWorkout()
     if (!exerciseSets.length) {
       setFinishError(t('workout.logCompleteSet'))
       return
@@ -735,6 +778,7 @@ export const StartWorkout = () => {
     setSubmitting(true)
     const request = create(CreateWorkoutRequestSchema, {
       exerciseSets,
+      groups,
       finishedAt: timestampFromDate(new Date()),
       routineId: quickWorkout ? '' : routineID,
       startedAt: timestampFromDate(new Date(startedAtMs ?? Date.now())),

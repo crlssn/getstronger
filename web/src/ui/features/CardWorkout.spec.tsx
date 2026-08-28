@@ -15,7 +15,7 @@ vi.mock('@/http/requests', async (importOriginal) => ({
 }))
 
 import * as requests from '@/http/requests'
-import { ExerciseMetric } from '@/proto/api/v1/shared_pb'
+import { ExerciseMetric, RoutineGroupMode } from '@/proto/api/v1/shared_pb'
 import {
   DeleteWorkoutResponseSchema,
   PostCommentResponseSchema,
@@ -39,7 +39,11 @@ type WorkoutInit = MessageInitShape<typeof WorkoutSchema>
 
 // Spelled out rather than spread over a base: `create` also accepts a built
 // Workout, and a spread of two partial inits matches that overload instead.
-const workout = ({ exerciseSets, comments }: Pick<WorkoutInit, 'exerciseSets' | 'comments'> = {}) =>
+const workout = ({
+  exerciseSets,
+  comments,
+  groups,
+}: Pick<WorkoutInit, 'exerciseSets' | 'comments' | 'groups'> = {}) =>
   create(WorkoutSchema, {
     id: 'workout-1',
     name: 'Push Day',
@@ -47,6 +51,7 @@ const workout = ({ exerciseSets, comments }: Pick<WorkoutInit, 'exerciseSets' | 
     user: { id: ownerId, name: 'Alice Lifter', username: 'alice' },
     exerciseSets,
     comments,
+    groups,
   })
 
 const withSets = () =>
@@ -61,6 +66,50 @@ const withSets = () =>
         sets: [
           { id: 'set-1', weight: 100, reps: 5, metadata: { personalBest: true } },
           { id: 'set-2', weight: 90, reps: 8 },
+        ],
+      },
+    ],
+  })
+
+const lift = (id: string, name: string) => ({
+  id,
+  name,
+  metrics: [ExerciseMetric.WEIGHT, ExerciseMetric.REPS],
+})
+
+// A warm-up worked straight through, then a circuit taken twice round.
+const withBlocks = () =>
+  workout({
+    exerciseSets: [
+      { exercise: lift('exercise-1', 'Bench press'), sets: [{ weight: 40, reps: 10 }] },
+      {
+        exercise: lift('exercise-2', 'Squat'),
+        sets: [
+          { weight: 90, reps: 5 },
+          { weight: 95, reps: 5 },
+        ],
+      },
+    ],
+    groups: [
+      {
+        id: 'group-warmup',
+        mode: RoutineGroupMode.STRAIGHT,
+        exercises: [
+          { exercise: lift('exercise-1', 'Bench press'), sets: [{ weight: 40, reps: 10 }] },
+        ],
+      },
+      {
+        id: 'group-circuit',
+        mode: RoutineGroupMode.CIRCUIT,
+        rounds: 2,
+        exercises: [
+          {
+            exercise: lift('exercise-2', 'Squat'),
+            sets: [
+              { weight: 90, reps: 5 },
+              { weight: 95, reps: 5 },
+            ],
+          },
         ],
       },
     ],
@@ -178,6 +227,32 @@ describe('CardWorkout', () => {
       )
       expect(screen.getByRole('table', { name: /Bench press/ })).toBeInTheDocument()
       expect(screen.getAllByRole('row')).toHaveLength(3)
+    })
+
+    // A circuit and a block of straight sets used to read identically once the
+    // session was saved, which is the whole reason the workout records them.
+    test('reads a grouped session in its blocks', () => {
+      render(<CardWorkout compact={false} workout={withBlocks()} />)
+
+      expect(screen.getByText('Group A')).toBeInTheDocument()
+      expect(screen.getByText('Straight sets')).toBeInTheDocument()
+      // What the session actually did, not what it was prescribed.
+      expect(screen.getByText('Circuit · 2 rounds')).toBeInTheDocument()
+
+      // The straight block keeps the accordion; the circuit is read by round.
+      expect(screen.getByRole('button', { name: /Bench press/ })).toBeInTheDocument()
+      expect(screen.getByRole('heading', { name: 'Round 1' })).toBeInTheDocument()
+      expect(screen.getByRole('heading', { name: 'Round 2' })).toBeInTheDocument()
+      expect(screen.getByText('95 kg · 5')).toBeInTheDocument()
+    })
+
+    // A plain routine, a quick workout, and every session logged before blocks
+    // were recorded: one list, no badges.
+    test('reads an ungrouped session as the flat list it always was', () => {
+      render(<CardWorkout compact={false} workout={withSets()} />)
+
+      expect(screen.queryByText('Group A')).not.toBeInTheDocument()
+      expect(screen.getByRole('table', { name: /Bench press/ })).toBeInTheDocument()
     })
 
     // The toast has to survive the navigation home that follows.

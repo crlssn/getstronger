@@ -18,11 +18,12 @@ var (
 	eventWithParentsCascadingCtx = newContextual[bool]("eventWithParentsCascading")
 
 	// Relationship Contexts for exercises
-	exerciseWithParentsCascadingCtx = newContextual[bool]("exerciseWithParentsCascading")
-	exerciseRelUserCtx              = newContextual[bool]("exercises.users.exercises.exercises_user_id_fkey")
-	exerciseRelExercisesRoutinesCtx = newContextual[bool]("exercises.exercises_routines.exercises_routines.routine_exercises_exercise_id_fkey")
-	exerciseRelRoutinesCtx          = newContextual[bool]("exercises.routines.routines_exercises")
-	exerciseRelSetsCtx              = newContextual[bool]("exercises.sets.sets.sets_exercise_id_fkey")
+	exerciseWithParentsCascadingCtx     = newContextual[bool]("exerciseWithParentsCascading")
+	exerciseRelUserCtx                  = newContextual[bool]("exercises.users.exercises.exercises_user_id_fkey")
+	exerciseRelExercisesRoutinesCtx     = newContextual[bool]("exercises.exercises_routines.exercises_routines.routine_exercises_exercise_id_fkey")
+	exerciseRelRoutinesCtx              = newContextual[bool]("exercises.routines.routines_exercises")
+	exerciseRelSetsCtx                  = newContextual[bool]("exercises.sets.sets.sets_exercise_id_fkey")
+	exerciseRelWorkoutGroupExercisesCtx = newContextual[bool]("exercises.workout_group_exercises.workout_group_exercises.workout_group_exercises_exercise_id_fkey")
 
 	// Relationship Contexts for exercises_routines
 	exercisesRoutineWithParentsCascadingCtx = newContextual[bool]("exercisesRoutineWithParentsCascading")
@@ -64,9 +65,10 @@ var (
 	routineRelWorkoutsCtx          = newContextual[bool]("routines.workouts.workouts.workouts_routine_id_fkey")
 
 	// Relationship Contexts for sets
-	setWithParentsCascadingCtx = newContextual[bool]("setWithParentsCascading")
-	setRelExerciseCtx          = newContextual[bool]("exercises.sets.sets.sets_exercise_id_fkey")
-	setRelWorkoutCtx           = newContextual[bool]("sets.workouts.sets.sets_workout_id_fkey")
+	setWithParentsCascadingCtx    = newContextual[bool]("setWithParentsCascading")
+	setRelExerciseCtx             = newContextual[bool]("exercises.sets.sets.sets_exercise_id_fkey")
+	setRelWorkoutGroupExerciseCtx = newContextual[bool]("sets.workout_group_exercises.sets.sets_workout_group_exercise_id_fkey")
+	setRelWorkoutCtx              = newContextual[bool]("sets.workouts.sets.sets_workout_id_fkey")
 
 	// Relationship Contexts for traces
 	traceWithParentsCascadingCtx = newContextual[bool]("traceWithParentsCascading")
@@ -87,10 +89,22 @@ var (
 	workoutCommentRelUserCtx              = newContextual[bool]("users.workout_comments.workout_comments.workout_comments_user_id_fkey")
 	workoutCommentRelWorkoutCtx           = newContextual[bool]("workout_comments.workouts.workout_comments.workout_comments_workout_id_fkey")
 
+	// Relationship Contexts for workout_group_exercises
+	workoutGroupExerciseWithParentsCascadingCtx = newContextual[bool]("workoutGroupExerciseWithParentsCascading")
+	workoutGroupExerciseRelSetsCtx              = newContextual[bool]("sets.workout_group_exercises.sets.sets_workout_group_exercise_id_fkey")
+	workoutGroupExerciseRelExerciseCtx          = newContextual[bool]("exercises.workout_group_exercises.workout_group_exercises.workout_group_exercises_exercise_id_fkey")
+	workoutGroupExerciseRelWorkoutGroupCtx      = newContextual[bool]("workout_group_exercises.workout_groups.workout_group_exercises.workout_group_exercises_workout_group_id_fkey")
+
+	// Relationship Contexts for workout_groups
+	workoutGroupWithParentsCascadingCtx     = newContextual[bool]("workoutGroupWithParentsCascading")
+	workoutGroupRelWorkoutGroupExercisesCtx = newContextual[bool]("workout_group_exercises.workout_groups.workout_group_exercises.workout_group_exercises_workout_group_id_fkey")
+	workoutGroupRelWorkoutCtx               = newContextual[bool]("workout_groups.workouts.workout_groups.workout_groups_workout_id_fkey")
+
 	// Relationship Contexts for workouts
 	workoutWithParentsCascadingCtx = newContextual[bool]("workoutWithParentsCascading")
 	workoutRelSetsCtx              = newContextual[bool]("sets.workouts.sets.sets_workout_id_fkey")
 	workoutRelWorkoutCommentsCtx   = newContextual[bool]("workout_comments.workouts.workout_comments.workout_comments_workout_id_fkey")
+	workoutRelWorkoutGroupsCtx     = newContextual[bool]("workout_groups.workouts.workout_groups.workout_groups_workout_id_fkey")
 	workoutRelRoutineCtx           = newContextual[bool]("routines.workouts.workouts.workouts_routine_id_fkey")
 	workoutRelUserCtx              = newContextual[bool]("users.workouts.workouts.workouts_user_id_fkey")
 

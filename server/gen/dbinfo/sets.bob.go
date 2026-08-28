@@ -114,6 +114,24 @@ var Sets = Table[
 			Generated: false,
 			AutoIncr:  false,
 		},
+		WorkoutGroupExerciseID: column{
+			Name:      "workout_group_exercise_id",
+			DBType:    "uuid",
+			Default:   "NULL",
+			Comment:   "",
+			Nullable:  true,
+			Generated: false,
+			AutoIncr:  false,
+		},
+		Position: column{
+			Name:      "position",
+			DBType:    "integer",
+			Default:   "0",
+			Comment:   "",
+			Nullable:  false,
+			Generated: false,
+			AutoIncr:  false,
+		},
 	},
 	Indexes: setIndexes{
 		SetsPkey: index{
@@ -139,6 +157,23 @@ var Sets = Table[
 			Columns: []indexColumn{
 				{
 					Name:         "exercise_id",
+					Desc:         null.FromCond(false, true),
+					IsExpression: false,
+				},
+			},
+			Unique:        false,
+			Comment:       "",
+			NullsFirst:    []bool{false},
+			NullsDistinct: false,
+			Where:         "",
+			Include:       []string{},
+		},
+		SetsWorkoutGroupExerciseIDIdx: index{
+			Type: "btree",
+			Name: "sets_workout_group_exercise_id_idx",
+			Columns: []indexColumn{
+				{
+					Name:         "workout_group_exercise_id",
 					Desc:         null.FromCond(false, true),
 					IsExpression: false,
 				},
@@ -183,6 +218,15 @@ var Sets = Table[
 			ForeignTable:   "exercises",
 			ForeignColumns: []string{"id"},
 		},
+		SetsSetsWorkoutGroupExerciseIDFkey: foreignKey{
+			constraint: constraint{
+				Name:    "sets.sets_workout_group_exercise_id_fkey",
+				Columns: []string{"workout_group_exercise_id"},
+				Comment: "",
+			},
+			ForeignTable:   "workout_group_exercises",
+			ForeignColumns: []string{"id"},
+		},
 		SetsSetsWorkoutIDFkey: foreignKey{
 			constraint: constraint{
 				Name:    "sets.sets_workout_id_fkey",
@@ -219,6 +263,14 @@ var Sets = Table[
 			},
 			Expression: "(duration_seconds >= 0)",
 		},
+		SetsPositionCheck: check{
+			constraint: constraint{
+				Name:    "sets_position_check",
+				Columns: []string{"position"},
+				Comment: "",
+			},
+			Expression: "(\"position\" >= 0)",
+		},
 		SetsWeightUnitCheck: check{
 			constraint: constraint{
 				Name:    "sets_weight_unit_check",
@@ -232,45 +284,49 @@ var Sets = Table[
 }
 
 type setColumns struct {
-	ID              column
-	WorkoutID       column
-	ExerciseID      column
-	Weight          column
-	Reps            column
-	CreatedAt       column
-	UserID          column
-	Distance        column
-	DurationSeconds column
-	WeightUnit      column
-	DistanceUnit    column
+	ID                     column
+	WorkoutID              column
+	ExerciseID             column
+	Weight                 column
+	Reps                   column
+	CreatedAt              column
+	UserID                 column
+	Distance               column
+	DurationSeconds        column
+	WeightUnit             column
+	DistanceUnit           column
+	WorkoutGroupExerciseID column
+	Position               column
 }
 
 func (c setColumns) AsSlice() []column {
 	return []column{
-		c.ID, c.WorkoutID, c.ExerciseID, c.Weight, c.Reps, c.CreatedAt, c.UserID, c.Distance, c.DurationSeconds, c.WeightUnit, c.DistanceUnit,
+		c.ID, c.WorkoutID, c.ExerciseID, c.Weight, c.Reps, c.CreatedAt, c.UserID, c.Distance, c.DurationSeconds, c.WeightUnit, c.DistanceUnit, c.WorkoutGroupExerciseID, c.Position,
 	}
 }
 
 type setIndexes struct {
-	SetsPkey          index
-	SetsExerciseIDIdx index
-	SetsWorkoutIDIdx  index
+	SetsPkey                      index
+	SetsExerciseIDIdx             index
+	SetsWorkoutGroupExerciseIDIdx index
+	SetsWorkoutIDIdx              index
 }
 
 func (i setIndexes) AsSlice() []index {
 	return []index{
-		i.SetsPkey, i.SetsExerciseIDIdx, i.SetsWorkoutIDIdx,
+		i.SetsPkey, i.SetsExerciseIDIdx, i.SetsWorkoutGroupExerciseIDIdx, i.SetsWorkoutIDIdx,
 	}
 }
 
 type setForeignKeys struct {
-	SetsSetsExerciseIDFkey foreignKey
-	SetsSetsWorkoutIDFkey  foreignKey
+	SetsSetsExerciseIDFkey             foreignKey
+	SetsSetsWorkoutGroupExerciseIDFkey foreignKey
+	SetsSetsWorkoutIDFkey              foreignKey
 }
 
 func (f setForeignKeys) AsSlice() []foreignKey {
 	return []foreignKey{
-		f.SetsSetsExerciseIDFkey, f.SetsSetsWorkoutIDFkey,
+		f.SetsSetsExerciseIDFkey, f.SetsSetsWorkoutGroupExerciseIDFkey, f.SetsSetsWorkoutIDFkey,
 	}
 }
 
@@ -284,11 +340,12 @@ type setChecks struct {
 	SetsDistanceNonNegative        check
 	SetsDistanceUnitCheck          check
 	SetsDurationSecondsNonNegative check
+	SetsPositionCheck              check
 	SetsWeightUnitCheck            check
 }
 
 func (c setChecks) AsSlice() []check {
 	return []check{
-		c.SetsDistanceNonNegative, c.SetsDistanceUnitCheck, c.SetsDurationSecondsNonNegative, c.SetsWeightUnitCheck,
+		c.SetsDistanceNonNegative, c.SetsDistanceUnitCheck, c.SetsDurationSecondsNonNegative, c.SetsPositionCheck, c.SetsWeightUnitCheck,
 	}
 }

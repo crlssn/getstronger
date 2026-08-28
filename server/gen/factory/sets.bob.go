@@ -8,7 +8,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/aarondl/opt/null"
 	"github.com/aarondl/opt/omit"
+	"github.com/aarondl/opt/omitnull"
 	models "github.com/crlssn/getstronger/server/gen/models"
 	"github.com/gofrs/uuid/v5"
 	"github.com/jaswdr/faker/v2"
@@ -36,17 +38,19 @@ func (mods SetModSlice) Apply(ctx context.Context, n *SetTemplate) {
 // SetTemplate is an object representing the database table.
 // all columns are optional and should be set by mods
 type SetTemplate struct {
-	ID              func() uuid.UUID
-	WorkoutID       func() uuid.UUID
-	ExerciseID      func() uuid.UUID
-	Weight          func() float64
-	Reps            func() int32
-	CreatedAt       func() time.Time
-	UserID          func() uuid.UUID
-	Distance        func() float64
-	DurationSeconds func() int32
-	WeightUnit      func() string
-	DistanceUnit    func() string
+	ID                     func() uuid.UUID
+	WorkoutID              func() uuid.UUID
+	ExerciseID             func() uuid.UUID
+	Weight                 func() float64
+	Reps                   func() int32
+	CreatedAt              func() time.Time
+	UserID                 func() uuid.UUID
+	Distance               func() float64
+	DurationSeconds        func() int32
+	WeightUnit             func() string
+	DistanceUnit           func() string
+	WorkoutGroupExerciseID func() null.Val[uuid.UUID]
+	Position               func() int32
 
 	r setR
 	f *Factory
@@ -55,12 +59,16 @@ type SetTemplate struct {
 }
 
 type setR struct {
-	Exercise *setRExerciseR
-	Workout  *setRWorkoutR
+	Exercise             *setRExerciseR
+	WorkoutGroupExercise *setRWorkoutGroupExerciseR
+	Workout              *setRWorkoutR
 }
 
 type setRExerciseR struct {
 	o *ExerciseTemplate
+}
+type setRWorkoutGroupExerciseR struct {
+	o *WorkoutGroupExerciseTemplate
 }
 type setRWorkoutR struct {
 	o *WorkoutTemplate
@@ -82,6 +90,14 @@ func (t SetTemplate) setModelRels(o *models.Set) {
 		o.ExerciseID = rel.ID // h2
 		o.R.Exercise = rel
 		o.R.Loaded.Exercise = true
+	}
+
+	if t.r.WorkoutGroupExercise != nil {
+		rel := t.r.WorkoutGroupExercise.o.Build()
+		rel.R.Sets = append(rel.R.Sets, o)
+		o.WorkoutGroupExerciseID = null.From(rel.ID) // h2
+		o.R.WorkoutGroupExercise = rel
+		o.R.Loaded.WorkoutGroupExercise = true
 	}
 
 	if t.r.Workout != nil {
@@ -142,6 +158,14 @@ func (o SetTemplate) BuildSetter() *models.SetSetter {
 		val := o.DistanceUnit()
 		m.DistanceUnit = omit.From(val)
 	}
+	if o.WorkoutGroupExerciseID != nil {
+		val := o.WorkoutGroupExerciseID()
+		m.WorkoutGroupExerciseID = omitnull.FromNull(val)
+	}
+	if o.Position != nil {
+		val := o.Position()
+		m.Position = omit.From(val)
+	}
 
 	return m
 }
@@ -197,6 +221,12 @@ func (o SetTemplate) Build() *models.Set {
 	if o.DistanceUnit != nil {
 		m.DistanceUnit = o.DistanceUnit()
 	}
+	if o.WorkoutGroupExerciseID != nil {
+		m.WorkoutGroupExerciseID = o.WorkoutGroupExerciseID()
+	}
+	if o.Position != nil {
+		m.Position = o.Position()
+	}
 
 	o.setModelRels(m)
 
@@ -245,6 +275,26 @@ func ensureCreatableSet(m *models.SetSetter) {
 func (o *SetTemplate) insertOptRels(ctx context.Context, exec bob.Executor, m *models.Set) error {
 	var err error
 
+	isWorkoutGroupExerciseDone, _ := setRelWorkoutGroupExerciseCtx.Value(ctx)
+	if !isWorkoutGroupExerciseDone && o.r.WorkoutGroupExercise != nil {
+		ctx = setRelWorkoutGroupExerciseCtx.WithValue(ctx, true)
+		if o.r.WorkoutGroupExercise.o.alreadyPersisted {
+			m.R.WorkoutGroupExercise = o.r.WorkoutGroupExercise.o.Build()
+			m.R.Loaded.WorkoutGroupExercise = true
+		} else {
+			var rel1 *models.WorkoutGroupExercise
+			rel1, err = o.r.WorkoutGroupExercise.o.Create(ctx, exec)
+			if err != nil {
+				return err
+			}
+			err = m.AttachWorkoutGroupExercise(ctx, exec, rel1)
+			if err != nil {
+				return err
+			}
+		}
+
+	}
+
 	return err
 }
 
@@ -287,32 +337,32 @@ func (o *SetTemplate) Create(ctx context.Context, exec bob.Executor) (*models.Se
 
 	opt.ExerciseID = omit.From(rel0.ID)
 
-	var rel1 *models.Workout
+	var rel2 *models.Workout
 
 	if o.r.Workout == nil {
 		if parentModel, found := mInCreation["workouts:sets:sets.sets_workout_id_fkey"]; found {
 			if pModel, ok := parentModel.(*models.Workout); ok {
-				rel1 = pModel
+				rel2 = pModel
 			}
 		}
 	}
 
-	if rel1 == nil {
+	if rel2 == nil {
 		if o.r.Workout == nil {
 			SetMods.WithNewWorkout().Apply(ctx, o)
 		}
 
 		if o.r.Workout.o.alreadyPersisted {
-			rel1 = o.r.Workout.o.Build()
+			rel2 = o.r.Workout.o.Build()
 		} else {
-			rel1, err = o.r.Workout.o.Create(ctx, exec)
+			rel2, err = o.r.Workout.o.Create(ctx, exec)
 			if err != nil {
 				return nil, err
 			}
 		}
 	}
 
-	opt.WorkoutID = omit.From(rel1.ID)
+	opt.WorkoutID = omit.From(rel2.ID)
 
 	m, err := models.Sets.Insert(opt).One(ctx, exec)
 	if err != nil {
@@ -332,7 +382,7 @@ func (o *SetTemplate) Create(ctx context.Context, exec bob.Executor) (*models.Se
 
 	m.R.Exercise = rel0
 	m.R.Loaded.Exercise = true
-	m.R.Workout = rel1
+	m.R.Workout = rel2
 	m.R.Loaded.Workout = true
 
 	if err := o.insertOptRels(ctx, exec, m); err != nil {
@@ -423,6 +473,8 @@ func (m setMods) RandomizeAllColumns(f *faker.Faker) SetMod {
 		SetMods.RandomDurationSeconds(f),
 		SetMods.RandomWeightUnit(f),
 		SetMods.RandomDistanceUnit(f),
+		SetMods.RandomWorkoutGroupExerciseID(f),
+		SetMods.RandomPosition(f),
 	}
 }
 
@@ -767,6 +819,90 @@ func (m setMods) RandomDistanceUnit(f *faker.Faker) SetMod {
 	})
 }
 
+// Set the model columns to this value
+func (m setMods) WorkoutGroupExerciseID(val null.Val[uuid.UUID]) SetMod {
+	return SetModFunc(func(_ context.Context, o *SetTemplate) {
+		o.WorkoutGroupExerciseID = func() null.Val[uuid.UUID] { return val }
+	})
+}
+
+// Set the Column from the function
+func (m setMods) WorkoutGroupExerciseIDFunc(f func() null.Val[uuid.UUID]) SetMod {
+	return SetModFunc(func(_ context.Context, o *SetTemplate) {
+		o.WorkoutGroupExerciseID = f
+	})
+}
+
+// Clear any values for the column
+func (m setMods) UnsetWorkoutGroupExerciseID() SetMod {
+	return SetModFunc(func(_ context.Context, o *SetTemplate) {
+		o.WorkoutGroupExerciseID = nil
+	})
+}
+
+// Generates a random value for the column using the given faker
+// if faker is nil, a default faker is used
+// The generated value is sometimes null
+func (m setMods) RandomWorkoutGroupExerciseID(f *faker.Faker) SetMod {
+	return SetModFunc(func(_ context.Context, o *SetTemplate) {
+		o.WorkoutGroupExerciseID = func() null.Val[uuid.UUID] {
+			if f == nil {
+				f = &defaultFaker
+			}
+
+			val := random_uuid_UUID(f)
+			return null.From(val)
+		}
+	})
+}
+
+// Generates a random value for the column using the given faker
+// if faker is nil, a default faker is used
+// The generated value is never null
+func (m setMods) RandomWorkoutGroupExerciseIDNotNull(f *faker.Faker) SetMod {
+	return SetModFunc(func(_ context.Context, o *SetTemplate) {
+		o.WorkoutGroupExerciseID = func() null.Val[uuid.UUID] {
+			if f == nil {
+				f = &defaultFaker
+			}
+
+			val := random_uuid_UUID(f)
+			return null.From(val)
+		}
+	})
+}
+
+// Set the model columns to this value
+func (m setMods) Position(val int32) SetMod {
+	return SetModFunc(func(_ context.Context, o *SetTemplate) {
+		o.Position = func() int32 { return val }
+	})
+}
+
+// Set the Column from the function
+func (m setMods) PositionFunc(f func() int32) SetMod {
+	return SetModFunc(func(_ context.Context, o *SetTemplate) {
+		o.Position = f
+	})
+}
+
+// Clear any values for the column
+func (m setMods) UnsetPosition() SetMod {
+	return SetModFunc(func(_ context.Context, o *SetTemplate) {
+		o.Position = nil
+	})
+}
+
+// Generates a random value for the column using the given faker
+// if faker is nil, a default faker is used
+func (m setMods) RandomPosition(f *faker.Faker) SetMod {
+	return SetModFunc(func(_ context.Context, o *SetTemplate) {
+		o.Position = func() int32 {
+			return random_int32(f)
+		}
+	})
+}
+
 func (m setMods) WithParentsCascading() SetMod {
 	return SetModFunc(func(ctx context.Context, o *SetTemplate) {
 		if isDone, _ := setWithParentsCascadingCtx.Value(ctx); isDone {
@@ -777,6 +913,11 @@ func (m setMods) WithParentsCascading() SetMod {
 
 			related := o.f.NewExerciseWithContext(ctx, ExerciseMods.WithParentsCascading())
 			m.WithExercise(related).Apply(ctx, o)
+		}
+		{
+
+			related := o.f.NewWorkoutGroupExerciseWithContext(ctx, WorkoutGroupExerciseMods.WithParentsCascading())
+			m.WithWorkoutGroupExercise(related).Apply(ctx, o)
 		}
 		{
 
@@ -813,6 +954,36 @@ func (m setMods) WithExistingExercise(em *models.Exercise) SetMod {
 func (m setMods) WithoutExercise() SetMod {
 	return SetModFunc(func(ctx context.Context, o *SetTemplate) {
 		o.r.Exercise = nil
+	})
+}
+
+func (m setMods) WithWorkoutGroupExercise(rel *WorkoutGroupExerciseTemplate) SetMod {
+	return SetModFunc(func(ctx context.Context, o *SetTemplate) {
+		o.r.WorkoutGroupExercise = &setRWorkoutGroupExerciseR{
+			o: rel,
+		}
+	})
+}
+
+func (m setMods) WithNewWorkoutGroupExercise(mods ...WorkoutGroupExerciseMod) SetMod {
+	return SetModFunc(func(ctx context.Context, o *SetTemplate) {
+		related := o.f.NewWorkoutGroupExerciseWithContext(ctx, mods...)
+
+		m.WithWorkoutGroupExercise(related).Apply(ctx, o)
+	})
+}
+
+func (m setMods) WithExistingWorkoutGroupExercise(em *models.WorkoutGroupExercise) SetMod {
+	return SetModFunc(func(ctx context.Context, o *SetTemplate) {
+		o.r.WorkoutGroupExercise = &setRWorkoutGroupExerciseR{
+			o: o.f.fromExistingWorkoutGroupExercise(ctx, em),
+		}
+	})
+}
+
+func (m setMods) WithoutWorkoutGroupExercise() SetMod {
+	return SetModFunc(func(ctx context.Context, o *SetTemplate) {
+		o.r.WorkoutGroupExercise = nil
 	})
 }
 

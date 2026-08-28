@@ -970,8 +970,11 @@ type CreateWorkoutParams struct {
 	UserID       string
 	RoutineID    string
 	ExerciseSets []ExerciseSet
-	StartedAt    time.Time
-	FinishedAt   time.Time
+	// Groups is how the session was trained, resolved against ExerciseSets. An
+	// empty slice stores the workout ungrouped.
+	Groups     []training.WorkoutGroup
+	StartedAt  time.Time
+	FinishedAt time.Time
 }
 
 type ExerciseSet struct {
@@ -1006,9 +1009,14 @@ func (r *Repo) CreateWorkout(ctx context.Context, p CreateWorkoutParams) (*model
 			return fmt.Errorf("workout insert: %w", err)
 		}
 
+		occurrences, err := writeWorkoutGroups(ctx, tx.bobExec(), workout.ID, p.Groups)
+		if err != nil {
+			return err
+		}
+
 		for _, exerciseSet := range p.ExerciseSets {
 			sets := make([]*models.SetSetter, 0, len(exerciseSet.Sets))
-			for _, set := range exerciseSet.Sets {
+			for position, set := range exerciseSet.Sets {
 				sets = append(sets, &models.SetSetter{
 					Reps:            omit.From(safe.Int32FromInt(set.Reps)),
 					Weight:          omit.From(weightunit.ToKilograms(set.Weight, set.WeightUnit)),
@@ -1019,6 +1027,14 @@ func (r *Repo) CreateWorkout(ctx context.Context, p CreateWorkoutParams) (*model
 					UserID:          omit.From(uuidFromString(p.UserID)),
 					WorkoutID:       omit.From(workout.ID),
 					ExerciseID:      omit.From(uuidFromString(exerciseSet.ExerciseID)),
+					// The order the session logged them in, which is what a
+					// circuit's rounds are read off; every set of a workout
+					// shares created_at, so it cannot answer.
+					Position: omit.From(safe.Int32FromInt(position)),
+					WorkoutGroupExerciseID: occurrenceOf(occurrences, setOccurrence{
+						exerciseID: exerciseSet.ExerciseID,
+						position:   position,
+					}),
 				})
 			}
 
@@ -1848,6 +1864,11 @@ func (r *Repo) UpdateWorkoutSets(ctx context.Context, p UpdateWorkoutSetsParams)
 			return fmt.Errorf("workout fetch: %w", err)
 		}
 
+		// The rows are rewritten, so which block logged each of them has to be
+		// carried across: an edit changes what was lifted, never how the
+		// session was structured.
+		occurrences := setOccurrencesOf(workout.R.Sets)
+
 		if _, err = models.Sets.Delete(
 			models.DeleteWhere.Sets.WorkoutID.EQ(workout.ID),
 		).Exec(ctx, tx.bobExec()); err != nil {
@@ -1857,7 +1878,7 @@ func (r *Repo) UpdateWorkoutSets(ctx context.Context, p UpdateWorkoutSetsParams)
 		var sets []*models.SetSetter
 		setCreatedAt := workout.CreatedAt
 		for _, exerciseSet := range p.ExerciseSets {
-			for _, set := range exerciseSet.Sets {
+			for position, set := range exerciseSet.Sets {
 				sets = append(sets, &models.SetSetter{
 					UserID:          omit.From(workout.UserID),
 					WorkoutID:       omit.From(workout.ID),
@@ -1869,6 +1890,13 @@ func (r *Repo) UpdateWorkoutSets(ctx context.Context, p UpdateWorkoutSetsParams)
 					DistanceUnit:    omit.From(string(distanceunit.Normalize(set.DistanceUnit))),
 					DurationSeconds: omit.From(safe.Int32FromInt(set.DurationSeconds)),
 					CreatedAt:       omit.From(setCreatedAt),
+					Position:        omit.From(safe.Int32FromInt(position)),
+					// A set the edit added is beyond every block the session
+					// held, so it is stored ungrouped.
+					WorkoutGroupExerciseID: occurrenceOf(occurrences, setOccurrence{
+						exerciseID: exerciseSet.ExerciseID,
+						position:   position,
+					}),
 				})
 			}
 

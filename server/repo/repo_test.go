@@ -1951,6 +1951,69 @@ func (s *repoSuite) TestPublishEvent() {
 	}
 }
 
+// An edit rewrites every set row, so the block each of them was logged in has
+// to be carried across: changing what was lifted must not change how the
+// session was structured.
+func (s *repoSuite) TestUpdateWorkoutSetsKeepsTheBlocks() {
+	user := s.factory.NewUser()
+	press := s.factory.NewExercise(factory.ExerciseUserID(user.ID))
+	squat := s.factory.NewExercise(factory.ExerciseUserID(user.ID))
+
+	workout, err := s.repo.CreateWorkout(context.Background(), repo.CreateWorkoutParams{
+		Name:       "Circuit",
+		UserID:     user.ID.String(),
+		StartedAt:  time.Now(),
+		FinishedAt: time.Now().Add(time.Hour),
+		ExerciseSets: []repo.ExerciseSet{
+			{ExerciseID: press.ID.String(), Sets: []repo.Set{{Reps: 8, Weight: 60}, {Reps: 8, Weight: 60}}},
+			{ExerciseID: squat.ID.String(), Sets: []repo.Set{{Reps: 5, Weight: 90}}},
+		},
+		Groups: []training.WorkoutGroup{
+			{
+				Mode:   training.RoutineGroupModeCircuit,
+				Rounds: 2,
+				Exercises: []training.WorkoutGroupExerciseSets{
+					{ExerciseID: press.ID.String(), SetPositions: []int{0, 1}},
+					{ExerciseID: squat.ID.String(), SetPositions: []int{0}},
+				},
+			},
+		},
+	})
+	s.Require().NoError(err)
+
+	// The same session, one press set corrected and one squat set added.
+	s.Require().NoError(s.repo.UpdateWorkoutSets(context.Background(), repo.UpdateWorkoutSetsParams{
+		WorkoutID: workout.ID.String(),
+		ExerciseSets: []repo.ExerciseSet{
+			{ExerciseID: press.ID.String(), Sets: []repo.Set{{Reps: 8, Weight: 65}, {Reps: 8, Weight: 60}}},
+			{ExerciseID: squat.ID.String(), Sets: []repo.Set{{Reps: 5, Weight: 90}, {Reps: 5, Weight: 95}}},
+		},
+	}))
+
+	groups, err := s.repo.ListWorkoutGroups(context.Background(), workout.ID.String())
+	s.Require().NoError(err)
+	s.Require().Len(groups[workout.ID.String()], 1)
+
+	updated, err := s.repo.GetWorkout(
+		context.Background(),
+		repo.GetWorkoutWithID(workout.ID.String()),
+		repo.GetWorkoutLoadSets(),
+	)
+	s.Require().NoError(err)
+	s.Require().Len(updated.R.Sets, 4)
+
+	grouped := 0
+	for _, set := range updated.R.Sets {
+		if set.WorkoutGroupExerciseID.IsNull() {
+			continue
+		}
+		grouped++
+	}
+	// Three sets were in the block; the fourth was added by the edit and sits
+	// outside every block the session held.
+	s.Require().Equal(3, grouped)
+}
+
 func (s *repoSuite) TestUpdateWorkout() {
 	type expected struct {
 		err     error

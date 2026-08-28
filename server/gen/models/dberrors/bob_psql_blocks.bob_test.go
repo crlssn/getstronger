@@ -257,6 +257,23 @@ func TestCheckConstraintErrors(t *testing.T) {
 			t.Fatal("expected ErrCheckSetsDurationSecondsNonNegative.Is not to match different constraint")
 		}
 	})
+	t.Run("Set_ErrCheckSetsPositionCheck", func(t *testing.T) {
+		matchingErr := newCheckErr("23514", "sets_position_check")
+		if !errors.Is(SetErrors.ErrCheckSetsPositionCheck, matchingErr) {
+			t.Fatalf("expected ErrCheckSetsPositionCheck to match constraint %q", "sets_position_check")
+		}
+		if !SetErrors.ErrCheckSetsPositionCheck.Is(matchingErr) {
+			t.Fatalf("expected ErrCheckSetsPositionCheck.Is to match constraint %q", "sets_position_check")
+		}
+
+		nonMatchingErr := newCheckErr("23514", "other_constraint")
+		if errors.Is(SetErrors.ErrCheckSetsPositionCheck, nonMatchingErr) {
+			t.Fatal("expected ErrCheckSetsPositionCheck not to match different constraint")
+		}
+		if SetErrors.ErrCheckSetsPositionCheck.Is(nonMatchingErr) {
+			t.Fatal("expected ErrCheckSetsPositionCheck.Is not to match different constraint")
+		}
+	})
 	t.Run("Set_ErrCheckSetsWeightUnitCheck", func(t *testing.T) {
 		matchingErr := newCheckErr("23514", "sets_weight_unit_check")
 		if !errors.Is(SetErrors.ErrCheckSetsWeightUnitCheck, matchingErr) {
@@ -307,6 +324,93 @@ func TestCheckConstraintErrors(t *testing.T) {
 		}
 		if UserErrors.ErrCheckUsersWeightUnitCheck.Is(nonMatchingErr) {
 			t.Fatal("expected ErrCheckUsersWeightUnitCheck.Is not to match different constraint")
+		}
+	})
+
+	t.Run("WorkoutGroupExercise_ErrCheckWorkoutGroupExercisesPositionCheck", func(t *testing.T) {
+		matchingErr := newCheckErr("23514", "workout_group_exercises_position_check")
+		if !errors.Is(WorkoutGroupExerciseErrors.ErrCheckWorkoutGroupExercisesPositionCheck, matchingErr) {
+			t.Fatalf("expected ErrCheckWorkoutGroupExercisesPositionCheck to match constraint %q", "workout_group_exercises_position_check")
+		}
+		if !WorkoutGroupExerciseErrors.ErrCheckWorkoutGroupExercisesPositionCheck.Is(matchingErr) {
+			t.Fatalf("expected ErrCheckWorkoutGroupExercisesPositionCheck.Is to match constraint %q", "workout_group_exercises_position_check")
+		}
+
+		nonMatchingErr := newCheckErr("23514", "other_constraint")
+		if errors.Is(WorkoutGroupExerciseErrors.ErrCheckWorkoutGroupExercisesPositionCheck, nonMatchingErr) {
+			t.Fatal("expected ErrCheckWorkoutGroupExercisesPositionCheck not to match different constraint")
+		}
+		if WorkoutGroupExerciseErrors.ErrCheckWorkoutGroupExercisesPositionCheck.Is(nonMatchingErr) {
+			t.Fatal("expected ErrCheckWorkoutGroupExercisesPositionCheck.Is not to match different constraint")
+		}
+	})
+
+	t.Run("WorkoutGroup_ErrCheckWorkoutGroupsPositionCheck", func(t *testing.T) {
+		matchingErr := newCheckErr("23514", "workout_groups_position_check")
+		if !errors.Is(WorkoutGroupErrors.ErrCheckWorkoutGroupsPositionCheck, matchingErr) {
+			t.Fatalf("expected ErrCheckWorkoutGroupsPositionCheck to match constraint %q", "workout_groups_position_check")
+		}
+		if !WorkoutGroupErrors.ErrCheckWorkoutGroupsPositionCheck.Is(matchingErr) {
+			t.Fatalf("expected ErrCheckWorkoutGroupsPositionCheck.Is to match constraint %q", "workout_groups_position_check")
+		}
+
+		nonMatchingErr := newCheckErr("23514", "other_constraint")
+		if errors.Is(WorkoutGroupErrors.ErrCheckWorkoutGroupsPositionCheck, nonMatchingErr) {
+			t.Fatal("expected ErrCheckWorkoutGroupsPositionCheck not to match different constraint")
+		}
+		if WorkoutGroupErrors.ErrCheckWorkoutGroupsPositionCheck.Is(nonMatchingErr) {
+			t.Fatal("expected ErrCheckWorkoutGroupsPositionCheck.Is not to match different constraint")
+		}
+	})
+	t.Run("WorkoutGroup_ErrCheckWorkoutGroupsRestBetweenExercisesSecondsCheck", func(t *testing.T) {
+		matchingErr := newCheckErr("23514", "workout_groups_rest_between_exercises_seconds_check")
+		if !errors.Is(WorkoutGroupErrors.ErrCheckWorkoutGroupsRestBetweenExercisesSecondsCheck, matchingErr) {
+			t.Fatalf("expected ErrCheckWorkoutGroupsRestBetweenExercisesSecondsCheck to match constraint %q", "workout_groups_rest_between_exercises_seconds_check")
+		}
+		if !WorkoutGroupErrors.ErrCheckWorkoutGroupsRestBetweenExercisesSecondsCheck.Is(matchingErr) {
+			t.Fatalf("expected ErrCheckWorkoutGroupsRestBetweenExercisesSecondsCheck.Is to match constraint %q", "workout_groups_rest_between_exercises_seconds_check")
+		}
+
+		nonMatchingErr := newCheckErr("23514", "other_constraint")
+		if errors.Is(WorkoutGroupErrors.ErrCheckWorkoutGroupsRestBetweenExercisesSecondsCheck, nonMatchingErr) {
+			t.Fatal("expected ErrCheckWorkoutGroupsRestBetweenExercisesSecondsCheck not to match different constraint")
+		}
+		if WorkoutGroupErrors.ErrCheckWorkoutGroupsRestBetweenExercisesSecondsCheck.Is(nonMatchingErr) {
+			t.Fatal("expected ErrCheckWorkoutGroupsRestBetweenExercisesSecondsCheck.Is not to match different constraint")
+		}
+	})
+	t.Run("WorkoutGroup_ErrCheckWorkoutGroupsRestBetweenRoundsSecondsCheck", func(t *testing.T) {
+		matchingErr := newCheckErr("23514", "workout_groups_rest_between_rounds_seconds_check")
+		if !errors.Is(WorkoutGroupErrors.ErrCheckWorkoutGroupsRestBetweenRoundsSecondsCheck, matchingErr) {
+			t.Fatalf("expected ErrCheckWorkoutGroupsRestBetweenRoundsSecondsCheck to match constraint %q", "workout_groups_rest_between_rounds_seconds_check")
+		}
+		if !WorkoutGroupErrors.ErrCheckWorkoutGroupsRestBetweenRoundsSecondsCheck.Is(matchingErr) {
+			t.Fatalf("expected ErrCheckWorkoutGroupsRestBetweenRoundsSecondsCheck.Is to match constraint %q", "workout_groups_rest_between_rounds_seconds_check")
+		}
+
+		nonMatchingErr := newCheckErr("23514", "other_constraint")
+		if errors.Is(WorkoutGroupErrors.ErrCheckWorkoutGroupsRestBetweenRoundsSecondsCheck, nonMatchingErr) {
+			t.Fatal("expected ErrCheckWorkoutGroupsRestBetweenRoundsSecondsCheck not to match different constraint")
+		}
+		if WorkoutGroupErrors.ErrCheckWorkoutGroupsRestBetweenRoundsSecondsCheck.Is(nonMatchingErr) {
+			t.Fatal("expected ErrCheckWorkoutGroupsRestBetweenRoundsSecondsCheck.Is not to match different constraint")
+		}
+	})
+	t.Run("WorkoutGroup_ErrCheckWorkoutGroupsRoundsCheck", func(t *testing.T) {
+		matchingErr := newCheckErr("23514", "workout_groups_rounds_check")
+		if !errors.Is(WorkoutGroupErrors.ErrCheckWorkoutGroupsRoundsCheck, matchingErr) {
+			t.Fatalf("expected ErrCheckWorkoutGroupsRoundsCheck to match constraint %q", "workout_groups_rounds_check")
+		}
+		if !WorkoutGroupErrors.ErrCheckWorkoutGroupsRoundsCheck.Is(matchingErr) {
+			t.Fatalf("expected ErrCheckWorkoutGroupsRoundsCheck.Is to match constraint %q", "workout_groups_rounds_check")
+		}
+
+		nonMatchingErr := newCheckErr("23514", "other_constraint")
+		if errors.Is(WorkoutGroupErrors.ErrCheckWorkoutGroupsRoundsCheck, nonMatchingErr) {
+			t.Fatal("expected ErrCheckWorkoutGroupsRoundsCheck not to match different constraint")
+		}
+		if WorkoutGroupErrors.ErrCheckWorkoutGroupsRoundsCheck.Is(nonMatchingErr) {
+			t.Fatal("expected ErrCheckWorkoutGroupsRoundsCheck.Is not to match different constraint")
 		}
 	})
 }

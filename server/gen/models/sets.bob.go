@@ -9,7 +9,9 @@ import (
 	"io"
 	"time"
 
+	"github.com/aarondl/opt/null"
 	"github.com/aarondl/opt/omit"
+	"github.com/aarondl/opt/omitnull"
 	"github.com/gofrs/uuid/v5"
 	"github.com/stephenafamo/bob"
 	"github.com/stephenafamo/bob/dialect/psql"
@@ -26,17 +28,19 @@ import (
 
 // Set is an object representing the database table.
 type Set struct {
-	ID              uuid.UUID `db:"id,pk" `
-	WorkoutID       uuid.UUID `db:"workout_id" `
-	ExerciseID      uuid.UUID `db:"exercise_id" `
-	Weight          float64   `db:"weight" `
-	Reps            int32     `db:"reps" `
-	CreatedAt       time.Time `db:"created_at" `
-	UserID          uuid.UUID `db:"user_id" `
-	Distance        float64   `db:"distance" `
-	DurationSeconds int32     `db:"duration_seconds" `
-	WeightUnit      string    `db:"weight_unit" `
-	DistanceUnit    string    `db:"distance_unit" `
+	ID                     uuid.UUID           `db:"id,pk" `
+	WorkoutID              uuid.UUID           `db:"workout_id" `
+	ExerciseID             uuid.UUID           `db:"exercise_id" `
+	Weight                 float64             `db:"weight" `
+	Reps                   int32               `db:"reps" `
+	CreatedAt              time.Time           `db:"created_at" `
+	UserID                 uuid.UUID           `db:"user_id" `
+	Distance               float64             `db:"distance" `
+	DurationSeconds        int32               `db:"duration_seconds" `
+	WeightUnit             string              `db:"weight_unit" `
+	DistanceUnit           string              `db:"distance_unit" `
+	WorkoutGroupExerciseID null.Val[uuid.UUID] `db:"workout_group_exercise_id" `
+	Position               int32               `db:"position" `
 
 	R setR `db:"-" `
 }
@@ -53,8 +57,9 @@ type SetsQuery = *psql.ViewQuery[*Set, SetSlice]
 
 // setR is where relationships are stored.
 type setR struct {
-	Exercise *Exercise // sets.sets_exercise_id_fkey
-	Workout  *Workout  // sets.sets_workout_id_fkey
+	Exercise             *Exercise             // sets.sets_exercise_id_fkey
+	WorkoutGroupExercise *WorkoutGroupExercise // sets.sets_workout_group_exercise_id_fkey
+	Workout              *Workout              // sets.sets_workout_id_fkey
 	// Loaded reports whether each relationship has been loaded.
 	// A relationship's bool is set by Load*, Preload, ThenLoad, factory builds,
 	// and to-one Attach/Insert operations. To-many Attach/Insert operations leave it unchanged.
@@ -63,13 +68,14 @@ type setR struct {
 
 // setRLoaded tracks which relationships on Set have been loaded.
 type setRLoaded struct {
-	Exercise bool // sets.sets_exercise_id_fkey
-	Workout  bool // sets.sets_workout_id_fkey
+	Exercise             bool // sets.sets_exercise_id_fkey
+	WorkoutGroupExercise bool // sets.sets_workout_group_exercise_id_fkey
+	Workout              bool // sets.sets_workout_id_fkey
 }
 
 func buildSetColumns(tableName string) setColumns {
 	columnsExpr := expr.NewColumnsExpr(
-		"id", "workout_id", "exercise_id", "weight", "reps", "created_at", "user_id", "distance", "duration_seconds", "weight_unit", "distance_unit",
+		"id", "workout_id", "exercise_id", "weight", "reps", "created_at", "user_id", "distance", "duration_seconds", "weight_unit", "distance_unit", "workout_group_exercise_id", "position",
 	)
 
 	if tableName != "" {
@@ -77,36 +83,40 @@ func buildSetColumns(tableName string) setColumns {
 	}
 
 	return setColumns{
-		ColumnsExpr:     columnsExpr,
-		tableAlias:      tableName,
-		ID:              buildSetColumn(tableName, "id"),
-		WorkoutID:       buildSetColumn(tableName, "workout_id"),
-		ExerciseID:      buildSetColumn(tableName, "exercise_id"),
-		Weight:          buildSetColumn(tableName, "weight"),
-		Reps:            buildSetColumn(tableName, "reps"),
-		CreatedAt:       buildSetColumn(tableName, "created_at"),
-		UserID:          buildSetColumn(tableName, "user_id"),
-		Distance:        buildSetColumn(tableName, "distance"),
-		DurationSeconds: buildSetColumn(tableName, "duration_seconds"),
-		WeightUnit:      buildSetColumn(tableName, "weight_unit"),
-		DistanceUnit:    buildSetColumn(tableName, "distance_unit"),
+		ColumnsExpr:            columnsExpr,
+		tableAlias:             tableName,
+		ID:                     buildSetColumn(tableName, "id"),
+		WorkoutID:              buildSetColumn(tableName, "workout_id"),
+		ExerciseID:             buildSetColumn(tableName, "exercise_id"),
+		Weight:                 buildSetColumn(tableName, "weight"),
+		Reps:                   buildSetColumn(tableName, "reps"),
+		CreatedAt:              buildSetColumn(tableName, "created_at"),
+		UserID:                 buildSetColumn(tableName, "user_id"),
+		Distance:               buildSetColumn(tableName, "distance"),
+		DurationSeconds:        buildSetColumn(tableName, "duration_seconds"),
+		WeightUnit:             buildSetColumn(tableName, "weight_unit"),
+		DistanceUnit:           buildSetColumn(tableName, "distance_unit"),
+		WorkoutGroupExerciseID: buildSetColumn(tableName, "workout_group_exercise_id"),
+		Position:               buildSetColumn(tableName, "position"),
 	}
 }
 
 type setColumns struct {
 	expr.ColumnsExpr
-	tableAlias      string
-	ID              setColumn
-	WorkoutID       setColumn
-	ExerciseID      setColumn
-	Weight          setColumn
-	Reps            setColumn
-	CreatedAt       setColumn
-	UserID          setColumn
-	Distance        setColumn
-	DurationSeconds setColumn
-	WeightUnit      setColumn
-	DistanceUnit    setColumn
+	tableAlias             string
+	ID                     setColumn
+	WorkoutID              setColumn
+	ExerciseID             setColumn
+	Weight                 setColumn
+	Reps                   setColumn
+	CreatedAt              setColumn
+	UserID                 setColumn
+	Distance               setColumn
+	DurationSeconds        setColumn
+	WeightUnit             setColumn
+	DistanceUnit           setColumn
+	WorkoutGroupExerciseID setColumn
+	Position               setColumn
 }
 
 // Alias returns the current table alias for the columns set.
@@ -152,21 +162,23 @@ func (c setColumn) ShouldOmitParens() bool {
 // All values are optional, and do not have to be set
 // Generated columns are not included
 type SetSetter struct {
-	ID              omit.Val[uuid.UUID] `db:"id,pk" `
-	WorkoutID       omit.Val[uuid.UUID] `db:"workout_id" `
-	ExerciseID      omit.Val[uuid.UUID] `db:"exercise_id" `
-	Weight          omit.Val[float64]   `db:"weight" `
-	Reps            omit.Val[int32]     `db:"reps" `
-	CreatedAt       omit.Val[time.Time] `db:"created_at" `
-	UserID          omit.Val[uuid.UUID] `db:"user_id" `
-	Distance        omit.Val[float64]   `db:"distance" `
-	DurationSeconds omit.Val[int32]     `db:"duration_seconds" `
-	WeightUnit      omit.Val[string]    `db:"weight_unit" `
-	DistanceUnit    omit.Val[string]    `db:"distance_unit" `
+	ID                     omit.Val[uuid.UUID]     `db:"id,pk" `
+	WorkoutID              omit.Val[uuid.UUID]     `db:"workout_id" `
+	ExerciseID             omit.Val[uuid.UUID]     `db:"exercise_id" `
+	Weight                 omit.Val[float64]       `db:"weight" `
+	Reps                   omit.Val[int32]         `db:"reps" `
+	CreatedAt              omit.Val[time.Time]     `db:"created_at" `
+	UserID                 omit.Val[uuid.UUID]     `db:"user_id" `
+	Distance               omit.Val[float64]       `db:"distance" `
+	DurationSeconds        omit.Val[int32]         `db:"duration_seconds" `
+	WeightUnit             omit.Val[string]        `db:"weight_unit" `
+	DistanceUnit           omit.Val[string]        `db:"distance_unit" `
+	WorkoutGroupExerciseID omitnull.Val[uuid.UUID] `db:"workout_group_exercise_id" `
+	Position               omit.Val[int32]         `db:"position" `
 }
 
 func (s SetSetter) SetColumns() []string {
-	vals := make([]string, 0, 11)
+	vals := make([]string, 0, 13)
 	if s.ID.IsValue() {
 		vals = append(vals, "id")
 	}
@@ -199,6 +211,12 @@ func (s SetSetter) SetColumns() []string {
 	}
 	if s.DistanceUnit.IsValue() {
 		vals = append(vals, "distance_unit")
+	}
+	if s.WorkoutGroupExerciseID.IsValue() || s.WorkoutGroupExerciseID.IsNull() {
+		vals = append(vals, "workout_group_exercise_id")
+	}
+	if s.Position.IsValue() {
+		vals = append(vals, "position")
 	}
 	return vals
 }
@@ -236,6 +254,12 @@ func (s SetSetter) Overwrite(t *Set) {
 	}
 	if s.DistanceUnit.IsValue() {
 		t.DistanceUnit = s.DistanceUnit.MustGet()
+	}
+	if s.WorkoutGroupExerciseID.IsValue() || s.WorkoutGroupExerciseID.IsNull() {
+		t.WorkoutGroupExerciseID = s.WorkoutGroupExerciseID.MustGetNull()
+	}
+	if s.Position.IsValue() {
+		t.Position = s.Position.MustGet()
 	}
 }
 
@@ -300,6 +324,16 @@ func (s *SetSetter) Apply(q *dialect.InsertQuery) {
 				return psql.Raw("DEFAULT").WriteSQL(ctx, w, d, start)
 			}
 			return psql.Arg(s.DistanceUnit.MustGet()).WriteSQL(ctx, w, d, start)
+		}), bob.ExpressionFunc(func(ctx context.Context, w io.StringWriter, d bob.Dialect, start int) ([]any, error) {
+			if s.WorkoutGroupExerciseID.IsUnset() {
+				return psql.Raw("DEFAULT").WriteSQL(ctx, w, d, start)
+			}
+			return psql.Arg(s.WorkoutGroupExerciseID.MustGetNull()).WriteSQL(ctx, w, d, start)
+		}), bob.ExpressionFunc(func(ctx context.Context, w io.StringWriter, d bob.Dialect, start int) ([]any, error) {
+			if s.Position.IsUnset() {
+				return psql.Raw("DEFAULT").WriteSQL(ctx, w, d, start)
+			}
+			return psql.Arg(s.Position.MustGet()).WriteSQL(ctx, w, d, start)
 		}))
 }
 
@@ -308,7 +342,7 @@ func (s SetSetter) UpdateMod() bob.Mod[*dialect.UpdateQuery] {
 }
 
 func (s SetSetter) Expressions(prefix ...string) []bob.Expression {
-	exprs := make([]bob.Expression, 0, 11)
+	exprs := make([]bob.Expression, 0, 13)
 
 	if s.ID.IsValue() {
 		exprs = append(exprs, expr.Join{Sep: " = ", Exprs: []bob.Expression{
@@ -387,6 +421,20 @@ func (s SetSetter) Expressions(prefix ...string) []bob.Expression {
 		}})
 	}
 
+	if s.WorkoutGroupExerciseID.IsValue() || s.WorkoutGroupExerciseID.IsNull() {
+		exprs = append(exprs, expr.Join{Sep: " = ", Exprs: []bob.Expression{
+			psql.Quote(append(prefix, "workout_group_exercise_id")...),
+			psql.Arg(s.WorkoutGroupExerciseID),
+		}})
+	}
+
+	if s.Position.IsValue() {
+		exprs = append(exprs, expr.Join{Sep: " = ", Exprs: []bob.Expression{
+			psql.Quote(append(prefix, "position")...),
+			psql.Arg(s.Position),
+		}})
+	}
+
 	return exprs
 }
 
@@ -397,7 +445,7 @@ func setScanMapper(ctx context.Context, cols []string) (scan.BeforeFunc, func(an
 		idx int
 		dst func(o *Set) any
 	}
-	targets := make([]target, 0, 11)
+	targets := make([]target, 0, 13)
 	for i, col := range cols {
 		switch col {
 		case "id":
@@ -422,6 +470,10 @@ func setScanMapper(ctx context.Context, cols []string) (scan.BeforeFunc, func(an
 			targets = append(targets, target{i, func(o *Set) any { return &o.WeightUnit }})
 		case "distance_unit":
 			targets = append(targets, target{i, func(o *Set) any { return &o.DistanceUnit }})
+		case "workout_group_exercise_id":
+			targets = append(targets, target{i, func(o *Set) any { return &o.WorkoutGroupExerciseID }})
+		case "position":
+			targets = append(targets, target{i, func(o *Set) any { return &o.Position }})
 		}
 	}
 
@@ -727,6 +779,36 @@ func (os SetSlice) Exercise(mods ...bob.Mod[*dialect.SelectQuery]) ExercisesQuer
 	)...)
 }
 
+// WorkoutGroupExercise starts a query for related objects on workout_group_exercises
+func (o *Set) WorkoutGroupExercise(mods ...bob.Mod[*dialect.SelectQuery]) WorkoutGroupExercisesQuery {
+	return WorkoutGroupExercises.Query(append(mods,
+		sm.Where(WorkoutGroupExercises.Columns.ID.EQ(psql.Arg(o.WorkoutGroupExerciseID))),
+	)...)
+}
+
+func (os SetSlice) WorkoutGroupExercise(mods ...bob.Mod[*dialect.SelectQuery]) WorkoutGroupExercisesQuery {
+	pkWorkoutGroupExerciseID := make(pgtypes.Array[null.Val[uuid.UUID]], 0, len(os))
+
+	// the array is only a filter (semi-join), so duplicate keys can be
+	// dropped before they are sent over the wire
+	seenWorkoutGroupExerciseID := make(map[null.Val[uuid.UUID]]struct{}, len(os))
+	for _, o := range os {
+		if o == nil {
+			continue
+		}
+		if _, ok := seenWorkoutGroupExerciseID[o.WorkoutGroupExerciseID]; ok {
+			continue
+		}
+		seenWorkoutGroupExerciseID[o.WorkoutGroupExerciseID] = struct{}{}
+		pkWorkoutGroupExerciseID = append(pkWorkoutGroupExerciseID, o.WorkoutGroupExerciseID)
+	}
+	PKArgExpr := psql.Any(psql.Cast(psql.Arg(pkWorkoutGroupExerciseID), "uuid[]"))
+
+	return WorkoutGroupExercises.Query(append(mods,
+		sm.Where(WorkoutGroupExercises.Columns.ID.EQ(PKArgExpr)),
+	)...)
+}
+
 // Workout starts a query for related objects on workouts
 func (o *Set) Workout(mods ...bob.Mod[*dialect.SelectQuery]) WorkoutsQuery {
 	return Workouts.Query(append(mods,
@@ -807,6 +889,56 @@ func (set0 *Set) AttachExercise(ctx context.Context, exec bob.Executor, exercise
 	return nil
 }
 
+func attachSetWorkoutGroupExercise0(ctx context.Context, exec bob.Executor, count int, set0 *Set, workoutGroupExercise1 *WorkoutGroupExercise) (*Set, error) {
+	setter := &SetSetter{
+		WorkoutGroupExerciseID: omitnull.From(workoutGroupExercise1.ID),
+	}
+
+	err := set0.Update(ctx, exec, setter)
+	if err != nil {
+		return nil, fmt.Errorf("attachSetWorkoutGroupExercise0: %w", err)
+	}
+
+	return set0, nil
+}
+
+func (set0 *Set) InsertWorkoutGroupExercise(ctx context.Context, exec bob.Executor, related *WorkoutGroupExerciseSetter) error {
+	var err error
+
+	workoutGroupExercise1, err := WorkoutGroupExercises.Insert(related).One(ctx, exec)
+	if err != nil {
+		return fmt.Errorf("inserting related objects: %w", err)
+	}
+
+	_, err = attachSetWorkoutGroupExercise0(ctx, exec, 1, set0, workoutGroupExercise1)
+	if err != nil {
+		return err
+	}
+
+	set0.R.WorkoutGroupExercise = workoutGroupExercise1
+	set0.R.Loaded.WorkoutGroupExercise = true
+
+	workoutGroupExercise1.R.Sets = append(workoutGroupExercise1.R.Sets, set0)
+
+	return nil
+}
+
+func (set0 *Set) AttachWorkoutGroupExercise(ctx context.Context, exec bob.Executor, workoutGroupExercise1 *WorkoutGroupExercise) error {
+	var err error
+
+	_, err = attachSetWorkoutGroupExercise0(ctx, exec, 1, set0, workoutGroupExercise1)
+	if err != nil {
+		return err
+	}
+
+	set0.R.WorkoutGroupExercise = workoutGroupExercise1
+	set0.R.Loaded.WorkoutGroupExercise = true
+
+	workoutGroupExercise1.R.Sets = append(workoutGroupExercise1.R.Sets, set0)
+
+	return nil
+}
+
 func attachSetWorkout0(ctx context.Context, exec bob.Executor, count int, set0 *Set, workout1 *Workout) (*Set, error) {
 	setter := &SetSetter{
 		WorkoutID: omit.From(workout1.ID),
@@ -858,19 +990,21 @@ func (set0 *Set) AttachWorkout(ctx context.Context, exec bob.Executor, workout1 
 }
 
 type setWhere[Q psql.Filterable] struct {
-	cols            setColumns
-	ID              psql.WhereMod[Q, uuid.UUID]
-	WorkoutID       psql.WhereMod[Q, uuid.UUID]
-	ExerciseID      psql.WhereMod[Q, uuid.UUID]
-	Weight          psql.WhereMod[Q, float64]
-	Reps            psql.WhereMod[Q, int32]
-	CreatedAt       psql.WhereMod[Q, time.Time]
-	UserID          psql.WhereMod[Q, uuid.UUID]
-	Distance        psql.WhereMod[Q, float64]
-	DurationSeconds psql.WhereMod[Q, int32]
-	WeightUnit      psql.WhereMod[Q, string]
-	DistanceUnit    psql.WhereMod[Q, string]
-	R               setWhereR[Q]
+	cols                   setColumns
+	ID                     psql.WhereMod[Q, uuid.UUID]
+	WorkoutID              psql.WhereMod[Q, uuid.UUID]
+	ExerciseID             psql.WhereMod[Q, uuid.UUID]
+	Weight                 psql.WhereMod[Q, float64]
+	Reps                   psql.WhereMod[Q, int32]
+	CreatedAt              psql.WhereMod[Q, time.Time]
+	UserID                 psql.WhereMod[Q, uuid.UUID]
+	Distance               psql.WhereMod[Q, float64]
+	DurationSeconds        psql.WhereMod[Q, int32]
+	WeightUnit             psql.WhereMod[Q, string]
+	DistanceUnit           psql.WhereMod[Q, string]
+	WorkoutGroupExerciseID psql.WhereNullMod[Q, uuid.UUID]
+	Position               psql.WhereMod[Q, int32]
+	R                      setWhereR[Q]
 }
 
 func (setWhere[Q]) AliasedAs(alias string) setWhere[Q] {
@@ -879,19 +1013,21 @@ func (setWhere[Q]) AliasedAs(alias string) setWhere[Q] {
 
 func buildSetWhere[Q psql.Filterable](cols setColumns) setWhere[Q] {
 	return setWhere[Q]{
-		cols:            cols,
-		ID:              psql.Where[Q, uuid.UUID](cols.ID.Expression),
-		WorkoutID:       psql.Where[Q, uuid.UUID](cols.WorkoutID.Expression),
-		ExerciseID:      psql.Where[Q, uuid.UUID](cols.ExerciseID.Expression),
-		Weight:          psql.Where[Q, float64](cols.Weight.Expression),
-		Reps:            psql.Where[Q, int32](cols.Reps.Expression),
-		CreatedAt:       psql.Where[Q, time.Time](cols.CreatedAt.Expression),
-		UserID:          psql.Where[Q, uuid.UUID](cols.UserID.Expression),
-		Distance:        psql.Where[Q, float64](cols.Distance.Expression),
-		DurationSeconds: psql.Where[Q, int32](cols.DurationSeconds.Expression),
-		WeightUnit:      psql.Where[Q, string](cols.WeightUnit.Expression),
-		DistanceUnit:    psql.Where[Q, string](cols.DistanceUnit.Expression),
-		R:               setWhereR[Q]{cols: cols},
+		cols:                   cols,
+		ID:                     psql.Where[Q, uuid.UUID](cols.ID.Expression),
+		WorkoutID:              psql.Where[Q, uuid.UUID](cols.WorkoutID.Expression),
+		ExerciseID:             psql.Where[Q, uuid.UUID](cols.ExerciseID.Expression),
+		Weight:                 psql.Where[Q, float64](cols.Weight.Expression),
+		Reps:                   psql.Where[Q, int32](cols.Reps.Expression),
+		CreatedAt:              psql.Where[Q, time.Time](cols.CreatedAt.Expression),
+		UserID:                 psql.Where[Q, uuid.UUID](cols.UserID.Expression),
+		Distance:               psql.Where[Q, float64](cols.Distance.Expression),
+		DurationSeconds:        psql.Where[Q, int32](cols.DurationSeconds.Expression),
+		WeightUnit:             psql.Where[Q, string](cols.WeightUnit.Expression),
+		DistanceUnit:           psql.Where[Q, string](cols.DistanceUnit.Expression),
+		WorkoutGroupExerciseID: psql.WhereNull[Q, uuid.UUID](cols.WorkoutGroupExerciseID.Expression),
+		Position:               psql.Where[Q, int32](cols.Position.Expression),
+		R:                      setWhereR[Q]{cols: cols},
 	}
 }
 
@@ -911,6 +1047,20 @@ func (w setWhereR[Q]) HasExercise(filters ...bob.Mod[*dialect.SelectQuery]) mods
 		sm.Columns(psql.Raw("1")),
 		sm.From(Exercises.NameExpr()),
 		sm.Where(Exercises.Columns.ID.EQ(w.cols.ExerciseID)),
+	)
+	q.Apply(filters...)
+	return mods.Where[Q]{E: psql.Exists(q)}
+}
+
+// HasWorkoutGroupExercise filters parents that have a matching WorkoutGroupExercise using a
+// correlated EXISTS subquery (semi-join). Unlike an INNER JOIN it does not
+// multiply parent rows, so no DISTINCT is needed. The optional filters are
+// applied to the subquery (i.e. to WorkoutGroupExercises).
+func (w setWhereR[Q]) HasWorkoutGroupExercise(filters ...bob.Mod[*dialect.SelectQuery]) mods.Where[Q] {
+	q := psql.Select(
+		sm.Columns(psql.Raw("1")),
+		sm.From(WorkoutGroupExercises.NameExpr()),
+		sm.Where(WorkoutGroupExercises.Columns.ID.EQ(w.cols.WorkoutGroupExerciseID)),
 	)
 	q.Apply(filters...)
 	return mods.Where[Q]{E: psql.Exists(q)}
@@ -949,6 +1099,19 @@ func (o *Set) Preload(name string, retrieved any) error {
 			rel.R.Sets = SetSlice{o}
 		}
 		return nil
+	case "WorkoutGroupExercise":
+		rel, ok := retrieved.(*WorkoutGroupExercise)
+		if !ok {
+			return fmt.Errorf("set cannot load %T as %q", retrieved, name)
+		}
+
+		o.R.WorkoutGroupExercise = rel
+		o.R.Loaded.WorkoutGroupExercise = true
+
+		if rel != nil {
+			rel.R.Sets = SetSlice{o}
+		}
+		return nil
 	case "Workout":
 		rel, ok := retrieved.(*Workout)
 		if !ok {
@@ -968,8 +1131,9 @@ func (o *Set) Preload(name string, retrieved any) error {
 }
 
 type setPreloader struct {
-	Exercise func(...psql.PreloadOption) psql.Preloader
-	Workout  func(...psql.PreloadOption) psql.Preloader
+	Exercise             func(...psql.PreloadOption) psql.Preloader
+	WorkoutGroupExercise func(...psql.PreloadOption) psql.Preloader
+	Workout              func(...psql.PreloadOption) psql.Preloader
 }
 
 func buildSetPreloader() setPreloader {
@@ -986,6 +1150,19 @@ func buildSetPreloader() setPreloader {
 					},
 				},
 			}, Exercises.Columns.Names(), exerciseScanMapperNullable, opts...)
+		},
+		WorkoutGroupExercise: func(opts ...psql.PreloadOption) psql.Preloader {
+			return psql.Preload[*WorkoutGroupExercise, WorkoutGroupExerciseSlice](psql.PreloadRel{
+				Name: "WorkoutGroupExercise",
+				Sides: []psql.PreloadSide{
+					{
+						From:        Sets,
+						To:          WorkoutGroupExercises,
+						FromColumns: []string{"workout_group_exercise_id"},
+						ToColumns:   []string{"id"},
+					},
+				},
+			}, WorkoutGroupExercises.Columns.Names(), workoutGroupExerciseScanMapperNullable, opts...)
 		},
 		Workout: func(opts ...psql.PreloadOption) psql.Preloader {
 			return psql.Preload[*Workout, WorkoutSlice](psql.PreloadRel{
@@ -1004,13 +1181,17 @@ func buildSetPreloader() setPreloader {
 }
 
 type setThenLoader[Q orm.Loadable] struct {
-	Exercise func(...bob.Mod[*dialect.SelectQuery]) orm.Loader[Q]
-	Workout  func(...bob.Mod[*dialect.SelectQuery]) orm.Loader[Q]
+	Exercise             func(...bob.Mod[*dialect.SelectQuery]) orm.Loader[Q]
+	WorkoutGroupExercise func(...bob.Mod[*dialect.SelectQuery]) orm.Loader[Q]
+	Workout              func(...bob.Mod[*dialect.SelectQuery]) orm.Loader[Q]
 }
 
 func buildSetThenLoader[Q orm.Loadable]() setThenLoader[Q] {
 	type ExerciseLoadInterface interface {
 		LoadExercise(context.Context, bob.Executor, ...bob.Mod[*dialect.SelectQuery]) error
+	}
+	type WorkoutGroupExerciseLoadInterface interface {
+		LoadWorkoutGroupExercise(context.Context, bob.Executor, ...bob.Mod[*dialect.SelectQuery]) error
 	}
 	type WorkoutLoadInterface interface {
 		LoadWorkout(context.Context, bob.Executor, ...bob.Mod[*dialect.SelectQuery]) error
@@ -1021,6 +1202,12 @@ func buildSetThenLoader[Q orm.Loadable]() setThenLoader[Q] {
 			"Exercise",
 			func(ctx context.Context, exec bob.Executor, retrieved ExerciseLoadInterface, mods ...bob.Mod[*dialect.SelectQuery]) error {
 				return retrieved.LoadExercise(ctx, exec, mods...)
+			},
+		),
+		WorkoutGroupExercise: thenLoadBuilder[Q](
+			"WorkoutGroupExercise",
+			func(ctx context.Context, exec bob.Executor, retrieved WorkoutGroupExerciseLoadInterface, mods ...bob.Mod[*dialect.SelectQuery]) error {
+				return retrieved.LoadWorkoutGroupExercise(ctx, exec, mods...)
 			},
 		),
 		Workout: thenLoadBuilder[Q](
@@ -1107,6 +1294,86 @@ func (os SetSlice) LoadExercise(ctx context.Context, exec bob.Executor, mods ...
 	return nil
 }
 
+// LoadWorkoutGroupExercise loads the set's WorkoutGroupExercise into the .R struct
+func (o *Set) LoadWorkoutGroupExercise(ctx context.Context, exec bob.Executor, mods ...bob.Mod[*dialect.SelectQuery]) error {
+	if o == nil {
+		return nil
+	}
+
+	// Reset the relationship
+	o.R.WorkoutGroupExercise = nil
+	o.R.Loaded.WorkoutGroupExercise = false
+
+	related, err := o.WorkoutGroupExercise(mods...).One(ctx, exec)
+	if err != nil {
+		return err
+	}
+
+	related.R.Sets = SetSlice{o}
+
+	o.R.WorkoutGroupExercise = related
+	o.R.Loaded.WorkoutGroupExercise = true
+	return nil
+}
+
+// LoadWorkoutGroupExercise loads the set's WorkoutGroupExercise into the .R struct
+func (os SetSlice) LoadWorkoutGroupExercise(ctx context.Context, exec bob.Executor, mods ...bob.Mod[*dialect.SelectQuery]) error {
+	if len(os) == 0 {
+		return nil
+	}
+
+	workoutGroupExercises, err := os.WorkoutGroupExercise(mods...).All(ctx, exec)
+	if err != nil {
+		return err
+	}
+
+	for _, o := range os {
+		if o == nil {
+			continue
+		}
+
+		o.R.WorkoutGroupExercise = nil
+		o.R.Loaded.WorkoutGroupExercise = true
+	}
+	// O(N+M) stitch via a map keyed by the join column (key -> []parent; was O(N*M)).
+	setByKey := make(map[uuid.UUID][]*Set, len(os))
+	for _, o := range os {
+		if o == nil {
+			continue
+		}
+
+		// NULL never matches any row in SQL, so don't add it to the map
+		if !o.WorkoutGroupExerciseID.IsValue() {
+			continue
+		}
+
+		setByKey[o.WorkoutGroupExerciseID.MustGet()] = append(setByKey[o.WorkoutGroupExerciseID.MustGet()], o)
+	}
+
+	for _, rel := range workoutGroupExercises {
+
+		owners, ok := setByKey[rel.ID]
+		if !ok {
+			continue
+		}
+
+		for _, o := range owners {
+
+			// to-one: keep only the first matching child (matches the previous break)
+			if o.R.WorkoutGroupExercise != nil {
+				continue
+			}
+
+			rel.R.Sets = append(rel.R.Sets, o)
+
+			o.R.WorkoutGroupExercise = rel
+
+		}
+	}
+
+	return nil
+}
+
 // LoadWorkout loads the set's Workout into the .R struct
 func (o *Set) LoadWorkout(ctx context.Context, exec bob.Executor, mods ...bob.Mod[*dialect.SelectQuery]) error {
 	if o == nil {
@@ -1183,9 +1450,10 @@ func (os SetSlice) LoadWorkout(ctx context.Context, exec bob.Executor, mods ...b
 }
 
 type setJoins[Q dialect.Joinable] struct {
-	typ      string
-	Exercise modAs[Q, exerciseColumns]
-	Workout  modAs[Q, workoutColumns]
+	typ                  string
+	Exercise             modAs[Q, exerciseColumns]
+	WorkoutGroupExercise modAs[Q, workoutGroupExerciseColumns]
+	Workout              modAs[Q, workoutColumns]
 }
 
 func (j setJoins[Q]) aliasedAs(alias string) setJoins[Q] {
@@ -1203,6 +1471,20 @@ func buildSetJoins[Q dialect.Joinable](cols setColumns, typ string) setJoins[Q] 
 				{
 					mods = append(mods, dialect.Join[Q](typ, Exercises.NameExpr().As(to.Alias())).On(
 						to.ID.EQ(cols.ExerciseID),
+					))
+				}
+
+				return mods
+			},
+		},
+		WorkoutGroupExercise: modAs[Q, workoutGroupExerciseColumns]{
+			c: WorkoutGroupExercises.Columns,
+			f: func(to workoutGroupExerciseColumns) bob.Mod[Q] {
+				mods := make(mods.QueryMods[Q], 0, 1)
+
+				{
+					mods = append(mods, dialect.Join[Q](typ, WorkoutGroupExercises.NameExpr().As(to.Alias())).On(
+						to.ID.EQ(cols.WorkoutGroupExerciseID),
 					))
 				}
 

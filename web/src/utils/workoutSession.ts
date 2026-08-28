@@ -3,7 +3,7 @@ import type { Exercise } from '@/proto/api/v1/shared_pb'
 import type { Set } from '@/types/workout'
 import type { GroupMode } from '@/utils/routineGroups'
 
-import { RoutineGroupMode } from '@/proto/api/v1/routine_service_pb'
+import { RoutineGroupMode } from '@/proto/api/v1/shared_pb'
 import { hasAnyExerciseSetValue, isExerciseSetComplete } from '@/utils/exerciseMeasurements'
 import { defaultRestSeconds } from '@/utils/routineGroups'
 
@@ -206,6 +206,48 @@ export const sessionGroups = (
 
   return blocks.filter((block) => block.stations.length > 0)
 }
+
+/**
+ * One block as a save describes it: how it ran, and how many sets each of its
+ * exercises logged there.
+ *
+ * The sets themselves travel with the workout — one copy of them is enough —
+ * and a block states how many of each exercise's it took. The blocks are read
+ * in order against that list, which is what lets an exercise trained in two of
+ * them split between the two.
+ */
+export interface SavedGroup {
+  mode: GroupMode
+  restBetweenExercisesSeconds: number
+  restBetweenRoundsSeconds: number
+  rounds: number
+  exercises: { exerciseId: string; setCount: number }[]
+}
+
+/**
+ * The session's blocks as the save describes them.
+ *
+ * A station that logged nothing is left out, and a block left holding nothing
+ * with it: a block with no work in it is not part of the session that happened.
+ */
+export const savedGroups = (
+  blocks: readonly SessionGroup[],
+  setCounts: Record<string, number>,
+): SavedGroup[] =>
+  blocks
+    .map((block) => ({
+      mode: block.mode,
+      restBetweenExercisesSeconds: block.restBetweenExercisesSeconds,
+      restBetweenRoundsSeconds: block.restBetweenRoundsSeconds,
+      rounds: block.rounds,
+      exercises: block.stations
+        .map((station) => ({
+          exerciseId: station.exercise.id,
+          setCount: setCounts[station.key] ?? 0,
+        }))
+        .filter((entry) => entry.setCount > 0),
+    }))
+    .filter((block) => block.exercises.length > 0)
 
 /**
  * The station the session moves to once a block is finished with.

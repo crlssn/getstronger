@@ -1,7 +1,7 @@
 import type { Routine } from '@/proto/api/v1/routine_service_pb'
 import type { Exercise, ExerciseSets } from '@/proto/api/v1/shared_pb'
 
-import { RoutineGroupMode } from '@/proto/api/v1/routine_service_pb'
+import { RoutineGroupMode } from '@/proto/api/v1/shared_pb'
 
 import {
   Bars3Icon,
