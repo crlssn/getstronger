@@ -580,8 +580,7 @@ flag "--path <path>" help="Directory to publish, defaulting to web/screenshots/c
 flag "--append" help="Append the markdown to the pull request body, replacing an earlier block"
 '''
 # The bucket name is deliberately absent from here: it is a GitHub repository
-# variable, and locally it comes from .env, so no clone publishes to a bucket
-# it did not configure. See the README's Scaleway section.
+# variable, and locally it comes from .env. See the README's Scaleway section.
 env = { _.file = ".env" }
 run = './scripts/pr_screenshots.sh "$usage_number" ${usage_path+--path "$usage_path"} ${usage_append+--append}'
 

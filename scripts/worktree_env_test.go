@@ -194,15 +194,15 @@ func TestItNamesTheCredentialsScreenshotPublishingWillNeed(t *testing.T) {
 
 	require.Equal(t, 0, result.exitCode, result.output)
 	require.Contains(t, result.output, "pr:screenshots")
-	require.Contains(t, result.output, "SCW_SCREENSHOTS_BUCKET_NAME")
 	require.Contains(t, result.output, "AWS_ACCESS_KEY_ID")
 	require.Contains(t, result.output, "AWS_SECRET_ACCESS_KEY")
+	require.NotContains(t, result.output, "SCW_SCREENSHOTS_BUCKET_NAME", ".env.example already names the bucket")
 }
 
 func TestItStaysQuietWhenTheScreenshotCredentialsAreAlreadyThere(t *testing.T) {
 	main := newCheckout(t)
 	tree := addWorktree(t, main, "feature-a")
-	write(t, tree, ".env", "SCW_SCREENSHOTS_BUCKET_NAME=bucket\nAWS_ACCESS_KEY_ID=key\nAWS_SECRET_ACCESS_KEY=secret\n")
+	write(t, tree, ".env", "AWS_ACCESS_KEY_ID=key\nAWS_SECRET_ACCESS_KEY=secret\n")
 
 	result := runEnv(t, tree, nil)
 
@@ -215,17 +215,32 @@ func TestItStaysQuietWhenTheScreenshotCredentialsAreAlreadyThere(t *testing.T) {
 // they are for fails on a pull request that is already open.
 func TestItCarriesTheScreenshotCredentialsFromTheMainCheckout(t *testing.T) {
 	main := newCheckout(t)
-	write(t, main, ".env", "SCW_SCREENSHOTS_BUCKET_NAME=bucket\nAWS_ACCESS_KEY_ID=key\nAWS_SECRET_ACCESS_KEY=secret\n")
+	write(t, main, ".env", "AWS_ACCESS_KEY_ID=key\nAWS_SECRET_ACCESS_KEY=secret\n")
 	tree := addWorktree(t, main, "feature-a")
 
 	result := runEnv(t, tree, nil)
 
 	require.Equal(t, 0, result.exitCode, result.output)
 	env := readFile(t, filepath.Join(tree, ".env"))
-	require.Contains(t, env, "SCW_SCREENSHOTS_BUCKET_NAME=bucket")
 	require.Contains(t, env, "AWS_ACCESS_KEY_ID=key")
 	require.Contains(t, env, "AWS_SECRET_ACCESS_KEY=secret")
 	require.NotContains(t, result.output, "pr:screenshots", "nothing is missing, so nothing is said")
+}
+
+// The bucket is not a credential: .env.example names it, so every worktree has
+// the same one and a main checkout pointed at another bucket for an afternoon
+// does not quietly hand its name to every worktree made that day.
+func TestItDoesNotCarryTheBucketNameFromTheMainCheckout(t *testing.T) {
+	main := newCheckout(t)
+	write(t, main, ".env", "SCW_SCREENSHOTS_BUCKET_NAME=someone-elses-bucket\n")
+	tree := addWorktree(t, main, "feature-a")
+
+	result := runEnv(t, tree, nil)
+
+	require.Equal(t, 0, result.exitCode, result.output)
+	env := readFile(t, filepath.Join(tree, ".env"))
+	require.Contains(t, env, "SCW_SCREENSHOTS_BUCKET_NAME=getstronger.screenshots")
+	require.NotContains(t, env, "someone-elses-bucket")
 }
 
 // By name, never by copying the file: a cloud DB_HOST appended to the main
@@ -408,7 +423,7 @@ func newCheckout(t *testing.T) string {
 	git(t, dir, "config", "user.email", "worktree@example.test")
 	git(t, dir, "config", "user.name", "Worktree Test")
 
-	write(t, dir, ".env.example", "DB_PORT=5433\nSERVER_PORT=8080\nSSE_PORT=8081\nCORS_ALLOWED_ORIGIN=http://localhost:5173\nMAILHOG_SMTP_PORT=1025\n")
+	write(t, dir, ".env.example", "DB_PORT=5433\nSERVER_PORT=8080\nSSE_PORT=8081\nCORS_ALLOWED_ORIGIN=http://localhost:5173\nMAILHOG_SMTP_PORT=1025\nSCW_SCREENSHOTS_BUCKET_NAME=getstronger.screenshots\n")
 	write(t, dir, "web/.env.example", "VITE_API_URL=http://localhost:8080\n")
 	write(t, dir, ".claude/launch.json.example", `{"configurations": [{"port": 5173}]}`+"\n")
 	require.NoError(t, os.MkdirAll(filepath.Join(dir, ".claude/worktrees"), 0o755))

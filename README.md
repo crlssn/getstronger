@@ -543,11 +543,11 @@ Anything outside `web/screenshots/` is refused, symlinks included; the baseline 
 The bucket is not the one the web app is deployed to: `deploy.yml` syncs that one with `--delete`, so a `pr/` prefix in it would disappear on the next merge to `main`. Create it once, and give it a lifecycle rule so old images clean themselves up:
 
 ```bash
-scw object bucket create getstronger-pull-requests region=fr-par
+scw object bucket create getstronger.screenshots region=fr-par
 
 aws s3api put-bucket-lifecycle-configuration \
   --endpoint-url https://s3.fr-par.scw.cloud \
-  --bucket getstronger-pull-requests \
+  --bucket getstronger.screenshots \
   --lifecycle-configuration '{
     "Rules": [
       {
@@ -559,9 +559,9 @@ aws s3api put-bucket-lifecycle-configuration \
     ]
   }'
 
-gh variable set SCW_SCREENSHOTS_BUCKET_NAME --body getstronger-pull-requests
+gh variable set SCW_SCREENSHOTS_BUCKET_NAME --body getstronger.screenshots
 ```
 
 The bucket itself stays private: only the objects the task uploads are readable, and only for thirty days.
 
-`SCW_SCREENSHOTS_BUCKET_NAME` is a repository variable rather than a value written into the task, so nothing publishes to a bucket it was not pointed at. Locally it comes from `.env`, alongside `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` — the `getstronger-deploy` API key from step 7 already carries the Object Storage permission sets the upload needs. Without either, the task fails and uploads nothing. `mise run worktree:env` carries those three keys from the main checkout's `.env` into a new worktree's, by name — a worktree whose `.env` came from `.env.example` alone could not publish anything. Nothing else crosses: a cloud `DB_HOST` added to the main file would point a worktree's backend at production.
+`SCW_SCREENSHOTS_BUCKET_NAME` is a repository variable rather than a value written into the task, so nothing publishes to a bucket it was not pointed at. Locally it comes from `.env`, which `.env.example` fills in: the bucket is not a secret and is the same for everyone. The two credentials beside it are — `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`, the `getstronger-deploy` API key from step 7, which already carries the Object Storage permission sets the upload needs. Without them the task fails and uploads nothing, so `mise run worktree:env` carries just those two from the main checkout's `.env` into a new worktree's, by name. Nothing else crosses: a cloud `DB_HOST` added to the main file would point a worktree's backend at production.
