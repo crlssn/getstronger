@@ -35,6 +35,7 @@ aspirational.
 | A value a row can unfold       | `<AppValueChip>`                                    |
 | A panel around content         | `<AppCard>`, or the `card` utility inside a module  |
 | Rows of things                 | `<AppList>` + `<AppListItem>` / `<AppListItemLink>` |
+| A row with a value and a way on | `<AppListRow>`                                     |
 | A row that is one tap          | `<AppOptionRow>`                                    |
 | Nothing to show yet            | `<AppEmptyState>`                                   |
 | A fetch that failed            | `<AppErrorState>`                                   |
@@ -226,6 +227,19 @@ An unordered list that fetches its next page when the bottom scrolls into view.
 
 A row, and a row that is a link. `is="danger"` for a destructive row,
 `is="header"` for a section label.
+
+### `<AppListRow>`
+
+A tile, what the row is, what it says, and what it is worth. Four screens drew
+this by hand — the exercise library, the workout history, and the same personal
+best twice — at two type scales, two paddings, and two answers to whether a
+link shows where it goes. `to` is that answer now: **a row that navigates
+always shows the chevron**, so tappable is something the row looks rather than
+something the reader finds out.
+
+Below 520px the `trailing` value drops under the title instead of competing
+with it: on a 390px screen a long exercise name and its heaviest set cannot
+both have the room they need on one line.
 
 ### `<AppOptionRow>`
 

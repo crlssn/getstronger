@@ -1,0 +1,7 @@
+@reference '../../assets/base.css';
+
+/* Amber is the record colour throughout the app — the trophy here, the badge
+   on a workout card, the tint on a feed row that set one. */
+.trophy {
+  @apply bg-record-surface text-record;
+}

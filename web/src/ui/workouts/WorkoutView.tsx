@@ -11,6 +11,8 @@ import { useConfirmationStore } from '@/stores/confirmation'
 import { selectActivePlan, selectNextRoutine, useDashboardStore } from '@/stores/dashboard'
 import { usePlanStore } from '@/stores/plans'
 import { AppButton } from '@/ui/components/AppButton'
+import { AppList } from '@/ui/components/AppList'
+import { AppListRow } from '@/ui/components/AppListRow'
 import { AppPageHeader } from '@/ui/components/AppPageHeader'
 import { AppSkeleton } from '@/ui/components/AppSkeleton'
 import { formatTimestamp } from '@/utils/datetime'
@@ -190,17 +192,16 @@ export const WorkoutView = () => {
         </header>
 
         {workouts.length > 0 && (
-          <div className={styles.historyList}>
+          <AppList className={styles.historyList}>
             {workouts.map((workout) => (
-              <Link key={workout.id} to={`/workouts/${workout.id}`}>
-                <span>
-                  <strong>{workout.name}</strong>
-                  <small>{workoutMeta(workout)}</small>
-                </span>
-                <ChevronRightIcon aria-hidden="true" />
-              </Link>
+              <AppListRow
+                key={workout.id}
+                meta={<small>{workoutMeta(workout)}</small>}
+                title={workout.name}
+                to={`/workouts/${workout.id}`}
+              />
             ))}
-          </div>
+          </AppList>
         )}
 
         {!loaded ? (

@@ -1,20 +1,18 @@
-import { ArrowTrendingUpIcon, ChevronRightIcon, TrophyIcon } from '@heroicons/react/24/outline'
+import { ArrowTrendingUpIcon, TrophyIcon } from '@heroicons/react/24/outline'
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link } from 'react-router-dom'
 
 import { useDashboardStore } from '@/stores/dashboard'
 import { useProgressStore } from '@/stores/progress'
 import { AppEmptyState } from '@/ui/components/AppEmptyState'
 import { AppErrorState } from '@/ui/components/AppErrorState'
+import { AppList } from '@/ui/components/AppList'
 import { AppSegmented } from '@/ui/components/AppSegmented'
 import { AppSkeleton } from '@/ui/components/AppSkeleton'
 import { PageNavAction } from '@/ui/components/PageNavAction'
-import { ExerciseTags } from '@/ui/exercises/ExerciseTags'
+import { RecordRow } from '@/ui/features/RecordRow'
 import { WorkoutChart } from '@/ui/features/WorkoutChart'
 import { totalVolume, volumeSeries, withinDays, type VolumeGranularity } from '@/utils/dailyVolume'
-import { formatTimestamp } from '@/utils/datetime'
-import { formatExerciseSet } from '@/utils/exerciseMeasurements'
 import { formatNumber } from '@/utils/numbers'
 import styles from './ProgressView.module.css'
 
@@ -126,28 +124,11 @@ export const ProgressView = () => {
           {dashboardFailed && personalBests.length === 0 ? (
             <AppErrorState onRetry={load} />
           ) : personalBests.length > 0 ? (
-            <div className={styles.recordList}>
+            <AppList className={styles.recordList}>
               {personalBests.map((personalBest) => (
-                <Link key={personalBest.set?.id} to={`/exercises/${personalBest.exercise?.id}`}>
-                  <span className={styles.recordIcon}>
-                    <TrophyIcon aria-hidden="true" />
-                  </span>
-                  <span className="min-w-0">
-                    <strong>{personalBest.exercise?.name}</strong>
-                    <ExerciseTags compact tags={personalBest.exercise?.tags} />
-                    {personalBest.set?.metadata?.createdAt && (
-                      <small>{formatTimestamp(personalBest.set.metadata.createdAt)}</small>
-                    )}
-                  </span>
-                  <span className={styles.recordValue}>
-                    {personalBest.set
-                      ? formatExerciseSet(personalBest.set, personalBest.exercise)
-                      : ''}
-                  </span>
-                  <ChevronRightIcon className={styles.chevron} aria-hidden="true" />
-                </Link>
+                <RecordRow key={personalBest.set?.id} record={personalBest} />
               ))}
-            </div>
+            </AppList>
           ) : (
             <AppEmptyState
               action={{ label: t('home.startWorkout'), to: '/workout' }}

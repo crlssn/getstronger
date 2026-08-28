@@ -7,11 +7,9 @@ import { useParams } from 'react-router-dom'
 import { getPersonalBests } from '@/http/requests'
 import { AppErrorState } from '@/ui/components/AppErrorState'
 import { AppList } from '@/ui/components/AppList'
-import { AppListItem, AppListItemLink } from '@/ui/components/AppListItem'
+import { AppListItem } from '@/ui/components/AppListItem'
 import { AppSkeleton } from '@/ui/components/AppSkeleton'
-import { ExerciseTags } from '@/ui/exercises/ExerciseTags'
-import { formatTimestamp } from '@/utils/datetime'
-import { formatExerciseSet } from '@/utils/exerciseMeasurements'
+import { RecordRow } from '@/ui/features/RecordRow'
 
 /** This profile's best set for every exercise they have logged. */
 export const UserPersonalBests = () => {
@@ -43,16 +41,7 @@ export const UserPersonalBests = () => {
     <AppList>
       {personalBests.length === 0 && <AppListItem>{t('common.nothingHere')}</AppListItem>}
       {personalBests.map((best) => (
-        <AppListItemLink key={best.exercise?.id} to={`/exercises/${best.exercise?.id}`}>
-          <div className="font-semibold">
-            {best.exercise?.name}
-            <ExerciseTags compact tags={best.exercise?.tags} />
-            <p className="mt-1 text-sm font-normal text-text-muted">
-              {formatTimestamp(best.set?.metadata?.createdAt)}
-            </p>
-          </div>
-          {best.set ? formatExerciseSet(best.set, best.exercise) : ''}
-        </AppListItemLink>
+        <RecordRow key={best.exercise?.id} record={best} />
       ))}
     </AppList>
   )

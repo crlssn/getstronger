@@ -12,30 +12,8 @@
   @apply mb-2 px-1 text-eyebrow font-bold uppercase text-text-subtle;
 }
 
+/* AppList is the card and AppListRow the row; the group only says that this
+   one sits under its heading rather than under the page's own margin. */
 .exerciseGroupCard {
-  @apply card overflow-hidden;
-}
-
-.exerciseGroupCard > a {
-  @apply flex min-h-16 items-center justify-between gap-3 border-t border-border px-5 py-3 transition hover:text-ink-strong;
-}
-
-.exerciseGroupCard > a:first-child {
-  @apply border-t-0;
-}
-
-.exerciseCopy {
-  @apply min-w-0;
-}
-
-.exerciseCopy strong {
-  @apply block truncate text-body-lg font-semibold text-text;
-}
-
-.exerciseCopy small {
-  @apply mt-0.5 block truncate text-meta text-text-subtle;
-}
-
-.exerciseGroupCard > a > svg {
-  @apply size-5 shrink-0 text-text-subtle;
+  @apply mb-0;
 }
