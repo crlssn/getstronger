@@ -4,7 +4,6 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 import { useActionButton } from '@/stores/actionButton'
 import { useAuthStore } from '@/stores/auth'
-import { useNavTabs } from '@/stores/navTabs'
 import { usePageTitleStore } from '@/stores/pageTitle'
 import {
   applyPageTitle,
@@ -67,36 +66,14 @@ describe('isSignedIn', () => {
 
 describe('onNavigate', () => {
   beforeEach(() => {
-    useNavTabs.setState({ tabs: [{ name: 'Workouts', href: '/users/1' }] })
     useActionButton.setState({ action: vi.fn(), icon: () => null })
-  })
-
-  test('clears the tabs when the screen changes', () => {
-    onNavigate('exercises', 'home')
-
-    expect(useNavTabs.getState().tabs).toEqual([])
-  })
-
-  // The tabs belong to the screen, and /users/:id keeps them across its own
-  // children.
-  test('keeps the tabs while staying on the same screen', () => {
-    onNavigate('user-view', 'user-view')
-
-    expect(useNavTabs.getState().tabs).toHaveLength(1)
   })
 
   // The action button belongs to a view of a screen, so even moving between a
   // parent's children has to drop it.
-  test('always clears the action button', () => {
-    onNavigate('user-view', 'user-view')
+  test('clears the action button', () => {
+    onNavigate()
 
-    expect(useActionButton.getState().icon).toBeUndefined()
-  })
-
-  test('clears both on the first navigation', () => {
-    onNavigate('home')
-
-    expect(useNavTabs.getState().tabs).toEqual([])
     expect(useActionButton.getState().icon).toBeUndefined()
   })
 })

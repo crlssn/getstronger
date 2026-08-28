@@ -21,31 +21,23 @@ export const buildRouteObjects = (
   from: AppRoute[] = routes,
   lookup: Partial<Record<string, ScreenLoader>> = screens,
 ): RouteObject[] => {
-  // The screen a navigation landed on, as opposed to the view of it. Moving
-  // between a screen's own tabs is not a change of screen, and the tab bar's
-  // state has to survive it.
-  let previousScreen: string | undefined
-
-  const loaderFor = (route: AppRoute, screen: string) => () => {
+  const loaderFor = (route: AppRoute) => () => {
     const to = redirectForRoute(route.access)
     if (to) throw redirect(to)
 
-    onNavigate(screen, previousScreen)
-    previousScreen = screen
+    onNavigate()
     applyPageTitle(route.titleKey)
     return null
   }
 
-  const build = (list: AppRoute[], parentScreen?: string): RouteObject[] =>
+  const build = (list: AppRoute[]): RouteObject[] =>
     list.map((route) => {
-      const screen = parentScreen ?? route.name
       const lazy = lookup[route.name]
 
       // A parent with children is only a frame around them: its children carry
-      // the guard and the bookkeeping, and running them twice would reset the
-      // tab bar the frame exists to hold.
+      // the guard and the bookkeeping.
       if (route.children?.length) {
-        return { path: route.path, lazy, children: build(route.children, screen) }
+        return { path: route.path, lazy, children: build(route.children) }
       }
 
       return {
@@ -55,7 +47,7 @@ export const buildRouteObjects = (
         // The landing route has no screen — its loader always redirects — and
         // this stops the router falling back to an outlet with nothing in it.
         ...(lazy ? {} : { element: null }),
-        loader: loaderFor(route, screen),
+        loader: loaderFor(route),
       }
     })
 
