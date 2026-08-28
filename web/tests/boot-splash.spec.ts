@@ -15,10 +15,27 @@ const theme = readFileSync(join(__dirname, '..', 'src', 'assets', 'theme.css'), 
 // and a rule reads the same either way.
 const flat = (value: string) => value.replace(/\s+/g, ' ').trim()
 
-const declarationsFor = (selector: string) => {
-  const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-  return flat(new RegExp(`${escaped}\\s*\\{([^}]*)\\}`).exec(css)?.[1] ?? '')
+// Everything outside the reduced-motion block, and the block itself. The two
+// declare the same selectors and say opposite things about them.
+const reducedMotionBlock =
+  /@media \(prefers-reduced-motion: reduce\) \{([\s\S]*?)\n {6}\}/.exec(css)?.[1] ?? ''
+// Comments sit between the rules, and a selector reads as itself without them.
+const withoutComments = (source: string) => source.replace(/\/\*[\s\S]*?\*\//g, '')
+const fullMotion = withoutComments(css.replace(reducedMotionBlock, ''))
+
+const declarationsFor = (selector: string, source = fullMotion) => {
+  const rule = [...withoutComments(source).matchAll(/([^{}]+)\{([^{}]*)\}/g)].find(
+    ([, selectors]) =>
+      selectors
+        .split(',')
+        .map((one) => flat(one))
+        .includes(selector),
+  )
+  return flat(rule?.[2] ?? '')
 }
+
+const keyframes = (name: string) =>
+  flat(new RegExp(`@keyframes ${name} \\{([\\s\\S]*?)\\n {6}\\}`).exec(css)?.[1] ?? '')
 
 // theme.css has not loaded yet when the splash paints, so the splash restates
 // the handful of values it needs. This reads them back out of the token layer,
@@ -29,41 +46,88 @@ const token = (name: string) => {
   return flat(value)
 }
 
-// The sprite is a strip of frames behind a window one frame wide, so the count
-// has to agree in three places: the drawing, the window, and the step.
-const frames = 6
+// Three plates a side, loaded heaviest first so that a plate never slides
+// through the one already on the bar.
+const plates = ['p1', 'p2', 'p3'] as const
+
+// A keyframe track, read back as the stops it is written as: the percentage
+// the plate is at, and how far off the collar it sits.
+const stops = (name: string) =>
+  [
+    ...keyframes(name).matchAll(/([\d.%, ]+)\{\s*transform: translateX\((-?[\d.]+)(?:px)?\)/g),
+  ].flatMap(([, percentages, offset]) =>
+    percentages
+      .split(',')
+      .filter((percentage) => percentage.trim())
+      .map((percentage) => ({ at: parseFloat(percentage), offset: parseFloat(offset) })),
+  )
+
+// Seated is within the collar's own couple of pixels: the plate lands with a
+// shove into the collar before it settles, and that shove is still seated.
+const seated = (offset: number) => Math.abs(offset) <= 2
+const loadedAt = (name: string) => stops(name).find((stop) => seated(stop.offset))?.at
+const strippedAt = (name: string) => {
+  const track = stops(name)
+  const landing = track.findIndex((stop) => seated(stop.offset))
+  return track.slice(landing).find((stop) => !seated(stop.offset))?.at
+}
 
 describe('boot splash', () => {
   const document = new DOMParser().parseFromString(html, 'text/html')
 
-  it('lifts under the brand', () => {
-    expect(document.querySelector('#boot-splash .boot-lifter svg')).not.toBeNull()
+  it('loads a bar under the brand', () => {
+    expect(document.querySelector('#boot-splash .boot-barbell svg')).not.toBeNull()
   })
 
-  it('draws every frame of the lift', () => {
-    expect(document.querySelectorAll('#boot-splash .boot-lifter .boot-frame')).toHaveLength(frames)
+  it('hangs three plates on each end', () => {
+    expect(document.querySelectorAll('#boot-splash .boot-plate-l')).toHaveLength(plates.length)
+    expect(document.querySelectorAll('#boot-splash .boot-plate-r')).toHaveLength(plates.length)
   })
 
-  it('shows one frame at a time', () => {
-    expect(declarationsFor('#boot-splash .boot-lifter')).toMatch(/overflow:\s*hidden/)
+  it('slides every plate on from off the bar and takes it off again', () => {
+    for (const side of ['l', 'r'] as const)
+      for (const plate of plates) {
+        const track = stops(`load-${side}${plate.slice(1)}`)
+        expect(track.length).toBeGreaterThan(0)
+        expect(seated(track[0].offset)).toBe(false)
+        expect(seated(track[track.length - 1].offset)).toBe(false)
+        expect(track.some((stop) => stop.offset === 0)).toBe(true)
+      }
   })
 
-  it('draws the lifter in strokes rather than pixels', () => {
-    const stroke = declarationsFor('#boot-splash .boot-lifter path')
-    expect(stroke).toMatch(/stroke-linecap:\s*round/)
-    expect(stroke).toMatch(/stroke-linejoin:\s*round/)
-    expect(css).not.toMatch(/crispEdges/)
+  it('loads the two ends towards one another', () => {
+    for (const plate of plates) {
+      const left = stops(`load-l${plate.slice(1)}`)[0].offset
+      const right = stops(`load-r${plate.slice(1)}`)[0].offset
+      expect(left).toBeLessThan(0)
+      expect(right).toBe(-left)
+    }
   })
 
-  // A limb crossing the body is laid on paper of its own. That paper is the
-  // splash's background, so the two have to be the same colour.
-  it('lays a crossing limb on paper of the splash’s own colour', () => {
-    expect(declarationsFor('#boot-splash .boot-arm-behind')).toContain(
-      `stroke: ${token('color-surface-sunken')}`,
+  // The one thing that keeps the animation honest: a plate that loaded before
+  // another has to come off after it, or the two slide through one another.
+  it('loads heaviest first and strips lightest first', () => {
+    const loads = plates.map((plate) => loadedAt(`load-l${plate.slice(1)}`))
+    const strips = plates.map((plate) => strippedAt(`load-l${plate.slice(1)}`))
+    expect(loads).toEqual([...loads].sort((a, b) => (a ?? 0) - (b ?? 0)))
+    expect(strips).toEqual([...strips].sort((a, b) => (b ?? 0) - (a ?? 0)))
+  })
+
+  it('dips the bar as each pair lands', () => {
+    const dips = [
+      ...keyframes('bar-dip').matchAll(/([\d.]+)% \{ transform: translateY\(([\d.]+)px/g),
+    ]
+    expect(dips.map(([, at]) => parseFloat(at))).toEqual(
+      plates.map((plate) => loadedAt(`load-l${plate.slice(1)}`)),
     )
-    expect(declarationsFor('#boot-splash .boot-plate-behind')).toContain(
-      `fill: ${token('color-surface-sunken')}`,
-    )
+    for (const [, , drop] of dips) expect(parseFloat(drop)).toBeGreaterThan(0)
+  })
+
+  it('runs the bar and its plates off one clock', () => {
+    const duration = /(\d+(?:\.\d+)?s)/.exec(declarationsFor('#boot-splash .boot-rig'))?.[1]
+    expect(duration).toBeDefined()
+    expect(declarationsFor('#boot-splash .boot-plate-l')).toContain(duration)
+    expect(declarationsFor('#boot-splash .boot-plate-r')).toContain(duration)
   })
 
   it('restates the theme it cannot wait for', () => {
@@ -82,10 +146,12 @@ describe('boot splash', () => {
     )
   })
 
-  it('cuts from frame to frame rather than sliding between them', () => {
-    expect(declarationsFor('#boot-splash .boot-lifter svg')).toMatch(
-      new RegExp(`animation:[^;]*\\bsteps\\(${frames}\\)[^;]*\\binfinite\\b`),
-    )
+  // Three weights of plate, so a loaded bar reads as loaded rather than as one
+  // black slab. Each is a step of the ink ramp the rest of the app is drawn in.
+  it('draws the plates in the ink ramp', () => {
+    expect(declarationsFor('#boot-splash .p1')).toContain(`fill: ${token('color-ink')}`)
+    expect(declarationsFor('#boot-splash .p2')).toContain(`fill: ${token('color-ink-muted')}`)
+    expect(declarationsFor('#boot-splash .p3')).toContain(`fill: ${token('color-text-subtle')}`)
   })
 
   // The splash cannot import from src, so it restates the lockup by hand.
@@ -102,7 +168,6 @@ describe('boot splash', () => {
 
   it('leaves the brand itself still', () => {
     for (const selector of [
-      '#boot-splash',
       '#boot-splash .boot-brand',
       '#boot-splash .boot-mark',
       '#boot-splash .boot-copy',
@@ -110,9 +175,23 @@ describe('boot splash', () => {
       expect(declarationsFor(selector)).not.toMatch(/animation/)
   })
 
-  it('holds the lift still for a reader who asked for less motion', () => {
-    const reducedMotion = /@media \(prefers-reduced-motion: reduce\) \{([\s\S]*?)\n {6}\}/.exec(css)
-    expect(reducedMotion?.[1]).toContain('.boot-lifter')
-    expect(reducedMotion?.[1]).toMatch(/animation:\s*none/)
+  // A start that beats the splash should never flash it, so it fades in on a
+  // delay rather than painting with the document.
+  it('waits a beat before showing itself', () => {
+    const splash = declarationsFor('#boot-splash')
+    expect(splash).toMatch(/opacity: 0/)
+    expect(splash).toMatch(/animation: boot-reveal [\d.]+m?s [a-z-]+ 0\.[1-9]\d*s forwards/)
+    expect(keyframes('boot-reveal')).toContain('opacity: 1')
+  })
+
+  it('parks the bar loaded for a reader who asked for less motion', () => {
+    for (const selector of [
+      '#boot-splash .boot-rig',
+      '#boot-splash .boot-plate-l',
+      '#boot-splash .boot-plate-r',
+    ])
+      expect(declarationsFor(selector, reducedMotionBlock)).toMatch(/animation: none/)
+    // Still revealed, or the splash would be a blank page.
+    expect(declarationsFor('#boot-splash', reducedMotionBlock)).toMatch(/animation-duration/)
   })
 })
