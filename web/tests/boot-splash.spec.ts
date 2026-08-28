@@ -48,12 +48,22 @@ describe('boot splash', () => {
     expect(declarationsFor('#boot-splash .boot-lifter')).toMatch(/overflow:\s*hidden/)
   })
 
-  it('stands the lift on a card, the way every other surface is drawn', () => {
-    const stage = declarationsFor('#boot-splash .boot-stage')
-    expect(stage).toContain(`border-radius: ${token('radius-card')}`)
-    expect(stage).toContain(`background: ${token('color-surface')}`)
-    expect(stage).toContain(`border: 1px solid ${token('color-border')}`)
-    expect(stage).toContain(`box-shadow: ${token('shadow-card')}`)
+  it('draws the lifter in strokes rather than pixels', () => {
+    const stroke = declarationsFor('#boot-splash .boot-lifter path')
+    expect(stroke).toMatch(/stroke-linecap:\s*round/)
+    expect(stroke).toMatch(/stroke-linejoin:\s*round/)
+    expect(css).not.toMatch(/crispEdges/)
+  })
+
+  // A limb crossing the body is laid on paper of its own. That paper is the
+  // splash's background, so the two have to be the same colour.
+  it('lays a crossing limb on paper of the splash’s own colour', () => {
+    expect(declarationsFor('#boot-splash .boot-arm-behind')).toContain(
+      `stroke: ${token('color-surface-sunken')}`,
+    )
+    expect(declarationsFor('#boot-splash .boot-plate-behind')).toContain(
+      `fill: ${token('color-surface-sunken')}`,
+    )
   })
 
   it('restates the theme it cannot wait for', () => {
@@ -68,7 +78,7 @@ describe('boot splash', () => {
       `color: ${token('color-text-subtle')}`,
     )
     expect(declarationsFor('#boot-splash .boot-ground')).toContain(
-      `fill: ${token('color-ink-tint')}`,
+      `fill: ${token('color-ink-border')}`,
     )
   })
 

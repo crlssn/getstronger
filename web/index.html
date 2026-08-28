@@ -83,36 +83,56 @@
       /* Six frames of a power clean, run behind a window one frame wide. The
          wait has no known length, so the loop reads as work rather than as
          progress towards a finish. */
-      #boot-splash .boot-stage {
-        display: grid;
-        place-items: center;
-        padding: 1.25rem;
-        border: 1px solid #edebe7;
-        border-radius: 1rem;
-        background: #ffffff;
-        box-shadow:
-          0 1px 2px rgb(23 23 26 / 0.05),
-          0 8px 20px -14px rgb(23 23 26 / 0.18);
-      }
       #boot-splash .boot-lifter {
         overflow: hidden;
         width: 7.5rem;
         height: 7.5rem;
-        color: #17171a;
       }
       #boot-splash .boot-lifter svg {
         display: block;
         width: 45rem;
         height: 7.5rem;
-        fill: currentColor;
         animation: boot-splash-clean 1.2s steps(6) infinite;
       }
-      /* Pixels stay square; the floor under them is the one thing that curves. */
-      #boot-splash .boot-frame {
-        shape-rendering: crispEdges;
+      /* The lifter is a stroked skeleton: a pose is a set of joints, and the
+         weight of each stroke is what makes a torso a torso and an arm an arm. */
+      #boot-splash .boot-lifter path {
+        fill: none;
+        stroke: #17171a;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+      #boot-splash .boot-legs {
+        stroke-width: 4.5;
+      }
+      #boot-splash .boot-torso {
+        stroke-width: 6.5;
+      }
+      #boot-splash .boot-arm {
+        stroke-width: 3;
+      }
+      #boot-splash .boot-thin {
+        stroke-width: 2.5;
+      }
+      /* Paper, laid behind the arm and the plate: in profile both cross the
+         body, and without it the three read as one shape. */
+      #boot-splash .boot-arm-behind {
+        stroke: #f5f4f2;
+        stroke-width: 5.5;
+      }
+      #boot-splash .boot-plate-behind {
+        fill: #f5f4f2;
+      }
+      #boot-splash .boot-head,
+      #boot-splash .boot-plate {
+        fill: #17171a;
+      }
+      /* The sleeve, seen down the bar: the one hole in the plate. */
+      #boot-splash .boot-hub {
+        fill: #f5f4f2;
       }
       #boot-splash .boot-ground {
-        fill: #e4e2dd;
+        fill: #d3d0c9;
       }
       @keyframes boot-splash-clean {
         to {
@@ -137,53 +157,81 @@
           <span>Lift it. Log it. Beat it.</span>
         </span>
       </div>
-      <div class="boot-stage">
-        <div class="boot-lifter">
-          <svg viewBox="0 0 240 40">
-            <g transform="translate(0 0)">
-              <rect class="boot-ground" x="3" y="36" width="34" height="2" rx="1" />
-              <path
-                class="boot-frame"
-                d="M23 15h5v5h-5zM18 18h5v9h-5zM16 19h2v11h-2zM14 20h2v9h-2zM23 20h1v6h-1zM12 21h2v7h-2zM11 22h1v6h-1zM24 23h1v3h-1zM18 27h3v1h-3zM23 27h3v3h-3zM13 28h1v1h-1zM18 28h2v2h-2zM22 28h1v7h-1zM26 28h1v7h-1zM15 29h1v1h-1zM21 29h1v5h-1zM27 29h1v5h-1zM17 30h2v6h-2zM20 30h1v3h-1zM25 30h1v6h-1zM28 30h1v3h-1zM16 32h1v4h-1zM23 32h2v4h-2zM19 33h1v3h-1zM15 34h1v2h-1zM20 35h1v1h-1z"
-              />
-            </g>
-            <g transform="translate(40 0)">
-              <rect class="boot-ground" x="3" y="36" width="34" height="2" rx="1" />
-              <path
-                class="boot-frame"
-                d="M23 11h5v5h-5zM18 14h5v8h-5zM16 15h2v14h-2zM15 16h1v12h-1zM23 16h1v7h-1zM14 17h1v10h-1zM12 18h2v7h-2zM11 19h1v6h-1zM24 19h1v4h-1zM18 22h2v5h-2zM21 22h2v2h-2zM20 24h1v1h-1zM23 24h3v3h-3zM13 25h1v1h-1zM22 25h1v7h-1zM26 25h1v7h-1zM21 26h1v5h-1zM27 26h1v5h-1zM18 27h1v9h-1zM20 27h1v3h-1zM25 27h1v6h-1zM28 27h1v3h-1zM17 29h1v7h-1zM23 29h2v4h-2zM19 30h1v6h-1zM16 32h1v4h-1zM20 32h1v4h-1zM15 34h1v2h-1zM21 34h3v2h-3z"
-              />
-            </g>
-            <g transform="translate(80 0)">
-              <rect class="boot-ground" x="3" y="36" width="34" height="2" rx="1" />
-              <path
-                class="boot-frame"
-                d="M18 4h5v5h-5zM18 9h2v13h-2zM15 11h3v7h-3zM20 11h1v9h-1zM21 13h1v6h-1zM22 15h1v4h-1zM23 16h1v2h-1zM16 18h2v4h-2zM23 19h3v3h-3zM22 20h1v7h-1zM26 20h1v7h-1zM21 21h1v5h-1zM27 21h1v5h-1zM17 22h2v3h-2zM20 22h1v3h-1zM25 22h1v6h-1zM28 22h1v3h-1zM23 24h2v4h-2zM18 25h2v10h-2zM20 27h1v9h-1zM21 28h2v3h-2zM21 31h1v5h-1zM22 34h2v2h-2zM19 35h1v1h-1z"
-              />
-            </g>
-            <g transform="translate(120 0)">
-              <rect class="boot-ground" x="3" y="36" width="34" height="2" rx="1" />
-              <path
-                class="boot-frame"
-                d="M16 11h5v5h-5zM16 16h3v16h-3zM14 17h2v14h-2zM19 17h1v3h-1zM23 17h3v3h-3zM22 18h1v7h-1zM26 18h1v7h-1zM21 19h1v5h-1zM27 19h1v5h-1zM20 20h1v3h-1zM25 20h1v6h-1zM28 20h1v3h-1zM13 22h1v9h-1zM23 22h2v4h-2zM19 23h1v13h-1zM20 25h1v1h-1zM21 26h2v10h-2zM26 26h1v7h-1zM20 27h1v9h-1zM23 27h3v6h-3zM17 32h2v4h-2zM23 33h1v3h-1zM16 34h1v2h-1zM24 34h1v2h-1z"
-              />
-            </g>
-            <g transform="translate(160 0)">
-              <rect class="boot-ground" x="3" y="36" width="34" height="2" rx="1" />
-              <path
-                class="boot-frame"
-                d="M18 5h5v5h-5zM18 10h3v3h-3zM16 11h2v16h-2zM21 11h1v1h-1zM23 12h3v3h-3zM18 13h2v2h-2zM22 13h1v7h-1zM26 13h1v7h-1zM21 14h1v5h-1zM27 14h1v5h-1zM18 15h1v21h-1zM20 15h1v3h-1zM25 15h1v6h-1zM28 15h1v3h-1zM23 17h2v4h-2zM19 18h1v18h-1zM20 20h1v16h-1zM21 21h2v2h-2zM26 21h1v3h-1zM23 22h3v2h-3zM21 23h1v9h-1zM17 27h1v9h-1zM16 34h1v2h-1zM21 34h4v2h-4z"
-              />
-            </g>
-            <g transform="translate(200 0)">
-              <rect class="boot-ground" x="3" y="36" width="34" height="2" rx="1" />
-              <path
-                class="boot-frame"
-                d="M23 12h5v5h-5zM18 15h5v8h-5zM17 16h1v20h-1zM16 17h1v12h-1zM23 17h1v5h-1zM14 18h2v9h-2zM13 19h1v7h-1zM12 20h1v6h-1zM24 20h1v2h-1zM18 23h3v1h-3zM23 23h3v3h-3zM18 24h2v2h-2zM22 24h1v7h-1zM26 24h1v7h-1zM21 25h1v5h-1zM27 25h1v5h-1zM18 26h1v10h-1zM20 26h1v3h-1zM25 26h1v6h-1zM28 26h1v3h-1zM15 27h1v1h-1zM23 28h2v4h-2zM19 29h1v7h-1zM20 31h1v5h-1zM16 32h1v4h-1zM21 32h1v1h-1zM15 34h1v2h-1zM21 34h3v2h-3z"
-              />
-            </g>
-          </svg>
-        </div>
+      <div class="boot-lifter">
+        <svg viewBox="0 0 240 40">
+          <g class="boot-frame" transform="translate(0 0)">
+            <path class="boot-legs" d="M18 34L21 29L14 25" />
+            <path class="boot-torso" d="M14 25L21 21" />
+            <path class="boot-arm-behind" d="M21 21L23 26L23 31" />
+            <path class="boot-arm" d="M21 21L23 26L23 31" />
+            <path class="boot-thin" d="M21 21L26 16M16 35L21 35" />
+            <circle class="boot-head" cx="26" cy="16" r="3" />
+            <circle class="boot-plate-behind" cx="24" cy="31" r="6.8" />
+            <rect class="boot-ground" x="4" y="36" width="32" height="2" rx="1" />
+            <circle class="boot-plate" cx="24" cy="31" r="5" />
+            <circle class="boot-hub" cx="24" cy="31" r="1.5" />
+          </g>
+          <g class="boot-frame" transform="translate(40 0)">
+            <path class="boot-legs" d="M18 34L21 29L14 22" />
+            <path class="boot-torso" d="M14 22L21 17" />
+            <path class="boot-arm-behind" d="M21 17L23 22L23 28" />
+            <path class="boot-arm" d="M21 17L23 22L23 28" />
+            <path class="boot-thin" d="M21 17L26 12M16 35L21 35" />
+            <circle class="boot-head" cx="26" cy="12" r="3" />
+            <circle class="boot-plate-behind" cx="24" cy="28" r="6.8" />
+            <rect class="boot-ground" x="4" y="36" width="32" height="2" rx="1" />
+            <circle class="boot-plate" cx="24" cy="28" r="5" />
+            <circle class="boot-hub" cx="24" cy="28" r="1.5" />
+          </g>
+          <g class="boot-frame" transform="translate(80 0)">
+            <path class="boot-legs" d="M20 33L20 28L20 22" />
+            <path class="boot-torso" d="M20 22L18 14" />
+            <path class="boot-arm-behind" d="M18 14L22 18L23 22" />
+            <path class="boot-arm" d="M18 14L22 18L23 22" />
+            <path class="boot-thin" d="M18 14L19 7M19.5 35L21.5 35" />
+            <circle class="boot-head" cx="19" cy="7" r="3" />
+            <circle class="boot-plate-behind" cx="24" cy="23" r="6.8" />
+            <rect class="boot-ground" x="4" y="36" width="32" height="2" rx="1" />
+            <circle class="boot-plate" cx="24" cy="23" r="5" />
+            <circle class="boot-hub" cx="24" cy="23" r="1.5" />
+          </g>
+          <g class="boot-frame" transform="translate(120 0)">
+            <path class="boot-legs" d="M19 34L23 29L17 26" />
+            <path class="boot-torso" d="M17 26L18 19" />
+            <path class="boot-arm-behind" d="M18 19L22 24L23 21" />
+            <path class="boot-arm" d="M18 19L22 24L23 21" />
+            <path class="boot-thin" d="M18 19L18 12M17 35L22 35" />
+            <circle class="boot-head" cx="18" cy="12" r="3" />
+            <circle class="boot-plate-behind" cx="24" cy="21" r="6.8" />
+            <rect class="boot-ground" x="4" y="36" width="32" height="2" rx="1" />
+            <circle class="boot-plate" cx="24" cy="21" r="5" />
+            <circle class="boot-hub" cx="24" cy="21" r="1.5" />
+          </g>
+          <g class="boot-frame" transform="translate(160 0)">
+            <path class="boot-legs" d="M19 34L19 29L19 24" />
+            <path class="boot-torso" d="M19 24L19 14" />
+            <path class="boot-arm-behind" d="M19 14L23 20L24 18" />
+            <path class="boot-arm" d="M19 14L23 20L24 18" />
+            <path class="boot-thin" d="M19 14L20 7M17 35L22 35" />
+            <circle class="boot-head" cx="20" cy="7" r="3" />
+            <circle class="boot-plate-behind" cx="25" cy="18" r="6.8" />
+            <rect class="boot-ground" x="4" y="36" width="32" height="2" rx="1" />
+            <circle class="boot-plate" cx="25" cy="18" r="5" />
+            <circle class="boot-hub" cx="25" cy="18" r="1.5" />
+          </g>
+          <g class="boot-frame" transform="translate(200 0)">
+            <path class="boot-legs" d="M18 34L21 29L15 23" />
+            <path class="boot-torso" d="M15 23L21 18" />
+            <path class="boot-arm-behind" d="M21 18L23 23L23 27" />
+            <path class="boot-arm" d="M21 18L23 23L23 27" />
+            <path class="boot-thin" d="M21 18L26 13M16 35L21 35" />
+            <circle class="boot-head" cx="26" cy="13" r="3" />
+            <circle class="boot-plate-behind" cx="24" cy="27" r="6.8" />
+            <rect class="boot-ground" x="4" y="36" width="32" height="2" rx="1" />
+            <circle class="boot-plate" cx="24" cy="27" r="5" />
+            <circle class="boot-hub" cx="24" cy="27" r="1.5" />
+          </g>
+        </svg>
       </div>
     </div>
     <div id="root"></div>
