@@ -4,8 +4,10 @@ import (
 	"context"
 	"log"
 	"testing"
+	"time"
 
 	"connectrpc.com/connect"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/zap"
 
@@ -98,4 +100,54 @@ func (s *feedSuite) TestListFeedItemsMarksPersonalBestsOfWorkoutOwners() {
 	}
 	s.Require().True(personalBests[bestSet.ID.String()])
 	s.Require().False(personalBests[lesserSet.ID.String()])
+}
+
+func (s *feedSuite) TestListFeedItemsPaginates() {
+	viewer := s.factory.NewUser()
+	now := time.Now().UTC()
+	for i := range 3 {
+		s.factory.NewWorkout(
+			factory.WorkoutUserID(viewer.ID),
+			factory.WorkoutCreatedAt(now.Add(-time.Duration(i)*time.Second)),
+		)
+	}
+
+	ctx := xcontext.WithUserID(context.Background(), viewer.ID.String())
+	ctx = xcontext.WithLogger(ctx, zap.NewExample())
+
+	first, err := s.handler.ListFeedItems(ctx, &connect.Request[apiv1.ListFeedItemsRequest]{
+		Msg: &apiv1.ListFeedItemsRequest{
+			FollowedOnly: true,
+			Pagination:   &apiv1.PaginationRequest{PageLimit: 2},
+		},
+	})
+	s.Require().NoError(err)
+	s.Require().Len(first.Msg.GetItems(), 2)
+	s.Require().NotEmpty(first.Msg.GetPagination().GetNextPageToken())
+
+	second, err := s.handler.ListFeedItems(ctx, &connect.Request[apiv1.ListFeedItemsRequest]{
+		Msg: &apiv1.ListFeedItemsRequest{
+			FollowedOnly: true,
+			Pagination: &apiv1.PaginationRequest{
+				PageLimit: 2,
+				PageToken: first.Msg.GetPagination().GetNextPageToken(),
+			},
+		},
+	})
+	s.Require().NoError(err)
+	s.Require().Len(second.Msg.GetItems(), 1)
+	s.Require().Empty(second.Msg.GetPagination().GetNextPageToken())
+}
+
+func (s *feedSuite) TestListFeedItemsRejectsAMalformedPageToken() {
+	ctx := xcontext.WithUserID(context.Background(), uuid.NewString())
+	ctx = xcontext.WithLogger(ctx, zap.NewExample())
+
+	res, err := s.handler.ListFeedItems(ctx, &connect.Request[apiv1.ListFeedItemsRequest]{
+		Msg: &apiv1.ListFeedItemsRequest{
+			Pagination: &apiv1.PaginationRequest{PageLimit: 2, PageToken: []byte("not a token")},
+		},
+	})
+	s.Require().Nil(res)
+	s.Require().Equal(connect.CodeInternal, connect.CodeOf(err))
 }

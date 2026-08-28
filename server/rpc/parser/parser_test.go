@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"testing"
 
+	gofrsuuid "github.com/gofrs/uuid/v5"
+	"github.com/lib/pq"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/crlssn/getstronger/server/gen/models"
@@ -680,4 +682,67 @@ func (s *parserSuite) TestSetSlice() {
 		s.Require().True(sets[i].CreatedAt.Equal(set.GetMetadata().GetCreatedAt().AsTime()))
 		s.Require().Equal(i == 0, set.GetMetadata().GetPersonalBest())
 	}
+}
+
+// A metric the schema does not know is dropped on the way out and read back as
+// the unspecified one: an exercise saved by a newer client must not arrive
+// claiming to measure something this one does not understand. The model is
+// built by hand because the exercises_metrics_valid check refuses to store an
+// unknown metric — the parser is the second line, not the first.
+func (s *parserSuite) TestUnknownExerciseMetricsAreDropped() {
+	exercise := &models.Exercise{
+		ID:      gofrsuuid.Must(gofrsuuid.NewV4()),
+		UserID:  gofrsuuid.Must(gofrsuuid.NewV4()),
+		Title:   "Rowing",
+		Metrics: pq.StringArray{"weight", "cadence", "reps"},
+	}
+	parsed := parser.Exercise(exercise)
+
+	s.Require().Equal([]v1.ExerciseMetric{
+		v1.ExerciseMetric_EXERCISE_METRIC_WEIGHT,
+		v1.ExerciseMetric_EXERCISE_METRIC_REPS,
+	}, parsed.GetMetrics())
+
+	s.Require().Equal(
+		[]training.Metric{training.Metric(""), training.Metric("")},
+		parser.ExerciseMetricsFromProto([]v1.ExerciseMetric{
+			v1.ExerciseMetric_EXERCISE_METRIC_UNSPECIFIED,
+			v1.ExerciseMetric(999),
+		}),
+	)
+}
+
+// The personal-best pass owns the metadata it writes: a set that arrived
+// without any is given some rather than skipped.
+func (s *parserSuite) TestExerciseSetsPersonalBestsFillsMissingMetadata() {
+	best := s.factory.NewSet()
+	other := s.factory.NewSet()
+
+	sets := &v1.ExerciseSets{
+		Exercise: &v1.Exercise{Id: best.ExerciseID.String()},
+		Sets: []*v1.Set{
+			{Id: best.ID.String(), Metadata: nil},
+			{Id: other.ID.String(), Metadata: nil},
+		},
+	}
+	parser.ExerciseSetsPersonalBests(models.SetSlice{best})(sets)
+
+	s.Require().True(sets.GetSets()[0].GetMetadata().GetPersonalBest())
+	s.Require().NotNil(sets.GetSets()[1].GetMetadata())
+	s.Require().False(sets.GetSets()[1].GetMetadata().GetPersonalBest())
+}
+
+// Both notification options are given what the notification is not about, so
+// each has to leave it alone rather than reshape it.
+func (s *parserSuite) TestNotificationOptionsIgnoreWhatIsNotTheirs() {
+	n := &v1.Notification{Id: "notification-id"}
+
+	parser.NotificationActor(notification.TypeFollow, nil)(n)
+	s.Require().Nil(n.GetType())
+
+	parser.NotificationWorkout(notification.TypeFollow, s.factory.NewWorkout())(n)
+	s.Require().Nil(n.GetType())
+
+	parser.NotificationWorkout(notification.TypeWorkoutComment, nil)(n)
+	s.Require().Nil(n.GetType())
 }

@@ -6,6 +6,8 @@ import (
 	"testing"
 
 	"connectrpc.com/connect"
+	"github.com/google/uuid"
+	"github.com/stephenafamo/bob"
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/zap"
 
@@ -635,4 +637,121 @@ func groupExercises(ids ...string) []*apiv1.RoutineExercise {
 	}
 
 	return exercises
+}
+
+// A routine that is not there and one belonging to somebody else are the same
+// situation to a client. Only the read says so with NotFound; the writes are
+// failed preconditions.
+func (s *routineSuite) TestRoutineEndpointsRejectAMissingRoutine() {
+	ctx, user := s.athlete()
+	exercise := s.factory.NewExercise(factory.ExerciseUserID(user.ID))
+	missing := uuid.NewString()
+
+	s.Run("get", func() {
+		_, err := s.handler.GetRoutine(ctx, connect.NewRequest(&apiv1.GetRoutineRequest{Id: missing}))
+		s.Require().Equal(connect.CodeNotFound, connect.CodeOf(err))
+	})
+
+	s.Run("update", func() {
+		_, err := s.handler.UpdateRoutine(ctx, connect.NewRequest(&apiv1.UpdateRoutineRequest{
+			Routine: &apiv1.Routine{
+				Id:        missing,
+				Name:      "Ghost",
+				Exercises: []*apiv1.Exercise{{Id: exercise.ID.String()}},
+			},
+		}))
+		s.Require().Equal(connect.CodeFailedPrecondition, connect.CodeOf(err))
+	})
+
+	s.Run("delete", func() {
+		_, err := s.handler.DeleteRoutine(ctx, connect.NewRequest(&apiv1.DeleteRoutineRequest{Id: missing}))
+		s.Require().Equal(connect.CodeFailedPrecondition, connect.CodeOf(err))
+	})
+
+	s.Run("add_exercise", func() {
+		_, err := s.handler.AddExercise(ctx, connect.NewRequest(&apiv1.AddExerciseRequest{
+			RoutineId:  missing,
+			ExerciseId: exercise.ID.String(),
+		}))
+		s.Require().Equal(connect.CodeFailedPrecondition, connect.CodeOf(err))
+	})
+
+	s.Run("update_exercise_order", func() {
+		_, err := s.handler.UpdateExerciseOrder(ctx, connect.NewRequest(&apiv1.UpdateExerciseOrderRequest{
+			RoutineId:   missing,
+			ExerciseIds: []string{exercise.ID.String()},
+		}))
+		s.Require().Equal(connect.CodeFailedPrecondition, connect.CodeOf(err))
+	})
+}
+
+func (s *routineSuite) TestDeleteRoutineRemovesItAndItsGroups() {
+	ctx, user := s.athlete()
+	exercise := s.factory.NewExercise(factory.ExerciseUserID(user.ID))
+	created, err := s.handler.CreateRoutine(ctx, connect.NewRequest(&apiv1.CreateRoutineRequest{
+		Name:        "Retired",
+		ExerciseIds: []string{exercise.ID.String()},
+	}))
+	s.Require().NoError(err)
+
+	_, err = s.handler.DeleteRoutine(ctx, connect.NewRequest(&apiv1.DeleteRoutineRequest{
+		Id: created.Msg.GetId(),
+	}))
+	s.Require().NoError(err)
+
+	_, err = s.handler.GetRoutine(ctx, connect.NewRequest(&apiv1.GetRoutineRequest{Id: created.Msg.GetId()}))
+	s.Require().Equal(connect.CodeNotFound, connect.CodeOf(err))
+
+	groups, err := models.RoutineGroups.Query(
+		models.SelectWhere.RoutineGroups.RoutineID.EQ(nativeUUID(created.Msg.GetId())),
+	).Count(context.Background(), bob.NewDB(s.container.DB))
+	s.Require().NoError(err)
+	s.Require().Zero(groups)
+}
+
+// The exercise is looked up under the athlete who asked, so one they do not own
+// is indistinguishable from one that does not exist.
+func (s *routineSuite) TestAddExerciseRejectsAnExerciseTheAthleteDoesNotOwn() {
+	ctx, user := s.athlete()
+	owned := s.factory.NewExercise(factory.ExerciseUserID(user.ID))
+	created, err := s.handler.CreateRoutine(ctx, connect.NewRequest(&apiv1.CreateRoutineRequest{
+		Name:        "Push",
+		ExerciseIds: []string{owned.ID.String()},
+	}))
+	s.Require().NoError(err)
+
+	_, stranger := s.athlete()
+	theirs := s.factory.NewExercise(factory.ExerciseUserID(stranger.ID))
+
+	_, err = s.handler.AddExercise(ctx, connect.NewRequest(&apiv1.AddExerciseRequest{
+		RoutineId:  created.Msg.GetId(),
+		ExerciseId: theirs.ID.String(),
+	}))
+	s.Require().Equal(connect.CodeFailedPrecondition, connect.CodeOf(err))
+}
+
+func (s *routineSuite) TestUpdateExerciseOrderRefusesAnotherAthletesRoutine() {
+	ownerCtx, owner := s.athlete()
+	exercise := s.factory.NewExercise(factory.ExerciseUserID(owner.ID))
+	created, err := s.handler.CreateRoutine(ownerCtx, connect.NewRequest(&apiv1.CreateRoutineRequest{
+		Name:        "Private",
+		ExerciseIds: []string{exercise.ID.String()},
+	}))
+	s.Require().NoError(err)
+
+	strangerCtx, _ := s.athlete()
+	_, err = s.handler.UpdateExerciseOrder(strangerCtx, connect.NewRequest(&apiv1.UpdateExerciseOrderRequest{
+		RoutineId:   created.Msg.GetId(),
+		ExerciseIds: []string{exercise.ID.String()},
+	}))
+	s.Require().Equal(connect.CodePermissionDenied, connect.CodeOf(err))
+}
+
+func (s *routineSuite) TestListRoutinesRejectsAMalformedPageToken() {
+	ctx, _ := s.athlete()
+
+	_, err := s.handler.ListRoutines(ctx, connect.NewRequest(&apiv1.ListRoutinesRequest{
+		Pagination: &apiv1.PaginationRequest{PageLimit: 2, PageToken: []byte("not a token")},
+	}))
+	s.Require().Equal(connect.CodeInternal, connect.CodeOf(err))
 }

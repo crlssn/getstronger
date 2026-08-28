@@ -51,3 +51,23 @@ func TestConnectionSSLMode(t *testing.T) {
 		})
 	}
 }
+
+// sql.Open does not dial, so New hands back a handle with no database behind
+// it; the connection is made by the lifecycle hook that pings it.
+func TestNewOpensAHandleWithoutDialing(t *testing.T) {
+	t.Parallel()
+
+	handle, err := New(&config.Config{
+		Environment: config.EnvironmentLocal,
+		DB: config.DB{
+			Host:     "database.example.com",
+			Port:     "5432",
+			Name:     "getstronger",
+			User:     "user",
+			Password: "password",
+		},
+	})
+	require.NoError(t, err)
+	require.NotNil(t, handle)
+	require.NoError(t, handle.Close())
+}

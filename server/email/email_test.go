@@ -1,6 +1,7 @@
 package email_test
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -52,4 +53,22 @@ func TestNew(t *testing.T) {
 	_, err = email.New(c)
 	require.Error(t, err)
 	require.ErrorIs(t, err, email.ErrUnknownEmailProvider)
+}
+
+// The no-op provider is what the local stack runs with when nothing should
+// leave the machine: it accepts both messages and sends neither.
+func TestNoopSendsNothing(t *testing.T) {
+	t.Parallel()
+	provider := email.NewNoop()
+
+	require.NoError(t, provider.SendVerification(context.Background(), email.SendVerification{
+		Name:  "John Doe",
+		Email: "john@example.com",
+		Token: "token",
+	}))
+	require.NoError(t, provider.SendPasswordReset(context.Background(), email.SendPasswordReset{
+		Name:  "John Doe",
+		Email: "john@example.com",
+		Token: "token",
+	}))
 }

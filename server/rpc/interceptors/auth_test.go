@@ -377,3 +377,16 @@ func (s *authSuite) TestStreamingHandler() {
 		})
 	}
 }
+
+// The client half authenticates nothing: it is the outbound side of a duplex
+// the API does not serve, so it hands the call straight on.
+func (s *authSuite) TestStreamingClientPassesThrough() {
+	called := false
+	wrapped := s.interceptor.WrapStreamingClient(func(_ context.Context, _ connect.Spec) connect.StreamingClientConn {
+		called = true
+		return nil
+	})
+
+	s.Require().Nil(wrapped(context.Background(), connect.Spec{}))
+	s.Require().True(called)
+}

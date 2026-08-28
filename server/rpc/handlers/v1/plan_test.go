@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"connectrpc.com/connect"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/zap"
 
@@ -197,4 +198,90 @@ func planRoutineIDs(plan *apiv1.Plan) []string {
 	}
 
 	return ids
+}
+
+func (s *planSuite) TestUpdatePlanIsNotFoundForAnotherAthletesPlan() {
+	ctx, user := s.athlete()
+	routine := s.factory.NewRoutine(factory.RoutineUserID(user.ID))
+	plan := s.createPlan(ctx, "Private", routine.ID.String())
+
+	strangerCtx, _ := s.athlete()
+	_, err := s.handler.UpdatePlan(strangerCtx, connect.NewRequest(&apiv1.UpdatePlanRequest{
+		Id:         plan.GetId(),
+		Name:       "Taken over",
+		RoutineIds: []string{routine.ID.String()},
+	}))
+	s.Require().Equal(connect.CodeNotFound, connect.CodeOf(err))
+}
+
+func (s *planSuite) TestUpdatePlanRejectsARepeatedRoutine() {
+	ctx, user := s.athlete()
+	routine := s.factory.NewRoutine(factory.RoutineUserID(user.ID))
+	plan := s.createPlan(ctx, "Rotation", routine.ID.String())
+
+	_, err := s.handler.UpdatePlan(ctx, connect.NewRequest(&apiv1.UpdatePlanRequest{
+		Id:         plan.GetId(),
+		Name:       "Rotation",
+		RoutineIds: []string{routine.ID.String(), routine.ID.String()},
+	}))
+	s.Require().Equal(connect.CodeInvalidArgument, connect.CodeOf(err))
+}
+
+func (s *planSuite) TestSetActivePlanIsNotFoundForAPlanTheAthleteCannotSee() {
+	ctx, user := s.athlete()
+	routine := s.factory.NewRoutine(factory.RoutineUserID(user.ID))
+	plan := s.createPlan(ctx, "Private", routine.ID.String())
+
+	s.Run("another_athletes_plan", func() {
+		strangerCtx, _ := s.athlete()
+		_, err := s.handler.SetActivePlan(strangerCtx, connect.NewRequest(&apiv1.SetActivePlanRequest{
+			Id: plan.GetId(),
+		}))
+		s.Require().Equal(connect.CodeNotFound, connect.CodeOf(err))
+	})
+
+	s.Run("a_plan_that_does_not_exist", func() {
+		_, err := s.handler.SetActivePlan(ctx, connect.NewRequest(&apiv1.SetActivePlanRequest{
+			Id: uuid.NewString(),
+		}))
+		s.Require().Equal(connect.CodeNotFound, connect.CodeOf(err))
+	})
+}
+
+func (s *planSuite) TestSkipPlanRoutineIsNotFoundForAPlanThatDoesNotExist() {
+	ctx, _ := s.athlete()
+
+	_, err := s.handler.SkipPlanRoutine(ctx, connect.NewRequest(&apiv1.SkipPlanRoutineRequest{
+		Id: uuid.NewString(),
+	}))
+	s.Require().Equal(connect.CodeNotFound, connect.CodeOf(err))
+}
+
+// Skipping a plan that is not the active one is a precondition failure, not a
+// missing plan: the athlete owns it, they just are not running it.
+func (s *planSuite) TestSkipPlanRoutineRejectsAnInactivePlan() {
+	ctx, user := s.athlete()
+	routine := s.factory.NewRoutine(factory.RoutineUserID(user.ID))
+	plan := s.createPlan(ctx, "Idle", routine.ID.String())
+
+	_, err := s.handler.SkipPlanRoutine(ctx, connect.NewRequest(&apiv1.SkipPlanRoutineRequest{
+		Id: plan.GetId(),
+	}))
+	s.Require().Equal(connect.CodeFailedPrecondition, connect.CodeOf(err))
+}
+
+func (s *planSuite) TestGetPlanReturnsItsRotation() {
+	ctx, user := s.athlete()
+	first := s.factory.NewRoutine(factory.RoutineUserID(user.ID), factory.RoutineName("First"))
+	second := s.factory.NewRoutine(factory.RoutineUserID(user.ID), factory.RoutineName("Second"))
+	created := s.createPlan(ctx, "Rotation", first.ID.String(), second.ID.String())
+
+	res, err := s.handler.GetPlan(ctx, connect.NewRequest(&apiv1.GetPlanRequest{Id: created.GetId()}))
+	s.Require().NoError(err)
+	s.Require().Equal(created.GetId(), res.Msg.GetPlan().GetId())
+	s.Require().Equal("Rotation", res.Msg.GetPlan().GetName())
+	s.Require().Equal(
+		[]string{first.ID.String(), second.ID.String()},
+		planRoutineIDs(res.Msg.GetPlan()),
+	)
 }

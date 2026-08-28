@@ -363,3 +363,81 @@ func (s *notificationSuite) TestListNotifications() {
 		})
 	}
 }
+
+func (s *notificationSuite) TestListNotificationsPaginates() {
+	user := s.testFactory.NewUser()
+	actor := s.testFactory.NewUser()
+	now := time.Now().UTC()
+	for i := range 3 {
+		s.testFactory.NewNotification(
+			factory.NotificationUserID(user.ID),
+			factory.NotificationType(notification.TypeFollow),
+			factory.NotificationPayload(notification.Payload{ActorID: actor.ID.String()}),
+			factory.NotificationCreatedAt(now.Add(-time.Duration(i)*time.Second)),
+		)
+	}
+
+	ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
+	ctx = xcontext.WithUserID(ctx, user.ID.String())
+
+	first, err := s.handler.ListNotifications(ctx, &connect.Request[apiv1.ListNotificationsRequest]{
+		Msg: &apiv1.ListNotificationsRequest{
+			Pagination: &apiv1.PaginationRequest{PageLimit: 2},
+		},
+	})
+	s.Require().NoError(err)
+	s.Require().Len(first.Msg.GetNotifications(), 2)
+	s.Require().NotEmpty(first.Msg.GetPagination().GetNextPageToken())
+
+	second, err := s.handler.ListNotifications(ctx, &connect.Request[apiv1.ListNotificationsRequest]{
+		Msg: &apiv1.ListNotificationsRequest{
+			Pagination: &apiv1.PaginationRequest{
+				PageLimit: 2,
+				PageToken: first.Msg.GetPagination().GetNextPageToken(),
+			},
+		},
+	})
+	s.Require().NoError(err)
+	s.Require().Len(second.Msg.GetNotifications(), 1)
+	s.Require().Empty(second.Msg.GetPagination().GetNextPageToken())
+}
+
+func (s *notificationSuite) TestListNotificationsRejectsAMalformedPageToken() {
+	ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
+	ctx = xcontext.WithUserID(ctx, uuid.NewString())
+
+	res, err := s.handler.ListNotifications(ctx, &connect.Request[apiv1.ListNotificationsRequest]{
+		Msg: &apiv1.ListNotificationsRequest{
+			Pagination: &apiv1.PaginationRequest{PageLimit: 2, PageToken: []byte("not a token")},
+		},
+	})
+	s.Require().Nil(res)
+	s.Require().Equal(connect.CodeInternal, connect.CodeOf(err))
+}
+
+// The payload is written by the publisher, not the client, so one that no
+// longer parses is a fault on this side: the list fails rather than showing a
+// notification with the wrong actor.
+func (s *notificationSuite) TestListNotificationsFailsOnAnUnreadablePayload() {
+	user := s.testFactory.NewUser()
+	n := s.testFactory.NewNotification(
+		factory.NotificationUserID(user.ID),
+		factory.NotificationType(notification.TypeFollow),
+		factory.NotificationPayload(notification.Payload{ActorID: uuid.NewString()}),
+	)
+
+	_, err := s.testContainer.DB.ExecContext(context.Background(),
+		`UPDATE public.notifications SET payload = '[]'::jsonb WHERE id = $1`, n.ID)
+	s.Require().NoError(err)
+
+	ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
+	ctx = xcontext.WithUserID(ctx, user.ID.String())
+
+	res, err := s.handler.ListNotifications(ctx, &connect.Request[apiv1.ListNotificationsRequest]{
+		Msg: &apiv1.ListNotificationsRequest{
+			Pagination: &apiv1.PaginationRequest{PageLimit: 10},
+		},
+	})
+	s.Require().Nil(res)
+	s.Require().Equal(connect.CodeInternal, connect.CodeOf(err))
+}
