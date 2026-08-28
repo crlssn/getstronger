@@ -12,7 +12,9 @@ export const test = base.extend<{ runtimeErrors: string[] }>({
       const errors: string[] = []
       page.on('pageerror', (error) => errors.push(error.message))
       page.on('console', (message) => {
-        if (message.type() === 'error') errors.push(`console: ${message.text()}`)
+        if (message.type() !== 'error') return
+        if (isDroppedRequestLog(message.text())) return
+        errors.push(`console: ${message.text()}`)
       })
       page.on('requestfailed', (request) => {
         const reason = request.failure()?.errorText ?? 'unknown error'
@@ -143,6 +145,15 @@ export const allowRuntimeErrors = {
 
 const allowsRuntimeErrors = (testInfo: TestInfo) =>
   testInfo.annotations.some((annotation) => annotation.type === allowRuntimeErrors.type)
+
+// The app logs every request that does not come back, including the ones the
+// browser dropped when a test navigated away mid-flight. That request is
+// already judged below, by a listener that knows how each engine words a
+// cancellation; counting the log line as well fails a test for a request it
+// deliberately cut short. A request that genuinely failed still arrives there
+// under a reason no cancellation wears.
+const isDroppedRequestLog = (text: string) =>
+  /ConnectError: \[unknown\] (Load failed|Failed to fetch|NetworkError)/.test(text)
 
 // Each engine words an in-flight request dropped by a navigation differently:
 // Chromium aborts, Firefox binds-aborts, WebKit cancels the load request.
