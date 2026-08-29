@@ -510,6 +510,31 @@ func (s *repoSuite) TestCompareEmailAndPassword() {
 	}
 }
 
+// An email that matches no row must still cost a bcrypt comparison, or the
+// response time tells anyone with a stopwatch which addresses are registered.
+func (s *repoSuite) TestCompareEmailAndPasswordHidesUnregisteredEmails() {
+	registered := gofakeit.Email()
+	s.factory.NewAuth(
+		factory.AuthEmail(registered),
+		factory.AuthPassword("actual_password"),
+	)
+
+	timeCompare := func(email string, expected error) time.Duration {
+		start := time.Now()
+		err := s.repo.CompareEmailAndPassword(context.Background(), email, "wrong_password")
+		elapsed := time.Since(start)
+		s.Require().ErrorIs(err, expected)
+		return elapsed
+	}
+
+	registeredDuration := timeCompare(registered, bcrypt.ErrMismatchedHashAndPassword)
+	unregisteredDuration := timeCompare(gofakeit.Email(), sql.ErrNoRows)
+
+	// Half the registered cost sits far above the sub-millisecond lookup an
+	// early return takes and far below the bcrypt work both paths should do.
+	s.Require().Greater(unregisteredDuration, registeredDuration/2)
+}
+
 func (s *repoSuite) TestRefreshTokenExists() {
 	type expected struct {
 		exists bool
