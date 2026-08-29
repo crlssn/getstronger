@@ -1,4 +1,4 @@
-import { CheckIcon } from '@heroicons/react/24/outline'
+import { DateTime } from 'luxon'
 import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -7,7 +7,7 @@ import { cn } from '@/ui/cn'
 import { streakWeeks } from '@/utils/streakWeeks'
 import styles from './StreakCard.module.css'
 
-/** The five-week streak track, and what the user has to do to keep it. */
+/** One-row streak card: the count, the state in words, eight weeks of ticks. */
 export const StreakCard = () => {
   const { t } = useTranslation()
 
@@ -23,12 +23,15 @@ export const StreakCard = () => {
 
   if (!loaded || failed) return null
 
-  // Spelled out rather than built from a prefix, so every key stays greppable.
-  const title = !streak
-    ? t('streak.startTitle')
-    : thisWeekLogged
-      ? t('streak.securedTitle')
-      : t('streak.keepAliveTitle')
+  const title = streak ? t('streak.weekStreakTitle') : t('streak.startTitle')
+
+  // Today still counts: on the week's last day one day is left, not zero.
+  const daysLeft = Math.ceil(DateTime.now().endOf('week').diff(DateTime.now(), 'days').days)
+  const meta = thisWeekLogged
+    ? t('streak.securedMeta')
+    : streak
+      ? t('streak.daysLeft', { count: daysLeft })
+      : t('streak.startMeta')
 
   const weeks = streakWeeks({ streak, thisWeekLogged, weekWorkoutCounts })
 
@@ -46,47 +49,24 @@ export const StreakCard = () => {
 
   return (
     <section className={cn(styles.streakCard, streak > 0 && styles.active)}>
-      {/* The count is the headline number, not a boxed badge: the card is five
-          weeks of history and one line saying where they leave you. */}
-      <header>
-        <div className="min-w-0">
-          <small className={styles.eyebrow}>{t('streak.eyebrow')}</small>
-          <strong>{title}</strong>
-        </div>
-        <span className={styles.streakCount}>
-          {streak} {t('streak.weeks', { count: streak })}
-        </span>
-      </header>
-
-      <div className={styles.weekTrack} role="list" aria-label={t('streak.trackAria')}>
+      <span className={styles.streakCount}>{streak}</span>
+      <div className={styles.copy}>
+        <strong>{title}</strong>
+        <span>{meta}</span>
+      </div>
+      <div className={styles.weekTicks} role="list" aria-label={t('streak.trackAria')}>
         {weeks.map((week) => (
           <span
             key={week.weeksAgo}
             role="listitem"
             className={cn(
-              styles.weekBlock,
+              styles.tick,
               week.complete && styles.complete,
               week.current && styles.current,
             )}
             aria-label={`${labelFor(week.weeksAgo)}: ${statusFor(week)}`}
-          >
-            {week.complete ? (
-              <>
-                <CheckIcon aria-hidden="true" />
-                {week.workoutCount > 1 && (
-                  <strong className={styles.weekWorkoutCount}>{week.workoutCountDisplay}</strong>
-                )}
-              </>
-            ) : (
-              <span aria-hidden="true" />
-            )}
-          </span>
+          />
         ))}
-      </div>
-
-      <div className={styles.trackLabels} aria-hidden="true">
-        <span>{t('streak.weeksAgo', { count: 4 })}</span>
-        <span className={styles.thisWeekLabel}>{t('streak.thisWeek')}</span>
       </div>
     </section>
   )

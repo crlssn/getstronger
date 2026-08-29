@@ -1,70 +1,49 @@
 @reference '../../assets/base.css';
 
 .streakCard {
-  @apply card p-4;
+  @apply card flex items-center gap-4 px-5 py-4;
 }
 
-.streakCard header {
-  @apply flex items-baseline justify-between gap-3;
-}
-
-.streakCard header strong,
-.streakCard header small {
-  @apply block truncate;
-}
-
-.streakCard header > div > strong {
-  @apply text-body-lg font-bold text-text;
-}
-
-.streakCard .eyebrow {
-  @apply mb-0.5 text-eyebrow font-bold uppercase text-text-subtle;
-}
-
-/* The weeks a streak is worth, as a number rather than as a badge. Green once
-   there is a streak to hold: the colour is the streak's, everywhere it shows. */
+/* The count is the card's hero, in the streak's green once there is one to
+   hold. The handoff fades a zero to #c9c6bc, which reads under 2:1 on white;
+   text-subtle keeps the same quiet register without dropping below AA. */
 .streakCount {
-  @apply shrink-0 text-meta font-bold tabular-nums text-text-subtle;
+  @apply min-w-12 text-display font-extrabold tabular-nums text-text-subtle;
 }
 
 .streakCard.active .streakCount {
   @apply text-success;
 }
 
-/* No groove behind them: five blocks on the card read as five weeks, and the
-   track around them was a box drawn around a row of boxes. */
-.weekTrack {
-  @apply mt-3 grid grid-cols-5 gap-1.5;
+.copy {
+  @apply flex min-w-0 flex-1 flex-col gap-px;
 }
 
-.weekBlock {
-  @apply flex h-9 items-center justify-center gap-1.5 rounded-control bg-ink-surface text-text-subtle;
+.copy strong {
+  @apply truncate text-body-lg font-bold tracking-tight text-text;
 }
 
-.weekBlock.complete {
-  @apply bg-success text-white;
+.copy > span {
+  @apply truncate text-meta text-text-subtle;
 }
 
-.weekBlock.current:not(.complete) {
-  @apply bg-success-surface ring-2 ring-inset ring-success;
+/* Eight weeks as ticks: a secured week fills green, an open one stays sunken,
+   and the week in progress is ringed rather than filled — the outline marks
+   "now" without promising a workout that has not happened. */
+.weekTicks {
+  @apply flex shrink-0 items-end gap-[3px];
 }
 
-.weekBlock > svg {
-  @apply size-4 stroke-[2.5];
+.tick {
+  @apply h-6 w-1.5 bg-surface-sunken;
+  border-radius: 3px;
 }
 
-.weekWorkoutCount {
-  @apply text-xs font-bold tabular-nums;
+.tick.complete {
+  @apply bg-success;
 }
 
-.weekBlock > span {
-  @apply size-1.5 rounded-full bg-current;
-}
-
-.trackLabels {
-  @apply mt-2 flex justify-between text-eyebrow font-semibold tracking-normal text-text-subtle;
-}
-
-.thisWeekLabel {
-  @apply font-bold text-text;
+.tick.current {
+  outline: 1.5px solid var(--color-ink);
+  outline-offset: 1.5px;
 }

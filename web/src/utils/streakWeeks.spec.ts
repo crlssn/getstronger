@@ -18,7 +18,7 @@ describe('streakWeeks', () => {
     const track = weeks(0, false)
 
     expect(track).toHaveLength(trackedWeeks)
-    expect(track.map((week) => week.weeksAgo)).toEqual([4, 3, 2, 1, 0])
+    expect(track.map((week) => week.weeksAgo)).toEqual([7, 6, 5, 4, 3, 2, 1, 0])
     expect(track.at(-1)?.current).toBe(true)
   })
 
@@ -30,26 +30,32 @@ describe('streakWeeks', () => {
   })
 
   test('fills exactly as many past weeks as the streak covers', () => {
-    expect(weeks(2, false).map((week) => week.complete)).toEqual([false, false, true, true, false])
-    expect(weeks(2, true).map((week) => week.complete)).toEqual([false, false, false, true, true])
+    expect(weeks(2, false).map((week) => week.complete)).toEqual([
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      true,
+      false,
+    ])
+    expect(weeks(2, true).map((week) => week.complete)).toEqual([
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      true,
+    ])
   })
 
   test('counts the workouts logged in each week', () => {
     const track = weeks(1, true, { [weekKeyAgo(0)]: 3 })
 
     expect(track.at(-1)?.workoutCount).toBe(3)
-    expect(track.at(-1)?.workoutCountDisplay).toBe('3')
     expect(track.at(-2)?.workoutCount).toBe(0)
-  })
-
-  // The block has room for two characters, so a big week is capped for the eye
-  // while the real number still reaches a screen reader.
-  test('caps the displayed count at nine', () => {
-    expect(weeks(1, true, { [weekKeyAgo(0)]: 12 }).at(-1)).toMatchObject({
-      workoutCount: 12,
-      workoutCountDisplay: '9+',
-    })
-    expect(weeks(1, true, { [weekKeyAgo(0)]: 9 }).at(-1)?.workoutCountDisplay).toBe('9+')
-    expect(weeks(1, true, { [weekKeyAgo(0)]: 8 }).at(-1)?.workoutCountDisplay).toBe('8')
   })
 })
