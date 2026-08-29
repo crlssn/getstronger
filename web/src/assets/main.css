@@ -5,7 +5,7 @@ body {
   color-scheme: light;
   font-family: var(--font-sans);
   touch-action: manipulation;
-  @apply min-h-full bg-surface-sunken text-text antialiased;
+  @apply min-h-full bg-canvas text-text antialiased;
 }
 
 /* With viewport-fit=cover the page extends under the status bar and Dynamic

@@ -9,9 +9,11 @@
  * Each matches what the app renders today, so adopting one moves no pixels.
  */
 
-/* The string that had been re-typed, character for character, in 29 files. */
+/* The string that had been re-typed, character for character, in 29 files.
+ * Elevation and border never combine: the shadow lifts a top-level card, and
+ * only a nested container closes its edge with a hairline instead. */
 @utility card {
-  @apply rounded-card border border-border bg-surface shadow-card;
+  @apply rounded-card bg-surface shadow-card;
 }
 
 /* Every tappable thing. Height, radius and focus ring in one place — and the
