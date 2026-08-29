@@ -1,6 +1,7 @@
 package jwt
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"time"
@@ -28,6 +29,35 @@ func (s Secrets) ResolveKey(tokenType TokenType) []byte {
 	default:
 		return nil
 	}
+}
+
+var (
+	// ErrMissingSigningKey reports a key the environment never set.
+	ErrMissingSigningKey = errors.New("missing signing key")
+	// ErrSharedSigningKey reports one key doing both tokens' work.
+	ErrSharedSigningKey = errors.New("shared signing key")
+)
+
+// Validate reports whether these keys are ones the server may issue sessions
+// with. HS256 signs and verifies with an empty key as readily as a real one, so
+// a key the environment forgot to set does not fail — it produces tokens anyone
+// can mint for any account. One key doing both tokens' work is the same bargain
+// smaller: a leaked access key would then also mint the thirty-day refresh
+// tokens it is deliberately kept apart from.
+func (s Secrets) Validate() error {
+	if len(s.AccessKey) == 0 {
+		return fmt.Errorf("%w: %s", ErrMissingSigningKey, TokenTypeAccess)
+	}
+
+	if len(s.RefreshKey) == 0 {
+		return fmt.Errorf("%w: %s", ErrMissingSigningKey, TokenTypeRefresh)
+	}
+
+	if bytes.Equal(s.AccessKey, s.RefreshKey) {
+		return ErrSharedSigningKey
+	}
+
+	return nil
 }
 
 // Issuer signs the access and refresh tokens this server hands out, and reads
