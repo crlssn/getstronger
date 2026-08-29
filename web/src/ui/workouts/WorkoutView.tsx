@@ -5,7 +5,8 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 
-import { listWorkouts } from '@/http/requests'
+import { consumeRequestError, listWorkouts } from '@/http/requests'
+import { AppInlineError } from '@/ui/components/AppInlineError'
 import { useAuthStore } from '@/stores/auth'
 import { useConfirmationStore } from '@/stores/confirmation'
 import { selectActivePlan, selectNextRoutine, useDashboardStore } from '@/stores/dashboard'
@@ -44,6 +45,7 @@ export const WorkoutView = () => {
   const [loaded, setLoaded] = useState(false)
   const [reachedEnd, setReachedEnd] = useState(false)
   const [failed, setFailed] = useState(false)
+  const [actionError, setActionError] = useState<string>()
 
   // Held in refs rather than state: neither is rendered, and reading them from
   // state would put the loader's identity at the mercy of a render.
@@ -109,9 +111,12 @@ export const WorkoutView = () => {
     })
     if (!confirmed) return
 
+    setActionError(undefined)
     if (await usePlanStore.getState().skip(activePlan.id)) {
       await useDashboardStore.getState().load()
+      return
     }
+    setActionError(consumeRequestError() ?? t('common.somethingWentWrong'))
   }
 
   // The row earns its space with the stats that matter: date, volume, sets.
@@ -169,6 +174,7 @@ export const WorkoutView = () => {
               {t('workout.skipRoutine')}
             </AppButton>
           )}
+          {actionError && <AppInlineError>{actionError}</AppInlineError>}
         </section>
       ) : (
         <section className={styles.emptyCard}>

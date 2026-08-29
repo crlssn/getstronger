@@ -6,7 +6,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 
-import { deleteExercise, getExercise, listSets } from '@/http/requests'
+import { consumeRequestError, deleteExercise, getExercise, listSets } from '@/http/requests'
 import { useAuthStore } from '@/stores/auth'
 import { useConfirmationStore } from '@/stores/confirmation'
 import { usePageTitleStore } from '@/stores/pageTitle'
@@ -16,6 +16,7 @@ import { AppButton } from '@/ui/components/AppButton'
 import { AppChip } from '@/ui/components/AppChip'
 import { AppLoadMore } from '@/ui/components/AppLoadMore'
 import { AppOptionRow } from '@/ui/components/AppOptionRow'
+import { AppInlineError } from '@/ui/components/AppInlineError'
 import { AppSheet, SheetAction } from '@/ui/components/AppSheet'
 import { AppSkeleton } from '@/ui/components/AppSkeleton'
 import { DropdownButton } from '@/ui/components/DropdownButton'
@@ -49,6 +50,7 @@ export const ViewExercise = () => {
   const [sets, setSets] = useState<Set[]>([])
   const [loading, setLoading] = useState(true)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [deleteError, setDeleteError] = useState<string>()
   const [deleting, setDeleting] = useState(false)
 
   const fetchSets = useCallback(async () => {
@@ -76,15 +78,18 @@ export const ViewExercise = () => {
     if (deleting) return
     setDeleting(true)
 
+    setDeleteError(undefined)
     try {
       const response = await deleteExercise(id)
-      setDeleteDialogOpen(false)
 
+      // The sheet stays open on a failure: closing it to report one would
+      // take the retry away with it.
       if (!response) {
-        useToastStore.getState().error(t('exercise.view.deleteFailed'))
+        setDeleteError(consumeRequestError() ?? t('exercise.view.deleteFailed'))
         return
       }
 
+      setDeleteDialogOpen(false)
       useToastStore.getState().success(t('exercise.view.deleted'))
       await navigate('/exercises')
     } finally {
@@ -190,7 +195,9 @@ export const ViewExercise = () => {
               </SheetAction>
             </>
           }
-        />
+        >
+          {deleteError && <AppInlineError>{deleteError}</AppInlineError>}
+        </AppSheet>
       )}
 
       {sets.length > 0 && (

@@ -3,11 +3,12 @@ import { useTranslation } from 'react-i18next'
 import { Link, useNavigate } from 'react-router-dom'
 
 import { brandName } from '@/brand'
-import { login } from '@/http/requests'
+import { consumeRequestError, login } from '@/http/requests'
 import posthog from '@/posthog'
 import { useAuthStore } from '@/stores/auth'
 import { useNotificationStore } from '@/stores/notifications'
 import { AppButton } from '@/ui/components/AppButton'
+import { AppInlineError } from '@/ui/components/AppInlineError'
 import { AppInput } from '@/ui/components/AppInput'
 import { AppPasswordInput } from '@/ui/components/AppPasswordInput'
 
@@ -19,19 +20,24 @@ export const UserLogin = () => {
   const [password, setPassword] = useState('')
   // A submit against an unreachable server used to do nothing visible at all.
   const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState<string>()
 
   const onSubmit = async (event: React.FormEvent) => {
     event.preventDefault()
     if (submitting) return
 
     setSubmitting(true)
+    setError(undefined)
     let res
     try {
       res = await login(email, password)
     } finally {
       setSubmitting(false)
     }
-    if (!res) return
+    if (!res) {
+      setError(consumeRequestError() ?? t('common.somethingWentWrong'))
+      return
+    }
 
     useAuthStore.getState().setAccessToken(res.accessToken)
     posthog.capture('user_logged_in')
@@ -76,6 +82,8 @@ export const UserLogin = () => {
             onValueChange={setPassword}
           />
         </div>
+
+        {error && <AppInlineError>{error}</AppInlineError>}
 
         <AppButton
           type="submit"

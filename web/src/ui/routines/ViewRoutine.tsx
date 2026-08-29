@@ -16,6 +16,7 @@ import { useTranslation } from 'react-i18next'
 import { useNavigate, useParams } from 'react-router-dom'
 
 import {
+  consumeRequestError,
   deleteRoutine,
   getPreviousWorkoutSets,
   getRoutine,
@@ -26,6 +27,7 @@ import { useDashboardStore } from '@/stores/dashboard'
 import { usePageTitleStore } from '@/stores/pageTitle'
 import { useToastStore } from '@/stores/toasts'
 import { AppButton } from '@/ui/components/AppButton'
+import { AppInlineError } from '@/ui/components/AppInlineError'
 import { AppIconButton } from '@/ui/components/AppIconButton'
 import { AppSkeleton } from '@/ui/components/AppSkeleton'
 import { ExerciseTags } from '@/ui/exercises/ExerciseTags'
@@ -49,6 +51,7 @@ export const ViewRoutine = () => {
   const [routine, setRoutine] = useState<Routine>()
   const [previousSets, setPreviousSets] = useState<ExerciseSets[]>([])
   const [loading, setLoading] = useState(true)
+  const [deleteError, setDeleteError] = useState<string>()
 
   useEffect(() => {
     const load = async () => {
@@ -134,9 +137,10 @@ export const ViewRoutine = () => {
     })
     if (!confirmed) return
 
+    setDeleteError(undefined)
     const response = await deleteRoutine(routine.id)
     if (!response) {
-      useToastStore.getState().error(t('routine.deleteFailed'))
+      setDeleteError(consumeRequestError() ?? t('routine.deleteFailed'))
       return
     }
 
@@ -310,6 +314,7 @@ export const ViewRoutine = () => {
         >
           <TrashIcon className="size-5" aria-hidden="true" /> {t('common.delete')}
         </AppButton>
+        {deleteError && <AppInlineError>{deleteError}</AppInlineError>}
       </section>
     </div>
   )

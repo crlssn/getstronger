@@ -25,6 +25,8 @@ interface Props {
   submitLabel: string
   /** Whether what the exercise measures is settled by sets already logged. */
   metricsLocked?: boolean
+  /** Why the last save failed, rendered inline beside the submit. */
+  error?: string
 }
 
 /**
@@ -39,6 +41,7 @@ export const ExerciseForm = ({
   onSubmit,
   submitLabel,
   metricsLocked = false,
+  error,
 }: Props) => {
   const { t } = useTranslation()
   const [suggestions, setSuggestions] = useState<string[]>([])
@@ -86,7 +89,7 @@ export const ExerciseForm = ({
 
       {/* Pinned rather than parked at the end of the scroll, where the tab
           bar sliced it in half. */}
-      <AppFormFooter>
+      <AppFormFooter error={error}>
         <AppButton type="submit" colour="primary" size="lg">
           {submitLabel}
         </AppButton>

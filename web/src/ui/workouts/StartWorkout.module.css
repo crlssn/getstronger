@@ -185,8 +185,9 @@
   @apply text-meta font-semibold text-text-muted;
 }
 
+/* Muted rather than amber: nothing has gone wrong, something is missing. */
 .actionBlock > strong.blocked {
-  @apply text-warning;
+  @apply text-text-subtle;
 }
 
 .actionBlock > strong.failed {

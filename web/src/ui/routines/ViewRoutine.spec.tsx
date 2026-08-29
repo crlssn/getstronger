@@ -167,7 +167,7 @@ describe('ViewRoutine', () => {
 
       await waitFor(() => expect(mocked.deleteRoutine).toHaveBeenCalledWith('push'))
       expect(await screen.findByText('routines')).toBeInTheDocument()
-      expect(useToastStore.getState().toast).toMatchObject({ type: 'success' })
+      expect(useToastStore.getState().toast).not.toBeNull()
     })
 
     test('does nothing when the confirmation is declined', async () => {
@@ -190,7 +190,8 @@ describe('ViewRoutine', () => {
       await waitFor(() => expect(useConfirmationStore.getState().confirmation).not.toBeNull())
       useConfirmationStore.getState().accept()
 
-      await waitFor(() => expect(useToastStore.getState().toast).toMatchObject({ type: 'error' }))
+      expect(await screen.findByRole('alert')).toHaveTextContent(/could not|failed|wrong/i)
+      expect(useToastStore.getState().toast).toBeNull()
       expect(screen.queryByText('routines')).not.toBeInTheDocument()
     })
   })

@@ -40,20 +40,20 @@
    * text-subtle sits at 4.5:1 against --color-surface-sunken, the lightest
    * thing it is ever read on; anything paler fails WCAG AA on the canvas. */
   --color-text: #1a1917;
-  --color-text-muted: #6b675c;
+  /* One step darker than the handoff's #6b675c, which reads 4.35:1 on the
+   * segmented track — the darkest thing this grey is read on — and fails AA. */
+  --color-text-muted: #666257;
   /* The handoff's ink-muted (#8a877e) reads 3.6:1 on white and fails AA for
    * meta text, so the subtle step keeps this darker warm grey instead. */
   --color-text-subtle: #6e6b65;
 
-  /* State. One green where there were three, an amber that is not the
-   * achievement orange, a neutral informational step, and a badge colour that
-   * is its own value rather than danger's. */
+  /* State. One green where there were three, a neutral informational step,
+   * and a badge colour that is its own value rather than danger's. There is
+   * no amber and no blue. */
   --color-success: #2e7d5b;
   /* Warmed a step off the cool mint it was, so a green tile sits on the same
    * paper as everything around it. */
   --color-success-surface: #e3f0e9;
-  --color-warning: #b45309;
-  --color-warning-surface: #fffbeb;
   --color-danger: #c0362c;
   /* A darker step for hover and for text that sits on the danger surface. */
   --color-danger-strong: #a12d24;

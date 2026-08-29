@@ -11,12 +11,13 @@ import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useParams } from 'react-router-dom'
 
-import { getWorkout, updateWorkout } from '@/http/requests'
+import { consumeRequestError, getWorkout, updateWorkout } from '@/http/requests'
 import { SetSchema } from '@/proto/api/v1/shared_pb'
 import { useToastStore } from '@/stores/toasts'
 import { useAuthStore } from '@/stores/auth'
 import { usePageTitleStore } from '@/stores/pageTitle'
 import { AppButton } from '@/ui/components/AppButton'
+import { AppEmptyState } from '@/ui/components/AppEmptyState'
 import { AppErrorState } from '@/ui/components/AppErrorState'
 import { AppFormFooter } from '@/ui/components/AppFormFooter'
 import { AppDatetimeField } from '@/ui/components/AppDatetimeField'
@@ -45,6 +46,8 @@ export const EditWorkout = () => {
 
   const [workout, setWorkout] = useState<Workout>()
   const [failed, setFailed] = useState(false)
+  const [forbidden, setForbidden] = useState(false)
+  const [saveError, setSaveError] = useState<string>()
 
   const load = useCallback(async () => {
     const res = await getWorkout(id)
@@ -54,17 +57,17 @@ export const EditWorkout = () => {
     }
 
     // Editing someone else's workout is refused here as well as by the API,
-    // so the form is never shown for one.
+    // so the form is never shown for one. The refusal renders in place rather
+    // than toasting over a navigation.
     if (res.workout?.user?.id !== useAuthStore.getState().userId) {
-      useToastStore.getState().error(t('workout.edit.noPermission'))
-      await navigate('/home')
+      setForbidden(true)
       return
     }
 
     setFailed(false)
     setWorkout(res.workout)
     usePageTitleStore.getState().setPageTitle(res.workout.name)
-  }, [id, t, navigate])
+  }, [id])
 
   useEffect(() => {
     const initialLoad = async () => {
@@ -85,8 +88,12 @@ export const EditWorkout = () => {
       }))
       .filter((exerciseSet) => exerciseSet.sets.length > 0)
 
+    setSaveError(undefined)
     const res = await updateWorkout({ ...workout, exerciseSets })
-    if (!res) return
+    if (!res) {
+      setSaveError(consumeRequestError() ?? t('common.somethingWentWrong'))
+      return
+    }
 
     useToastStore.getState().success(t('workout.edit.updated'))
     await navigate(`/workouts/${workout.id}`)
@@ -134,6 +141,14 @@ export const EditWorkout = () => {
 
   // The form is only mounted with the workout in hand, so without this the
   // screen keeps pulsating at a fetch that is never coming back.
+  if (forbidden) {
+    return (
+      <AppEmptyState
+        title={t('workout.edit.noPermission')}
+        action={{ label: t('nav.home'), to: '/home' }}
+      />
+    )
+  }
   if (failed) return <AppErrorState onRetry={() => void load()} />
   if (!workout) return <AppSkeleton />
 
@@ -246,6 +261,7 @@ export const EditWorkout = () => {
       />
 
       <AppFormFooter
+        error={saveError}
         secondary={
           <AppButton
             type="link"

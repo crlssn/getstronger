@@ -757,8 +757,9 @@ export const StartWorkout = () => {
     useMutationQueueStore.getState().enqueue(WorkoutService.method.createWorkout, request)
     useConnectionStore.getState().setOnline(false)
     useWorkoutStore.getState().removeWorkout(routineID)
-    // Not a success yet: the workout is on the device and not on the server.
-    useToastStore.getState().info(t('workout.savedOffline'))
+    // Saved on the device rather than the server; the offline banner carries
+    // the not-yet-synced state while the toast reports the save itself.
+    useToastStore.getState().success(t('workout.savedOffline'))
     await navigate('/home', { replace: true })
   }
 

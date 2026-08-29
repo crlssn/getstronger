@@ -3,30 +3,36 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 
-import { resetPassword } from '@/http/requests'
+import { consumeRequestError, resetPassword } from '@/http/requests'
 import posthog from '@/posthog'
 import { ResetPasswordRequestSchema } from '@/proto/api/v1/auth_service_pb'
 import { useToastStore } from '@/stores/toasts'
 import { AppButton } from '@/ui/components/AppButton'
+import { AppInlineError } from '@/ui/components/AppInlineError'
 import { AppInput } from '@/ui/components/AppInput'
 
 export const ForgotPassword = () => {
   const { t } = useTranslation()
   const [email, setEmail] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState<string>()
 
   const onSubmit = async (event: React.FormEvent) => {
     event.preventDefault()
     if (submitting) return
 
     setSubmitting(true)
+    setError(undefined)
     let res
     try {
       res = await resetPassword(create(ResetPasswordRequestSchema, { email }))
     } finally {
       setSubmitting(false)
     }
-    if (!res) return
+    if (!res) {
+      setError(consumeRequestError() ?? t('common.somethingWentWrong'))
+      return
+    }
 
     posthog.capture('password_reset_requested')
     setEmail('')
@@ -53,6 +59,8 @@ export const ForgotPassword = () => {
           value={email}
           onChange={(event) => setEmail(event.target.value)}
         />
+
+        {error && <AppInlineError>{error}</AppInlineError>}
 
         <AppButton
           type="submit"

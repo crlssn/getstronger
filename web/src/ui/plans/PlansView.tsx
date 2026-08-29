@@ -7,7 +7,9 @@ import { useConfirmationStore } from '@/stores/confirmation'
 import { useDashboardStore } from '@/stores/dashboard'
 import { selectActivePlan, usePlanStore } from '@/stores/plans'
 import { cn } from '@/ui/cn'
+import { consumeRequestError } from '@/http/requests'
 import { AppButton } from '@/ui/components/AppButton'
+import { AppInlineError } from '@/ui/components/AppInlineError'
 import { AppEmptyState } from '@/ui/components/AppEmptyState'
 import { AppErrorState } from '@/ui/components/AppErrorState'
 import { AppPageHeader } from '@/ui/components/AppPageHeader'
@@ -24,6 +26,7 @@ export const PlansView = () => {
   const failed = usePlanStore((state) => state.failed)
 
   const [loaded, setLoaded] = useState(false)
+  const [actionError, setActionError] = useState<string>()
 
   const load = useCallback(() => usePlanStore.getState().load(), [])
 
@@ -49,7 +52,12 @@ export const PlansView = () => {
       if (!confirmed) return
     }
 
-    if (await usePlanStore.getState().activate(id)) await useDashboardStore.getState().load()
+    setActionError(undefined)
+    if (await usePlanStore.getState().activate(id)) {
+      await useDashboardStore.getState().load()
+      return
+    }
+    setActionError(consumeRequestError() ?? t('common.somethingWentWrong'))
   }
 
   const pause = async () => {
@@ -60,11 +68,17 @@ export const PlansView = () => {
     })
     if (!confirmed) return
 
-    if (await usePlanStore.getState().pause()) await useDashboardStore.getState().load()
+    setActionError(undefined)
+    if (await usePlanStore.getState().pause()) {
+      await useDashboardStore.getState().load()
+      return
+    }
+    setActionError(consumeRequestError() ?? t('common.somethingWentWrong'))
   }
 
   return (
     <div className={styles.plansPage}>
+      {actionError && <AppInlineError>{actionError}</AppInlineError>}
       <AppPageHeader
         action={
           plans.length > 0 && (

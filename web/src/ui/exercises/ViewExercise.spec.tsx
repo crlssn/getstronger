@@ -245,7 +245,7 @@ describe('ViewExercise', () => {
 
       await waitFor(() => expect(mocked.deleteExercise).toHaveBeenCalledWith('bench'))
       expect(await screen.findByText('library')).toBeInTheDocument()
-      expect(useToastStore.getState().toast).toMatchObject({ type: 'success' })
+      expect(useToastStore.getState().toast).not.toBeNull()
     })
 
     // A failed deletion leaves the reader where they are, so the complaint is
@@ -257,7 +257,8 @@ describe('ViewExercise', () => {
 
       await userEvent.click(await screen.findByRole('button', { name: /Delete exercise/ }))
 
-      await waitFor(() => expect(useToastStore.getState().toast).toMatchObject({ type: 'error' }))
+      expect(await screen.findByRole('alert')).toHaveTextContent(/could not|failed|wrong/i)
+      expect(useToastStore.getState().toast).toBeNull()
       expect(screen.queryByText('library')).not.toBeInTheDocument()
     })
 

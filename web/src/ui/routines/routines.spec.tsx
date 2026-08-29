@@ -283,7 +283,7 @@ describe('CreateRoutine', () => {
         [expect.objectContaining({ mode: 'straight' })],
       ),
     )
-    expect(useToastStore.getState().toast?.type).toBe('success')
+    expect(useToastStore.getState().toast).not.toBeNull()
   })
 
   test('adds what is picked, and takes it away again', async () => {

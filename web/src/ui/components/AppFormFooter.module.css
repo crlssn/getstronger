@@ -21,6 +21,11 @@
   @apply w-full text-meta font-medium text-text-subtle;
 }
 
+/* The full-width row an inline error takes above the action it explains. */
+.errorLine {
+  @apply w-full;
+}
+
 .primary {
   @apply min-w-0 flex-1;
 }

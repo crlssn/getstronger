@@ -6,7 +6,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useParams } from 'react-router-dom'
 
-import { getRoutine, updateRoutine } from '@/http/requests'
+import { consumeRequestError, getRoutine, updateRoutine } from '@/http/requests'
 import { useToastStore } from '@/stores/toasts'
 import { AppErrorState } from '@/ui/components/AppErrorState'
 import { AppSkeleton } from '@/ui/components/AppSkeleton'
@@ -18,6 +18,7 @@ export const EditRoutine = () => {
   const { id = '' } = useParams()
 
   const [name, setName] = useState('')
+  const [error, setError] = useState<string>()
   const [exercises, setExercises] = useState<Exercise[]>([])
   const [groups, setGroups] = useState<RoutineGroup[]>([])
   const [loading, setLoading] = useState(true)
@@ -48,9 +49,13 @@ export const EditRoutine = () => {
     updatedGroups: DraftGroup[],
   ) => {
     setSaving(true)
+    setError(undefined)
     try {
       const response = await updateRoutine(id, updatedName, updatedExerciseIds, updatedGroups)
-      if (!response) return
+      if (!response) {
+        setError(consumeRequestError() ?? t('common.somethingWentWrong'))
+        return
+      }
 
       useToastStore.getState().success(t('routine.form.updated'))
       await navigate(`/routines/${id}`)
@@ -73,6 +78,7 @@ export const EditRoutine = () => {
       initialExercises={exercises}
       initialGroups={groups}
       saving={saving}
+      error={error}
       onSave={(updatedName, updatedIds, updatedGroups) =>
         void onSave(updatedName, updatedIds, updatedGroups)
       }

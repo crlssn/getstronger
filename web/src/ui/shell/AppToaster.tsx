@@ -1,47 +1,25 @@
-import {
-  CheckCircleIcon,
-  ExclamationCircleIcon,
-  ExclamationTriangleIcon,
-  InformationCircleIcon,
-  XMarkIcon,
-} from '@heroicons/react/24/outline'
+import { CheckCircleIcon, XMarkIcon } from '@heroicons/react/24/outline'
 import type { CSSProperties } from 'react'
 
 import { useTranslation } from 'react-i18next'
 
-import type { ToastType } from '@/types/toast'
-
 import { AppIconButton } from '@/ui/components/AppIconButton'
 import { selectBottomChrome, useBottomChrome } from '@/stores/bottomChrome'
 import { useToastStore } from '@/stores/toasts'
-import { cn } from '@/ui/cn'
 import styles from './AppToaster.module.css'
 
-// DS-TODO: the design system wants toasts success-only, with errors rendered
-// inline where they happened. Every error surface would have to grow an inline
-// slot first, so the error and warning variants stay until that lands.
-const icons = {
-  success: CheckCircleIcon,
-  error: ExclamationCircleIcon,
-  warning: ExclamationTriangleIcon,
-  info: InformationCircleIcon,
-}
-
-/** Something went wrong interrupts; something went right does not. */
-const interrupts = (type: ToastType) => type === 'error' || type === 'warning'
-
 /**
- * The transient message, floating over whichever shell is on screen.
+ * The transient success message, floating over whichever shell is on screen.
  *
- * The region is always mounted so a screen reader is watching it before the
- * first message lands, and it lets taps through everywhere the card is not.
+ * Success only: errors render inline where they happened, so the toast never
+ * has to interrupt. The region is always mounted so a screen reader is
+ * watching it before the first message lands, and it lets taps through
+ * everywhere the card is not.
  */
 export const AppToaster = () => {
   const { t } = useTranslation()
   const toast = useToastStore((state) => state.toast)
   const bottomChrome = useBottomChrome(selectBottomChrome)
-
-  const Icon = toast ? icons[toast.type] : null
 
   return (
     <div
@@ -51,15 +29,11 @@ export const AppToaster = () => {
       // save and delete on the screen reporting that it had been saved.
       style={{ '--bottom-chrome': `${bottomChrome}px` } as CSSProperties}
     >
-      {toast && Icon && (
+      {toast && (
         // Keyed so a new message replaces the card rather than editing it,
         // which is what makes a screen reader announce the second one.
-        <div
-          key={toast.id}
-          className={cn(styles.toast, styles[toast.type])}
-          role={interrupts(toast.type) ? 'alert' : 'status'}
-        >
-          <Icon className={styles.statusIcon} aria-hidden="true" />
+        <div key={toast.id} className={styles.toast} role="status">
+          <CheckCircleIcon className={styles.statusIcon} aria-hidden="true" />
           <p>{toast.message}</p>
           <AppIconButton
             className={styles.dismiss}

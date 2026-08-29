@@ -4,11 +4,12 @@ import { useTranslation } from 'react-i18next'
 import { Link, useNavigate } from 'react-router-dom'
 
 import { brandSignupSubtitle } from '@/brand'
-import { signup, verifyEmailPendingPath } from '@/http/requests'
+import { consumeRequestError, signup, verifyEmailPendingPath } from '@/http/requests'
 import posthog from '@/posthog'
 import { SignupRequestSchema } from '@/proto/api/v1/auth_service_pb'
 import { useEmailVerificationStore } from '@/stores/emailVerification'
 import { AppButton } from '@/ui/components/AppButton'
+import { AppInlineError } from '@/ui/components/AppInlineError'
 import { AppInput } from '@/ui/components/AppInput'
 import { AppPasswordInput } from '@/ui/components/AppPasswordInput'
 import { usernameFromName } from '@/utils/names'
@@ -24,6 +25,7 @@ export const UserSignup = () => {
   const [passwordConfirmation, setPasswordConfirmation] = useState('')
   const [usernameEdited, setUsernameEdited] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState<string>()
 
   // The username follows the name until it is typed in, which is the only
   // signal that the suggestion is not wanted. Clearing the field hands it back.
@@ -45,6 +47,7 @@ export const UserSignup = () => {
     if (submitting) return
 
     setSubmitting(true)
+    setError(undefined)
     let res
     try {
       res = await signup(
@@ -53,7 +56,10 @@ export const UserSignup = () => {
     } finally {
       setSubmitting(false)
     }
-    if (!res) return
+    if (!res) {
+      setError(consumeRequestError() ?? t('common.somethingWentWrong'))
+      return
+    }
 
     posthog.capture('account_signed_up')
     // Signup sends the first verification email, so the resend cooldown starts
@@ -130,6 +136,8 @@ export const UserSignup = () => {
           value={passwordConfirmation}
           onValueChange={setPasswordConfirmation}
         />
+
+        {error && <AppInlineError>{error}</AppInlineError>}
 
         <AppButton
           type="submit"

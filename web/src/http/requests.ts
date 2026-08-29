@@ -146,7 +146,6 @@ import { isConnectivityError } from '@/http/offlineCache'
 import { logoutUnauthenticatedUser } from '@/http/unauthenticated'
 import { currentPath, goTo } from '@/router/navigation'
 import { useConnectionStore } from '@/stores/connection'
-import { useToastStore } from '@/stores/toasts'
 import { useEmailVerificationStore } from '@/stores/emailVerification'
 
 const defaultPageLimit = 25
@@ -681,10 +680,23 @@ type TryCatchOptions = {
   rethrow?: boolean
 }
 
+// Errors render inline rather than toasting, and the caller owns the inline
+// slot, so a request that returns void leaves its message here for the caller
+// to collect. One slot suffices: requests follow user actions, one at a time.
+let requestErrorMessage: string | undefined
+
+/** The message the request that just returned void failed with, then clears it. */
+export const consumeRequestError = (): string | undefined => {
+  const message = requestErrorMessage
+  requestErrorMessage = undefined
+  return message
+}
+
 const tryCatch = async <T>(
   fn: () => Promise<T>,
   options: TryCatchOptions = {},
 ): Promise<T | void> => {
+  requestErrorMessage = undefined
   try {
     return await fn()
   } catch (error) {
@@ -708,23 +720,22 @@ const tryCatch = async <T>(
             await options.onEmailNotVerified?.()
             return
           case Error.PASSWORDS_DO_NOT_MATCH:
-            useToastStore.getState().error(i18n.t('auth.passwordsDoNotMatch'))
+            requestErrorMessage = i18n.t('auth.passwordsDoNotMatch')
             return
           case Error.USERNAME_TAKEN:
-            useToastStore.getState().error(i18n.t('auth.usernameTaken'))
+            requestErrorMessage = i18n.t('auth.usernameTaken')
             return
         }
       }
 
       // An application error says something the user can act on, so it is
-      // shown as it came. Cancelled and unreachable are neither: they fall
+      // kept as it came. Cancelled and unreachable are neither: they fall
       // through to the connectivity handling below.
       if (error.code !== Code.Canceled && !isConnectivityError(error)) {
-        useToastStore.getState().error(
-          // An Unknown carries a transport message ("[unknown] Failed to
-          // fetch"), which tells the user nothing they can do anything with.
-          error.code === Code.Unknown ? i18n.t('common.somethingWentWrong') : error.message,
-        )
+        // An Unknown carries a transport message ("[unknown] Failed to
+        // fetch"), which tells the user nothing they can do anything with.
+        requestErrorMessage =
+          error.code === Code.Unknown ? i18n.t('common.somethingWentWrong') : error.message
         return
       }
     }
@@ -735,14 +746,14 @@ const tryCatch = async <T>(
     // A request that never reached the backend used to end here in silence, and
     // the callers turned that silence into "nothing here yet".
     //
-    // The toast marks the moment connectivity went, not every request that
-    // fails after it: the banner carries the state from there on, and a toast
-    // per failed request would bury the one message the user was waiting for —
-    // "Workout saved on this device" is raised while the app is already
-    // offline, and the newest toast wins.
-    if (isConnectivityError(error) && useConnectionStore.getState().online) {
-      useConnectionStore.getState().setOnline(false)
-      useToastStore.getState().error(i18n.t('offline.requestFailed'))
+    // The offline banner marks the moment connectivity went and carries the
+    // state from there on; the recorded message lets whichever action failed
+    // say so inline as well.
+    if (isConnectivityError(error)) {
+      requestErrorMessage = i18n.t('offline.requestFailed')
+      if (useConnectionStore.getState().online) {
+        useConnectionStore.getState().setOnline(false)
+      }
     }
   }
 }

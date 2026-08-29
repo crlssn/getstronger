@@ -5,13 +5,14 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useParams } from 'react-router-dom'
 
-import { getPlan } from '@/http/requests'
+import { consumeRequestError, getPlan } from '@/http/requests'
 import { useConfirmationStore } from '@/stores/confirmation'
 import { useDashboardStore } from '@/stores/dashboard'
 import { usePageTitleStore } from '@/stores/pageTitle'
 import { usePlanStore } from '@/stores/plans'
 import { cn } from '@/ui/cn'
 import { AppButton } from '@/ui/components/AppButton'
+import { AppInlineError } from '@/ui/components/AppInlineError'
 import { AppSkeleton } from '@/ui/components/AppSkeleton'
 import styles from './ViewPlan.module.css'
 
@@ -22,6 +23,7 @@ export const ViewPlan = () => {
   const { id = '' } = useParams()
 
   const [plan, setPlan] = useState<Plan>()
+  const [actionError, setActionError] = useState<string>()
 
   useEffect(() => {
     const load = async () => {
@@ -44,8 +46,12 @@ export const ViewPlan = () => {
     })
     if (!confirmed) return
 
+    setActionError(undefined)
     const updated = await usePlanStore.getState().activate(id)
-    if (!updated) return
+    if (!updated) {
+      setActionError(consumeRequestError() ?? t('common.somethingWentWrong'))
+      return
+    }
 
     setPlan(updated)
     await useDashboardStore.getState().load()
@@ -59,7 +65,11 @@ export const ViewPlan = () => {
     })
     if (!confirmed) return
 
-    if (!(await usePlanStore.getState().pause())) return
+    setActionError(undefined)
+    if (!(await usePlanStore.getState().pause())) {
+      setActionError(consumeRequestError() ?? t('common.somethingWentWrong'))
+      return
+    }
 
     setPlan((current) => (current ? { ...current, active: false } : current))
     await useDashboardStore.getState().load()
@@ -74,7 +84,12 @@ export const ViewPlan = () => {
     })
     if (!confirmed) return
 
-    if (await usePlanStore.getState().remove(id)) await navigate('/plans')
+    setActionError(undefined)
+    if (await usePlanStore.getState().remove(id)) {
+      await navigate('/plans')
+      return
+    }
+    setActionError(consumeRequestError() ?? t('common.somethingWentWrong'))
   }
 
   if (!plan) return <AppSkeleton />
@@ -110,6 +125,7 @@ export const ViewPlan = () => {
             </AppButton>
           )}
         </div>
+        {actionError && <AppInlineError>{actionError}</AppInlineError>}
       </section>
 
       <header className={styles.orderHeading}>
