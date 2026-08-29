@@ -152,16 +152,17 @@ export const CardWorkout = ({ workout, compact }: Props) => {
   )
 
   const metric = (label: string, value: string) => (
-    <article>
-      <small>{label}</small>
+    <li>
+      <span>{label}</span>
       <strong>{value}</strong>
-    </article>
+    </li>
   )
 
-  // The units the session actually trained in, then the session's own numbers.
-  // Each metric carried a grey icon tile once; the label says it alone.
-  const metricGrid = (
-    <div className={styles.metricGrid}>
+  // The units the session actually trained in, then the session's own
+  // numbers, as the list every other collection is: the 2x2 quadrant left a
+  // hole whenever the count of metrics came out odd.
+  const metricList = (
+    <ul className={styles.metricList}>
       {workout.intensity > 0 &&
         metric(t('workout.totalVolume'), `${formatNumber(workout.intensity)} ${t('common.kg')}`)}
       {totalReps > 0 && metric(t('common.reps'), formatNumber(totalReps))}
@@ -174,7 +175,7 @@ export const CardWorkout = ({ workout, compact }: Props) => {
       {metric(t('common.duration'), `${durationMinutes} ${t('common.min')}`)}
       {metric(t('workout.setsLogged'), `${setCount}`)}
       {metric(t('workout.personalRecords'), `${personalBestCount}`)}
-    </div>
+    </ul>
   )
 
   const note = workout.note && (
@@ -271,7 +272,7 @@ export const CardWorkout = ({ workout, compact }: Props) => {
           {personalBestBadge}
         </div>
 
-        {metricGrid}
+        {metricList}
         {note}
       </section>
 

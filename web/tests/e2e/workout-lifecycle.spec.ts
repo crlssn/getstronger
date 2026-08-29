@@ -574,9 +574,11 @@ test.describe('weight units', () => {
       // from the set's own distance unit: 12:30 over 3.5 mi is 3:34 min/mi.
       // Distance and time each appear twice — the summary totals every unit
       // the session trained in, and the set row keeps its own values.
-      await expect(page.getByRole('article').filter({ hasText: /^Distance3\.5 mi$/ })).toBeVisible()
       await expect(
-        page.getByRole('article').filter({ hasText: /^Time12 min 30 sec$/ }),
+        page.getByRole('listitem').filter({ hasText: /^Distance3\.5 mi$/ }),
+      ).toBeVisible()
+      await expect(
+        page.getByRole('listitem').filter({ hasText: /^Time12 min 30 sec$/ }),
       ).toBeVisible()
       await expect(page.getByRole('cell', { name: /3\.5\s*mi/ })).toBeVisible()
       await expect(page.getByText('3:34 min/mi')).toBeVisible()

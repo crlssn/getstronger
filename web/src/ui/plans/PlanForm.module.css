@@ -13,8 +13,10 @@
   @apply card;
 }
 
+/* The hero field stands on the canvas like the routine and exercise names;
+   the page's own rhythm spaces it. */
 .nameField {
-  @apply card p-4;
+  @apply block;
 }
 
 .loopNote,
