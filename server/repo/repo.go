@@ -249,11 +249,19 @@ func (r *Repo) UpdateAuth(ctx context.Context, authID string, opts ...UpdateAuth
 	return nil
 }
 
+// unmatchableHash is a bcrypt hash of an unguessable string, at the cost every
+// stored password uses. It gives an email that matches no row the same work an
+// email that does costs, so the response time stops saying which is which.
+const unmatchableHash = "$2a$10$sK44yiS/oOhlzCNmn65OM.jUuFbAy3IGA0JABRo6MIlVMdVm26s5a"
+
 func (r *Repo) CompareEmailAndPassword(ctx context.Context, email, password string) error {
 	auth, err := models.Auths.Query(
 		models.SelectWhere.Auths.Email.EQ(account.NormalizeEmailAddress(email)),
 	).One(ctx, r.bobExec())
 	if err != nil {
+		// Deliberately discarded: the comparison exists to spend the time, and
+		// nothing can match this hash.
+		_ = bcrypt.CompareHashAndPassword([]byte(unmatchableHash), []byte(password))
 		return fmt.Errorf("auth fetch: %w", err)
 	}
 
