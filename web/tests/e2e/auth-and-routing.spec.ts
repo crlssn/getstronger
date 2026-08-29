@@ -84,6 +84,19 @@ test.describe('guest authentication and routing', () => {
     await expect(page).toHaveURL(/\/signup$/)
 
     await page.getByLabel('Username').fill(`e2e.${Date.now()}`)
+
+    // bcrypt hashes at most 72 bytes, so a longer passphrase — what a password
+    // manager offers — is named as a bad password rather than dying as an
+    // internal error.
+    const tooLong = 'a'.repeat(73)
+    await page.getByLabel('Password', { exact: true }).fill(tooLong)
+    await page.getByLabel('Confirm password').fill(tooLong)
+    await page.getByRole('button', { name: 'Create an account' }).click()
+    await expect(page.getByRole('alert')).toContainText('password')
+    await expect(page).toHaveURL(/\/signup$/)
+
+    await page.getByLabel('Password', { exact: true }).fill(password)
+    await page.getByLabel('Confirm password').fill(password)
     await page.getByRole('button', { name: 'Create an account' }).click()
 
     // The notice says the link was sent, not that the account is verified.

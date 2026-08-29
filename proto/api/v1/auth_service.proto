@@ -41,7 +41,11 @@ message SignupRequest {
   reserved "first_name", "last_name", "weight_unit", "distance_unit";
 
   string email = 1 [(buf.validate.field).string.email = true];
-  string password = 2 [(buf.validate.field).string.min_len = 6];
+  // Bytes, not characters: bcrypt refuses anything longer than 72 of them.
+  string password = 2 [(buf.validate.field).string = {
+    min_len: 6
+    max_bytes: 72
+  }];
   string password_confirmation = 3;
   string name = 8 [(buf.validate.field).string.min_len = 1];
   // Compared case-insensitively; the server stores it lowercased.
@@ -90,7 +94,10 @@ message ResetPasswordResponse {}
 
 message UpdatePasswordRequest {
   string token = 1 [(buf.validate.field).string.uuid = true];
-  string password = 2 [(buf.validate.field).string.min_len = 6];
+  string password = 2 [(buf.validate.field).string = {
+    min_len: 6
+    max_bytes: 72
+  }];
   string password_confirmation = 3;
 }
 message UpdatePasswordResponse {}

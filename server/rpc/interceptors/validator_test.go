@@ -2,6 +2,7 @@ package interceptors
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"buf.build/go/protovalidate"
@@ -100,4 +101,69 @@ func TestValidatorRefusesANonProtoRequest(t *testing.T) {
 	require.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
 	require.ErrorIs(t, err, errRequestMessageNotProtoMessage)
 	require.False(t, reached)
+}
+
+// bcrypt refuses a password longer than 72 bytes, so the schema bounds one
+// before a handler can hand it over and answer with an internal error.
+func TestValidatorRejectsAPasswordBcryptCannotHash(t *testing.T) {
+	t.Parallel()
+	validator, err := protovalidate.New()
+	require.NoError(t, err)
+
+	// 72 accented characters are 144 bytes: the bound counts bytes, as bcrypt
+	// does, so a character count would let this one through.
+	tooLong := strings.Repeat("é", 72)
+	require.Len(t, []byte(tooLong), 144)
+
+	for name, req := range map[string]connect.AnyRequest{
+		"signup": connect.NewRequest(&apiv1.SignupRequest{
+			Email:    "athlete@example.com",
+			Password: tooLong,
+			Name:     "Athlete",
+			Username: "athlete",
+		}),
+		"update password": connect.NewRequest(&apiv1.UpdatePasswordRequest{
+			Token:    uuid.NewString(),
+			Password: tooLong,
+		}),
+	} {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			reached := false
+			next := func(_ context.Context, _ connect.AnyRequest) (connect.AnyResponse, error) {
+				reached = true
+				return connect.NewResponse(&apiv1.SignupResponse{}), nil
+			}
+			interceptor := newValidator(zap.NewNop(), validator)
+
+			_, err := interceptor.WrapUnary(next)(context.Background(), req)
+			require.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
+			require.False(t, reached)
+		})
+	}
+}
+
+// The longest password bcrypt does hash still reaches the handler.
+func TestValidatorAllowsAPasswordOfSeventyTwoBytes(t *testing.T) {
+	t.Parallel()
+	validator, err := protovalidate.New()
+	require.NoError(t, err)
+
+	called := false
+	next := func(_ context.Context, _ connect.AnyRequest) (connect.AnyResponse, error) {
+		called = true
+		return connect.NewResponse(&apiv1.SignupResponse{}), nil
+	}
+	interceptor := newValidator(zap.NewNop(), validator)
+
+	_, err = interceptor.WrapUnary(next)(context.Background(), connect.NewRequest(&apiv1.SignupRequest{
+		Email:    "athlete@example.com",
+		Password: strings.Repeat("a", 72),
+		Name:     "Athlete",
+		Username: "athlete",
+	}))
+
+	require.NoError(t, err)
+	require.True(t, called)
 }
