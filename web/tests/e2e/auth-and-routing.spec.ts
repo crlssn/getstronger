@@ -404,6 +404,43 @@ test.describe('authenticated session routing', () => {
     await expect(page).toHaveURL(/\/login$/)
   })
 
+  // An account has one refresh token, so a second device signing in holds the
+  // same cookie. Once the first device logs out that token is gone, and the
+  // second device — still open, its access token good for another quarter of an
+  // hour — has nothing left to revoke. Logging out must expire the dead cookie
+  // all the same.
+  test('expires the cookie when the session it names has already ended @mutation', async ({
+    browser,
+    page,
+  }) => {
+    const second = await browser.newContext({ baseURL: new URL(page.url()).origin })
+    const device = await second.newPage()
+    await logIn(device)
+
+    await page.goto('/profile')
+    await page.getByRole('link', { name: 'Log out' }).click()
+    await expect(page).toHaveURL(/\/login$/)
+
+    const staleCookie = async () =>
+      (await second.cookies()).find(({ name }) => name === 'refreshToken')
+    expect(await staleCookie(), 'The second device should still hold the cookie').toBeDefined()
+
+    // Navigated within the app rather than reloaded: a reload renews the access
+    // token first, and that is what would notice the session had ended. The tab
+    // is matched on its trailing name because it carries an unread badge, and
+    // because a bare 'Me' also matches 'Home'.
+    await device
+      .getByRole('navigation', { name: 'Primary navigation' })
+      .getByRole('link', { name: /Me$/ })
+      .click()
+    await expect(device).toHaveURL(/\/profile$/)
+    await device.getByRole('link', { name: 'Log out' }).click()
+    await expect(device).toHaveURL(/\/login$/)
+    expect(await staleCookie(), 'Logging out should expire the cookie either way').toBeUndefined()
+
+    await second.close()
+  })
+
   test('logs out when a protected endpoint reports an expired session', async ({ page }) => {
     test.info().annotations.push(allowRuntimeErrors)
     await page.route('**/api.v1.UserService/GetUser', async (route) => {
