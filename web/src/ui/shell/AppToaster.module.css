@@ -27,11 +27,6 @@
   @apply min-w-0 flex-1;
 }
 
-/* The toast is tinted by its type, so the dismiss borrows that tint rather
-   than the default tone's neutral. */
-.dismiss {
-  @apply -m-1.5 text-current hover:bg-black/5 hover:text-current;
-}
 
 @keyframes toast-in {
   from {
