@@ -74,8 +74,8 @@ test.describe('social feed and discovery', () => {
       }
     })
     await page.reload()
-    // Scoped to the feed's own row: an unreachable backend also raises the
-    // global connectivity toast, which is an alert of its own.
+    // Scoped to the feed's own row: other surfaces may raise alerts of their
+    // own about the unreachable backend.
     const failure = page.getByRole('alert').filter({ hasText: 'Latest workouts could not be' })
     await expect(failure).toBeVisible()
     await failure.getByRole('button', { name: 'Try again' }).click()
@@ -243,7 +243,9 @@ test.describe('account progress', () => {
     const usernameInput = page.getByRole('textbox', { name: 'Username' })
     await usernameInput.fill('janedoe')
     await page.getByRole('button', { name: 'Save' }).click()
+    // Inline in the sheet, beside the field to correct — never a toast.
     await expect(page.getByRole('alert')).toContainText('already taken')
+    await expect(page.getByRole('status')).toBeHidden()
     await expect(usernameInput).toBeVisible()
 
     // A free handle saves, closes the sheet, and shows immediately.

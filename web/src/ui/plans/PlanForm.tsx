@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 
-import { getPlan, listRoutines } from '@/http/requests'
+import { consumeRequestError, getPlan, listRoutines } from '@/http/requests'
 import posthog from '@/posthog'
 import { lastPerformedIn, useActivityStore } from '@/stores/activity'
 import { usePlanStore } from '@/stores/plans'
@@ -40,6 +40,7 @@ export const PlanForm = ({ planId }: Props) => {
   const [selected, setSelected] = useState<Routine[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string>()
   const [pickerOpen, setPickerOpen] = useState(false)
 
   const editing = Boolean(planId)
@@ -112,6 +113,7 @@ export const PlanForm = ({ planId }: Props) => {
   const save = async () => {
     if (!canSave || saving) return
     setSaving(true)
+    setError(undefined)
 
     const routineIds = selected.map((routine) => routine.id)
     const store = usePlanStore.getState()
@@ -120,7 +122,10 @@ export const PlanForm = ({ planId }: Props) => {
       : await store.create(name.trim(), routineIds)
 
     setSaving(false)
-    if (!plan) return
+    if (!plan) {
+      setError(consumeRequestError() ?? t('common.somethingWentWrong'))
+      return
+    }
 
     posthog.capture(editing ? 'plan_updated' : 'plan_created')
     useToastStore
@@ -234,7 +239,7 @@ export const PlanForm = ({ planId }: Props) => {
 
             {/* Pinned rather than parked at the end of the scroll, where the
                 tab bar sliced it in half. */}
-            <AppFormFooter hint={missing}>
+            <AppFormFooter hint={missing} error={error}>
               <AppButton type="submit" colour="primary" size="lg" disabled={!canSave || saving}>
                 {saving
                   ? t('training.planForm.saving')

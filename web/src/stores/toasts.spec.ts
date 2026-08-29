@@ -14,15 +14,10 @@ describe('useToastStore', () => {
     vi.useRealTimers()
   })
 
-  test.each([
-    ['success', 'success'],
-    ['error', 'error'],
-    ['warning', 'warning'],
-    ['info', 'info'],
-  ] as const)('%s raises a %s toast', (method, type) => {
-    store()[method]('Saved')
+  test('raises a success toast', () => {
+    store().success('Saved')
 
-    expect(store().toast).toEqual({ id: expect.any(Number), message: 'Saved', type })
+    expect(store().toast).toEqual({ id: expect.any(Number), message: 'Saved' })
   })
 
   test('dismisses a toast on its own after a few seconds', () => {
@@ -46,19 +41,19 @@ describe('useToastStore', () => {
   // The newest message is the one the user just caused.
   test('replaces the message before it', () => {
     store().success('Saved')
-    store().error('Failed')
+    store().success('Also saved')
 
-    expect(store().toast).toMatchObject({ message: 'Failed', type: 'error' })
+    expect(store().toast).toMatchObject({ message: 'Also saved' })
   })
 
   test('gives the replacement its own clock', () => {
     store().success('Saved')
     vi.advanceTimersByTime(TOAST_DURATION_MS - 1)
-    store().error('Failed')
+    store().success('Also saved')
 
     // The message it replaced must not take it away a millisecond later.
     vi.advanceTimersByTime(1)
-    expect(store().toast).toMatchObject({ message: 'Failed' })
+    expect(store().toast).toMatchObject({ message: 'Also saved' })
 
     vi.advanceTimersByTime(TOAST_DURATION_MS)
     expect(store().toast).toBeNull()
@@ -73,14 +68,14 @@ describe('useToastStore', () => {
     expect(store().toast).toBeNull()
   })
 
-  // Effects run twice under StrictMode, and a request can fail the same way
+  // Effects run twice under StrictMode, so a save can report the same way
   // twice in a row.
   test('restarts the clock of a repeated message rather than raising it again', () => {
-    store().error('Failed')
+    store().success('Saved')
     const raised = store().toast
 
     vi.advanceTimersByTime(TOAST_DURATION_MS - 1)
-    store().error('Failed')
+    store().success('Saved')
 
     // Same toast, not a second one: the id is what the view keys on.
     expect(store().toast).toBe(raised)
@@ -90,15 +85,5 @@ describe('useToastStore', () => {
 
     vi.advanceTimersByTime(1)
     expect(store().toast).toBeNull()
-  })
-
-  test('tells apart the same message raised as two types', () => {
-    store().info('Sync')
-    const raised = store().toast
-
-    store().warning('Sync')
-
-    expect(store().toast).not.toBe(raised)
-    expect(store().toast).toMatchObject({ type: 'warning' })
   })
 })

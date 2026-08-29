@@ -27,6 +27,8 @@ interface Props {
   submitLabel: string
   onSave: (name: string, exerciseIds: string[], groups: DraftGroup[]) => void
   saving?: boolean
+  /** Why the last save failed, rendered inline beside the submit. */
+  error?: string
   initialName?: string
   /** The routine's exercises, which is where the form reads their names from. */
   initialExercises?: Exercise[]
@@ -48,6 +50,7 @@ export const RoutineForm = ({
   submitLabel,
   onSave,
   saving = false,
+  error,
   initialName = '',
   initialExercises,
   initialGroups,
@@ -166,7 +169,7 @@ export const RoutineForm = ({
 
       {/* Pinned rather than parked at the end of the scroll, where a routine
           with ten exercises hid it. */}
-      <AppFormFooter hint={missing}>
+      <AppFormFooter hint={missing} error={error}>
         <AppButton type="submit" colour="primary" size="lg" disabled={!canSubmit}>
           {saving ? t('training.planForm.saving') : submitLabel}
         </AppButton>

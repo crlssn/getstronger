@@ -50,7 +50,7 @@
 }
 
 .avatar {
-  @apply grid size-11 shrink-0 place-items-center rounded-control bg-ink-surface text-meta font-bold text-text-muted;
+  @apply grid size-11 shrink-0 place-items-center rounded-avatar bg-ink-surface text-meta font-bold text-text-muted;
 }
 
 /* The byline of the workout you opened, under the title the nav bar carries. */

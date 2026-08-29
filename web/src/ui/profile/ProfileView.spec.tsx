@@ -208,11 +208,11 @@ describe('ProfileView', () => {
         'true',
       )
       await waitFor(() => expect(request()).toHaveBeenCalledWith(expected))
-      expect(useToastStore.getState().toast?.type).toBe('success')
+      expect(useToastStore.getState().toast).not.toBeNull()
     })
 
-    // The request helper is silent for network-level failures, so the revert
-    // has to explain itself or the control appears to snap back on its own.
+    // A failure reverts the control and the row says why inline, or the
+    // control appears to snap back on its own.
     test('reverts and says why when the request fails', async () => {
       request().mockResolvedValue(undefined)
       render()
@@ -226,7 +226,8 @@ describe('ProfileView', () => {
           'false',
         ),
       )
-      expect(useToastStore.getState().toast?.type).toBe('error')
+      expect(screen.getByRole('alert')).toHaveTextContent('Could not update')
+      expect(useToastStore.getState().toast).toBeNull()
     })
 
     test('does nothing when the current option is picked again', async () => {
@@ -414,7 +415,6 @@ describe('ProfileView', () => {
       // readable on the login screen the app leaves for.
       expect(useToastStore.getState().toast).toMatchObject({
         message: 'Your account has been deleted.',
-        type: 'success',
       })
     })
 

@@ -121,7 +121,7 @@
 }
 
 .routineIcon {
-  @apply grid size-11 place-items-center rounded-control bg-ink-surface text-ink;
+  @apply grid size-11 place-items-center rounded-avatar bg-ink-surface text-ink;
 }
 
 .routineIcon svg {

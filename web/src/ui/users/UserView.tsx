@@ -6,11 +6,18 @@ import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Outlet, useParams } from 'react-router-dom'
 
-import { followUser, getUser, listWorkouts, unfollowUser } from '@/http/requests'
+import {
+  consumeRequestError,
+  followUser,
+  getUser,
+  listWorkouts,
+  unfollowUser,
+} from '@/http/requests'
 import posthog from '@/posthog'
 import { useAuthStore } from '@/stores/auth'
 import { usePageTitleStore } from '@/stores/pageTitle'
 import { AppButton } from '@/ui/components/AppButton'
+import { AppInlineError } from '@/ui/components/AppInlineError'
 import { AppCard } from '@/ui/components/AppCard'
 import { AppSegmentedNav } from '@/ui/components/AppSegmented'
 import { AppSkeleton } from '@/ui/components/AppSkeleton'
@@ -64,11 +71,17 @@ export const UserView = () => {
     void load()
   }, [fetchUser, signedInUserId, t])
 
+  const [actionError, setActionError] = useState<string>()
+
   const notMe = Boolean(user?.id) && user?.id !== signedInUserId
 
   const onFollow = async () => {
+    setActionError(undefined)
     const response = await followUser(id)
-    if (!response) return
+    if (!response) {
+      setActionError(consumeRequestError() ?? t('common.somethingWentWrong'))
+      return
+    }
     posthog.capture('user_followed')
     await fetchUser()
   }
@@ -77,8 +90,12 @@ export const UserView = () => {
     {
       destructive: true,
       func: async () => {
+        setActionError(undefined)
         const response = await unfollowUser(id)
-        if (!response) return
+        if (!response) {
+          setActionError(consumeRequestError() ?? t('common.somethingWentWrong'))
+          return
+        }
         posthog.capture('user_unfollowed')
         await fetchUser()
       },
@@ -107,6 +124,8 @@ export const UserView = () => {
             </AppButton>
           </div>
         ))}
+
+      {actionError && <AppInlineError>{actionError}</AppInlineError>}
 
       {/* Two points is the fewest that can show a direction. */}
       {/* The chart decides what it can honestly draw: a figure under three

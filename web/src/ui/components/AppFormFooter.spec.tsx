@@ -36,6 +36,18 @@ describe('AppFormFooter', () => {
     expect(screen.getByRole('button', { name: 'Create routine' })).toBeVisible()
   })
 
+  test('announces why the last submit failed, beside the submit', () => {
+    renderWithProviders(
+      <AppFormFooter error="Could not save. Please try again.">
+        <AppButton type="submit" colour="primary">
+          Save changes
+        </AppButton>
+      </AppFormFooter>,
+    )
+
+    expect(screen.getByRole('alert')).toHaveTextContent('Could not save. Please try again.')
+  })
+
   test('carries a secondary action beside the primary one', () => {
     renderWithProviders(
       <AppFormFooter

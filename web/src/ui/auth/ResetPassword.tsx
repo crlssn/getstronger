@@ -3,11 +3,12 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 
-import { updatePassword } from '@/http/requests'
+import { consumeRequestError, updatePassword } from '@/http/requests'
 import posthog from '@/posthog'
 import { UpdatePasswordRequestSchema } from '@/proto/api/v1/auth_service_pb'
 import { useToastStore } from '@/stores/toasts'
 import { AppButton } from '@/ui/components/AppButton'
+import { AppInlineError } from '@/ui/components/AppInlineError'
 import { AppPasswordInput } from '@/ui/components/AppPasswordInput'
 
 export const ResetPassword = () => {
@@ -18,12 +19,14 @@ export const ResetPassword = () => {
   const [password, setPassword] = useState('')
   const [passwordConfirmation, setPasswordConfirmation] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState<string>()
 
   const onSubmit = async (event: React.FormEvent) => {
     event.preventDefault()
     if (submitting) return
 
     setSubmitting(true)
+    setError(undefined)
     let res
     try {
       res = await updatePassword(
@@ -36,7 +39,10 @@ export const ResetPassword = () => {
     } finally {
       setSubmitting(false)
     }
-    if (!res) return
+    if (!res) {
+      setError(consumeRequestError() ?? t('common.somethingWentWrong'))
+      return
+    }
 
     posthog.capture('password_reset_completed')
     useToastStore.getState().success(t('auth.recovery.resetDone'))
@@ -71,6 +77,8 @@ export const ResetPassword = () => {
           value={passwordConfirmation}
           onValueChange={setPasswordConfirmation}
         />
+
+        {error && <AppInlineError>{error}</AppInlineError>}
 
         <AppButton
           type="submit"

@@ -55,7 +55,7 @@
 }
 
 .routineOrder li > span {
-  @apply grid size-11 place-items-center rounded-control bg-ink-tint font-semibold text-text-muted;
+  @apply grid size-11 place-items-center rounded-avatar bg-ink-tint font-semibold text-text-muted;
 }
 
 .routineOrder li > div {

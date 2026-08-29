@@ -5,7 +5,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 
-import { createExercise } from '@/http/requests'
+import { consumeRequestError, createExercise } from '@/http/requests'
 import posthog from '@/posthog'
 import { CreateExerciseRequestSchema } from '@/proto/api/v1/exercise_service_pb'
 import { ExerciseMetric } from '@/proto/api/v1/shared_pb'
@@ -24,10 +24,15 @@ export const CreateExercise = () => {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const [values, setValues] = useState(blankExercise)
+  const [error, setError] = useState<string>()
 
   const onSubmit = async () => {
+    setError(undefined)
     const res = await createExercise(create(CreateExerciseRequestSchema, values))
-    if (!res) return
+    if (!res) {
+      setError(consumeRequestError() ?? t('common.somethingWentWrong'))
+      return
+    }
 
     posthog.capture('exercise_created')
     useToastStore.getState().success(t('exercise.form.created'))
@@ -40,6 +45,7 @@ export const CreateExercise = () => {
       onChange={setValues}
       onSubmit={() => void onSubmit()}
       submitLabel={t('exercise.create')}
+      error={error}
     />
   )
 }

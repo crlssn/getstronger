@@ -6,7 +6,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useNavigate } from 'react-router-dom'
 
-import { deleteWorkout, postWorkoutComment } from '@/http/requests'
+import { consumeRequestError, deleteWorkout, postWorkoutComment } from '@/http/requests'
 import { RoutineGroupMode } from '@/proto/api/v1/shared_pb'
 import { useToastStore } from '@/stores/toasts'
 import { useAuthStore } from '@/stores/auth'
@@ -20,6 +20,7 @@ import { cn } from '@/ui/cn'
 import { CardWorkoutCircuit } from '@/ui/features/CardWorkoutCircuit'
 import { CardWorkoutComment } from '@/ui/features/CardWorkoutComment'
 import { CardWorkoutExercise } from '@/ui/features/CardWorkoutExercise'
+import { AppInlineError } from '@/ui/components/AppInlineError'
 import { DropdownButton } from '@/ui/components/DropdownButton'
 import { handle, initials } from '@/utils/names'
 import { formatNumber } from '@/utils/numbers'
@@ -51,6 +52,8 @@ export const CardWorkout = ({ workout, compact }: Props) => {
   const [deleted, setDeleted] = useState(false)
   const [comments, setComments] = useState<WorkoutComment[]>(() => [...workout.comments])
   const [commentInput, setCommentInput] = useState('')
+  const [commentError, setCommentError] = useState<string>()
+  const [actionError, setActionError] = useState<string>()
   // One exercise open at a time: the list is there so the session reads as its
   // exercises, and two tables at once is what it was built to stop. Keyed
   // rather than indexed, because a grouped session may train one exercise in
@@ -88,8 +91,12 @@ export const CardWorkout = ({ workout, compact }: Props) => {
     })
     if (!confirmed) return
 
+    setActionError(undefined)
     const response = await deleteWorkout(workout.id)
-    if (!response) return
+    if (!response) {
+      setActionError(consumeRequestError() ?? t('common.somethingWentWrong'))
+      return
+    }
 
     useToastStore.getState().success(t('workout.card.deleted'))
 
@@ -108,9 +115,13 @@ export const CardWorkout = ({ workout, compact }: Props) => {
     if (!comment || postingComment) return
 
     setPostingComment(true)
+    setCommentError(undefined)
     try {
       const response = await postWorkoutComment(workout.id, comment)
-      if (!response?.comment) return
+      if (!response?.comment) {
+        setCommentError(consumeRequestError() ?? t('common.somethingWentWrong'))
+        return
+      }
 
       setComments((current) => [...current, response.comment as WorkoutComment])
       setCommentInput('')
@@ -216,6 +227,7 @@ export const CardWorkout = ({ workout, compact }: Props) => {
       {isOwner && (
         <PageNavAction>
           <DropdownButton items={dropdownItems} />
+          {actionError && <AppInlineError>{actionError}</AppInlineError>}
         </PageNavAction>
       )}
 
@@ -371,6 +383,7 @@ export const CardWorkout = ({ workout, compact }: Props) => {
               </AppButton>
             </div>
           </form>
+          {commentError && <AppInlineError>{commentError}</AppInlineError>}
         </section>
       )}
     </div>

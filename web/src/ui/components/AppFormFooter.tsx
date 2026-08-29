@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 
 import { cloneElement, isValidElement, useId } from 'react'
 
+import { AppInlineError } from '@/ui/components/AppInlineError'
 import { cn } from '@/ui/cn'
 import { useKeyboardOpen } from '@/utils/useKeyboardOpen'
 import { usePinnedHeight } from '@/utils/usePinnedHeight'
@@ -19,6 +20,13 @@ interface Props {
    * submit without one is a control that refuses and will not say why.
    */
   hint?: string
+  /**
+   * Why the last submit failed, said where the submit lives.
+   *
+   * Errors render here rather than toasting: the message stays with the
+   * button until the retry that clears it.
+   */
+  error?: string
 }
 
 /**
@@ -36,7 +44,7 @@ interface Props {
  * action anybody is reaching for mid-word. The spacer keeps the same room in
  * the scroll either way, so the page does not jump as it goes.
  */
-export const AppFormFooter = ({ children, className, secondary, hint }: Props) => {
+export const AppFormFooter = ({ children, className, secondary, hint, error }: Props) => {
   const keyboardOpen = useKeyboardOpen()
   const hintId = useId()
   // Measured, and only while the bar is drawn: it is 76px with a button in it
@@ -57,6 +65,7 @@ export const AppFormFooter = ({ children, className, secondary, hint }: Props) =
       {!keyboardOpen && (
         <div ref={pinned} className={cn(styles.footer, className)}>
           <div className={styles.inner}>
+            {error && <AppInlineError className={styles.errorLine}>{error}</AppInlineError>}
             {hint && (
               <p id={hintId} className={styles.hint}>
                 {hint}

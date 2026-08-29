@@ -43,6 +43,7 @@ aspirational.
 | Nothing to show yet             | `<AppEmptyState>`                                   |
 | One section of it empty         | `<AppEmptyInline>`                                  |
 | A fetch that failed             | `<AppErrorState>`                                   |
+| An action that failed           | `<AppInlineError>`                                  |
 | Waiting for the API             | `<AppSkeleton>`                                     |
 | A modal decision or a picker    | `<AppSheet>` + `<SheetAction>`                      |
 | One of a few choices            | `<AppSegmented>` / `<AppSegmentedNav>`              |
@@ -92,7 +93,9 @@ A form's primary action, pinned above the tab bar instead of parked at the
 bottom of the scroll where a long form hides it. It stands down while the
 on-screen keyboard is up — a bar floating on the keyboard covers the field being
 typed into — and leaves a spacer behind either way, so the page does not jump as
-the keyboard comes and goes.
+the keyboard comes and goes. `hint` names what a disabled submit is waiting for;
+`error` says why the last submit failed, rendered as an `<AppInlineError>` in
+the same full-width row.
 
 ### `<AppLoadMore>`
 
@@ -305,6 +308,16 @@ which is the more confident of the two claims and the harder one to argue
 with. `onRetry` is required for the same reason `action` is over there — a
 dead end is not a state. `compact` is the one-row form, for a failure under
 content that did arrive.
+
+### `<AppInlineError>`
+
+An action's failure, said beside the control that raised it. Errors never
+toast: a toast floats away from what needs correcting and dismisses itself,
+so the message stays in the form, sheet or card until it is fixed. Rendered
+with `role="alert"`, and takes an `id` so a field can point at it with
+`aria-describedby`. The difference from `<AppErrorState>` is what failed: that
+one is a fetch the screen cannot render without, this one is an action whose
+screen is otherwise fine.
 
 ### `<AppSkeleton>`
 

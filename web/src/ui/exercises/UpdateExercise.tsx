@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useParams } from 'react-router-dom'
 
-import { getExercise, listSets, updateExercise } from '@/http/requests'
+import { consumeRequestError, getExercise, listSets, updateExercise } from '@/http/requests'
 import { ExerciseSchema } from '@/proto/api/v1/shared_pb'
 import { useToastStore } from '@/stores/toasts'
 import { AppButton } from '@/ui/components/AppButton'
@@ -28,6 +28,7 @@ export const UpdateExercise = () => {
   // The backend refuses a measurement change on an exercise that has been
   // logged, so the form asks for a single set to find out before offering one.
   const [metricsLocked, setMetricsLocked] = useState(false)
+  const [error, setError] = useState<string>()
 
   useEffect(() => {
     const load = async () => {
@@ -52,8 +53,12 @@ export const UpdateExercise = () => {
   const onSubmit = async () => {
     if (!exercise || !values) return
 
+    setError(undefined)
     const res = await updateExercise(create(ExerciseSchema, { ...exercise, ...values }))
-    if (!res) return
+    if (!res) {
+      setError(consumeRequestError() ?? t('common.somethingWentWrong'))
+      return
+    }
 
     useToastStore.getState().success(t('exercise.form.updated'))
     await navigate(`/exercises/${exercise.id}`)
@@ -67,6 +72,7 @@ export const UpdateExercise = () => {
         metricsLocked={metricsLocked}
         onSubmit={() => void onSubmit()}
         submitLabel={t('common.saveChanges')}
+        error={error}
       />
     )
   }

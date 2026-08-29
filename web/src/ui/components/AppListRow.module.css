@@ -11,7 +11,7 @@
 }
 
 .leading {
-  @apply grid size-11 shrink-0 place-items-center rounded-control;
+  @apply grid size-11 shrink-0 place-items-center rounded-avatar;
 }
 
 .leading svg {

@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next'
 import { Link, useNavigate } from 'react-router-dom'
 
 import {
+  consumeRequestError,
   deleteAccount,
   getCurrentUser,
   updateUserAutofillSets,
@@ -27,6 +28,7 @@ import { AppButton } from '@/ui/components/AppButton'
 import { AppErrorState } from '@/ui/components/AppErrorState'
 import { AppPasswordInput } from '@/ui/components/AppPasswordInput'
 import { AppIconButton } from '@/ui/components/AppIconButton'
+import { AppInlineError } from '@/ui/components/AppInlineError'
 import { AppInput } from '@/ui/components/AppInput'
 import { AppPageHeader } from '@/ui/components/AppPageHeader'
 import { AppSegmented } from '@/ui/components/AppSegmented'
@@ -63,6 +65,8 @@ export const ProfileView = () => {
   const [draft, setDraft] = useState<{ name: string; username: string }>()
   const [deletePassword, setDeletePassword] = useState<string>()
   const [deleteError, setDeleteError] = useState<string>()
+  const [preferenceError, setPreferenceError] = useState<{ field: string; message: string }>()
+  const [profileError, setProfileError] = useState<string>()
   const [deleting, setDeleting] = useState(false)
 
   const load = useCallback(async () => {
@@ -101,9 +105,8 @@ export const ProfileView = () => {
   /**
    * Applies a preference straight away, then tells the server.
    *
-   * The request helper stays silent for network-level failures (Unavailable,
-   * Unknown, Canceled), which is exactly when this reverts — so the revert says
-   * why, or the control appears to snap back on its own.
+   * A failure reverts the control, and the row says why inline — otherwise
+   * the control appears to snap back on its own.
    */
   const savePreference = async <T,>(
     field: 'weight' | 'distance' | 'autofill',
@@ -117,12 +120,13 @@ export const ProfileView = () => {
 
     apply(next)
     setSaving(field)
+    setPreferenceError(undefined)
     const res = await request()
     setSaving(undefined)
 
     if (!res) {
       apply(previous)
-      useToastStore.getState().error(messages.failed)
+      setPreferenceError({ field, message: messages.failed })
       return
     }
 
@@ -134,8 +138,8 @@ export const ProfileView = () => {
    *
    * They are separate requests, so a refused username must not roll back a
    * name that already landed: the card takes each success as it comes, and the
-   * sheet stays open on the failure for the draft to be corrected. Failures —
-   * including a taken username — surface through the request helper's toast.
+   * sheet stays open on the failure — including a taken username — saying why
+   * inline, for the draft to be corrected.
    */
   const saveProfile = async () => {
     if (!user || !draft || saving === 'profile') return
@@ -143,9 +147,11 @@ export const ProfileView = () => {
     setSaving('profile')
     let saved = user
 
+    setProfileError(undefined)
     if (draft.name !== user.name) {
       const res = await updateUserName(draft.name)
       if (!res) {
+        setProfileError(consumeRequestError() ?? t('common.somethingWentWrong'))
         setSaving(undefined)
         return
       }
@@ -155,6 +161,7 @@ export const ProfileView = () => {
     if (draft.username !== user.username) {
       const res = await updateUserUsername(draft.username)
       if (!res) {
+        setProfileError(consumeRequestError() ?? t('common.somethingWentWrong'))
         setUser(saved)
         setSaving(undefined)
         return
@@ -208,11 +215,19 @@ export const ProfileView = () => {
 
   // One grouped card of rows, each with its control inline: a compact
   // segmented for a genuine choice of unit, a switch for a boolean.
-  const preferenceRow = (title: string, body: string, control: ReactNode): ReactNode => (
+  const preferenceRow = (
+    title: string,
+    body: string,
+    control: ReactNode,
+    field?: string,
+  ): ReactNode => (
     <div className={styles.preferenceRow}>
       <div className={styles.preferenceCopy}>
         <strong>{title}</strong>
         <small>{body}</small>
+        {preferenceError && preferenceError.field === field && (
+          <AppInlineError>{preferenceError.message}</AppInlineError>
+        )}
       </div>
       {control}
     </div>
@@ -340,6 +355,7 @@ export const ProfileView = () => {
                 )
               }
             />,
+            'weight',
           )}
 
           {preferenceRow(
@@ -371,6 +387,7 @@ export const ProfileView = () => {
                 )
               }
             />,
+            'distance',
           )}
 
           {/* A boolean is a switch, not an Off/On segmented: two segments
@@ -397,6 +414,7 @@ export const ProfileView = () => {
                 )
               }
             />,
+            'autofill',
           )}
         </div>
       </section>
@@ -500,6 +518,7 @@ export const ProfileView = () => {
                 )
               }
             />
+            {profileError && <AppInlineError>{profileError}</AppInlineError>}
           </form>
         </AppSheet>
       )}
@@ -546,9 +565,7 @@ export const ProfileView = () => {
               onValueChange={setDeletePassword}
             />
             {deleteError !== undefined && (
-              <p role="alert" className="mt-2 text-sm text-danger">
-                {deleteError}
-              </p>
+              <AppInlineError className="mt-2">{deleteError}</AppInlineError>
             )}
           </form>
         </AppSheet>

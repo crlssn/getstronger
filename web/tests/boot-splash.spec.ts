@@ -131,9 +131,7 @@ describe('boot splash', () => {
   })
 
   it('restates the theme it cannot wait for', () => {
-    expect(declarationsFor('#boot-splash')).toContain(
-      `background: ${token('color-surface-sunken')}`,
-    )
+    expect(declarationsFor('#boot-splash')).toContain(`background: ${token('color-canvas')}`)
     expect(declarationsFor('#boot-splash .boot-mark')).toContain(
       `background: ${token('color-ink')}`,
     )

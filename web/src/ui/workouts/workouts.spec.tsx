@@ -171,8 +171,11 @@ describe('EditWorkout', () => {
     useAuthStore.setState({ userId: 'someone-else' })
     render()
 
-    expect(await screen.findByText('home')).toBeInTheDocument()
-    expect(useToastStore.getState().toast?.type).toBe('error')
+    // The refusal renders in place rather than toasting over a redirect.
+    expect(
+      await screen.findByText('You do not have permission to edit this workout'),
+    ).toBeInTheDocument()
+    expect(useToastStore.getState().toast).toBeNull()
   })
 
   test('opens with every set filled in', async () => {

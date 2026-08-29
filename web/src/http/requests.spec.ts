@@ -30,6 +30,7 @@ import { useAuthStore } from '@/stores/auth'
 import { useConnectionStore } from '@/stores/connection'
 import { useEmailVerificationStore } from '@/stores/emailVerification'
 import {
+  consumeRequestError,
   createWorkout as createAWorkout,
   getCurrentUser,
   login as logIn,
@@ -161,15 +162,15 @@ describe('shared error handling', () => {
     useAuthStore.setState({ userId: 'user-1', accessToken: 'token' })
   })
 
-  it('surfaces an application error as a toast', async () => {
+  it('records an application error for the caller to render inline', async () => {
     getUser.mockRejectedValue(new ConnectError('exercise not found', Code.InvalidArgument))
 
     await getCurrentUser('user-1')
 
-    expect(useToastStore.getState().toast).toMatchObject({
-      type: 'error',
-      message: expect.stringContaining('exercise not found'),
-    })
+    expect(consumeRequestError()).toContain('exercise not found')
+    // Consuming is a read-once: the next caller must not inherit it.
+    expect(consumeRequestError()).toBeUndefined()
+    expect(useToastStore.getState().toast).toBeNull()
   })
 
   // The failure the app used to swallow. Silence here is what let the screens
@@ -180,22 +181,20 @@ describe('shared error handling', () => {
 
     await getCurrentUser('user-1')
 
-    expect(useToastStore.getState().toast).toMatchObject({
-      type: 'error',
-      message: expect.stringContaining('offline'),
-    })
+    expect(consumeRequestError()).toContain('offline')
     expect(useConnectionStore.getState().online).toBe(false)
   })
 
-  // The banner carries the offline state once it is up, and the newest toast
-  // wins: one per failed request would bury whatever the user was waiting for.
-  it('says it once rather than once per failed request', async () => {
+  // The banner carries the offline state; each failed action can still say so
+  // inline where it was tried.
+  it('records the failure even while already offline', async () => {
     useConnectionStore.setState({ online: false })
     getUser.mockRejectedValue(new ConnectError('transport', Code.Unavailable))
 
     await getCurrentUser('user-1')
 
-    expect(useToastStore.getState().toast).toBeNull()
+    expect(consumeRequestError()).toContain('offline')
+    expect(useConnectionStore.getState().online).toBe(false)
   })
 
   // An Unknown carries a transport message the user can do nothing with.
@@ -204,10 +203,7 @@ describe('shared error handling', () => {
 
     await getCurrentUser('user-1')
 
-    expect(useToastStore.getState().toast).toMatchObject({
-      type: 'error',
-      message: 'Something went wrong. Please try again.',
-    })
+    expect(consumeRequestError()).toBe('Something went wrong. Please try again.')
   })
 
   // The app changing its mind — a superseded search, a screen left behind — is
@@ -217,7 +213,7 @@ describe('shared error handling', () => {
 
     await getCurrentUser('user-1')
 
-    expect(useToastStore.getState().toast).toBeNull()
+    expect(consumeRequestError()).toBeUndefined()
   })
 
   it('ends the session when the server rejects the token', async () => {
@@ -244,10 +240,7 @@ describe('shared error handling', () => {
 
     await getCurrentUser('user-1')
 
-    expect(useToastStore.getState().toast).toMatchObject({
-      type: 'error',
-      message: 'Passwords do not match',
-    })
+    expect(consumeRequestError()).toBe('Passwords do not match')
   })
 
   // The caller queues the workout for a later retry, which it can only do if
@@ -262,6 +255,6 @@ describe('shared error handling', () => {
     getUser.mockResolvedValue({ user: { id: 'user-1' } })
 
     await expect(getCurrentUser('user-1')).resolves.toEqual({ user: { id: 'user-1' } })
-    expect(useToastStore.getState().toast).toBeNull()
+    expect(consumeRequestError()).toBeUndefined()
   })
 })

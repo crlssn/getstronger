@@ -1,0 +1,7 @@
+@reference '../../assets/base.css';
+
+/* The invalid-field register: quiet enough to sit inside a form, red enough
+ * to be the thing the eye lands on. */
+.error {
+  @apply text-sm font-semibold text-danger;
+}

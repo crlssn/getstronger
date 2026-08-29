@@ -46,11 +46,10 @@ test.describe('guest authentication and routing', () => {
     await expect(page.getByRole('alert')).toContainText('invalid credentials')
     await expect(page).toHaveURL(/\/login$/)
 
-    // A toast goes on its own, but the button that takes it early is subject to
-    // the 44px floor like any other control.
-    const dismiss = await boxOf(page.getByRole('button', { name: 'Dismiss message' }))
-    expect(dismiss.height).toBeGreaterThanOrEqual(44)
-    expect(dismiss.width).toBeGreaterThanOrEqual(44)
+    // The complaint stays inline in the form rather than toasting: it sits
+    // with the fields that need correcting and does not dismiss itself.
+    await expect(page.getByRole('status')).toBeHidden()
+    await expect(page.locator('form').getByRole('alert')).toBeVisible()
   })
 
   test('signs up, resends the verification link, verifies and logs in @mutation', async ({

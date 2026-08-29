@@ -38,7 +38,7 @@
 }
 
 .avatar {
-  @apply grid size-11 place-items-center rounded-control bg-ink-tint text-sm font-semibold text-text;
+  @apply grid size-11 place-items-center rounded-avatar bg-ink-tint text-sm font-semibold text-text;
 }
 
 .avatar svg {

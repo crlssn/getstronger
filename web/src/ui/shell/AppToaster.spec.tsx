@@ -57,16 +57,11 @@ describe('AppToaster', () => {
     expect(screen.queryByRole('alert')).not.toBeInTheDocument()
   })
 
-  test.each([
-    ['success', 'status'],
-    ['info', 'status'],
-    ['error', 'alert'],
-    ['warning', 'alert'],
-  ] as const)('announces a %s as a %s', (type, role) => {
-    raise()[type]('Workout saved')
+  test('announces a success as a status', () => {
+    raise().success('Workout saved')
     renderWithProviders(<AppToaster />)
 
-    expect(screen.getByRole(role)).toHaveTextContent('Workout saved')
+    expect(screen.getByRole('status')).toHaveTextContent('Workout saved')
   })
 
   test('disappears on its own after a few seconds', () => {
@@ -92,11 +87,11 @@ describe('AppToaster', () => {
   // Two of them stacked would cover the screen a phone has little of.
   test('shows the newest message in place of the one before it', () => {
     raise().success('Workout saved')
-    raise().error('Could not save')
+    raise().success('Routine created')
     renderWithProviders(<AppToaster />)
 
     expect(screen.queryByText('Workout saved')).not.toBeInTheDocument()
-    expect(screen.getByRole('alert')).toHaveTextContent('Could not save')
+    expect(screen.getByRole('status')).toHaveTextContent('Routine created')
   })
 
   // A toast raised just before a navigation has to survive it, or it is gone
