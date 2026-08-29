@@ -14,6 +14,7 @@ import (
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/mock/gomock"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zaptest/observer"
 	"golang.org/x/crypto/bcrypt"
 
 	"github.com/crlssn/getstronger/server/account"
@@ -475,14 +476,17 @@ func (s *authSuite) TestLogout() {
 			},
 		},
 		{
-			name:  "err_refresh_token_not_found",
+			// A password reset deletes the refresh token, so a device still
+			// holding that cookie is a session already ended. Logout says so
+			// and expires the cookie rather than refusing.
+			name:  "ok_refresh_token_already_deleted",
 			token: s.jwt.MustCreateToken(uuid.NewString(), jwt.TokenTypeRefresh),
 			init: func(t test) context.Context {
 				ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
 				return xcontext.WithRefreshToken(ctx, t.token)
 			},
 			expected: expected{
-				err: connect.NewError(connect.CodeFailedPrecondition, nil),
+				err: nil,
 			},
 		},
 	}
@@ -509,6 +513,62 @@ func (s *authSuite) TestLogout() {
 			exists, existsErr := models.Auths.Query(models.SelectWhere.Auths.RefreshToken.EQ(t.token)).Exists(ctx, bob.NewDB(s.container.DB))
 			s.Require().NoError(existsErr)
 			s.Require().False(exists)
+		})
+	}
+}
+
+// TestExpectedAuthFailuresLogAtWarn pins the level of the auth failures a
+// stranger can trigger without credentials. A mistyped password and a refresh
+// token that expired on schedule are expected anomalies, and an error log is a
+// signal someone may need to act on: logging them at error lets credential
+// stuffing bury the lines that matter.
+func (s *authSuite) TestExpectedAuthFailuresLogAtWarn() {
+	type test struct {
+		name    string
+		message string
+		call    func(logger *zap.Logger)
+	}
+
+	tests := []test{
+		{
+			name:    "login_with_wrong_password",
+			message: "Compare credentials for login",
+			call: func(logger *zap.Logger) {
+				auth := s.factory.NewAuth(factory.AuthEmailVerified())
+				_, err := s.handler.Login(
+					xcontext.WithLogger(context.Background(), logger),
+					&connect.Request[v1.LoginRequest]{
+						Msg: &v1.LoginRequest{
+							Email:    auth.Email,
+							Password: "not-the-password",
+						},
+					},
+				)
+				s.Require().Error(err)
+			},
+		},
+		{
+			name:    "refresh_with_unparseable_token",
+			message: "Parse refresh token",
+			call: func(logger *zap.Logger) {
+				token := s.jwt.MustCreateToken(uuid.NewString(), jwt.TokenTypeAccess)
+				s.factory.NewAuth(factory.AuthRefreshToken(token))
+				ctx := xcontext.WithRefreshToken(xcontext.WithLogger(context.Background(), logger), token)
+				_, err := s.handler.RefreshToken(ctx, &connect.Request[v1.RefreshTokenRequest]{
+					Msg: &v1.RefreshTokenRequest{},
+				})
+				s.Require().Error(err)
+			},
+		},
+	}
+
+	for _, t := range tests {
+		s.Run(t.name, func() {
+			core, logs := observer.New(zap.DebugLevel)
+			t.call(zap.New(core))
+
+			s.Require().Empty(logs.FilterLevelExact(zap.ErrorLevel).All())
+			s.Require().Len(logs.FilterMessage(t.message).FilterLevelExact(zap.WarnLevel).All(), 1)
 		})
 	}
 }

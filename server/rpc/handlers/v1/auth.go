@@ -121,7 +121,7 @@ func (h *authHandler) Login(ctx context.Context, req *connect.Request[apiv1.Logi
 	log := xcontext.MustExtractLogger(ctx)
 
 	if err := h.repo.CompareEmailAndPassword(ctx, req.Msg.GetEmail(), req.Msg.GetPassword()); err != nil {
-		log.Error("Invalid credentials", zap.Error(err))
+		log.Warn("Compare credentials for login", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInvalidArgument, ErrInvalidCredentials)
 	}
 
@@ -198,12 +198,12 @@ func (h *authHandler) RefreshToken(ctx context.Context, _ *connect.Request[apiv1
 
 	claims, err := h.jwt.ClaimsFromToken(refreshToken, jwt.TokenTypeRefresh)
 	if err != nil {
-		log.Error("Parse refresh token", zap.Error(err))
+		log.Warn("Parse refresh token", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInvalidArgument, ErrInvalidRefreshToken)
 	}
 
 	if err = h.jwt.ValidateClaims(claims); err != nil {
-		log.Error("Validate refresh token claims", zap.Error(err))
+		log.Warn("Validate refresh token claims", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInvalidArgument, ErrInvalidRefreshToken)
 	}
 
@@ -223,15 +223,22 @@ func (h *authHandler) Logout(ctx context.Context, _ *connect.Request[apiv1.Logou
 	log := xcontext.MustExtractLogger(ctx)
 	refreshToken, ok := xcontext.ExtractRefreshToken(ctx)
 	if ok {
+		// A password reset deletes the refresh token, so the cookie a device
+		// still holds can outlive the session it names. That session has
+		// already ended: expire the cookie and say so, rather than refusing
+		// and leaving the dead cookie in the browser.
 		auth, err := h.repo.GetAuth(ctx, repo.GetAuthByRefreshToken(refreshToken))
-		if err != nil {
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			log.Warn("Auth not found for logout")
+		case err != nil:
 			log.Error("Fetch auth for logout", zap.Error(err))
-			return nil, connect.NewError(connect.CodeFailedPrecondition, nil)
-		}
-
-		if err = h.repo.UpdateAuth(ctx, auth.ID.String(), repo.UpdateAuthDeleteRefreshToken()); err != nil {
-			log.Error("Delete refresh token for logout", zap.Error(err))
 			return nil, connect.NewError(connect.CodeInternal, nil)
+		default:
+			if err = h.repo.UpdateAuth(ctx, auth.ID.String(), repo.UpdateAuthDeleteRefreshToken()); err != nil {
+				log.Error("Delete refresh token for logout", zap.Error(err))
+				return nil, connect.NewError(connect.CodeInternal, nil)
+			}
 		}
 	}
 
