@@ -24,11 +24,12 @@ const (
 )
 
 type SignupRequest struct {
-	state                protoimpl.MessageState `protogen:"open.v1"`
-	Email                string                 `protobuf:"bytes,1,opt,name=email,proto3" json:"email,omitempty"`
-	Password             string                 `protobuf:"bytes,2,opt,name=password,proto3" json:"password,omitempty"`
-	PasswordConfirmation string                 `protobuf:"bytes,3,opt,name=password_confirmation,json=passwordConfirmation,proto3" json:"password_confirmation,omitempty"`
-	Name                 string                 `protobuf:"bytes,8,opt,name=name,proto3" json:"name,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Email string                 `protobuf:"bytes,1,opt,name=email,proto3" json:"email,omitempty"`
+	// Bytes, not characters: bcrypt refuses anything longer than 72 of them.
+	Password             string `protobuf:"bytes,2,opt,name=password,proto3" json:"password,omitempty"`
+	PasswordConfirmation string `protobuf:"bytes,3,opt,name=password_confirmation,json=passwordConfirmation,proto3" json:"password_confirmation,omitempty"`
+	Name                 string `protobuf:"bytes,8,opt,name=name,proto3" json:"name,omitempty"`
 	// Compared case-insensitively; the server stores it lowercased.
 	Username      string `protobuf:"bytes,9,opt,name=username,proto3" json:"username,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -816,10 +817,10 @@ var File_api_v1_auth_service_proto protoreflect.FileDescriptor
 
 const file_api_v1_auth_service_proto_rawDesc = "" +
 	"\n" +
-	"\x19api/v1/auth_service.proto\x12\x06api.v1\x1a\x14api/v1/options.proto\x1a\x1bbuf/validate/validate.proto\"\xa9\x02\n" +
+	"\x19api/v1/auth_service.proto\x12\x06api.v1\x1a\x14api/v1/options.proto\x1a\x1bbuf/validate/validate.proto\"\xab\x02\n" +
 	"\rSignupRequest\x12\x1d\n" +
-	"\x05email\x18\x01 \x01(\tB\a\xbaH\x04r\x02`\x01R\x05email\x12#\n" +
-	"\bpassword\x18\x02 \x01(\tB\a\xbaH\x04r\x02\x10\x06R\bpassword\x123\n" +
+	"\x05email\x18\x01 \x01(\tB\a\xbaH\x04r\x02`\x01R\x05email\x12%\n" +
+	"\bpassword\x18\x02 \x01(\tB\t\xbaH\x06r\x04\x10\x06(HR\bpassword\x123\n" +
 	"\x15password_confirmation\x18\x03 \x01(\tR\x14passwordConfirmation\x12\x1b\n" +
 	"\x04name\x18\b \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x04name\x127\n" +
 	"\busername\x18\t \x01(\tB\x1b\xbaH\x18r\x16\x10\x03\x18\x1e2\x10^[A-Za-z0-9_.]+$R\busernameJ\x04\b\x04\x10\x05J\x04\b\x05\x10\x06J\x04\b\x06\x10\aJ\x04\b\a\x10\bR\n" +
@@ -844,10 +845,10 @@ const file_api_v1_auth_service_proto_rawDesc = "" +
 	"\x13retry_after_seconds\x18\x01 \x01(\x05R\x11retryAfterSeconds\"5\n" +
 	"\x14ResetPasswordRequest\x12\x1d\n" +
 	"\x05email\x18\x01 \x01(\tB\a\xbaH\x04r\x02`\x01R\x05email\"\x17\n" +
-	"\x15ResetPasswordResponse\"\x91\x01\n" +
+	"\x15ResetPasswordResponse\"\x93\x01\n" +
 	"\x15UpdatePasswordRequest\x12\x1e\n" +
-	"\x05token\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x05token\x12#\n" +
-	"\bpassword\x18\x02 \x01(\tB\a\xbaH\x04r\x02\x10\x06R\bpassword\x123\n" +
+	"\x05token\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x05token\x12%\n" +
+	"\bpassword\x18\x02 \x01(\tB\t\xbaH\x06r\x04\x10\x06(HR\bpassword\x123\n" +
 	"\x15password_confirmation\x18\x03 \x01(\tR\x14passwordConfirmation\"\x18\n" +
 	"\x16UpdatePasswordResponse\";\n" +
 	"\x14DeleteAccountRequest\x12#\n" +
