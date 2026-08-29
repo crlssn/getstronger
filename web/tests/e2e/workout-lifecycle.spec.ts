@@ -228,13 +228,12 @@ test.describe('quick workout lifecycle', () => {
 
     // Finishing a workout marks the current week complete on the home streak.
     await page.goto('/home')
-    // Each week square names itself and its state, which is a better handle
+    // Each week tick names itself and its state, which is a better handle
     // than the classes that colour it.
-    const currentWeek = page.getByRole('listitem', {
-      name: /^This week: \d+ workouts? logged$/,
-    })
-    await expect(currentWeek.locator('svg')).toBeVisible()
-    await expect(currentWeek.locator('strong')).toHaveText(/^(?:[2-8]|9\+)$/)
+    await expect(
+      page.getByRole('listitem', { name: /^This week: \d+ workouts? logged$/ }),
+    ).toBeVisible()
+    await expect(page.getByText('Secured this week')).toBeVisible()
   })
 
   test('promotes previous-session values into the set rows @mutation', async ({ page }) => {

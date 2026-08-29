@@ -16,11 +16,12 @@ const weekKeyAgo = (weeksAgo: number) => {
 const seed = (state: Partial<ReturnType<typeof useStreakStore.getState>>) =>
   useStreakStore.setState({ loaded: true, failed: false, ...state })
 
-const blocks = () => screen.getAllByRole('listitem')
+const ticks = () => screen.getAllByRole('listitem')
 
 describe('StreakCard', () => {
   beforeEach(() => {
     vi.useFakeTimers()
+    // A Friday, so the week in progress has three days left.
     vi.setSystemTime(new Date('2026-08-14T00:00:00Z'))
     vi.spyOn(useStreakStore.getState(), 'load').mockResolvedValue(undefined)
     useStreakStore.setState({
@@ -52,48 +53,56 @@ describe('StreakCard', () => {
     seed({ streak: 0 })
     renderWithProviders(<StreakCard />)
 
+    expect(screen.getByText('0')).toBeInTheDocument()
     expect(screen.getByText('Start your streak')).toBeInTheDocument()
-    expect(screen.queryByText('1')).not.toBeInTheDocument()
+    expect(screen.getByText('Log a workout this week')).toBeInTheDocument()
   })
 
-  test('counts the weeks once a streak is running', () => {
+  test('leads with the count once the week is secured', () => {
     seed({ streak: 3, thisWeekLogged: true })
     renderWithProviders(<StreakCard />)
 
-    expect(screen.getByText('3 weeks')).toBeInTheDocument()
+    expect(screen.getByText('3')).toBeInTheDocument()
+    expect(screen.getByText('Week streak')).toBeInTheDocument()
+    expect(screen.getByText('Secured this week')).toBeInTheDocument()
   })
 
-  test('shows only a check for one workout and adds the count for more', () => {
-    seed({
-      streak: 2,
-      thisWeekLogged: true,
-      weekWorkoutCounts: { [weekKeyAgo(1)]: 1, [weekKeyAgo(0)]: 3 },
-    })
+  // A streak carried over from last week is alive but not yet secured: the
+  // meta line says how long the user has to keep it.
+  test('counts down the week while the streak is unsecured', () => {
+    seed({ streak: 2, thisWeekLogged: false })
     renderWithProviders(<StreakCard />)
 
-    const [oneWorkout, multiple] = blocks().slice(-2)
-    expect(oneWorkout).not.toHaveTextContent(/\d/)
-    expect(multiple).toHaveTextContent('3')
-    expect(multiple).toHaveAccessibleName(/3 workouts logged/)
+    expect(screen.getByText('Week streak')).toBeInTheDocument()
+    expect(screen.getByText('3 days left this week')).toBeInTheDocument()
   })
 
-  // The block has room for two characters; the real number still reaches a
-  // screen reader.
-  test('caps the visible count at 9+ while announcing the actual count', () => {
-    seed({ streak: 1, thisWeekLogged: true, weekWorkoutCounts: { [weekKeyAgo(0)]: 12 } })
+  test('shows one tick per tracked week', () => {
+    seed({ streak: 2, thisWeekLogged: true })
     renderWithProviders(<StreakCard />)
 
-    const current = blocks().at(-1)
-    expect(current).toHaveTextContent('9+')
-    expect(current).toHaveAccessibleName(/12 workouts logged/)
+    expect(ticks()).toHaveLength(8)
   })
 
   test('tells each week apart for a screen reader', () => {
-    seed({ streak: 1, thisWeekLogged: false })
+    seed({
+      streak: 1,
+      thisWeekLogged: false,
+      weekWorkoutCounts: { [weekKeyAgo(1)]: 3 },
+    })
     renderWithProviders(<StreakCard />)
 
-    expect(blocks().at(-1)).toHaveAccessibleName('This week: workout still needed')
-    expect(blocks().at(-2)).toHaveAccessibleName(/^1 week ago: /)
-    expect(blocks().at(0)).toHaveAccessibleName('4 weeks ago: outside current streak')
+    expect(ticks().at(-1)).toHaveAccessibleName('This week: workout still needed')
+    expect(ticks().at(-2)).toHaveAccessibleName('1 week ago: 3 workouts logged')
+    expect(ticks().at(0)).toHaveAccessibleName('7 weeks ago: outside current streak')
+  })
+
+  // A complete week always logged at least one workout, even when the count
+  // was not fetched: "0 workouts logged" over a green tick reads as a bug.
+  test('never announces a complete week as empty', () => {
+    seed({ streak: 1, thisWeekLogged: true })
+    renderWithProviders(<StreakCard />)
+
+    expect(ticks().at(-1)).toHaveAccessibleName('This week: 1 workout logged')
   })
 })
