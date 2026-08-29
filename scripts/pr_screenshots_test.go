@@ -240,7 +240,7 @@ func TestPRScreenshotsPrintsBeforeAndAfter(t *testing.T) {
 	require.Contains(t, result.stdout, "| Page | Before | After | Difference |")
 	for _, state := range []string{"before", "after", "difference"} {
 		require.Contains(t, result.stdout,
-			"https://getstronger-pull-requests.s3.fr-par.scw.cloud/pr/1209/abc1234/"+state+"/active/home.png")
+			"https://s3.fr-par.scw.cloud/getstronger-pull-requests/pr/1209/abc1234/"+state+"/active/home.png")
 	}
 	require.Contains(t, result.stdout, "active/home")
 	require.Contains(t, result.stdout, "abc1234", "the block names the commit the images show")
@@ -262,10 +262,10 @@ func TestPRScreenshotsMarksAPageWithNoBefore(t *testing.T) {
 
 	require.Equal(t, 0, result.exitCode, result.stderr)
 	require.NotContains(t, result.stdout,
-		"https://getstronger-pull-requests.s3.fr-par.scw.cloud/pr/1209/abc1234/before/active/plans.png")
+		"https://s3.fr-par.scw.cloud/getstronger-pull-requests/pr/1209/abc1234/before/active/plans.png")
 	require.Contains(t, result.stdout, "not in the baseline")
 	require.Contains(t, result.stdout,
-		"https://getstronger-pull-requests.s3.fr-par.scw.cloud/pr/1209/abc1234/after/active/plans.png")
+		"https://s3.fr-par.scw.cloud/getstronger-pull-requests/pr/1209/abc1234/after/active/plans.png")
 }
 
 // 'screenshots:page' leaves differences with no baseline to compare them with,
@@ -282,7 +282,7 @@ func TestPRScreenshotsPublishesWithoutABaseline(t *testing.T) {
 	require.Contains(t, result.awsArgs, "s3://getstronger-pull-requests/pr/1209/abc1234")
 	require.Contains(t, result.stdout, "| Page | Screenshot |")
 	require.Contains(t, result.stdout,
-		"https://getstronger-pull-requests.s3.fr-par.scw.cloud/pr/1209/abc1234/active/home.png")
+		"https://s3.fr-par.scw.cloud/getstronger-pull-requests/pr/1209/abc1234/active/home.png")
 }
 
 // The page a change actually moved was the one missing from the report: it grew
@@ -306,7 +306,7 @@ func TestPRScreenshotsPublishesAPageThatGainedAFold(t *testing.T) {
 
 	result := runPRScreenshots(t, root, []string{"1209"}, credentials())
 
-	const prefix = "https://getstronger-pull-requests.s3.fr-par.scw.cloud/pr/1209/abc1234/"
+	const prefix = "https://s3.fr-par.scw.cloud/getstronger-pull-requests/pr/1209/abc1234/"
 	require.Equal(t, 0, result.exitCode, result.stderr)
 	require.Contains(t, result.stdout, prefix+"after/active/38-circuit-1.png")
 	require.Contains(t, result.stdout, prefix+"after/active/38-circuit-2.png")
@@ -332,7 +332,7 @@ func TestPRScreenshotsPublishesTheDifferenceTheIndexNames(t *testing.T) {
 
 	result := runPRScreenshots(t, root, []string{"1209"}, credentials())
 
-	const prefix = "https://getstronger-pull-requests.s3.fr-par.scw.cloud/pr/1209/abc1234/"
+	const prefix = "https://s3.fr-par.scw.cloud/getstronger-pull-requests/pr/1209/abc1234/"
 	require.Equal(t, 0, result.exitCode, result.stderr)
 	require.Contains(t, result.stdout, prefix+"difference/active/home.png")
 	require.NotContains(t, result.stdout, "active/plans", "an unchanged page is not the report")
@@ -364,7 +364,7 @@ func TestPRScreenshotsUploadsAnotherDirectoryUnderScreenshots(t *testing.T) {
 	require.Equal(t, 1, count(result.awsArgs, "sync"), "a folder of the set is published as it is")
 	require.Contains(t, result.awsArgs, path)
 	require.Contains(t, result.stdout,
-		"https://getstronger-pull-requests.s3.fr-par.scw.cloud/pr/1209/abc1234/home.png")
+		"https://s3.fr-par.scw.cloud/getstronger-pull-requests/pr/1209/abc1234/home.png")
 }
 
 // The guard that keeps real data out of a public bucket.
@@ -500,7 +500,7 @@ func TestPRScreenshotsAppendsTheBlockToTheBody(t *testing.T) {
 	require.Contains(t, result.ghArgs, "1209")
 	require.Contains(t, result.newBody, "## Why", "the body it had is kept")
 	require.Contains(t, result.newBody,
-		"https://getstronger-pull-requests.s3.fr-par.scw.cloud/pr/1209/abc1234/active/home.png")
+		"https://s3.fr-par.scw.cloud/getstronger-pull-requests/pr/1209/abc1234/active/home.png")
 }
 
 // Re-photographing a change and publishing again is normal, so the second run

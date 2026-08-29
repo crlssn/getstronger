@@ -140,8 +140,11 @@ publish() {
 }
 
 image_tag() {
-  printf '<img src="https://%s.s3.%s.scw.cloud/%s/%s" width="%s" alt="%s">' \
-    "$bucket" "$REGION" "$PREFIX" "$1" "$2" "$3"
+  # Path-style, not virtual-host: the bucket name carries a dot, which the
+  # wildcard certificate *.s3.<region>.scw.cloud cannot match, so the
+  # virtual-host form fails TLS and every embedded image breaks.
+  printf '<img src="https://s3.%s.scw.cloud/%s/%s/%s" width="%s" alt="%s">' \
+    "$REGION" "$bucket" "$PREFIX" "$1" "$2" "$3"
 }
 
 block="$MARKER
