@@ -15,7 +15,7 @@
 /* Success only — an error renders inline where it happened, so the toast has
    exactly one costume. */
 .toast {
-  @apply pointer-events-auto flex min-h-14 items-center gap-3 rounded-card border border-success/30 bg-success-surface px-3 py-3 text-sm font-semibold text-success shadow-overlay;
+  @apply pointer-events-auto flex min-h-14 items-center gap-3 rounded-card border border-success/30 bg-success-surface px-3 py-3 text-sm font-semibold text-success-strong shadow-overlay;
   animation: toast-in 200ms ease-out;
 }
 

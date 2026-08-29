@@ -51,6 +51,9 @@
    * and a badge colour that is its own value rather than danger's. There is
    * no amber and no blue. */
   --color-success: #2e7d5b;
+  /* Success text sitting on the success surface: #2e7d5b reads 4.26:1 on
+   * that tint and fails AA, so text there takes this darker step. */
+  --color-success-strong: #2a7354;
   /* Warmed a step off the cool mint it was, so a green tile sits on the same
    * paper as everything around it. */
   --color-success-surface: #e3f0e9;

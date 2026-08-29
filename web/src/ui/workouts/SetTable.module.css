@@ -56,7 +56,7 @@
 }
 
 .setRow.complete .setNumber {
-  @apply bg-success-surface text-success;
+  @apply bg-success-surface text-success-strong;
 }
 
 .setRow.active .setNumber {
