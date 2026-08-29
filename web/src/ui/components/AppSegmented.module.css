@@ -68,6 +68,8 @@
   @apply rounded-pill;
 }
 
+/* Wider than the tap floor on purpose: at 44px square the selected white
+   pill reads as a switch knob, and this is a choice, not a boolean. */
 .compact > * {
-  @apply min-w-(--size-control-sm) rounded-pill px-3.5 text-meta;
+  @apply min-w-14 rounded-pill px-3.5 text-meta;
 }

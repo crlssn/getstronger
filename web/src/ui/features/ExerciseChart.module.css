@@ -19,7 +19,7 @@
 }
 
 .exerciseChart header strong {
-  @apply text-title font-extrabold text-text;
+  @apply text-stat font-extrabold text-text;
 }
 
 .exerciseChart header > span {

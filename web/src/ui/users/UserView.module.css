@@ -8,17 +8,17 @@
   @apply mb-4;
 }
 
-/* The chart's label belongs inside the card it names rather than floating
-   above it as an uppercase caption. */
 .trendCard {
   @apply mb-4 p-4;
 }
 
+/* The status kicker on a stat card: the overline register, naming the figure
+   rather than heading a section. */
 .trendCard h2 {
-  @apply text-body-lg font-semibold text-text;
+  @apply text-eyebrow font-bold uppercase tracking-(--text-eyebrow--letter-spacing) text-text-subtle;
 }
 
-/* The number the card exists for, under the title that names it. */
+/* The number the card exists for, big in the header at the stat step. */
 .trendTotal {
-  @apply mb-2 mt-1 text-display font-bold text-text;
+  @apply mb-2 mt-1 text-stat font-extrabold text-text;
 }

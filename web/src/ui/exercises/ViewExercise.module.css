@@ -92,6 +92,7 @@
 
 /* The card's own title. It was an uppercase eyebrow above the chart's own
    uppercase metric label — two captions stacked, and neither a heading. */
+/* The stat card's kicker, in the overline register. */
 .chartTitle {
-  @apply mb-3 text-body-lg font-semibold text-text;
+  @apply mb-3 text-eyebrow font-bold uppercase tracking-(--text-eyebrow--letter-spacing) text-text-subtle;
 }
