@@ -127,6 +127,8 @@ describe('CreateExercise', () => {
 
     await userEvent.type(nameField(), 'Row')
     await userEvent.click(screen.getByRole('button', { name: 'Distance' }))
+    // Tags start collapsed behind the optional action.
+    await userEvent.click(screen.getByRole('button', { name: /Add tags/ }))
     await userEvent.type(
       screen.getByRole('combobox', { name: 'Add exercise tag' }),
       'Cardio{Enter}',

@@ -63,12 +63,12 @@ describe('AppInput', () => {
     expect(container.firstElementChild?.className.split(' ').length).toBeGreaterThan(1)
   })
 
-  // The one field a screen is built around is drawn as the panel it fills, and
-  // is still the same labelled input underneath.
-  test('draws as a card without losing the field it is', async () => {
+  // The one field a screen is built around raises its label to the overline
+  // register, and is still the same labelled input underneath.
+  test('draws as the hero field without losing the field it is', async () => {
     const onChange = vi.fn()
     const { container } = render(
-      <AppInput variant="card" label="Routine name" value="" onChange={onChange} />,
+      <AppInput variant="hero" label="Routine name" value="" onChange={onChange} />,
     )
 
     const input = screen.getByLabelText('Routine name')

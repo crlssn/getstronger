@@ -1191,6 +1191,7 @@ export const StartWorkout = () => {
               <AppButton
                 type="button"
                 colour="secondary"
+                size="lg"
                 disabled={!canFinish}
                 title={canFinish ? undefined : finishStatus}
                 aria-label={

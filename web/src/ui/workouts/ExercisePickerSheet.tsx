@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { listExercises } from '@/http/requests'
+import { AppButton } from '@/ui/components/AppButton'
 import { AppErrorState } from '@/ui/components/AppErrorState'
 import { AppLoadMore } from '@/ui/components/AppLoadMore'
 import { AppOptionRow } from '@/ui/components/AppOptionRow'
@@ -108,6 +109,15 @@ export const ExercisePickerSheet = ({ excluded = [], eyebrow, onAdd, onClose }: 
               <ExerciseTags compact tags={exercise.tags} />
             </AppOptionRow>
           ))}
+        </div>
+      ) : !search && !options.length ? (
+        // An empty library is not "everything already added": the way forward
+        // is creating the first exercise, so the sheet offers it.
+        <div className={styles.pickerEmpty}>
+          <p>{t('workout.emptyLibrary')}</p>
+          <AppButton type="link" colour="primary" width="auto" to="/exercises/create">
+            {t('exercise.create')}
+          </AppButton>
         </div>
       ) : (
         <div className={styles.pickerEmpty}>

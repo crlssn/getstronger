@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next'
 
 import { brandName } from '@/brand'
+import { useAuthStore } from '@/stores/auth'
 import styles from './PrivacyPolicy.module.css'
 
 /**
@@ -18,10 +19,14 @@ const privacyEmail = 'privacy@getstronger.studio'
 export const PrivacyPolicy = () => {
   const { t } = useTranslation()
 
+  const authenticated = useAuthStore((state) => Boolean(state.accessToken))
+
   return (
     <article className={styles.policy}>
+      {/* Signed in, the nav bar above already titles the page; a second
+          heading right under it read as a stutter. Guests have no bar. */}
       <header>
-        <h1>{t('privacy.heading')}</h1>
+        {!authenticated && <h1>{t('privacy.heading')}</h1>}
         <p>{t('privacy.updated')}</p>
       </header>
 

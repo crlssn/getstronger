@@ -9,8 +9,8 @@ export const TrainingTabs = () => {
     <AppSegmentedNav
       label={t('training.heading')}
       links={[
-        { label: t('common.plans'), to: '/plans' },
         { label: t('common.routines'), to: '/routines' },
+        { label: t('common.plans'), to: '/plans' },
       ]}
     />
   )

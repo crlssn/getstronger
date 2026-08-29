@@ -153,6 +153,7 @@ export const PlanForm = ({ planId }: Props) => {
           <>
             <AppInput
               className={styles.nameField}
+              variant="hero"
               label={t('training.planForm.name')}
               placeholder={t('training.planForm.namePlaceholder')}
               value={name}

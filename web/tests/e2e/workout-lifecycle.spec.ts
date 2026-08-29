@@ -572,8 +572,13 @@ test.describe('weight units', () => {
       const workoutUrl = page.url()
       // The completed view splits the duration into units and derives a pace
       // from the set's own distance unit: 12:30 over 3.5 mi is 3:34 min/mi.
-      await expect(page.getByText(/3\.5\s*mi/)).toBeVisible()
-      await expect(page.getByText('12 min 30 sec')).toBeVisible()
+      // Distance and time each appear twice — the summary totals every unit
+      // the session trained in, and the set row keeps its own values.
+      await expect(page.getByRole('article').filter({ hasText: /^Distance3\.5 mi$/ })).toBeVisible()
+      await expect(
+        page.getByRole('article').filter({ hasText: /^Time12 min 30 sec$/ }),
+      ).toBeVisible()
+      await expect(page.getByRole('cell', { name: /3\.5\s*mi/ })).toBeVisible()
       await expect(page.getByText('3:34 min/mi')).toBeVisible()
 
       // Switching back to kilometers must not rewrite the set logged in

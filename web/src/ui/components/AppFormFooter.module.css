@@ -6,7 +6,9 @@
  * ending at it. */
 .footer {
   bottom: calc(var(--tab-bar-height, 4.5rem) + env(safe-area-inset-bottom));
-  @apply fixed inset-x-0 z-30 border-t border-border bg-surface-sunken/90 backdrop-blur;
+  /* Surface, not the canvas: the bar has to read as chrome over the page, and
+     a sunken fill matched the body underneath it to within a shade. */
+  @apply fixed inset-x-0 z-30 border-t border-border bg-surface/90 backdrop-blur;
 }
 
 /* One row: the primary takes the floor, the way out sits beside it as text.

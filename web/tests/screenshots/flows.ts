@@ -127,6 +127,7 @@ export const flows: Flow[] = [
         act: async (page) => {
           await page.goto('/exercises/create')
           await page.locator('form input[type="text"]').first().fill(exerciseName)
+          await page.getByRole('button', { name: 'Add tags' }).click()
           await page.getByLabel('Add exercise tag').fill('Upper body')
           await page.getByLabel('Add exercise tag').press('Enter')
           await page.getByLabel('Add exercise tag').fill('Push')

@@ -49,6 +49,7 @@ test.describe('authenticated journeys', () => {
     await page.getByRole('link', { name: 'New exercise' }).click()
     await page.locator('form input[type="text"]').first().fill(exerciseName)
 
+    await page.getByRole('button', { name: 'Add tags' }).click()
     const tagInput = page.getByLabel('Add exercise tag')
     await tagInput.fill('Upper body')
     await tagInput.press('Enter')

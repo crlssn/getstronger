@@ -8,11 +8,6 @@
   @apply mb-5;
 }
 
-/* The one mark that says a heading-sized line is a field. */
-.namePencil {
-  @apply size-4 shrink-0 text-text-subtle;
-}
-
 /* No card: the switch is the whole of this section, and a box around one
    control is a box around nothing. The line under it is what each half means,
    which the two words alone never said. */

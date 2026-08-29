@@ -25,6 +25,7 @@ import {
   UpdateWorkoutResponseSchema,
   WorkoutSchema,
 } from '@/proto/api/v1/workout_service_pb'
+import { usePageNavActionStore } from '@/stores/pageNavAction'
 import { useToastStore } from '@/stores/toasts'
 import { useAuthStore } from '@/stores/auth'
 import { useConfirmationStore } from '@/stores/confirmation'
@@ -134,11 +135,20 @@ describe('EditWorkout', () => {
     mocked.getWorkout.mockResolvedValue(create(GetWorkoutResponseSchema, { workout: withSets() }))
   })
 
-  test('offers the way back beside the update rather than under it', async () => {
+  // Cancel portals into the nav bar's action slot — the same spot
+  // Notifications keeps Mark all read — which only a mounted bar publishes.
+  test('offers the way back in the nav bar rather than beside the update', async () => {
+    const slot = document.createElement('div')
+    document.body.append(slot)
+    usePageNavActionStore.setState({ container: slot })
+
     render()
 
     expect(await screen.findByRole('button', { name: 'Save changes' })).toBeVisible()
-    expect(screen.getByRole('link', { name: 'Cancel' })).toBeVisible()
+    expect(slot.contains(screen.getByRole('link', { name: 'Cancel' }))).toBe(true)
+
+    usePageNavActionStore.setState({ container: null })
+    slot.remove()
   })
 
   // The same pinned footer as every other create and edit screen, and the only

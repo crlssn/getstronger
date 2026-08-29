@@ -6,8 +6,8 @@ import { useTranslation } from 'react-i18next'
 import { listExerciseTags } from '@/http/requests'
 import { AppButton } from '@/ui/components/AppButton'
 import { AppFormFooter } from '@/ui/components/AppFormFooter'
-import { AppList } from '@/ui/components/AppList'
-import { AppListItemInput } from '@/ui/components/AppListItemInput'
+import { AppInput } from '@/ui/components/AppInput'
+import { AppOptionalAction } from '@/ui/components/AppOptionalAction'
 import { ExerciseMeasurementSettings } from '@/ui/exercises/ExerciseMeasurementSettings'
 import { ExerciseTagsInput } from '@/ui/exercises/ExerciseTagsInput'
 import styles from './ExerciseForm.module.css'
@@ -45,6 +45,7 @@ export const ExerciseForm = ({
 }: Props) => {
   const { t } = useTranslation()
   const [suggestions, setSuggestions] = useState<string[]>([])
+  const [tagsOpen, setTagsOpen] = useState(values.tags.length > 0)
 
   useEffect(() => {
     const load = async () => setSuggestions(await listExerciseTags())
@@ -60,17 +61,17 @@ export const ExerciseForm = ({
         onSubmit()
       }}
     >
-      {/* The field carries this label itself, and the measurement card carries
-          its own heading, so neither needs one floating above it. */}
-      <AppList>
-        <AppListItemInput
-          label={t('exercise.name')}
-          model={values.name}
-          type="text"
-          required
-          onUpdate={(name) => update({ name })}
-        />
-      </AppList>
+      {/* The screen's first-class field: overline label on the canvas, the
+          standard input under it, no panel of its own. */}
+      <AppInput
+        className={styles.name}
+        variant="hero"
+        label={t('exercise.name')}
+        value={values.name}
+        type="text"
+        required
+        onChange={(event) => update({ name: event.target.value })}
+      />
 
       <ExerciseMeasurementSettings
         metrics={values.metrics}
@@ -78,14 +79,21 @@ export const ExerciseForm = ({
         metricsLocked={metricsLocked}
       />
 
-      <h2 className={styles.sectionTitle}>
-        {t('exercise.form.tags')} <small>{t('common.optional')}</small>
-      </h2>
-      <ExerciseTagsInput
-        value={values.tags}
-        onChange={(tags) => update({ tags })}
-        suggestions={suggestions}
-      />
+      {/* Collapsed until wanted: most exercises ship without tags, and an open
+          input suggests the form is waiting for one. An exercise that already
+          has tags opens with them showing. */}
+      {tagsOpen ? (
+        <>
+          <h2 className={styles.sectionTitle}>{t('exercise.form.tags')}</h2>
+          <ExerciseTagsInput
+            value={values.tags}
+            onChange={(tags) => update({ tags })}
+            suggestions={suggestions}
+          />
+        </>
+      ) : (
+        <AppOptionalAction label={t('exercise.form.addTags')} onClick={() => setTagsOpen(true)} />
+      )}
 
       {/* Pinned rather than parked at the end of the scroll, where the tab
           bar sliced it in half. */}

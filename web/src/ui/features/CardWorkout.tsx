@@ -7,7 +7,7 @@ import { useTranslation } from 'react-i18next'
 import { Link, useNavigate } from 'react-router-dom'
 
 import { consumeRequestError, deleteWorkout, postWorkoutComment } from '@/http/requests'
-import { RoutineGroupMode } from '@/proto/api/v1/shared_pb'
+import { DistanceUnit, RoutineGroupMode } from '@/proto/api/v1/shared_pb'
 import { useToastStore } from '@/stores/toasts'
 import { useAuthStore } from '@/stores/auth'
 import { useConfirmationStore } from '@/stores/confirmation'
@@ -23,7 +23,10 @@ import { CardWorkoutExercise } from '@/ui/features/CardWorkoutExercise'
 import { AppInlineError } from '@/ui/components/AppInlineError'
 import { DropdownButton } from '@/ui/components/DropdownButton'
 import { handle, initials } from '@/utils/names'
+import { convertDistance, distanceUnitLabel } from '@/utils/distanceUnits'
+import { formatDurationDisplay } from '@/utils/exerciseMeasurements'
 import { formatNumber } from '@/utils/numbers'
+import { usePreferencesStore } from '@/stores/preferences'
 import { groupLetter } from '@/utils/routineGroups'
 import { workoutSummary } from '@/utils/workoutSummary'
 import styles from './CardWorkout.module.css'
@@ -60,9 +63,18 @@ export const CardWorkout = ({ workout, compact }: Props) => {
   // two blocks and each of them opens on its own.
   const [openExercise, setOpenExercise] = useState('0')
   const [postingComment, setPostingComment] = useState(false)
+  const preferredDistanceUnit = usePreferencesStore((state) => state.distanceUnit)
 
-  const { setCount, personalBestCount, durationMinutes, finishedDate, finishedMoment } =
-    workoutSummary(workout)
+  const {
+    setCount,
+    personalBestCount,
+    durationMinutes,
+    finishedDate,
+    finishedMoment,
+    totalReps,
+    totalDistanceKm,
+    totalSetSeconds,
+  } = workoutSummary(workout)
   const isOwner = workout.user?.id === userId
 
   // One straight block is the plain session every workout used to be, so it is
@@ -146,12 +158,19 @@ export const CardWorkout = ({ workout, compact }: Props) => {
     </article>
   )
 
-  // Four numbers in a quadrant, and nothing else: each carried a grey icon tile
-  // that repeated eight times down a feed screen without saying anything the
-  // label beside it did not.
+  // The units the session actually trained in, then the session's own numbers.
+  // Each metric carried a grey icon tile once; the label says it alone.
   const metricGrid = (
     <div className={styles.metricGrid}>
-      {metric(t('workout.totalVolume'), `${formatNumber(workout.intensity)} ${t('common.kg')}`)}
+      {workout.intensity > 0 &&
+        metric(t('workout.totalVolume'), `${formatNumber(workout.intensity)} ${t('common.kg')}`)}
+      {totalReps > 0 && metric(t('common.reps'), formatNumber(totalReps))}
+      {totalDistanceKm > 0 &&
+        metric(
+          t('common.distance'),
+          `${formatNumber(convertDistance(totalDistanceKm, DistanceUnit.KILOMETERS, preferredDistanceUnit), 2)} ${distanceUnitLabel(preferredDistanceUnit)}`,
+        )}
+      {totalSetSeconds > 0 && metric(t('common.time'), formatDurationDisplay(totalSetSeconds))}
       {metric(t('common.duration'), `${durationMinutes} ${t('common.min')}`)}
       {metric(t('workout.setsLogged'), `${setCount}`)}
       {metric(t('workout.personalRecords'), `${personalBestCount}`)}

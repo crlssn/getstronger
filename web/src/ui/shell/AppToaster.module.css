@@ -27,7 +27,6 @@
   @apply min-w-0 flex-1;
 }
 
-
 @keyframes toast-in {
   from {
     opacity: 0;
