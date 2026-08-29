@@ -919,6 +919,58 @@ func (s *authSuite) TestResetPassword() {
 				resp: &v1.ResetPasswordResponse{},
 			},
 		},
+		{
+			// No SendPasswordReset is expected: the mock controller fails the
+			// test if the handler mails this address again.
+			name: "ok_rate_limited_no_exposure",
+			req: &connect.Request[v1.ResetPasswordRequest]{
+				Msg: &v1.ResetPasswordRequest{
+					Email: gofakeit.Email(),
+				},
+			},
+			init: func(t test) {
+				auth := s.factory.NewAuth(
+					factory.AuthEmail(t.req.Msg.GetEmail()),
+					factory.AuthPasswordResetToken(uuid.NewString(), account.PasswordResetTokenTTL),
+				)
+				s.factory.NewUser(
+					factory.UserAuthID(auth.ID),
+				)
+			},
+			expected: expected{
+				err:  nil,
+				resp: &v1.ResetPasswordResponse{},
+			},
+		},
+		{
+			name: "ok_cooldown_elapsed_password_reset_email_sent",
+			req: &connect.Request[v1.ResetPasswordRequest]{
+				Msg: &v1.ResetPasswordRequest{
+					Email: gofakeit.Email(),
+				},
+			},
+			init: func(t test) {
+				// A token issued a cooldown and a half ago still has most of its
+				// life left, but the address may be written to again.
+				auth := s.factory.NewAuth(
+					factory.AuthEmail(t.req.Msg.GetEmail()),
+					factory.AuthPasswordResetToken(
+						uuid.NewString(),
+						account.PasswordResetTokenTTL-account.PasswordResetCooldown*3/2,
+					),
+				)
+				s.factory.NewUser(
+					factory.UserAuthID(auth.ID),
+				)
+
+				s.mocks.email.EXPECT().
+					SendPasswordReset(gomock.Any(), gomock.Any())
+			},
+			expected: expected{
+				err:  nil,
+				resp: &v1.ResetPasswordResponse{},
+			},
+		},
 	}
 
 	for _, t := range tests {

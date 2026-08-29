@@ -364,6 +364,11 @@ func (h *authHandler) ResendVerificationEmail(ctx context.Context, req *connect.
 
 func (h *authHandler) ResetPassword(ctx context.Context, req *connect.Request[apiv1.ResetPasswordRequest]) (*connect.Response[apiv1.ResetPasswordResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
+
+	// The same response is returned for every address so that the endpoint never
+	// discloses whether an account exists or how recently one was written to.
+	res := connect.NewResponse(&apiv1.ResetPasswordResponse{})
+
 	auth, err := h.repo.GetAuth(
 		ctx,
 		repo.GetAuthByEmail(req.Msg.GetEmail()),
@@ -373,11 +378,17 @@ func (h *authHandler) ResetPassword(ctx context.Context, req *connect.Request[ap
 		if errors.Is(err, sql.ErrNoRows) {
 			// Do not expose information about the email not existing.
 			log.Warn("Auth not found")
-			return connect.NewResponse(&apiv1.ResetPasswordResponse{}), nil
+			return res, nil
 		}
 
 		log.Error("Fetch auth for password reset request", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
+
+	if !account.PasswordResetResendAllowed(auth.PasswordResetTokenValidUntil.GetOrZero(), time.Now().UTC()) {
+		// Do not expose information about the address being rate limited.
+		log.Warn("Password reset email rate limited")
+		return res, nil
 	}
 
 	token := uuid.NewString()
@@ -396,7 +407,7 @@ func (h *authHandler) ResetPassword(ctx context.Context, req *connect.Request[ap
 	}
 
 	log.Info("Password reset email sent")
-	return connect.NewResponse(&apiv1.ResetPasswordResponse{}), nil
+	return res, nil
 }
 
 func (h *authHandler) UpdatePassword(ctx context.Context, req *connect.Request[apiv1.UpdatePasswordRequest]) (*connect.Response[apiv1.UpdatePasswordResponse], error) {
