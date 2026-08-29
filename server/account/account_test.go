@@ -58,3 +58,35 @@ func TestPasswordResetTokenExpired(t *testing.T) {
 	require.False(t, account.PasswordResetTokenExpired(now.Add(time.Hour), now))
 	require.True(t, account.PasswordResetTokenExpired(now.Add(-time.Hour), now))
 }
+
+func TestPasswordResetResendAllowed(t *testing.T) {
+	t.Parallel()
+
+	now := time.Date(2026, time.August, 22, 12, 0, 0, 0, time.UTC)
+
+	// A token's deadline dates the email that carried it, so the argument is
+	// the moment it was sent plus the token's lifetime.
+	sentAt := func(d time.Duration) time.Time {
+		return now.Add(d).Add(account.PasswordResetTokenTTL)
+	}
+
+	// Never asked, or asked and spent: no live token to date an email by.
+	require.True(t, account.PasswordResetResendAllowed(time.Time{}, now))
+
+	require.False(t, account.PasswordResetResendAllowed(sentAt(0), now))
+	require.False(t, account.PasswordResetResendAllowed(sentAt(-account.PasswordResetCooldown/2), now))
+	require.True(t, account.PasswordResetResendAllowed(sentAt(-account.PasswordResetCooldown), now))
+	require.True(t, account.PasswordResetResendAllowed(sentAt(-time.Hour), now))
+}
+
+// An expired token still dates the email that carried it, but the cooldown ran
+// out long before the token did, so a fresh link is never withheld.
+func TestPasswordResetResendAllowedAfterTheTokenExpired(t *testing.T) {
+	t.Parallel()
+
+	now := time.Date(2026, time.August, 22, 12, 0, 0, 0, time.UTC)
+	expired := now.Add(-time.Hour)
+
+	require.True(t, account.PasswordResetTokenExpired(expired, now))
+	require.True(t, account.PasswordResetResendAllowed(expired, now))
+}

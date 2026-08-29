@@ -83,3 +83,23 @@ func PasswordResetTokenExpired(validUntil, now time.Time) bool {
 
 	return validUntil.Before(now)
 }
+
+// PasswordResetCooldown is how long an address must wait between password reset
+// emails, so that the endpoint cannot be used to send somebody mail repeatedly.
+const PasswordResetCooldown = time.Minute
+
+// PasswordResetResendAllowed reports whether an address holding a reset token
+// that runs out at validUntil may be sent another reset email now.
+//
+// The token's deadline dates the email that carried it: a reset always issues a
+// token good for PasswordResetTokenTTL from the moment it sends, so the send
+// time is that deadline less the lifetime and nothing separate records it. An
+// address with no live token has either never asked or has spent the one it
+// had, and always may.
+func PasswordResetResendAllowed(validUntil, now time.Time) bool {
+	if validUntil.IsZero() {
+		return true
+	}
+
+	return now.Sub(validUntil.Add(-PasswordResetTokenTTL)) >= PasswordResetCooldown
+}
