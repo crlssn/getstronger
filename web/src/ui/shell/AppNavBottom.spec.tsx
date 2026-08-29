@@ -33,7 +33,7 @@ describe('AppNavBottom', () => {
   test.each([
     ['/home', 'Home'],
     ['/workout', 'Workout'],
-    ['/plans', 'Training'],
+    ['/routines', 'Training'],
     ['/exercises', 'Exercises'],
     ['/profile', 'Me'],
   ])('marks the tab for %s as the current page', (route, name) => {

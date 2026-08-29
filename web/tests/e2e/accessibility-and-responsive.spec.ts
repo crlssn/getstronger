@@ -153,6 +153,7 @@ test('removes a tag from a chip that clears the tap-target floor @responsive', a
   await logIn(page)
 
   await page.goto('/exercises/create')
+  await page.getByRole('button', { name: 'Add tags' }).click()
   const tagInput = page.getByLabel('Add exercise tag')
   await tagInput.fill('Upper body')
   await tagInput.press('Enter')

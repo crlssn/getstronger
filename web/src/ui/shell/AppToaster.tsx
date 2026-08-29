@@ -1,9 +1,6 @@
-import { CheckCircleIcon, XMarkIcon } from '@heroicons/react/24/outline'
+import { CheckCircleIcon } from '@heroicons/react/24/outline'
 import type { CSSProperties } from 'react'
 
-import { useTranslation } from 'react-i18next'
-
-import { AppIconButton } from '@/ui/components/AppIconButton'
 import { selectBottomChrome, useBottomChrome } from '@/stores/bottomChrome'
 import { useToastStore } from '@/stores/toasts'
 import styles from './AppToaster.module.css'
@@ -12,12 +9,11 @@ import styles from './AppToaster.module.css'
  * The transient success message, floating over whichever shell is on screen.
  *
  * Success only: errors render inline where they happened, so the toast never
- * has to interrupt. The region is always mounted so a screen reader is
- * watching it before the first message lands, and it lets taps through
- * everywhere the card is not.
+ * has to interrupt — and it dismisses itself, so it carries no close control.
+ * The region is always mounted so a screen reader is watching it before the
+ * first message lands, and it lets taps through everywhere the card is not.
  */
 export const AppToaster = () => {
-  const { t } = useTranslation()
   const toast = useToastStore((state) => state.toast)
   const bottomChrome = useBottomChrome(selectBottomChrome)
 
@@ -35,12 +31,6 @@ export const AppToaster = () => {
         <div key={toast.id} className={styles.toast} role="status">
           <CheckCircleIcon className={styles.statusIcon} aria-hidden="true" />
           <p>{toast.message}</p>
-          <AppIconButton
-            className={styles.dismiss}
-            icon={XMarkIcon}
-            label={t('common.dismiss')}
-            onClick={() => useToastStore.getState().dismiss()}
-          />
         </div>
       )}
     </div>

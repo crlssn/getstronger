@@ -2,7 +2,6 @@ import type { RoutineGroup } from '@/proto/api/v1/routine_service_pb'
 import type { Exercise } from '@/proto/api/v1/shared_pb'
 import type { DraftGroup } from '@/utils/routineGroups'
 
-import { PencilIcon } from '@heroicons/react/24/outline'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -126,19 +125,17 @@ export const RoutineForm = ({
         if (canSubmit) submit()
       }}
     >
-      {/* The field carries its own label, and is the panel rather than a
-          control inside one: three grey section captions above three different
-          controls said only that a form was underneath. */}
+      {/* The screen's first-class field: overline label on the canvas, the
+          standard input under it, no panel of its own. */}
       <AppInput
         className={styles.name}
-        variant="card"
+        variant="hero"
         label={t('routine.form.name')}
         value={name}
         type="text"
         required
         autoComplete="off"
         placeholder={t('routine.form.namePlaceholder')}
-        trailing={<PencilIcon className={styles.namePencil} aria-hidden="true" />}
         onChange={(event) => setName(event.target.value)}
       />
 

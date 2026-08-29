@@ -14,11 +14,11 @@ interface Props extends Omit<ComponentProps<'input'>, 'className'> {
   /** A control at the trailing edge, inside the field's border. */
   trailing?: ReactNode
   /**
-   * `card` draws the field as the panel it fills: the label sits inside it as
-   * an eyebrow and the value is read at title size. For the one field a screen
-   * is built around, rather than one of a form's many.
+   * `hero` is for the one field a screen is built around: the label rises to
+   * the caps overline register on the page background, and the input stands
+   * on the canvas rather than inside a panel.
    */
-  variant?: 'default' | 'card'
+  variant?: 'default' | 'hero'
   /** Positions the field. The input's own styling is never replaced. */
   className?: string
 }
@@ -43,7 +43,7 @@ export const AppInput = ({
   const inputId = id ?? generatedId
 
   return (
-    <div className={cn(styles.field, variant === 'card' && styles.card, className)}>
+    <div className={cn(styles.field, variant === 'hero' && styles.hero, className)}>
       {label && (
         <label htmlFor={inputId} className={styles.label}>
           {label}

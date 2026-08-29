@@ -113,25 +113,18 @@
 
 /* Four numbers, divided by hairlines and set in tabular figures so a column of
    them lines up. */
-.metricGrid {
-  @apply grid grid-cols-2 gap-px bg-border sm:grid-cols-4;
+/* The list grammar, not a quadrant: one row per number, divided by
+   hairlines, so an odd count of metrics leaves no hole. */
+.metricList li {
+  @apply flex items-baseline justify-between gap-3 border-b border-border px-4 py-3 last:border-b-0;
 }
 
-.metricGrid article {
-  @apply bg-surface px-4 py-3;
+.metricList span {
+  @apply truncate text-eyebrow font-bold uppercase text-text-subtle;
 }
 
-.metricGrid small,
-.metricGrid strong {
-  @apply block truncate;
-}
-
-.metricGrid small {
-  @apply text-eyebrow font-bold uppercase text-text-subtle;
-}
-
-.metricGrid strong {
-  @apply mt-0.5 text-body-lg font-bold tabular-nums text-text;
+.metricList strong {
+  @apply shrink-0 text-body-lg font-bold tabular-nums text-text;
 }
 
 .detailSection,

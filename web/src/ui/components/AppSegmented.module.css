@@ -9,7 +9,9 @@
  * träningspass and Föredragen viktenhet have somewhere to go.
  */
 .segmented {
-  @apply flex w-max max-w-full gap-1 overflow-x-auto rounded-card bg-surface-track p-1;
+  /* Pill track, pill items: the one pair of radii that stays concentric at
+     any height, which a card-round track over control-round items did not. */
+  @apply flex w-max max-w-full gap-1 overflow-x-auto rounded-pill bg-surface-track p-1;
   /* A scrollbar over a two-item control is louder than the overflow it warns
    * about, and the items are wide enough to drag. */
   scrollbar-width: none;
@@ -44,7 +46,7 @@
 /* Density is horizontal padding and type size. Height is the tap-target floor,
  * and there is no density below it. */
 .segmented > * {
-  @apply grid min-h-(--size-control-sm) shrink-0 cursor-pointer place-items-center whitespace-nowrap rounded-control px-5 text-sm font-semibold text-text-muted transition;
+  @apply grid min-h-(--size-control-sm) shrink-0 cursor-pointer place-items-center whitespace-nowrap rounded-pill px-5 text-sm font-semibold text-text-muted transition;
 }
 
 .segmented > *:hover {
@@ -60,16 +62,8 @@
 }
 
 /* Short labels only — 7D, 4W, 1Y, or a switch that has to fit beside a title.
-   Rounded to a pill, because at this size it reads as a control sitting beside
-   content rather than as a band across the page. The min-width keeps the
-   narrowest of them clear of the tap floor on both axes: "1Y" at this size is
-   43px of text and padding. */
-.segmented.compact {
-  @apply rounded-pill;
-}
-
-/* Wider than the tap floor on purpose: at 44px square the selected white
+   Wider than the tap floor on purpose: at 44px square the selected white
    pill reads as a switch knob, and this is a choice, not a boolean. */
 .compact > * {
-  @apply min-w-14 rounded-pill px-3.5 text-meta;
+  @apply min-w-14 px-3.5 text-meta;
 }

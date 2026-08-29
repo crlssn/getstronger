@@ -75,7 +75,8 @@ export const AppNavBottom = () => {
       timer,
     },
     {
-      href: '/plans',
+      // Routines are what most sessions start from, so Training lands there.
+      href: '/routines',
       icon: RectangleStackIcon,
       iconActive: RectangleStackIconSolid,
       name: t('nav.training'),

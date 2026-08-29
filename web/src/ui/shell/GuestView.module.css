@@ -1,7 +1,9 @@
 @reference '../../assets/base.css';
 
+/* The same paper the auth pages sit on: the sunken tint read as its own
+   surface behind them. */
 .guestShell {
-  @apply min-h-screen bg-surface-sunken;
+  @apply min-h-screen bg-canvas;
 }
 
 .guestHeader {

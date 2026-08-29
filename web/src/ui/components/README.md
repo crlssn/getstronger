@@ -185,12 +185,6 @@ and the arrow keys move it — what typing gave a keyboard, kept.
 On or off, decided the moment it is tapped. `label` is required — a track and a
 knob have no accessible name of their own.
 
-### `<AppListItemInput>`
-
-A text field that fills a list row. The value is committed when the field is
-left rather than on every keystroke, so a half-typed name never reaches the
-caller.
-
 ## Surfaces
 
 ### `<AppCard>`

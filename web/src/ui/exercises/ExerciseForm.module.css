@@ -18,3 +18,7 @@
 .sectionTitle small {
   @apply text-body-lg font-normal text-text-subtle;
 }
+
+.name {
+  @apply mb-5;
+}

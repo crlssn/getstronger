@@ -118,6 +118,7 @@ test.describe('exercise library', () => {
     try {
       await page.goto('/exercises/create')
       await page.locator('form input[type="text"]').first().fill(sourceName)
+      await page.getByRole('button', { name: 'Add tags' }).click()
       await page.getByLabel('Add exercise tag').fill(sharedTag)
       await page.getByLabel('Add exercise tag').press('Enter')
       await page.getByRole('button', { name: 'Create exercise' }).click()
@@ -125,6 +126,7 @@ test.describe('exercise library', () => {
 
       await page.goto('/exercises/create')
       await page.locator('form input[type="text"]').first().fill(targetName)
+      await page.getByRole('button', { name: 'Add tags' }).click()
       const tagInput = page.getByLabel('Add exercise tag')
       await tagInput.fill(sharedTag.slice(0, Math.max(3, sharedTag.length - 3)))
       await expect(page.getByRole('listbox', { name: 'Existing exercise tags' })).toBeVisible()

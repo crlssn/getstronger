@@ -1,7 +1,6 @@
 // @vitest-environment jsdom
 
 import { act, screen } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
 import { useBottomChrome } from '@/stores/bottomChrome'
@@ -10,9 +9,6 @@ import { renderWithProviders } from '@/ui/testing'
 import { AppToaster } from './AppToaster'
 
 const raise = () => useToastStore.getState()
-
-/** Fake timers stop userEvent's own waiting, so it is pointed at them. */
-const user = () => userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
 
 const wait = (ms: number) => act(() => void vi.advanceTimersByTime(ms))
 
@@ -75,13 +71,12 @@ describe('AppToaster', () => {
     expect(screen.queryByRole('status')).not.toBeInTheDocument()
   })
 
-  test('can be dismissed before its time is up', async () => {
+  // It dismisses itself, so it carries no close control to tap.
+  test('offers no dismiss button', () => {
     raise().success('Workout saved')
     renderWithProviders(<AppToaster />)
 
-    await user().click(screen.getByRole('button', { name: 'Dismiss message' }))
-
-    expect(screen.queryByRole('status')).not.toBeInTheDocument()
+    expect(screen.queryByRole('button')).not.toBeInTheDocument()
   })
 
   // Two of them stacked would cover the screen a phone has little of.

@@ -20,6 +20,7 @@ import { AppButton } from '@/ui/components/AppButton'
 import { AppEmptyState } from '@/ui/components/AppEmptyState'
 import { AppErrorState } from '@/ui/components/AppErrorState'
 import { AppFormFooter } from '@/ui/components/AppFormFooter'
+import { PageNavAction } from '@/ui/components/PageNavAction'
 import { AppDatetimeField } from '@/ui/components/AppDatetimeField'
 import { AppOptionalAction } from '@/ui/components/AppOptionalAction'
 import { AppSkeleton } from '@/ui/components/AppSkeleton'
@@ -221,32 +222,36 @@ export const EditWorkout = () => {
       </ol>
 
       {/* The app's own date form with the platform picker behind it, not the
-          browser-default datetime row. */}
-      <AppDatetimeField
-        label={t('workout.edit.startTime')}
-        model={toLocalInput(workout.startedAt)}
-        required
-        onUpdate={(value) =>
-          setWorkout((current) =>
-            current
-              ? { ...current, startedAt: timestampFromDate(DateTime.fromISO(value).toJSDate()) }
-              : current,
-          )
-        }
-      />
+          browser-default datetime row — under the same group label the
+          profile's preference cards carry, clear of the sets above. */}
+      <section className={styles.timeGroup}>
+        <h2>{t('workout.edit.timeSection')}</h2>
+        <AppDatetimeField
+          label={t('workout.edit.startTime')}
+          model={toLocalInput(workout.startedAt)}
+          required
+          onUpdate={(value) =>
+            setWorkout((current) =>
+              current
+                ? { ...current, startedAt: timestampFromDate(DateTime.fromISO(value).toJSDate()) }
+                : current,
+            )
+          }
+        />
 
-      <AppDatetimeField
-        label={t('workout.edit.endTime')}
-        model={toLocalInput(workout.finishedAt)}
-        required
-        onUpdate={(value) =>
-          setWorkout((current) =>
-            current
-              ? { ...current, finishedAt: timestampFromDate(DateTime.fromISO(value).toJSDate()) }
-              : current,
-          )
-        }
-      />
+        <AppDatetimeField
+          label={t('workout.edit.endTime')}
+          model={toLocalInput(workout.finishedAt)}
+          required
+          onUpdate={(value) =>
+            setWorkout((current) =>
+              current
+                ? { ...current, finishedAt: timestampFromDate(DateTime.fromISO(value).toJSDate()) }
+                : current,
+            )
+          }
+        />
+      </section>
 
       <AppTextarea
         autosize
@@ -260,20 +265,15 @@ export const EditWorkout = () => {
         }
       />
 
-      <AppFormFooter
-        error={saveError}
-        secondary={
-          <AppButton
-            type="link"
-            to={`/workouts/${workout.id}`}
-            colour="ghost"
-            size="lg"
-            width="auto"
-          >
-            {t('common.cancel')}
-          </AppButton>
-        }
-      >
+      {/* The way out sits in the top nav, in the same spot Notifications
+          keeps Mark all read, leaving the pinned bar to the save alone. */}
+      <PageNavAction>
+        <AppButton type="link" to={`/workouts/${workout.id}`} colour="ghost" size="sm" width="auto">
+          {t('common.cancel')}
+        </AppButton>
+      </PageNavAction>
+
+      <AppFormFooter error={saveError}>
         <AppButton type="submit" colour="primary" size="lg">
           {t('common.saveChanges')}
         </AppButton>
