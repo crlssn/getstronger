@@ -139,8 +139,11 @@ func options() []fx.Option {
 			protovalidate.New,
 			func() *config.Config {
 				return &config.Config{
-					DB:  config.DB{},
-					JWT: config.JWT{},
+					DB: config.DB{},
+					JWT: config.JWT{
+						AccessTokenKey:  "e2e-access-key",
+						RefreshTokenKey: "e2e-refresh-key",
+					},
 					Server: config.Server{
 						Port: randomUnusedPort(),
 					},
