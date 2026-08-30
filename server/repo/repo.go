@@ -477,7 +477,7 @@ func ListExercisesWithPageToken(pageToken []byte) ListExercisesOpt {
 		}
 
 		return append([]bob.Mod[*dialect.SelectQuery]{
-			models.SelectWhere.Exercises.CreatedAt.LT(pt.CreatedAt),
+			pageTokenBoundary(models.Exercises.Columns.CreatedAt, models.Exercises.Columns.ID, pt),
 		}, ordered...), nil
 	}
 }
@@ -703,6 +703,19 @@ func newestFirst(createdAt, id any) []bob.Mod[*dialect.SelectQuery] {
 	}
 }
 
+// pageTokenBoundary keeps the rows strictly after the token's place in the
+// newest-first (created_at, id) order. A token from before cursors carried an
+// id compares on the timestamp alone, which skips rows tied with the boundary
+// — the reason the id is there.
+func pageTokenBoundary(createdAt, id bob.Expression, pt PageToken) bob.Mod[*dialect.SelectQuery] {
+	if pt.ID == "" {
+		return sm.Where(psql.Group(createdAt).LT(psql.Arg(pt.CreatedAt)))
+	}
+
+	return sm.Where(psql.Group(createdAt, id).
+		LT(psql.Group(psql.Arg(pt.CreatedAt), psql.Arg(uuidFromString(pt.ID)))))
+}
+
 // stableExerciseOrder orders a routine's exercise load by the position recorded on the
 // relationship table, which the load's join makes available to ORDER BY. Positions may have gaps
 // after removals; only their relative order matters. The exercise ID keeps the sort total in case
@@ -762,7 +775,7 @@ func ListRoutinesWithPageToken(pageToken []byte) ListRoutineOpt {
 		}
 
 		return append([]bob.Mod[*dialect.SelectQuery]{
-			models.SelectWhere.Routines.CreatedAt.LT(pt.CreatedAt),
+			pageTokenBoundary(models.Routines.Columns.CreatedAt, models.Routines.Columns.ID, pt),
 		}, ordered...), nil
 	}
 }
@@ -977,7 +990,7 @@ func ListWorkoutsWithPageToken(token []byte) ListWorkoutsOpt {
 		}
 
 		return append([]bob.Mod[*dialect.SelectQuery]{
-			models.SelectWhere.Workouts.CreatedAt.LT(pt.CreatedAt),
+			pageTokenBoundary(models.Workouts.Columns.CreatedAt, models.Workouts.Columns.ID, pt),
 		}, ordered...), nil
 	}
 }
@@ -1619,7 +1632,7 @@ func ListNotificationsWithPageToken(token []byte) ListNotificationsOpt {
 		}
 
 		return append([]bob.Mod[*dialect.SelectQuery]{
-			models.SelectWhere.Notifications.CreatedAt.LT(pageToken.CreatedAt),
+			pageTokenBoundary(models.Notifications.Columns.CreatedAt, models.Notifications.Columns.ID, pageToken),
 		}, ordered...), nil
 	}
 }
@@ -1787,7 +1800,7 @@ func ListSetsWithPageToken(token []byte) ListSetsOpt {
 			return nil, fmt.Errorf("page token unmarshal: %w", err)
 		}
 
-		return models.SelectWhere.Sets.CreatedAt.LT(pt.CreatedAt), nil
+		return pageTokenBoundary(models.Sets.Columns.CreatedAt, models.Sets.Columns.ID, pt), nil
 	}
 }
 
@@ -1803,14 +1816,18 @@ func ListSetsLoadExercise() ListSetsOpt {
 	}
 }
 
+// ListSetsOrderByCreatedAt orders by creation time with the ID keeping the
+// order total: every set of a workout shares created_at, so without it Postgres
+// hands the tied rows back in whatever order they physically sit in.
 func ListSetsOrderByCreatedAt(order order) ListSetsOpt {
 	return func() (bob.Mod[*dialect.SelectQuery], error) {
-		orderBy := sm.OrderBy(models.Sets.Columns.CreatedAt)
+		createdAt := sm.OrderBy(models.Sets.Columns.CreatedAt)
+		id := sm.OrderBy(models.Sets.Columns.ID)
 		if order == DESC {
-			return orderBy.Desc(), nil
+			return bob.Mods[*dialect.SelectQuery]{createdAt.Desc(), id.Desc()}, nil
 		}
 
-		return orderBy.Asc(), nil
+		return bob.Mods[*dialect.SelectQuery]{createdAt.Asc(), id.Asc()}, nil
 	}
 }
 

@@ -29,10 +29,13 @@ type Pagination[Item ModelItem, Slice ModelSlice[Item]] struct {
 }
 
 func PaginateSlice[Item ModelItem, Slice ModelSlice[Item]](
-	items Slice, limit int, createdAt func(Item) time.Time,
+	items Slice, limit int, cursor func(Item) (createdAt time.Time, id string),
 ) (*Pagination[Item, Slice], error) {
 	return PaginateSliceWithToken(items, limit, func(item Item) any {
-		return PageTokenCreatedAt(createdAt(item))
+		createdAt, id := cursor(item)
+		token := PageTokenCreatedAt(createdAt)
+		token.ID = id
+		return token
 	})
 }
 
@@ -69,6 +72,11 @@ func PageTokenCreatedAt(t time.Time) PageToken {
 
 type PageToken struct {
 	CreatedAt time.Time `json:"createdAt"`
+	// ID pins the cursor to one row: created_at alone is not unique — every set
+	// of a workout shares one — and a cursor naming several rows loses whichever
+	// of them sort after it. Empty in tokens minted before it existed, which
+	// keep their strictly-older meaning.
+	ID string `json:"id,omitempty"`
 }
 
 // The Update* methods built on these opts each issue a single statement keyed

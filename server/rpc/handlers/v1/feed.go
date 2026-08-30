@@ -60,8 +60,8 @@ func (h *feedHandler) ListFeedItems(ctx context.Context, req *connect.Request[ap
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	paginated, err := repo.PaginateSlice(workouts, limit, func(workout *models.Workout) time.Time {
-		return workout.CreatedAt
+	paginated, err := repo.PaginateSlice(workouts, limit, func(workout *models.Workout) (time.Time, string) {
+		return workout.CreatedAt, workout.ID.String()
 	})
 	if err != nil {
 		log.Error("Paginate feed workouts", zap.Error(err))

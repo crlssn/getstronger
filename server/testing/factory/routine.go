@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/aarondl/opt/omit"
 	"github.com/stephenafamo/bob/dialect/psql/im"
@@ -82,6 +83,12 @@ func RoutineID(id any) RoutineOpt {
 func RoutineUserID(userID any) RoutineOpt {
 	return func(m *models.RoutineSetter) {
 		m.UserID = omit.From(nativeUUID(userID))
+	}
+}
+
+func RoutineCreatedAt(createdAt time.Time) RoutineOpt {
+	return func(m *models.RoutineSetter) {
+		m.CreatedAt = omit.From(createdAt)
 	}
 }
 
