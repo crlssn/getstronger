@@ -1,3 +1,7 @@
+import { readFileSync, readdirSync } from 'node:fs'
+import { dirname, join } from 'node:path'
+import { fileURLToPath } from 'node:url'
+
 import { describe, expect, it } from 'vitest'
 import { en, sv } from './messages'
 
@@ -19,6 +23,25 @@ const flattenEntries = (messages: Messages, prefix = ''): Array<[string, string]
 
 const placeholders = (message: string) =>
   [...message.matchAll(/\{(\w+)\}/g)].map(([, name]) => name).sort()
+
+// Prefixes whose keys are assembled at runtime, so no source file spells one
+// out. Each needs the code that builds it named beside it, because a prefix
+// listed here is a prefix the orphan check can no longer see into.
+const assembledPrefixes = [
+  // `activity.${bucket}` in utils/activityBuckets.ts, for both bucket sets.
+  'activity.',
+]
+
+const catalogueDir = dirname(fileURLToPath(import.meta.url))
+const cataloguePath = join(catalogueDir, 'messages.ts')
+const sourceRoot = join(catalogueDir, '..', '..')
+
+const sourceFiles = (directory: string): string[] =>
+  readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
+    const path = join(directory, entry.name)
+    if (entry.isDirectory()) return entry.name === 'node_modules' ? [] : sourceFiles(path)
+    return /\.(ts|tsx)$/.test(entry.name) ? [path] : []
+  })
 
 describe('messages', () => {
   it('translates every key in every supported locale', () => {
@@ -105,6 +128,24 @@ describe('messages', () => {
       .map(([key, value]) => `${key}: ${value}`)
 
     expect(shouting, shouting.join('\n')).toEqual([])
+  })
+
+  // A key nothing renders still costs every locale a translation. Screens get
+  // rewritten far more often than the catalogue gets pruned, so the pruning is
+  // enforced rather than remembered.
+  it('keeps no key that nothing renders', () => {
+    const sources = sourceFiles(sourceRoot)
+      .filter((path) => path !== cataloguePath)
+      .map((path) => readFileSync(path, 'utf8'))
+      .join('\n')
+
+    const orphaned = flatten(en as Messages)
+      // Both arms of a plural are reached through the stem alone.
+      .map((key) => key.replace(/_(one|other)$/, ''))
+      .filter((key) => !assembledPrefixes.some((prefix) => key.startsWith(prefix)))
+      .filter((key) => !sources.includes(key))
+
+    expect([...new Set(orphaned)], 'nothing renders these — delete them from en and sv').toEqual([])
   })
 
   it.each(['en', 'sv'] as const)('localises the email verification notice in %s', (locale) => {
