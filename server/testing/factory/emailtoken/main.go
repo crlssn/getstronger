@@ -4,52 +4,13 @@
 package main
 
 import (
-	"context"
-	"flag"
-	"fmt"
-	"log"
-
-	"github.com/joho/godotenv"
-	"github.com/stephenafamo/bob"
-
-	"github.com/crlssn/getstronger/server/account"
-	"github.com/crlssn/getstronger/server/config"
-	"github.com/crlssn/getstronger/server/db"
 	"github.com/crlssn/getstronger/server/gen/models"
+	"github.com/crlssn/getstronger/server/testing/factory/authtoken"
 )
 
 func main() {
-	if err := godotenv.Load(); err != nil {
-		panic(fmt.Errorf("load .env file: %w", err))
-	}
-
-	c := config.New()
-	if c.Environment != config.EnvironmentLocal {
-		log.Printf("environment must be local, got %s", c.Environment)
-		return
-	}
-
-	email := flag.String("email", "", "the address to print the verification token of")
-	flag.Parse()
-
-	if *email == "" {
-		log.Print("an email is required")
-		return
-	}
-
-	database, err := db.New(c)
-	if err != nil {
-		log.Printf("connect to database: %v", err)
-		return
-	}
-
-	auth, err := models.Auths.Query(
-		models.SelectWhere.Auths.Email.EQ(account.NormalizeEmailAddress(*email)),
-	).One(context.Background(), bob.NewDB(database))
-	if err != nil {
-		log.Printf("fetch auth: %v", err)
-		return
-	}
-
-	fmt.Println(auth.EmailToken.String()) //nolint:forbidigo // The token is this command's output.
+	authtoken.Run(
+		"the address to print the verification token of",
+		func(auth *models.Auth) string { return auth.EmailToken.String() },
+	)
 }
