@@ -75,8 +75,19 @@ test.describe('guest authentication and routing', () => {
     await expect(page.getByText('Preferred weight unit')).toHaveCount(0)
     await expect(page.getByText('Preferred distance unit')).toHaveCount(0)
 
-    // A username someone already holds is refused with a clear message and
-    // leaves the rest of the form intact.
+    // A name the app keeps for itself is refused, whether it carries the brand
+    // through separators or is one of the app's own routes. The words are the
+    // ones a held name gets, so nothing tells the reader which applied — these
+    // go first, before any other refusal has put an alert on screen.
+    for (const reserved of ['xX.get.stronger.Xx', 'verify_email']) {
+      await page.getByLabel('Username').fill(reserved)
+      await page.getByRole('button', { name: 'Create an account' }).click()
+      await expect(page.getByRole('alert')).toContainText('already taken')
+      await expect(page).toHaveURL(/\/signup$/)
+    }
+
+    // A username someone already holds is refused the same way and leaves the
+    // rest of the form intact.
     await page.getByLabel('Username').fill('alex')
     await page.getByRole('button', { name: 'Create an account' }).click()
     await expect(page.getByRole('alert')).toContainText('already taken')

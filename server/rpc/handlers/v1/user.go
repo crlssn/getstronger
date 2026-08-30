@@ -19,6 +19,7 @@ import (
 	"github.com/crlssn/getstronger/server/repo"
 	"github.com/crlssn/getstronger/server/rpc"
 	"github.com/crlssn/getstronger/server/rpc/parser"
+	"github.com/crlssn/getstronger/server/username"
 	"github.com/crlssn/getstronger/server/xcontext"
 )
 
@@ -175,6 +176,13 @@ func (h *userHandler) UpdateUserName(ctx context.Context, req *connect.Request[a
 func (h *userHandler) UpdateUserUsername(ctx context.Context, req *connect.Request[apiv1.UpdateUserUsernameRequest]) (*connect.Response[apiv1.UpdateUserUsernameResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
+
+	// A reserved name answers as a held one does: whether a name is free and
+	// whether it is ours are not the caller's business to tell apart.
+	if username.IsReserved(req.Msg.GetUsername()) {
+		log.Warn("Username reserved for username update")
+		return nil, rpc.Error(connect.CodeAlreadyExists, apiv1.Error_ERROR_USERNAME_TAKEN)
+	}
 
 	if err := h.repo.UpdateUser(ctx, userID, repo.UpdateUserUsername(req.Msg.GetUsername())); err != nil {
 		if errors.Is(err, account.ErrUsernameTaken) {

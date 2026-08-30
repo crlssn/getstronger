@@ -126,6 +126,29 @@ func (s *userSuite) TestUpdateUserUsername() {
 		expected := rpc.Error(connect.CodeAlreadyExists, v1.Error_ERROR_USERNAME_TAKEN)
 		s.Require().Equal(expected.Error(), err.Error())
 	})
+
+	// A reserved name answers exactly as a held one does, so that the endpoint
+	// cannot be used to map out which names the app keeps for itself.
+	s.Run("err_username_reserved", func() {
+		user := s.factory.NewUser()
+		ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
+		ctx = xcontext.WithUserID(ctx, user.ID.String())
+
+		for _, username := range []string{"Get.Stronger", "login"} {
+			res, err := s.handler.UpdateUserUsername(ctx, &connect.Request[v1.UpdateUserUsernameRequest]{
+				Msg: &v1.UpdateUserUsernameRequest{Username: username},
+			})
+			s.Require().Nil(res)
+			s.Require().Error(err)
+			expected := rpc.Error(connect.CodeAlreadyExists, v1.Error_ERROR_USERNAME_TAKEN)
+			s.Require().Equal(expected.Error(), err.Error())
+		}
+
+		// The refusal changed nothing.
+		persisted, err := s.repo.GetUser(ctx, repo.GetUserWithID(user.ID.String()))
+		s.Require().NoError(err)
+		s.Require().Equal(user.Username, persisted.Username)
+	})
 }
 
 func (s *userSuite) TestUpdateUserWeightUnit() {
