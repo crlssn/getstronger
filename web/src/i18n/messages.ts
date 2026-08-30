@@ -958,7 +958,7 @@ export const sv = {
     saveFailed: 'Passet kunde inte sparas. Kontrollera din anslutning och försök igen.',
     savedWithoutId: 'Passet sparades utan id. Uppdatera dina träningspass för att öppna det.',
     savedNotOpened:
-      'Passet sparades men kunde inte öppnas. Tryck på Avsluta pass för att försöka igen.',
+      'Passet sparades men kunde inte öppnas. Tryck på Avsluta träningspass för att försöka igen.',
     quickWorkoutUnavailable: 'Starta om backend för att aktivera snabbpass och försök igen.',
     saveTimedOut: 'Det tog för lång tid att spara. Kontrollera din anslutning och försök igen.',
     saved: 'Träningspasset sparades',
@@ -1148,7 +1148,7 @@ export const sv = {
     form: {
       eyebrow: 'Passbyggare',
       name: 'Passets namn',
-      namePlaceholder: 't.ex. Överkropp styrka',
+      namePlaceholder: 't.ex. Överkroppsstyrka',
       needsName: 'Lägg till ett namn',
       needsExercise: 'Lägg till en övning',
       needsNameAndExercise: 'Lägg till ett namn och en övning',
@@ -1196,7 +1196,7 @@ export const sv = {
         removeGroup: 'Ta bort grupp {letter}',
         reorder: 'Ändra ordning på {name}',
         removeExercise: 'Ta bort {name}',
-        empty: 'Inga övningar här än.',
+        empty: 'Inga övningar här ännu.',
       },
     },
     view: {
@@ -1269,7 +1269,7 @@ export const sv = {
         'Övningen tas bort från ditt bibliotek och från alla pass den ingår i. Set du redan har loggat finns kvar i din träningshistorik. Det här går inte att ångra i appen.',
       deleteFailed: 'Övningen kunde inte tas bort. Försök igen.',
       deleted: 'Övningen togs bort',
-      prPill: 'PB',
+      prPill: 'PR',
       emptyHistory: 'Logga övningen i ett träningspass för att börja bygga historik.',
       loadMoreSets: 'Ladda fler set',
       unavailableBody: 'Det gick inte att ladda övningen eller så finns den inte längre.',
@@ -1355,7 +1355,7 @@ export const sv = {
     followeesEmptyBody: 'Konton som den här medlemmen följer visas här.',
     personalBestsEmptyTitle: 'Inga personliga rekord ännu',
     personalBestsEmptyBody:
-      'Det tyngsta loggade settet för varje övning räknas som personligt rekord.',
+      'Det tyngsta loggade setet för varje övning räknas som personligt rekord.',
     privacyPolicy: 'Integritetspolicy',
     privacyPolicyBody: 'Vad vi lagrar, och varför',
     dangerZone: 'Riskzon',

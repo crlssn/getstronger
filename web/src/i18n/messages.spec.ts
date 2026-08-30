@@ -148,6 +148,23 @@ describe('messages', () => {
     expect([...new Set(orphaned)], 'nothing renders these — delete them from en and sv').toEqual([])
   })
 
+  // The toast tells the reader which button to press, so it must name the
+  // button exactly — "Avsluta pass" pointed at a button labelled "Avsluta
+  // träningspass".
+  it.each(['en', 'sv'] as const)('names the finish button exactly in %s', (locale) => {
+    const messages = { en, sv }[locale]
+
+    expect(messages.workout.savedNotOpened).toContain(messages.workout.finish)
+  })
+
+  // Personal records are "PR" everywhere; the exercise page's pill once said
+  // "PB" while every other badge said "PR".
+  it.each(['en', 'sv'] as const)('abbreviates personal records consistently in %s', (locale) => {
+    const messages = { en, sv }[locale]
+
+    expect(messages.exercise.view.prPill).toBe(messages.common.pr)
+  })
+
   it.each(['en', 'sv'] as const)('localises the email verification notice in %s', (locale) => {
     const messages = { en, sv }[locale]
     const keys = flatten(messages.auth.verification as unknown as Messages)
