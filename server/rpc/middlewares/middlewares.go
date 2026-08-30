@@ -7,6 +7,7 @@ import (
 	"github.com/rs/cors"
 
 	"github.com/crlssn/getstronger/server/config"
+	"github.com/crlssn/getstronger/server/cookies"
 	"github.com/crlssn/getstronger/server/trace"
 	"github.com/crlssn/getstronger/server/xcontext"
 )
@@ -60,7 +61,7 @@ func (m *Middleware) coors(h http.Handler) http.Handler {
 
 func (m *Middleware) cookies(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		cookie, err := r.Cookie("refreshToken") // TODO: Move cookie logic to own package.
+		cookie, err := r.Cookie(cookies.CookieNameRefreshToken)
 		if err == nil {
 			r = r.WithContext(xcontext.WithRefreshToken(r.Context(), cookie.Value))
 		}
