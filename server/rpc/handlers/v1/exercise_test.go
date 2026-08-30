@@ -730,7 +730,12 @@ func (s *exerciseSuite) TestListExercises() { //nolint:maintidx
 					return t.expected.res.GetExercises()[i].GetId() > t.expected.res.GetExercises()[j].GetId()
 				})
 
-				nextPageToken, err := json.Marshal(repo.PageTokenCreatedAt(exercises[0].CreatedAt))
+				// The cursor names the page's last row: the tied exercise the
+				// ID order puts second.
+				pageEnd := t.expected.res.GetExercises()[len(t.expected.res.GetExercises())-1]
+				token := repo.PageTokenCreatedAt(exercises[0].CreatedAt)
+				token.ID = pageEnd.GetId()
+				nextPageToken, err := json.Marshal(token)
 				s.Require().NoError(err)
 				t.expected.res.Pagination.NextPageToken = nextPageToken
 
@@ -1300,7 +1305,10 @@ func (s *exerciseSuite) TestListSets() {
 					return sets[i].CreatedAt.Before(sets[j].CreatedAt)
 				})
 
-				nextPageToken, err := json.Marshal(repo.PageTokenCreatedAt(sets[0].CreatedAt))
+				// The cursor names the page's last row: the older of the two sets.
+				token := repo.PageTokenCreatedAt(sets[0].CreatedAt)
+				token.ID = sets[0].ID.String()
+				nextPageToken, err := json.Marshal(token)
 				s.Require().NoError(err)
 				t.expected.res.Pagination.NextPageToken = nextPageToken
 
