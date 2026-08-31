@@ -12,10 +12,13 @@ test.describe('the workout dock', () => {
     await logIn(page)
     await page.goto('/workouts/quick')
     await page.getByRole('button', { name: 'Choose exercise' }).click()
+    // The tests log weight and reps, so the seeded cardio exercise — whose
+    // set inputs are distance and time — must never be the one picked.
     await page
       .getByRole('dialog', { name: 'Add exercise' })
       .getByRole('button')
       .filter({ has: page.locator('strong') })
+      .filter({ hasNotText: 'Cardio' })
       .first()
       .click()
   })

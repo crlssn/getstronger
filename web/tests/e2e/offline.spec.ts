@@ -95,10 +95,12 @@ test.describe('offline mode', () => {
     await page.getByRole('button', { name: 'Choose exercise' }).click()
     const picker = page.getByRole('dialog', { name: 'Add exercise' })
     // The options are the buttons that name something; the sheet's close and
-    // load-more controls carry no name of their own.
+    // load-more controls carry no name of their own. The seeded cardio
+    // exercise is skipped: the lines below log weight and reps.
     const option = picker
       .getByRole('button')
       .filter({ has: page.locator('strong') })
+      .filter({ hasNotText: 'Cardio' })
       .first()
     const exerciseName = (await option.locator('strong').innerText()).trim()
     await option.click()
