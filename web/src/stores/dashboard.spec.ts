@@ -66,6 +66,16 @@ describe('dashboard store', () => {
     expect(store().preferredRoutineId).toBe('r2')
   })
 
+  // Starting a routine from the home row is a choice made on the way off the
+  // screen, so it records the preference and leaves the fetch to the screen
+  // that opens next.
+  test('remembers a routine without asking for the dashboard', () => {
+    store().preferRoutine('r2')
+
+    expect(store().preferredRoutineId).toBe('r2')
+    expect(getDashboardMock).not.toHaveBeenCalled()
+  })
+
   test('keeps the last dashboard when a load fails', async () => {
     getDashboardMock.mockResolvedValue(response({ nextRoutine: { id: 'r1' } }))
     await store().load()

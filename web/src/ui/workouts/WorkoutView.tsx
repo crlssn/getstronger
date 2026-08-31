@@ -19,14 +19,11 @@ import { AppListRow } from '@/ui/components/AppListRow'
 import { AppPageHeader } from '@/ui/components/AppPageHeader'
 import { AppSkeleton } from '@/ui/components/AppSkeleton'
 import { formatTimestamp } from '@/utils/datetime'
+import { estimatedSessionMinutes } from '@/utils/sessionEstimate'
 import { formatNumber } from '@/utils/numbers'
 import { useInfiniteScroll } from '@/utils/useInfiniteScroll'
 import { workoutSummary } from '@/utils/workoutSummary'
 import styles from './WorkoutView.module.css'
-
-// Matches the estimate on the home screen's up-next card.
-const minutesPerExercise = 8
-const minimumEstimatedMinutes = 30
 
 // Far enough ahead that the next page is usually there by the time the reader
 // reaches the end of this one.
@@ -154,10 +151,7 @@ export const WorkoutView = () => {
           <p>
             {t('home.exerciseCount', { count: nextRoutine.exercises.length })} ·{' '}
             {t('home.aboutMinutes', {
-              count: Math.max(
-                minimumEstimatedMinutes,
-                nextRoutine.exercises.length * minutesPerExercise,
-              ),
+              count: estimatedSessionMinutes(nextRoutine.exercises.length),
             })}
           </p>
           <AppButton type="link" colour="secondary" className="mt-5" to={plannedStart}>

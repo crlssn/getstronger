@@ -1,6 +1,6 @@
 import type { Workout } from '@/proto/api/v1/workout_service_pb'
 
-import { CheckIcon, FireIcon, PlayIcon } from '@heroicons/react/24/outline'
+import { CheckIcon, FireIcon } from '@heroicons/react/24/outline'
 import { DateTime } from 'luxon'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -19,14 +19,10 @@ import { AppSheet } from '@/ui/components/AppSheet'
 import { AppSkeleton } from '@/ui/components/AppSkeleton'
 import { CardWorkout } from '@/ui/features/CardWorkout'
 import { HomePageActions } from '@/ui/features/HomePageActions'
+import { RoutineCarousel } from '@/ui/features/RoutineCarousel'
 import { StreakCard } from '@/ui/features/StreakCard'
 import { useInfiniteScroll } from '@/utils/useInfiniteScroll'
 import styles from './HomeView.module.css'
-
-// Eight minutes an exercise, and never a session that claims to be shorter than
-// getting changed for it.
-const minutesPerExercise = 8
-const minimumEstimatedMinutes = 30
 
 // Far enough ahead that the next page is usually there by the time the reader
 // reaches the end of this one.
@@ -111,14 +107,6 @@ export const HomeView = () => {
     feedPrefetchMargin,
   )
 
-  const nextWorkoutHref = nextRoutine
-    ? `/workouts/routine/${nextRoutine.id}${activePlan ? `?plan_id=${activePlan.id}` : ''}`
-    : '/workout'
-  const estimatedMinutes = Math.max(
-    minimumEstimatedMinutes,
-    (nextRoutine?.exercises.length ?? 0) * minutesPerExercise,
-  )
-
   const selectRoutine = async (routineId: string) => {
     await useDashboardStore.getState().selectRoutine(routineId)
     setRoutinePickerOpen(false)
@@ -150,64 +138,20 @@ export const HomeView = () => {
               <AppSkeleton />
             ) : nextRoutine ? (
               <section className={styles.nextSession}>
-                <div>
-                  <div className={styles.nextLabelRow}>
-                    <p className={styles.eyebrow}>{t('home.upNext')}</p>
-                    {activePlan ? (
-                      <span className={styles.planProgress}>
-                        {activePlan.currentPosition + 1} {t('common.of')}{' '}
-                        {activePlan.routines.length}
-                      </span>
-                    ) : (
-                      <span className={styles.readyStatus}>
-                        <CheckIcon aria-hidden="true" /> {t('home.ready')}
-                      </span>
-                    )}
-                  </div>
-                  <h2>{nextRoutine.name}</h2>
-                  {/* What it is, how much of it, how long: one line, where three
-                      lines spread the card down the screen. */}
-                  <p className={styles.sessionMeta}>
-                    {activePlan && (
-                      <>
-                        <strong>{activePlan.name}</strong>
-                        <span aria-hidden="true">·</span>
-                      </>
-                    )}
-                    {t('home.exerciseCount', { count: nextRoutine.exercises.length })}
-                    <span aria-hidden="true">·</span>
-                    {t('home.aboutMinutes', { count: estimatedMinutes })}
-                  </p>
-                </div>
-                <div className={styles.sessionActions}>
-                  <AppButton
-                    type="link"
-                    colour="secondary"
-                    className={styles.startButton}
-                    to={nextWorkoutHref}
-                  >
-                    <PlayIcon className="size-5" aria-hidden="true" /> {t('home.startWorkout')}
+                <RoutineCarousel
+                  activePlan={activePlan}
+                  nextRoutine={nextRoutine}
+                  routines={dashboard?.routines ?? []}
+                  onShowAll={() => setRoutinePickerOpen(true)}
+                  onSwitch={(routineId) => useDashboardStore.getState().preferRoutine(routineId)}
+                />
+                {/* A plan runs the order, so what the row cannot offer — skip
+                    it, pause it, see the rest of it — lives one tap away. */}
+                {activePlan && (
+                  <AppButton type="link" colour="ghost" size="sm" to="/workout">
+                    {t('home.workoutOptions')}
                   </AppButton>
-                  {activePlan ? (
-                    <AppButton
-                      type="link"
-                      colour="ghost"
-                      className={styles.chooseButton}
-                      to="/workout"
-                    >
-                      {t('home.workoutOptions')}
-                    </AppButton>
-                  ) : (
-                    <AppButton
-                      type="button"
-                      colour="ghost"
-                      className={styles.chooseButton}
-                      onClick={() => setRoutinePickerOpen(true)}
-                    >
-                      {t('home.chooseRoutine')}
-                    </AppButton>
-                  )}
-                </div>
+                )}
               </section>
             ) : dashboardFailed ? (
               // Onboarding copy for a user who already has routines is the

@@ -12,59 +12,10 @@
   @apply block;
 }
 
-.eyebrow {
-  @apply text-eyebrow font-bold uppercase text-text-subtle;
-}
-
+/* The row of routines runs to the screen's edges, so the stack's own gutter
+   is the carousel's to give away. */
 .nextSession {
-  @apply grid gap-5 rounded-sheet bg-surface-inverse p-5 text-white shadow-raised sm:grid-cols-[1fr_auto] sm:items-end sm:p-6;
-}
-
-.nextLabelRow {
-  @apply flex items-center justify-between gap-3;
-}
-
-.nextSession .eyebrow {
-  @apply text-ink-tint;
-}
-
-.planProgress {
-  @apply rounded-pill border border-white/20 bg-white/15 px-3 py-1 text-eyebrow font-bold tracking-normal text-white;
-}
-
-.readyStatus {
-  @apply inline-flex items-center gap-1.5 rounded-pill border border-white/30 bg-white/10 px-3 py-1 text-eyebrow font-bold tracking-normal text-white;
-}
-
-.readyStatus svg {
-  @apply size-3.5;
-}
-
-.nextSession h2 {
-  @apply mt-1 text-display font-extrabold text-white;
-}
-
-.sessionMeta {
-  @apply mt-2 flex flex-wrap items-center gap-2 text-meta font-medium text-white/60;
-}
-
-/* The plan is what the session belongs to, so it leads the line it shares. */
-.sessionMeta strong {
-  @apply font-semibold text-white/90;
-}
-
-.sessionActions {
-  @apply grid gap-1 sm:min-w-48;
-}
-
-/* The session card is ink, so its actions invert: white fill for the primary,
-   white text for the quieter one. */
-.startButton {
-  @apply border-white bg-white text-ink-strong hover:bg-ink-surface;
-}
-
-.chooseButton {
-  @apply text-white hover:bg-white/10 hover:text-white;
+  @apply grid gap-1;
 }
 
 .followingFeed {

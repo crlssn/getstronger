@@ -1,0 +1,52 @@
+@reference '../../assets/base.css';
+
+.carousel {
+  @apply grid;
+}
+
+/* The row runs the full width of the screen while its panels stay on the
+ * page's gutter: negative margins take it out to the edges, matching padding
+ * puts the first panel back where the cards above it start, and the scroll
+ * padding keeps the snap on that same line rather than against the viewport. */
+.track {
+  @apply -mx-3 flex snap-x snap-mandatory scroll-px-3 gap-3 overflow-x-auto px-3 sm:-mx-5 sm:scroll-px-5 sm:px-5 lg:-mx-8 lg:scroll-px-8 lg:px-8;
+  scrollbar-width: none;
+  /* A horizontal drag that runs out of row is the row's, not the page's: the
+     tab underneath must not go back a screen because a swipe overshot. */
+  overscroll-behavior-x: contain;
+}
+
+.track::-webkit-scrollbar {
+  display: none;
+}
+
+/* Short of the full width on purpose — the panel that shows past the edge is
+ * what says the row moves. Capped so a desktop does not stretch one card
+ * across the whole page. */
+.slide {
+  @apply w-[86%] max-w-96 shrink-0 snap-start;
+}
+
+/* Dots are the tap-target floor square with the indicator drawn inside them,
+ * so a 6px dot is still something a thumb can hit — and the row is pulled in
+ * at both ends, because the empty half of that target is not spacing anybody
+ * asked for. */
+.dots {
+  @apply -my-2 flex items-center justify-center;
+}
+
+.dots > button {
+  @apply grid size-11 place-items-center;
+}
+
+.dots > button::before {
+  @apply block size-1.5 rounded-pill bg-border-strong transition-all content-[''];
+}
+
+.dots > button:hover::before {
+  @apply bg-text-subtle;
+}
+
+.dots > .currentDot::before {
+  @apply w-4 bg-ink;
+}

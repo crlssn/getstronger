@@ -1,0 +1,57 @@
+@reference '../../assets/base.css';
+
+.routineRow {
+  @apply grid gap-1;
+}
+
+/* Half the height the up-next card used to be: the whole card is the tap
+ * target, and the row below it gets back what the two stacked buttons took. */
+.card {
+  @apply flex h-full items-center gap-4 rounded-sheet bg-surface-inverse px-5 py-4 text-left text-white shadow-raised transition;
+}
+
+.card:hover {
+  @apply shadow-overlay;
+}
+
+/* The routine waiting behind the one that is up next steps back rather than
+ * competing with it. Ink over the canvas rather than a colour of its own:
+ * these cards are only ever read on the dashboard's paper. */
+.alternative {
+  @apply bg-surface-inverse/85;
+}
+
+.copy {
+  @apply min-w-0 flex-1;
+}
+
+.eyebrow {
+  @apply text-eyebrow font-bold uppercase text-ink-tint;
+}
+
+/* Dimmer than the card it steps back from, but no dimmer than AA allows on a
+   surface that is itself translucent. */
+.alternative .eyebrow {
+  @apply text-white/70;
+}
+
+.card h2 {
+  @apply mt-1 truncate text-title font-extrabold text-white;
+}
+
+.meta {
+  @apply mt-0.5 truncate text-meta font-medium text-white/60;
+}
+
+/* The card starts the workout, so it wears the play the button used to. */
+.play {
+  @apply grid size-14 shrink-0 place-items-center rounded-full bg-white text-ink-strong;
+}
+
+.play svg {
+  @apply size-6;
+}
+
+.alternative .play {
+  @apply border border-white/25 bg-transparent text-white/80;
+}
