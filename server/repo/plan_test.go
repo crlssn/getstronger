@@ -281,6 +281,17 @@ func TestSoftDeleteRoutineLeavesPlansPointingWhereTheyWere(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, chest.ID, plan.CurrentRoutine().ID)
 
+	// A plan holding none of the retired routines, to show the delete reaches
+	// only the rotations the routine was actually in.
+	press := f.NewRoutine(factory.RoutineUserID(user.ID), factory.RoutineName("Press"))
+	squat := f.NewRoutine(factory.RoutineUserID(user.ID), factory.RoutineName("Squat"))
+	untouched, err := r.CreatePlan(ctx, repo.CreatePlanParams{
+		UserID:     user.ID.String(),
+		Name:       "Other Rotation",
+		RoutineIDs: []string{press.ID.String(), squat.ID.String()},
+	})
+	require.NoError(t, err)
+
 	require.NoError(t, r.SoftDeleteRoutine(ctx, lower.ID.String()))
 	plan, err = r.GetPlan(ctx, plan.ID, user.ID.String())
 	require.NoError(t, err)
@@ -302,6 +313,12 @@ func TestSoftDeleteRoutineLeavesPlansPointingWhereTheyWere(t *testing.T) {
 	require.Zero(t, plan.CurrentPosition)
 	require.False(t, plan.Active, "a plan with nothing to train cannot say what is next")
 
+	untouched, err = r.GetPlan(ctx, untouched.ID, user.ID.String())
+	require.NoError(t, err)
+	require.Equal(t, []string{press.ID.String(), squat.ID.String()}, planRoutineIDs(untouched),
+		"a plan none of the retired routines were in keeps its rotation")
+	require.Zero(t, untouched.CurrentPosition)
+
 	// The routines are retired rather than erased, so the workouts that trained
 	// them still point at a row.
 	_, err = r.GetRoutine(ctx, repo.GetRoutineWithID(lower.ID.String()))
@@ -309,4 +326,7 @@ func TestSoftDeleteRoutineLeavesPlansPointingWhereTheyWere(t *testing.T) {
 	require.NoError(t, testContainer.DB.QueryRowContext(ctx,
 		`SELECT 1 FROM public.routines WHERE id = $1 AND deleted_at IS NOT NULL`,
 		lower.ID.String()).Scan(new(int)))
+
+	// A routine already retired is not there to retire again.
+	require.ErrorIs(t, r.SoftDeleteRoutine(ctx, lower.ID.String()), sql.ErrNoRows)
 }
