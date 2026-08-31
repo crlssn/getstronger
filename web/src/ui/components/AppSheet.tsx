@@ -63,6 +63,41 @@ export const AppSheet = ({
 }: Props) => {
   const titleId = useId()
   const panel = useRef<HTMLElement>(null)
+  const backdrop = useRef<HTMLDivElement>(null)
+
+  // Callers close a sheet by unmounting it, so the slide-down cannot play
+  // inside React: by the time this cleanup runs, the backdrop is already out
+  // of the document. It stages the exit itself — puts the detached element
+  // back, inert and hidden from assistive tech, and removes it for good when
+  // its fade ends. React is finished with the element by then, and under
+  // StrictMode's rehearsal the element is still connected, so nothing stages.
+  useEffect(() => {
+    const el = backdrop.current
+    return () => {
+      if (!el || el.isConnected) return
+      // jsdom leaves animations out entirely; a reader who asked for less
+      // movement gets none (the stylesheet also stills the keyframes).
+      if (!('getAnimations' in el)) return
+      if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return
+
+      el.classList.add(styles.closing)
+      el.setAttribute('aria-hidden', 'true')
+      el.setAttribute('inert', '')
+      document.body.append(el)
+
+      const remove = () => el.remove()
+      // Nothing here outlives the exit: the listener and timer hold the only
+      // references to an element no longer React's, and `remove()` ends both.
+      // eslint-disable-next-line @eslint-react/web-api-no-leaked-event-listener
+      el.addEventListener('animationend', (event) => {
+        if (event.target === el) remove()
+      })
+      // In case the fade never ends — a stylesheet that failed to load, an
+      // animation cancelled mid-flight.
+      // eslint-disable-next-line @eslint-react/web-api-no-leaked-timeout
+      setTimeout(remove, 400)
+    }
+  }, [])
 
   // `aria-modal` hides the page behind the sheet from a screen reader, so the
   // sheet has to hold the keyboard too: focus starts on the panel, Tab cannot
@@ -125,6 +160,7 @@ export const AppSheet = ({
     // that took focus of its own would put a tab stop in front of the panel.
     // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
     <div
+      ref={backdrop}
       className={styles.sheetBackdrop}
       onClick={(event) => {
         // Only the backdrop itself dismisses; a click inside the panel bubbles

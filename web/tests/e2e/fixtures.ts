@@ -6,7 +6,19 @@ import { seedEmail, seedPassword } from './seed'
 
 const repositoryRoot = fileURLToPath(new URL('../../../', import.meta.url))
 
-export const test = base.extend<{ runtimeErrors: string[] }>({
+export const test = base.extend<{ runtimeErrors: string[]; stillness: void }>({
+  // The suite asks every page for less movement, which the app honours down to
+  // the sheets: a closing sheet otherwise lingers through its slide-down, and a
+  // getByText that catches that beat sees the same words twice. Emulated per
+  // page because the `reducedMotion` context option stops short of the page in
+  // this Playwright.
+  stillness: [
+    async ({ page }, use) => {
+      await page.emulateMedia({ reducedMotion: 'reduce' })
+      await use()
+    },
+    { auto: true },
+  ],
   runtimeErrors: [
     async ({ page }, use) => {
       const errors: string[] = []
