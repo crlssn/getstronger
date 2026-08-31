@@ -1,8 +1,9 @@
 import type { User } from '@/proto/api/v1/shared_pb'
 
-import { BellIcon, PencilSquareIcon } from '@heroicons/react/24/outline'
+import { BellIcon, ChevronRightIcon } from '@heroicons/react/24/outline'
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { Link } from 'react-router-dom'
 
 import { getCurrentUser, updateUserAutofillSets } from '@/http/requests'
 import { localeNames } from '@/i18n'
@@ -12,7 +13,6 @@ import { selectLocale, useLocaleStore } from '@/stores/locale'
 import { useNotificationStore } from '@/stores/notifications'
 import { usePreferencesStore } from '@/stores/preferences'
 import { themeLabelKey } from '@/theme'
-import { AppButton } from '@/ui/components/AppButton'
 import { AppErrorState } from '@/ui/components/AppErrorState'
 import { AppIconButton } from '@/ui/components/AppIconButton'
 import { AppListRow } from '@/ui/components/AppListRow'
@@ -87,73 +87,78 @@ export const ProfileView = () => {
   // swapping in under a tab that no longer has a user to ask about.
   if (!user) return <AppSkeleton />
 
+  // The handle and the action on one line, where the email address used to
+  // have a line of its own: it can only be read and changed on the account
+  // screen, so the card spent a line repeating something nobody could act on.
+  // handle() answers an unloaded username with an empty string, which would
+  // otherwise open the line with a separator standing on its own.
+  const identityLine = [handle(user.username), t('profile.editProfile')].filter(Boolean).join(' · ')
+
   return (
     <div className={styles.profileStack}>
       {/* A tab root opens with its own large title. This one used to open
           straight onto a card, which left it the only tab without one. */}
-      <AppPageHeader title={t('profile.heading')} />
+      <AppPageHeader
+        title={t('profile.heading')}
+        // Beside the title, where the home tab keeps its search: the bell is
+        // the tab's one action rather than something the profile card owns,
+        // and inside the card it floated against the middle of three lines
+        // with nothing to align to.
+        action={
+          <span className={styles.notificationSlot}>
+            <AppIconButton
+              icon={BellIcon}
+              label={
+                unreadCount > 0
+                  ? t('profile.notificationsUnread', { count: unreadCount })
+                  : t('profile.notifications')
+              }
+              to="/notifications"
+              tone="raised"
+            />
+            {unreadCount > 0 && (
+              <span className={styles.notificationBadge} aria-hidden="true">
+                {unreadCount > maxBadgeCount ? `${maxBadgeCount}+` : unreadCount}
+              </span>
+            )}
+          </span>
+        }
+      />
 
+      {/* Who you are and how the week went, in one card: two cards said one
+          thing between them, and the seam cost a block of page to a rule. */}
       <section className={styles.profileCard}>
-        <div className={styles.avatar}>{initials(user.name)}</div>
-        <div className="min-w-0">
-          {/* One action for the card rather than a pencil per field: two of
-              them sat under the tap-target floor, and the one pinned after the
-              name squeezed the heading into a column narrow enough to truncate
-              it while the card had 90px going spare. */}
-          <h2>{user.name}</h2>
-          <p className={styles.usernameLine}>{handle(user.username)}</p>
-          <p className={styles.email}>{user.email}</p>
-          <AppButton
-            type="link"
-            to="/settings/account"
-            colour="ghost"
-            size="sm"
-            width="auto"
-            className={styles.editProfile}
-          >
-            <PencilSquareIcon className="size-4" aria-hidden="true" /> {t('profile.editProfile')}
-          </AppButton>
-        </div>
-        {/* The same square the search and the overflow menu are. It was the
-            one control in the app with no container at all — a bare glyph with
-            a red disc on it — and the count it carries belongs in its name,
-            not only in the colour. */}
-        <span className={styles.notificationSlot}>
-          <AppIconButton
-            icon={BellIcon}
-            label={
-              unreadCount > 0
-                ? t('profile.notificationsUnread', { count: unreadCount })
-                : t('profile.notifications')
-            }
-            to="/notifications"
-            tone="raised"
-          />
-          {unreadCount > 0 && (
-            <span className={styles.notificationBadge} aria-hidden="true">
-              {unreadCount > maxBadgeCount ? `${maxBadgeCount}+` : unreadCount}
-            </span>
-          )}
-        </span>
-      </section>
+        {/* The whole row goes to the account screen, rather than a pencil
+            under the name with 300px of dead card beside it. The row is drawn
+            here rather than with <AppListRow> because the name is the card's
+            heading and that component's title is a <strong> in an <li>. */}
+        <Link className={styles.identityRow} to="/settings/account">
+          <div className={styles.avatar}>{initials(user.name)}</div>
+          <div className={styles.identity}>
+            <h2>{user.name}</h2>
+            <p>{identityLine}</p>
+          </div>
+          <ChevronRightIcon className={styles.chevron} aria-hidden="true" />
+        </Link>
 
-      <section className={styles.statsStrip} aria-label={t('profile.trainingSummary')}>
-        <article>
-          {/* The lifetime total, not recentWorkouts.length — that list is a
-              three-workout preview. */}
-          <strong>{formatNumber(dashboard?.workoutCount ?? 0)}</strong>
-          <small>{t('profile.workouts')}</small>
-        </article>
-        <article>
-          <strong>{formatNumber(dashboard?.personalBests.length ?? 0)}</strong>
-          <small>{t('profile.records')}</small>
-        </article>
-        <article>
-          <strong>
-            {formatNumber(dashboard?.volumeThisWeek ?? 0)} {t('common.kg')}
-          </strong>
-          <small>{t('profile.thisWeek')}</small>
-        </article>
+        <section className={styles.statsStrip} aria-label={t('profile.trainingSummary')}>
+          <article>
+            {/* The lifetime total, not recentWorkouts.length — that list is a
+                three-workout preview. */}
+            <strong>{formatNumber(dashboard?.workoutCount ?? 0)}</strong>
+            <small>{t('profile.workouts')}</small>
+          </article>
+          <article>
+            <strong>{formatNumber(dashboard?.personalBests.length ?? 0)}</strong>
+            <small>{t('profile.records')}</small>
+          </article>
+          <article>
+            <strong>
+              {formatNumber(dashboard?.volumeThisWeek ?? 0)} {t('common.kg')}
+            </strong>
+            <small>{t('profile.thisWeek')}</small>
+          </article>
+        </section>
       </section>
 
       <ul className={styles.settingsList}>

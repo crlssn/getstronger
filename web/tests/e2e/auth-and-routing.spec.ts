@@ -201,7 +201,7 @@ test.describe('guest authentication and routing', () => {
 
     // And it is the first account, not a second one the twin signup opened.
     await page.goto('/profile')
-    await expect(page.getByText(`@${username}`, { exact: true })).toBeVisible()
+    await expect(page.getByText(`@${username} · Edit profile`, { exact: true })).toBeVisible()
   })
 
   test('accepts password reset requests without exposing account existence', async ({ page }) => {

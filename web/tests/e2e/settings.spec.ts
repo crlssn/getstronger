@@ -118,8 +118,12 @@ test.describe('settings', () => {
     await page.goto('/profile')
     await expect(page.getByRole('heading', { name: 'Alex Morgan' })).toBeVisible()
 
-    // The card's own action is one way in; the settings row is the other.
-    await page.getByRole('link', { name: /Edit profile/ }).click()
+    // The identity row is one way in; the settings row is the other. The whole
+    // row goes, name and handle included, rather than a pencil under it.
+    const identity = page.getByRole('link', { name: /Edit profile/ })
+    await expect(identity).toHaveAccessibleName(/Alex Morgan/)
+    await expect(identity).toHaveAccessibleName(/@alex/)
+    await identity.click()
     await expect(page).toHaveURL(/\/settings\/account$/)
 
     // Nothing typed yet, so there is nothing to save.
@@ -157,7 +161,7 @@ test.describe('settings', () => {
     await expect(page.getByRole('status')).toContainText('Profile updated')
 
     await page.goto('/profile')
-    await expect(page.getByText('@alex.morgan', { exact: true })).toBeVisible()
+    await expect(page.getByText('@alex.morgan · Edit profile', { exact: true })).toBeVisible()
   })
 
   // One form holds both fields, so one save can change both — and each lands
@@ -172,7 +176,7 @@ test.describe('settings', () => {
 
     await page.goto('/profile')
     await expect(page.getByRole('heading', { name: 'Alexandra Morgan' })).toBeVisible()
-    await expect(page.getByText('@alexandra', { exact: true })).toBeVisible()
+    await expect(page.getByText('@alexandra · Edit profile', { exact: true })).toBeVisible()
   })
 
   // A settings row has no save button, so a refused change has to put the
