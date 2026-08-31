@@ -75,6 +75,58 @@ VALUES ($1, $2, $3)`, planID, routineID, position); err != nil {
 	return nil
 }
 
+// dropRoutineFromPlans takes routine out of every plan that trains it, letting
+// training.Plan say where each rotation now points. plan_routines.position is
+// rewritten rather than left with a gap because plans.current_position indexes
+// the dense slice loadPlanRoutines builds.
+func (r *Repo) dropRoutineFromPlans(ctx context.Context, routine *models.Routine) error {
+	rows, err := r.sqlExec().QueryContext(ctx,
+		`SELECT plan_id FROM public.plan_routines WHERE routine_id = $1`, routine.ID)
+	if err != nil {
+		return fmt.Errorf("plans holding routine query: %w", err)
+	}
+	defer rows.Close()
+
+	var planIDs []string
+	for rows.Next() {
+		var planID string
+		if err = rows.Scan(&planID); err != nil {
+			return fmt.Errorf("plan holding routine scan: %w", err)
+		}
+		planIDs = append(planIDs, planID)
+	}
+	if err = rows.Err(); err != nil {
+		return fmt.Errorf("plans holding routine iterate: %w", err)
+	}
+	if err = rows.Close(); err != nil {
+		return fmt.Errorf("plans holding routine close: %w", err)
+	}
+
+	// A plan may only hold routines its own athlete owns, so the routine's
+	// owner is every one of these plans' owner too.
+	userID := routine.UserID.String()
+	for _, planID := range planIDs {
+		plan, planErr := r.GetPlan(ctx, planID, userID)
+		if planErr != nil {
+			return fmt.Errorf("plan get before routine removal: %w", planErr)
+		}
+
+		rotation := plan.RotationWithout(routine.ID.String())
+		if _, planErr = r.exec().ExecContext(ctx, `
+UPDATE public.plans
+SET current_position = $1, active = $2, updated_at = (NOW() AT TIME ZONE 'UTC')
+WHERE id = $3 AND user_id = $4`, rotation.CurrentPosition, rotation.Active, planID, userID); planErr != nil {
+			return fmt.Errorf("plan rotation update: %w", planErr)
+		}
+
+		if planErr = r.replacePlanRoutines(ctx, planID, rotation.RoutineIDs); planErr != nil {
+			return planErr
+		}
+	}
+
+	return nil
+}
+
 func (r *Repo) CreatePlan(ctx context.Context, p CreatePlanParams) (*training.Plan, error) {
 	var planID string
 	if err := r.NewTx(ctx, func(tx *Repo) error {

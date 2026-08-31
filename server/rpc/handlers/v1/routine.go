@@ -237,8 +237,8 @@ func (h *routineLibrary) DeleteRoutine(ctx context.Context, req *connect.Request
 		return nil, connect.NewError(connect.CodePermissionDenied, nil)
 	}
 
-	if err = h.repo.DeleteRoutine(ctx, req.Msg.GetId()); err != nil {
-		log.Error("Delete routine", zap.Error(err))
+	if err = h.repo.SoftDeleteRoutine(ctx, req.Msg.GetId()); err != nil {
+		log.Error("Soft delete routine", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
