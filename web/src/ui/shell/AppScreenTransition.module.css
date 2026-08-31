@@ -1,0 +1,20 @@
+@reference '../../assets/base.css';
+
+/* Opacity only. Screens pin real elements to the viewport — the form footer,
+   the sheet — and a transform here would become their containing block for as
+   long as it animates, yanking them into the page mid-fade. */
+.screen {
+  animation: screen-in 150ms ease-out;
+}
+
+@keyframes screen-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .screen {
+    animation: none;
+  }
+}

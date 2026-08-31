@@ -1,7 +1,8 @@
 // @vitest-environment jsdom
 
 import { screen } from '@testing-library/react'
-import { Route, Routes } from 'react-router-dom'
+import userEvent from '@testing-library/user-event'
+import { Link, Route, Routes } from 'react-router-dom'
 import { describe, expect, test } from 'vitest'
 
 import { brandName, brandSlogan } from '@/brand'
@@ -42,5 +43,23 @@ describe('GuestView', () => {
 
     expect(screen.queryByRole('img')).not.toBeInTheDocument()
     expect(document.querySelector('img')).toHaveAttribute('alt', '')
+  })
+
+  // Landing on a new path remounts the screen, which is what replays its
+  // entrance transition; the brand header above it holds still.
+  test('replays the screen transition on navigation', async () => {
+    renderWithProviders(
+      <Routes>
+        <Route element={<GuestView />}>
+          <Route path="*" element={<Link to="/signup">The form</Link>} />
+        </Route>
+      </Routes>,
+      { route: '/login' },
+    )
+    const before = screen.getByText('The form')
+
+    await userEvent.click(before)
+
+    expect(screen.getByText('The form')).not.toBe(before)
   })
 })

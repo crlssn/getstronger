@@ -6,6 +6,7 @@ import { cn } from '@/ui/cn'
 import { AppNavBottom } from '@/ui/shell/AppNavBottom'
 import { AppNavTop } from '@/ui/shell/AppNavTop'
 import { AppRestTimerBanner } from '@/ui/shell/AppRestTimerBanner'
+import { AppScreenTransition } from '@/ui/shell/AppScreenTransition'
 import styles from './AppDashboard.module.css'
 
 /**
@@ -39,7 +40,9 @@ export const AppDashboard = () => {
       <AppRestTimerBanner />
       <main className={styles.main}>
         {showsTopNavigation && <AppNavTop />}
-        <Outlet />
+        <AppScreenTransition transitionKey={pathname}>
+          <Outlet />
+        </AppScreenTransition>
       </main>
       {!tabBarHidden && <AppNavBottom />}
     </div>

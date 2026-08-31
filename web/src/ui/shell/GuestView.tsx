@@ -1,12 +1,14 @@
 import { useTranslation } from 'react-i18next'
-import { Link, Outlet } from 'react-router-dom'
+import { Link, Outlet, useLocation } from 'react-router-dom'
 
 import { brandName, brandNameParts, brandSlogan } from '@/brand'
+import { AppScreenTransition } from '@/ui/shell/AppScreenTransition'
 import styles from './GuestView.module.css'
 
 /** The shell a signed-out visitor sees: the brand, and one narrow column. */
 export const GuestView = () => {
   const { t } = useTranslation()
+  const { pathname } = useLocation()
 
   return (
     <div className={styles.guestShell}>
@@ -30,7 +32,9 @@ export const GuestView = () => {
       </header>
 
       <main className={styles.guestMain}>
-        <Outlet />
+        <AppScreenTransition transitionKey={pathname}>
+          <Outlet />
+        </AppScreenTransition>
       </main>
     </div>
   )
