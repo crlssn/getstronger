@@ -145,8 +145,8 @@ test.describe('guest authentication and routing', () => {
     await page.getByRole('button', { name: 'Log in' }).click()
     await expect(page).toHaveURL(/\/home$/)
 
-    // A new account is metric until the profile says otherwise.
-    await page.goto('/profile')
+    // A new account is metric until the settings say otherwise.
+    await page.goto('/settings/units')
     await expect(
       page
         .getByRole('group', { name: 'Preferred weight unit' })

@@ -18,6 +18,7 @@ const authenticatedPages = [
   { path: '/exercises', ready: 'Exercises' },
   { path: '/profile', ready: 'Alex Morgan' },
   { path: '/progress', ready: 'Progress' },
+  { path: '/settings/units', ready: 'Units' },
 ] as const
 
 const waitForPageData = async (page: Page, path: string) => {

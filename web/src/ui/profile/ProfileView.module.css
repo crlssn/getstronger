@@ -64,6 +64,12 @@
   @apply card divide-y divide-border overflow-hidden;
 }
 
+/* The same card, holding rows the system draws — <AppListRow> for a setting
+   that opens a screen, <AppPreferenceRow> for one changed where it stands. */
+.settingsList {
+  @apply card divide-y divide-border overflow-hidden;
+}
+
 .settingsCard > a,
 .settingsCard > button {
   @apply grid w-full grid-cols-[1fr_auto] items-center gap-3 p-4 transition hover:bg-ink-surface hover:text-ink-strong;
@@ -87,40 +93,6 @@
    list names its buckets. */
 .settingsGroup > h2 {
   @apply mb-2 px-1 text-eyebrow font-bold uppercase text-text-subtle;
-}
-
-/* One card of preference rows, each control inline with its copy. The compact
-   segmented fits beside the label; the old full-width one forced every row to
-   stack. */
-.preferencesCard {
-  @apply card divide-y divide-border overflow-hidden;
-}
-
-.preferenceRow {
-  @apply flex items-center justify-between gap-4 p-4;
-}
-
-/* The control keeps its width whole — a compact segmented that gets squeezed
-   scrolls, and a scrolled "kg | lb…" reads as clipped. The copy is what gives. */
-.preferenceRow > :last-child {
-  @apply shrink-0;
-}
-
-.preferenceCopy {
-  @apply min-w-0;
-}
-
-.preferenceCopy strong,
-.preferenceCopy small {
-  @apply block;
-}
-
-.preferenceCopy strong {
-  @apply text-base font-semibold text-text;
-}
-
-.preferenceCopy small {
-  @apply mt-0.5 text-sm text-text-subtle;
 }
 
 /* The delete block: consequence beside its button, the outlined red pill kept

@@ -41,8 +41,8 @@ test.describe('in Swedish', () => {
       await expect(page.getByRole('heading', { name: heading }).first()).toBeVisible()
     }
 
-    // Profile: unit preference labels.
-    await page.goto('/profile')
+    // Settings: unit preference labels.
+    await page.goto('/settings/units')
     await expect(page.getByText('Föredragen viktenhet').first()).toBeVisible()
 
     // Notifications: the page title was hard-coded in the router and the feed
@@ -66,6 +66,6 @@ test('renders the same surface in English', async ({ page }) => {
     await expect(page.getByRole('heading', { name: heading }).first()).toBeVisible()
   }
 
-  await page.goto('/profile')
+  await page.goto('/settings/units')
   await expect(page.getByText('Preferred weight unit').first()).toBeVisible()
 })

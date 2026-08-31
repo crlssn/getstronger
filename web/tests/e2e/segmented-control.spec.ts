@@ -48,7 +48,7 @@ const clipped = async (options: Locator) =>
 // and Starta träningspass need somewhere to go. An equal-column grid gave the
 // old weight-unit picker 69px for "Kilograms" and it clipped its own container.
 const pages = [
-  { heading: /Föredragen viktenhet/, nav: /Träning|Training/, path: '/profile' },
+  { heading: /Föredragen viktenhet/, nav: /Träning|Training/, path: '/settings/units' },
   { heading: /Framsteg|Progress/, nav: /Träning|Training/, path: '/progress' },
   { heading: /Träning|Training/, nav: /Träning|Training/, path: '/routines' },
   // The two the audit caught: four presets whose longest label is Distans ×
@@ -94,7 +94,7 @@ test.describe('the public profile in Swedish', () => {
 
 test('keeps every segmented option above the tap-target floor', async ({ page }) => {
   await logIn(page)
-  await page.goto('/profile')
+  await page.goto('/settings/units')
 
   const options = page.getByRole('group').getByRole('button')
   await expect(options.first()).toBeVisible()

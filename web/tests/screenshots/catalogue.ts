@@ -84,6 +84,11 @@ export const authenticatedPages: PageEntry[] = [
   { component: 'src/ui/ProgressView.tsx', name: 'progress', route: () => '/progress' },
   { component: 'src/ui/profile/ProfileView.tsx', name: 'profile', route: () => '/profile' },
   {
+    component: 'src/ui/profile/UnitSettings.tsx',
+    name: 'settings-units',
+    route: () => '/settings/units',
+  },
+  {
     component: 'src/ui/users/UserWorkouts.tsx',
     name: 'user-workouts',
     route: ({ userId }) => userId && `/users/${userId}`,

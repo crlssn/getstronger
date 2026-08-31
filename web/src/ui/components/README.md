@@ -40,6 +40,7 @@ aspirational.
 | Rows of things                  | `<AppList>` + `<AppListItem>` / `<AppListItemLink>` |
 | A row with a value and a way on | `<AppListRow>`                                      |
 | A row that is one tap           | `<AppOptionRow>`                                    |
+| A setting changed where it is   | `<AppPreferenceRow>`                                |
 | Nothing to show yet             | `<AppEmptyState>`                                   |
 | One section of it empty         | `<AppEmptyInline>`                                  |
 | A fetch that failed             | `<AppErrorState>`                                   |
@@ -257,6 +258,17 @@ A whole row that is one tap: an optional `leading` tile, the copy, an optional
 `trailing` icon. Pass `selected` only for a row that toggles — a row that picks
 and closes has no pressed state, and `aria-pressed="false"` on one says the
 wrong thing. `flat` drops the border for a row inside an already-divided list.
+
+### `<AppPreferenceRow>`
+
+A preference and the control that changes it, on one row: the copy on the
+left, a switch or a compact segmented on the right. It draws the same row
+shape `<AppListRow>` does, so one card holds both kinds of setting — the ones
+that open a screen and the ones that are changed where they stand.
+
+`error` is why the last change did not save. A setting applies the moment it is
+tapped, so a refused one has nowhere to surface but the row it was made on: the
+control reverts and the line appears under the copy, still beside it.
 
 ### `<AppValueChip>`
 

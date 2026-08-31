@@ -618,7 +618,6 @@ export const en = {
     privacyPolicy: 'Privacy policy',
     privacyPolicyBody: 'What we store, and why',
     dangerZone: 'Danger zone',
-    preferencesSection: 'Preferences',
     accountSection: 'Account',
     logoutBody: 'Sign out on this device',
     deleteAccount: 'Delete account',
@@ -632,6 +631,12 @@ export const en = {
     deleteAccountWrongPassword: 'That password is not correct.',
     deleteAccountFailed: 'Could not delete your account. Please try again.',
     accountDeleted: 'Your account has been deleted.',
+  },
+  settings: {
+    section: 'Settings',
+    units: 'Units',
+    unitsIntro:
+      'Weights and distances are written in these units everywhere you are signed in to this account.',
   },
   streak: {
     startTitle: 'Start your streak',
@@ -732,6 +737,7 @@ export const en = {
     verifyEmail: 'Verify your email',
     resetPassword: 'Reset password',
     chooseNewPassword: 'Choose a new password',
+    units: 'Units',
     privacy: 'Privacy policy',
     notFound: 'Not found',
   },
@@ -1359,7 +1365,6 @@ export const sv = {
     privacyPolicy: 'Integritetspolicy',
     privacyPolicyBody: 'Vad vi lagrar, och varför',
     dangerZone: 'Riskzon',
-    preferencesSection: 'Inställningar',
     accountSection: 'Konto',
     logoutBody: 'Logga ut på den här enheten',
     deleteAccount: 'Ta bort konto',
@@ -1373,6 +1378,12 @@ export const sv = {
     deleteAccountWrongPassword: 'Lösenordet stämmer inte.',
     deleteAccountFailed: 'Det gick inte att ta bort ditt konto. Försök igen.',
     accountDeleted: 'Ditt konto har tagits bort.',
+  },
+  settings: {
+    section: 'Inställningar',
+    units: 'Enheter',
+    unitsIntro:
+      'Vikter och distanser skrivs i de här enheterna överallt där du är inloggad på det här kontot.',
   },
   streak: {
     startTitle: 'Starta din streak',
@@ -1472,6 +1483,7 @@ export const sv = {
     verifyEmail: 'Verifiera din e-postadress',
     resetPassword: 'Återställ lösenord',
     chooseNewPassword: 'Välj ett nytt lösenord',
+    units: 'Enheter',
     privacy: 'Integritetspolicy',
     notFound: 'Sidan hittades inte',
   },

@@ -8,8 +8,6 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
 vi.mock('@/http/requests', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/http/requests')>()),
   getCurrentUser: vi.fn(),
-  updateUserWeightUnit: vi.fn(),
-  updateUserDistanceUnit: vi.fn(),
   updateUserAutofillSets: vi.fn(),
   updateUserUsername: vi.fn(),
   updateUserName: vi.fn(),
@@ -26,9 +24,7 @@ import {
   GetUserResponseSchema,
   UpdateUserAutofillSetsResponseSchema,
   UpdateUserNameResponseSchema,
-  UpdateUserDistanceUnitResponseSchema,
   UpdateUserUsernameResponseSchema,
-  UpdateUserWeightUnitResponseSchema,
 } from '@/proto/api/v1/user_service_pb'
 import { useToastStore } from '@/stores/toasts'
 import { useAuthStore } from '@/stores/auth'
@@ -40,8 +36,6 @@ import { ProfileView } from './ProfileView'
 
 const mocked = {
   getCurrentUser: vi.mocked(requests.getCurrentUser),
-  updateUserWeightUnit: vi.mocked(requests.updateUserWeightUnit),
-  updateUserDistanceUnit: vi.mocked(requests.updateUserDistanceUnit),
   updateUserAutofillSets: vi.mocked(requests.updateUserAutofillSets),
   updateUserUsername: vi.mocked(requests.updateUserUsername),
   updateUserName: vi.mocked(requests.updateUserName),
@@ -50,15 +44,23 @@ const mocked = {
 
 const me = 'user-me'
 
-const profile = (fields: { username?: string; name?: string; autofillSets?: boolean } = {}) =>
+const profile = (
+  fields: {
+    username?: string
+    name?: string
+    autofillSets?: boolean
+    weightUnit?: WeightUnit
+    distanceUnit?: DistanceUnit
+  } = {},
+) =>
   create(GetUserResponseSchema, {
     user: {
       id: me,
       name: fields.name ?? 'Alex Morgan',
       username: fields.username ?? 'alex',
       email: 'alex@example.com',
-      weightUnit: WeightUnit.KILOGRAMS,
-      distanceUnit: DistanceUnit.KILOMETERS,
+      weightUnit: fields.weightUnit ?? WeightUnit.KILOGRAMS,
+      distanceUnit: fields.distanceUnit ?? DistanceUnit.KILOMETERS,
       autofillSets: fields.autofillSets ?? false,
     },
   })
@@ -67,8 +69,6 @@ const updated = () => ({ user: profile().user })
 
 const render = () => renderWithProviders(<ProfileView />, { route: '/profile' })
 
-const group = (label: string) => within(screen.getByRole('group', { name: label }))
-
 /** The screen fetches before it renders anything, so specs wait for it. */
 const loaded = () => screen.findByRole('heading', { name: 'Alex Morgan' })
 
@@ -76,12 +76,6 @@ describe('ProfileView', () => {
   beforeEach(() => {
     Object.values(mocked).forEach((mock) => mock.mockReset())
     mocked.getCurrentUser.mockResolvedValue(profile())
-    mocked.updateUserWeightUnit.mockResolvedValue(
-      create(UpdateUserWeightUnitResponseSchema, updated()),
-    )
-    mocked.updateUserDistanceUnit.mockResolvedValue(
-      create(UpdateUserDistanceUnitResponseSchema, updated()),
-    )
     mocked.updateUserAutofillSets.mockResolvedValue(
       create(UpdateUserAutofillSetsResponseSchema, updated()),
     )
@@ -193,51 +187,19 @@ describe('ProfileView', () => {
     })
   })
 
-  describe.each([
-    ['Preferred weight unit', 'lbs', () => mocked.updateUserWeightUnit, WeightUnit.POUNDS],
-    ['Preferred distance unit', 'mi', () => mocked.updateUserDistanceUnit, DistanceUnit.MILES],
-  ] as const)('%s', (label, option, request, expected) => {
-    test('is applied straight away and then saved', async () => {
-      render()
+  // The value nobody has to open anything to read is the one they came to
+  // check, so the row that opens a setting says what it is set to.
+  test('opens each setting from a row that says what it is set to', async () => {
+    mocked.getCurrentUser.mockResolvedValue(
+      profile({ weightUnit: WeightUnit.POUNDS, distanceUnit: DistanceUnit.MILES }),
+    )
+    render()
 
-      await loaded()
-      await userEvent.click(group(label).getByRole('button', { name: option }))
-
-      expect(group(label).getByRole('button', { name: option })).toHaveAttribute(
-        'aria-pressed',
-        'true',
-      )
-      await waitFor(() => expect(request()).toHaveBeenCalledWith(expected))
-      expect(useToastStore.getState().toast).not.toBeNull()
-    })
-
-    // A failure reverts the control and the row says why inline, or the
-    // control appears to snap back on its own.
-    test('reverts and says why when the request fails', async () => {
-      request().mockResolvedValue(undefined)
-      render()
-
-      await loaded()
-      await userEvent.click(group(label).getByRole('button', { name: option }))
-
-      await waitFor(() =>
-        expect(group(label).getByRole('button', { name: option })).toHaveAttribute(
-          'aria-pressed',
-          'false',
-        ),
-      )
-      expect(screen.getByRole('alert')).toHaveTextContent('Could not update')
-      expect(useToastStore.getState().toast).toBeNull()
-    })
-
-    test('does nothing when the current option is picked again', async () => {
-      render()
-
-      await loaded()
-      await userEvent.click(group(label).getAllByRole('button')[0]!)
-
-      expect(request()).not.toHaveBeenCalled()
-    })
+    await loaded()
+    const settings = within(await screen.findByRole('region', { name: 'Settings' }))
+    const units = settings.getByRole('link', { name: /Units/ })
+    expect(units).toHaveAttribute('href', '/settings/units')
+    expect(units).toHaveTextContent('lbs · mi')
   })
 
   // A boolean is a switch, not an Off/On segmented control.

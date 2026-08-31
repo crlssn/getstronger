@@ -389,8 +389,8 @@ test.describe('weight units', () => {
     await expect(page).toHaveURL(/\/workouts\/[0-9a-f-]+$/)
     await expect(page.getByText(/60\s*kg/)).toBeVisible()
 
-    // Switch the preference from profile settings.
-    await page.goto('/profile')
+    // Switch the preference from the units settings screen.
+    await page.goto('/settings/units')
     const unit = page.getByRole('group', { name: 'Preferred weight unit' })
     await expect(unit.getByRole('button', { name: 'kg', exact: true })).toHaveAttribute(
       'aria-pressed',

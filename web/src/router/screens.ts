@@ -19,6 +19,9 @@ export const screens: Partial<Record<string, ScreenLoader>> = {
   }),
   progress: async () => ({ Component: (await import('@/ui/ProgressView')).ProgressView }),
   profile: async () => ({ Component: (await import('@/ui/profile/ProfileView')).ProfileView }),
+  'settings-units': async () => ({
+    Component: (await import('@/ui/profile/UnitSettings')).UnitSettings,
+  }),
 
   'user-view': async () => ({ Component: (await import('@/ui/users/UserView')).UserView }),
   'user-workouts': async () => ({

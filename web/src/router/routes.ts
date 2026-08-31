@@ -49,6 +49,12 @@ export const routes: AppRoute[] = [
   { name: 'progress', path: '/progress', access: 'auth', titleKey: 'pages.progress' },
   { name: 'profile', path: '/profile', access: 'auth', titleKey: 'pages.profile' },
   {
+    name: 'settings-units',
+    path: '/settings/units',
+    access: 'auth',
+    titleKey: 'pages.units',
+  },
+  {
     name: 'user-view',
     path: '/users/:id',
     access: 'auth',

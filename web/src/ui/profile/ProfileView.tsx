@@ -1,5 +1,4 @@
 import type { User } from '@/proto/api/v1/shared_pb'
-import type { ReactNode } from 'react'
 
 import { BellIcon, ChevronRightIcon, PencilSquareIcon } from '@heroicons/react/24/outline'
 import { Code, ConnectError } from '@connectrpc/connect'
@@ -12,12 +11,9 @@ import {
   deleteAccount,
   getCurrentUser,
   updateUserAutofillSets,
-  updateUserDistanceUnit,
   updateUserName,
   updateUserUsername,
-  updateUserWeightUnit,
 } from '@/http/requests'
-import { DistanceUnit, WeightUnit } from '@/proto/api/v1/shared_pb'
 import { clearAccountState } from '@/stores/accountState'
 import { useAuthStore } from '@/stores/auth'
 import { useDashboardStore } from '@/stores/dashboard'
@@ -30,15 +26,17 @@ import { AppPasswordInput } from '@/ui/components/AppPasswordInput'
 import { AppIconButton } from '@/ui/components/AppIconButton'
 import { AppInlineError } from '@/ui/components/AppInlineError'
 import { AppInput } from '@/ui/components/AppInput'
+import { AppListRow } from '@/ui/components/AppListRow'
 import { AppPageHeader } from '@/ui/components/AppPageHeader'
-import { AppSegmented } from '@/ui/components/AppSegmented'
+import { AppPreferenceRow } from '@/ui/components/AppPreferenceRow'
 import { AppSheet, SheetAction } from '@/ui/components/AppSheet'
 import { AppSkeleton } from '@/ui/components/AppSkeleton'
 import { AppSwitch } from '@/ui/components/AppSwitch'
-import { distanceUnitLabel, normalizeDistanceUnit } from '@/utils/distanceUnits'
+import { distanceUnitLabel } from '@/utils/distanceUnits'
 import { handle, initials } from '@/utils/names'
 import { formatNumber } from '@/utils/numbers'
-import { normalizeWeightUnit, weightUnitLabel } from '@/utils/weightUnits'
+import { weightUnitLabel } from '@/utils/weightUnits'
+import { usePreferenceSave } from './preferenceSave'
 import styles from './ProfileView.module.css'
 
 // Past this the badge is wider than the icon it sits on.
@@ -61,13 +59,14 @@ export const ProfileView = () => {
 
   const [user, setUser] = useState<User>()
   const [failed, setFailed] = useState(false)
-  const [saving, setSaving] = useState<'weight' | 'distance' | 'autofill' | 'profile'>()
+  const [savingProfile, setSavingProfile] = useState(false)
   const [draft, setDraft] = useState<{ name: string; username: string }>()
   const [deletePassword, setDeletePassword] = useState<string>()
   const [deleteError, setDeleteError] = useState<string>()
-  const [preferenceError, setPreferenceError] = useState<{ field: string; message: string }>()
   const [profileError, setProfileError] = useState<string>()
   const [deleting, setDeleting] = useState(false)
+
+  const { save, saving, failureOn } = usePreferenceSave()
 
   const load = useCallback(async () => {
     // Deleting the account swaps the signed-in shell for the guest one, which
@@ -103,37 +102,6 @@ export const ProfileView = () => {
   }, [load])
 
   /**
-   * Applies a preference straight away, then tells the server.
-   *
-   * A failure reverts the control, and the row says why inline — otherwise
-   * the control appears to snap back on its own.
-   */
-  const savePreference = async <T,>(
-    field: 'weight' | 'distance' | 'autofill',
-    previous: T,
-    next: T,
-    apply: (value: T) => void,
-    request: () => Promise<unknown>,
-    messages: { updated: string; failed: string },
-  ) => {
-    if (previous === next) return
-
-    apply(next)
-    setSaving(field)
-    setPreferenceError(undefined)
-    const res = await request()
-    setSaving(undefined)
-
-    if (!res) {
-      apply(previous)
-      setPreferenceError({ field, message: messages.failed })
-      return
-    }
-
-    useToastStore.getState().success(messages.updated)
-  }
-
-  /**
    * Saves whichever of the two fields was changed.
    *
    * They are separate requests, so a refused username must not roll back a
@@ -142,9 +110,9 @@ export const ProfileView = () => {
    * inline, for the draft to be corrected.
    */
   const saveProfile = async () => {
-    if (!user || !draft || saving === 'profile') return
+    if (!user || !draft || savingProfile) return
 
-    setSaving('profile')
+    setSavingProfile(true)
     let saved = user
 
     setProfileError(undefined)
@@ -152,7 +120,7 @@ export const ProfileView = () => {
       const res = await updateUserName(draft.name)
       if (!res) {
         setProfileError(consumeRequestError() ?? t('common.somethingWentWrong'))
-        setSaving(undefined)
+        setSavingProfile(false)
         return
       }
       saved = { ...saved, name: res.user?.name ?? draft.name }
@@ -163,7 +131,7 @@ export const ProfileView = () => {
       if (!res) {
         setProfileError(consumeRequestError() ?? t('common.somethingWentWrong'))
         setUser(saved)
-        setSaving(undefined)
+        setSavingProfile(false)
         return
       }
       saved = { ...saved, username: res.user?.username ?? draft.username }
@@ -171,7 +139,7 @@ export const ProfileView = () => {
 
     setUser(saved)
     setDraft(undefined)
-    setSaving(undefined)
+    setSavingProfile(false)
     useToastStore.getState().success(t('profile.profileUpdated'))
   }
 
@@ -212,26 +180,6 @@ export const ProfileView = () => {
   // Still fetching — or the account was just deleted, and the guest shell is
   // swapping in under a screen that no longer has a user to ask about.
   if (!user) return <AppSkeleton />
-
-  // One grouped card of rows, each with its control inline: a compact
-  // segmented for a genuine choice of unit, a switch for a boolean.
-  const preferenceRow = (
-    title: string,
-    body: string,
-    control: ReactNode,
-    field?: string,
-  ): ReactNode => (
-    <div className={styles.preferenceRow}>
-      <div className={styles.preferenceCopy}>
-        <strong>{title}</strong>
-        <small>{body}</small>
-        {preferenceError && preferenceError.field === field && (
-          <AppInlineError>{preferenceError.message}</AppInlineError>
-        )}
-      </div>
-      {control}
-    </div>
-  )
 
   return (
     <div className={styles.profileStack}>
@@ -302,121 +250,65 @@ export const ProfileView = () => {
         </article>
       </section>
 
-      <section className={styles.settingsCard}>
-        <Link to="/progress">
-          <span>
-            <strong>{t('profile.progress')}</strong>
-            <small>{t('profile.progressBody')}</small>
-          </span>
-          <ChevronRightIcon aria-hidden="true" />
-        </Link>
-        <Link to={`/users/${user.id}`}>
-          <span>
-            <strong>{t('profile.publicProfile')}</strong>
-            <small>{t('profile.publicProfileBody')}</small>
-          </span>
-          <ChevronRightIcon aria-hidden="true" />
-        </Link>
-        <Link to="/privacy">
-          <span>
-            <strong>{t('profile.privacyPolicy')}</strong>
-            <small>{t('profile.privacyPolicyBody')}</small>
-          </span>
-          <ChevronRightIcon aria-hidden="true" />
-        </Link>
-      </section>
+      <ul className={styles.settingsList}>
+        <AppListRow to="/progress" title={t('profile.progress')} meta={t('profile.progressBody')} />
+        <AppListRow
+          to={`/users/${user.id}`}
+          title={t('profile.publicProfile')}
+          meta={t('profile.publicProfileBody')}
+        />
+        <AppListRow
+          to="/privacy"
+          title={t('profile.privacyPolicy')}
+          meta={t('profile.privacyPolicyBody')}
+        />
+      </ul>
 
-      <section className={styles.settingsGroup}>
-        <h2>{t('profile.preferencesSection')}</h2>
-        <div className={styles.preferencesCard}>
-          {preferenceRow(
-            t('profile.weightUnit'),
-            t('profile.weightUnitBody'),
-            <AppSegmented
-              busy={saving === 'weight'}
-              density="compact"
-              label={t('profile.weightUnit')}
-              options={[
-                { value: WeightUnit.KILOGRAMS, label: weightUnitLabel(WeightUnit.KILOGRAMS) },
-                { value: WeightUnit.POUNDS, label: weightUnitLabel(WeightUnit.POUNDS) },
-              ]}
-              value={normalizeWeightUnit(weightUnit)}
-              onChange={(unit) =>
-                void savePreference(
-                  'weight',
-                  normalizeWeightUnit(weightUnit),
-                  unit,
-                  usePreferencesStore.getState().setWeightUnit,
-                  () => updateUserWeightUnit(unit),
-                  {
-                    updated: t('profile.weightUnitUpdated'),
-                    failed: t('profile.weightUnitUpdateFailed'),
-                  },
-                )
-              }
-            />,
-            'weight',
-          )}
-
-          {preferenceRow(
-            t('profile.distanceUnit'),
-            t('profile.distanceUnitBody'),
-            <AppSegmented
-              busy={saving === 'distance'}
-              density="compact"
-              label={t('profile.distanceUnit')}
-              options={[
-                {
-                  value: DistanceUnit.KILOMETERS,
-                  label: distanceUnitLabel(DistanceUnit.KILOMETERS),
-                },
-                { value: DistanceUnit.MILES, label: distanceUnitLabel(DistanceUnit.MILES) },
-              ]}
-              value={normalizeDistanceUnit(distanceUnit)}
-              onChange={(unit) =>
-                void savePreference(
-                  'distance',
-                  normalizeDistanceUnit(distanceUnit),
-                  unit,
-                  usePreferencesStore.getState().setDistanceUnit,
-                  () => updateUserDistanceUnit(unit),
-                  {
-                    updated: t('profile.distanceUnitUpdated'),
-                    failed: t('profile.distanceUnitUpdateFailed'),
-                  },
-                )
-              }
-            />,
-            'distance',
-          )}
+      {/* Each setting is a screen of its own, and what a row says under its
+          name is what that setting is set to — the value nobody should have to
+          open anything to read. A description would say less: "kg · km" names
+          the units and answers what the screen behind it is for. */}
+      <section className={styles.settingsGroup} aria-label={t('settings.section')}>
+        <h2>{t('settings.section')}</h2>
+        <ul className={styles.settingsList}>
+          <AppListRow
+            to="/settings/units"
+            title={t('settings.units')}
+            meta={`${weightUnitLabel(weightUnit)} · ${distanceUnitLabel(distanceUnit)}`}
+          />
 
           {/* A boolean is a switch, not an Off/On segmented: two segments
               spelling out a yes and a no is a control wearing the costume of a
-              choice between things. */}
-          {preferenceRow(
-            t('profile.autofillSets'),
-            t('profile.autofillSetsBody'),
-            <AppSwitch
-              checked={autofillSets}
-              disabled={saving === 'autofill'}
-              label={t('profile.autofillSets')}
-              onChange={(enabled) =>
-                void savePreference(
-                  'autofill',
-                  autofillSets,
-                  enabled,
-                  usePreferencesStore.getState().setAutofillSets,
-                  () => updateUserAutofillSets(enabled),
-                  {
-                    updated: t('profile.autofillSetsUpdated'),
-                    failed: t('profile.autofillSetsUpdateFailed'),
-                  },
-                )
+              choice between things. One tap, so it stays on the row rather
+              than behind a screen of its own. */}
+          <li>
+            <AppPreferenceRow
+              title={t('profile.autofillSets')}
+              body={t('profile.autofillSetsBody')}
+              error={failureOn('autofill')}
+              control={
+                <AppSwitch
+                  checked={autofillSets}
+                  disabled={saving('autofill')}
+                  label={t('profile.autofillSets')}
+                  onChange={(enabled) =>
+                    void save(
+                      'autofill',
+                      autofillSets,
+                      enabled,
+                      usePreferencesStore.getState().setAutofillSets,
+                      () => updateUserAutofillSets(enabled),
+                      {
+                        updated: t('profile.autofillSetsUpdated'),
+                        failed: t('profile.autofillSetsUpdateFailed'),
+                      },
+                    )
+                  }
+                />
               }
-            />,
-            'autofill',
-          )}
-        </div>
+            />
+          </li>
+        </ul>
       </section>
 
       {/* The red waits in the button's outline and the confirmation — the row
@@ -469,7 +361,7 @@ export const ProfileView = () => {
               type="submit"
               form="profile-form"
               tone="primary"
-              disabled={saving === 'profile'}
+              disabled={savingProfile}
             >
               {t('common.save')}
             </SheetAction>
