@@ -9,7 +9,7 @@
 }
 
 .avatar {
-  @apply grid size-16 place-items-center rounded-card bg-ink text-xl font-semibold text-white;
+  @apply grid size-16 place-items-center rounded-card bg-ink text-xl font-semibold text-text-inverse;
 }
 
 .profileCard h2 {
@@ -37,7 +37,7 @@
 }
 
 .notificationBadge {
-  @apply absolute right-0 top-0 grid min-h-[22px] min-w-[22px] place-items-center rounded-full bg-badge px-1 text-eyebrow font-bold leading-none tracking-normal text-white ring-[3px] ring-white;
+  @apply absolute right-0 top-0 grid min-h-[22px] min-w-[22px] place-items-center rounded-full bg-badge px-1 text-eyebrow font-bold leading-none tracking-normal text-text-inverse ring-[3px] ring-surface;
 }
 
 .statsStrip {

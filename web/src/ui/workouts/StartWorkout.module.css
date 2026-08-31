@@ -19,7 +19,7 @@
 }
 
 .workoutHeader {
-  @apply border-b border-border bg-white text-text;
+  @apply border-b border-border bg-surface text-text;
 }
 
 /* The bar is a card in the content column, so it takes the column's gutters. */
@@ -49,7 +49,7 @@
    same mono pill the tab bar uses for this timer — one clock, one costume,
    sized up for the screen it headlines. */
 .elapsed {
-  @apply shrink-0 whitespace-nowrap rounded-pill bg-surface-inverse px-3 py-1.5 font-mono text-base font-bold leading-none tabular-nums text-white;
+  @apply shrink-0 whitespace-nowrap rounded-pill bg-surface-inverse px-3 py-1.5 font-mono text-base font-bold leading-none tabular-nums text-text-inverse;
 }
 
 .exerciseStack {

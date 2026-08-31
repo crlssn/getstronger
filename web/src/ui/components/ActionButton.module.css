@@ -1,7 +1,7 @@
 @reference '../../assets/base.css';
 
 .actionButton {
-  @apply grid size-11 place-items-center rounded-control border border-border bg-white text-text-muted transition hover:border-ink-border hover:bg-ink-surface hover:text-ink-strong;
+  @apply grid size-11 place-items-center rounded-control border border-border bg-surface text-text-muted transition hover:border-ink-border hover:bg-ink-surface hover:text-ink-strong;
 }
 
 .actionButton svg {

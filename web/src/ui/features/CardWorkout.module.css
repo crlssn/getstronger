@@ -100,7 +100,7 @@
 }
 
 .completedMark {
-  @apply grid size-6 shrink-0 place-items-center rounded-control bg-ink text-white;
+  @apply grid size-6 shrink-0 place-items-center rounded-control bg-ink text-text-inverse;
 }
 
 .completedBand.record .completedMark {

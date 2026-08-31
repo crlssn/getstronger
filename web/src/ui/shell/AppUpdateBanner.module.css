@@ -3,7 +3,7 @@
 /* Sits above the bottom navigation and the workout dock. */
 .updateBanner {
   bottom: calc(5.75rem + env(safe-area-inset-bottom));
-  @apply fixed inset-x-0 z-50 mx-auto flex max-w-lg items-center gap-3 rounded-card bg-surface-inverse px-4 py-3 text-white shadow-overlay;
+  @apply fixed inset-x-0 z-50 mx-auto flex max-w-lg items-center gap-3 rounded-card bg-surface-inverse px-4 py-3 text-text-inverse shadow-overlay;
   margin-inline: 0.75rem;
 }
 
@@ -18,13 +18,13 @@
 /* The banner floats over the workout dock, where a mis-tap costs a set. Both
    controls take the full floor; the negative margin keeps the bar its height. */
 .refresh {
-  @apply -my-1 shrink-0 border-white bg-white text-ink hover:bg-ink-tint;
+  @apply -my-1 shrink-0 border-text-inverse bg-text-inverse text-ink hover:bg-ink-tint;
 }
 
 /* On the inverted banner, so it borrows the surface's own contrast
    rather than the default tone's. */
 .dismiss {
-  @apply -m-1 text-ink-tint hover:bg-white/10 hover:text-white;
+  @apply -m-1 text-ink-tint hover:bg-text-inverse/10 hover:text-text-inverse;
 }
 
 @media (min-width: 640px) {

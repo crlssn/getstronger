@@ -35,7 +35,7 @@
 }
 
 .firstResult > span {
-  @apply mb-2 size-4 rounded-full border-4 border-ink bg-white;
+  @apply mb-2 size-4 rounded-full border-4 border-ink bg-surface;
   box-shadow: 0 0 0 8px var(--color-ink-tint);
 }
 

@@ -18,8 +18,17 @@
   @apply cursor-not-allowed opacity-60;
 }
 
+/* The knob wears the on-ink colour: white on both light-palette tracks, and
+ * ink-dark on the light checked track in the dark palette. */
 .knob {
-  @apply absolute left-1 top-1/2 size-6 -translate-y-1/2 rounded-full bg-white shadow-card transition-transform;
+  @apply absolute left-1 top-1/2 size-6 -translate-y-1/2 rounded-full bg-text-inverse shadow-card transition-transform;
+}
+
+/* The one state that colour cannot cover: dark palette, switch off, so both
+ * knob and track are dark. The knob takes the ink instead — light on dark —
+ * and hands it back the moment the track inverts under it. */
+[data-theme='dark'] .switch[aria-checked='false'] .knob {
+  @apply bg-ink;
 }
 
 .switch[aria-checked='true'] .knob {

@@ -7,7 +7,7 @@
 }
 
 .guestHeader {
-  @apply border-b border-border bg-white;
+  @apply border-b border-border bg-surface;
 }
 
 .guestBrand {
@@ -20,6 +20,12 @@
 
 .guestBrandMark img {
   @apply size-7 brightness-0 invert;
+}
+
+/* The ink tile is light in the dark palette, so the logo stays ink-dark
+   rather than inverting to white. */
+[data-theme='dark'] .guestBrandMark img {
+  @apply invert-0;
 }
 
 .guestBrandCopy {

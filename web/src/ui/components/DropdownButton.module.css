@@ -12,7 +12,7 @@
 }
 
 .menuItems {
-  @apply absolute right-0 z-50 mt-2 w-48 origin-top-right space-y-1 rounded-control border border-border bg-white p-1.5 shadow-overlay focus:outline-none;
+  @apply absolute right-0 z-50 mt-2 w-48 origin-top-right space-y-1 rounded-control border border-border bg-surface p-1.5 shadow-overlay focus:outline-none;
 }
 
 .enter {

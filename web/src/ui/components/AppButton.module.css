@@ -39,11 +39,11 @@
 }
 
 .primary {
-  @apply border-ink bg-ink text-white hover:bg-ink-strong;
+  @apply border-ink bg-ink text-text-inverse hover:bg-ink-strong;
 }
 
 .secondary {
-  @apply border-ink-border bg-white text-text hover:bg-ink-surface;
+  @apply border-ink-border bg-surface text-text hover:bg-ink-surface;
 }
 
 .ghost {

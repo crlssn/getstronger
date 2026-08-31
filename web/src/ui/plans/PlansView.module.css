@@ -93,7 +93,7 @@
 }
 
 .sequence span.current {
-  @apply bg-ink text-white;
+  @apply bg-ink text-text-inverse;
 }
 
 .nextRow {

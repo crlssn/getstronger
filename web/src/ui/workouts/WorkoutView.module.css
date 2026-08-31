@@ -9,7 +9,7 @@
 }
 
 .nextCard {
-  @apply rounded-sheet bg-surface-inverse p-6 text-white shadow-raised;
+  @apply rounded-sheet bg-surface-inverse p-6 text-text-inverse shadow-raised;
 }
 
 .nextCard > header {
@@ -21,7 +21,7 @@
 }
 
 .nextCard > header span {
-  @apply rounded-full border border-white/20 bg-white/15 px-3 py-1 text-xs font-semibold;
+  @apply rounded-full border border-text-inverse/20 bg-text-inverse/15 px-3 py-1 text-xs font-semibold;
 }
 
 .nextCard h2 {
@@ -33,13 +33,13 @@
 }
 
 .nextCard .planName {
-  @apply font-semibold text-white;
+  @apply font-semibold text-text-inverse;
 }
 
 /* On the ink card, so it borrows that surface's own quiet rather than the
    ghost role's. */
 .skipButton {
-  @apply mt-2 text-ink-tint hover:bg-white/10 hover:text-white;
+  @apply mt-2 text-ink-tint hover:bg-text-inverse/10 hover:text-text-inverse;
 }
 
 .emptyCard {

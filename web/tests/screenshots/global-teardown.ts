@@ -1,7 +1,14 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { relative } from 'node:path'
 import { compare } from './budget'
-import { authenticatedPages, guestPages, personas, type PageEntry } from './catalogue'
+import {
+  audienceName,
+  authenticatedPages,
+  guestPages,
+  personas,
+  themes,
+  type PageEntry,
+} from './catalogue'
 import { flowRecords } from './flows'
 import { changesSince } from './diff'
 import {
@@ -24,15 +31,25 @@ type Audience = {
   pages: (PageEntry | { name: string })[]
 }
 
-const audiences: Audience[] = [
-  { description: 'Pages a signed-out visitor sees', name: 'guest', pages: guestPages },
-  ...personas.map((persona) => ({
-    description: persona.description,
-    email: persona.email,
-    name: persona.name,
-    pages: [...authenticatedPages, ...flowRecords],
-  })),
-]
+// One audience per persona per palette, in the same order the capture runs.
+const audiences: Audience[] = themes.flatMap((theme) => {
+  const inPalette = (description: string) =>
+    theme === 'light' ? description : `${description} — dark palette`
+
+  return [
+    {
+      description: inPalette('Pages a signed-out visitor sees'),
+      name: audienceName('guest', theme),
+      pages: guestPages,
+    },
+    ...personas.map((persona) => ({
+      description: inPalette(persona.description),
+      email: persona.email,
+      name: audienceName(persona.name, theme),
+      pages: [...authenticatedPages, ...flowRecords],
+    })),
+  ]
+})
 
 // A re-captured page appends a second line, and the newer one wins.
 const readRecords = async () => {

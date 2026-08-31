@@ -11,6 +11,7 @@ import { useDashboardStore } from '@/stores/dashboard'
 import { selectLocale, useLocaleStore } from '@/stores/locale'
 import { useNotificationStore } from '@/stores/notifications'
 import { usePreferencesStore } from '@/stores/preferences'
+import { themeLabelKey } from '@/theme'
 import { AppButton } from '@/ui/components/AppButton'
 import { AppErrorState } from '@/ui/components/AppErrorState'
 import { AppIconButton } from '@/ui/components/AppIconButton'
@@ -39,6 +40,7 @@ export const ProfileView = () => {
   const distanceUnit = usePreferencesStore((state) => state.distanceUnit)
   const autofillSets = usePreferencesStore((state) => state.autofillSets)
   const locale = useLocaleStore(selectLocale)
+  const theme = useLocaleStore((state) => state.theme)
 
   const [user, setUser] = useState<User>()
   const [failed, setFailed] = useState(false)
@@ -184,6 +186,14 @@ export const ProfileView = () => {
             to="/settings/language"
             title={t('settings.language')}
             meta={localeNames[locale]}
+          />
+          {/* The mode rather than the palette it resolves to: "Device
+              appearance" is the setting, and which palette that means today
+              is the picker's detail to give. */}
+          <AppListRow
+            to="/settings/appearance"
+            title={t('settings.appearance')}
+            meta={t(theme === undefined ? 'settings.appearanceSystem' : themeLabelKey[theme])}
           />
           {/* The one row with no value to show: the card at the top of the tab
               is already the name, the username and the address it would

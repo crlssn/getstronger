@@ -23,6 +23,23 @@
     <meta name="twitter:description" content="Lift it. Log it. Beat it." />
     <meta name="twitter:image" content="https://www.getstronger.studio/og-image.png" />
     <title>GetStronger</title>
+    <script>
+      // Before the first paint, so neither the splash nor the page flashes
+      // light at a reader whose palette is dark. Mirrors stores/locale.ts,
+      // which owns the attribute once the app is up.
+      ;(() => {
+        let theme
+        try {
+          theme = JSON.parse(localStorage.getItem('locale') ?? '{}').state?.theme
+        } catch {
+          // Not ours to interpret; the device decides below.
+        }
+        if (theme !== 'light' && theme !== 'dark') {
+          theme = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+        }
+        document.documentElement.dataset.theme = theme
+      })()
+    </script>
     <style>
       /* Boot splash: painted before any JavaScript runs and swept away when
          the app mounts into #root. Cold starts wait on a token refresh
@@ -299,6 +316,41 @@
         100% {
           transform: translateY(0);
         }
+      }
+
+      /* The splash in the dark palette, mirroring theme.css the same way the
+         light colours above do. The script above has set data-theme before
+         any of this paints. */
+      [data-theme='dark'] #boot-splash {
+        background: #161512;
+      }
+      [data-theme='dark'] #boot-splash .boot-brand {
+        color: #ece9e2;
+      }
+      [data-theme='dark'] #boot-splash .boot-mark {
+        background: #e8e6e0;
+        box-shadow:
+          0 1px 2px #3b382f,
+          0 8px 20px -14px #3b382f;
+      }
+      [data-theme='dark'] #boot-splash .boot-mark img {
+        filter: brightness(0);
+      }
+      [data-theme='dark'] #boot-splash .boot-copy > span {
+        color: #a8a397;
+      }
+      [data-theme='dark'] #boot-splash .boot-steel,
+      [data-theme='dark'] #boot-splash .p1 {
+        fill: #e8e6e0;
+      }
+      [data-theme='dark'] #boot-splash .p2 {
+        fill: #a29d90;
+      }
+      [data-theme='dark'] #boot-splash .p3 {
+        fill: #a8a397;
+      }
+      [data-theme='dark'] #boot-splash .boot-ground {
+        fill: #3b382f;
       }
 
       /* With the motion gone, the bar parks fully loaded. */

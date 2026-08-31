@@ -42,7 +42,7 @@ export const latestValueLabel: Plugin<'bar'> = {
     const height = textSize + padY * 2
     const bottom = bar.y - gap
 
-    ctx.fillStyle = inkColor
+    ctx.fillStyle = inkColor()
     ctx.beginPath()
     // roundRect landed in every current browser; a canvas without it (an old
     // WebView, a test double) still gets the pill, square-cornered.
@@ -53,7 +53,7 @@ export const latestValueLabel: Plugin<'bar'> = {
     }
     ctx.fill()
 
-    ctx.fillStyle = surfaceColor
+    ctx.fillStyle = surfaceColor()
     ctx.fillText(label, x, bottom - padY + 1)
     ctx.restore()
   },

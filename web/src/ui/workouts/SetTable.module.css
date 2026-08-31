@@ -60,7 +60,7 @@
 }
 
 .setRow.active .setNumber {
-  @apply bg-surface-inverse text-white;
+  @apply bg-surface-inverse text-text-inverse;
 }
 
 .setNumber svg {

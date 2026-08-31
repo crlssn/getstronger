@@ -73,6 +73,44 @@ test.describe('settings', () => {
     await expect(page.getByRole('heading', { name: 'Language' })).toBeVisible()
   })
 
+  // Like the language, the palette is kept on the device: what proves it
+  // landed is the page repainting the moment it is picked, and staying dark
+  // after a reload.
+  test('changes the appearance on the device and keeps it', async ({ page }) => {
+    await page.goto('/settings/appearance')
+    await page.getByRole('button', { name: 'Dark', exact: true }).click()
+
+    // Applied without a reload: the attribute every token reads is already on
+    // the root element, and the canvas behind the page is the dark one.
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark')
+    await expect(page.locator('body')).toHaveCSS('background-color', 'rgb(22, 21, 18)')
+
+    await page.goto('/profile')
+    await expect(page.getByRole('link', { name: /Appearance/ })).toContainText('Dark')
+
+    await page.reload()
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark')
+
+    // And handing it back to the device is a choice of its own — this suite
+    // runs in a light-preference browser, so System resolves light.
+    await page.goto('/settings/appearance')
+    await page.getByRole('button', { name: /Device appearance/ }).click()
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'light')
+  })
+
+  // System is live: while the app is open, the device changing its palette
+  // repaints the page with no navigation.
+  test('follows the device while it moves', async ({ page }) => {
+    await page.goto('/profile')
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'light')
+
+    await page.emulateMedia({ colorScheme: 'dark' })
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark')
+
+    await page.emulateMedia({ colorScheme: 'light' })
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'light')
+  })
+
   // The details are the one settings screen with a save button, because the
   // two fields are typed rather than picked and half a username is not a
   // choice anybody meant to make.

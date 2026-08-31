@@ -80,7 +80,7 @@
 }
 
 .routineOrder li.current > span {
-  @apply bg-ink text-white;
+  @apply bg-ink text-text-inverse;
 }
 
 .routineOrder footer {

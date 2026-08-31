@@ -2,12 +2,15 @@ import { expect, test, type Browser, type BrowserContext, type Page } from '@pla
 import { appendFile, mkdir, readdir, readFile, rm } from 'node:fs/promises'
 import { dirname, join, relative } from 'node:path'
 import {
+  audienceName,
   authenticatedPages,
   guestPages,
   personas,
   resolveIds,
+  themes,
   type Ids,
   type PageEntry,
+  type Theme,
 } from './catalogue'
 import { flows, recordName } from './flows'
 import { inspect } from './inspect'
@@ -31,7 +34,7 @@ const freezeClock = async (context: BrowserContext) => {
   if (recorded) await context.clock.setFixedTime(new Date(recorded))
 }
 
-const newContext = async (browser: Browser) => {
+const newContext = async (browser: Browser, theme: Theme) => {
   // Chart.js grows its bars and lines out of the axis over about a second, on a
   // canvas — where Playwright's `animations: 'disabled'`, which only reaches
   // CSS, cannot follow. Photographed after the usual settle, every chart in
@@ -42,7 +45,9 @@ const newContext = async (browser: Browser) => {
   //
   // Asking for stillness is what the charts answer, so the picture is of the
   // chart rather than of its entrance.
-  const context = await browser.newContext({ reducedMotion: 'reduce' })
+  // The palette comes from the emulated device, not from a stored choice, so
+  // a dark capture photographs the System mode the way a dark phone gets it.
+  const context = await browser.newContext({ colorScheme: theme, reducedMotion: 'reduce' })
   await freezeClock(context)
 
   return context
@@ -165,92 +170,102 @@ const logIn = async (page: Page, email: string, password: string) => {
   await settle(page)
 }
 
-test.describe('guest', () => {
-  test.describe.configure({ mode: 'serial' })
-
-  let context: BrowserContext
-  let page: Page
-
-  test.beforeAll(async ({ browser }) => {
-    context = await newContext(browser)
-    page = await context.newPage()
-  })
-
-  test.afterAll(async () => {
-    await context.close()
-  })
-
-  guestPages.forEach((entry, index) => {
-    test(`guest ${entry.name}`, async () => {
-      await capture(page, 'guest', index + 1, entry, entry.route({}) as string)
-    })
-  })
-})
-
-personas.forEach((persona) => {
-  test.describe(persona.name, () => {
+themes.forEach((theme) => {
+  test.describe(audienceName('guest', theme), () => {
     test.describe.configure({ mode: 'serial' })
 
     let context: BrowserContext
-    let ids: Ids
     let page: Page
 
     test.beforeAll(async ({ browser }) => {
-      context = await newContext(browser)
+      context = await newContext(browser, theme)
       page = await context.newPage()
-      await logIn(page, persona.email, persona.password)
-      ids = await resolveIds(page, settle)
     })
 
     test.afterAll(async () => {
       await context.close()
     })
 
-    authenticatedPages.forEach((entry, index) => {
-      test(`${persona.name} ${entry.name}`, async () => {
-        const route = entry.route(ids)
-        if (!route) {
-          const reason = `${persona.email} has no seeded data behind this page`
-          await record({
-            component: entry.component,
-            images: [],
-            name: entry.name,
-            persona: persona.name,
-            reason,
-          })
-          test.skip(true, reason)
-          return
-        }
-
-        await capture(page, persona.name, index + 1, entry, route)
+    guestPages.forEach((entry, index) => {
+      test(`${audienceName('guest', theme)} ${entry.name}`, async () => {
+        await capture(
+          page,
+          audienceName('guest', theme),
+          index + 1,
+          entry,
+          entry.route({}) as string,
+        )
       })
     })
+  })
 
-    // Flows come last within a persona: they create an exercise, a routine, a
-    // plan, and a workout, and every page above would otherwise show them.
-    const personaFlows = flows.filter((flow) => flow.personas.includes(persona.name))
+  personas.forEach((persona) => {
+    const audience = audienceName(persona.name, theme)
 
-    personaFlows.forEach((flow, flowIndex) => {
-      test(`${persona.name} flow ${flow.name}`, async () => {
-        const before = personaFlows
-          .slice(0, flowIndex)
-          .reduce((total, earlier) => total + earlier.steps.length, 0)
+    test.describe(audience, () => {
+      test.describe.configure({ mode: 'serial' })
 
-        try {
-          for (const [stepIndex, step] of flow.steps.entries()) {
-            await step.act(page)
-            await photograph(
-              page,
-              persona.name,
-              authenticatedPages.length + before + stepIndex + 1,
-              recordName(flow, step),
-              flow.component,
-            )
+      let context: BrowserContext
+      let ids: Ids
+      let page: Page
+
+      test.beforeAll(async ({ browser }) => {
+        context = await newContext(browser, theme)
+        page = await context.newPage()
+        await logIn(page, persona.email, persona.password)
+        ids = await resolveIds(page, settle)
+      })
+
+      test.afterAll(async () => {
+        await context.close()
+      })
+
+      authenticatedPages.forEach((entry, index) => {
+        test(`${audience} ${entry.name}`, async () => {
+          const route = entry.route(ids)
+          if (!route) {
+            const reason = `${persona.email} has no seeded data behind this page`
+            await record({
+              component: entry.component,
+              images: [],
+              name: entry.name,
+              persona: audience,
+              reason,
+            })
+            test.skip(true, reason)
+            return
           }
-        } finally {
-          // A flow that broke halfway still created something.
-          await flow.cleanup?.(page)
-        }
+
+          await capture(page, audience, index + 1, entry, route)
+        })
+      })
+
+      // Flows come last within a persona: they create an exercise, a routine, a
+      // plan, and a workout, and every page above would otherwise show them.
+      const personaFlows = flows.filter((flow) => flow.personas.includes(persona.name))
+
+      personaFlows.forEach((flow, flowIndex) => {
+        test(`${audience} flow ${flow.name}`, async () => {
+          const before = personaFlows
+            .slice(0, flowIndex)
+            .reduce((total, earlier) => total + earlier.steps.length, 0)
+
+          try {
+            for (const [stepIndex, step] of flow.steps.entries()) {
+              await step.act(page)
+              await photograph(
+                page,
+                audience,
+                authenticatedPages.length + before + stepIndex + 1,
+                recordName(flow, step),
+                flow.component,
+              )
+            }
+          } finally {
+            // A flow that broke halfway still created something.
+            await flow.cleanup?.(page)
+          }
+        })
       })
     })
   })
