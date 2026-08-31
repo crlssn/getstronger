@@ -84,6 +84,22 @@ describe('boot splash', () => {
     expect(document.querySelectorAll('#boot-splash .boot-plate-r')).toHaveLength(plates.length)
   })
 
+  // Touching plates read as one slab with notches where the corners round
+  // off, so each pair is parted by the same sliver of daylight instead.
+  it('leaves the same gap between neighbouring plates', () => {
+    for (const side of ['l', 'r'] as const) {
+      const spans = [...document.querySelectorAll(`#boot-splash .boot-plate-${side}`)]
+        .map((rect) => {
+          const from = parseFloat(rect.getAttribute('x') ?? '')
+          return { from, to: from + parseFloat(rect.getAttribute('width') ?? '') }
+        })
+        .sort((a, b) => a.from - b.from)
+      const gaps = spans.slice(1).map((span, at) => span.from - spans[at].to)
+      expect(gaps[0]).toBeGreaterThan(0)
+      for (const gap of gaps) expect(gap).toBe(gaps[0])
+    }
+  })
+
   it('slides every plate on from off the bar and takes it off again', () => {
     for (const side of ['l', 'r'] as const)
       for (const plate of plates) {
