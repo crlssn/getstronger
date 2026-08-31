@@ -100,7 +100,7 @@ describe('buildRouteObjects', () => {
     renderAt('/home')
     await screen.findByText('home screen')
 
-    expect(usePageTitleStore.getState().pageTitle).toBe('Home')
+    expect(usePageTitleStore.getState().pageTitleKey).toBe('pages.home')
   })
 
   test('blanks the title for a route that sets its own', async () => {
