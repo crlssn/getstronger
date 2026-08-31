@@ -788,6 +788,18 @@ func ListRoutinesWithName(name string) ListRoutineOpt {
 	}
 }
 
+func ListRoutinesWithIDs(ids []string) ListRoutineOpt {
+	return func() ([]bob.Mod[*dialect.SelectQuery], error) {
+		if len(ids) == 0 {
+			return nil, nil
+		}
+
+		return []bob.Mod[*dialect.SelectQuery]{
+			models.SelectWhere.Routines.ID.In(uuidsFromStrings(ids)...),
+		}, nil
+	}
+}
+
 func ListRoutinesWithUserID(userID string) ListRoutineOpt {
 	return func() ([]bob.Mod[*dialect.SelectQuery], error) {
 		return []bob.Mod[*dialect.SelectQuery]{

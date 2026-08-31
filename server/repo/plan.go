@@ -6,7 +6,9 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
+	"github.com/lib/pq"
 
+	"github.com/crlssn/getstronger/server/gen/models"
 	"github.com/crlssn/getstronger/server/training"
 )
 
@@ -30,10 +32,23 @@ func (r *Repo) validatePlanRoutines(ctx context.Context, userID string, routineI
 		return fmt.Errorf("plan rotation validate: %w", err)
 	}
 
+	routines, err := r.ListRoutines(ctx, ListRoutinesWithIDs(routineIDs))
+	if err != nil {
+		return fmt.Errorf("plan routines fetch: %w", err)
+	}
+
+	routinesByID := make(map[string]*models.Routine, len(routines))
+	for _, routine := range routines {
+		routinesByID[routine.ID.String()] = routine
+	}
+
+	// Walking the requested order rather than the rows keeps two rejections the
+	// handlers answer with different codes apart: a routine no row matches does
+	// not exist, one whose row names another athlete is not the caller's.
 	for _, routineID := range routineIDs {
-		routine, err := r.GetRoutine(ctx, GetRoutineWithID(routineID))
-		if err != nil {
-			return fmt.Errorf("plan routine fetch: %w", err)
+		routine, found := routinesByID[routineID]
+		if !found {
+			return fmt.Errorf("plan routine fetch: %w", sql.ErrNoRows)
 		}
 
 		if err = training.ValidatePlanRoutine(routine, userID); err != nil {
@@ -87,7 +102,7 @@ func (r *Repo) scanPlan(ctx context.Context, row interface{ Scan(dest ...any) er
 	if err != nil {
 		return nil, err
 	}
-	if err = r.loadPlanRoutines(ctx, plan); err != nil {
+	if err = r.loadPlanRoutines(ctx, []*training.Plan{plan}); err != nil {
 		return nil, err
 	}
 
@@ -110,46 +125,85 @@ func scanPlanBase(row interface{ Scan(dest ...any) error }) (*training.Plan, err
 	return plan, nil
 }
 
-func (r *Repo) loadPlanRoutines(ctx context.Context, plan *training.Plan) error {
-	routineRows, err := r.sqlExec().QueryContext(ctx, `
-SELECT routine_id
-FROM public.plan_routines
-WHERE plan_id = $1
-ORDER BY position`, plan.ID)
-	if err != nil {
-		return fmt.Errorf("plan routines query: %w", err)
+// loadPlanRoutines fills in the rotation each plan trains, costing one read of
+// the rotations and one of the routines they name however many plans and
+// routines are involved. Every plan must belong to the same athlete, which
+// every read in this file does.
+func (r *Repo) loadPlanRoutines(ctx context.Context, plans []*training.Plan) error {
+	if len(plans) == 0 {
+		return nil
 	}
-	defer routineRows.Close()
+
+	planIDs := make([]string, 0, len(plans))
+	for _, plan := range plans {
+		planIDs = append(planIDs, plan.ID)
+	}
+
+	rotations, err := r.planRotations(ctx, planIDs)
+	if err != nil {
+		return err
+	}
 
 	var routineIDs []string
-	for routineRows.Next() {
-		var routineID string
-		if err = routineRows.Scan(&routineID); err != nil {
-			return fmt.Errorf("plan routine scan: %w", err)
-		}
-		routineIDs = append(routineIDs, routineID)
+	for _, planID := range planIDs {
+		routineIDs = append(routineIDs, rotations[planID]...)
 	}
-	if err = routineRows.Err(); err != nil {
-		return fmt.Errorf("plan routines iterate: %w", err)
-	}
-	if err = routineRows.Close(); err != nil {
-		return fmt.Errorf("plan routines close: %w", err)
+	if len(routineIDs) == 0 {
+		return nil
 	}
 
-	for _, routineID := range routineIDs {
-		routine, routineErr := r.GetRoutine(
-			ctx,
-			GetRoutineWithID(routineID),
-			GetRoutineWithUserID(plan.UserID),
-			GetRoutineWithExercises(),
-		)
-		if routineErr != nil {
-			return fmt.Errorf("plan routine fetch: %w", routineErr)
+	routines, err := r.ListRoutines(
+		ctx,
+		ListRoutinesWithIDs(routineIDs),
+		ListRoutinesWithUserID(plans[0].UserID),
+		ListRoutinesLoadExercises(),
+	)
+	if err != nil {
+		return fmt.Errorf("plan routines fetch: %w", err)
+	}
+
+	for _, plan := range plans {
+		rotation := rotations[plan.ID]
+		plan.Routines = training.OrderRoutinesByIDs(routines, rotation)
+		// A routine missing from the athlete's own routines leaves a hole in the
+		// rotation. Fetching one at a time reported that as not found, and the
+		// handlers still answer for it that way.
+		if len(plan.Routines) != len(rotation) {
+			return fmt.Errorf("plan routine fetch: %w", sql.ErrNoRows)
 		}
-		plan.Routines = append(plan.Routines, routine)
 	}
 
 	return nil
+}
+
+// planRotations reads which routines each plan trains and in what order.
+func (r *Repo) planRotations(ctx context.Context, planIDs []string) (map[string][]string, error) {
+	rows, err := r.sqlExec().QueryContext(ctx, `
+SELECT plan_id, routine_id
+FROM public.plan_routines
+WHERE plan_id = ANY($1)
+ORDER BY plan_id, position`, pq.Array(planIDs))
+	if err != nil {
+		return nil, fmt.Errorf("plan routines query: %w", err)
+	}
+	defer rows.Close()
+
+	rotations := make(map[string][]string, len(planIDs))
+	for rows.Next() {
+		var planID, routineID string
+		if err = rows.Scan(&planID, &routineID); err != nil {
+			return nil, fmt.Errorf("plan routine scan: %w", err)
+		}
+		rotations[planID] = append(rotations[planID], routineID)
+	}
+	if err = rows.Err(); err != nil {
+		return nil, fmt.Errorf("plan routines iterate: %w", err)
+	}
+	if err = rows.Close(); err != nil {
+		return nil, fmt.Errorf("plan routines close: %w", err)
+	}
+
+	return rotations, nil
 }
 
 const selectPlanColumns = `
@@ -189,10 +243,8 @@ func (r *Repo) ListPlans(ctx context.Context, userID string) ([]*training.Plan, 
 		return nil, fmt.Errorf("plans close: %w", err)
 	}
 
-	for _, plan := range plans {
-		if err = r.loadPlanRoutines(ctx, plan); err != nil {
-			return nil, err
-		}
+	if err = r.loadPlanRoutines(ctx, plans); err != nil {
+		return nil, err
 	}
 
 	return plans, nil
