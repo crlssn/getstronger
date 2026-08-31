@@ -173,6 +173,20 @@ export const expectAccessible = async (page: Page) => {
   // between a scan of the page and a scan of an animation frame.
   await expect(page.getByRole('menu')).toHaveCount(0)
 
+  // The screen itself fades in as navigation lands on it, and axe reads a
+  // half-opacity frame the same way: copy blended toward the canvas fails
+  // contrast it passes at rest. Skeletons pulse forever, so only finite
+  // animations are waited out.
+  await page.waitForFunction(() =>
+    document
+      .getAnimations()
+      .every(
+        (animation) =>
+          animation.playState !== 'running' ||
+          animation.effect?.getTiming().iterations === Infinity,
+      ),
+  )
+
   const results = await new AxeBuilder({ page })
     .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
     .analyze()
