@@ -168,3 +168,75 @@ func TestValidatePlanRoutine(t *testing.T) {
 		training.ValidatePlanRoutine(deleted, userID.String()),
 		training.ErrPlanRoutineDeleted)
 }
+
+func TestPlanRotationWithout(t *testing.T) {
+	t.Parallel()
+
+	first, second, third := uuid.Must(uuid.NewV4()), uuid.Must(uuid.NewV4()), uuid.Must(uuid.NewV4())
+	newPlan := func() *training.Plan {
+		return &training.Plan{
+			Active:          true,
+			CurrentPosition: 1,
+			Routines:        models.RoutineSlice{routine(first), routine(second), routine(third)},
+		}
+	}
+
+	t.Run("keeps the plan on the routine it was training", func(t *testing.T) {
+		t.Parallel()
+		rotation := newPlan().RotationWithout(first.String())
+		require.Equal(t, []string{second.String(), third.String()}, rotation.RoutineIDs)
+		require.Equal(t, 0, rotation.CurrentPosition)
+		require.True(t, rotation.Active)
+	})
+
+	t.Run("leaves a rotation the routine was not in alone", func(t *testing.T) {
+		t.Parallel()
+		rotation := newPlan().RotationWithout(uuid.Must(uuid.NewV4()).String())
+		require.Equal(t, []string{first.String(), second.String(), third.String()}, rotation.RoutineIDs)
+		require.Equal(t, 1, rotation.CurrentPosition)
+		require.True(t, rotation.Active)
+	})
+
+	t.Run("restarts when the routine it was training is the one removed", func(t *testing.T) {
+		t.Parallel()
+		rotation := newPlan().RotationWithout(second.String())
+		require.Equal(t, []string{first.String(), third.String()}, rotation.RoutineIDs)
+		require.Equal(t, 0, rotation.CurrentPosition)
+		require.True(t, rotation.Active)
+	})
+
+	t.Run("pauses a plan left with nothing to train", func(t *testing.T) {
+		t.Parallel()
+		plan := &training.Plan{
+			Active:   true,
+			Routines: models.RoutineSlice{routine(first)},
+		}
+		rotation := plan.RotationWithout(first.String())
+		require.Empty(t, rotation.RoutineIDs)
+		require.Equal(t, 0, rotation.CurrentPosition)
+		require.False(t, rotation.Active)
+	})
+
+	t.Run("leaves an already paused plan paused", func(t *testing.T) {
+		t.Parallel()
+		plan := newPlan()
+		plan.Active = false
+		require.False(t, plan.RotationWithout(third.String()).Active)
+	})
+}
+
+// A plan with nothing to train cannot say what comes next, so it may not become
+// the plan the athlete is following — the same rule that pauses one whose last
+// routine is deleted. See TestPlanRotationWithout.
+func TestPlanValidateActivation(t *testing.T) {
+	t.Parallel()
+
+	require.NoError(t, (&training.Plan{
+		Routines: models.RoutineSlice{routine(uuid.Must(uuid.NewV4()))},
+	}).ValidateActivation())
+
+	require.ErrorIs(t, (&training.Plan{}).ValidateActivation(), training.ErrPlanRequiresRoutine)
+	require.ErrorIs(t,
+		(&training.Plan{Routines: models.RoutineSlice{}}).ValidateActivation(),
+		training.ErrPlanRequiresRoutine)
+}

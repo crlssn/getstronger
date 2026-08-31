@@ -382,6 +382,7 @@ export const en = {
       routinesRepeat_one: '{count} routine repeats continuously in this order.',
       routinesRepeat_other: '{count} routines repeat continuously in this order.',
       orderTitle: 'Your repeating sequence',
+      emptyBody: 'Every routine this plan trained has been deleted. Edit the plan to add one.',
       upNextTag: 'UP NEXT',
       routineTag: 'ROUTINE {number}',
       deleteConfirmTitle: 'Delete this plan?',
@@ -1145,6 +1146,8 @@ export const sv = {
       routinesRepeat_one: '{count} pass upprepas löpande i den här ordningen.',
       routinesRepeat_other: '{count} pass upprepas löpande i den här ordningen.',
       orderTitle: 'Din återkommande följd',
+      emptyBody:
+        'Alla pass som planen tränade har tagits bort. Redigera planen för att lägga till ett.',
       upNextTag: 'NÄSTA PASS',
       routineTag: 'PASS {number}',
       deleteConfirmTitle: 'Ta bort planen?',

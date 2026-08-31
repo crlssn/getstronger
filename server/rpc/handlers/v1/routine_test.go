@@ -685,7 +685,10 @@ func (s *routineSuite) TestRoutineEndpointsRejectAMissingRoutine() {
 	})
 }
 
-func (s *routineSuite) TestDeleteRoutineRemovesItAndItsGroups() {
+// A deleted routine is retired rather than erased, the way a deleted exercise
+// is: the athlete never sees it again, but the row stays so the workouts that
+// trained it still resolve.
+func (s *routineSuite) TestDeleteRoutineRetiresItWithoutErasingIt() {
 	ctx, user := s.athlete()
 	exercise := s.factory.NewExercise(factory.ExerciseUserID(user.ID))
 	created, err := s.handler.CreateRoutine(ctx, connect.NewRequest(&apiv1.CreateRoutineRequest{
@@ -702,11 +705,21 @@ func (s *routineSuite) TestDeleteRoutineRemovesItAndItsGroups() {
 	_, err = s.handler.GetRoutine(ctx, connect.NewRequest(&apiv1.GetRoutineRequest{Id: created.Msg.GetId()}))
 	s.Require().Equal(connect.CodeNotFound, connect.CodeOf(err))
 
-	groups, err := models.RoutineGroups.Query(
-		models.SelectWhere.RoutineGroups.RoutineID.EQ(nativeUUID(created.Msg.GetId())),
-	).Count(context.Background(), bob.NewDB(s.container.DB))
+	listed, err := s.handler.ListRoutines(ctx, connect.NewRequest(&apiv1.ListRoutinesRequest{}))
 	s.Require().NoError(err)
-	s.Require().Zero(groups)
+	s.Require().Empty(listed.Msg.GetRoutines())
+
+	retired, err := models.Routines.Query(
+		models.SelectWhere.Routines.ID.EQ(nativeUUID(created.Msg.GetId())),
+	).One(context.Background(), bob.NewDB(s.container.DB))
+	s.Require().NoError(err)
+	s.Require().False(retired.DeletedAt.IsNull())
+
+	// Deleting it a second time reads as a routine that is no longer there.
+	_, err = s.handler.DeleteRoutine(ctx, connect.NewRequest(&apiv1.DeleteRoutineRequest{
+		Id: created.Msg.GetId(),
+	}))
+	s.Require().Equal(connect.CodeFailedPrecondition, connect.CodeOf(err))
 }
 
 // The exercise is looked up under the athlete who asked, so one they do not own

@@ -223,6 +223,25 @@ describe('ViewPlan', () => {
     expect(await screen.findByText('plans')).toBeInTheDocument()
   })
 
+  // Deleting a routine takes it out of every plan that trained it, so a plan
+  // can outlive its whole rotation. The loop footer named a first and a last
+  // routine that were no longer there.
+  test('says why a plan has no sequence left, instead of an empty loop', async () => {
+    mocked.getPlan.mockResolvedValue(
+      create(GetPlanResponseSchema, { plan: plan({ routines: [] }) }),
+    )
+    render()
+
+    expect(
+      await screen.findByText(/Every routine this plan trained has been deleted/),
+    ).toBeInTheDocument()
+    expect(screen.queryByText('Your repeating sequence')).not.toBeInTheDocument()
+    expect(screen.queryByText(/the plan returns to/)).not.toBeInTheDocument()
+    // Following it again would put it straight back into a state where it
+    // cannot say what to train next.
+    expect(screen.queryByRole('button', { name: 'Make active' })).not.toBeInTheDocument()
+  })
+
   test('goes back to the list when the plan is gone', async () => {
     mocked.getPlan.mockResolvedValue(undefined)
     render()

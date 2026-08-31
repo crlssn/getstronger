@@ -78,6 +78,47 @@ func (p *Plan) PositionAfterReplacing(routineIDs []string) int {
 	return 0
 }
 
+// Rotation is what a plan's loop becomes once a routine leaves it: the
+// routines still in the loop, where the plan now points, and whether it can
+// still be the plan the athlete is following.
+type Rotation struct {
+	RoutineIDs      []string
+	CurrentPosition int
+	Active          bool
+}
+
+// RotationWithout is the plan once routineID is no longer trainable. The plan
+// keeps pointing at the routine it was on, restarting when that is the routine
+// removed, and a plan left with nothing to train pauses: it can no longer
+// answer what comes next.
+func (p *Plan) RotationWithout(routineID string) Rotation {
+	remaining := make([]string, 0, len(p.Routines))
+	for _, routine := range p.Routines {
+		if routine.ID.String() == routineID {
+			continue
+		}
+		remaining = append(remaining, routine.ID.String())
+	}
+
+	return Rotation{
+		RoutineIDs:      remaining,
+		CurrentPosition: p.PositionAfterReplacing(remaining),
+		Active:          p.Active && len(remaining) > 0,
+	}
+}
+
+// ValidateActivation reports whether the plan may become the one the athlete is
+// following. A plan with no routines left cannot say what to train next, which
+// is why losing its last routine pauses it; letting it be activated again would
+// put it straight back into that state.
+func (p *Plan) ValidateActivation() error {
+	if len(p.Routines) == 0 {
+		return ErrPlanRequiresRoutine
+	}
+
+	return nil
+}
+
 // ValidatePlanRotation checks a requested rotation on its own terms: a plan
 // needs at least one routine and may not train the same one twice per cycle.
 // Whether each routine exists and belongs to the athlete is a separate question

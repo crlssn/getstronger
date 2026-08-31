@@ -75,6 +75,42 @@ VALUES ($1, $2, $3)`, planID, routineID, position); err != nil {
 	return nil
 }
 
+// dropRoutineFromPlans takes routine out of every plan that trains it, letting
+// training.Plan say where each rotation now points. plan_routines.position is
+// rewritten rather than left with a gap because plans.current_position indexes
+// the dense slice loadPlanRoutines builds.
+//
+// Reading the athlete's plans costs no more than reading only the ones holding
+// the routine: ListPlans loads every rotation in the same two queries. It must
+// run before the routine is retired, while its rows still resolve.
+func (r *Repo) dropRoutineFromPlans(ctx context.Context, routine *models.Routine) error {
+	userID := routine.UserID.String()
+	plans, err := r.ListPlans(ctx, userID)
+	if err != nil {
+		return fmt.Errorf("plans before routine removal: %w", err)
+	}
+
+	for _, plan := range plans {
+		rotation := plan.RotationWithout(routine.ID.String())
+		if len(rotation.RoutineIDs) == len(plan.Routines) {
+			continue
+		}
+
+		if _, err = r.exec().ExecContext(ctx, `
+UPDATE public.plans
+SET current_position = $1, active = $2, updated_at = (NOW() AT TIME ZONE 'UTC')
+WHERE id = $3 AND user_id = $4`, rotation.CurrentPosition, rotation.Active, plan.ID, userID); err != nil {
+			return fmt.Errorf("plan rotation update: %w", err)
+		}
+
+		if err = r.replacePlanRoutines(ctx, plan.ID, rotation.RoutineIDs); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 func (r *Repo) CreatePlan(ctx context.Context, p CreatePlanParams) (*training.Plan, error) {
 	var planID string
 	if err := r.NewTx(ctx, func(tx *Repo) error {
@@ -295,8 +331,12 @@ func (r *Repo) DeletePlan(ctx context.Context, planID, userID string) error {
 
 func (r *Repo) SetActivePlan(ctx context.Context, planID, userID string) (*training.Plan, error) {
 	if err := r.NewTx(ctx, func(tx *Repo) error {
-		if _, err := tx.GetPlan(ctx, planID, userID); err != nil {
+		plan, err := tx.GetPlan(ctx, planID, userID)
+		if err != nil {
 			return fmt.Errorf("plan get before activation: %w", err)
+		}
+		if err = plan.ValidateActivation(); err != nil {
+			return fmt.Errorf("plan activation validate: %w", err)
 		}
 		if _, err := tx.exec().ExecContext(ctx,
 			`UPDATE public.plans SET active = FALSE, updated_at = (NOW() AT TIME ZONE 'UTC') WHERE user_id = $1 AND active = TRUE`, userID); err != nil {

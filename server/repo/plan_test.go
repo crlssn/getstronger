@@ -247,3 +247,86 @@ func planRoutineIDs(plan *training.Plan) []string {
 	}
 	return ids
 }
+
+// A routine an athlete retires must leave every plan that trained it without
+// moving the plan onto a routine it was not on. See training.Plan.RotationWithout.
+func TestSoftDeleteRoutineLeavesPlansPointingWhereTheyWere(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	testContainer := container.NewContainer(ctx)
+	t.Cleanup(func() {
+		if err := testContainer.Terminate(ctx); err != nil {
+			log.Printf("terminate routine deletion test container: %v", err)
+		}
+	})
+
+	f := factory.NewFactory(testContainer.DB)
+	r := repo.New(testContainer.DB)
+	user := f.NewUser()
+	lower := f.NewRoutine(factory.RoutineUserID(user.ID), factory.RoutineName("Lower"))
+	chest := f.NewRoutine(factory.RoutineUserID(user.ID), factory.RoutineName("Chest"))
+	pull := f.NewRoutine(factory.RoutineUserID(user.ID), factory.RoutineName("Pull"))
+
+	plan, err := r.CreatePlan(ctx, repo.CreatePlanParams{
+		UserID:     user.ID.String(),
+		Name:       "Strength Rotation",
+		RoutineIDs: []string{lower.ID.String(), chest.ID.String(), pull.ID.String()},
+	})
+	require.NoError(t, err)
+
+	plan, err = r.SetActivePlan(ctx, plan.ID, user.ID.String())
+	require.NoError(t, err)
+	plan, err = r.AdvancePlan(ctx, plan.ID, user.ID.String(), lower.ID.String())
+	require.NoError(t, err)
+	require.Equal(t, chest.ID, plan.CurrentRoutine().ID)
+
+	// A plan holding none of the retired routines, to show the delete reaches
+	// only the rotations the routine was actually in.
+	press := f.NewRoutine(factory.RoutineUserID(user.ID), factory.RoutineName("Press"))
+	squat := f.NewRoutine(factory.RoutineUserID(user.ID), factory.RoutineName("Squat"))
+	untouched, err := r.CreatePlan(ctx, repo.CreatePlanParams{
+		UserID:     user.ID.String(),
+		Name:       "Other Rotation",
+		RoutineIDs: []string{press.ID.String(), squat.ID.String()},
+	})
+	require.NoError(t, err)
+
+	require.NoError(t, r.SoftDeleteRoutine(ctx, lower.ID.String()))
+	plan, err = r.GetPlan(ctx, plan.ID, user.ID.String())
+	require.NoError(t, err)
+	require.Equal(t, []string{chest.ID.String(), pull.ID.String()}, planRoutineIDs(plan))
+	require.Equal(t, chest.ID, plan.CurrentRoutine().ID, "the plan was on Chest before Lower went")
+	require.True(t, plan.Active)
+
+	require.NoError(t, r.SoftDeleteRoutine(ctx, chest.ID.String()))
+	plan, err = r.GetPlan(ctx, plan.ID, user.ID.String())
+	require.NoError(t, err)
+	require.Equal(t, []string{pull.ID.String()}, planRoutineIDs(plan))
+	require.Equal(t, pull.ID, plan.CurrentRoutine().ID, "a rotation that loses its current routine starts again")
+	require.True(t, plan.Active)
+
+	require.NoError(t, r.SoftDeleteRoutine(ctx, pull.ID.String()))
+	plan, err = r.GetPlan(ctx, plan.ID, user.ID.String())
+	require.NoError(t, err)
+	require.Empty(t, planRoutineIDs(plan))
+	require.Zero(t, plan.CurrentPosition)
+	require.False(t, plan.Active, "a plan with nothing to train cannot say what is next")
+
+	untouched, err = r.GetPlan(ctx, untouched.ID, user.ID.String())
+	require.NoError(t, err)
+	require.Equal(t, []string{press.ID.String(), squat.ID.String()}, planRoutineIDs(untouched),
+		"a plan none of the retired routines were in keeps its rotation")
+	require.Zero(t, untouched.CurrentPosition)
+
+	// The routines are retired rather than erased, so the workouts that trained
+	// them still point at a row.
+	_, err = r.GetRoutine(ctx, repo.GetRoutineWithID(lower.ID.String()))
+	require.ErrorIs(t, err, sql.ErrNoRows)
+	require.NoError(t, testContainer.DB.QueryRowContext(ctx,
+		`SELECT 1 FROM public.routines WHERE id = $1 AND deleted_at IS NOT NULL`,
+		lower.ID.String()).Scan(new(int)))
+
+	// A routine already retired is not there to retire again.
+	require.ErrorIs(t, r.SoftDeleteRoutine(ctx, lower.ID.String()), sql.ErrNoRows)
+}

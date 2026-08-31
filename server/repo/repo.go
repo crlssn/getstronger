@@ -727,8 +727,13 @@ func stableExerciseOrder() []bob.Mod[*dialect.SelectQuery] {
 	}
 }
 
+// GetRoutine never returns a retired routine. The filter is baked in rather
+// than offered as an option: a caller that forgot it would hand the app a
+// routine the athlete has deleted, which is how a plan's rotation came to
+// point at one.
 func (r *Repo) GetRoutine(ctx context.Context, opts ...GetRoutineOpt) (*models.Routine, error) {
-	query := make([]bob.Mod[*dialect.SelectQuery], 0, len(opts))
+	query := make([]bob.Mod[*dialect.SelectQuery], 0, len(opts)+1)
+	query = append(query, models.SelectWhere.Routines.DeletedAt.IsNull())
 	for _, opt := range opts {
 		query = append(query, opt())
 	}
@@ -741,19 +746,25 @@ func (r *Repo) GetRoutine(ctx context.Context, opts ...GetRoutineOpt) (*models.R
 	return routine, nil
 }
 
-func (r *Repo) DeleteRoutine(ctx context.Context, id string) error {
+// SoftDeleteRoutine retires a routine rather than erasing it, the way an
+// exercise is retired: the row stays so the workouts that trained it still
+// resolve, while every plan that rotated through it drops it and keeps
+// pointing at the routine it was on.
+func (r *Repo) SoftDeleteRoutine(ctx context.Context, id string) error {
 	return r.NewTx(ctx, func(tx *Repo) error {
 		routine, err := tx.GetRoutine(ctx, GetRoutineWithID(id))
 		if err != nil {
 			return fmt.Errorf("routine fetch: %w", err)
 		}
 
-		if err = setRoutineGroups(ctx, tx.bobExec(), routine.ID, nil, nil); err != nil {
-			return fmt.Errorf("routine groups set: %w", err)
+		if err = tx.dropRoutineFromPlans(ctx, routine); err != nil {
+			return err
 		}
 
-		if err = routine.Delete(ctx, tx.bobExec()); err != nil {
-			return fmt.Errorf("routine delete: %w", err)
+		if err = routine.Update(ctx, tx.bobExec(), &models.RoutineSetter{
+			DeletedAt: omitnull.From(time.Now().UTC()),
+		}); err != nil {
+			return fmt.Errorf("routine soft delete: %w", err)
 		}
 
 		return nil
@@ -824,8 +835,9 @@ func ListRoutinesLoadExercises() ListRoutineOpt {
 	}
 }
 
+// ListRoutines never returns retired routines. See GetRoutine.
 func (r *Repo) ListRoutines(ctx context.Context, opts ...ListRoutineOpt) (models.RoutineSlice, error) {
-	var query []bob.Mod[*dialect.SelectQuery]
+	query := []bob.Mod[*dialect.SelectQuery]{models.SelectWhere.Routines.DeletedAt.IsNull()}
 	for _, opt := range opts {
 		q, err := opt()
 		if err != nil {

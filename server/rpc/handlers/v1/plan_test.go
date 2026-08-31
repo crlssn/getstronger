@@ -191,6 +191,87 @@ func (s *planSuite) TestDeletePlanRemovesItAndIsNotFoundTwice() {
 	s.Require().Equal(connect.CodeNotFound, connect.CodeOf(err))
 }
 
+// Deleting a routine is the one way a rotation changes without the athlete
+// editing it, so the plan must land where editing it would have left it.
+func (s *planSuite) TestDeleteRoutineKeepsThePlanOnTheRoutineItWasTraining() {
+	ctx, user := s.athlete()
+	first := s.factory.NewRoutine(factory.RoutineUserID(user.ID), factory.RoutineName("First"))
+	second := s.factory.NewRoutine(factory.RoutineUserID(user.ID), factory.RoutineName("Second"))
+	third := s.factory.NewRoutine(factory.RoutineUserID(user.ID), factory.RoutineName("Third"))
+	plan := s.createPlan(ctx, "Rotation", first.ID.String(), second.ID.String(), third.ID.String())
+
+	_, err := s.handler.SetActivePlan(ctx, connect.NewRequest(&apiv1.SetActivePlanRequest{Id: plan.GetId()}))
+	s.Require().NoError(err)
+	_, err = s.handler.SkipPlanRoutine(ctx, connect.NewRequest(&apiv1.SkipPlanRoutineRequest{Id: plan.GetId()}))
+	s.Require().NoError(err)
+
+	_, err = s.handler.DeleteRoutine(ctx, connect.NewRequest(&apiv1.DeleteRoutineRequest{Id: first.ID.String()}))
+	s.Require().NoError(err)
+
+	res, err := s.handler.GetPlan(ctx, connect.NewRequest(&apiv1.GetPlanRequest{Id: plan.GetId()}))
+	s.Require().NoError(err)
+	s.Require().Equal([]string{second.ID.String(), third.ID.String()}, planRoutineIDs(res.Msg.GetPlan()))
+	s.Require().Zero(res.Msg.GetPlan().GetCurrentPosition(), "Second was next and still is")
+	s.Require().True(res.Msg.GetPlan().GetActive())
+
+	// The rotation still turns, rather than being stuck past its own end.
+	skipped, err := s.handler.SkipPlanRoutine(ctx, connect.NewRequest(&apiv1.SkipPlanRoutineRequest{Id: plan.GetId()}))
+	s.Require().NoError(err)
+	s.Require().Equal(int32(1), skipped.Msg.GetPlan().GetCurrentPosition())
+}
+
+func (s *planSuite) TestDeletingThePlansLastRoutinePausesIt() {
+	ctx, user := s.athlete()
+	only := s.factory.NewRoutine(factory.RoutineUserID(user.ID), factory.RoutineName("Only"))
+	plan := s.createPlan(ctx, "Rotation", only.ID.String())
+
+	_, err := s.handler.SetActivePlan(ctx, connect.NewRequest(&apiv1.SetActivePlanRequest{Id: plan.GetId()}))
+	s.Require().NoError(err)
+
+	_, err = s.handler.DeleteRoutine(ctx, connect.NewRequest(&apiv1.DeleteRoutineRequest{Id: only.ID.String()}))
+	s.Require().NoError(err)
+
+	res, err := s.handler.GetPlan(ctx, connect.NewRequest(&apiv1.GetPlanRequest{Id: plan.GetId()}))
+	s.Require().NoError(err)
+	s.Require().Empty(planRoutineIDs(res.Msg.GetPlan()))
+	s.Require().Zero(res.Msg.GetPlan().GetCurrentPosition())
+	s.Require().False(res.Msg.GetPlan().GetActive(), "a plan with nothing to train cannot say what is next")
+}
+
+// Losing its last routine pauses a plan; activating it again would put it
+// straight back into a state where it cannot say what to train next.
+func (s *planSuite) TestSetActivePlanRejectsAPlanWithNoRoutinesLeft() {
+	ctx, user := s.athlete()
+	only := s.factory.NewRoutine(factory.RoutineUserID(user.ID), factory.RoutineName("Only"))
+	plan := s.createPlan(ctx, "Rotation", only.ID.String())
+
+	_, err := s.handler.DeleteRoutine(ctx, connect.NewRequest(&apiv1.DeleteRoutineRequest{Id: only.ID.String()}))
+	s.Require().NoError(err)
+
+	_, err = s.handler.SetActivePlan(ctx, connect.NewRequest(&apiv1.SetActivePlanRequest{Id: plan.GetId()}))
+	s.Require().Equal(connect.CodeFailedPrecondition, connect.CodeOf(err))
+
+	res, err := s.handler.GetPlan(ctx, connect.NewRequest(&apiv1.GetPlanRequest{Id: plan.GetId()}))
+	s.Require().NoError(err)
+	s.Require().False(res.Msg.GetPlan().GetActive())
+}
+
+// A routine the athlete has retired may not be put back into a rotation by a
+// client still holding it.
+func (s *planSuite) TestCreatePlanRejectsADeletedRoutine() {
+	ctx, user := s.athlete()
+	routine := s.factory.NewRoutine(factory.RoutineUserID(user.ID))
+
+	_, err := s.handler.DeleteRoutine(ctx, connect.NewRequest(&apiv1.DeleteRoutineRequest{Id: routine.ID.String()}))
+	s.Require().NoError(err)
+
+	_, err = s.handler.CreatePlan(ctx, connect.NewRequest(&apiv1.CreatePlanRequest{
+		Name:       "Ghost",
+		RoutineIds: []string{routine.ID.String()},
+	}))
+	s.Require().Equal(connect.CodeInvalidArgument, connect.CodeOf(err))
+}
+
 func planRoutineIDs(plan *apiv1.Plan) []string {
 	ids := make([]string, 0, len(plan.GetRoutines()))
 	for _, routine := range plan.GetRoutines() {
