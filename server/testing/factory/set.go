@@ -192,6 +192,18 @@ func SetWeightUnit(unit weightunit.Unit) SetOpt {
 	}
 }
 
+func SetDistance(distance float64) SetOpt {
+	return func(set *models.SetSetter) {
+		set.Distance = omit.From(distance)
+	}
+}
+
+func SetDurationSeconds(seconds int) SetOpt {
+	return func(set *models.SetSetter) {
+		set.DurationSeconds = omit.From(safe.Int32FromInt(seconds))
+	}
+}
+
 func SetDistanceUnit(unit distanceunit.Unit) SetOpt {
 	return func(set *models.SetSetter) {
 		set.DistanceUnit = omit.From(string(unit))

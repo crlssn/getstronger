@@ -43,7 +43,9 @@ const sectionWithHeading = (page: E2EPage, heading: string) =>
 const addFirstExercise = async (page: Parameters<typeof logIn>[0]) => {
   await page.getByRole('button', { name: 'Choose exercise' }).click()
   const picker = page.getByRole('dialog', { name: 'Add exercise' })
-  const option = pickerOptions(page, picker).first()
+  // The callers log weight and reps, so the seeded cardio exercise — whose
+  // set inputs are distance and time — must never be the one picked.
+  const option = pickerOptions(page, picker).filter({ hasNotText: 'Cardio' }).first()
   const name = (await option.locator('strong').innerText()).trim()
   await option.click()
   return name

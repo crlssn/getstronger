@@ -116,6 +116,24 @@ func TestFactory_Set(t *testing.T) {
 		require.InEpsilon(t, weight, created.Weight, 0)
 	})
 
+	t.Run("SetDistance", func(t *testing.T) {
+		t.Parallel()
+		distance := 5.2
+		expected := f.NewSet(factory.SetDistance(distance))
+		created, err := models.FindSet(ctx, bob.NewDB(c.DB), expected.ID)
+		require.NoError(t, err)
+		require.InEpsilon(t, distance, created.Distance, 0)
+	})
+
+	t.Run("SetDurationSeconds", func(t *testing.T) {
+		t.Parallel()
+		seconds := 240
+		expected := f.NewSet(factory.SetDurationSeconds(seconds))
+		created, err := models.FindSet(ctx, bob.NewDB(c.DB), expected.ID)
+		require.NoError(t, err)
+		require.Equal(t, int32(seconds), created.DurationSeconds)
+	})
+
 	t.Run("SetCreatedAt", func(t *testing.T) {
 		t.Parallel()
 		createdAt := time.Now().Add(-24 * time.Hour).UTC()

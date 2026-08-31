@@ -72,7 +72,16 @@ describe('ExerciseChart', () => {
   test('offers a distance-and-time exercise its own measures', () => {
     renderWithProviders(<ExerciseChart sets={twoDays} exercise={cardio} />)
 
-    expect(metrics()).toEqual(['Distance', 'Time'])
+    expect(metrics()).toEqual(['Distance', 'Time', 'Pace'])
+  })
+
+  // Pace needs one unambiguous speed per set, which only the exact
+  // distance × time pair has.
+  test('keeps pace from exercises with any other measure', () => {
+    const swim = { metrics: [ExerciseMetric.DISTANCE, ExerciseMetric.TIME, ExerciseMetric.REPS] }
+    renderWithProviders(<ExerciseChart sets={twoDays} exercise={swim} />)
+
+    expect(metrics()).not.toContain('Pace')
   })
 
   test('leads with the estimated 1RM and its latest value', () => {
@@ -98,6 +107,54 @@ describe('ExerciseChart', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Time' }))
 
     expect(screen.getByText('30 min')).toBeInTheDocument()
+  })
+
+  // A run is its own result, so the cardio measures plot every set rather
+  // than collapsing a day of intervals into its best one.
+  test('plots every set of a cardio measure, even within one day', () => {
+    const intervals = [
+      set('2026-08-14T08:00:00Z', { distance: 0.68, durationSeconds: 240 }),
+      set('2026-08-14T08:10:00Z', { distance: 0.74, durationSeconds: 240 }),
+    ]
+    renderWithProviders(<ExerciseChart sets={intervals} exercise={cardio} />)
+
+    expect(values()).toEqual([0.68, 0.74])
+  })
+
+  test('keeps a lift at one point per day', async () => {
+    const sameDay = [
+      set('2026-08-14T08:00:00Z', { weight: 100, reps: 5 }),
+      set('2026-08-14T08:10:00Z', { weight: 80, reps: 5 }),
+      set('2026-08-15T08:00:00Z', { weight: 110, reps: 5 }),
+    ]
+    renderWithProviders(<ExerciseChart sets={sameDay} exercise={lift} />)
+
+    await userEvent.click(screen.getByRole('button', { name: 'kg' }))
+
+    expect(values()).toEqual([100, 110])
+  })
+
+  test('shows a sub-kilometre distance in metres', () => {
+    const intervals = [
+      set('2026-08-14T08:00:00Z', { distance: 0.68, durationSeconds: 240 }),
+      set('2026-08-14T08:10:00Z', { distance: 0.74, durationSeconds: 240 }),
+    ]
+    renderWithProviders(<ExerciseChart sets={intervals} exercise={cardio} />)
+
+    expect(screen.getByText('740 m')).toBeInTheDocument()
+  })
+
+  test('shows pace as minutes per kilometre', async () => {
+    const intervals = [
+      set('2026-08-14T08:00:00Z', { distance: 0.68, durationSeconds: 240 }),
+      set('2026-08-14T08:10:00Z', { distance: 0.74, durationSeconds: 240 }),
+    ]
+    renderWithProviders(<ExerciseChart sets={intervals} exercise={cardio} />)
+
+    await userEvent.click(screen.getByRole('button', { name: 'Pace' }))
+
+    // The latest interval covered 0.74 km in 4 minutes: 5:24 min/km.
+    expect(screen.getByText('5:24 min/km')).toBeInTheDocument()
   })
 
   test('reports the move from the first day to the last', () => {

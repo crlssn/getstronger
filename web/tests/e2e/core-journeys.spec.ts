@@ -117,10 +117,12 @@ test.describe('authenticated journeys', () => {
 
     const picker = page.getByRole('dialog', { name: 'Add exercise' })
     // The options are the buttons that name something; the sheet's own close
-    // and load-more controls carry no name of their own.
+    // and load-more controls carry no name of their own. The seeded cardio
+    // exercise is skipped: the next lines log weight and reps.
     const firstExercise = picker
       .getByRole('button')
       .filter({ has: page.locator('strong') })
+      .filter({ hasNotText: 'Cardio' })
       .first()
     const exerciseName = (await firstExercise.locator('strong').innerText()).trim()
     await firstExercise.click()

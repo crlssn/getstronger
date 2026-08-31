@@ -19,8 +19,14 @@ import { ExerciseMetric } from '@/proto/api/v1/shared_pb'
 import { selectTheme, useLocaleStore } from '@/stores/locale'
 import { borderColor, chartFillColor, inkColor, subtleColor, surfaceColor } from '@/ui/chartTokens'
 import { AppSegmented } from '@/ui/components/AppSegmented'
-import { exerciseMetrics, formatDurationDisplay } from '@/utils/exerciseMeasurements'
-import { trendByDay, trendChange } from '@/utils/exerciseTrend'
+import {
+  exerciseMetrics,
+  formatDistanceDisplay,
+  formatDurationDisplay,
+  formatPaceDisplay,
+  isDistanceTimeExercise,
+} from '@/utils/exerciseMeasurements'
+import { trendByDay, trendBySet, trendChange } from '@/utils/exerciseTrend'
 import { formatNumber } from '@/utils/numbers'
 import { usePrefersReducedMotion } from '@/utils/usePrefersReducedMotion'
 import styles from './ExerciseChart.module.css'
@@ -57,6 +63,11 @@ export const ExerciseChart = ({ sets, exercise }: Props) => {
     ...(selected.includes(ExerciseMetric.TIME)
       ? [{ key: 'durationSeconds' as const, label: t('common.time') }]
       : []),
+    // Pace only has one unambiguous speed per set on the exact distance × time
+    // pair, mirroring the pace column on logged sets.
+    ...(isDistanceTimeExercise(exercise)
+      ? [{ key: 'pace' as const, label: t('common.pace') }]
+      : []),
     ...(hasWeightAndReps
       ? [{ key: 'volume' as const, label: t('exercise.chart.volumeShort') }]
       : []),
@@ -69,8 +80,9 @@ export const ExerciseChart = ({ sets, exercise }: Props) => {
     weight: { heading: t('exercise.chart.workingWeight'), unit: t('common.kg') },
     volume: { heading: t('exercise.chart.dailyVolume'), unit: t('common.kg') },
     reps: { heading: t('exercise.chart.mostReps'), unit: t('common.reps').toLocaleLowerCase() },
-    distance: { heading: t('exercise.chart.longestDistance'), unit: 'km' },
-    durationSeconds: { heading: t('exercise.chart.longestTime'), unit: '' },
+    distance: { heading: t('common.distance'), unit: '' },
+    durationSeconds: { heading: t('common.time'), unit: '' },
+    pace: { heading: t('common.pace'), unit: '' },
   }
 
   const stillness = usePrefersReducedMotion()
@@ -78,13 +90,30 @@ export const ExerciseChart = ({ sets, exercise }: Props) => {
   // whichever palette is on the root element by then.
   useLocaleStore(selectTheme)
   const days = useMemo(() => trendByDay(sets), [sets])
-  const values = days.map((day) => day[metric])
+  const points = useMemo(() => trendBySet(sets), [sets])
+  // A run is its own result, so the cardio measures plot every set; the
+  // strength ones keep answering "how strong was I that day" with its best.
+  const perSet = metric === 'distance' || metric === 'durationSeconds' || metric === 'pace'
+  // A set that never recorded the plotted measure would drag the line to
+  // zero, so only the sets that did are plotted.
+  const series = perSet ? points.filter((point) => point[metric] > 0) : days
+  const values = series.map((point) => point[metric])
   const latest = values[values.length - 1] ?? 0
 
-  const formattedLatest =
-    metric === 'durationSeconds'
-      ? formatDurationDisplay(latest)
-      : `${formatNumber(latest)} ${details[metric].unit}`.trim()
+  const formatValue = (value: number) => {
+    switch (metric) {
+      case 'durationSeconds':
+        return formatDurationDisplay(value)
+      case 'distance':
+        return formatDistanceDisplay(value)
+      case 'pace':
+        return formatPaceDisplay(value)
+      default:
+        return `${formatNumber(value)} ${details[metric].unit}`
+    }
+  }
+
+  const formattedLatest = formatValue(latest)
 
   const percentage = trendChange(values)
   const change =
@@ -103,6 +132,17 @@ export const ExerciseChart = ({ sets, exercise }: Props) => {
       // The headline above the plot carries the latest value and its unit, so
       // the y axis says nothing: one baseline hairline is all the scaffolding.
       x: {
+        // Several sets can share a day, and a day printed twice reads as a
+        // mistake: only a label's first point keeps its tick.
+        afterBuildTicks: (axis) => {
+          const seen = new Set<string>()
+          axis.ticks = axis.ticks.filter((tick) => {
+            const label = axis.getLabelForValue(tick.value)
+            if (seen.has(label)) return false
+            seen.add(label)
+            return true
+          })
+        },
         border: { color: borderColor() },
         grid: { display: false },
         ticks: { color: subtleColor(), maxRotation: 0, maxTicksLimit: 6 },
@@ -115,7 +155,16 @@ export const ExerciseChart = ({ sets, exercise }: Props) => {
         title: { display: false },
       },
     },
-    plugins: { legend: { display: false } },
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        callbacks: {
+          // With no y axis to read against, the tooltip formats the value the
+          // same way as the headline.
+          label: (item) => `${details[metric].heading}: ${formatValue(item.parsed.y ?? 0)}`,
+        },
+      },
+    },
   }
 
   return (
@@ -137,11 +186,11 @@ export const ExerciseChart = ({ sets, exercise }: Props) => {
 
       {/* One point is not a trend, so it says what it is waiting for instead of
           drawing a line through a single dot. */}
-      {days.length > 1 ? (
+      {series.length > 1 ? (
         <div className={styles.chartFrame}>
           <Line
             data={{
-              labels: days.map((day) => day.label),
+              labels: series.map((point) => point.label),
               datasets: [
                 {
                   backgroundColor: chartFillColor(),
@@ -171,10 +220,12 @@ export const ExerciseChart = ({ sets, exercise }: Props) => {
         <div className={styles.firstResult} role="status">
           <span aria-hidden="true" />
           <strong>
-            {days.length ? t('exercise.chart.firstResult') : t('exercise.chart.noResults')}
+            {series.length ? t('exercise.chart.firstResult') : t('exercise.chart.noResults')}
           </strong>
           <p>
-            {days.length ? t('exercise.chart.firstResultBody') : t('exercise.chart.noResultsBody')}
+            {series.length
+              ? t('exercise.chart.firstResultBody')
+              : t('exercise.chart.noResultsBody')}
           </p>
         </div>
       )}

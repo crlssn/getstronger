@@ -45,7 +45,9 @@ const planName = 'Screenshot Plan'
 const pickExercise = async (page: Page, optionIndex = 0, groupIndex = 0) => {
   await page.getByRole('button', { name: 'Add exercise' }).nth(groupIndex).click()
   const sheet = page.getByRole('dialog')
-  const option = pickerOptions(page, sheet).nth(optionIndex)
+  // The flows log weight and reps, so the seeded cardio exercise — whose set
+  // inputs are distance and time — must never be the one picked.
+  const option = pickerOptions(page, sheet).filter({ hasNotText: 'Cardio' }).nth(optionIndex)
   // The session labels its set inputs after the exercise, so what was picked
   // here is what a step training it has to ask for.
   const name = (await option.locator('strong').innerText()).trim()
@@ -384,7 +386,9 @@ export const flows: Flow[] = [
           await page.goto('/workouts/quick')
           await page.getByRole('button', { name: 'Choose exercise' }).click()
           const picker = page.getByRole('dialog', { name: 'Add exercise' })
-          const option = pickerOptions(page, picker).first()
+          // Cardio is skipped for the same reason pickExercise skips it: the
+          // next step logs weight and reps.
+          const option = pickerOptions(page, picker).filter({ hasNotText: 'Cardio' }).first()
           // The set inputs are labelled after the exercise, so the name chosen
           // here is what the next step has to ask for.
           chosenExercise = (await option.locator('strong').innerText()).trim()

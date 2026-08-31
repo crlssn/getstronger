@@ -23,8 +23,8 @@ import { CardWorkoutExercise } from '@/ui/features/CardWorkoutExercise'
 import { AppInlineError } from '@/ui/components/AppInlineError'
 import { DropdownButton } from '@/ui/components/DropdownButton'
 import { handle, initials } from '@/utils/names'
-import { convertDistance, distanceUnitLabel } from '@/utils/distanceUnits'
-import { formatDurationDisplay } from '@/utils/exerciseMeasurements'
+import { convertDistance, distanceUnitLabel, normalizeDistanceUnit } from '@/utils/distanceUnits'
+import { formatDistanceDisplay, formatDurationDisplay } from '@/utils/exerciseMeasurements'
 import { formatNumber } from '@/utils/numbers'
 import { usePreferencesStore } from '@/stores/preferences'
 import { groupLetter } from '@/utils/routineGroups'
@@ -169,7 +169,10 @@ export const CardWorkout = ({ workout, compact }: Props) => {
       {totalDistanceKm > 0 &&
         metric(
           t('common.distance'),
-          `${formatNumber(convertDistance(totalDistanceKm, DistanceUnit.KILOMETERS, preferredDistanceUnit), 2)} ${distanceUnitLabel(preferredDistanceUnit)}`,
+          // Kilometres switch to metres below one; miles have no such sub-unit.
+          normalizeDistanceUnit(preferredDistanceUnit) === DistanceUnit.KILOMETERS
+            ? formatDistanceDisplay(totalDistanceKm)
+            : `${formatNumber(convertDistance(totalDistanceKm, DistanceUnit.KILOMETERS, preferredDistanceUnit), 2)} ${distanceUnitLabel(preferredDistanceUnit)}`,
         )}
       {totalSetSeconds > 0 && metric(t('common.time'), formatDurationDisplay(totalSetSeconds))}
       {metric(t('common.duration'), `${durationMinutes} ${t('common.min')}`)}

@@ -334,9 +334,14 @@ const addRoutineExercise = async (
   const sheet = page.getByRole('dialog')
 
   if (name) await sheet.getByLabel('Search exercises').fill(name)
+  // A blind pick feeds callers that log weight and reps, so the seeded cardio
+  // exercise — whose set inputs are distance and time — stays out of it.
   const option = name
     ? sheet.getByRole('button').filter({ hasText: name })
-    : sheet.getByRole('button').filter({ has: page.locator('strong') })
+    : sheet
+        .getByRole('button')
+        .filter({ has: page.locator('strong') })
+        .filter({ hasNotText: 'Cardio' })
 
   const chosen = option.first()
   const chosenName = (await chosen.locator('strong').innerText()).trim()

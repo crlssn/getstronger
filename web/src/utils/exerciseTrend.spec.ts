@@ -2,8 +2,8 @@ import { create } from '@bufbuild/protobuf'
 import { timestampFromDate } from '@bufbuild/protobuf/wkt'
 import { describe, expect, test } from 'vitest'
 
-import { SetSchema, WeightUnit } from '@/proto/api/v1/shared_pb'
-import { downSample, estimateOneRepMax, trendByDay, trendChange } from './exerciseTrend'
+import { DistanceUnit, SetSchema, WeightUnit } from '@/proto/api/v1/shared_pb'
+import { downSample, estimateOneRepMax, trendByDay, trendBySet, trendChange } from './exerciseTrend'
 
 // Spelled out rather than spread: `create` also accepts a built Set, and a
 // spread of a partial init matches that overload instead.
@@ -11,6 +11,9 @@ interface SetFields {
   weight?: number
   reps?: number
   weightUnit?: WeightUnit
+  distance?: number
+  durationSeconds?: number
+  distanceUnit?: DistanceUnit
 }
 
 const set = (createdAt: string | undefined, fields: SetFields = {}) =>
@@ -18,6 +21,9 @@ const set = (createdAt: string | undefined, fields: SetFields = {}) =>
     weight: fields.weight,
     reps: fields.reps,
     weightUnit: fields.weightUnit,
+    distance: fields.distance,
+    durationSeconds: fields.durationSeconds,
+    distanceUnit: fields.distanceUnit,
     metadata: createdAt ? { createdAt: timestampFromDate(new Date(createdAt)) } : undefined,
   })
 
@@ -77,6 +83,53 @@ describe('trendByDay', () => {
 
   test('ignores a set with no date to plot it against', () => {
     expect(trendByDay([set(undefined, { weight: 100, reps: 5 })])).toEqual([])
+  })
+})
+
+describe('trendBySet', () => {
+  test('keeps every set as its own point, oldest first', () => {
+    const points = trendBySet([
+      set('2026-08-14T09:00:00Z', { distance: 0.74, durationSeconds: 240 }),
+      set('2026-08-14T08:00:00Z', { distance: 0.68, durationSeconds: 240 }),
+      set('2026-08-13T08:00:00Z', { distance: 0.6, durationSeconds: 235 }),
+    ])
+
+    expect(points.map((point) => point.distance)).toEqual([0.6, 0.68, 0.74])
+    expect(points.map((point) => point.durationSeconds)).toEqual([235, 240, 240])
+  })
+
+  test('derives each set its pace in seconds per kilometre', () => {
+    const [point] = trendBySet([
+      set('2026-08-14T08:00:00Z', { distance: 0.8, durationSeconds: 240 }),
+    ])
+
+    expect(point?.pace).toBeCloseTo(300)
+  })
+
+  test('compares paces in one unit', () => {
+    const [point] = trendBySet([
+      set('2026-08-14T08:00:00Z', {
+        distance: 1,
+        durationSeconds: 483,
+        distanceUnit: DistanceUnit.MILES,
+      }),
+    ])
+
+    // 483 seconds over a mile is almost exactly 5:00 min/km.
+    expect(point?.pace).toBeCloseTo(300, 0)
+  })
+
+  test('leaves the pace at zero without both halves of it', () => {
+    const points = trendBySet([
+      set('2026-08-14T08:00:00Z', { distance: 0.8 }),
+      set('2026-08-14T09:00:00Z', { durationSeconds: 240 }),
+    ])
+
+    expect(points.map((point) => point.pace)).toEqual([0, 0])
+  })
+
+  test('ignores a set with no date to plot it against', () => {
+    expect(trendBySet([set(undefined, { distance: 0.8, durationSeconds: 240 })])).toEqual([])
   })
 })
 

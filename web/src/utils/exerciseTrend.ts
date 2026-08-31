@@ -7,13 +7,18 @@ import { distanceInKilometers } from '@/utils/distanceUnits'
 import { weightInKilograms } from '@/utils/weightUnits'
 
 /** What the trend chart can plot; which of them apply is up to the exercise. */
-export type TrendMetric = 'oneRm' | 'weight' | 'volume' | 'reps' | 'distance' | 'durationSeconds'
+export type TrendMetric =
+  'oneRm' | 'weight' | 'volume' | 'reps' | 'distance' | 'durationSeconds' | 'pace'
 
-export type TrendDay = { label: string; timestamp: number } & Record<TrendMetric, number>
+export type TrendPoint = { label: string; timestamp: number } & Record<TrendMetric, number>
 
 /** Epley, which is what a "estimated 1RM" means everywhere else in the app. */
 export const estimateOneRepMax = (weight: number, reps: number) =>
   reps === 1 ? weight : weight * (1 + reps / 30)
+
+/** Seconds per kilometre, or zero for a set missing either half of the ratio. */
+const paceOf = (distanceKilometers: number, durationSeconds: number) =>
+  distanceKilometers > 0 && durationSeconds > 0 ? durationSeconds / distanceKilometers : 0
 
 /**
  * One point per calendar day, oldest first.
@@ -23,8 +28,8 @@ export const estimateOneRepMax = (weight: number, reps: number) =>
  * Weights and distances are converted first: sets logged years apart may have
  * been recorded under different unit preferences.
  */
-export const trendByDay = (sets: readonly Set[]): TrendDay[] => {
-  const days = new Map<string, TrendDay>()
+export const trendByDay = (sets: readonly Set[]): TrendPoint[] => {
+  const days = new Map<string, TrendPoint>()
 
   for (const set of sets) {
     const createdAt = set.metadata?.createdAt
@@ -45,20 +50,58 @@ export const trendByDay = (sets: readonly Set[]): TrendDay[] => {
       reps: 0,
       distance: 0,
       durationSeconds: 0,
+      pace: 0,
     }
 
     const weight = weightInKilograms(set.weight, set.weightUnit)
+    const distance = distanceInKilometers(set.distance, set.distanceUnit)
     day.oneRm = Math.max(day.oneRm, estimateOneRepMax(weight, set.reps))
     day.weight = Math.max(day.weight, weight)
     day.volume += weight * set.reps
     day.reps = Math.max(day.reps, set.reps)
-    day.distance = Math.max(day.distance, distanceInKilometers(set.distance, set.distanceUnit))
+    day.distance = Math.max(day.distance, distance)
     day.durationSeconds = Math.max(day.durationSeconds, set.durationSeconds)
+    // The day's best pace is its lowest: fewer seconds per kilometre is faster.
+    const pace = paceOf(distance, set.durationSeconds)
+    if (pace) day.pace = day.pace ? Math.min(day.pace, pace) : pace
 
     days.set(key, day)
   }
 
   return [...days.values()].sort((first, second) => first.timestamp - second.timestamp)
+}
+
+/**
+ * One point per set, oldest first — for the measures where each set is a
+ * result of its own, the way each run interval is, rather than an attempt at
+ * a daily best. Units are converted exactly as in trendByDay.
+ */
+export const trendBySet = (sets: readonly Set[]): TrendPoint[] => {
+  const points: TrendPoint[] = []
+
+  for (const set of sets) {
+    const createdAt = set.metadata?.createdAt
+    if (!createdAt) continue
+
+    const date = DateTime.fromSeconds(Number(createdAt.seconds))
+    if (!date.isValid) continue
+
+    const weight = weightInKilograms(set.weight, set.weightUnit)
+    const distance = distanceInKilometers(set.distance, set.distanceUnit)
+    points.push({
+      label: date.setLocale(dateLocale()).toFormat('d LLL'),
+      timestamp: date.toMillis(),
+      oneRm: estimateOneRepMax(weight, set.reps),
+      weight,
+      volume: weight * set.reps,
+      reps: set.reps,
+      distance,
+      durationSeconds: set.durationSeconds,
+      pace: paceOf(distance, set.durationSeconds),
+    })
+  }
+
+  return points.sort((first, second) => first.timestamp - second.timestamp)
 }
 
 /** The whole-percent change from the first day plotted to the last. */

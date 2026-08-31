@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import { DistanceUnit, ExerciseMetric } from '@/proto/api/v1/shared_pb'
 import {
+  formatDistanceDisplay,
   formatDurationDisplay,
   formatExerciseSet,
   formatMeasurementDuration,
+  formatPaceDisplay,
   formatSetPace,
   isDistanceTimeExercise,
 } from '@/utils/exerciseMeasurements'
@@ -25,6 +27,25 @@ describe('formatDurationDisplay', () => {
   it('drops the zero part', () => {
     expect(formatDurationDisplay(1800)).toBe('30 min')
     expect(formatDurationDisplay(45)).toBe('45 sec')
+  })
+})
+
+describe('formatDistanceDisplay', () => {
+  it('shows a sub-kilometre distance in metres', () => {
+    expect(formatDistanceDisplay(0.744)).toBe('744 m')
+    expect(formatDistanceDisplay(0)).toBe('0 m')
+  })
+
+  it('keeps kilometres from one up', () => {
+    expect(formatDistanceDisplay(1)).toBe('1 km')
+    expect(formatDistanceDisplay(5.25)).toBe('5.25 km')
+  })
+})
+
+describe('formatPaceDisplay', () => {
+  it('writes seconds per kilometre as m:ss min/km', () => {
+    expect(formatPaceDisplay(300)).toBe('5:00 min/km')
+    expect(formatPaceDisplay(324.3)).toBe('5:24 min/km')
   })
 })
 
@@ -76,6 +97,24 @@ describe('formatExerciseSet', () => {
         { metrics: [ExerciseMetric.WEIGHT, ExerciseMetric.REPS, ExerciseMetric.DISTANCE] },
       ),
     ).toBe('60 kg × 8 · 1 km')
+  })
+
+  it('shows a sub-kilometre set in metres', () => {
+    expect(
+      formatExerciseSet(
+        { distance: 0.68, durationSeconds: 240, distanceUnit: DistanceUnit.KILOMETERS },
+        distanceTime,
+      ),
+    ).toBe('680 m · 4 min (5:53 min/km)')
+  })
+
+  it('leaves miles alone below one', () => {
+    expect(
+      formatExerciseSet(
+        { distance: 0.5, durationSeconds: 240, distanceUnit: DistanceUnit.MILES },
+        distanceTime,
+      ),
+    ).toBe('0.5 mi · 4 min (8:00 min/mi)')
   })
 
   it('leaves other metric combinations without a pace', () => {
