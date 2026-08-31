@@ -45,7 +45,7 @@ export const localeNames: Record<AppLocale, string> = {
 export const deviceLocale = resolveLocale(browserLanguages)
 
 /** The locale the app is reading in right now. */
-export const currentLocale = (): AppLocale => resolveLocale([i18n.language])
+const currentLocale = (): AppLocale => resolveLocale([i18n.language])
 
 /**
  * The locale dates and numbers are formatted in.
