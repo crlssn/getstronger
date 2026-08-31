@@ -1,6 +1,6 @@
-import { ExerciseMetric, type Exercise, type Set } from '@/proto/api/v1/shared_pb'
+import { DistanceUnit, ExerciseMetric, type Exercise, type Set } from '@/proto/api/v1/shared_pb'
 import { weightUnitLabel } from '@/utils/weightUnits'
-import { distanceUnitLabel } from '@/utils/distanceUnits'
+import { distanceUnitLabel, normalizeDistanceUnit } from '@/utils/distanceUnits'
 import { formatNumber } from '@/utils/numbers'
 import { i18n } from '@/i18n'
 
@@ -82,6 +82,19 @@ export const isDistanceTimeExercise = (exercise?: Pick<Exercise, 'metrics'>) => 
   )
 }
 
+// A stored kilometre value under one reads better in metres: "744 m", where
+// "0.74 km" makes the reader do the conversion.
+export const formatDistanceDisplay = (kilometers: number) =>
+  kilometers < 1 ? `${formatNumber(kilometers * 1000)} m` : `${formatNumber(kilometers, 2)} km`
+
+/** Pace the way runners say it: "5:24 min/km", from seconds per kilometre. */
+export const formatPaceDisplay = (secondsPerKilometer: number) => {
+  const rounded = Math.round(secondsPerKilometer)
+  const minutes = Math.floor(rounded / 60)
+  const seconds = rounded % 60
+  return `${minutes}:${seconds.toString().padStart(2, '0')} min/km`
+}
+
 export const formatSetPace = (set: Partial<Set>): string | undefined => {
   const distance = Number(set.distance ?? 0)
   const seconds = Number(set.durationSeconds ?? 0)
@@ -104,8 +117,15 @@ export const formatExerciseSet = (set: Partial<Set>, exercise?: Pick<Exercise, '
       // says what the count multiplies.
       case 'reps':
         return { field, text: number(value) }
+      // Kilometres switch to metres below one; miles have no such sub-unit.
       case 'distance':
-        return { field, text: `${number(value)} ${distanceUnitLabel(set.distanceUnit)}` }
+        return {
+          field,
+          text:
+            normalizeDistanceUnit(set.distanceUnit) === DistanceUnit.KILOMETERS
+              ? formatDistanceDisplay(value)
+              : `${number(value)} ${distanceUnitLabel(set.distanceUnit)}`,
+        }
       case 'durationSeconds':
         return { field, text: formatDurationDisplay(value) }
     }

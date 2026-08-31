@@ -217,6 +217,27 @@ describe('CardWorkout', () => {
   })
 
   describe('as the full workout', () => {
+    test('totals a sub-kilometre distance in metres', () => {
+      const short = workout({
+        exerciseSets: [
+          {
+            exercise: {
+              id: 'exercise-run',
+              name: 'Run',
+              metrics: [ExerciseMetric.DISTANCE, ExerciseMetric.TIME],
+            },
+            sets: [
+              { id: 'set-1', distance: 0.4, durationSeconds: 150 },
+              { id: 'set-2', distance: 0.45, durationSeconds: 150 },
+            ],
+          },
+        ],
+      })
+      render(<CardWorkout compact={false} workout={short} />)
+
+      expect(screen.getByText('850 m')).toBeInTheDocument()
+    })
+
     test('lists every exercise with its sets', () => {
       render(<CardWorkout compact={false} workout={withSets()} />)
 

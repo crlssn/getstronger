@@ -13,6 +13,7 @@ export type Ids = {
   followeeId?: string
   planId?: string
   routineId?: string
+  runExerciseId?: string
   userId?: string
   workoutId?: string
 }
@@ -214,6 +215,13 @@ export const authenticatedPages: PageEntry[] = [
     name: 'view-exercise',
     route: ({ exerciseId }) => exerciseId && `/exercises/${exerciseId}`,
   },
+  // The trend chart's cardio measures — distance, time, pace — only show on a
+  // distance-and-time exercise, so the seeded Run is photographed by name.
+  {
+    component: 'src/ui/exercises/ViewExercise.tsx',
+    name: 'view-run-exercise',
+    route: ({ runExerciseId }) => runExerciseId && `/exercises/${runExerciseId}`,
+  },
   {
     component: 'src/ui/exercises/UpdateExercise.tsx',
     name: 'edit-exercise',
@@ -280,10 +288,28 @@ export const resolveIds = async (
     return hrefs.map((href) => pattern.exec(href)?.[1]).filter((id) => id !== undefined)
   }
 
+  // The seeded Run is found by its name on the page just visited, so a persona
+  // without it simply skips the cardio trend capture.
+  const runIdOnExercises = async () => {
+    const pattern = new RegExp(`^/exercises/(${uuid})$`)
+    const links = await page.locator('a[href^="/exercises/"]').evaluateAll((anchors) =>
+      anchors.map((anchor) => ({
+        href: anchor.getAttribute('href') ?? '',
+        title: anchor.querySelector('strong')?.textContent ?? '',
+      })),
+    )
+
+    return links
+      .filter((link) => link.title === 'Run')
+      .map((link) => pattern.exec(link.href)?.[1])
+      .find((id) => id !== undefined)
+  }
+
   const [userId] = await idsOn('/profile', 'users')
   const [workoutId] = await idsOn('/workout', 'workouts')
   const [routineId] = await idsOn('/routines', 'routines')
   const [exerciseId] = await idsOn('/exercises', 'exercises')
+  const runExerciseId = await runIdOnExercises()
   const [planId] = await idsOn('/plans', 'plans')
   const followees = userId ? await idsOn(`/users/${userId}/follows`, 'users') : []
 
@@ -292,6 +318,7 @@ export const resolveIds = async (
     followeeId: followees.find((id) => id !== userId),
     planId,
     routineId,
+    runExerciseId,
     userId,
     workoutId,
   }

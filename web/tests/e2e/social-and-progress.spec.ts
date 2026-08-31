@@ -213,6 +213,25 @@ test.describe('account progress', () => {
     await expect(page).toHaveURL(/\/exercises\/[0-9a-f-]+$/)
   })
 
+  test('charts a run in metres and pace, one point per interval @smoke', async ({ page }) => {
+    await page.goto('/exercises')
+    await page
+      .locator('a')
+      .filter({ has: page.getByText('Run', { exact: true }) })
+      .click()
+
+    // Every interval is its own point, so the headline reads the latest set —
+    // 0.72 km — in metres rather than a kilometre value rounded up to "1 km".
+    await expect(page.getByText('720 m', { exact: true })).toBeVisible()
+
+    // 0.72 km in 4 minutes is 5:33 min/km.
+    await page.getByRole('button', { name: 'Pace' }).click()
+    await expect(page.getByText('5:33 min/km', { exact: true })).toBeVisible()
+
+    // The logged sets read sub-kilometre distances in metres too.
+    await expect(page.getByText('720 m · 4 min (5:33 min/km)').first()).toBeVisible()
+  })
+
   test('opens the current user public profile from account settings', async ({ page }) => {
     await page.goto('/profile')
     await page.getByRole('link', { name: /Public profile/ }).click()
