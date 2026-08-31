@@ -42,6 +42,12 @@ test.describe('settings', () => {
 
     await page.goto('/profile')
     await expect(settings(page).getByRole('link', { name: /Units/ })).toContainText('lbs · km')
+
+    // Put the seeded default back: the account is shared with the tests after
+    // this one, and a preference is exactly the kind of state that leaks.
+    await page.goto('/settings/units')
+    await unit.getByRole('button', { name: 'kg', exact: true }).click()
+    await expect(page.getByRole('status')).toContainText('Weight unit updated')
   })
 
   // The one setting that is not on the account: it is kept on the device, so
@@ -70,22 +76,65 @@ test.describe('settings', () => {
   // The details are the one settings screen with a save button, because the
   // two fields are typed rather than picked and half a username is not a
   // choice anybody meant to make.
-  test('changes the account details from the account screen @mutation', async ({ page }) => {
+  test('edits the name from the account screen @mutation', async ({ page }) => {
     await page.goto('/profile')
-    await page.getByRole('link', { name: /Account/ }).click()
+    await expect(page.getByRole('heading', { name: 'Alex Morgan' })).toBeVisible()
+
+    // The card's own action is one way in; the settings row is the other.
+    await page.getByRole('link', { name: /Edit profile/ }).click()
     await expect(page).toHaveURL(/\/settings\/account$/)
 
     // Nothing typed yet, so there is nothing to save.
     await expect(page.getByRole('button', { name: 'Save changes' })).toBeDisabled()
 
-    const name = page.getByLabel('Name', { exact: true })
-    await name.fill('Alex Morgan-Reid')
+    await page.getByRole('textbox', { name: 'Name', exact: true }).fill('Alex Morgan-Reid')
     await page.getByRole('button', { name: 'Save changes' }).click()
     await expect(page.getByRole('status')).toContainText('Profile updated')
 
-    // Saved on the account rather than in the tab that asked for it.
+    // It came back from the backend, not from the draft still in memory.
+    await page.reload()
+    await expect(page.getByRole('textbox', { name: 'Name', exact: true })).toHaveValue(
+      'Alex Morgan-Reid',
+    )
     await page.goto('/profile')
     await expect(page.getByRole('heading', { name: 'Alex Morgan-Reid' })).toBeVisible()
+  })
+
+  test('refuses a username someone else holds @mutation', async ({ page }, testInfo) => {
+    // The taken-username attempt intentionally draws a 4xx from the backend.
+    testInfo.annotations.push(allowRuntimeErrors)
+
+    await page.goto('/settings/account')
+    const username = page.getByRole('textbox', { name: 'Username' })
+    await username.fill('janedoe')
+    await page.getByRole('button', { name: 'Save changes' }).click()
+
+    // Inline in the form, beside the field to correct — never a toast.
+    await expect(page.getByRole('alert')).toContainText('already taken')
+    await expect(page.getByRole('status')).toBeHidden()
+    await expect(username).toHaveValue('janedoe')
+
+    await username.fill('alex.morgan')
+    await page.getByRole('button', { name: 'Save changes' }).click()
+    await expect(page.getByRole('status')).toContainText('Profile updated')
+
+    await page.goto('/profile')
+    await expect(page.getByText('@alex.morgan', { exact: true })).toBeVisible()
+  })
+
+  // One form holds both fields, so one save can change both — and each lands
+  // as its own request.
+  test('edits the name and the handle together @mutation', async ({ page }) => {
+    await page.goto('/settings/account')
+
+    await page.getByRole('textbox', { name: 'Name', exact: true }).fill('Alexandra Morgan')
+    await page.getByRole('textbox', { name: 'Username' }).fill('alexandra')
+    await page.getByRole('button', { name: 'Save changes' }).click()
+    await expect(page.getByRole('status')).toContainText('Profile updated')
+
+    await page.goto('/profile')
+    await expect(page.getByRole('heading', { name: 'Alexandra Morgan' })).toBeVisible()
+    await expect(page.getByText('@alexandra', { exact: true })).toBeVisible()
   })
 
   // A settings row has no save button, so a refused change has to put the
