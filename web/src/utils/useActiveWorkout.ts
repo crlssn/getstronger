@@ -9,7 +9,7 @@ const hasEnteredValue = (value: unknown) =>
 
 // Opening a routine stamps startedAt before anything is logged, so a workout
 // only counts as resumable once it holds real progress.
-export const hasProgress = (workout: Workout) =>
+const hasProgress = (workout: Workout) =>
   Object.values(workout.exerciseSets ?? {}).some((sets) =>
     sets.some(
       (set) =>
@@ -25,7 +25,7 @@ export const hasProgress = (workout: Workout) =>
 type SavedWorkout = [routineId: string, workout: Workout] | undefined
 
 /** The most recently started workout that holds real progress. */
-export const selectSavedWorkout = (workouts: Record<string, Workout>): SavedWorkout =>
+const selectSavedWorkout = (workouts: Record<string, Workout>): SavedWorkout =>
   Object.entries(workouts)
     .filter(([, workout]) => workout.startedAt && hasProgress(workout))
     .sort(([, a], [, b]) => Date.parse(b.startedAt ?? '') - Date.parse(a.startedAt ?? ''))[0]
@@ -36,7 +36,7 @@ export const selectSavedWorkout = (workouts: Record<string, Workout>): SavedWork
  * A plan travels as a query parameter rather than in the path, so the routine
  * screen knows which plan to advance when the workout is saved.
  */
-export const savedWorkoutHref = (saved: SavedWorkout): string => {
+const savedWorkoutHref = (saved: SavedWorkout): string => {
   const routineId = saved?.[0]
   if (!routineId) return '/workout'
   if (routineId === quickWorkoutRoutineID) return '/workouts/quick'

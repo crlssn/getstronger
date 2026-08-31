@@ -36,12 +36,12 @@ export const measurementsForExercise = (exercise?: Pick<Exercise, 'metrics'>) =>
   return measurementDefinitions.filter(({ metric }) => selected.has(metric))
 }
 
-export const hasMeasurementValue = (set: Partial<Set>, field: MeasurementField) => {
+const hasMeasurementValue = (set: Partial<Set>, field: MeasurementField) => {
   const value = set[field]
   return value !== undefined && value !== null
 }
 
-export const isMeasurementComplete = (set: Partial<Set>, field: MeasurementField) => {
+const isMeasurementComplete = (set: Partial<Set>, field: MeasurementField) => {
   const value = Number(set[field])
   if (!Number.isFinite(value)) return false
   if (field === 'weight') return value >= 0

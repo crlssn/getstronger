@@ -29,7 +29,7 @@ import styles from './SetTable.module.css'
  * "previous" to show and no row in progress, so that column carries the way to
  * take a set out instead.
  */
-export type SetTableMode = 'log' | 'edit'
+type SetTableMode = 'log' | 'edit'
 
 interface Props {
   exercise: Exercise

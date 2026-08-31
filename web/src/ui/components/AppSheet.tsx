@@ -6,7 +6,7 @@ import { useEffect, useId, useRef } from 'react'
 import { cn } from '@/ui/cn'
 import styles from './AppSheet.module.css'
 
-export type SheetActionTone = 'primary' | 'danger' | 'dangerOutline' | 'tertiary'
+type SheetActionTone = 'primary' | 'danger' | 'dangerOutline' | 'tertiary'
 
 interface ActionProps extends Omit<ComponentProps<'button'>, 'className'> {
   tone: SheetActionTone
