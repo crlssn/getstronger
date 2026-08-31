@@ -1,12 +1,10 @@
-# Deploys the database, API, and web app to one of two environments. A merge to
-# `main` reaches beta only; production is promoted by publishing a release, so
-# nothing reaches users without a deliberate act.
+# Deploys the database, API, and web app to one of two environments. Neither is
+# reached by merging: beta is asked for, by labelling a pull request or by a
+# manual run, and production is promoted by publishing a release, so nothing
+# reaches users without a deliberate act.
 name: deploy
 
 on:
-  push:
-    branches:
-      - main
   release:
     types:
       - published
@@ -68,7 +66,7 @@ permissions:
 
 jobs:
   init:
-    if: github.event_name == 'push' || github.event_name == 'release' || github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.label.name == 'deploy:beta' && github.actor == 'crlssn')
+    if: github.event_name == 'release' || github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.label.name == 'deploy:beta' && github.actor == 'crlssn')
     runs-on: ubuntu-latest
     timeout-minutes: 5
 
@@ -77,13 +75,13 @@ jobs:
       # A release and a labelled pull request deploy every component: a release
       # usually spans several merges, and a label is asking to see that branch
       # on beta — neither wants an environment running half of one revision and
-      # half of another. A push deploys by path, and a manual run by its inputs,
-      # which is why these are left empty for it. A label reseeds too: it asks
-      # for that branch on a beta nobody has been poking at.
-      web: ${{ (github.event_name == 'release' || github.event_name == 'pull_request') && 'true' || steps.changes.outputs.web }}
-      server: ${{ (github.event_name == 'release' || github.event_name == 'pull_request') && 'true' || steps.changes.outputs.server }}
-      database: ${{ (github.event_name == 'release' || github.event_name == 'pull_request') && 'true' || steps.changes.outputs.database }}
-      seed: ${{ (github.event_name == 'release' || github.event_name == 'pull_request') && 'true' || steps.changes.outputs.seed }}
+      # half of another. A manual run deploys by its inputs, which is why these
+      # are left empty for it. A label reseeds too: it asks for that branch on a
+      # beta nobody has been poking at.
+      web: ${{ (github.event_name == 'release' || github.event_name == 'pull_request') && 'true' || '' }}
+      server: ${{ (github.event_name == 'release' || github.event_name == 'pull_request') && 'true' || '' }}
+      database: ${{ (github.event_name == 'release' || github.event_name == 'pull_request') && 'true' || '' }}
+      seed: ${{ (github.event_name == 'release' || github.event_name == 'pull_request') && 'true' || '' }}
 
     steps:
       - name: Resolve the target environment
@@ -93,39 +91,6 @@ jobs:
         run: |
           echo "Deploying to ${ENVIRONMENT}"
           echo "environment=${ENVIRONMENT}" >> "$GITHUB_OUTPUT"
-
-      - name: Checkout code
-        if: github.event_name == 'push'
-        uses: actions/checkout@v7
-        with:
-          fetch-depth: 0
-
-      # On push, diff against the last successful push deploy rather than only
-      # the pushed commits, so changes from a failed deploy are retried on the
-      # next push instead of being silently dropped. Pushes only ever deploy to
-      # beta, so this lookup is a beta-only question.
-      - name: Find last successful beta deploy
-        id: last-deploy
-        if: github.event_name == 'push'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          sha="$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/deploy.yml/runs?branch=main&event=push&status=success&per_page=1" \
-            --jq '.workflow_runs[0].head_sha // empty')"
-          echo "Last successful deploy: ${sha:-none}"
-          echo "sha=$sha" >> "$GITHUB_OUTPUT"
-
-      - name: Check for changes
-        id: changes
-        if: github.event_name == 'push'
-        uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
-        with:
-          base: ${{ steps.last-deploy.outputs.sha }}
-          filters: |
-            web: ['web/**']
-            server: ['server/**', 'Dockerfile', '.dockerignore', 'go.mod', 'go.sum', 'mise.toml']
-            database: ['database/**']
-            seed: ['server/testing/factory/**']
 
   database:
     needs: init
@@ -169,12 +134,11 @@ jobs:
             -database "postgresql://${DB_MIGRATION_USER}:${DB_MIGRATION_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=require" \
             -verbose up
 
-  # Beta is a demo environment: a push that changes the seed reseeds it, so it
-  # shows the personas that commit describes rather than the ones the previous
-  # seed wrote. A push that leaves the seed alone leaves beta's data alone —
-  # reseeding is destructive, and an unchanged seed has nothing new to write.
-  # The condition and the environment check confine the truncate to beta, and
-  # the seed refuses any ENV it may not wipe.
+  # Beta is a demo environment, so every beta deploy reseeds it: it shows the
+  # personas that revision describes rather than whatever the last person
+  # testing it left behind. Reseeding is destructive, so the condition and the
+  # environment check confine the truncate to beta, the seed refuses any ENV it
+  # may not wipe, and a manual run can decline it outright.
   seed:
     needs: [init, database]
     runs-on: ubuntu-latest
@@ -184,7 +148,6 @@ jobs:
       needs.init.result == 'success' &&
       (needs.database.result == 'success' || needs.database.result == 'skipped') &&
       needs.init.outputs.environment == 'beta' &&
-      (github.event_name != 'push' || needs.init.outputs.seed == 'true') &&
       (github.event_name != 'workflow_dispatch' || inputs.seed)
     environment: ${{ needs.init.outputs.environment }}
 

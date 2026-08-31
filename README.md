@@ -198,7 +198,7 @@ The `privacy@getstronger.studio` address the policy points at has to receive mai
 
 ## Hosting infrastructure on Scaleway
 
-Infrastructure is provisioned manually in the [Scaleway console](https://console.scaleway.com/) (ClickOps). Each deployed environment — production, and the beta environment every merge to `main` lands on — is one copy of this layout:
+Infrastructure is provisioned manually in the [Scaleway console](https://console.scaleway.com/) (ClickOps). Each deployed environment — production, and the beta environment a pull request can be put on — is one copy of this layout:
 
 - a Serverless Container for the Go API, fed from a Container Registry namespace;
 - a Serverless SQL Database for PostgreSQL;
@@ -341,16 +341,15 @@ The workflow deploys to one of two GitHub Environments, `beta` and `production`,
 
 | Trigger | Environment |
 | --- | --- |
-| Push to `main` | `beta` |
 | Pull request labelled `deploy:beta` | `beta` |
 | Published GitHub release | `production` |
 | **Run workflow** (manual) | `beta` or `production`, chosen by an input |
 
-A merge is therefore never a production deploy: `main` lands on beta, and production is promoted by publishing a release. Concurrency is scoped per environment so the two never queue behind each other.
+Merging deploys nothing. Beta is asked for — a label on the pull request whose branch you want to see there, or a manual run — and production is promoted by publishing a release. Concurrency is scoped per environment so the two never queue behind each other.
 
-Only a push deploys selectively, by the paths that changed since the last successful push deploy. A release and a labelled pull request deploy all three components, since neither wants an environment running half of one revision and half of another. Beta then keeps what the pull request left there until a later push or a manual run replaces it — run the workflow against `main` with all three components to put it back.
+A release and a labelled pull request deploy all three components, since neither wants an environment running half of one revision and half of another; only a manual run picks components, through its inputs. Beta therefore keeps whatever was last put there until something replaces it — run the workflow against `main` with all three components to return it to the released code.
 
-A push that changes `server/testing/factory/` reseeds beta's database, and a labelled pull request always does. Beta is a demo environment: it is meant to show the app's personas rather than whatever the last person testing it left behind. Reseeding is destructive, though, so a push that leaves the seed alone leaves beta's data alone — an unchanged seed writes the same personas back under different random names, at the cost of every account anyone made in the meantime. The seed truncates every table and rewrites it from `server/testing/factory/seed` in one transaction, so a failed seed leaves the previous data in place. Production is never seeded: the job runs only when the resolved environment is `beta`, and the seed refuses any `ENV` it may not wipe. A manual run can skip it with the **Seed** input.
+A beta deploy also reseeds beta's database, unless a manual run declines it with the **Seed** input. Beta is a demo environment: it is meant to show the app's personas rather than whatever the last person testing it left behind. Reseeding is destructive — every account anyone made on beta goes with it. The seed truncates every table and rewrites it from `server/testing/factory/seed` in one transaction, so a failed seed leaves the previous data in place. Production is never seeded: the job runs only when the resolved environment is `beta`, and the seed refuses any `ENV` it may not wipe.
 
 Give the `production` environment a required reviewer under **Settings → Environments → production → Required reviewers**, so the promotion is an approval rather than an accident. Every deploying job names its environment, so a production run pauses before it touches anything.
 
@@ -540,7 +539,7 @@ For every page in that run's `pages.tsv` it publishes three images: the page as 
 
 Anything outside `web/screenshots/` is refused, symlinks included; the baseline is the one exception, and only because the task reaches for it itself — it holds the same seeded photographs, one run older. Each object is uploaded world-readable so GitHub's image proxy can fetch it, and that directory is photographed from the seeded database by construction — the guard is what keeps real data out of a public bucket.
 
-The bucket is not the one the web app is deployed to: `deploy.yml` syncs that one with `--delete`, so a `pr/` prefix in it would disappear on the next merge to `main`. Create it once, and give it a lifecycle rule so old images clean themselves up:
+The bucket is not the one the web app is deployed to: `deploy.yml` syncs that one with `--delete`, so a `pr/` prefix in it would disappear on the next deploy. Create it once, and give it a lifecycle rule so old images clean themselves up:
 
 ```bash
 scw object bucket create getstronger.screenshots region=fr-par
