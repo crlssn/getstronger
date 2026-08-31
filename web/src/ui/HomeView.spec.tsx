@@ -35,6 +35,9 @@ const feedPage = (workouts: { id: string; name: string }[], nextPageToken = new 
 
 const render = () => renderWithProviders(<HomeView />, { route: '/home' })
 
+// The badge after the copy in a picker row, which fills in on the chosen one.
+const tick = (row: HTMLElement) => row.lastElementChild as HTMLElement
+
 // jsdom has no IntersectionObserver. This one reports its target as visible as
 // soon as it is observed, which is what a short feed looks like: the sentinel
 // is on screen, so the next page is asked for straight away.
@@ -227,6 +230,34 @@ describe('HomeView', () => {
       await waitFor(() =>
         expect(screen.queryByText('Change what is up next')).not.toBeInTheDocument(),
       )
+    })
+
+    // The tick beside a row is the only thing in the sheet that says which
+    // routine is already up next. It was styled by a rule reaching for
+    // AppOptionRow's own '.selected' from HomeView's stylesheet, which is
+    // hashed under the other module and so matched nothing: every row wore the
+    // same blank badge.
+    test('ticks the routine that is already up next', async () => {
+      useDashboardStore.setState({
+        dashboard: dashboard({
+          nextRoutine: { id: 'routine-2', name: 'Routine 2', exercises: [{ id: 'e1' }] },
+          // The picker only opens past what the row can hold, so it takes more
+          // routines than the carousel shows.
+          routines: Array.from({ length: 7 }, (_, index) => ({
+            id: `routine-${index + 1}`,
+            name: `Routine ${index + 1}`,
+            exercises: [{ id: 'e1' }],
+          })),
+        }),
+      })
+      render()
+
+      await userEvent.click(await screen.findByRole('button', { name: 'Choose another routine' }))
+
+      const chosen = await screen.findByRole('button', { name: /Routine 2/, pressed: true })
+      const other = screen.getByRole('button', { name: /Routine 1/, pressed: false })
+
+      expect(tick(chosen).className).not.toEqual(tick(other).className)
     })
   })
 

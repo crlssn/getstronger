@@ -225,26 +225,32 @@ export const HomeView = () => {
           onClose={() => setRoutinePickerOpen(false)}
         >
           <div className={styles.routineOptions}>
-            {dashboard?.routines.map((routine) => (
-              <AppOptionRow
-                key={routine.id}
-                leading={
-                  <span className={styles.routineIcon}>
-                    <FireIcon aria-hidden="true" />
-                  </span>
-                }
-                selected={routine.id === nextRoutine?.id}
-                trailing={
-                  <span className={styles.selectionIcon}>
-                    <CheckIcon aria-hidden="true" />
-                  </span>
-                }
-                onClick={() => void selectRoutine(routine.id)}
-              >
-                <strong>{routine.name}</strong>
-                <small>{t('home.exerciseCount', { count: routine.exercises.length })}</small>
-              </AppOptionRow>
-            ))}
+            {dashboard?.routines.map((routine) => {
+              const chosen = routine.id === nextRoutine?.id
+
+              return (
+                <AppOptionRow
+                  key={routine.id}
+                  leading={
+                    <span className={styles.routineIcon}>
+                      <FireIcon aria-hidden="true" />
+                    </span>
+                  }
+                  selected={chosen}
+                  trailing={
+                    <span
+                      className={cn(styles.selectionIcon, chosen && styles.selectionIconSelected)}
+                    >
+                      <CheckIcon aria-hidden="true" />
+                    </span>
+                  }
+                  onClick={() => void selectRoutine(routine.id)}
+                >
+                  <strong>{routine.name}</strong>
+                  <small>{t('home.exerciseCount', { count: routine.exercises.length })}</small>
+                </AppOptionRow>
+              )
+            })}
           </div>
         </AppSheet>
       )}

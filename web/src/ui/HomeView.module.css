@@ -87,6 +87,10 @@
   @apply size-4;
 }
 
-.routineOptions > button.selected .selectionIcon {
+/* On a chosen row the tint below matches the badge's own, so the badge has to
+   invert to stay a badge at all. HomeView cannot select the row's chosen state
+   from here — it is AppOptionRow's own class, hashed under that module — so the
+   caller puts this on the badge itself. */
+.selectionIconSelected {
   @apply bg-ink text-white;
 }
