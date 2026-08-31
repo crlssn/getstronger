@@ -22,6 +22,7 @@ import (
 	"github.com/crlssn/getstronger/server/jwt"
 	"github.com/crlssn/getstronger/server/repo"
 	"github.com/crlssn/getstronger/server/rpc"
+	"github.com/crlssn/getstronger/server/username"
 	"github.com/crlssn/getstronger/server/xcontext"
 )
 
@@ -67,8 +68,36 @@ func (h *authHandler) Signup(ctx context.Context, req *connect.Request[apiv1.Sig
 		return nil, rpc.Error(connect.CodeInvalidArgument, apiv1.Error_ERROR_PASSWORDS_DO_NOT_MATCH)
 	}
 
-	if err = h.repo.NewTx(ctx, func(tx *repo.Repo) error {
-		auth, err := tx.CreateAuth(ctx, req.Msg.GetEmail(), req.Msg.GetPassword())
+	// A reserved name answers as a held one does: whether a name is free and
+	// whether it is ours are not the caller's business to tell apart.
+	if username.IsReserved(req.Msg.GetUsername()) {
+		log.Warn("Username reserved for signup")
+		return nil, rpc.Error(connect.CodeAlreadyExists, apiv1.Error_ERROR_USERNAME_TAKEN)
+	}
+
+	if err = h.createAccount(ctx, req.Msg); err != nil {
+		if errors.Is(err, account.ErrUsernameTaken) {
+			log.Warn("Username already taken")
+			return nil, rpc.Error(connect.CodeAlreadyExists, apiv1.Error_ERROR_USERNAME_TAKEN)
+		}
+
+		log.Error("Sign up user", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
+
+	log.Info("User signed up")
+	return connect.NewResponse(&apiv1.SignupResponse{}), nil
+}
+
+// createAccount opens an account for an already validated signup and sends it
+// a verification link, in one transaction: a signup nobody can be told about
+// leaves no account behind. An address that already has one is not an error,
+// so that the endpoint cannot be used to discover who is registered.
+func (h *authHandler) createAccount(ctx context.Context, msg *apiv1.SignupRequest) error {
+	log := xcontext.MustExtractLogger(ctx)
+
+	if err := h.repo.NewTx(ctx, func(tx *repo.Repo) error {
+		auth, err := tx.CreateAuth(ctx, msg.GetEmail(), msg.GetPassword())
 		if err != nil {
 			if errors.Is(err, account.ErrEmailAlreadyRegistered) {
 				log.Warn("Email already registered")
@@ -80,8 +109,8 @@ func (h *authHandler) Signup(ctx context.Context, req *connect.Request[apiv1.Sig
 
 		user, err := tx.CreateUser(ctx, repo.CreateUserParams{
 			AuthID:   auth.ID.String(),
-			Name:     strings.TrimSpace(req.Msg.GetName()),
-			Username: req.Msg.GetUsername(),
+			Name:     strings.TrimSpace(msg.GetName()),
+			Username: msg.GetUsername(),
 		})
 		if err != nil {
 			return fmt.Errorf("create user: %w", err)
@@ -102,17 +131,10 @@ func (h *authHandler) Signup(ctx context.Context, req *connect.Request[apiv1.Sig
 
 		return nil
 	}); err != nil {
-		if errors.Is(err, account.ErrUsernameTaken) {
-			log.Warn("Username already taken")
-			return nil, rpc.Error(connect.CodeAlreadyExists, apiv1.Error_ERROR_USERNAME_TAKEN)
-		}
-
-		log.Error("Sign up user", zap.Error(err))
-		return nil, connect.NewError(connect.CodeInternal, nil)
+		return fmt.Errorf("signup transaction: %w", err)
 	}
 
-	log.Info("User signed up")
-	return connect.NewResponse(&apiv1.SignupResponse{}), nil
+	return nil
 }
 
 var ErrInvalidCredentials = errors.New("invalid credentials")

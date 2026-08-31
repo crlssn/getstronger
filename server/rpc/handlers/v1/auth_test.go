@@ -159,6 +159,44 @@ func (s *authSuite) TestSignup() {
 			},
 		},
 		{
+			// A reserved name answers exactly as a held one does, so signup
+			// cannot be used to map out which names the app keeps for itself.
+			name: "err_username_reserved_brand",
+			req: &connect.Request[v1.SignupRequest]{
+				Msg: &v1.SignupRequest{
+					Email:                gofakeit.Email(),
+					Password:             "password",
+					PasswordConfirmation: "password",
+					Name:                 gofakeit.Name(),
+					Username:             "xX.Get.Stronger.Xx",
+				},
+			},
+			init: func(_ test) {
+				s.mocks.email.EXPECT().SendVerification(gomock.Any(), gomock.Any()).Times(0)
+			},
+			expected: expected{
+				err: rpc.Error(connect.CodeAlreadyExists, v1.Error_ERROR_USERNAME_TAKEN),
+			},
+		},
+		{
+			name: "err_username_reserved_route",
+			req: &connect.Request[v1.SignupRequest]{
+				Msg: &v1.SignupRequest{
+					Email:                gofakeit.Email(),
+					Password:             "password",
+					PasswordConfirmation: "password",
+					Name:                 gofakeit.Name(),
+					Username:             "Verify_Email",
+				},
+			},
+			init: func(_ test) {
+				s.mocks.email.EXPECT().SendVerification(gomock.Any(), gomock.Any()).Times(0)
+			},
+			expected: expected{
+				err: rpc.Error(connect.CodeAlreadyExists, v1.Error_ERROR_USERNAME_TAKEN),
+			},
+		},
+		{
 			name: "err_password_mismatch",
 			req: &connect.Request[v1.SignupRequest]{
 				Msg: &v1.SignupRequest{
