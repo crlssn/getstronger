@@ -101,4 +101,27 @@ describe('the colour roles', () => {
       'shell/AppNavBottom.module.css',
     ])
   })
+
+  // The ink family inverts in the dark palette, so a raw white or black is a
+  // colour that means something in one palette and disappears in the other.
+  // Text on an ink fill is text-inverse; a card is surface.
+  test('no module spends a raw white or black', () => {
+    expect(spenders('white')).toEqual([])
+    expect(spenders('black')).toEqual([])
+  })
+
+  // Every role has a value in both palettes: a token the dark block misses
+  // falls through to its light value and hides on the dark canvas.
+  test('the dark palette redefines every colour the light one names', () => {
+    const theme = readFileSync(join(uiRoot, '..', 'assets', 'theme.css'), 'utf8')
+    const names = (block: string) =>
+      [...block.matchAll(/--color-[\w-]+(?=:)/g)].map(([name]) => name).sort()
+
+    const [, light] = /@theme static \{([^}]+)\}/.exec(theme) ?? []
+    const [, dark] = /:root\[data-theme='dark'\] \{([^}]+)\}/.exec(theme) ?? []
+
+    expect(light).toBeDefined()
+    expect(dark).toBeDefined()
+    expect(names(dark ?? '')).toEqual(names(light ?? ''))
+  })
 })

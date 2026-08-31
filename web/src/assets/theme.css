@@ -46,6 +46,13 @@
   /* The handoff's ink-muted (#8a877e) reads 3.6:1 on white and fails AA for
    * meta text, so the subtle step keeps this darker warm grey instead. */
   --color-text-subtle: #6e6b65;
+  /* Text sitting on an ink or inverse fill. Never a raw white: the ink family
+   * inverts in the dark palette, and a hard-coded white on it disappears. */
+  --color-text-inverse: #ffffff;
+  /* The one quieter step on those fills — the rest banner's REST label, a
+   * carousel's meta line. An alpha rather than a grey so it keeps the fill's
+   * own warmth underneath. */
+  --color-text-inverse-muted: rgb(255 255 255 / 0.62);
 
   /* State. One green where there were three, a neutral informational step,
    * and a badge colour that is its own value rather than danger's. There is
@@ -79,7 +86,9 @@
   --color-record: #8a6d1f;
   --color-record-surface: #f6ecd0;
   --color-record-border: #e8d0a2;
-  --color-record-strong: #8b5f18;
+  /* One step darker than the handoff's #8b5f18, which reads 3.73:1 on the
+   * record border — the darkest thing this gold is read on — and fails AA. */
+  --color-record-strong: #7a5314;
 
   /* Control geometry. --size-control-sm is a floor, not a step: nothing
    * tappable goes below it. */
@@ -135,4 +144,63 @@
   --text-eyebrow: 0.75rem; /* 12 */
   --text-eyebrow--line-height: 1.3;
   --text-eyebrow--letter-spacing: 0.16em;
+}
+
+/* The dark palette: the same roles, re-valued. The ink family inverts — ink is
+ * still the identity and the strongest thing on the page, it is simply light
+ * on dark paper now — and the state colours step up in lightness so they keep
+ * reading against the darker surfaces they sit on.
+ *
+ * Plain CSS rather than a second @theme: the utilities already read these
+ * custom properties, so overriding them under data-theme re-colours every one.
+ * `stores/locale.ts` owns the attribute; colourContrast.spec.ts holds every
+ * pair here to WCAG AA, so a value is changed there first, not by eye. */
+:root[data-theme='dark'] {
+  --color-ink: #e8e6e0;
+  --color-ink-strong: #f7f6f2;
+  --color-ink-muted: #a29d90;
+  --color-ink-tint: #34322c;
+  --color-ink-surface: #2a2823;
+  --color-ink-border: #3b382f;
+
+  /* The canvas darkens past the cards, so elevation still reads as lightness
+   * even where a shadow barely shows. */
+  --color-canvas: #161512;
+  --color-surface: #211f1c;
+  --color-surface-sunken: #1b1a17;
+  --color-surface-inverse: #eceae4;
+  --color-surface-track: #343129;
+  --color-border: #2c2a25;
+  --color-border-strong: #3b382f;
+
+  --color-text: #ece9e2;
+  --color-text-muted: #b3aea2;
+  --color-text-subtle: #a8a397;
+  --color-text-inverse: #1a1917;
+  --color-text-inverse-muted: rgb(12 11 10 / 0.72);
+
+  --color-success: #7cc9a4;
+  --color-success-strong: #8ed3b1;
+  --color-success-surface: #20312a;
+  --color-danger: #e8887f;
+  --color-danger-strong: #eda49d;
+  --color-danger-surface: #392220;
+  --color-danger-outline: #6b3a36;
+  --color-badge: #e8887f;
+  --color-info: #b5b0a5;
+  --color-info-surface: #26241f;
+  --color-chart-bar: #38352e;
+  --color-chart-fill: rgb(232 230 224 / 0.08);
+
+  --color-record: #d0ac52;
+  --color-record-surface: #332b17;
+  --color-record-border: #57482a;
+  --color-record-strong: #dcbd6d;
+
+  /* Ink-cast shadows vanish on dark paper; these are cast in true black and
+   * carry more weight, since they are most of what still separates a raised
+   * thing from the page. */
+  --shadow-card: 0 1px 3px rgb(0 0 0 / 0.4), 0 8px 24px rgb(0 0 0 / 0.35);
+  --shadow-raised: 0 4px 12px rgb(0 0 0 / 0.5);
+  --shadow-overlay: 0 16px 40px rgb(0 0 0 / 0.65);
 }

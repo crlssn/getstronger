@@ -6,6 +6,7 @@ import { useMemo } from 'react'
 import { Bar } from 'react-chartjs-2'
 import { useTranslation } from 'react-i18next'
 
+import { selectTheme, useLocaleStore } from '@/stores/locale'
 import { borderColor, chartBarColor, inkColor, subtleColor } from '@/ui/chartTokens'
 import { latestValueLabel } from '@/ui/features/latestValueLabel'
 import { volumeSeries } from '@/utils/dailyVolume'
@@ -35,6 +36,9 @@ export const WorkoutChart = ({ workouts }: Props) => {
 
   const { granularity, points } = useMemo(() => volumeSeries(workouts), [workouts])
   const stillness = usePrefersReducedMotion()
+  // Subscribed for the re-render alone: the token reads below answer in
+  // whichever palette is on the root element by then.
+  useLocaleStore(selectTheme)
 
   if (points.length === 0) return null
 
@@ -69,7 +73,7 @@ export const WorkoutChart = ({ workouts }: Props) => {
       // axis says nothing: no labels, no title, no gridlines. One baseline
       // hairline under the bars is all the scaffolding the trend needs.
       x: {
-        border: { color: borderColor },
+        border: { color: borderColor() },
         grid: { display: false },
         ticks: {
           display: true,
@@ -77,7 +81,7 @@ export const WorkoutChart = ({ workouts }: Props) => {
           // Horizontal always — a rotated label is unreadable at a glance —
           // and the current period reads in ink where the rest stay subtle.
           maxRotation: 0,
-          color: (context) => (context.index === points.length - 1 ? inkColor : subtleColor),
+          color: (context) => (context.index === points.length - 1 ? inkColor() : subtleColor()),
           font: (context) => (context.index === points.length - 1 ? { weight: 700 } : {}),
         },
         title: { display: false },
@@ -103,7 +107,7 @@ export const WorkoutChart = ({ workouts }: Props) => {
         // ink and the rest step back to the pale neutral. Green was saying
         // "this week" here as well as four other things.
         backgroundColor: points.map((_, index) =>
-          index === points.length - 1 ? inkColor : chartBarColor,
+          index === points.length - 1 ? inkColor() : chartBarColor(),
         ),
         borderRadius: 8,
         data: points.map((point) => point.volume),

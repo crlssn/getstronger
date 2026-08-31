@@ -19,7 +19,7 @@
 }
 
 .emptyAction {
-  @apply inline-flex min-h-(--size-control-sm) items-center gap-2 rounded-control bg-ink px-4 text-sm font-semibold text-white transition hover:brightness-125;
+  @apply inline-flex min-h-(--size-control-sm) items-center gap-2 rounded-control bg-ink px-4 text-sm font-semibold text-text-inverse transition hover:brightness-125;
 }
 
 .emptyAction svg {

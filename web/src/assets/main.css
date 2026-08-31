@@ -1,8 +1,18 @@
 @import 'base.css';
 
+/* The palette rides on data-theme, which stores/locale.ts resolves — System
+   included — so the stylesheet never asks the device itself. color-scheme
+   follows it, keeping scrollbars and native form controls in the palette. */
+html {
+  color-scheme: light;
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+}
+
 html,
 body {
-  color-scheme: light;
   font-family: var(--font-sans);
   touch-action: manipulation;
   @apply min-h-full bg-canvas text-text antialiased;

@@ -92,5 +92,5 @@
    from here — it is AppOptionRow's own class, hashed under that module — so the
    caller puts this on the badge itself. */
 .selectionIconSelected {
-  @apply bg-ink text-white;
+  @apply bg-ink text-text-inverse;
 }

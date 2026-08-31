@@ -23,9 +23,9 @@
 }
 
 .chip.expanded .pill {
-  @apply bg-ink text-white;
+  @apply bg-ink text-text-inverse;
 }
 
 .chip.expanded:hover .pill {
-  @apply bg-ink-strong text-white;
+  @apply bg-ink-strong text-text-inverse;
 }

@@ -16,6 +16,7 @@ import { Line } from 'react-chartjs-2'
 import { useTranslation } from 'react-i18next'
 
 import { ExerciseMetric } from '@/proto/api/v1/shared_pb'
+import { selectTheme, useLocaleStore } from '@/stores/locale'
 import { borderColor, chartFillColor, inkColor, subtleColor, surfaceColor } from '@/ui/chartTokens'
 import { AppSegmented } from '@/ui/components/AppSegmented'
 import { exerciseMetrics, formatDurationDisplay } from '@/utils/exerciseMeasurements'
@@ -73,6 +74,9 @@ export const ExerciseChart = ({ sets, exercise }: Props) => {
   }
 
   const stillness = usePrefersReducedMotion()
+  // Subscribed for the re-render alone: the token reads below answer in
+  // whichever palette is on the root element by then.
+  useLocaleStore(selectTheme)
   const days = useMemo(() => trendByDay(sets), [sets])
   const values = days.map((day) => day[metric])
   const latest = values[values.length - 1] ?? 0
@@ -99,9 +103,9 @@ export const ExerciseChart = ({ sets, exercise }: Props) => {
       // The headline above the plot carries the latest value and its unit, so
       // the y axis says nothing: one baseline hairline is all the scaffolding.
       x: {
-        border: { color: borderColor },
+        border: { color: borderColor() },
         grid: { display: false },
-        ticks: { color: subtleColor, maxRotation: 0, maxTicksLimit: 6 },
+        ticks: { color: subtleColor(), maxRotation: 0, maxTicksLimit: 6 },
       },
       y: {
         beginAtZero: false,
@@ -140,14 +144,14 @@ export const ExerciseChart = ({ sets, exercise }: Props) => {
               labels: days.map((day) => day.label),
               datasets: [
                 {
-                  backgroundColor: chartFillColor,
-                  borderColor: inkColor,
+                  backgroundColor: chartFillColor(),
+                  borderColor: inkColor(),
                   borderWidth: 2,
                   data: values,
                   fill: true,
                   label: details[metric].heading,
-                  pointBackgroundColor: surfaceColor,
-                  pointBorderColor: inkColor,
+                  pointBackgroundColor: surfaceColor(),
+                  pointBorderColor: inkColor(),
                   pointBorderWidth: 2,
                   // A dot on every point turns the line into beads; only the
                   // latest one is marked. The hit radius keeps every point's

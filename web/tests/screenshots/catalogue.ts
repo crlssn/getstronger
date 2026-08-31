@@ -33,6 +33,17 @@ export type Persona = {
   password: string
 }
 
+// Every audience is photographed once per palette. The dark run opens the
+// same pages in a context whose device asks for dark and leaves the app on
+// its System default, so it exercises that path end to end — and the harness
+// measures contrast and legibility findings in both palettes rather than one.
+export const themes = ['light', 'dark'] as const
+export type Theme = (typeof themes)[number]
+
+/** 'active' in the light palette, 'active-dark' in the dark one. */
+export const audienceName = (name: string, theme: Theme): string =>
+  theme === 'light' ? name : `${name}-dark`
+
 const password = process.env.USER_PASSWORD ?? 'password123'
 
 export const personas: Persona[] = [
@@ -108,6 +119,11 @@ export const authenticatedPages: PageEntry[] = [
     component: 'src/ui/profile/LanguageSettings.tsx',
     name: 'settings-language',
     route: () => '/settings/language',
+  },
+  {
+    component: 'src/ui/profile/AppearanceSettings.tsx',
+    name: 'settings-appearance',
+    route: () => '/settings/appearance',
   },
   {
     component: 'src/ui/profile/AccountSettings.tsx',

@@ -10,7 +10,7 @@
    The panel is focused as the sheet opens but is never a tab stop, so it draws
    no ring — same as the dropdown's menu panel. */
 .sheetPanel {
-  @apply flex max-h-[85vh] w-full max-w-lg flex-col rounded-t-sheet bg-white px-5 pt-5 text-left shadow-overlay focus:outline-none sm:max-h-[75vh] sm:rounded-sheet sm:pb-5;
+  @apply flex max-h-[85vh] w-full max-w-lg flex-col rounded-t-sheet bg-surface px-5 pt-5 text-left shadow-overlay focus:outline-none sm:max-h-[75vh] sm:rounded-sheet sm:pb-5;
   padding-bottom: calc(1.25rem + env(safe-area-inset-bottom));
 }
 
@@ -72,11 +72,11 @@
 }
 
 .action.primary {
-  @apply bg-ink text-white hover:bg-ink-strong;
+  @apply bg-ink text-text-inverse hover:bg-ink-strong;
 }
 
 .action.danger {
-  @apply bg-danger text-white hover:bg-danger-strong;
+  @apply bg-danger text-text-inverse hover:bg-danger-strong;
 }
 
 .action.dangerOutline {

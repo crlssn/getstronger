@@ -75,7 +75,7 @@
 }
 
 .routineMenu > div {
-  @apply absolute bottom-12 right-0 z-10 w-40 overflow-hidden rounded-control border border-border bg-white p-1 shadow-raised;
+  @apply absolute bottom-12 right-0 z-10 w-40 overflow-hidden rounded-control border border-border bg-surface p-1 shadow-raised;
 }
 
 .routineMenu > div a,

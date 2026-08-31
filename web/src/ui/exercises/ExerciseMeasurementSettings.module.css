@@ -30,7 +30,7 @@
 }
 
 .measurement[aria-pressed='true'] .check {
-  @apply bg-surface-inverse text-white;
+  @apply bg-surface-inverse text-text-inverse;
 }
 
 /* The same tile as an editable measurement, minus the affordances: no hover,

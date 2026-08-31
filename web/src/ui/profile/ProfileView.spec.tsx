@@ -21,6 +21,7 @@ import {
 import { useToastStore } from '@/stores/toasts'
 import { useAuthStore } from '@/stores/auth'
 import { useDashboardStore } from '@/stores/dashboard'
+import { useLocaleStore } from '@/stores/locale'
 import { useNotificationStore } from '@/stores/notifications'
 import { usePreferencesStore } from '@/stores/preferences'
 import { renderWithProviders } from '@/ui/testing'
@@ -71,6 +72,7 @@ describe('ProfileView', () => {
     vi.spyOn(useDashboardStore.getState(), 'load').mockResolvedValue(undefined)
     vi.spyOn(useNotificationStore.getState(), 'refreshUnreadNotifications').mockResolvedValue()
     useAuthStore.setState({ userId: me })
+    useLocaleStore.setState({ theme: undefined })
     useNotificationStore.setState({ unreadCount: 0 })
     useDashboardStore.setState({ dashboard: undefined })
     usePreferencesStore.setState({
@@ -193,6 +195,21 @@ describe('ProfileView', () => {
     const language = settings.getByRole('link', { name: /Language/ })
     expect(language).toHaveAttribute('href', '/settings/language')
     expect(language).toHaveTextContent('English')
+
+    // The mode, not the palette it resolves to: following the device is what
+    // this device is set to.
+    const appearance = settings.getByRole('link', { name: /Appearance/ })
+    expect(appearance).toHaveAttribute('href', '/settings/appearance')
+    expect(appearance).toHaveTextContent('Device appearance')
+  })
+
+  test('names the chosen palette on the appearance row once there is one', async () => {
+    useLocaleStore.setState({ theme: 'dark' })
+    render()
+
+    await loaded()
+    const settings = within(await screen.findByRole('region', { name: 'Settings' }))
+    expect(settings.getByRole('link', { name: /Appearance/ })).toHaveTextContent('Dark')
   })
 
   // A boolean is a switch, not an Off/On segmented control.

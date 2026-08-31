@@ -1,6 +1,7 @@
 // Charts read their colours from the token layer rather than repeating hex
-// values that theme.css already owns.
-const token = (name: string, fallback: string) =>
+// values that theme.css already owns. Each is read at call time, not import
+// time, so a palette switch reaches the next render without a reload.
+const token = (name: string, fallback: string) => (): string =>
   (typeof window !== 'undefined' &&
     getComputedStyle(document.documentElement).getPropertyValue(name).trim()) ||
   fallback
