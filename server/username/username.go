@@ -64,6 +64,7 @@ func routeSegments() []string {
 		"progress",
 		"reset-password",
 		"routines",
+		"settings",
 		"signup",
 		"users",
 		"verify-email",
