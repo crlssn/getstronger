@@ -12,10 +12,6 @@
   @apply grid size-16 place-items-center rounded-card bg-ink text-xl font-semibold text-white;
 }
 
-.eyebrow {
-  @apply text-eyebrow font-bold uppercase text-text-subtle;
-}
-
 .profileCard h2 {
   @apply truncate text-title font-extrabold text-text;
 }

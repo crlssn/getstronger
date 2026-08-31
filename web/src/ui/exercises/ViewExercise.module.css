@@ -28,10 +28,6 @@
   @apply size-5 shrink-0 text-text-subtle;
 }
 
-.eyebrow {
-  @apply mb-3 text-eyebrow font-bold uppercase text-text-subtle;
-}
-
 .chartCard {
   @apply space-y-4;
 }
