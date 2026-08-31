@@ -2,6 +2,8 @@ import react from '@eslint-react/eslint-plugin'
 import js from '@eslint/js'
 import pluginVitest from '@vitest/eslint-plugin'
 import prettier from 'eslint-config-prettier'
+import i18next from 'eslint-plugin-i18next'
+import jsxA11y from 'eslint-plugin-jsx-a11y'
 import reactHooks from 'eslint-plugin-react-hooks'
 import reactRefresh from 'eslint-plugin-react-refresh'
 import tseslint from 'typescript-eslint'
@@ -98,6 +100,76 @@ export default tseslint.config(
             'The app has no select. Use <AppSegmented> for a few options, or add one to the design system.',
         },
       ],
+    },
+  },
+
+  // The other half of the same rule. web/CLAUDE.md answers "may I reuse this?"
+  // with the directory a file is in, and a directory only means that while the
+  // arrows point one way: the design system knows nothing about the app, and a
+  // domain widget knows nothing about the chrome it is rendered in.
+  {
+    files: ['src/ui/components/**/*.{ts,tsx}'],
+    ignores: ['**/*.spec.{ts,tsx}'],
+    name: 'app/design-system-imports',
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['@/ui/features/*', '@/ui/shell/*', '@/stores/*', '@/http/*', '@/proto/*'],
+              message:
+                'The design system is domain-free: it takes props and gives back events. A component that needs a store, a request or a generated type belongs in ui/features — see web/CLAUDE.md.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+
+  {
+    files: ['src/ui/features/**/*.{ts,tsx}'],
+    ignores: ['**/*.spec.{ts,tsx}'],
+    name: 'app/feature-imports',
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['@/ui/shell/*'],
+              message:
+                'The chrome renders the widget, not the other way round. A widget that needs the shell wants a prop from whoever placed it.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+
+  // Every user-facing string goes through i18next, and until now nothing but
+  // review said so. jsx-text-only: the rule's stricter modes flag every string
+  // literal in the file, including class names and test ids.
+  {
+    files: ['src/ui/**/*.tsx'],
+    ignores: ['**/*.spec.tsx'],
+    name: 'app/localisation',
+    plugins: { i18next },
+    rules: { 'i18next/no-literal-string': ['error', { mode: 'jsx-text-only' }] },
+  },
+
+  // The end-to-end suite already fails on a WCAG violation through axe. These
+  // are the subset a linter can see without running the app, which is a good
+  // deal earlier.
+  {
+    files: ['**/*.tsx'],
+    name: 'app/accessibility',
+    extends: [jsxA11y.flatConfigs.recommended],
+    rules: {
+      // Tailwind's preflight sets `list-style: none` on every ul, and VoiceOver
+      // stops announcing a list that has no markers. `role="list"` is redundant
+      // in the specification and load-bearing in Safari.
+      'jsx-a11y/no-redundant-roles': ['error', { ul: ['list'] }],
     },
   },
 

@@ -121,6 +121,9 @@ export const AppSheet = ({
   }, [onClose])
 
   return (
+    // The keyboard path off this dialog is Escape, handled above. A backdrop
+    // that took focus of its own would put a tab stop in front of the panel.
+    // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
     <div
       className={styles.sheetBackdrop}
       onClick={(event) => {

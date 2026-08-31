@@ -2,6 +2,10 @@ import type { ReactNode } from 'react'
 
 import { createPortal } from 'react-dom'
 
+// The one component here that is plumbing rather than a control: it hands a
+// screen's action to the shell, and the slot it renders into is the shell's to
+// publish. Catalogued here because a screen goes looking for it here.
+// eslint-disable-next-line no-restricted-imports
 import { usePageNavActionStore } from '@/stores/pageNavAction'
 
 /**
