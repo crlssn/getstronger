@@ -2332,10 +2332,208 @@ func (s *repoSuite) TestListPageTokens() {
 // without a next token: the client would otherwise stop at a partial list.
 func (s *repoSuite) TestPaginateSliceReportsAnUnmarshalableCursor() {
 	items := models.WorkoutSlice{{}, {}}
-	_, err := repo.PaginateSlice(items, 1, func(*models.Workout) time.Time {
-		return time.Date(-1, time.January, 1, 0, 0, 0, 0, time.UTC)
+	_, err := repo.PaginateSlice(items, 1, func(*models.Workout) (time.Time, string) {
+		return time.Date(-1, time.January, 1, 0, 0, 0, 0, time.UTC), ""
 	})
 	s.Require().Error(err)
+}
+
+// A page boundary can land inside a group of rows sharing created_at — every
+// set of a workout does, since Postgres fixes NOW() per transaction — so the
+// cursor names a row, not a timestamp. Walking pages must return every row
+// exactly once whatever the tie.
+func (s *repoSuite) TestListPageTokensSurviveCreatedAtTies() {
+	ctx := context.Background()
+	tie := time.Now().UTC().Truncate(time.Microsecond)
+
+	const pageLimit = 2
+
+	// walk pages the way the handlers do: limit+1, trim, follow the token.
+	walk := func(list func(token []byte) ([]string, []byte)) []string {
+		var seen []string
+		var token []byte
+		for range 5 {
+			ids, next := list(token)
+			seen = append(seen, ids...)
+			if next == nil {
+				return seen
+			}
+			token = next
+		}
+		s.T().Fatal("pagination never ended")
+		return nil
+	}
+
+	s.Run("workouts", func() {
+		user := s.factory.NewUser()
+		want := make([]string, 0, 3)
+		for range 3 {
+			want = append(want, s.factory.NewWorkout(factory.WorkoutUserID(user.ID), factory.WorkoutCreatedAt(tie)).ID.String())
+		}
+
+		seen := walk(func(token []byte) ([]string, []byte) {
+			listed, err := s.repo.ListWorkouts(
+				ctx,
+				repo.ListWorkoutsWithUserIDs(user.ID.String()),
+				repo.ListWorkoutsWithLimit(pageLimit+1),
+				repo.ListWorkoutsWithPageToken(token),
+			)
+			s.Require().NoError(err)
+			page, err := repo.PaginateSlice(listed, pageLimit, func(w *models.Workout) (time.Time, string) {
+				return w.CreatedAt, w.ID.String()
+			})
+			s.Require().NoError(err)
+			ids := make([]string, 0, len(page.Items))
+			for _, workout := range page.Items {
+				ids = append(ids, workout.ID.String())
+			}
+			return ids, page.NextPageToken
+		})
+
+		s.Require().ElementsMatch(want, seen)
+	})
+
+	s.Run("sets", func() {
+		user := s.factory.NewUser()
+		exercise := s.factory.NewExercise(factory.ExerciseUserID(user.ID))
+		want := make([]string, 0, 3)
+		for range 3 {
+			want = append(want, s.factory.NewSet(
+				factory.SetUserID(user.ID), factory.SetExerciseID(exercise.ID), factory.SetCreatedAt(tie),
+			).ID.String())
+		}
+
+		seen := walk(func(token []byte) ([]string, []byte) {
+			listed, err := s.repo.ListSets(
+				ctx,
+				repo.ListSetsWithExerciseID(exercise.ID.String()),
+				repo.ListSetsWithLimit(pageLimit+1),
+				repo.ListSetsWithPageToken(token),
+				repo.ListSetsOrderByCreatedAt(repo.DESC),
+			)
+			s.Require().NoError(err)
+			page, err := repo.PaginateSlice(listed, pageLimit, func(set *models.Set) (time.Time, string) {
+				return set.CreatedAt, set.ID.String()
+			})
+			s.Require().NoError(err)
+			ids := make([]string, 0, len(page.Items))
+			for _, set := range page.Items {
+				ids = append(ids, set.ID.String())
+			}
+			return ids, page.NextPageToken
+		})
+
+		s.Require().ElementsMatch(want, seen)
+	})
+
+	s.Run("exercises", func() {
+		user := s.factory.NewUser()
+		want := make([]string, 0, 3)
+		for range 3 {
+			want = append(want, s.factory.NewExercise(factory.ExerciseUserID(user.ID), factory.ExerciseCreatedAt(tie)).ID.String())
+		}
+
+		seen := walk(func(token []byte) ([]string, []byte) {
+			listed, err := s.repo.ListExercises(
+				ctx,
+				repo.ListExercisesWithUserID(user.ID.String()),
+				repo.ListExercisesWithLimit(pageLimit+1),
+				repo.ListExercisesWithPageToken(token),
+			)
+			s.Require().NoError(err)
+			page, err := repo.PaginateSlice(listed, pageLimit, func(exercise *models.Exercise) (time.Time, string) {
+				return exercise.CreatedAt, exercise.ID.String()
+			})
+			s.Require().NoError(err)
+			ids := make([]string, 0, len(page.Items))
+			for _, exercise := range page.Items {
+				ids = append(ids, exercise.ID.String())
+			}
+			return ids, page.NextPageToken
+		})
+
+		s.Require().ElementsMatch(want, seen)
+	})
+
+	s.Run("routines", func() {
+		user := s.factory.NewUser()
+		want := make([]string, 0, 3)
+		for range 3 {
+			want = append(want, s.factory.NewRoutine(factory.RoutineUserID(user.ID), factory.RoutineCreatedAt(tie)).ID.String())
+		}
+
+		seen := walk(func(token []byte) ([]string, []byte) {
+			listed, err := s.repo.ListRoutines(
+				ctx,
+				repo.ListRoutinesWithUserID(user.ID.String()),
+				repo.ListRoutinesWithLimit(pageLimit+1),
+				repo.ListRoutinesWithPageToken(token),
+			)
+			s.Require().NoError(err)
+			page, err := repo.PaginateSlice(listed, pageLimit, func(routine *models.Routine) (time.Time, string) {
+				return routine.CreatedAt, routine.ID.String()
+			})
+			s.Require().NoError(err)
+			ids := make([]string, 0, len(page.Items))
+			for _, routine := range page.Items {
+				ids = append(ids, routine.ID.String())
+			}
+			return ids, page.NextPageToken
+		})
+
+		s.Require().ElementsMatch(want, seen)
+	})
+
+	s.Run("notifications", func() {
+		user := s.factory.NewUser()
+		want := make([]string, 0, 3)
+		for range 3 {
+			want = append(want, s.factory.NewNotification(
+				factory.NotificationUserID(user.ID), factory.NotificationCreatedAt(tie),
+			).ID.String())
+		}
+
+		seen := walk(func(token []byte) ([]string, []byte) {
+			listed, err := s.repo.ListNotifications(
+				ctx,
+				repo.ListNotificationsWithUserID(user.ID.String()),
+				repo.ListNotificationsWithLimit(pageLimit+1),
+				repo.ListNotificationsWithPageToken(token),
+			)
+			s.Require().NoError(err)
+			page, err := repo.PaginateSlice(listed, pageLimit, func(n *models.Notification) (time.Time, string) {
+				return n.CreatedAt, n.ID.String()
+			})
+			s.Require().NoError(err)
+			ids := make([]string, 0, len(page.Items))
+			for _, n := range page.Items {
+				ids = append(ids, n.ID.String())
+			}
+			return ids, page.NextPageToken
+		})
+
+		s.Require().ElementsMatch(want, seen)
+	})
+
+	// A token minted before cursors carried an id names only a timestamp. It
+	// keeps its strictly-older meaning: rows tied with it stay excluded.
+	s.Run("legacy_timestamp_token_stays_strictly_older", func() {
+		user := s.factory.NewUser()
+		s.factory.NewWorkout(factory.WorkoutUserID(user.ID), factory.WorkoutCreatedAt(tie))
+		older := s.factory.NewWorkout(factory.WorkoutUserID(user.ID), factory.WorkoutCreatedAt(tie.Add(-time.Hour)))
+
+		token, err := json.Marshal(repo.PageTokenCreatedAt(tie))
+		s.Require().NoError(err)
+
+		listed, err := s.repo.ListWorkouts(
+			ctx,
+			repo.ListWorkoutsWithUserIDs(user.ID.String()),
+			repo.ListWorkoutsWithPageToken(token),
+		)
+		s.Require().NoError(err)
+		s.Require().Len(listed, 1)
+		s.Require().Equal(older.ID, listed[0].ID)
+	})
 }
 
 // A routine may only hold exercises its owner still has, so the two ways that

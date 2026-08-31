@@ -43,8 +43,8 @@ func (h *notificationHandler) ListNotifications(ctx context.Context, req *connec
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	paginated, err := repo.PaginateSlice(notifications, limit, func(n *models.Notification) time.Time {
-		return n.CreatedAt
+	paginated, err := repo.PaginateSlice(notifications, limit, func(n *models.Notification) (time.Time, string) {
+		return n.CreatedAt, n.ID.String()
 	})
 	if err != nil {
 		log.Error("Paginate notifications", zap.Error(err))

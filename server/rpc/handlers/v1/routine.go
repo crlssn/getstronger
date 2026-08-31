@@ -264,8 +264,8 @@ func (h *routineLibrary) ListRoutines(ctx context.Context, req *connect.Request[
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	pagination, err := repo.PaginateSlice(routines, limit, func(routine *models.Routine) time.Time {
-		return routine.CreatedAt
+	pagination, err := repo.PaginateSlice(routines, limit, func(routine *models.Routine) (time.Time, string) {
+		return routine.CreatedAt, routine.ID.String()
 	})
 	if err != nil {
 		log.Error("Paginate routines", zap.Error(err))

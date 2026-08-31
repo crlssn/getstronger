@@ -236,8 +236,8 @@ func (h *exerciseHandler) ListExercises(ctx context.Context, req *connect.Reques
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	pagination, err := repo.PaginateSlice(exercises, limit, func(exercise *models.Exercise) time.Time {
-		return exercise.CreatedAt
+	pagination, err := repo.PaginateSlice(exercises, limit, func(exercise *models.Exercise) (time.Time, string) {
+		return exercise.CreatedAt, exercise.ID.String()
 	})
 	if err != nil {
 		log.Error("Paginate exercises", zap.Error(err))
@@ -315,8 +315,8 @@ func (h *exerciseHandler) ListSets(ctx context.Context, req *connect.Request[api
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	paginated, err := repo.PaginateSlice(sets, limit, func(set *models.Set) time.Time {
-		return set.CreatedAt
+	paginated, err := repo.PaginateSlice(sets, limit, func(set *models.Set) (time.Time, string) {
+		return set.CreatedAt, set.ID.String()
 	})
 	if err != nil {
 		log.Error("Paginate exercise sets", zap.Error(err))
