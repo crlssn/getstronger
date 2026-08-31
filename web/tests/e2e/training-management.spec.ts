@@ -72,6 +72,15 @@ const deleteExercise = async (page: Parameters<typeof logIn>[0], name: string) =
   await expect(page).toHaveURL(/\/exercises$/)
 }
 
+const deleteRoutine = async (page: Parameters<typeof logIn>[0], name: string) => {
+  await page.goto('/routines')
+  await page.getByLabel('Search routines').fill(name)
+  await page.getByRole('heading', { name }).click()
+  await page.getByRole('button', { name: 'Delete', exact: true }).click()
+  await acceptConfirmDialog(page, 'Delete')
+  await expect(page.getByRole('status')).toContainText('Routine deleted')
+}
+
 test.describe('exercise library', () => {
   test.beforeEach(async ({ page }) => logIn(page))
 
@@ -725,5 +734,73 @@ test.describe('plan lifecycle', () => {
     await acceptConfirmDialog(page, 'Delete plan')
     await expect(page).toHaveURL(/\/plans$/)
     await expect(page.getByText(updatedPlanName)).toHaveCount(0)
+  })
+
+  // Deleting a routine is the one way a rotation changes without the athlete
+  // editing it. It used to shift the plan onto a routine it was not on, or
+  // strand it past the end of what was left, where nothing rotated it again.
+  test('keeps a plan on its routine when another one is deleted @mutation', async ({ page }) => {
+    const planName = uniqueName('E2E Delete Plan')
+    const firstRoutine = uniqueName('E2E First')
+    const secondRoutine = uniqueName('E2E Second')
+
+    for (const name of [firstRoutine, secondRoutine]) {
+      await page.goto('/routines/create')
+      await page.getByLabel('Routine name').fill(name)
+      await addRoutineExercise(page)
+      await page.getByRole('button', { name: 'Create routine' }).click()
+      await expect(page).toHaveURL(/\/routines$/)
+    }
+
+    await page.goto('/plans/create')
+    await page.getByLabel('Plan name').fill(planName)
+    for (const name of [firstRoutine, secondRoutine]) {
+      await page.getByRole('button', { name: 'Add routine' }).click()
+      const picker = page.getByRole('dialog', { name: 'Choose a routine' })
+      await picker.getByRole('button').filter({ hasText: name }).click()
+      await expect(picker).toBeHidden()
+    }
+    await page.getByRole('button', { name: 'Create plan' }).click()
+    await expect(page.getByRole('heading', { name: planName })).toBeVisible()
+
+    const planURL = new URL(page.url()).pathname
+    await page.getByRole('button', { name: 'Make active' }).click()
+    await acceptConfirmDialog(page, 'Make active')
+    await expect(page.getByRole('button', { name: 'Pause' })).toBeVisible()
+
+    // Move the plan onto the second routine, so a rotation re-read without the
+    // first one would offer the wrong routine — or nothing at all.
+    await page.goto('/workout')
+    await page.getByRole('button', { name: 'Skip this routine' }).click()
+    await acceptConfirmDialog(page, 'Skip')
+    await expect(page.getByRole('heading', { name: secondRoutine })).toBeVisible()
+
+    await deleteRoutine(page, firstRoutine)
+
+    await page.goto(planURL)
+    const order = page.getByRole('listitem')
+    await expect(order).toHaveCount(1)
+    await expect(order.first()).toContainText(secondRoutine)
+    await expect(order.first()).toContainText('UP NEXT')
+    await expect(page.getByRole('button', { name: 'Pause' })).toBeVisible()
+
+    // And the rotation still turns, rather than being stuck past its own end.
+    await page.goto('/workout')
+    await expect(page.getByRole('heading', { name: secondRoutine })).toBeVisible()
+
+    // The last routine leaves the plan with nothing to train, so it stops
+    // being the plan the athlete is following.
+    await deleteRoutine(page, secondRoutine)
+    await page.goto(planURL)
+    await expect(
+      page.getByText('Every routine this plan trained has been deleted. Edit the plan to add one.'),
+    ).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Make active' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Pause' })).toHaveCount(0)
+    await expect(page.getByRole('heading', { name: 'Your repeating sequence' })).toHaveCount(0)
+
+    await page.getByRole('button', { name: 'Delete', exact: true }).click()
+    await acceptConfirmDialog(page, 'Delete plan')
+    await expect(page).toHaveURL(/\/plans$/)
   })
 })

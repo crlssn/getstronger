@@ -96,6 +96,11 @@ export const ViewPlan = () => {
 
   const isCurrent = (index: number) => plan.active && index === plan.currentPosition
 
+  // Deleting a routine takes it out of every plan that trained it, so a plan
+  // can outlive its whole rotation. It has no sequence to show until it is
+  // edited, and no loop to spell out.
+  const hasRoutines = plan.routines.length > 0
+
   return (
     <div className={styles.planPage}>
       <section className={styles.overview}>
@@ -105,7 +110,11 @@ export const ViewPlan = () => {
           </p>
           {plan.active && <span>{t('training.active')}</span>}
         </header>
-        <p>{t('training.planView.routinesRepeat', { count: plan.routines.length })}</p>
+        <p>
+          {hasRoutines
+            ? t('training.planView.routinesRepeat', { count: plan.routines.length })
+            : t('training.planView.emptyBody')}
+        </p>
         <div className={styles.overviewActions}>
           <AppButton type="link" colour="primary" width="auto" to={`/plans/${plan.id}/edit`}>
             <PencilIcon className="size-5" aria-hidden="true" /> {t('training.planForm.editTitle')}
@@ -128,38 +137,42 @@ export const ViewPlan = () => {
         {actionError && <AppInlineError>{actionError}</AppInlineError>}
       </section>
 
-      <header className={styles.orderHeading}>
-        <h2>{t('training.planView.orderTitle')}</h2>
-      </header>
+      {hasRoutines && (
+        <>
+          <header className={styles.orderHeading}>
+            <h2>{t('training.planView.orderTitle')}</h2>
+          </header>
 
-      <section className={styles.routineOrder}>
-        <ol>
-          {plan.routines.map((routine, index) => (
-            <li key={routine.id} className={cn(isCurrent(index) && styles.current)}>
-              <span>{index + 1}</span>
-              <div>
-                <small>
-                  {isCurrent(index)
-                    ? t('training.planView.upNextTag')
-                    : t('training.planView.routineTag', { number: index + 1 })}
-                </small>
-                <strong>{routine.name}</strong>
-                <small>{t('home.exerciseCount', { count: routine.exercises.length })}</small>
-              </div>
-              {isCurrent(index) && <b>{t('common.next')}</b>}
-            </li>
-          ))}
-        </ol>
+          <section className={styles.routineOrder}>
+            <ol>
+              {plan.routines.map((routine, index) => (
+                <li key={routine.id} className={cn(isCurrent(index) && styles.current)}>
+                  <span>{index + 1}</span>
+                  <div>
+                    <small>
+                      {isCurrent(index)
+                        ? t('training.planView.upNextTag')
+                        : t('training.planView.routineTag', { number: index + 1 })}
+                    </small>
+                    <strong>{routine.name}</strong>
+                    <small>{t('home.exerciseCount', { count: routine.exercises.length })}</small>
+                  </div>
+                  {isCurrent(index) && <b>{t('common.next')}</b>}
+                </li>
+              ))}
+            </ol>
 
-        {/* The loop is the point of a plan, so the wrap-around is spelled out
-            rather than left to be inferred from the order. */}
-        <footer>
-          {t('training.planForm.loopFooter', {
-            last: plan.routines[plan.routines.length - 1]?.name,
-            first: plan.routines[0]?.name,
-          })}
-        </footer>
-      </section>
+            {/* The loop is the point of a plan, so the wrap-around is spelled
+                out rather than left to be inferred from the order. */}
+            <footer>
+              {t('training.planForm.loopFooter', {
+                last: plan.routines[plan.routines.length - 1]?.name,
+                first: plan.routines[0]?.name,
+              })}
+            </footer>
+          </section>
+        </>
+      )}
 
       {/* The same danger pattern the routine editor set: the consequence in
           words beside an outlined red pill, never a full-width red row. */}
