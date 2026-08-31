@@ -1,3 +1,4 @@
+import react from '@eslint-react/eslint-plugin'
 import js from '@eslint/js'
 import pluginVitest from '@vitest/eslint-plugin'
 import prettier from 'eslint-config-prettier'
@@ -45,10 +46,23 @@ export default tseslint.config(
   {
     files: ['**/*.{ts,tsx}'],
     name: 'app/react',
+    extends: [react.configs['recommended-typescript']],
     plugins: { 'react-hooks': reactHooks, 'react-refresh': reactRefresh },
     rules: {
       ...reactHooks.configs.recommended.rules,
       'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
+      // Wants every ref named `somethingRef`. The app names refs after the
+      // thing they hold, which reads better in the JSX that uses them.
+      '@eslint-react/naming-convention-ref-name': 'off',
+      // Wants `setX` for every `useState` pair. `usePagination` returns a
+      // reducer-shaped pair the convention does not describe.
+      '@eslint-react/use-state': 'off',
+      // Three hooks seed state from a DOM measurement on mount and then
+      // subscribe — a carousel's scroll position, a row's overflowing edges,
+      // the height the on-screen keyboard takes. There is no event to read
+      // them from before the element exists, so the first read is an effect by
+      // construction, and each already skips the render when nothing moved.
+      '@eslint-react/set-state-in-effect': 'off',
     },
   },
 

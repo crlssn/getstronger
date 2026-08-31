@@ -596,6 +596,7 @@ export const StartWorkout = () => {
     // and selected, before this focus returns. A render left until the next
     // tick lands after the caret has been placed, so the first character typed
     // is appended to the copied number instead of replacing it.
+    // eslint-disable-next-line @eslint-react/dom-no-flush-sync -- see above: the caret placement depends on this render
     flushSync(() => onSetChange(station, index, changes))
     target.select()
   }
