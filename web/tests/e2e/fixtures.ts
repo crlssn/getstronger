@@ -153,7 +153,11 @@ const allowsRuntimeErrors = (testInfo: TestInfo) =>
 // deliberately cut short. A request that genuinely failed still arrives there
 // under a reason no cancellation wears.
 const isDroppedRequestLog = (text: string) =>
-  /ConnectError: \[unknown\] (Load failed|Failed to fetch|NetworkError)/.test(text)
+  /ConnectError: \[unknown\] (Load failed|Failed to fetch|NetworkError)/.test(text) ||
+  // Firefox renders the error argument of console.error('request', error) as a
+  // bare "Error", so the transport's own wording is nowhere in the text and
+  // every dropped request there read as a failure.
+  text === 'request Error'
 
 // Each engine words an in-flight request dropped by a navigation differently:
 // Chromium aborts, Firefox binds-aborts, WebKit cancels the load request.
