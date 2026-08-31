@@ -22,6 +22,9 @@ export const screens: Partial<Record<string, ScreenLoader>> = {
   'settings-units': async () => ({
     Component: (await import('@/ui/profile/UnitSettings')).UnitSettings,
   }),
+  'settings-language': async () => ({
+    Component: (await import('@/ui/profile/LanguageSettings')).LanguageSettings,
+  }),
 
   'user-view': async () => ({ Component: (await import('@/ui/users/UserView')).UserView }),
   'user-workouts': async () => ({

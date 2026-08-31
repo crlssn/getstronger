@@ -55,6 +55,12 @@ export const routes: AppRoute[] = [
     titleKey: 'pages.units',
   },
   {
+    name: 'settings-language',
+    path: '/settings/language',
+    access: 'auth',
+    titleKey: 'pages.language',
+  },
+  {
     name: 'user-view',
     path: '/users/:id',
     access: 'auth',

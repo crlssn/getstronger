@@ -37,7 +37,7 @@ export const trendByDay = (sets: readonly Set[]): TrendDay[] => {
     if (!key) continue
 
     const day = days.get(key) ?? {
-      label: date.setLocale(dateLocale).toFormat('d LLL'),
+      label: date.setLocale(dateLocale()).toFormat('d LLL'),
       timestamp: date.toMillis(),
       oneRm: 0,
       weight: 0,

@@ -200,6 +200,12 @@ describe('ProfileView', () => {
     const units = settings.getByRole('link', { name: /Units/ })
     expect(units).toHaveAttribute('href', '/settings/units')
     expect(units).toHaveTextContent('lbs · mi')
+
+    // The language in its own name, which is what the screen behind the row
+    // lists it as.
+    const language = settings.getByRole('link', { name: /Language/ })
+    expect(language).toHaveAttribute('href', '/settings/language')
+    expect(language).toHaveTextContent('English')
   })
 
   // A boolean is a switch, not an Off/On segmented control.

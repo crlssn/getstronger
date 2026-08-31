@@ -44,6 +44,29 @@ test.describe('settings', () => {
     await expect(settings(page).getByRole('link', { name: /Units/ })).toContainText('lbs · km')
   })
 
+  // The one setting that is not on the account: it is kept on the device, so
+  // what proves it landed is the app itself changing language, and staying
+  // changed after a reload.
+  test('changes the language on the device and keeps it', async ({ page }) => {
+    await page.goto('/settings/language')
+    await page.getByRole('button', { name: 'Svenska', exact: true }).click()
+
+    // The screen it was chosen on is the first thing read back in it.
+    await expect(page.getByRole('heading', { name: 'Språk' })).toBeVisible()
+
+    await page.goto('/profile')
+    await expect(page.getByRole('heading', { name: 'Jag', exact: true })).toBeVisible()
+    await expect(page.getByRole('link', { name: /Språk/ })).toContainText('Svenska')
+
+    await page.reload()
+    await expect(page.getByRole('heading', { name: 'Jag', exact: true })).toBeVisible()
+
+    // And handing it back to the device is a choice of its own.
+    await page.goto('/settings/language')
+    await page.getByRole('button', { name: /Enhetens språk/ }).click()
+    await expect(page.getByRole('heading', { name: 'Language' })).toBeVisible()
+  })
+
   // A settings row has no save button, so a refused change has to put the
   // control back and say why where the tap happened.
   test('puts the control back and says why when the save fails', async ({ page }, testInfo) => {

@@ -43,7 +43,7 @@ export const AppDatetimeField = ({ label, model, required, className, onUpdate }
   return (
     <div className={cn(styles.field, className)}>
       <span aria-hidden="true">
-        {moment.isValid ? moment.setLocale(dateLocale).toFormat('ccc d LLL · HH:mm') : ''}
+        {moment.isValid ? moment.setLocale(dateLocale()).toFormat('ccc d LLL · HH:mm') : ''}
       </span>
       <span className={styles.edit} aria-hidden="true">
         {t('common.edit')}

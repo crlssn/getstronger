@@ -14,9 +14,11 @@ import {
   updateUserName,
   updateUserUsername,
 } from '@/http/requests'
+import { localeNames } from '@/i18n'
 import { clearAccountState } from '@/stores/accountState'
 import { useAuthStore } from '@/stores/auth'
 import { useDashboardStore } from '@/stores/dashboard'
+import { selectLocale, useLocaleStore } from '@/stores/locale'
 import { useNotificationStore } from '@/stores/notifications'
 import { usePreferencesStore } from '@/stores/preferences'
 import { useToastStore } from '@/stores/toasts'
@@ -56,6 +58,7 @@ export const ProfileView = () => {
   const weightUnit = usePreferencesStore((state) => state.weightUnit)
   const distanceUnit = usePreferencesStore((state) => state.distanceUnit)
   const autofillSets = usePreferencesStore((state) => state.autofillSets)
+  const locale = useLocaleStore(selectLocale)
 
   const [user, setUser] = useState<User>()
   const [failed, setFailed] = useState(false)
@@ -275,6 +278,11 @@ export const ProfileView = () => {
             to="/settings/units"
             title={t('settings.units')}
             meta={`${weightUnitLabel(weightUnit)} · ${distanceUnitLabel(distanceUnit)}`}
+          />
+          <AppListRow
+            to="/settings/language"
+            title={t('settings.language')}
+            meta={localeNames[locale]}
           />
 
           {/* A boolean is a switch, not an Off/On segmented: two segments

@@ -11,7 +11,7 @@ import { RouterProvider } from 'react-router-dom'
 
 import { I18nextProvider } from 'react-i18next'
 
-import { appLocale, i18n } from '@/i18n'
+import { i18n } from '@/i18n'
 import { refreshAccessTokenOrLogout } from '@/jwt/jwt'
 import { initNativePlatform } from '@/native/platform'
 import posthog, { identifyUser, isPostHogConfigured } from '@/posthog'
@@ -19,12 +19,15 @@ import { setNavigator } from '@/router/navigation'
 import { createRouter } from '@/router/router'
 import { warmLazyRoutesWhenIdle } from '@/router/warmRoutes'
 import { selectAuthorised, useAuthStore } from '@/stores/auth'
+import { startLocale } from '@/stores/locale'
 import { useNotificationStore } from '@/stores/notifications'
 
 const rootElement = document.getElementById('root')
 if (rootElement === null) throw new Error('#root element is missing from index.html')
 
-document.documentElement.lang = appLocale
+// Before the router, so the first screen renders in the chosen language rather
+// than in the device's and then switching under the reader.
+startLocale()
 
 const router = createRouter()
 // Registered before the first render: the HTTP layer redirects through this,

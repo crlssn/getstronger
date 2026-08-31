@@ -29,13 +29,48 @@ const browserLanguages =
       ? navigator.languages
       : [navigator.language]
 
-export const appLocale = resolveLocale(browserLanguages)
-export const dateLocale = appLocale === 'sv' ? 'sv-SE' : 'en-GB'
+/**
+ * Every language the app speaks, in its own name.
+ *
+ * Endonyms rather than catalogue keys: a reader looking for their language in
+ * a list they cannot read finds 'Svenska', not 'Swedish' translated into a
+ * third language. Same reason the brand name is not in the catalogue.
+ */
+export const localeNames: Record<AppLocale, string> = {
+  en: 'English',
+  sv: 'Svenska',
+}
+
+/** The locale this device asks for, and what an account that has not chosen gets. */
+export const deviceLocale = resolveLocale(browserLanguages)
+
+/** The locale the app is reading in right now. */
+export const currentLocale = (): AppLocale => resolveLocale([i18n.language])
+
+/**
+ * The locale dates and numbers are formatted in.
+ *
+ * A function rather than a constant: the language is chosen in the settings
+ * and changes without a reload, and a constant read at import time would keep
+ * formatting every date in whatever the device asked for.
+ */
+export const dateLocale = (): string => (currentLocale() === 'sv' ? 'sv-SE' : 'en-GB')
+
+/**
+ * Switches the app to a locale, and tells the page it did.
+ *
+ * `documentElement.lang` is what a screen reader picks its voice from, so it
+ * moves with the catalogue rather than being set once at startup.
+ */
+export const applyLocale = (locale: AppLocale): void => {
+  void i18n.changeLanguage(locale)
+  if (typeof document !== 'undefined') document.documentElement.lang = locale
+}
 
 export const i18n: I18nInstance = i18next.createInstance()
 
 void i18n.use(initReactI18next).init({
-  lng: appLocale,
+  lng: deviceLocale,
   fallbackLng: 'en',
   resources: {
     en: { translation: en },

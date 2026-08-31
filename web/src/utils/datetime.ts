@@ -3,7 +3,7 @@ import type { Timestamp } from '@bufbuild/protobuf/wkt'
 import { DateTime } from 'luxon'
 import { dateLocale, i18n } from '@/i18n'
 
-const localized = (date: DateTime): DateTime => date.setLocale(dateLocale)
+const localized = (date: DateTime): DateTime => date.setLocale(dateLocale())
 
 /** Below this, a count of seconds is noise rather than precision. */
 const justNowSeconds = 60

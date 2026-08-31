@@ -637,6 +637,9 @@ export const en = {
     units: 'Units',
     unitsIntro:
       'Weights and distances are written in these units everywhere you are signed in to this account.',
+    language: 'Language',
+    languageIntro: 'The language is kept on only this device, and changes without a connection.',
+    languageDevice: 'Device language',
   },
   streak: {
     startTitle: 'Start your streak',
@@ -738,6 +741,7 @@ export const en = {
     resetPassword: 'Reset password',
     chooseNewPassword: 'Choose a new password',
     units: 'Units',
+    language: 'Language',
     privacy: 'Privacy policy',
     notFound: 'Not found',
   },
@@ -1384,6 +1388,9 @@ export const sv = {
     units: 'Enheter',
     unitsIntro:
       'Vikter och distanser skrivs i de här enheterna överallt där du är inloggad på det här kontot.',
+    language: 'Språk',
+    languageIntro: 'Språket sparas bara på den här enheten och kan ändras utan uppkoppling.',
+    languageDevice: 'Enhetens språk',
   },
   streak: {
     startTitle: 'Starta din streak',
@@ -1484,6 +1491,7 @@ export const sv = {
     resetPassword: 'Återställ lösenord',
     chooseNewPassword: 'Välj ett nytt lösenord',
     units: 'Enheter',
+    language: 'Språk',
     privacy: 'Integritetspolicy',
     notFound: 'Sidan hittades inte',
   },

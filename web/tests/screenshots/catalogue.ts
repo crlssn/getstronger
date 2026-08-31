@@ -89,6 +89,11 @@ export const authenticatedPages: PageEntry[] = [
     route: () => '/settings/units',
   },
   {
+    component: 'src/ui/profile/LanguageSettings.tsx',
+    name: 'settings-language',
+    route: () => '/settings/language',
+  },
+  {
     component: 'src/ui/users/UserWorkouts.tsx',
     name: 'user-workouts',
     route: ({ userId }) => userId && `/users/${userId}`,
