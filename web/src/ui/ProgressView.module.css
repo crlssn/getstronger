@@ -4,10 +4,6 @@
   @apply space-y-5;
 }
 
-.eyebrow {
-  @apply text-eyebrow font-bold uppercase text-text-subtle;
-}
-
 .recordCount {
   @apply inline-flex w-max items-center gap-1.5 whitespace-nowrap rounded-full border border-record-border bg-record-surface px-3 py-1.5 text-meta font-semibold text-record-strong;
 }
