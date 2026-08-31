@@ -237,6 +237,9 @@ describe('ViewPlan', () => {
     ).toBeInTheDocument()
     expect(screen.queryByText('Your repeating sequence')).not.toBeInTheDocument()
     expect(screen.queryByText(/the plan returns to/)).not.toBeInTheDocument()
+    // Following it again would put it straight back into a state where it
+    // cannot say what to train next.
+    expect(screen.queryByRole('button', { name: 'Make active' })).not.toBeInTheDocument()
   })
 
   test('goes back to the list when the plan is gone', async () => {

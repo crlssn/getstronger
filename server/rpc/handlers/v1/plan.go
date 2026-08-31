@@ -131,6 +131,12 @@ func (p *planLibrary) SetActivePlan(ctx context.Context, req *connect.Request[ap
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, connect.NewError(connect.CodeNotFound, nil)
 		}
+		// A plan whose routines have all been deleted has nothing to train, so
+		// the client is asking for a state the plan cannot be in.
+		if training.RejectsRotation(err) {
+			log.Warn("Plan cannot be activated", zap.Error(err))
+			return nil, connect.NewError(connect.CodeFailedPrecondition, nil)
+		}
 		log.Error("Set active plan", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}

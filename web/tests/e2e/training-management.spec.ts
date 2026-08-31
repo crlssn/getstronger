@@ -795,9 +795,15 @@ test.describe('plan lifecycle', () => {
     await expect(
       page.getByText('Every routine this plan trained has been deleted. Edit the plan to add one.'),
     ).toBeVisible()
-    await expect(page.getByRole('button', { name: 'Make active' })).toBeVisible()
     await expect(page.getByRole('button', { name: 'Pause' })).toHaveCount(0)
     await expect(page.getByRole('heading', { name: 'Your repeating sequence' })).toHaveCount(0)
+    // Following it again would put it straight back into a state where it
+    // cannot say what to train next, so it is not offered.
+    await expect(page.getByRole('button', { name: 'Make active' })).toHaveCount(0)
+    await page.goto('/plans')
+    await expect(page.getByRole('link', { name: new RegExp(planName) })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Make active' })).toHaveCount(0)
+    await page.goto(planURL)
 
     await page.getByRole('button', { name: 'Delete', exact: true }).click()
     await acceptConfirmDialog(page, 'Delete plan')

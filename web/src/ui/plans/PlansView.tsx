@@ -234,16 +234,20 @@ export const PlansView = () => {
                       {t('training.routineCountSequence', { count: plan.routines.length })}
                     </small>
                   </Link>
-                  <AppButton
-                    type="button"
-                    colour="ghost"
-                    size="sm"
-                    width="auto"
-                    className={styles.makeActive}
-                    onClick={() => void activate(plan.id)}
-                  >
-                    {t('training.makeActive')}
-                  </AppButton>
+                  {/* A plan whose routines have all been deleted has nothing
+                      to train, so it is not one to switch to. */}
+                  {plan.routines.length > 0 && (
+                    <AppButton
+                      type="button"
+                      colour="ghost"
+                      size="sm"
+                      width="auto"
+                      className={styles.makeActive}
+                      onClick={() => void activate(plan.id)}
+                    >
+                      {t('training.makeActive')}
+                    </AppButton>
+                  )}
                 </article>
               ))}
             </section>

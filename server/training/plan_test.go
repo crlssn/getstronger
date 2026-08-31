@@ -224,3 +224,19 @@ func TestPlanRotationWithout(t *testing.T) {
 		require.False(t, plan.RotationWithout(third.String()).Active)
 	})
 }
+
+// A plan with nothing to train cannot say what comes next, so it may not become
+// the plan the athlete is following — the same rule that pauses one whose last
+// routine is deleted. See TestPlanRotationWithout.
+func TestPlanValidateActivation(t *testing.T) {
+	t.Parallel()
+
+	require.NoError(t, (&training.Plan{
+		Routines: models.RoutineSlice{routine(uuid.Must(uuid.NewV4()))},
+	}).ValidateActivation())
+
+	require.ErrorIs(t, (&training.Plan{}).ValidateActivation(), training.ErrPlanRequiresRoutine)
+	require.ErrorIs(t,
+		(&training.Plan{Routines: models.RoutineSlice{}}).ValidateActivation(),
+		training.ErrPlanRequiresRoutine)
+}

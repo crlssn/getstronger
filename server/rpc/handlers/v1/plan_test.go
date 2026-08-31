@@ -238,6 +238,24 @@ func (s *planSuite) TestDeletingThePlansLastRoutinePausesIt() {
 	s.Require().False(res.Msg.GetPlan().GetActive(), "a plan with nothing to train cannot say what is next")
 }
 
+// Losing its last routine pauses a plan; activating it again would put it
+// straight back into a state where it cannot say what to train next.
+func (s *planSuite) TestSetActivePlanRejectsAPlanWithNoRoutinesLeft() {
+	ctx, user := s.athlete()
+	only := s.factory.NewRoutine(factory.RoutineUserID(user.ID), factory.RoutineName("Only"))
+	plan := s.createPlan(ctx, "Rotation", only.ID.String())
+
+	_, err := s.handler.DeleteRoutine(ctx, connect.NewRequest(&apiv1.DeleteRoutineRequest{Id: only.ID.String()}))
+	s.Require().NoError(err)
+
+	_, err = s.handler.SetActivePlan(ctx, connect.NewRequest(&apiv1.SetActivePlanRequest{Id: plan.GetId()}))
+	s.Require().Equal(connect.CodeFailedPrecondition, connect.CodeOf(err))
+
+	res, err := s.handler.GetPlan(ctx, connect.NewRequest(&apiv1.GetPlanRequest{Id: plan.GetId()}))
+	s.Require().NoError(err)
+	s.Require().False(res.Msg.GetPlan().GetActive())
+}
+
 // A routine the athlete has retired may not be put back into a rotation by a
 // client still holding it.
 func (s *planSuite) TestCreatePlanRejectsADeletedRoutine() {

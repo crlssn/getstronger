@@ -107,6 +107,18 @@ func (p *Plan) RotationWithout(routineID string) Rotation {
 	}
 }
 
+// ValidateActivation reports whether the plan may become the one the athlete is
+// following. A plan with no routines left cannot say what to train next, which
+// is why losing its last routine pauses it; letting it be activated again would
+// put it straight back into that state.
+func (p *Plan) ValidateActivation() error {
+	if len(p.Routines) == 0 {
+		return ErrPlanRequiresRoutine
+	}
+
+	return nil
+}
+
 // ValidatePlanRotation checks a requested rotation on its own terms: a plan
 // needs at least one routine and may not train the same one twice per cycle.
 // Whether each routine exists and belongs to the athlete is a separate question

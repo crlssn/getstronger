@@ -119,11 +119,14 @@ export const ViewPlan = () => {
           <AppButton type="link" colour="primary" width="auto" to={`/plans/${plan.id}/edit`}>
             <PencilIcon className="size-5" aria-hidden="true" /> {t('training.planForm.editTitle')}
           </AppButton>
-          {plan.active ? (
+          {plan.active && (
             <AppButton type="button" colour="secondary" width="auto" onClick={() => void pause()}>
               {t('training.pause')}
             </AppButton>
-          ) : (
+          )}
+          {/* A plan with no routines cannot say what to train next, so it is
+              not one the athlete can follow until they add one back. */}
+          {!plan.active && hasRoutines && (
             <AppButton
               type="button"
               colour="secondary"

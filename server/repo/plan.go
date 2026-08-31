@@ -331,8 +331,12 @@ func (r *Repo) DeletePlan(ctx context.Context, planID, userID string) error {
 
 func (r *Repo) SetActivePlan(ctx context.Context, planID, userID string) (*training.Plan, error) {
 	if err := r.NewTx(ctx, func(tx *Repo) error {
-		if _, err := tx.GetPlan(ctx, planID, userID); err != nil {
+		plan, err := tx.GetPlan(ctx, planID, userID)
+		if err != nil {
 			return fmt.Errorf("plan get before activation: %w", err)
+		}
+		if err = plan.ValidateActivation(); err != nil {
+			return fmt.Errorf("plan activation validate: %w", err)
 		}
 		if _, err := tx.exec().ExecContext(ctx,
 			`UPDATE public.plans SET active = FALSE, updated_at = (NOW() AT TIME ZONE 'UTC') WHERE user_id = $1 AND active = TRUE`, userID); err != nil {
