@@ -139,7 +139,7 @@ export const ViewExercise = () => {
     { href: `/exercises/${id}/edit`, title: t('exercise.edit') },
     {
       destructive: true,
-      func: async () => {
+      func: () => {
         // The menu item keeps focus otherwise, and the sheet opens behind it.
         blurActiveElement()
         setDeleteDialogOpen(true)

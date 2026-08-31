@@ -200,13 +200,13 @@ export const RoutineGroupsEditor = ({
                   <strong className={styles.groupTitle}>
                     {t('routine.form.groups.groupName', { letter })}
                   </strong>
-                  <AppSegmented
+                  <AppSegmented<GroupMode>
                     className={styles.modeSwitch}
                     density="compact"
                     label={t('routine.form.groups.modeAria', { letter })}
                     options={[
-                      { label: t('routine.form.groups.straight'), value: 'straight' as GroupMode },
-                      { label: t('routine.form.groups.circuit'), value: 'circuit' as GroupMode },
+                      { label: t('routine.form.groups.straight'), value: 'straight' },
+                      { label: t('routine.form.groups.circuit'), value: 'circuit' },
                     ]}
                     value={group.mode}
                     onChange={(mode) => onChange(setMode(groups, group.id, mode))}

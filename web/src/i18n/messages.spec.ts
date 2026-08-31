@@ -61,8 +61,8 @@ describe('messages', () => {
   })
 
   it('keeps interpolation placeholders aligned across locales', () => {
-    const english = new Map(flattenEntries(en as Messages))
-    const swedish = new Map(flattenEntries(sv as Messages))
+    const english = new Map(flattenEntries(en))
+    const swedish = new Map(flattenEntries(sv))
 
     const mismatches: string[] = []
     for (const [key, enValue] of english) {
@@ -84,7 +84,7 @@ describe('messages', () => {
       ['en', en],
       ['sv', sv],
     ] as const) {
-      const keys = new Set(flatten(messages as Messages))
+      const keys = new Set(flatten(messages))
       const lonely = [...keys]
         .filter((key) => key.endsWith('_one') || key.endsWith('_other'))
         .filter((key) => {
@@ -167,7 +167,7 @@ describe('messages', () => {
 
   it.each(['en', 'sv'] as const)('localises the email verification notice in %s', (locale) => {
     const messages = { en, sv }[locale]
-    const keys = flatten(messages.auth.verification as unknown as Messages)
+    const keys = flatten(messages.auth.verification)
 
     expect(keys).toContain('pendingLabel')
     expect(keys).toContain('resend')

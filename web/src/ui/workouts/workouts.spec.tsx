@@ -215,10 +215,10 @@ describe('EditWorkout', () => {
   test('adds and removes sets', async () => {
     render()
 
-    await userEvent.click((await screen.findAllByRole('button', { name: 'Add set' }))[0]!)
+    await userEvent.click((await screen.findAllByRole('button', { name: 'Add set' }))[0])
     expect(screen.getAllByRole('button', { name: /^Remove set/ })).toHaveLength(3)
 
-    await userEvent.click(screen.getAllByRole('button', { name: 'Remove set 2' })[0]!)
+    await userEvent.click(screen.getAllByRole('button', { name: 'Remove set 2' })[0])
     expect(screen.getAllByRole('button', { name: /^Remove set/ })).toHaveLength(2)
   })
 
@@ -227,7 +227,7 @@ describe('EditWorkout', () => {
   test('drops a set that was never finished', async () => {
     render()
 
-    await userEvent.click((await screen.findAllByRole('button', { name: 'Add set' }))[0]!)
+    await userEvent.click((await screen.findAllByRole('button', { name: 'Add set' }))[0])
     // Every field names its own row now, where the stacked block called each
     // one of them "Weight" and left a screen reader to count.
     await userEvent.type(screen.getByRole('textbox', { name: 'Bench press set 2 weight' }), '90')

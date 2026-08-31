@@ -15,16 +15,29 @@ export default tseslint.config(
     name: 'app/files-to-ignore',
   },
 
+  // The type-aware set, not the syntactic one. A promise nobody awaits and a
+  // catch that swallows a non-Error look identical to a parser and obvious to
+  // a type checker; every tsconfig here is already built by 'type-check', so
+  // the program these rules need is one this project pays for anyway.
   {
     files: ['**/*.{ts,tsx}'],
     name: 'app/files-to-lint',
-    extends: [js.configs.recommended, tseslint.configs.recommended],
+    extends: [js.configs.recommended, tseslint.configs.recommendedTypeChecked],
+    languageOptions: {
+      parserOptions: { projectService: true, tsconfigRootDir: import.meta.dirname },
+    },
     rules: {
       // A leading underscore is how the codebase already marks a binding that
       // exists to hold a position rather than to be read.
       '@typescript-eslint/no-unused-vars': [
         'error',
         { argsIgnorePattern: '^_', varsIgnorePattern: '^_', caughtErrors: 'all' },
+      ],
+      // React Router signals a redirect by throwing the Response that performs
+      // it, which is the documented API rather than an error being abused.
+      '@typescript-eslint/only-throw-error': [
+        'error',
+        { allow: [{ from: 'lib', name: 'Response' }] },
       ],
     },
   },
@@ -86,6 +99,25 @@ export default tseslint.config(
       // Vitest's expect takes an optional second argument: the message shown
       // when the assertion fails. The rule defaults to rejecting it.
       'vitest/valid-expect': ['error', { maxArgs: 2 }],
+    },
+  },
+
+  // A test harness deals in `any` on purpose: JSON.parse of what a store
+  // persisted, expect.objectContaining, a mock whose signature is async
+  // whether or not that particular body awaits. The type-aware rules describe
+  // product code, and .golangci.yml exempts _test.go from its equivalents for
+  // the same reason.
+  {
+    files: ['**/*.spec.{ts,tsx}', 'tests/**/*.ts'],
+    name: 'app/test-harness',
+    rules: {
+      '@typescript-eslint/no-unsafe-argument': 'off',
+      '@typescript-eslint/no-unsafe-assignment': 'off',
+      '@typescript-eslint/no-unsafe-call': 'off',
+      '@typescript-eslint/no-unsafe-member-access': 'off',
+      '@typescript-eslint/no-unsafe-return': 'off',
+      '@typescript-eslint/require-await': 'off',
+      '@typescript-eslint/unbound-method': 'off',
     },
   },
 

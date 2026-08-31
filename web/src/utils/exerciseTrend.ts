@@ -80,10 +80,10 @@ export const downSample = <T>(data: readonly T[], sampleSize: number): T[] => {
 
   const step = Math.ceil(data.length / sampleSize)
   const sampled: T[] = []
-  for (let index = 0; index < data.length; index += step) sampled.push(data[index] as T)
+  for (let index = 0; index < data.length; index += step) sampled.push(data[index])
   // The most recent point is the one the reader is looking for, and a fixed
   // step lands on it only when the length divides evenly.
-  const last = data[data.length - 1] as T
+  const last = data[data.length - 1]
   if (sampled[sampled.length - 1] !== last) sampled.push(last)
   return sampled
 }

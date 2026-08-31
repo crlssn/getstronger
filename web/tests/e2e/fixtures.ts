@@ -195,7 +195,7 @@ export const expectAccessible = async (page: Page) => {
 // has none. Failing here says which element rather than dereferencing null.
 export const boxOf = async (locator: Locator) => {
   const box = await locator.boundingBox()
-  expect(box, `${locator} should be visible and have a bounding box`).not.toBeNull()
+  expect(box, `${locator.toString()} should be visible and have a bounding box`).not.toBeNull()
   return box as NonNullable<typeof box>
 }
 

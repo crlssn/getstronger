@@ -41,7 +41,7 @@ const listResponse = (name: string) => ({
 })
 
 const run = (req: unknown, next: (req: unknown) => Promise<unknown>): Promise<unknown> =>
-  offlineCache(next as never)(req as never) as Promise<unknown>
+  offlineCache(next as never)(req as never)
 
 // The jsdom build used by vitest ships without localStorage, so the cache's
 // storage is stood in for by a Map with the same surface.

@@ -9,7 +9,8 @@ import { screens } from '@/router/screens'
  * are ignored, because the route can still load on demand.
  */
 export const warmLazyRoutes = async (): Promise<void> => {
-  await Promise.all(Object.values(screens).map((load) => load?.().catch(() => undefined)))
+  const loaders = Object.values(screens).filter((load) => load !== undefined)
+  await Promise.all(loaders.map((load) => load().catch(() => undefined)))
 }
 
 /** Schedules `warmLazyRoutes` for the next moment the browser is idle. */

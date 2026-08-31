@@ -855,7 +855,7 @@ export const StartWorkout = () => {
     setFinishDialogOpen(true)
   }
 
-  const onPrimaryAction = async () => {
+  const onPrimaryAction = () => {
     if (!canRunPrimaryAction) {
       setBlockedMessage(blockedReason)
       return
@@ -923,7 +923,7 @@ export const StartWorkout = () => {
       noValidate
       onSubmit={(event) => {
         event.preventDefault()
-        void onPrimaryAction()
+        onPrimaryAction()
       }}
     >
       {/* The session chrome carries the two things worth glancing at between

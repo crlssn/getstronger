@@ -33,13 +33,13 @@ const trains = (id: string, restSeconds = defaultRestSeconds) => ({
 })
 
 const entryKey = (groups: readonly DraftGroup[], groupIndex: number, position: number) =>
-  groups[groupIndex]!.entries[position]!.key
+  groups[groupIndex].entries[position].key
 
 /** One straight group and one circuit, each holding the exercises named. */
 const twoGroups = (first: string[], second: string[]) => {
   const groups = addGroup(singleStraightGroup(first))
   return second.reduce(
-    (current, exerciseId) => addExerciseToGroup(current, groups[1]!.id, exercise(exerciseId)),
+    (current, exerciseId) => addExerciseToGroup(current, groups[1].id, exercise(exerciseId)),
     groups,
   )
 }
@@ -168,7 +168,7 @@ describe('addExerciseToGroup', () => {
   it('starts the occurrence at the rest a new one of that exercise takes', () => {
     const plank = create(ExerciseSchema, { id: 'plank', metrics: [ExerciseMetric.TIME] })
     const groups = addExerciseToGroup(singleStraightGroup(), '', plank)
-    const withPlank = addExerciseToGroup(groups, groups[0]!.id, plank)
+    const withPlank = addExerciseToGroup(groups, groups[0].id, plank)
 
     expect(withPlank[0]?.entries[0]?.restSeconds).toBe(0)
   })
@@ -184,7 +184,7 @@ describe('addExerciseToGroup', () => {
   // asked for.
   it('will not hold the same exercise twice in one group', () => {
     const groups = addExerciseToGroup(singleStraightGroup(['a']), '', exercise('a'))
-    const again = addExerciseToGroup(groups, groups[0]!.id, exercise('a'))
+    const again = addExerciseToGroup(groups, groups[0].id, exercise('a'))
 
     expect(groupExerciseIds(again)).toEqual(['a'])
   })
@@ -202,7 +202,7 @@ describe('removeEntry', () => {
 
 describe('reorderEntry', () => {
   const groups = singleStraightGroup(['a', 'b', 'c'])
-  const groupId = groups[0]!.id
+  const groupId = groups[0].id
 
   it('puts the exercise where it was dropped', () => {
     expect(groupExerciseIds(reorderEntry(groups, groupId, 2, 0))).toEqual(['c', 'a', 'b'])
@@ -223,7 +223,7 @@ describe('reorderEntry', () => {
   it('leaves the other groups alone', () => {
     const two = twoGroups(['a', 'b'], ['c'])
 
-    expect(groupExerciseIds(reorderEntry(two, two[0]!.id, 1, 0))).toEqual(['b', 'a', 'c'])
+    expect(groupExerciseIds(reorderEntry(two, two[0].id, 1, 0))).toEqual(['b', 'a', 'c'])
     expect(reorderEntry(two, 'missing', 1, 0)).toEqual(two)
   })
 })
@@ -246,7 +246,7 @@ describe('addGroup', () => {
 describe('removeGroup', () => {
   it('hands the exercises to the group before it', () => {
     const groups = twoGroups(['a'], ['b'])
-    const remaining = removeGroup(groups, groups[1]!.id)
+    const remaining = removeGroup(groups, groups[1].id)
 
     expect(remaining).toHaveLength(1)
     expect(groupExerciseIds(remaining)).toEqual(['a', 'b'])
@@ -255,19 +255,19 @@ describe('removeGroup', () => {
   it('hands them to the group after it when the first one goes', () => {
     const groups = twoGroups(['a'], ['b'])
 
-    expect(groupExerciseIds(removeGroup(groups, groups[0]!.id))).toEqual(['b', 'a'])
+    expect(groupExerciseIds(removeGroup(groups, groups[0].id))).toEqual(['b', 'a'])
   })
 
   it('refuses to remove the only group', () => {
     const groups = singleStraightGroup(['a'])
 
-    expect(removeGroup(groups, groups[0]!.id)).toEqual(groups)
+    expect(removeGroup(groups, groups[0].id)).toEqual(groups)
   })
 
   it('does not hand a neighbour an exercise it already trains', () => {
     const groups = twoGroups(['a'], ['a', 'b'])
 
-    expect(groupExerciseIds(removeGroup(groups, groups[1]!.id))).toEqual(['a', 'b'])
+    expect(groupExerciseIds(removeGroup(groups, groups[1].id))).toEqual(['a', 'b'])
   })
 })
 
@@ -275,8 +275,8 @@ describe('saveableGroups', () => {
   it('drops the empty ones and pulls the settings into range', () => {
     const groups = addGroup(singleStraightGroup(['a']))
     const saved = saveableGroups([
-      { ...groups[0]!, restBetweenRoundsSeconds: 90 },
-      { ...groups[1]!, restBetweenExercisesSeconds: 99999 },
+      { ...groups[0], restBetweenRoundsSeconds: 90 },
+      { ...groups[1], restBetweenExercisesSeconds: 99999 },
     ])
 
     expect(saved).toHaveLength(1)
@@ -287,7 +287,7 @@ describe('saveableGroups', () => {
 
   it('pulls the rests of a circuit back into the range the API takes', () => {
     const groups = addGroup(singleStraightGroup(['a']))
-    const circuit = { ...groups[1]!, entries: groups[0]!.entries, restBetweenRoundsSeconds: 99999 }
+    const circuit = { ...groups[1], entries: groups[0].entries, restBetweenRoundsSeconds: 99999 }
 
     expect(saveableGroups([circuit])[0]?.restBetweenRoundsSeconds).toBe(3600)
   })
@@ -302,10 +302,10 @@ describe('saveableGroups', () => {
 
   it('pulls the round count of a circuit back into the range the API takes', () => {
     const groups = addGroup(singleStraightGroup(['a']))
-    const entries = groups[0]!.entries
+    const entries = groups[0].entries
 
-    expect(saveableGroups([{ ...groups[1]!, entries, rounds: 999 }])[0]?.rounds).toBe(99)
-    expect(saveableGroups([{ ...groups[1]!, entries, rounds: -1 }])[0]?.rounds).toBe(0)
+    expect(saveableGroups([{ ...groups[1], entries, rounds: 999 }])[0]?.rounds).toBe(99)
+    expect(saveableGroups([{ ...groups[1], entries, rounds: -1 }])[0]?.rounds).toBe(0)
   })
 
   it("keeps a straight group's per-exercise rests, pulled into range", () => {
@@ -339,6 +339,6 @@ describe('isGrouped', () => {
 
   it('is true once there is a second group or a circuit', () => {
     expect(isGrouped(addGroup(singleStraightGroup(['a'])))).toBe(true)
-    expect(isGrouped([{ ...singleStraightGroup(['a'])[0]!, mode: 'circuit' }])).toBe(true)
+    expect(isGrouped([{ ...singleStraightGroup(['a'])[0], mode: 'circuit' }])).toBe(true)
   })
 })

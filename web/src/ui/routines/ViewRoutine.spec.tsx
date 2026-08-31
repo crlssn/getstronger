@@ -117,7 +117,7 @@ describe('ViewRoutine', () => {
     render()
 
     const rows = await screen.findAllByRole('listitem')
-    expect(within(rows[0]!).getByText('Chest')).toBeInTheDocument()
+    expect(within(rows[0]).getByText('Chest')).toBeInTheDocument()
   })
 
   test('offers a way to start it and to edit it', async () => {

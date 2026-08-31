@@ -321,19 +321,19 @@ describe('nextStationOutsideGroup', () => {
     const [block] = blocks()
     const stations = blocks().flatMap((group) => group.stations)
 
-    expect(nextStationOutsideGroup(stations, block!, {})?.key).toBe('c')
+    expect(nextStationOutsideGroup(stations, block, {})?.key).toBe('c')
   })
 
   test('is nothing when everything outside it is done', () => {
     const [block] = blocks()
     const stations = blocks().flatMap((group) => group.stations)
 
-    expect(nextStationOutsideGroup(stations, block!, { c: true })).toBeUndefined()
+    expect(nextStationOutsideGroup(stations, block, { c: true })).toBeUndefined()
   })
 })
 
 describe('circuitRound', () => {
-  const group = () => sessionGroups([circuit('two', ['a', 'b'])], [lift('a'), lift('b')])[0]!
+  const group = () => sessionGroups([circuit('two', ['a', 'b'])], [lift('a'), lift('b')])[0]
 
   test('is the first round before anything is logged', () => {
     expect(circuitRound(group(), {})).toBe(1)
@@ -351,7 +351,7 @@ describe('circuitRound', () => {
 })
 
 describe('nextCircuitStep', () => {
-  const group = () => sessionGroups([circuit('two', ['a', 'b'])], [lift('a'), lift('b')])[0]!
+  const group = () => sessionGroups([circuit('two', ['a', 'b'])], [lift('a'), lift('b')])[0]
 
   test('walks to the next exercise inside the round', () => {
     expect(nextCircuitStep(group(), 'a', 0)).toEqual({
@@ -388,7 +388,7 @@ describe('nextCircuitStep', () => {
   // end of the block, not the way into another lap of it.
   describe('prescribed for a number of rounds', () => {
     const prescribed = () =>
-      sessionGroups([circuit('two', ['a', 'b'], [], 2)], [lift('a'), lift('b')])[0]!
+      sessionGroups([circuit('two', ['a', 'b'], [], 2)], [lift('a'), lift('b')])[0]
 
     test('walks the rounds it was given', () => {
       expect(nextCircuitStep(prescribed(), 'b', 1)).toEqual({
