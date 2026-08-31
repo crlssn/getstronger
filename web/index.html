@@ -124,22 +124,15 @@
         width: 100%;
         height: auto;
       }
-      #boot-splash .boot-steel {
+      /* Plates included: the whole rig is one ink, one piece. */
+      #boot-splash .boot-steel,
+      #boot-splash .p1,
+      #boot-splash .p2,
+      #boot-splash .p3 {
         fill: #1a1917;
       }
       #boot-splash .boot-ground {
         fill: #dedcd4;
-      }
-      /* Three weights of plate, so a loaded bar reads as loaded rather than as
-         one black slab. Each is a step of the ink ramp. */
-      #boot-splash .p1 {
-        fill: #1a1917;
-      }
-      #boot-splash .p2 {
-        fill: #6b675c;
-      }
-      #boot-splash .p3 {
-        fill: #6e6b65;
       }
       #boot-splash .boot-rig {
         animation: bar-dip 6.4s linear infinite;
@@ -340,14 +333,10 @@
         color: #a8a397;
       }
       [data-theme='dark'] #boot-splash .boot-steel,
-      [data-theme='dark'] #boot-splash .p1 {
-        fill: #e8e6e0;
-      }
-      [data-theme='dark'] #boot-splash .p2 {
-        fill: #a29d90;
-      }
+      [data-theme='dark'] #boot-splash .p1,
+      [data-theme='dark'] #boot-splash .p2,
       [data-theme='dark'] #boot-splash .p3 {
-        fill: #a8a397;
+        fill: #e8e6e0;
       }
       [data-theme='dark'] #boot-splash .boot-ground {
         fill: #3b382f;

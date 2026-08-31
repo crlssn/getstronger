@@ -144,12 +144,11 @@ describe('boot splash', () => {
     )
   })
 
-  // Three weights of plate, so a loaded bar reads as loaded rather than as one
-  // black slab. Each is a step of the ink ramp the rest of the app is drawn in.
-  it('draws the plates in the ink ramp', () => {
-    expect(declarationsFor('#boot-splash .p1')).toContain(`fill: ${token('color-ink')}`)
-    expect(declarationsFor('#boot-splash .p2')).toContain(`fill: ${token('color-ink-muted')}`)
-    expect(declarationsFor('#boot-splash .p3')).toContain(`fill: ${token('color-text-subtle')}`)
+  // The plates wear the bar's own ink, so the rig reads as one piece.
+  it('draws every plate in the same ink as the bar', () => {
+    expect(declarationsFor('#boot-splash .boot-steel')).toContain(`fill: ${token('color-ink')}`)
+    for (const plate of plates)
+      expect(declarationsFor(`#boot-splash .${plate}`)).toContain(`fill: ${token('color-ink')}`)
   })
 
   // The splash cannot import from src, so it restates the lockup by hand.
