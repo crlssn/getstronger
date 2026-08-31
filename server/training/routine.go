@@ -53,19 +53,38 @@ func ValidateExerciseOrder(current models.ExerciseSlice, requestedIDs []string) 
 // ids. IDs that match no exercise and duplicate IDs are skipped, as are
 // exercises the ids omit.
 func OrderExercisesByIDs(exercises models.ExerciseSlice, ids []string) models.ExerciseSlice {
-	exercisesByID := make(map[string]*models.Exercise, len(exercises))
-	for _, exercise := range exercises {
-		exercisesByID[exercise.ID.String()] = exercise
+	return orderByIDs(exercises, ids, func(exercise *models.Exercise) string {
+		return exercise.ID.String()
+	})
+}
+
+// OrderRoutinesByIDs returns the routines rearranged to match the order of ids,
+// which is how a plan's rotation is put back together once the routines it
+// names have been read in one go. It skips on the same terms as
+// OrderExercisesByIDs, so a caller that needs every id matched compares lengths.
+func OrderRoutinesByIDs(routines models.RoutineSlice, ids []string) models.RoutineSlice {
+	return orderByIDs(routines, ids, func(routine *models.Routine) string {
+		return routine.ID.String()
+	})
+}
+
+// orderByIDs rearranges items into the order ids asks for, reading each item's
+// identifier with id. Unknown and repeated ids are skipped, as are items no id
+// names.
+func orderByIDs[T any](items []T, ids []string, id func(T) string) []T {
+	byID := make(map[string]T, len(items))
+	for _, item := range items {
+		byID[id(item)] = item
 	}
 
-	ordered := make(models.ExerciseSlice, 0, len(exercises))
-	for _, id := range ids {
-		exercise, ok := exercisesByID[id]
+	ordered := make([]T, 0, len(items))
+	for _, wanted := range ids {
+		item, ok := byID[wanted]
 		if !ok {
 			continue
 		}
-		delete(exercisesByID, id)
-		ordered = append(ordered, exercise)
+		delete(byID, wanted)
+		ordered = append(ordered, item)
 	}
 
 	return ordered

@@ -61,6 +61,16 @@ func TestOrderExercisesByIDs(t *testing.T) {
 	require.Equal(t, models.ExerciseSlice{exercise(second), exercise(first)}, ordered)
 }
 
+func TestOrderRoutinesByIDs(t *testing.T) {
+	t.Parallel()
+
+	first, second, unknown := uuid.Must(uuid.NewV4()), uuid.Must(uuid.NewV4()), uuid.Must(uuid.NewV4())
+	routines := models.RoutineSlice{routine(first), routine(second)}
+
+	ordered := training.OrderRoutinesByIDs(routines, []string{second.String(), unknown.String(), second.String(), first.String()})
+	require.Equal(t, models.RoutineSlice{routine(second), routine(first)}, ordered)
+}
+
 func TestNextRoutine(t *testing.T) {
 	t.Parallel()
 

@@ -2,11 +2,17 @@ package repo_test
 
 import (
 	"context"
+	"database/sql"
 	"log"
+	"sync/atomic"
 	"testing"
 
+	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/stdlib"
 	"github.com/stretchr/testify/require"
 
+	"github.com/crlssn/getstronger/server/gen/models"
 	"github.com/crlssn/getstronger/server/repo"
 	"github.com/crlssn/getstronger/server/testing/container"
 	"github.com/crlssn/getstronger/server/testing/factory"
@@ -69,6 +75,169 @@ func TestPlanLifecycle(t *testing.T) {
 	require.NoError(t, r.PauseActivePlan(ctx, user.ID.String()))
 	_, err = r.GetActivePlan(ctx, user.ID.String())
 	require.Error(t, err)
+}
+
+// TestPlanReadRoundTrips holds a plan read to a fixed number of queries: one
+// for the plan rows, one for the rotations they name, and one apiece for the
+// routines and their exercises. Reading a routine at a time made it grow with
+// the rotation, on the dashboard, which reads the active plan every load.
+func TestPlanReadRoundTrips(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	testContainer := container.NewContainer(ctx)
+	t.Cleanup(func() {
+		if err := testContainer.Terminate(ctx); err != nil {
+			log.Printf("terminate plan round trip container: %v", err)
+		}
+	})
+
+	f := factory.NewFactory(testContainer.DB)
+	r := repo.New(testContainer.DB)
+	user := f.NewUser()
+	userID := user.ID.String()
+
+	routines := make([]*models.Routine, 0, 3)
+	routineIDs := make([]string, 0, 3)
+	exerciseIDs := make(map[string][]string, cap(routines))
+	for range cap(routines) {
+		routine := f.NewRoutine(factory.RoutineUserID(user.ID))
+		first := f.NewExercise(factory.ExerciseUserID(user.ID))
+		second := f.NewExercise(factory.ExerciseUserID(user.ID))
+		f.AddRoutineExercise(routine, first, second)
+		routines = append(routines, routine)
+		routineIDs = append(routineIDs, routine.ID.String())
+		exerciseIDs[routine.ID.String()] = []string{first.ID.String(), second.ID.String()}
+	}
+
+	rotation := []string{routineIDs[2], routineIDs[0], routineIDs[1]}
+	active, err := r.CreatePlan(ctx, repo.CreatePlanParams{
+		UserID: userID, Name: "Rotation", RoutineIDs: rotation,
+	})
+	require.NoError(t, err)
+	_, err = r.SetActivePlan(ctx, active.ID, userID)
+	require.NoError(t, err)
+
+	// A second plan sharing the rotation's routines: ListPlans batches across
+	// every plan, and a routine two plans hold must reach both of them.
+	_, err = r.CreatePlan(ctx, repo.CreatePlanParams{
+		UserID: userID, Name: "Deload", RoutineIDs: routineIDs,
+	})
+	require.NoError(t, err)
+
+	queries, counted := countedRepo(t, testContainer.Connection)
+
+	queries.Store(0)
+	plan, err := counted.GetActivePlan(ctx, userID)
+	require.NoError(t, err)
+	require.Equal(t, int64(4), queries.Load(), "GetActivePlan should not query per routine")
+	require.Equal(t, rotation, planRoutineIDs(plan))
+	for _, routine := range plan.Routines {
+		require.Equal(t, exerciseIDs[routine.ID.String()], routineExerciseIDs(routine),
+			"loading every routine at once must keep each one's exercises in their own order")
+	}
+
+	queries.Store(0)
+	plans, err := counted.ListPlans(ctx, userID)
+	require.NoError(t, err)
+	require.Equal(t, int64(4), queries.Load(), "ListPlans should not query per plan or per routine")
+	require.Len(t, plans, 2)
+	require.Equal(t, rotation, planRoutineIDs(plans[0]))
+	require.Equal(t, routineIDs, planRoutineIDs(plans[1]))
+}
+
+// TestPlanRotationRejections pins the two rejections apart: reading the whole
+// rotation at once must still tell a routine that does not exist from one that
+// belongs to somebody else, which the handlers answer with different codes.
+func TestPlanRotationRejections(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	testContainer := container.NewContainer(ctx)
+	t.Cleanup(func() {
+		if err := testContainer.Terminate(ctx); err != nil {
+			log.Printf("terminate plan rejection container: %v", err)
+		}
+	})
+
+	f := factory.NewFactory(testContainer.DB)
+	r := repo.New(testContainer.DB)
+	user, stranger := f.NewUser(), f.NewUser()
+	own := f.NewRoutine(factory.RoutineUserID(user.ID))
+	theirs := f.NewRoutine(factory.RoutineUserID(stranger.ID))
+
+	_, err := r.CreatePlan(ctx, repo.CreatePlanParams{
+		UserID:     user.ID.String(),
+		Name:       "Unknown",
+		RoutineIDs: []string{own.ID.String(), uuid.NewString()},
+	})
+	require.ErrorIs(t, err, sql.ErrNoRows)
+
+	_, err = r.CreatePlan(ctx, repo.CreatePlanParams{
+		UserID:     user.ID.String(),
+		Name:       "Not mine",
+		RoutineIDs: []string{own.ID.String(), theirs.ID.String()},
+	})
+	require.ErrorIs(t, err, training.ErrPlanRoutineBelongsToAnotherUser)
+
+	plan, err := r.CreatePlan(ctx, repo.CreatePlanParams{
+		UserID:     user.ID.String(),
+		Name:       "Mine",
+		RoutineIDs: []string{own.ID.String()},
+	})
+	require.NoError(t, err)
+
+	_, err = r.UpdatePlan(ctx, repo.UpdatePlanParams{
+		ID:         plan.ID,
+		UserID:     user.ID.String(),
+		Name:       "Mine",
+		RoutineIDs: []string{theirs.ID.String()},
+	})
+	require.ErrorIs(t, err, training.ErrPlanRoutineBelongsToAnotherUser)
+}
+
+// countedRepo returns a repo whose every query bumps the returned counter.
+func countedRepo(t *testing.T, connection string) (*atomic.Int64, *repo.Repo) {
+	t.Helper()
+
+	config, err := pgx.ParseConfig(connection)
+	require.NoError(t, err)
+
+	counter := new(atomic.Int64)
+	config.Tracer = queryCounter{counter}
+
+	db := sql.OpenDB(stdlib.GetConnector(*config))
+	// One connection, opened before anything is counted, so that establishing
+	// it cannot land in the middle of a measurement.
+	db.SetMaxOpenConns(1)
+	require.NoError(t, db.PingContext(context.Background()))
+	t.Cleanup(func() {
+		if err = db.Close(); err != nil {
+			log.Printf("close counted database: %v", err)
+		}
+	})
+
+	return counter, repo.New(db)
+}
+
+// queryCounter counts every query pgx sends, whatever issues it.
+type queryCounter struct {
+	count *atomic.Int64
+}
+
+func (q queryCounter) TraceQueryStart(ctx context.Context, _ *pgx.Conn, _ pgx.TraceQueryStartData) context.Context {
+	q.count.Add(1)
+	return ctx
+}
+
+func (queryCounter) TraceQueryEnd(context.Context, *pgx.Conn, pgx.TraceQueryEndData) {}
+
+func routineExerciseIDs(routine *models.Routine) []string {
+	ids := make([]string, 0, len(routine.R.Exercises))
+	for _, exercise := range routine.R.Exercises {
+		ids = append(ids, exercise.ID.String())
+	}
+	return ids
 }
 
 func planRoutineIDs(plan *training.Plan) []string {
