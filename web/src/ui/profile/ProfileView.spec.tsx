@@ -9,22 +9,14 @@ vi.mock('@/http/requests', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/http/requests')>()),
   getCurrentUser: vi.fn(),
   updateUserAutofillSets: vi.fn(),
-  updateUserUsername: vi.fn(),
-  updateUserName: vi.fn(),
-  deleteAccount: vi.fn(),
 }))
 
-import { Code, ConnectError } from '@connectrpc/connect'
-
 import * as requests from '@/http/requests'
-import { DeleteAccountResponseSchema } from '@/proto/api/v1/auth_service_pb'
 import { GetDashboardResponseSchema } from '@/proto/api/v1/routine_service_pb'
 import { DistanceUnit, WeightUnit } from '@/proto/api/v1/shared_pb'
 import {
   GetUserResponseSchema,
   UpdateUserAutofillSetsResponseSchema,
-  UpdateUserNameResponseSchema,
-  UpdateUserUsernameResponseSchema,
 } from '@/proto/api/v1/user_service_pb'
 import { useToastStore } from '@/stores/toasts'
 import { useAuthStore } from '@/stores/auth'
@@ -37,9 +29,6 @@ import { ProfileView } from './ProfileView'
 const mocked = {
   getCurrentUser: vi.mocked(requests.getCurrentUser),
   updateUserAutofillSets: vi.mocked(requests.updateUserAutofillSets),
-  updateUserUsername: vi.mocked(requests.updateUserUsername),
-  updateUserName: vi.mocked(requests.updateUserName),
-  deleteAccount: vi.mocked(requests.deleteAccount),
 }
 
 const me = 'user-me'
@@ -79,8 +68,6 @@ describe('ProfileView', () => {
     mocked.updateUserAutofillSets.mockResolvedValue(
       create(UpdateUserAutofillSetsResponseSchema, updated()),
     )
-    mocked.updateUserUsername.mockResolvedValue(create(UpdateUserUsernameResponseSchema, updated()))
-    mocked.deleteAccount.mockResolvedValue(create(DeleteAccountResponseSchema, {}))
     vi.spyOn(useDashboardStore.getState(), 'load').mockResolvedValue(undefined)
     vi.spyOn(useNotificationStore.getState(), 'refreshUnreadNotifications').mockResolvedValue()
     useAuthStore.setState({ userId: me })
@@ -219,184 +206,38 @@ describe('ProfileView', () => {
     expect(usePreferencesStore.getState().autofillSets).toBe(true)
   })
 
-  // One action for the card, not a pencil per field: two 20px pencils were
-  // under the tap-target floor, and the one after the name pinned the heading
-  // into a column narrow enough to truncate it with 90px going spare.
-  describe('the profile editor', () => {
-    const open = async () => {
-      await userEvent.click(await screen.findByRole('button', { name: 'Edit profile' }))
-      return {
-        name: screen.getByRole('textbox', { name: 'Name' }),
-        username: screen.getByRole('textbox', { name: 'Username' }),
-      }
-    }
-
-    test('is the only way into either field', async () => {
-      render()
-
-      expect(await screen.findByRole('button', { name: 'Edit profile' })).toBeInTheDocument()
-      expect(screen.queryByRole('button', { name: 'Change name' })).not.toBeInTheDocument()
-      expect(screen.queryByRole('button', { name: 'Change username' })).not.toBeInTheDocument()
-    })
-
-    test('opens with both fields as they stand', async () => {
-      render()
-
-      const fields = await open()
-      expect(fields.name).toHaveValue('Alex Morgan')
-      expect(fields.username).toHaveValue('alex')
-    })
-
-    // Usernames are lower-case, so the field settles the case rather than
-    // rejecting what was typed.
-    test('lower-cases the username as it is typed', async () => {
-      render()
-
-      const { username } = await open()
-      await userEvent.clear(username)
-      await userEvent.type(username, 'Alex.Morgan')
-
-      expect(username).toHaveValue('alex.morgan')
-    })
-
-    test('saves both fields and closes', async () => {
-      mocked.updateUserName.mockResolvedValue(
-        create(UpdateUserNameResponseSchema, { user: profile({ name: 'Alexandra Morgan' }).user }),
-      )
-      mocked.updateUserUsername.mockResolvedValue(
-        create(UpdateUserUsernameResponseSchema, { user: profile({ username: 'newalex' }).user }),
-      )
-      render()
-
-      const fields = await open()
-      await userEvent.clear(fields.name)
-      await userEvent.type(fields.name, 'Alexandra Morgan')
-      await userEvent.clear(fields.username)
-      await userEvent.type(fields.username, 'newalex')
-      await userEvent.click(screen.getByRole('button', { name: 'Save' }))
-
-      await waitFor(() => expect(mocked.updateUserName).toHaveBeenCalledWith('Alexandra Morgan'))
-      await waitFor(() => expect(mocked.updateUserUsername).toHaveBeenCalledWith('newalex'))
-      await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
-      expect(screen.getByRole('heading', { name: 'Alexandra Morgan' })).toBeInTheDocument()
-      expect(screen.getByText('@newalex')).toBeInTheDocument()
-    })
-
-    // An untouched field is not an edit, so it is not sent.
-    test('sends only the field that changed', async () => {
-      mocked.updateUserName.mockResolvedValue(
-        create(UpdateUserNameResponseSchema, { user: profile({ name: 'Alexandra Morgan' }).user }),
-      )
-      render()
-
-      const fields = await open()
-      await userEvent.clear(fields.name)
-      await userEvent.type(fields.name, 'Alexandra Morgan')
-      await userEvent.click(screen.getByRole('button', { name: 'Save' }))
-
-      await waitFor(() => expect(mocked.updateUserName).toHaveBeenCalled())
-      expect(mocked.updateUserUsername).not.toHaveBeenCalled()
-    })
-
-    // A taken username surfaces through the request helper's own toast, so the
-    // sheet stays open for the draft to be corrected — and the name that did
-    // save is not rolled back with it.
-    test('keeps a saved name when the username is refused', async () => {
-      mocked.updateUserName.mockResolvedValue(
-        create(UpdateUserNameResponseSchema, { user: profile({ name: 'Alexandra Morgan' }).user }),
-      )
-      mocked.updateUserUsername.mockResolvedValue(undefined)
-      render()
-
-      const fields = await open()
-      await userEvent.clear(fields.name)
-      await userEvent.type(fields.name, 'Alexandra Morgan')
-      await userEvent.clear(fields.username)
-      await userEvent.type(fields.username, 'taken')
-      await userEvent.click(screen.getByRole('button', { name: 'Save' }))
-
-      await waitFor(() => expect(mocked.updateUserUsername).toHaveBeenCalled())
-      expect(screen.getByRole('dialog')).toBeInTheDocument()
-      expect(screen.getByRole('heading', { name: 'Alexandra Morgan' })).toBeInTheDocument()
-    })
-
-    // The action sits beside the heading, not inside it, so the heading's
-    // accessible name stays the name itself.
-    test('keeps the action out of the heading', async () => {
-      render()
-
-      expect(await screen.findByRole('heading', { name: 'Alex Morgan' })).toBeInTheDocument()
-    })
-  })
-
   // Three levels of alarm for something done once: the only filled red button
-  // in the app, in a tinted red card, under a red-outlined log out. Both are
-  // plain rows now, and the red waits in the confirmation.
-  test('offers the way out and the way off as two plain rows', async () => {
+  // in the app, in a tinted red card, under a red-outlined log out. The
+  // destructive half sits behind the account screen now, and what stays on the
+  // tab is the single tap.
+  test('keeps the way out on the tab and the way off behind the account', async () => {
     render()
 
-    const account = within(await screen.findByRole('region', { name: 'Account' }))
-    expect(account.getByRole('link', { name: /Log out/ })).toHaveAttribute('href', '/logout')
-    expect(account.getByRole('button', { name: /Delete account/ })).toBeInTheDocument()
-    expect(screen.queryByRole('region', { name: 'Danger zone' })).not.toBeInTheDocument()
+    const settings = within(await screen.findByRole('region', { name: 'Settings' }))
+    const account = settings.getByRole('link', { name: /Account/ })
+    expect(account).toHaveAttribute('href', '/settings/account')
+
+    expect(screen.getByRole('link', { name: /Log out/ })).toHaveAttribute('href', '/logout')
+    expect(screen.queryByRole('button', { name: /Delete account/ })).not.toBeInTheDocument()
   })
 
-  // Both app stores require the account to be deletable from inside the app.
-  describe('deleting the account', () => {
-    const open = async () => {
-      render()
-      await loaded()
-      await userEvent.click(
-        within(screen.getByRole('region', { name: 'Account' })).getByRole('button', {
-          name: /Delete account/,
-        }),
-      )
+  // The card's own action is the affordance that says the name and the
+  // username can be changed; it opens the screen that changes them.
+  test('opens the account screen from the card as well as from the group', async () => {
+    render()
 
-      return screen.getByLabelText('Confirm with your password')
-    }
+    expect(await screen.findByRole('link', { name: /Edit profile/ })).toHaveAttribute(
+      'href',
+      '/settings/account',
+    )
+  })
 
-    test('is reachable from the profile', async () => {
-      render()
+  test('is where the privacy policy is reached from', async () => {
+    render()
 
-      expect(await screen.findByRole('link', { name: /Privacy policy/ })).toHaveAttribute(
-        'href',
-        '/privacy',
-      )
-    })
-
-    test('asks for the password before erasing anything', async () => {
-      await open()
-
-      expect(screen.getByRole('dialog')).toHaveTextContent('cannot be undone')
-      expect(mocked.deleteAccount).not.toHaveBeenCalled()
-    })
-
-    test('deletes the account and leaves for the login screen', async () => {
-      const field = await open()
-      await userEvent.type(field, 'password')
-      await userEvent.click(screen.getByRole('button', { name: 'Delete my account' }))
-
-      await waitFor(() => expect(mocked.deleteAccount).toHaveBeenCalledWith('password'))
-      await waitFor(() => expect(useAuthStore.getState().accessToken).toBe(''))
-      await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
-      // The toast outlives the navigation on its own clock, so it is still
-      // readable on the login screen the app leaves for.
-      expect(useToastStore.getState().toast).toMatchObject({
-        message: 'Your account has been deleted.',
-      })
-    })
-
-    // The password was only ever typed into the sheet, so a rejection has to
-    // land there rather than in a toast behind it.
-    test('keeps the sheet open when the password is wrong', async () => {
-      mocked.deleteAccount.mockRejectedValue(new ConnectError('nope', Code.InvalidArgument))
-      const field = await open()
-      await userEvent.type(field, 'wrong')
-      await userEvent.click(screen.getByRole('button', { name: 'Delete my account' }))
-
-      expect(await screen.findByRole('alert')).toHaveTextContent('That password is not correct.')
-      expect(screen.getByRole('dialog')).toBeInTheDocument()
-      expect(useAuthStore.getState().userId).toBe(me)
-    })
+    expect(await screen.findByRole('link', { name: /Privacy policy/ })).toHaveAttribute(
+      'href',
+      '/privacy',
+    )
   })
 })

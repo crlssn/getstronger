@@ -1,0 +1,64 @@
+@reference '../../assets/base.css';
+
+.stack {
+  @apply mx-auto max-w-3xl space-y-5;
+}
+
+.intro {
+  @apply px-1 text-meta text-text-muted;
+}
+
+/* A labelled group of settings: an uppercase kicker above the card, the way a
+   list names its buckets. */
+.group > h2 {
+  @apply mb-2 px-1 text-eyebrow font-bold uppercase text-text-subtle;
+}
+
+.card {
+  @apply card overflow-hidden;
+}
+
+.form {
+  @apply space-y-4 p-4;
+}
+
+/* A block whose action sits under the sentence that explains it — the shape
+   the deletion block has always had, now shared with the reset link. */
+.hint {
+  @apply text-center text-meta text-text-subtle;
+}
+
+.actionRow {
+  @apply flex flex-col items-start gap-3 p-4;
+}
+
+.actionRow strong {
+  @apply block text-body-lg font-semibold text-text;
+}
+
+.actionRow small,
+.actionRow > p {
+  @apply mt-0.5 block text-meta text-text-subtle;
+}
+
+/* The red waits in the outline and in the confirmation. A filled red button
+   for something done once or never is three levels of alarm. */
+.deleteAccount {
+  @apply border-danger/30;
+}
+
+.readOnly {
+  @apply border-b border-border p-4;
+}
+
+.readOnly strong {
+  @apply block text-body-lg font-semibold text-text;
+}
+
+.readOnly p {
+  @apply mt-0.5 truncate text-meta text-text-muted;
+}
+
+.readOnly small {
+  @apply mt-1 block text-meta text-text-subtle;
+}

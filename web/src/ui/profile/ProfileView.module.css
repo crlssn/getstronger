@@ -60,47 +60,16 @@
   @apply text-xs text-text-subtle;
 }
 
-.settingsCard {
-  @apply card divide-y divide-border overflow-hidden;
-}
-
-/* The same card, holding rows the system draws — <AppListRow> for a setting
-   that opens a screen, <AppPreferenceRow> for one changed where it stands. */
+/* A card of rows the system draws — <AppListRow> for a setting that opens a
+   screen, <AppPreferenceRow> for one changed where it stands. The screen used
+   to style its own anchors, at its own type scale, so the two kinds of row on
+   this tab agreed about nothing. */
 .settingsList {
   @apply card divide-y divide-border overflow-hidden;
-}
-
-.settingsCard > a,
-.settingsCard > button {
-  @apply grid w-full grid-cols-[1fr_auto] items-center gap-3 p-4 transition hover:bg-ink-surface hover:text-ink-strong;
-}
-
-.settingsCard > a > svg,
-.settingsCard > button > svg {
-  @apply size-5 text-text-subtle;
-}
-
-.settingsCard strong,
-.settingsCard small {
-  @apply block;
-}
-
-.settingsCard small {
-  @apply mt-0.5 text-sm text-text-subtle;
 }
 
 /* A labelled group of settings: an uppercase kicker above the card, the way a
    list names its buckets. */
 .settingsGroup > h2 {
   @apply mb-2 px-1 text-eyebrow font-bold uppercase text-text-subtle;
-}
-
-/* The delete block: consequence beside its button, the outlined red pill kept
-   inside the card that explains it. */
-.dangerRow {
-  @apply flex flex-col items-start gap-3 p-4;
-}
-
-.deleteAccount {
-  @apply border-danger/30;
 }

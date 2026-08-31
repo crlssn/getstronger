@@ -67,6 +67,27 @@ test.describe('settings', () => {
     await expect(page.getByRole('heading', { name: 'Language' })).toBeVisible()
   })
 
+  // The details are the one settings screen with a save button, because the
+  // two fields are typed rather than picked and half a username is not a
+  // choice anybody meant to make.
+  test('changes the account details from the account screen @mutation', async ({ page }) => {
+    await page.goto('/profile')
+    await page.getByRole('link', { name: /Account/ }).click()
+    await expect(page).toHaveURL(/\/settings\/account$/)
+
+    // Nothing typed yet, so there is nothing to save.
+    await expect(page.getByRole('button', { name: 'Save changes' })).toBeDisabled()
+
+    const name = page.getByLabel('Name', { exact: true })
+    await name.fill('Alex Morgan-Reid')
+    await page.getByRole('button', { name: 'Save changes' }).click()
+    await expect(page.getByRole('status')).toContainText('Profile updated')
+
+    // Saved on the account rather than in the tab that asked for it.
+    await page.goto('/profile')
+    await expect(page.getByRole('heading', { name: 'Alex Morgan-Reid' })).toBeVisible()
+  })
+
   // A settings row has no save button, so a refused change has to put the
   // control back and say why where the tap happened.
   test('puts the control back and says why when the save fails', async ({ page }, testInfo) => {
