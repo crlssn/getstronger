@@ -77,6 +77,22 @@ export const guestPages: PageEntry[] = [
 export const authenticatedPages: PageEntry[] = [
   { component: 'src/ui/HomeView.tsx', name: 'home', route: () => '/home' },
   {
+    component: 'src/ui/features/RoutineCarousel.tsx',
+    name: 'home-switching',
+    // Swiped one panel along, which is what the routine row looks like while
+    // another routine is being chosen. A drag is the real gesture; the
+    // scroller is moved directly because Playwright has no thumb.
+    prepare: async (page) => {
+      const row = page.getByRole('list', { name: 'Routines to train next' })
+      await row.waitFor()
+      await row.evaluate((element) => {
+        const next = element.children[1] as HTMLElement | undefined
+        if (next) element.scrollTo({ left: next.offsetLeft - (element as HTMLElement).offsetLeft })
+      })
+    },
+    route: ({ routineId }) => routineId && '/home',
+  },
+  {
     component: 'src/ui/notifications/ListNotifications.tsx',
     name: 'notifications',
     route: () => '/notifications',

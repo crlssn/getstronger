@@ -77,7 +77,7 @@ describe('HomeView', () => {
   })
 
   describe('up next', () => {
-    test('offers the next routine, and a way to swap it', async () => {
+    test('leads with the next routine and offers the rest beside it', async () => {
       useDashboardStore.setState({
         dashboard: dashboard({
           nextRoutine: {
@@ -85,17 +85,21 @@ describe('HomeView', () => {
             name: 'Push day',
             exercises: [{ id: 'e1' }, { id: 'e2' }],
           },
+          routines: [
+            { id: 'routine-1', name: 'Push day', exercises: [{ id: 'e1' }, { id: 'e2' }] },
+            { id: 'routine-2', name: 'Pull day', exercises: [{ id: 'e3' }] },
+          ],
         }),
       })
       render()
 
       expect(await screen.findByRole('heading', { name: 'Push day' })).toBeInTheDocument()
-      expect(screen.getByRole('link', { name: /Start workout/ })).toHaveAttribute(
+      expect(screen.getByRole('link', { name: 'Start Push day' })).toHaveAttribute(
         'href',
         '/workouts/routine/routine-1',
       )
       expect(screen.getByText(/2 exercises/)).toBeInTheDocument()
-      expect(screen.getByRole('button', { name: 'Choose another routine' })).toBeInTheDocument()
+      expect(screen.getByRole('link', { name: 'Start Pull day' })).toBeInTheDocument()
     })
 
     // Thirty minutes is the floor: a one-exercise session still means changing,
@@ -125,13 +129,13 @@ describe('HomeView', () => {
       })
       render()
 
-      expect(await screen.findByRole('link', { name: /Start workout/ })).toHaveAttribute(
+      expect(await screen.findByRole('link', { name: 'Start Push day' })).toHaveAttribute(
         'href',
         '/workouts/routine/routine-1?plan_id=plan-1',
       )
       // Position is one-based on screen, zero-based in the message.
       expect(screen.getByText(/2\s+of\s+3/)).toBeInTheDocument()
-      expect(screen.getByText('Push pull legs')).toBeInTheDocument()
+      expect(screen.getByText(/Push pull legs/)).toBeInTheDocument()
     })
 
     // A plan decides what comes next, so the picker would be arguing with it.
@@ -179,10 +183,10 @@ describe('HomeView', () => {
       expect(load).toHaveBeenCalled()
     })
 
-    test('picks a different routine and closes the sheet', async () => {
-      const selectRoutine = vi
-        .spyOn(useDashboardStore.getState(), 'selectRoutine')
-        .mockResolvedValue(undefined)
+    // Starting a routine swiped to is the switch: it is what is up next the
+    // next time this screen is opened.
+    test('remembers the routine that was swiped to and started', async () => {
+      const preferRoutine = vi.spyOn(useDashboardStore.getState(), 'preferRoutine')
       useDashboardStore.setState({
         dashboard: dashboard({
           nextRoutine: { id: 'routine-1', name: 'Push day', exercises: [{ id: 'e1' }] },
@@ -194,10 +198,32 @@ describe('HomeView', () => {
       })
       render()
 
-      await userEvent.click(await screen.findByRole('button', { name: 'Choose another routine' }))
-      await userEvent.click(await screen.findByRole('button', { name: /Pull day/ }))
+      await userEvent.click(await screen.findByRole('link', { name: 'Start Pull day' }))
 
-      expect(selectRoutine).toHaveBeenCalledWith('routine-2')
+      expect(preferRoutine).toHaveBeenCalledWith('routine-2')
+    })
+
+    // Past what the row holds, the picker is still the way through the rest.
+    test('picks a different routine from the picker and closes it', async () => {
+      const selectRoutine = vi
+        .spyOn(useDashboardStore.getState(), 'selectRoutine')
+        .mockResolvedValue(undefined)
+      useDashboardStore.setState({
+        dashboard: dashboard({
+          nextRoutine: { id: 'routine-1', name: 'Push day', exercises: [{ id: 'e1' }] },
+          routines: Array.from({ length: 7 }, (_, index) => ({
+            id: `routine-${index + 1}`,
+            name: `Routine ${index + 1}`,
+            exercises: [{ id: 'e1' }],
+          })),
+        }),
+      })
+      render()
+
+      await userEvent.click(await screen.findByRole('button', { name: 'Choose another routine' }))
+      await userEvent.click(await screen.findByRole('button', { name: /Routine 7/ }))
+
+      expect(selectRoutine).toHaveBeenCalledWith('routine-7')
       await waitFor(() =>
         expect(screen.queryByText('Change what is up next')).not.toBeInTheDocument(),
       )

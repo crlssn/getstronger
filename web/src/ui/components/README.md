@@ -37,6 +37,7 @@ aspirational.
 | A status pill beside a title    | `<AppChip>`                                         |
 | A row not yet seen              | `<AppUnreadDot>`                                    |
 | A panel around content          | `<AppCard>`, or the `card` utility inside a module  |
+| Panels swiped one at a time     | `<AppCarousel>`                                     |
 | Rows of things                  | `<AppList>` + `<AppListItem>` / `<AppListItemLink>` |
 | A row with a value and a way on | `<AppListRow>`                                      |
 | A row that is one tap           | `<AppOptionRow>`                                    |
@@ -199,6 +200,21 @@ A screen's title block: an optional eyebrow, the `h1`, an optional lead
 paragraph, and an optional action on the right. Every tab root opens with one,
 which is what keeps titles at the same size and the same distance from the
 content below.
+
+### `<AppCarousel>`
+
+Panels swiped one at a time, with dots saying where in the row you are. The row
+bleeds past the page's gutters so the next panel peeks in from the edge — a row
+that ends flush at its container reads as a card, and nobody swipes a card —
+and snapping is what makes that peek a promise: a drag lands on a panel rather
+than wherever the finger left off.
+
+`label` names the row, and each slide carries its own `label` because the dots
+are real buttons rather than the decoration they look like: the peek only
+invites a thumb, and a pointer or a keyboard needs somewhere to click. A dot is
+named for the panel it goes to _and_ its place in the row — two panels can
+carry the same name, and two dots may not — and is the tap-target floor square
+with the 6px indicator drawn inside it.
 
 ### `<AppSheet>` and `<SheetAction>`
 

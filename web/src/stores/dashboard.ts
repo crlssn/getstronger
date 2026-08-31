@@ -14,6 +14,8 @@ interface DashboardState {
   /** The last load failed, so an absent dashboard is not an empty account. */
   failed: boolean
   load: () => Promise<void>
+  /** Remembers the routine to put up next, without asking for the dashboard. */
+  preferRoutine: (routineId: string) => void
   selectRoutine: (routineId: string) => Promise<void>
 }
 
@@ -53,8 +55,13 @@ export const useDashboardStore = create<DashboardState>()(
         }
       },
 
+      // Starting a routine is a choice made on the way off the screen: the
+      // reload it would have asked for is aborted by the navigation, and the
+      // screen loads the dashboard again the next time it is opened anyway.
+      preferRoutine: (routineId) => set({ preferredRoutineId: routineId }),
+
       selectRoutine: async (routineId) => {
-        set({ preferredRoutineId: routineId })
+        get().preferRoutine(routineId)
         await get().load()
       },
     }),

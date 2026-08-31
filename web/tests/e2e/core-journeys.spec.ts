@@ -41,6 +41,38 @@ test.describe('authenticated journeys', () => {
     await expect(page.getByRole('heading', { name: 'Alex Morgan' })).toBeVisible()
   })
 
+  // The routine row is how the next session is chosen: what it is left on is
+  // what the dashboard says is up next the next time the screen is opened.
+  test('switches what is up next from the routine row @smoke', async ({ page }) => {
+    await page.goto('/home')
+
+    const row = page.getByRole('list', { name: 'Routines to train next' })
+    const panels = row.getByRole('listitem')
+    await expect(panels.first()).toContainText('Up next')
+
+    // Let the screen finish loading before leaving it: the streak and the feed
+    // are still in flight for the first moment, and a request the navigation
+    // drops is logged as an error.
+    await expect(page.getByText('Week streak')).toBeVisible()
+    await expect(page.getByRole('link', { name: /^@/ }).first()).toBeVisible()
+
+    // A swipe is the gesture, and no engine has a thumb: the panel behind the
+    // first is reached by its own link instead.
+    const start = panels.nth(1).getByRole('link')
+    const href = await start.getAttribute('href')
+    await start.click()
+    await expect(page).toHaveURL(new RegExp(`${href}$`))
+    // The builder itself, not just its address: leaving while its route chunk
+    // is still arriving fails the import rather than the test's patience.
+    await expect(page.getByRole('button', { name: 'Finish workout' }).first()).toBeVisible()
+
+    // Reloaded from the API rather than from what the last screen remembered:
+    // the routine that was started leads the row, by id rather than by name.
+    await page.goto('/home')
+    await expect(panels.first()).toContainText('Up next')
+    await expect(panels.first().getByRole('link')).toHaveAttribute('href', href ?? '')
+  })
+
   test('creates, updates, and deletes a tagged exercise @mutation', async ({ page }) => {
     const exerciseName = 'E2E Cable Row'
     const updatedName = 'E2E Seated Cable Row'
