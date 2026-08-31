@@ -84,11 +84,11 @@ describe('applyPageTitle', () => {
   })
 
   // Routes carry catalogue keys rather than display strings, so the header
-  // follows the locale.
-  test('translates the route key', () => {
+  // follows the locale — including a language chosen while it is on screen.
+  test('keeps the route key for the header to read', () => {
     applyPageTitle('pages.exercises')
 
-    expect(usePageTitleStore.getState().pageTitle).toBe('Exercises')
+    expect(usePageTitleStore.getState().pageTitleKey).toBe('pages.exercises')
   })
 
   test('blanks the title for a screen that sets its own', () => {
@@ -96,6 +96,7 @@ describe('applyPageTitle', () => {
 
     applyPageTitle(undefined)
 
+    expect(usePageTitleStore.getState().pageTitleKey).toBe('')
     expect(usePageTitleStore.getState().pageTitle).toBe('')
   })
 })

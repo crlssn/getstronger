@@ -28,7 +28,7 @@ export const dailyVolume = (workouts: readonly Workout[]): DailyVolume[] => {
     if (!key) return
 
     buckets.set(key, {
-      label: finishedAt.setLocale(dateLocale).toFormat('d LLL'),
+      label: finishedAt.setLocale(dateLocale()).toFormat('d LLL'),
       timestamp: finishedAt.toMillis(),
       volume: (buckets.get(key)?.volume ?? 0) + workout.intensity,
     })
@@ -75,7 +75,7 @@ const bucketedVolume = (
     if (!key) return
 
     buckets.set(key, {
-      label: start.setLocale(dateLocale).toFormat(format),
+      label: start.setLocale(dateLocale()).toFormat(format),
       timestamp: start.toMillis(),
       volume: (buckets.get(key)?.volume ?? 0) + workout.intensity,
     })

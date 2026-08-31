@@ -1,0 +1,13 @@
+@reference '../../assets/base.css';
+
+.stack {
+  @apply mx-auto max-w-3xl space-y-5;
+}
+
+.intro {
+  @apply px-1 text-meta text-text-muted;
+}
+
+.card {
+  @apply card divide-y divide-border overflow-hidden;
+}

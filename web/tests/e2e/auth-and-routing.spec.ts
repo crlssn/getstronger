@@ -145,8 +145,8 @@ test.describe('guest authentication and routing', () => {
     await page.getByRole('button', { name: 'Log in' }).click()
     await expect(page).toHaveURL(/\/home$/)
 
-    // A new account is metric until the profile says otherwise.
-    await page.goto('/profile')
+    // A new account is metric until the settings say otherwise.
+    await page.goto('/settings/units')
     await expect(
       page
         .getByRole('group', { name: 'Preferred weight unit' })
@@ -345,9 +345,9 @@ test.describe('account deletion', () => {
     await expect(page).toHaveURL(/\/exercises$/)
     await expect(page.getByText(exercise)).toBeVisible()
 
-    await page.goto('/profile')
+    await page.goto('/settings/account')
     await page
-      .getByRole('region', { name: 'Account' })
+      .getByRole('region', { name: 'Danger zone' })
       .getByRole('button', { name: /Delete account/ })
       .click()
 
@@ -358,7 +358,7 @@ test.describe('account deletion', () => {
     await sheet.getByLabel('Confirm with your password').fill('not-the-password')
     await sheet.getByRole('button', { name: 'Delete my account' }).click()
     await expect(sheet.getByRole('alert')).toContainText('That password is not correct.')
-    await expect(page).toHaveURL(/\/profile$/)
+    await expect(page).toHaveURL(/\/settings\/account$/)
 
     await sheet.getByLabel('Confirm with your password').fill(password)
     await sheet.getByRole('button', { name: 'Delete my account' }).click()

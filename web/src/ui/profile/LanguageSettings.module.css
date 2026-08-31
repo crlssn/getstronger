@@ -1,0 +1,26 @@
+@reference '../../assets/base.css';
+
+.stack {
+  @apply mx-auto max-w-3xl space-y-5;
+}
+
+.intro {
+  @apply px-1 text-meta text-text-muted;
+}
+
+/* Rows that draw their own edge, the way every other picker in the app does:
+   a card of dividers would need <AppOptionRow flat>, which gives up its
+   padding to whatever list it sits in, and this list has none to give. */
+.options {
+  @apply space-y-2;
+}
+
+/* The tick marks the language in use. The slot is there on every row so the
+   copy does not shift sideways as the choice moves. */
+.tick {
+  @apply grid size-5 shrink-0 place-items-center text-ink;
+}
+
+.tick svg {
+  @apply size-5;
+}

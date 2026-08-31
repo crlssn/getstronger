@@ -26,7 +26,9 @@ export const AppNavTop = () => {
   const navigate = useNavigate()
 
   const pageTitle = usePageTitleStore((state) => state.pageTitle)
+  const pageTitleKey = usePageTitleStore((state) => state.pageTitleKey)
   const previousPageTitle = usePageTitleStore((state) => state.previousPageTitle)
+  const previousPageTitleKey = usePageTitleStore((state) => state.previousPageTitleKey)
   const action = useActionButton((state) => state.action)
   const icon = useActionButton((state) => state.icon)
   const actionActive = useActionButton(selectActionButtonActive)
@@ -47,8 +49,11 @@ export const AppNavTop = () => {
   // history and back really does land on it; with history it lands on the
   // screen before this one, and a public profile opened from the Me tab used
   // to promise "Home" because /users/... hangs off no tab in particular.
-  const backLabel =
-    hasHistory && previousPageTitle ? previousPageTitle : t(tabLabelKeys[parentTab] ?? 'nav.home')
+  // Resolved here rather than on arrival, so a language chosen in the settings
+  // reaches the bar above it without waiting for the next navigation.
+  const title = pageTitleKey ? t(pageTitleKey) : pageTitle
+  const previous = previousPageTitleKey ? t(previousPageTitleKey) : previousPageTitle
+  const backLabel = hasHistory && previous ? previous : t(tabLabelKeys[parentTab] ?? 'nav.home')
 
   return (
     <header className={styles.pageNav}>
@@ -66,7 +71,7 @@ export const AppNavTop = () => {
       </AppButton>
 
       <div className={styles.titleRow}>
-        <h1>{pageTitle}</h1>
+        <h1>{title}</h1>
         {/* Screens can portal their own action (a dropdown, say) into here. */}
         <div id="page-nav-action" className={styles.pageAction} ref={holdPageNavAction}>
           {actionActive && icon && <ActionButton action={action} icon={icon} />}

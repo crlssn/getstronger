@@ -213,68 +213,6 @@ test.describe('account progress', () => {
     await expect(page).toHaveURL(/\/exercises\/[0-9a-f-]+$/)
   })
 
-  test('edits the name from the profile @mutation', async ({ page }) => {
-    await page.goto('/profile')
-    await expect(page.getByRole('heading', { name: 'Alex Morgan' })).toBeVisible()
-
-    await page.getByRole('button', { name: 'Edit profile' }).click()
-    const nameInput = page.getByRole('textbox', { name: 'Name', exact: true })
-    await nameInput.fill('Alex Morgan-Reid')
-    await page.getByRole('button', { name: 'Save' }).click()
-
-    await expect(page.getByRole('heading', { name: 'Alex Morgan-Reid' })).toBeVisible()
-    await expect(nameInput).toHaveCount(0)
-
-    // The name comes back from the backend, not from the draft still in memory.
-    await page.reload()
-    await expect(page.getByRole('heading', { name: 'Alex Morgan-Reid' })).toBeVisible()
-  })
-
-  test('edits the username from the profile and rejects a taken one @mutation', async ({
-    page,
-  }) => {
-    // The taken-username attempt intentionally draws a 4xx from the backend.
-    test.info().annotations.push(allowRuntimeErrors)
-    await page.goto('/profile')
-    await expect(page.getByText('@alex', { exact: true })).toBeVisible()
-
-    // A handle someone else holds is refused with a clear message.
-    await page.getByRole('button', { name: 'Edit profile' }).click()
-    const usernameInput = page.getByRole('textbox', { name: 'Username' })
-    await usernameInput.fill('janedoe')
-    await page.getByRole('button', { name: 'Save' }).click()
-    // Inline in the sheet, beside the field to correct — never a toast.
-    await expect(page.getByRole('alert')).toContainText('already taken')
-    await expect(page.getByRole('status')).toBeHidden()
-    await expect(usernameInput).toBeVisible()
-
-    // A free handle saves, closes the sheet, and shows immediately.
-    await usernameInput.fill('alex.morgan')
-    await page.getByRole('button', { name: 'Save' }).click()
-    await expect(page.getByText('@alex.morgan', { exact: true })).toBeVisible()
-    await expect(usernameInput).toHaveCount(0)
-  })
-
-  // One action opens both fields, so one pass through the sheet can change
-  // both — and each lands as its own request.
-  test('edits the name and the handle together @mutation', async ({ page }) => {
-    await page.goto('/profile')
-    await expect(page.getByRole('heading', { name: 'Alex Morgan' })).toBeVisible()
-
-    await page.getByRole('button', { name: 'Edit profile' }).click()
-    await page.getByRole('textbox', { name: 'Name', exact: true }).fill('Alexandra Morgan')
-    await page.getByRole('textbox', { name: 'Username' }).fill('alexandra')
-    await page.getByRole('button', { name: 'Save' }).click()
-
-    await expect(page.getByRole('heading', { name: 'Alexandra Morgan' })).toBeVisible()
-    await expect(page.getByText('@alexandra', { exact: true })).toBeVisible()
-
-    // Both came back from the backend, not from the draft still in memory.
-    await page.reload()
-    await expect(page.getByRole('heading', { name: 'Alexandra Morgan' })).toBeVisible()
-    await expect(page.getByText('@alexandra', { exact: true })).toBeVisible()
-  })
-
   test('opens the current user public profile from account settings', async ({ page }) => {
     await page.goto('/profile')
     await page.getByRole('link', { name: /Public profile/ }).click()

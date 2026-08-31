@@ -389,8 +389,8 @@ test.describe('weight units', () => {
     await expect(page).toHaveURL(/\/workouts\/[0-9a-f-]+$/)
     await expect(page.getByText(/60\s*kg/)).toBeVisible()
 
-    // Switch the preference from profile settings.
-    await page.goto('/profile')
+    // Switch the preference from the units settings screen.
+    await page.goto('/settings/units')
     const unit = page.getByRole('group', { name: 'Preferred weight unit' })
     await expect(unit.getByRole('button', { name: 'kg', exact: true })).toHaveAttribute(
       'aria-pressed',
@@ -430,7 +430,7 @@ test.describe('weight units', () => {
 
     // Switching back to kilograms must not rewrite the set logged in pounds:
     // historical display stays correct even after the preference changes.
-    await page.goto('/profile')
+    await page.goto('/settings/units')
     const kgAgain = page.getByRole('group', { name: 'Preferred weight unit' })
     await kgAgain.getByRole('button', { name: 'kg', exact: true }).click()
     await expect(kgAgain.getByRole('button', { name: 'kg', exact: true })).toHaveAttribute(
@@ -455,7 +455,7 @@ test.describe('weight units', () => {
     // survives a fresh sign-in, not just a reload of the current session.
     await page.goto('/logout')
     await logInAs(page, 'active@getstronger.test', 'password123')
-    await page.goto('/profile')
+    await page.goto('/settings/units')
     await expect(
       page.getByRole('group', { name: 'Preferred weight unit' }).getByRole('button', {
         name: 'kg',
@@ -480,7 +480,7 @@ test.describe('weight units', () => {
     await page.getByRole('button', { name: 'Leave workout?' }).click()
     await page.getByRole('button', { name: 'Continue in the background' }).click()
 
-    await page.goto('/profile')
+    await page.goto('/settings/units')
     await page
       .getByRole('group', { name: 'Preferred weight unit' })
       .getByRole('button', { name: 'lbs', exact: true })
@@ -502,7 +502,7 @@ test.describe('weight units', () => {
 
     // Restore the seeded default so the preference does not leak into the
     // tests that follow.
-    await page.goto('/profile')
+    await page.goto('/settings/units')
     await page
       .getByRole('group', { name: 'Preferred weight unit' })
       .getByRole('button', { name: 'kg', exact: true })
@@ -533,7 +533,7 @@ test.describe('weight units', () => {
     await expect(page).toHaveURL(/\/exercises$/)
 
     try {
-      await page.goto('/profile')
+      await page.goto('/settings/units')
       const unit = page.getByRole('group', { name: 'Preferred distance unit' })
       await expect(unit.getByRole('button', { name: 'km', exact: true })).toHaveAttribute(
         'aria-pressed',
@@ -585,14 +585,14 @@ test.describe('weight units', () => {
 
       // Switching back to kilometers must not rewrite the set logged in
       // miles: historical display stays in the unit it was entered in.
-      await page.goto('/profile')
+      await page.goto('/settings/units')
       await unit.getByRole('button', { name: 'km', exact: true }).click()
       await expect(page.getByRole('status')).toContainText('Distance unit updated')
 
       await page.goto(workoutUrl)
       await expect(page.getByText(/3\.5\s*mi/)).toBeVisible()
     } finally {
-      await page.goto('/profile')
+      await page.goto('/settings/units')
       const unit = page.getByRole('group', { name: 'Preferred distance unit' })
       if (
         (await unit

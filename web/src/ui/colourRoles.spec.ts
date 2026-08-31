@@ -43,10 +43,10 @@ const roles = {
     'components/DropdownButton.module.css',
     'exercises/ExerciseTagsInput.module.css',
     // The danger pattern: an outlined red pill inside the card that explains
-    // the consequence — the routine editor set it, plans and the profile
-    // follow it.
+    // the consequence — the routine editor set it, plans and the account
+    // settings follow it.
     'plans/ViewPlan.module.css',
-    'profile/ProfileView.module.css',
+    'profile/AccountSettings.module.css',
     'routines/ViewRoutine.module.css',
     'workouts/StartWorkout.module.css',
     'workouts/SetTable.module.css',

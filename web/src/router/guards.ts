@@ -1,6 +1,5 @@
 import type { RouteAccess } from '@/router/routes'
 
-import { i18n } from '@/i18n'
 import { useActionButton } from '@/stores/actionButton'
 import { useAuthStore } from '@/stores/auth'
 import { usePageTitleStore } from '@/stores/pageTitle'
@@ -54,5 +53,5 @@ export const onNavigate = () => {
 export const applyPageTitle = (titleKey?: string) => {
   // enterPage rather than setPageTitle: this runs once per navigation, which is
   // exactly when the screen being left becomes the one back is named after.
-  usePageTitleStore.getState().enterPage(titleKey ? i18n.t(titleKey) : '')
+  usePageTitleStore.getState().enterPage(titleKey)
 }

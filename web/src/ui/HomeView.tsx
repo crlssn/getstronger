@@ -125,7 +125,7 @@ export const HomeView = () => {
         ) : (
           <AppPageHeader
             action={<HomePageActions open={false} onOpenChange={setSearchOpen} />}
-            eyebrow={DateTime.now().setLocale(dateLocale).toFormat('EEEE, d LLLL')}
+            eyebrow={DateTime.now().setLocale(dateLocale()).toFormat('EEEE, d LLLL')}
             title={t(greetingKey(DateTime.now().hour))}
           />
         )}

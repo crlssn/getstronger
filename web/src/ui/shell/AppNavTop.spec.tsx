@@ -1,9 +1,10 @@
 // @vitest-environment jsdom
 
-import { screen } from '@testing-library/react'
+import { act, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
+import { i18n } from '@/i18n'
 import { useActionButton } from '@/stores/actionButton'
 import { usePageTitleStore } from '@/stores/pageTitle'
 import { renderWithProviders } from '@/ui/testing'
@@ -13,7 +14,12 @@ const Icon = () => null
 
 describe('AppNavTop', () => {
   beforeEach(() => {
-    usePageTitleStore.setState({ pageTitle: 'Exercises', previousPageTitle: '' })
+    usePageTitleStore.setState({
+      pageTitle: 'Exercises',
+      pageTitleKey: '',
+      previousPageTitle: '',
+      previousPageTitleKey: '',
+    })
     useActionButton.setState({ action: () => {}, icon: undefined })
     window.history.replaceState({ idx: 0 }, '', '/')
   })
@@ -22,6 +28,23 @@ describe('AppNavTop', () => {
     renderWithProviders(<AppNavTop />, { route: '/exercises/1' })
 
     expect(screen.getByRole('heading', { name: 'Exercises' })).toBeInTheDocument()
+  })
+
+  // The language is chosen in the settings, on a screen this bar is titling at
+  // the time: a title resolved on arrival stayed in the language the reader
+  // had just left.
+  test('re-reads the route’s title when the language changes', async () => {
+    usePageTitleStore.setState({ pageTitle: '', pageTitleKey: 'pages.exercises' })
+    renderWithProviders(<AppNavTop />, { route: '/exercises/1' })
+
+    await act(async () => {
+      await i18n.changeLanguage('sv')
+    })
+
+    expect(screen.getByRole('heading', { name: 'Övningar' })).toBeInTheDocument()
+    await act(async () => {
+      await i18n.changeLanguage('en')
+    })
   })
 
   // Back says where it goes, rather than only that it goes back.

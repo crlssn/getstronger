@@ -38,8 +38,8 @@ A selector is written as a standalone function of the state so both call sites
 above can use it — one subscribing, one reading once.
 
 **Persistence** uses Zustand's `persist` middleware over `migratedStorage` from
-[`persistence.ts`](persistence.ts). Six stores persist: `auth`, `dashboard`,
-`emailVerification`, `mutationQueue`, `preferences` and `workout`. Each names
+[`persistence.ts`](persistence.ts). Seven stores persist: `auth`, `dashboard`,
+`emailVerification`, `locale`, `mutationQueue`, `preferences` and `workout`. Each names
 its fields in `partialize` explicitly, so actions and transient state never
 reach storage — a store that persisted its whole object would write its own
 functions out and read them back as data.
