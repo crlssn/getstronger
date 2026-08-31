@@ -3,7 +3,7 @@
 import { screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { useState } from 'react'
-import { describe, expect, test, vi } from 'vitest'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 
 import { renderWithProviders } from '@/ui/testing'
 import { AppSheet, SheetAction } from './AppSheet'
@@ -187,6 +187,88 @@ describe('AppSheet', () => {
     await userEvent.tab()
 
     expect(dialog()).toHaveFocus()
+  })
+})
+
+// Callers close a sheet by unmounting it, so the slide-down has to be staged
+// outside React: the sheet puts its detached backdrop back into the body —
+// inert, hidden from assistive tech — and removes it when the animation ends.
+// jsdom cannot run animations, so these specs grant the capability explicitly.
+describe('AppSheet exit', () => {
+  const grantAnimations = () => {
+    Object.defineProperty(HTMLElement.prototype, 'getAnimations', {
+      configurable: true,
+      value: () => [],
+    })
+  }
+
+  afterEach(() => {
+    Reflect.deleteProperty(HTMLElement.prototype, 'getAnimations')
+    vi.unstubAllGlobals()
+    vi.useRealTimers()
+  })
+
+  test('keeps an inert copy on screen until its slide-down ends', () => {
+    grantAnimations()
+    const { unmount } = renderWithProviders(<AppSheet title="Leave workout?" onClose={vi.fn()} />)
+    const backdrop = dialog().parentElement as HTMLElement
+
+    unmount()
+
+    expect(document.body.contains(backdrop)).toBe(true)
+    expect(backdrop).toHaveAttribute('aria-hidden', 'true')
+    expect(backdrop).toHaveAttribute('inert')
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+
+    backdrop.dispatchEvent(new Event('animationend'))
+    expect(document.body.contains(backdrop)).toBe(false)
+  })
+
+  test("ignores the panel's own animationend bubbling past", () => {
+    grantAnimations()
+    const { unmount } = renderWithProviders(<AppSheet title="Leave workout?" onClose={vi.fn()} />)
+    const backdrop = dialog().parentElement as HTMLElement
+    const panel = backdrop.firstElementChild as HTMLElement
+
+    unmount()
+    panel.dispatchEvent(new Event('animationend', { bubbles: true }))
+
+    expect(document.body.contains(backdrop)).toBe(true)
+    backdrop.dispatchEvent(new Event('animationend'))
+    expect(document.body.contains(backdrop)).toBe(false)
+  })
+
+  test('removes the copy even if no animation ever ends', () => {
+    vi.useFakeTimers()
+    grantAnimations()
+    const { unmount } = renderWithProviders(<AppSheet title="Leave workout?" onClose={vi.fn()} />)
+    const backdrop = dialog().parentElement as HTMLElement
+
+    unmount()
+    expect(document.body.contains(backdrop)).toBe(true)
+
+    vi.advanceTimersByTime(400)
+    expect(document.body.contains(backdrop)).toBe(false)
+  })
+
+  test('goes at once where animations cannot run', () => {
+    const { unmount } = renderWithProviders(<AppSheet title="Leave workout?" onClose={vi.fn()} />)
+    const backdrop = dialog().parentElement as HTMLElement
+
+    unmount()
+
+    expect(document.body.contains(backdrop)).toBe(false)
+  })
+
+  test('goes at once for a reader who asked for less movement', () => {
+    grantAnimations()
+    vi.stubGlobal('matchMedia', () => ({ matches: true }) as MediaQueryList)
+    const { unmount } = renderWithProviders(<AppSheet title="Leave workout?" onClose={vi.fn()} />)
+    const backdrop = dialog().parentElement as HTMLElement
+
+    unmount()
+
+    expect(document.body.contains(backdrop)).toBe(false)
   })
 })
 

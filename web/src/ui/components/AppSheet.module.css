@@ -2,16 +2,91 @@
 
 .sheetBackdrop {
   @apply fixed inset-0 z-50 flex items-end justify-center bg-ink-strong/40 sm:items-center sm:p-6;
+  animation: backdrop-in 200ms ease-out;
 }
 
 /* Flush with the bottom edge: only the top corners round, and the safe-area
    inset is padding inside the sheet so nothing shows through beneath it.
 
    The panel is focused as the sheet opens but is never a tab stop, so it draws
-   no ring — same as the dropdown's menu panel. */
+   no ring — same as the dropdown's menu panel. A transform is safe here where
+   the screen fade allows none: nothing inside the panel pins itself to the
+   viewport. */
 .sheetPanel {
   @apply flex max-h-[85vh] w-full max-w-lg flex-col rounded-t-sheet bg-surface px-5 pt-5 text-left shadow-overlay focus:outline-none sm:max-h-[75vh] sm:rounded-sheet sm:pb-5;
   padding-bottom: calc(1.25rem + env(safe-area-inset-bottom));
+  animation: panel-in 250ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+/* The exit plays on a detached copy the component re-attaches — see the
+   staging effect in AppSheet.tsx — so `forwards` keeps the final frame while
+   `animationend` is on its way. */
+.closing {
+  animation: backdrop-out 200ms ease-in forwards;
+  pointer-events: none;
+}
+
+.closing .sheetPanel {
+  animation: panel-out 200ms ease-in forwards;
+}
+
+@keyframes backdrop-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes backdrop-out {
+  to {
+    opacity: 0;
+  }
+}
+
+/* From the bottom edge on a phone; the centred desktop dialog settles into
+   place instead, since a viewport-height slide would cross the whole page. */
+@keyframes panel-in {
+  from {
+    transform: translateY(100%);
+  }
+}
+
+@keyframes panel-out {
+  to {
+    transform: translateY(100%);
+  }
+}
+
+@keyframes panel-in-centred {
+  from {
+    opacity: 0;
+    transform: translateY(0.75rem);
+  }
+}
+
+@keyframes panel-out-centred {
+  to {
+    opacity: 0;
+    transform: translateY(0.75rem);
+  }
+}
+
+@media (min-width: 40rem) {
+  .sheetPanel {
+    animation-name: panel-in-centred;
+  }
+
+  .closing .sheetPanel {
+    animation-name: panel-out-centred;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sheetBackdrop,
+  .sheetPanel,
+  .closing,
+  .closing .sheetPanel {
+    animation: none;
+  }
 }
 
 .sheetHandle {
