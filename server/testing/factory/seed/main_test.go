@@ -80,6 +80,28 @@ func TestSeedPersonas(t *testing.T) {
 	require.NoError(t, err)
 	require.GreaterOrEqual(t, followeeCount, int64(3))
 
+	// The trend chart's cardio measures need a distance-and-time history, with
+	// sets spread over more than one day and more than one per workout.
+	runExercise, err := models.Exercises.Query(
+		models.SelectWhere.Exercises.UserID.EQ(active.ID),
+		models.SelectWhere.Exercises.Title.EQ("Run"),
+	).One(ctx, bob.NewDB(c.DB))
+	require.NoError(t, err)
+	require.ElementsMatch(t, []string{"distance", "time"}, []string(runExercise.Metrics))
+
+	runSets, err := models.Sets.Query(
+		models.SelectWhere.Sets.ExerciseID.EQ(runExercise.ID),
+	).All(ctx, bob.NewDB(c.DB))
+	require.NoError(t, err)
+	require.GreaterOrEqual(t, len(runSets), 7)
+	runDays := make(map[string]int)
+	for _, set := range runSets {
+		require.Positive(t, set.Distance)
+		require.Positive(t, set.DurationSeconds)
+		runDays[set.CreatedAt.Format("2006-01-02")]++
+	}
+	require.GreaterOrEqual(t, len(runDays), 3)
+
 	newAuth, err := models.Auths.Query(
 		models.SelectWhere.Auths.Email.EQ(config.new.Email),
 	).One(ctx, bob.NewDB(c.DB))

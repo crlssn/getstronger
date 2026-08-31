@@ -180,6 +180,7 @@ func seedPersonas(exec bob.Executor, f *factory.Factory, config personaConfig) (
 		factory.UserUsername(config.new.Username),
 	)
 
+	seedActiveRuns(f, active)
 	jane := seedJaneDoe(exec, f, active)
 	seedActiveSocialGraph(exec, active, newlySignedUp, jane)
 	return active, newlySignedUp
@@ -207,6 +208,79 @@ END $$;`
 	}
 
 	return nil
+}
+
+// seedActiveRuns gives the active persona a distance-and-time exercise with a
+// short interval-run history, so the trend chart's cardio measures — distance,
+// time and pace, sub-kilometre intervals included — have data to plot.
+func seedActiveRuns(f *factory.Factory, active *models.User) {
+	run := f.NewExercise(
+		factory.ExerciseUserID(active.ID),
+		factory.ExerciseTitle("Run"),
+		factory.ExerciseTags("Cardio"),
+		factory.ExerciseMetrics("distance", "time"),
+	)
+
+	type runSet struct {
+		distance        float64
+		durationSeconds int
+	}
+	type runSeed struct {
+		finishedAt time.Time
+		sets       []runSet
+	}
+
+	now := factory.Now()
+	runs := []runSeed{
+		{
+			finishedAt: now.Add(-20 * time.Hour),
+			sets: []runSet{
+				{distance: 0.68, durationSeconds: 240},
+				{distance: 0.74, durationSeconds: 240},
+				{distance: 0.72, durationSeconds: 240},
+			},
+		},
+		{
+			finishedAt: now.Add(-3 * 24 * time.Hour),
+			sets: []runSet{
+				{distance: 1.2, durationSeconds: 420},
+				{distance: 0.66, durationSeconds: 240},
+			},
+		},
+		{
+			finishedAt: now.Add(-6 * 24 * time.Hour),
+			sets: []runSet{
+				{distance: 0.6, durationSeconds: 235},
+				{distance: 0.62, durationSeconds: 230},
+			},
+		},
+	}
+
+	for _, seededRun := range runs {
+		startedAt := seededRun.finishedAt.Add(-30 * time.Minute)
+		workout := f.NewWorkout(
+			factory.WorkoutUserID(active.ID),
+			factory.WorkoutName("Interval Run"),
+			factory.WorkoutStartedAt(startedAt),
+			factory.WorkoutFinishedAt(seededRun.finishedAt),
+			factory.WorkoutCreatedAt(seededRun.finishedAt),
+		)
+
+		setBatch := make([][]factory.SetOpt, 0, len(seededRun.sets))
+		for index, seededSet := range seededRun.sets {
+			setBatch = append(setBatch, []factory.SetOpt{
+				factory.SetUserID(active.ID),
+				factory.SetWorkoutID(workout.ID),
+				factory.SetExerciseID(run.ID),
+				factory.SetWeight(0),
+				factory.SetReps(0),
+				factory.SetDistance(seededSet.distance),
+				factory.SetDurationSeconds(seededSet.durationSeconds),
+				factory.SetCreatedAt(startedAt.Add(time.Duration(index+1) * 4 * time.Minute)),
+			})
+		}
+		f.NewSetBatch(setBatch...)
+	}
 }
 
 func seedJaneDoe(exec bob.Executor, f *factory.Factory, active *models.User) *models.User {
