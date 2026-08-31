@@ -38,11 +38,13 @@ export const AppNavTop = () => {
   // This bar only renders on a screen pushed onto a tab, so there is always
   // somewhere to go back to — but not always a history entry to go back
   // through, because the screen may have been opened from a link or a bookmark.
-  const hasHistory = window.history.state?.idx > 0
+  // React Router numbers the entries it pushed; history.state is otherwise any.
+  const { idx } = (window.history.state ?? {}) as { idx?: number }
+  const hasHistory = (idx ?? 0) > 0
 
   const goBack = () => {
-    if (hasHistory) navigate(-1)
-    else navigate(parentTab)
+    if (hasHistory) void navigate(-1)
+    else void navigate(parentTab)
   }
 
   // Named after where it actually goes. The tab is only right when there is no

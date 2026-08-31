@@ -56,7 +56,8 @@ export const AppFormFooter = ({ children, className, secondary, hint, error }: P
   // it: a reader who never sees the bar still hears why the button refuses.
   const action =
     hint && isValidElement<{ 'aria-describedby'?: string }>(children)
-      ? cloneElement(children, { 'aria-describedby': hintId })
+      ? // eslint-disable-next-line @eslint-react/no-clone-element -- the caller owns the button; describing it is all this adds
+        cloneElement(children, { 'aria-describedby': hintId })
       : children
 
   return (

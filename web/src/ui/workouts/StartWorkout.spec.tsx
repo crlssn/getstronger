@@ -488,11 +488,11 @@ describe('StartWorkout', () => {
 
       await user.type(setField('Bench Press set 1 weight'), '70')
       await user.type(setField('Bench Press set 1 reps'), '10')
-      await user.click(screen.getAllByRole('button', { name: 'Finish workout' })[0]!)
+      await user.click(screen.getAllByRole('button', { name: 'Finish workout' })[0])
       await user.click(screen.getByRole('button', { name: 'Finish and save' }))
 
       await waitFor(() => expect(mocked.createWorkout).toHaveBeenCalled())
-      const request = mocked.createWorkout.mock.calls[0]![0]
+      const request = mocked.createWorkout.mock.calls[0][0]
       const bench = request.exerciseSets.filter((entry) => entry.exercise?.id === benchPress.id)
       expect(bench).toHaveLength(1)
       expect(bench[0]?.sets).toHaveLength(2)

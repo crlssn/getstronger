@@ -9,7 +9,7 @@ const maxPages = 12
 
 const weekKey = (dateTime: DateTime) => `${dateTime.weekYear}-${dateTime.weekNumber}`
 
-export const currentWeekKey = () => weekKey(DateTime.now().startOf('week'))
+const currentWeekKey = () => weekKey(DateTime.now().startOf('week'))
 
 const computeStreak = (weeks: Set<string>) => {
   let count = 0

@@ -14,7 +14,7 @@ export type ButtonColour = 'primary' | 'secondary' | 'ghost' | 'destructive'
 // what a form's submit uses. There is nothing below sm on purpose — inline is
 // sm's height with the type of the copy it sits beside, which is a quieter
 // button rather than a smaller one.
-export type ButtonSize = 'inline' | 'sm' | 'md' | 'lg'
+type ButtonSize = 'inline' | 'sm' | 'md' | 'lg'
 
 interface Shared {
   colour: ButtonColour

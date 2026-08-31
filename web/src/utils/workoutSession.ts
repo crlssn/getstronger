@@ -131,7 +131,7 @@ export interface SessionGroup {
   stations: SessionStation[]
 }
 
-export const stationKey = (exerciseID: string, occurrence: number): string =>
+const stationKey = (exerciseID: string, occurrence: number): string =>
   occurrence === 0 ? exerciseID : `${exerciseID}#${occurrence + 1}`
 
 /**

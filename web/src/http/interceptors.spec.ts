@@ -20,7 +20,7 @@ const expired = () => new ConnectError('token expired', Code.Unauthenticated)
 const run = (
   req: { stream: boolean; method: unknown },
   next: (req: unknown) => Promise<unknown>,
-): Promise<unknown> => retryUnauthenticated(next as never)(req as never) as Promise<unknown>
+): Promise<unknown> => retryUnauthenticated(next as never)(req as never)
 
 const unaryRequest = { stream: false, method: UserService.method.getUser }
 

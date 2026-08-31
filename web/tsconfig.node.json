@@ -1,6 +1,11 @@
 {
   "extends": "@tsconfig/node20/tsconfig.json",
-  "include": ["vite.config.*", "vitest.config.*"],
+  "include": [
+    "vite.config.*",
+    "vitest.config.*",
+    "playwright.config.*",
+    "playwright.screenshots.config.*"
+  ],
   "compilerOptions": {
     "composite": true,
     "noEmit": true,

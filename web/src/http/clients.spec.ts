@@ -2,8 +2,6 @@
 
 import { describe, expect, test, vi } from 'vitest'
 
-type TransportOptions = { interceptors: unknown[]; fetch: typeof globalThis.fetch }
-
 const { createConnectTransport, isNativePlatform } = vi.hoisted(() => ({
   createConnectTransport: vi.fn((_options: { interceptors: unknown[]; fetch: typeof fetch }) => ({
     transport: true,
@@ -38,7 +36,7 @@ const loadTransport = async () => {
   if (!options) throw new Error('clients.ts did not create a transport')
 
   return {
-    options: options as TransportOptions,
+    options,
     auth,
     logger,
     retryUnauthenticated,

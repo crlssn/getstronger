@@ -121,6 +121,9 @@ export const CardWorkoutExercise = ({
 
               return (
                 <div
+                  // A logged set has an id; the fallback is for the optimistic
+                  // copy shown before the server has answered.
+                  // eslint-disable-next-line @eslint-react/no-array-index-key
                   key={set.id || index}
                   className={cn(styles.setRow, personalBest && styles.personalBestRow)}
                   role="row"

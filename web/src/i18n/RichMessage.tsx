@@ -39,7 +39,9 @@ export const RichMessage = ({ i18nKey, nodes, values }: Props) => {
     <>
       {parts.map((part, index) => (
         // Split with one capturing group alternates literal text and captures,
-        // so an odd index is always a placeholder name.
+        // so an odd index is always a placeholder name. The position IS the
+        // identity here: the parts of one sentence, in order.
+        // eslint-disable-next-line @eslint-react/no-array-index-key
         <Fragment key={index}>{index % 2 ? nodes[part] : part}</Fragment>
       ))}
     </>

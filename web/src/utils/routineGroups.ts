@@ -19,7 +19,7 @@ export const defaultRoundRestSeconds = 90
 /** How many times a new circuit is prescribed to go round. */
 export const defaultRounds = 3
 
-export const maximumRestSeconds = 3600
+const maximumRestSeconds = 3600
 
 export const maximumRounds = 99
 
@@ -202,7 +202,7 @@ export const draftGroupsFromRoutine = (
 }
 
 /** Whether the group already trains this exercise, and so will not take it again. */
-export const groupHasExercise = (group: DraftGroup, exerciseId: string): boolean =>
+const groupHasExercise = (group: DraftGroup, exerciseId: string): boolean =>
   group.entries.some((entry) => entry.exerciseId === exerciseId)
 
 export const addExerciseToGroup = (
@@ -320,7 +320,7 @@ const clampRounds = (value: number) =>
   Math.min(Math.max(Number.isFinite(value) ? Math.round(value) : 0, 0), maximumRounds)
 
 /** Keeps a group's settings inside what the API accepts. */
-export const clampGroup = (group: DraftGroup): DraftGroup => {
+const clampGroup = (group: DraftGroup): DraftGroup => {
   // Rounds are how the block is worked through rather than how it rests, so a
   // block with its timer off is still prescribed for the rounds it says.
   const rounds = group.mode === 'circuit' ? clampRounds(group.rounds) : 0

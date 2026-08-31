@@ -16,10 +16,10 @@ import styles from './AppEmptyState.module.css'
 // be decided. A screen with genuinely nowhere to go has to write action="none"
 // in its own markup, where a reviewer will see the choice being made. A class
 // cannot make anyone choose.
-export type EmptyStateAction = { label: string; to?: string }
+type EmptyStateAction = { label: string; to?: string }
 
 /** The concept behind the screen, for whoever wants it. */
-export interface EmptyStateExplainer {
+interface EmptyStateExplainer {
   label: string
   title: string
   children: ReactNode

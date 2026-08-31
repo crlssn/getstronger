@@ -29,7 +29,7 @@ import styles from './SetTable.module.css'
  * "previous" to show and no row in progress, so that column carries the way to
  * take a set out instead.
  */
-export type SetTableMode = 'log' | 'edit'
+type SetTableMode = 'log' | 'edit'
 
 interface Props {
   exercise: Exercise
@@ -113,6 +113,12 @@ export const SetTable = ({
 
         return (
           <div
+            // A draft set has no id to key by — `types/workout.ts` stores sets
+            // as a positional array — so removing one reuses the rows below it
+            // rather than remounting them. Their fields resync from props, so
+            // this costs identity rather than correctness; giving a draft set
+            // its own id is a store and persistence change, not a key change.
+            // eslint-disable-next-line @eslint-react/no-array-index-key
             key={index}
             className={cn(
               styles.setGrid,

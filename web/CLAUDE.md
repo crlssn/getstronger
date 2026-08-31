@@ -8,6 +8,13 @@ Verify with `mise run test:web` (build plus unit tests) and `mise run lint:web`.
 Flows that cross the UI, backend, and database also need an end-to-end test:
 `mise run test:e2e`.
 
+`lint:web` is two tools. ESLint reads one file at a time — typed, so a promise
+nobody awaits is an error — and knip reads the import graph, which is the only
+one of the two that can tell you a component nothing renders. Neither tolerates
+a warning. A rule that is wrong for one line is disabled on that line with the
+reason; a rule that is wrong for this app is turned off in `eslint.config.js`
+with the reason. Both are read more often than they are written.
+
 To see the app rather than reason about its markup — screenshots, accessibility
 and tap-target measurements, visual diffs — follow
 `.claude/skills/design-review/SKILL.md`.
@@ -67,12 +74,16 @@ control — the app went through a stage of fifty-three hand-written buttons and
 five different search fields, and every one of them started as a screen that
 did not find what it wanted.
 
-Two rules enforce it, so neither depends on remembering:
+Three rules enforce it, so none depends on remembering:
 
 - **A screen may not render a bare `<button>`, `<input>`, `<textarea>` or
   `<select>`.** ESLint rejects them outside `ui/components`. A genuinely local
   exception disables the rule on that line with the reason written above it,
   where a reviewer reads it — there are four in the app, and each says why.
+- **The arrows point one way.** `ui/components` may not import `ui/features`,
+  `ui/shell`, a store, the HTTP layer or a generated type: the design system
+  takes props and gives back events. `ui/features` may not import `ui/shell`.
+  `PageNavAction` is the single exception and says why at the import.
 - **Every component in `ui/components` is in the catalogue and has a spec.**
   `catalogue.spec.ts` fails otherwise, including for a catalogue entry whose
   component no longer exists.
@@ -140,7 +151,9 @@ Every user-facing string must go through i18next. Never hard-code English text
 in components — the only exceptions are the brand assets in `src/brand.ts` (the
 product name, slogan, and signup subtitle), which read the same in every locale
 and must never enter the message catalogues. `brand.spec.ts` fails if a
-catalogue value contains any of them.
+catalogue value contains any of them. ESLint rejects literal text in JSX under
+`src/ui/`, which catches the markup but not an aria-label or a toast built in a
+variable — those are still yours to remember.
 
 - Add every new string to `src/i18n/messages.ts` in **every supported locale**,
   and render it with `t()`. The test suite enforces key parity between locales,

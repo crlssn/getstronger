@@ -24,7 +24,7 @@ export const useAuthStore = create<AuthState>()(
       accessToken: '',
 
       setAccessToken: (token) => {
-        const claims = jwtDecode(token) as AccessToken
+        const claims = jwtDecode<AccessToken>(token)
         const wasAuthorised = selectAuthorised(get())
         const isSwitchingAccounts = Boolean(get().userId && get().userId !== claims.userId)
 

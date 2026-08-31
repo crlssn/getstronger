@@ -146,7 +146,7 @@ describe('UnitSettings', () => {
     test('does nothing when the current option is picked again', async () => {
       render()
 
-      await userEvent.click(group(label).getAllByRole('button')[0]!)
+      await userEvent.click(group(label).getAllByRole('button')[0])
 
       expect(request()).not.toHaveBeenCalled()
     })

@@ -18,7 +18,7 @@ const edgeClasses = (edges: { start: boolean; end: boolean }) => [
   edges.end && styles.fadeEnd,
 ]
 
-export interface SegmentedOption<T> {
+interface SegmentedOption<T> {
   label: string
   value: T
 }
@@ -87,7 +87,7 @@ export const AppSegmented = <T,>({
   )
 }
 
-export interface SegmentedLink {
+interface SegmentedLink {
   label: string
   to: string
 }

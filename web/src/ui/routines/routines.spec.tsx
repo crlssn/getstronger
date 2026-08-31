@@ -231,7 +231,7 @@ describe('CreateRoutine', () => {
   // sheet the session uses.
   const addExercise = async (name: RegExp, groupIndex = 0) => {
     const buttons = await screen.findAllByRole('button', { name: 'Add exercise' })
-    await userEvent.click(buttons[groupIndex]!)
+    await userEvent.click(buttons[groupIndex])
 
     const sheet = screen.getByRole('dialog')
     await userEvent.click(within(sheet).getByRole('button', { name }))
@@ -430,7 +430,7 @@ describe('CreateRoutine', () => {
     render()
 
     await addExercise(/Bench press/)
-    await userEvent.click(screen.getAllByRole('button', { name: 'Add exercise' })[0]!)
+    await userEvent.click(screen.getAllByRole('button', { name: 'Add exercise' })[0])
 
     const sheet = screen.getByRole('dialog')
     expect(within(sheet).queryByRole('button', { name: /Bench press/ })).not.toBeInTheDocument()
@@ -494,7 +494,7 @@ describe('CreateRoutine', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Create routine' }))
 
     await waitFor(() => expect(mocked.createRoutine).toHaveBeenCalled())
-    const [, , groups] = mocked.createRoutine.mock.calls[0]!
+    const [, , groups] = mocked.createRoutine.mock.calls[0]
     expect(groups?.[0]?.restBetweenExercisesSeconds).toBe(0)
     expect(groups?.[0]?.entries.map((entry) => entry.restSeconds)).toEqual([0, 0])
   })
@@ -584,7 +584,7 @@ describe('CreateRoutine', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Create routine' }))
 
     await waitFor(() => expect(mocked.createRoutine).toHaveBeenCalled())
-    const [, , groups] = mocked.createRoutine.mock.calls[0]!
+    const [, , groups] = mocked.createRoutine.mock.calls[0]
     expect(groups?.[0]?.entries[0]?.restSeconds).toBe(0)
   })
 

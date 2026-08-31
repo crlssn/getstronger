@@ -170,9 +170,9 @@ describe('CardWorkoutExercise', () => {
     })
 
     const best = rows()[1]
-    expect(within(best!).getByLabelText('Set 1, PR')).toHaveTextContent('1')
-    expect(within(best!).getByLabelText('PR')).toBeInTheDocument()
-    expect(within(rows()[2]!).queryByLabelText('PR')).not.toBeInTheDocument()
+    expect(within(best).getByLabelText('Set 1, PR')).toHaveTextContent('1')
+    expect(within(best).getByLabelText('PR')).toBeInTheDocument()
+    expect(within(rows()[2]).queryByLabelText('PR')).not.toBeInTheDocument()
   })
 
   // What a reader scans the closed list for is which exercises went well.

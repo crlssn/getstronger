@@ -152,7 +152,7 @@ describe('plan store', () => {
     ['skip', () => store().skip('p1')],
   ])('%s leaves the list alone when the server returns nothing', async (_name, invoke) => {
     seed(plan('p1'))
-    Object.values(mocked).forEach((mock) => mock.mockResolvedValue(undefined as never))
+    Object.values(mocked).forEach((mock) => mock.mockResolvedValue(undefined))
 
     await expect(invoke()).resolves.toBeUndefined()
 

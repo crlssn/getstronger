@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 
-export type Confirmation = {
+type Confirmation = {
   title: string
   body?: string
   confirmLabel: string
