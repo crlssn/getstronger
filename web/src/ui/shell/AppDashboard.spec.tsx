@@ -1,8 +1,9 @@
 // @vitest-environment jsdom
 
 import { screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, test } from 'vitest'
-import { Route, Routes } from 'react-router-dom'
+import { Link, Route, Routes } from 'react-router-dom'
 
 import { usePageTitleStore } from '@/stores/pageTitle'
 import { useWorkoutStore } from '@/stores/workout'
@@ -95,5 +96,23 @@ describe('AppDashboard', () => {
     renderAt('/workouts/1')
 
     expect(bottomNav()).toBeInTheDocument()
+  })
+
+  // Landing on a new path remounts the screen, which is what replays its
+  // entrance transition; the chrome around it holds still.
+  test('replays the screen transition on navigation', async () => {
+    renderWithProviders(
+      <Routes>
+        <Route element={<AppDashboard />}>
+          <Route path="*" element={<Link to="/exercises">The screen</Link>} />
+        </Route>
+      </Routes>,
+      { route: '/home' },
+    )
+    const before = screen.getByText('The screen')
+
+    await userEvent.click(before)
+
+    expect(screen.getByText('The screen')).not.toBe(before)
   })
 })
