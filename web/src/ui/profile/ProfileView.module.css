@@ -4,30 +4,40 @@
   @apply mx-auto max-w-3xl space-y-5;
 }
 
+/* One card for the identity and the week, so the rule between them belongs to
+   the card the way it does in every list below it. */
 .profileCard {
-  @apply card grid grid-cols-[auto_1fr_auto] items-center gap-4 p-5;
+  @apply card overflow-hidden;
+}
+
+/* The whole row is the way to the account screen, so it is sized like the
+   rows below it rather than like a card of its own. */
+.identityRow {
+  @apply flex items-center gap-4 p-4 text-text transition hover:text-ink-strong;
 }
 
 .avatar {
-  @apply grid size-16 place-items-center rounded-card bg-ink text-xl font-semibold text-text-inverse;
+  @apply grid size-15 shrink-0 place-items-center rounded-card bg-ink text-xl font-semibold text-text-inverse;
 }
 
-.profileCard h2 {
-  @apply truncate text-title font-extrabold text-text;
+.identity {
+  @apply min-w-0 flex-1;
 }
 
-.profileCard .email {
-  @apply mt-1 truncate text-sm text-text-subtle;
+.identity h2 {
+  @apply truncate text-title font-bold text-text;
 }
 
-.usernameLine {
-  @apply truncate text-sm text-text-muted;
+/* The handle and the action on one line: who this is, and what tapping the row
+   does. */
+.identity p {
+  @apply mt-0.5 truncate text-body text-text-subtle;
 }
 
-/* One action for the card, under the three lines it edits. Pulled left so its
-   label lines up with them rather than with its own padding. */
-.editProfile {
-  @apply -ml-3 mt-2;
+/* The same chevron <AppListRow> ends with: a row that goes somewhere says so
+   the same way wherever it is on the tab. */
+.chevron {
+  @apply size-5 shrink-0 text-text-subtle;
 }
 
 /* The badge hangs off the button's corner, so the slot around it is what the
@@ -36,12 +46,17 @@
   @apply relative inline-grid;
 }
 
+/* Cut out of the paper rather than drawn inside the icon's square: the ring is
+   the canvas the header sits on, which is what the bell is raised off now. */
 .notificationBadge {
-  @apply absolute right-0 top-0 grid min-h-[22px] min-w-[22px] place-items-center rounded-full bg-badge px-1 text-eyebrow font-bold leading-none tracking-normal text-text-inverse ring-[3px] ring-surface;
+  @apply absolute -right-1 -top-1 grid min-h-5 min-w-5 place-items-center rounded-full bg-badge px-1 text-eyebrow font-bold leading-none tracking-normal text-text-inverse ring-2 ring-canvas;
 }
 
+/* The week under the identity it belongs to, sharing the card's edges. The
+   last column carries a unit as well as a number, so it takes the extra
+   width rather than truncating a figure the other two never reach. */
 .statsStrip {
-  @apply card grid grid-cols-3 divide-x divide-border p-4;
+  @apply grid grid-cols-[1fr_1fr_1.2fr] divide-x divide-border border-t border-border p-4;
 }
 
 .statsStrip article {
@@ -49,11 +64,11 @@
 }
 
 .statsStrip strong {
-  @apply truncate text-base font-semibold tracking-tight text-text sm:text-lg;
+  @apply truncate text-title font-bold text-text;
 }
 
 .statsStrip small {
-  @apply text-xs text-text-subtle;
+  @apply text-meta text-text-subtle;
 }
 
 /* A card of rows the system draws — <AppListRow> for a setting that opens a

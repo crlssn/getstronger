@@ -90,11 +90,31 @@ describe('ProfileView', () => {
     // sits under it as an h2 rather than as a second title.
     expect(await screen.findByRole('heading', { name: 'Me', level: 1 })).toBeInTheDocument()
     expect(await screen.findByRole('heading', { name: 'Alex Morgan' })).toBeInTheDocument()
-    // Rendered through handle(), so a missing username is not a lone '@'.
-    expect(screen.getByText('@alex')).toBeInTheDocument()
-    expect(screen.getByText('alex@example.com')).toBeInTheDocument()
+    // The username and the way to change it read as one line under the name,
+    // and it is rendered through handle(), so a missing one is not a lone '@'.
+    expect(screen.getByText('@alex · Edit profile')).toBeInTheDocument()
     // Initials, because there are no avatars in the app.
     expect(screen.getByText('AM')).toBeInTheDocument()
+  })
+
+  // The address is on the account screen, which is the only place it can be
+  // read and the only place it explains itself. Repeating it here cost the
+  // card a line and told nobody anything they could act on.
+  test('leaves the email address to the account screen', async () => {
+    render()
+
+    await loaded()
+    expect(screen.queryByText('alex@example.com')).not.toBeInTheDocument()
+  })
+
+  // A username that has not loaded leaves the line as the action alone rather
+  // than as a separator with nothing in front of it.
+  test('drops the separator when there is no username', async () => {
+    mocked.getCurrentUser.mockResolvedValue(profile({ username: '' }))
+    render()
+
+    await loaded()
+    expect(screen.getByText('Edit profile')).toBeInTheDocument()
   })
 
   // The tab has no list to fall back to, so the skeleton was the whole page:
@@ -238,15 +258,15 @@ describe('ProfileView', () => {
     expect(screen.queryByRole('button', { name: /Delete account/ })).not.toBeInTheDocument()
   })
 
-  // The card's own action is the affordance that says the name and the
-  // username can be changed; it opens the screen that changes them.
+  // The whole identity row is the affordance that says the name and the
+  // username can be changed; it opens the screen that changes them. A pencil
+  // beside the name was a 32px target next to 300px of dead card.
   test('opens the account screen from the card as well as from the group', async () => {
     render()
 
-    expect(await screen.findByRole('link', { name: /Edit profile/ })).toHaveAttribute(
-      'href',
-      '/settings/account',
-    )
+    const identity = await screen.findByRole('link', { name: /Alex Morgan/ })
+    expect(identity).toHaveAttribute('href', '/settings/account')
+    expect(identity).toHaveAccessibleName(/Edit profile/)
   })
 
   test('is where the privacy policy is reached from', async () => {
