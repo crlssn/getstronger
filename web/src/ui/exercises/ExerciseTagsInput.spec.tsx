@@ -143,6 +143,39 @@ describe('ExerciseTagsInput', () => {
       expect(options()[1]).toHaveAttribute('aria-selected', 'false')
     })
 
+    // Focus stays in the field while the arrows walk the list, so the field is
+    // the only thing that can say which option the walk is on. Without this a
+    // screen reader announces nothing at all as the highlight moves.
+    test('names the highlighted option on the field itself', async () => {
+      renderWithProviders(<Harness />)
+
+      await userEvent.type(field(), 'chest{ArrowDown}')
+      expect(field()).toHaveAttribute('aria-activedescendant', options()[0].id)
+
+      await userEvent.type(field(), '{ArrowDown}')
+      expect(field()).toHaveAttribute('aria-activedescendant', options()[1].id)
+    })
+
+    test('names no option while the walk has not started', async () => {
+      renderWithProviders(<Harness />)
+
+      await userEvent.type(field(), 'chest')
+
+      expect(options().length).toBeGreaterThan(0)
+      expect(field()).not.toHaveAttribute('aria-activedescendant')
+    })
+
+    // Typing after a walk puts the highlight back to nothing, and the field has
+    // to stop pointing at an option that is no longer highlighted.
+    test('stops naming an option once typing resumes', async () => {
+      renderWithProviders(<Harness />)
+
+      await userEvent.type(field(), 'chest{ArrowDown}')
+      await userEvent.type(field(), ' ')
+
+      expect(field()).not.toHaveAttribute('aria-activedescendant')
+    })
+
     test('drops one that is already chosen', async () => {
       renderWithProviders(<Harness initial={['Chest']} />)
 
