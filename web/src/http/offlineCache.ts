@@ -3,6 +3,7 @@ import { Code, ConnectError, type Interceptor } from '@connectrpc/connect'
 
 import { useAuthStore } from '@/stores/auth'
 import { useConnectionStore } from '@/stores/connection'
+import { disposableCachePrefix, dropDisposableCache } from '@/stores/persistence'
 
 /**
  * True when a request never reached the backend: the fetch itself failed
@@ -16,21 +17,8 @@ export const isConnectivityError = (error: unknown): boolean => {
   return error.code === Code.Unknown && error.cause instanceof TypeError
 }
 
-const cachePrefix = 'offlineCache:'
-
 /** Removes every cached response, e.g. when the user logs out. */
-export const clearOfflineCache = (): void => {
-  try {
-    const doomed: string[] = []
-    for (let index = 0; index < window.localStorage.length; index++) {
-      const key = window.localStorage.key(index)
-      if (key?.startsWith(cachePrefix)) doomed.push(key)
-    }
-    doomed.forEach((key) => window.localStorage.removeItem(key))
-  } catch {
-    // An unavailable storage holds nothing worth clearing.
-  }
-}
+export const clearOfflineCache = (): void => dropDisposableCache(window.localStorage)
 
 // Reads follow the API's naming convention; anything else is a mutation and
 // must never be replayed from storage.
@@ -55,7 +43,7 @@ export const offlineCache: Interceptor = (next) => async (req) => {
   }
 
   const key = [
-    cachePrefix + useAuthStore.getState().userId,
+    disposableCachePrefix + useAuthStore.getState().userId,
     `${req.service.typeName}.${req.method.name}`,
     JSON.stringify(toJson(req.method.input, req.message)),
   ].join(':')
