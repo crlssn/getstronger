@@ -20,6 +20,10 @@ export interface Workout {
   addedExercises?: Exercise[]
   completedExerciseIds?: ExerciseID[]
   exerciseSets?: ExerciseSets
+  // Minted once per session and sent with every attempt to save it, so a
+  // save whose reply was lost is recognised by the server when it is sent
+  // again rather than stored twice.
+  idempotencyKey?: string
   note?: string
   planId?: string
   restTimerEndsAt?: string

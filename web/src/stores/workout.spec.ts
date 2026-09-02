@@ -52,6 +52,23 @@ describe('workout store', () => {
       expect(selectPlanId(store(), 'routine-id')).toBe('plan-id')
     })
 
+    // The key names one session across every attempt to save it, so it is
+    // minted once and kept: a reopened draft, and a draft from before keys
+    // existed, must not get a fresh one.
+    it('mints a save key once per draft', () => {
+      store().initialiseWorkout('routine-id')
+      const key = store().workouts['routine-id']?.idempotencyKey
+      expect(key).toMatch(/^[0-9a-f-]{36}$/)
+
+      store().initialiseWorkout('routine-id')
+      expect(store().workouts['routine-id']?.idempotencyKey).toBe(key)
+
+      useWorkoutStore.setState({ workouts: { legacy: { startedAt: '2024-01-01T00:00:00Z' } } })
+      store().initialiseWorkout('legacy')
+      expect(store().workouts.legacy?.idempotencyKey).toMatch(/^[0-9a-f-]{36}$/)
+      expect(store().workouts.legacy?.idempotencyKey).not.toBe(key)
+    })
+
     // Reopening a workout must not restart its clock or discard its sets.
     it('leaves an existing draft alone when initialised again', () => {
       store().initialiseWorkout('routine-id')

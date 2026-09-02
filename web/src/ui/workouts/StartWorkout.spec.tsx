@@ -3,7 +3,7 @@
 import type { Exercise } from '@/proto/api/v1/shared_pb'
 
 import { create } from '@bufbuild/protobuf'
-import { ConnectError } from '@connectrpc/connect'
+import { Code, ConnectError } from '@connectrpc/connect'
 import { act, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { Route, Routes } from 'react-router-dom'
@@ -1096,6 +1096,37 @@ describe('StartWorkout', () => {
       expect(useMutationQueueStore.getState().pending[0]?.method).toContain('CreateWorkout')
       expect(useWorkoutStore.getState().workouts[routineID]).toBeUndefined()
       expect(screen.getByText('home')).toBeInTheDocument()
+
+      // The replay carries the session's key, so a save the server committed
+      // before the connection dropped is recognised rather than stored again.
+      const queued = JSON.parse(useMutationQueueStore.getState().pending[0]?.request ?? '{}')
+      expect(queued.idempotencyKey).toMatch(/^[0-9a-f-]{36}$/)
+    })
+
+    // A save that timed out may well have landed. Finishing again sends the
+    // same key, which is what lets the server answer with the first save.
+    test('finishes again after a timeout under the same save key', async () => {
+      mocked.getRoutine.mockResolvedValue(routineOf('Push Day', [benchPress]))
+      mocked.createWorkout
+        .mockRejectedValueOnce(new ConnectError('timed out', Code.DeadlineExceeded))
+        .mockResolvedValueOnce(create(CreateWorkoutResponseSchema, { workoutId: 'workout-1' }))
+      const user = userEvent.setup()
+      await renderWorkout()
+
+      await logFirstSet(user)
+      await user.click(primaryAction())
+      await user.click(await screen.findByRole('button', { name: 'Finish workout' }))
+      await user.click(screen.getByRole('button', { name: 'Finish and save' }))
+      expect(await screen.findByText(/took too long/)).toBeInTheDocument()
+
+      await user.click(screen.getByRole('button', { name: /^Finish workout/ }))
+      await user.click(screen.getByRole('button', { name: 'Finish and save' }))
+      expect(await screen.findByText('saved workout')).toBeInTheDocument()
+
+      expect(mocked.createWorkout).toHaveBeenCalledTimes(2)
+      const [first, second] = mocked.createWorkout.mock.calls.map(([request]) => request)
+      expect(first?.idempotencyKey).toMatch(/^[0-9a-f-]{36}$/)
+      expect(second?.idempotencyKey).toBe(first?.idempotencyKey)
     })
 
     test('reports a save that came back without an id', async () => {
