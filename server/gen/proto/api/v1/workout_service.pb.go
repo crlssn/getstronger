@@ -25,14 +25,16 @@ const (
 )
 
 type CreateWorkoutRequest struct {
-	state        protoimpl.MessageState `protogen:"open.v1"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Optional: a quick workout follows no routine and so names none.
 	RoutineId    string                 `protobuf:"bytes,1,opt,name=routine_id,json=routineId,proto3" json:"routine_id,omitempty"`
 	ExerciseSets []*ExerciseSets        `protobuf:"bytes,2,rep,name=exercise_sets,json=exerciseSets,proto3" json:"exercise_sets,omitempty"`
 	StartedAt    *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=started_at,json=startedAt,proto3" json:"started_at,omitempty"`
 	FinishedAt   *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=finished_at,json=finishedAt,proto3" json:"finished_at,omitempty"`
 	Note         string                 `protobuf:"bytes,5,opt,name=note,proto3" json:"note,omitempty"`
-	PlanId       string                 `protobuf:"bytes,6,opt,name=plan_id,json=planId,proto3" json:"plan_id,omitempty"`
-	WorkoutName  string                 `protobuf:"bytes,7,opt,name=workout_name,json=workoutName,proto3" json:"workout_name,omitempty"`
+	// Optional: a session trained outside a plan names none.
+	PlanId      string `protobuf:"bytes,6,opt,name=plan_id,json=planId,proto3" json:"plan_id,omitempty"`
+	WorkoutName string `protobuf:"bytes,7,opt,name=workout_name,json=workoutName,proto3" json:"workout_name,omitempty"`
 	// Optional. The blocks the session was trained in, which say how to read the
 	// sets rather than carrying them: a block states how many of each exercise's
 	// sets it took, and the groups are matched against exercise_sets in the order
@@ -979,17 +981,17 @@ var File_api_v1_workout_service_proto protoreflect.FileDescriptor
 
 const file_api_v1_workout_service_proto_rawDesc = "" +
 	"\n" +
-	"\x1capi/v1/workout_service.proto\x12\x06api.v1\x1a\x13api/v1/shared.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1bbuf/validate/validate.proto\"\x80\x03\n" +
-	"\x14CreateWorkoutRequest\x12\x1d\n" +
+	"\x1capi/v1/workout_service.proto\x12\x06api.v1\x1a\x13api/v1/shared.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1bbuf/validate/validate.proto\"\x9a\x03\n" +
+	"\x14CreateWorkoutRequest\x12*\n" +
 	"\n" +
-	"routine_id\x18\x01 \x01(\tR\troutineId\x12C\n" +
+	"routine_id\x18\x01 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\xb0\x01\x01R\troutineId\x12C\n" +
 	"\rexercise_sets\x18\x02 \x03(\v2\x14.api.v1.ExerciseSetsB\b\xbaH\x05\x92\x01\x02\b\x01R\fexerciseSets\x12A\n" +
 	"\n" +
 	"started_at\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tstartedAt\x12C\n" +
 	"\vfinished_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\n" +
 	"finishedAt\x12\x12\n" +
-	"\x04note\x18\x05 \x01(\tR\x04note\x12\x17\n" +
-	"\aplan_id\x18\x06 \x01(\tR\x06planId\x12!\n" +
+	"\x04note\x18\x05 \x01(\tR\x04note\x12$\n" +
+	"\aplan_id\x18\x06 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\xb0\x01\x01R\x06planId\x12!\n" +
 	"\fworkout_name\x18\a \x01(\tR\vworkoutName\x12,\n" +
 	"\x06groups\x18\b \x03(\v2\x14.api.v1.WorkoutGroupR\x06groups\"6\n" +
 	"\x15CreateWorkoutResponse\x12\x1d\n" +

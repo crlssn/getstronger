@@ -28,7 +28,7 @@ service RoutineService {
 
 message CreateRoutineRequest {
   string name = 1 [(buf.validate.field).string.min_len = 1];
-  repeated string exercise_ids = 2 [(buf.validate.field).repeated.min_items = 1];
+  repeated string exercise_ids = 2 [(buf.validate.field).repeated = { min_items: 1, items: { string: { uuid: true }}}];
   // Optional. When set, it describes how exercise_ids are grouped; when empty,
   // the routine gets a single straight-sets group holding every exercise.
   repeated RoutineGroup groups = 3;
@@ -73,12 +73,16 @@ message AddExerciseResponse {}
 
 message UpdateExerciseOrderRequest {
   string routine_id = 1 [(buf.validate.field).string.uuid = true];
-  repeated string exercise_ids = 2 [(buf.validate.field).repeated.min_items = 1];
+  repeated string exercise_ids = 2 [(buf.validate.field).repeated = { min_items: 1, items: { string: { uuid: true }}}];
 }
 message UpdateExerciseOrderResponse {}
 
 message GetDashboardRequest {
-  string preferred_routine_id = 1;
+  // Optional: the empty string asks for whichever routine comes next.
+  string preferred_routine_id = 1 [
+    (buf.validate.field).string.uuid = true,
+    (buf.validate.field).ignore = IGNORE_IF_UNPOPULATED
+  ];
 }
 
 message GetDashboardResponse {

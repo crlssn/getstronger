@@ -666,8 +666,9 @@ func (*UpdateExerciseOrderResponse) Descriptor() ([]byte, []int) {
 }
 
 type GetDashboardRequest struct {
-	state              protoimpl.MessageState `protogen:"open.v1"`
-	PreferredRoutineId string                 `protobuf:"bytes,1,opt,name=preferred_routine_id,json=preferredRoutineId,proto3" json:"preferred_routine_id,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Optional: the empty string asks for whichever routine comes next.
+	PreferredRoutineId string `protobuf:"bytes,1,opt,name=preferred_routine_id,json=preferredRoutineId,proto3" json:"preferred_routine_id,omitempty"`
 	unknownFields      protoimpl.UnknownFields
 	sizeCache          protoimpl.SizeCache
 }
@@ -1808,10 +1809,10 @@ var File_api_v1_routine_service_proto protoreflect.FileDescriptor
 
 const file_api_v1_routine_service_proto_rawDesc = "" +
 	"\n" +
-	"\x1capi/v1/routine_service.proto\x12\x06api.v1\x1a\x13api/v1/shared.proto\x1a\x1capi/v1/workout_service.proto\x1a\x1bbuf/validate/validate.proto\"\x8e\x01\n" +
+	"\x1capi/v1/routine_service.proto\x12\x06api.v1\x1a\x13api/v1/shared.proto\x1a\x1capi/v1/workout_service.proto\x1a\x1bbuf/validate/validate.proto\"\x95\x01\n" +
 	"\x14CreateRoutineRequest\x12\x1b\n" +
-	"\x04name\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x04name\x12+\n" +
-	"\fexercise_ids\x18\x02 \x03(\tB\b\xbaH\x05\x92\x01\x02\b\x01R\vexerciseIds\x12,\n" +
+	"\x04name\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x04name\x122\n" +
+	"\fexercise_ids\x18\x02 \x03(\tB\x0f\xbaH\f\x92\x01\t\b\x01\"\x05r\x03\xb0\x01\x01R\vexerciseIds\x12,\n" +
 	"\x06groups\x18\x03 \x03(\v2\x14.api.v1.RoutineGroupR\x06groups\"'\n" +
 	"\x15CreateRoutineResponse\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\"-\n" +
@@ -1841,14 +1842,14 @@ const file_api_v1_routine_service_proto_rawDesc = "" +
 	"routine_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\troutineId\x12)\n" +
 	"\vexercise_id\x18\x02 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\n" +
 	"exerciseId\"\x15\n" +
-	"\x13AddExerciseResponse\"r\n" +
+	"\x13AddExerciseResponse\"y\n" +
 	"\x1aUpdateExerciseOrderRequest\x12'\n" +
 	"\n" +
-	"routine_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\troutineId\x12+\n" +
-	"\fexercise_ids\x18\x02 \x03(\tB\b\xbaH\x05\x92\x01\x02\b\x01R\vexerciseIds\"\x1d\n" +
-	"\x1bUpdateExerciseOrderResponse\"G\n" +
-	"\x13GetDashboardRequest\x120\n" +
-	"\x14preferred_routine_id\x18\x01 \x01(\tR\x12preferredRoutineId\"\x99\x03\n" +
+	"routine_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\troutineId\x122\n" +
+	"\fexercise_ids\x18\x02 \x03(\tB\x0f\xbaH\f\x92\x01\t\b\x01\"\x05r\x03\xb0\x01\x01R\vexerciseIds\"\x1d\n" +
+	"\x1bUpdateExerciseOrderResponse\"T\n" +
+	"\x13GetDashboardRequest\x12=\n" +
+	"\x14preferred_routine_id\x18\x01 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\xb0\x01\x01R\x12preferredRoutineId\"\x99\x03\n" +
 	"\x14GetDashboardResponse\x122\n" +
 	"\fnext_routine\x18\x01 \x01(\v2\x0f.api.v1.RoutineR\vnextRoutine\x12+\n" +
 	"\broutines\x18\x02 \x03(\v2\x0f.api.v1.RoutineR\broutines\x12,\n" +
