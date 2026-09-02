@@ -7,9 +7,9 @@ min_version = "2026.8.2"
 aws-cli = "2.36.31"
 buf = "1.50.0"
 bun = "1.4.0"
-go = "1.26.6"
+go = "1.27.1"
 gofumpt = "0.10.0"
-golangci-lint = "2.12.2"
+golangci-lint = "2.13.2"
 node = "24.19.0"
 # Records which test reached which line, for 'test:backend:coverage'. It
 # instruments the build through -toolexec and reads the counters back itself,
