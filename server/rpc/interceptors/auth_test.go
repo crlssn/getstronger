@@ -108,6 +108,11 @@ func (s *authSuite) TestClaimsFromHeader() {
 	}
 }
 
+// An in-memory test server answers every request its own client makes,
+// whatever address they carry, so this stands in for the base URL a server
+// on a real port would have published.
+const testBaseURL = "http://interceptors.test"
+
 func (s *authSuite) TestUnregisteredProcedure() {
 	const procedure = "/api.v1.UnregisteredService/Method"
 
@@ -122,10 +127,9 @@ func (s *authSuite) TestUnregisteredProcedure() {
 		connect.WithInterceptors(s.interceptor),
 	))
 
-	server := httptest.NewServer(mux)
-	s.T().Cleanup(server.Close)
+	server := httptest.NewTestServer(s.T(), mux)
 
-	client := connect.NewClient[apiv1.LoginRequest, apiv1.LoginResponse](server.Client(), server.URL+procedure)
+	client := connect.NewClient[apiv1.LoginRequest, apiv1.LoginResponse](server.Client(), testBaseURL+procedure)
 	_, err := client.CallUnary(s.T().Context(), connect.NewRequest(&apiv1.LoginRequest{}))
 	s.Require().Error(err)
 	s.Require().Equal(connect.CodeUnauthenticated, connect.CodeOf(err))
@@ -163,8 +167,7 @@ func (s *authSuite) TestGuestProceduresAreTheOnlyOnesServed() {
 	mux.Handle(apiv1connect.NewExerciseServiceHandler(apiv1connect.UnimplementedExerciseServiceHandler{}, opts))
 	mux.Handle(apiv1connect.NewNotificationServiceHandler(apiv1connect.UnimplementedNotificationServiceHandler{}, opts))
 
-	server := httptest.NewServer(mux)
-	s.T().Cleanup(server.Close)
+	server := httptest.NewTestServer(s.T(), mux)
 
 	files := []protoreflect.FileDescriptor{
 		apiv1.File_api_v1_auth_service_proto,
@@ -186,7 +189,7 @@ func (s *authSuite) TestGuestProceduresAreTheOnlyOnesServed() {
 				procedure := fmt.Sprintf("/%s/%s", service.FullName(), methods.Get(j).Name())
 				// An empty message encodes to an empty body, which every
 				// procedure decodes, so one request type calls them all.
-				client := connect.NewClient[apiv1.LoginRequest, apiv1.LoginResponse](server.Client(), server.URL+procedure)
+				client := connect.NewClient[apiv1.LoginRequest, apiv1.LoginResponse](server.Client(), testBaseURL+procedure)
 				_, err := client.CallUnary(s.T().Context(), connect.NewRequest(&apiv1.LoginRequest{}))
 				s.Require().Error(err)
 
@@ -255,8 +258,7 @@ func (s *authSuite) TestSchemaDecidesAuthentication() {
 		connect.WithInterceptors(s.interceptor),
 	))
 
-	server := httptest.NewServer(mux)
-	s.T().Cleanup(server.Close)
+	server := httptest.NewTestServer(s.T(), mux)
 
 	for _, t := range tests {
 		s.Run(t.name, func() {
@@ -265,7 +267,7 @@ func (s *authSuite) TestSchemaDecidesAuthentication() {
 				header.Set("Authorization", fmt.Sprintf("Bearer %s", t.token))
 			}
 
-			client := apiv1connect.NewAuthServiceClient(server.Client(), server.URL)
+			client := apiv1connect.NewAuthServiceClient(server.Client(), testBaseURL)
 			s.Require().Equal(t.expected, t.call(s.T().Context(), client, header))
 		})
 	}
