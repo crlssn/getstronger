@@ -3,6 +3,9 @@ package training
 import (
 	"errors"
 	"strings"
+	"time"
+
+	"github.com/gofrs/uuid/v5"
 )
 
 // MaxExerciseTags caps how many tags an exercise may carry; the database
@@ -150,4 +153,24 @@ func sameMetrics(stored, requested []Metric) bool {
 	}
 
 	return true
+}
+
+// Exercise is a movement an athlete has filed, and what a set of it is
+// measured by.
+type Exercise struct {
+	ID        uuid.UUID
+	UserID    uuid.UUID
+	Name      string
+	Tags      []string
+	Metrics   []Metric
+	CreatedAt time.Time
+	// DeletedAt is when the athlete retired the exercise, or zero while it is
+	// still in use. It is retired rather than erased so that the workouts
+	// that trained it still resolve.
+	DeletedAt time.Time
+}
+
+// Deleted reports whether the athlete has retired the exercise.
+func (e *Exercise) Deleted() bool {
+	return !e.DeletedAt.IsZero()
 }

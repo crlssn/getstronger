@@ -10,7 +10,6 @@ import (
 	"github.com/gofrs/uuid/v5"
 	"go.uber.org/zap"
 
-	"github.com/crlssn/getstronger/server/gen/models"
 	apiv1 "github.com/crlssn/getstronger/server/gen/proto/api/v1"
 	"github.com/crlssn/getstronger/server/repo"
 	"github.com/crlssn/getstronger/server/rpc/parser"
@@ -22,10 +21,10 @@ import (
 // dashboardSources are the things the dashboard is assembled from. It only
 // reads: everything it shows was decided elsewhere.
 type dashboardSources interface {
-	ListRoutines(ctx context.Context, opts ...repo.ListRoutineOpt) (models.RoutineSlice, error)
-	ListWorkouts(ctx context.Context, opts ...repo.ListWorkoutsOpt) (models.WorkoutSlice, error)
+	ListRoutines(ctx context.Context, opts ...repo.ListRoutineOpt) ([]*training.Routine, error)
+	ListWorkouts(ctx context.Context, opts ...repo.ListWorkoutsOpt) ([]*training.Workout, error)
 	GetActivePlan(ctx context.Context, userID uuid.UUID) (*training.Plan, error)
-	GetPersonalBests(ctx context.Context, userIDs ...uuid.UUID) (models.SetSlice, error)
+	GetPersonalBests(ctx context.Context, userIDs ...uuid.UUID) ([]*training.Set, error)
 	CountWorkouts(ctx context.Context, userID uuid.UUID) (int64, error)
 }
 
@@ -115,7 +114,7 @@ func (d *dashboard) GetDashboard(ctx context.Context, req *connect.Request[apiv1
 
 // nextRoutineOf renders the routine to train next, which an athlete with none
 // does not have.
-func nextRoutineOf(routine *models.Routine) *apiv1.Routine {
+func nextRoutineOf(routine *training.Routine) *apiv1.Routine {
 	if routine == nil {
 		return nil
 	}
@@ -124,7 +123,7 @@ func nextRoutineOf(routine *models.Routine) *apiv1.Routine {
 }
 
 // recentOf is the tail of the log the dashboard shows.
-func recentOf(workouts models.WorkoutSlice) models.WorkoutSlice {
+func recentOf(workouts []*training.Workout) []*training.Workout {
 	if len(workouts) > recentWorkoutLimit {
 		return workouts[:recentWorkoutLimit]
 	}

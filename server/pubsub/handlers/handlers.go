@@ -94,7 +94,7 @@ func (w *WorkoutCommentPosted) HandlePayload(payload any) {
 		return
 	}
 
-	for _, userID := range notification.CommentAudience(comment.UserID, workout.UserID, workout.R.WorkoutComments) {
+	for _, userID := range notification.CommentAudience(comment.UserID, workout.UserID, workout.Comments) {
 		if err = w.comments.CreateNotification(ctx, repo.CreateNotificationParams{
 			Type:   notification.TypeWorkoutComment,
 			UserID: userID,

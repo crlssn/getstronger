@@ -11,7 +11,6 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/crlssn/getstronger/server/account"
-	"github.com/crlssn/getstronger/server/gen/models"
 	apiv1 "github.com/crlssn/getstronger/server/gen/proto/api/v1"
 	"github.com/crlssn/getstronger/server/gen/proto/api/v1/apiv1connect"
 	"github.com/crlssn/getstronger/server/pubsub"
@@ -90,7 +89,7 @@ func (h *userHandler) SearchUsers(ctx context.Context, req *connect.Request[apiv
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	pagination, err := repo.PaginateSliceWithToken(users, limit, func(user *models.User) any {
+	pagination, err := repo.PaginateSliceWithToken(users, limit, func(user *account.User) any {
 		return repo.UserSearchPageToken{ID: user.ID}
 	})
 	if err != nil {

@@ -3,11 +3,32 @@ package training
 import (
 	"errors"
 	"slices"
+	"time"
 
 	"github.com/gofrs/uuid/v5"
-
-	"github.com/crlssn/getstronger/server/gen/models"
 )
+
+// Routine is a session an athlete has built: the exercises it holds, in the
+// order they are trained.
+type Routine struct {
+	ID        uuid.UUID
+	UserID    uuid.UUID
+	Name      string
+	CreatedAt time.Time
+	// DeletedAt is when the athlete retired the routine, or zero while it is
+	// still trained. Like an exercise it is retired rather than erased, so
+	// the workouts that followed it still say which routine that was.
+	DeletedAt time.Time
+
+	// Exercises is the flat exercise list in training order, when the read
+	// loaded it; nil says it was not asked for.
+	Exercises []*Exercise
+}
+
+// Deleted reports whether the athlete has retired the routine.
+func (r *Routine) Deleted() bool {
+	return !r.DeletedAt.IsZero()
+}
 
 var (
 	// ErrRoutineExerciseUnknown reports an exercise a routine cannot hold,
@@ -22,7 +43,7 @@ var (
 // for. Every requested exercise must be available: a routine cannot hold an
 // exercise that does not exist, that belongs to somebody else, or that the
 // request names twice.
-func ResolveRoutineExercises(available models.ExerciseSlice, requestedIDs []uuid.UUID) (models.ExerciseSlice, error) {
+func ResolveRoutineExercises(available []*Exercise, requestedIDs []uuid.UUID) ([]*Exercise, error) {
 	if len(available) != len(requestedIDs) {
 		return nil, ErrRoutineExerciseUnknown
 	}
@@ -32,7 +53,7 @@ func ResolveRoutineExercises(available models.ExerciseSlice, requestedIDs []uuid
 
 // ValidateExerciseOrder checks that requestedIDs is a rearrangement of current:
 // the same exercises, neither added to nor dropped.
-func ValidateExerciseOrder(current models.ExerciseSlice, requestedIDs []uuid.UUID) error {
+func ValidateExerciseOrder(current []*Exercise, requestedIDs []uuid.UUID) error {
 	if len(current) != len(requestedIDs) {
 		return ErrRoutineExerciseOrderMismatch
 	}
@@ -54,8 +75,8 @@ func ValidateExerciseOrder(current models.ExerciseSlice, requestedIDs []uuid.UUI
 // OrderExercisesByIDs returns the exercises rearranged to match the order of
 // ids. IDs that match no exercise and duplicate IDs are skipped, as are
 // exercises the ids omit.
-func OrderExercisesByIDs(exercises models.ExerciseSlice, ids []uuid.UUID) models.ExerciseSlice {
-	return orderByIDs(exercises, ids, func(exercise *models.Exercise) uuid.UUID {
+func OrderExercisesByIDs(exercises []*Exercise, ids []uuid.UUID) []*Exercise {
+	return orderByIDs(exercises, ids, func(exercise *Exercise) uuid.UUID {
 		return exercise.ID
 	})
 }
@@ -64,8 +85,8 @@ func OrderExercisesByIDs(exercises models.ExerciseSlice, ids []uuid.UUID) models
 // which is how a plan's rotation is put back together once the routines it
 // names have been read in one go. It skips on the same terms as
 // OrderExercisesByIDs, so a caller that needs every id matched compares lengths.
-func OrderRoutinesByIDs(routines models.RoutineSlice, ids []uuid.UUID) models.RoutineSlice {
-	return orderByIDs(routines, ids, func(routine *models.Routine) uuid.UUID {
+func OrderRoutinesByIDs(routines []*Routine, ids []uuid.UUID) []*Routine {
+	return orderByIDs(routines, ids, func(routine *Routine) uuid.UUID {
 		return routine.ID
 	})
 }
@@ -95,13 +116,13 @@ func orderByIDs[T any](items []T, ids []uuid.UUID, id func(T) uuid.UUID) []T {
 // NextRoutine is the routine to offer the athlete next. An active plan decides;
 // without one the athlete's last choice stands, and a new athlete is offered
 // whichever routine comes first.
-func NextRoutine(activePlan *Plan, routines models.RoutineSlice, preferredRoutineID uuid.UUID) *models.Routine {
+func NextRoutine(activePlan *Plan, routines []*Routine, preferredRoutineID uuid.UUID) *Routine {
 	if routine := activePlan.CurrentRoutine(); routine != nil {
 		return routine
 	}
 
 	if !preferredRoutineID.IsNil() {
-		index := slices.IndexFunc(routines, func(routine *models.Routine) bool {
+		index := slices.IndexFunc(routines, func(routine *Routine) bool {
 			return routine.ID == preferredRoutineID
 		})
 		if index >= 0 {

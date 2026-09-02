@@ -123,3 +123,23 @@ func normalizeWorkoutGroup(group WorkoutGroupDraft, exercises []WorkoutGroupExer
 
 	return normalized
 }
+
+// WorkoutGroupRecord is a stored block and the exercises it held, in training
+// order. The sets belonging to it are read off the workout's own sets, each of
+// which names the occurrence that logged it.
+type WorkoutGroupRecord struct {
+	ID                          uuid.UUID
+	Mode                        RoutineGroupMode
+	RestBetweenExercisesSeconds int32
+	RestBetweenRoundsSeconds    int32
+	Rounds                      int32
+	Exercises                   []WorkoutGroupOccurrence
+}
+
+// WorkoutGroupOccurrence is one exercise where a stored block trained it. The
+// same exercise in another block is another occurrence, which is how a set
+// finds its way back to the block that logged it.
+type WorkoutGroupOccurrence struct {
+	ID         uuid.UUID
+	ExerciseID uuid.UUID
+}

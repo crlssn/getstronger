@@ -5,16 +5,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/aarondl/opt/null"
 	"github.com/gofrs/uuid/v5"
 	"github.com/stretchr/testify/require"
 
-	"github.com/crlssn/getstronger/server/gen/models"
 	"github.com/crlssn/getstronger/server/training"
 )
 
-func routine(id uuid.UUID) *models.Routine {
-	return &models.Routine{ID: id}
+func routine(id uuid.UUID) *training.Routine {
+	return &training.Routine{ID: id}
 }
 
 func TestPlanCurrentRoutine(t *testing.T) {
@@ -24,7 +22,7 @@ func TestPlanCurrentRoutine(t *testing.T) {
 	plan := &training.Plan{
 		Active:          true,
 		CurrentPosition: 1,
-		Routines:        models.RoutineSlice{routine(first), routine(second)},
+		Routines:        []*training.Routine{routine(first), routine(second)},
 	}
 
 	require.Equal(t, second, plan.CurrentRoutine().ID)
@@ -47,7 +45,7 @@ func TestPlanAdvance(t *testing.T) {
 		return &training.Plan{
 			Active:          true,
 			CurrentPosition: 0,
-			Routines:        models.RoutineSlice{routine(first), routine(second)},
+			Routines:        []*training.Routine{routine(first), routine(second)},
 		}
 	}
 
@@ -109,7 +107,7 @@ func TestPlanPositionAfterReplacing(t *testing.T) {
 	first, second, third := uuid.Must(uuid.NewV4()), uuid.Must(uuid.NewV4()), uuid.Must(uuid.NewV4())
 	plan := &training.Plan{
 		CurrentPosition: 1,
-		Routines:        models.RoutineSlice{routine(first), routine(second)},
+		Routines:        []*training.Routine{routine(first), routine(second)},
 	}
 
 	t.Run("follows the current routine to its new position", func(t *testing.T) {
@@ -157,14 +155,14 @@ func TestValidatePlanRoutine(t *testing.T) {
 	userID := uuid.Must(uuid.NewV4())
 
 	require.NoError(t, training.ValidatePlanRoutine(
-		&models.Routine{UserID: userID}, userID,
+		&training.Routine{UserID: userID}, userID,
 	))
 
 	require.ErrorIs(t,
-		training.ValidatePlanRoutine(&models.Routine{UserID: uuid.Must(uuid.NewV4())}, userID),
+		training.ValidatePlanRoutine(&training.Routine{UserID: uuid.Must(uuid.NewV4())}, userID),
 		training.ErrPlanRoutineBelongsToAnotherUser)
 
-	deleted := &models.Routine{UserID: userID, DeletedAt: null.From(time.Now().UTC())}
+	deleted := &training.Routine{UserID: userID, DeletedAt: time.Now().UTC()}
 	require.ErrorIs(t,
 		training.ValidatePlanRoutine(deleted, userID),
 		training.ErrPlanRoutineDeleted)
@@ -178,7 +176,7 @@ func TestPlanRotationWithout(t *testing.T) {
 		return &training.Plan{
 			Active:          true,
 			CurrentPosition: 1,
-			Routines:        models.RoutineSlice{routine(first), routine(second), routine(third)},
+			Routines:        []*training.Routine{routine(first), routine(second), routine(third)},
 		}
 	}
 
@@ -210,7 +208,7 @@ func TestPlanRotationWithout(t *testing.T) {
 		t.Parallel()
 		plan := &training.Plan{
 			Active:   true,
-			Routines: models.RoutineSlice{routine(first)},
+			Routines: []*training.Routine{routine(first)},
 		}
 		rotation := plan.RotationWithout(first)
 		require.Empty(t, rotation.RoutineIDs)
@@ -233,11 +231,11 @@ func TestPlanValidateActivation(t *testing.T) {
 	t.Parallel()
 
 	require.NoError(t, (&training.Plan{
-		Routines: models.RoutineSlice{routine(uuid.Must(uuid.NewV4()))},
+		Routines: []*training.Routine{routine(uuid.Must(uuid.NewV4()))},
 	}).ValidateActivation())
 
 	require.ErrorIs(t, (&training.Plan{}).ValidateActivation(), training.ErrPlanRequiresRoutine)
 	require.ErrorIs(t,
-		(&training.Plan{Routines: models.RoutineSlice{}}).ValidateActivation(),
+		(&training.Plan{Routines: []*training.Routine{}}).ValidateActivation(),
 		training.ErrPlanRequiresRoutine)
 }

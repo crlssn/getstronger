@@ -12,7 +12,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 
-	"github.com/crlssn/getstronger/server/gen/models"
 	apiv1 "github.com/crlssn/getstronger/server/gen/proto/api/v1"
 	"github.com/crlssn/getstronger/server/repo"
 	"github.com/crlssn/getstronger/server/training"
@@ -33,11 +32,11 @@ type stubSources struct {
 	personalBestsErr error
 }
 
-func (s stubSources) ListRoutines(_ context.Context, _ ...repo.ListRoutineOpt) (models.RoutineSlice, error) {
+func (s stubSources) ListRoutines(_ context.Context, _ ...repo.ListRoutineOpt) ([]*training.Routine, error) {
 	return nil, s.listRoutinesErr
 }
 
-func (s stubSources) ListWorkouts(_ context.Context, _ ...repo.ListWorkoutsOpt) (models.WorkoutSlice, error) {
+func (s stubSources) ListWorkouts(_ context.Context, _ ...repo.ListWorkoutsOpt) ([]*training.Workout, error) {
 	return nil, s.listWorkoutsErr
 }
 
@@ -49,7 +48,7 @@ func (s stubSources) GetActivePlan(_ context.Context, _ uuid.UUID) (*training.Pl
 	return nil, sql.ErrNoRows
 }
 
-func (s stubSources) GetPersonalBests(_ context.Context, _ ...uuid.UUID) (models.SetSlice, error) {
+func (s stubSources) GetPersonalBests(_ context.Context, _ ...uuid.UUID) ([]*training.Set, error) {
 	return nil, s.personalBestsErr
 }
 

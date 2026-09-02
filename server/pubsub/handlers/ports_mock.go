@@ -13,8 +13,8 @@ import (
 	context "context"
 	reflect "reflect"
 
-	models "github.com/crlssn/getstronger/server/gen/models"
 	repo "github.com/crlssn/getstronger/server/repo"
+	training "github.com/crlssn/getstronger/server/training"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -133,14 +133,14 @@ func (mr *MockCommentThreadMockRecorder) CreateNotification(ctx, p any) *gomock.
 }
 
 // GetWorkout mocks base method.
-func (m *MockCommentThread) GetWorkout(ctx context.Context, opts ...repo.GetWorkoutOpt) (*models.Workout, error) {
+func (m *MockCommentThread) GetWorkout(ctx context.Context, opts ...repo.GetWorkoutOpt) (*training.Workout, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx}
 	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "GetWorkout", varargs...)
-	ret0, _ := ret[0].(*models.Workout)
+	ret0, _ := ret[0].(*training.Workout)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -153,14 +153,14 @@ func (mr *MockCommentThreadMockRecorder) GetWorkout(ctx any, opts ...any) *gomoc
 }
 
 // GetWorkoutComment mocks base method.
-func (m *MockCommentThread) GetWorkoutComment(ctx context.Context, opts ...repo.GetWorkoutCommentOpt) (*models.WorkoutComment, error) {
+func (m *MockCommentThread) GetWorkoutComment(ctx context.Context, opts ...repo.GetWorkoutCommentOpt) (*training.WorkoutComment, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx}
 	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "GetWorkoutComment", varargs...)
-	ret0, _ := ret[0].(*models.WorkoutComment)
+	ret0, _ := ret[0].(*training.WorkoutComment)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

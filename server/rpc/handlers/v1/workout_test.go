@@ -670,7 +670,7 @@ func (s *workoutSuite) TestPostComment() {
 			repo.GetWorkoutCommentWithWorkout(),
 		)
 		s.Require().NoError(err)
-		s.Require().Equal(workout.ID, comment.R.Workout.ID)
+		s.Require().Equal(workout.ID, comment.Workout.ID)
 
 		s.Require().Eventually(func() bool {
 			count, countErr := models.Events.Query(

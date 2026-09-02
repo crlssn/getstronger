@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/zap"
 
+	"github.com/crlssn/getstronger/server/account"
 	"github.com/crlssn/getstronger/server/distanceunit"
 	"github.com/crlssn/getstronger/server/gen/models"
 	v1 "github.com/crlssn/getstronger/server/gen/proto/api/v1"
@@ -334,8 +335,8 @@ func (s *userSuite) TestUpdateUserUnitPreferences_PreserveHistoricalSetUnits() {
 	persisted, err := s.repo.ListSets(ctx, repo.ListSetsWithID(set.ID))
 	s.Require().NoError(err)
 	s.Require().Len(persisted, 1)
-	s.Require().Equal(string(weightunit.Pounds), persisted[0].WeightUnit)
-	s.Require().Equal(string(distanceunit.Miles), persisted[0].DistanceUnit)
+	s.Require().Equal(weightunit.Pounds, persisted[0].WeightUnit)
+	s.Require().Equal(distanceunit.Miles, persisted[0].DistanceUnit)
 }
 
 func (s *userSuite) TestUpdateUserDistanceUnit() {
@@ -525,7 +526,7 @@ func (s *userSuite) TestFollowUser() {
 		})
 		s.Require().NoError(err)
 
-		followed, err := s.repo.IsUserFollowedByUserID(ctx, followee, follower.ID)
+		followed, err := s.repo.IsUserFollowedByUserID(ctx, &account.User{ID: followee.ID}, follower.ID)
 		s.Require().NoError(err)
 		s.Require().True(followed)
 
@@ -583,7 +584,7 @@ func (s *userSuite) TestUnfollowUser() {
 		})
 		s.Require().NoError(err)
 
-		followed, err := s.repo.IsUserFollowedByUserID(ctx, followee, follower.ID)
+		followed, err := s.repo.IsUserFollowedByUserID(ctx, &account.User{ID: followee.ID}, follower.ID)
 		s.Require().NoError(err)
 		s.Require().False(followed)
 	})

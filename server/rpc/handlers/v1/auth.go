@@ -168,15 +168,15 @@ func (h *authHandler) Login(ctx context.Context, req *connect.Request[apiv1.Logi
 		return nil, rpc.Error(connect.CodeFailedPrecondition, apiv1.Error_ERROR_EMAIL_NOT_VERIFIED)
 	}
 
-	accessToken, err := h.jwt.CreateToken(auth.R.User.ID, jwt.TokenTypeAccess)
+	accessToken, err := h.jwt.CreateToken(auth.User.ID, jwt.TokenTypeAccess)
 	if err != nil {
 		log.Error("Generate access token for login", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	refreshToken := auth.RefreshToken.GetOrZero()
-	if auth.RefreshToken.IsNull() {
-		refreshToken, err = h.jwt.CreateToken(auth.R.User.ID, jwt.TokenTypeRefresh)
+	refreshToken := auth.RefreshToken
+	if refreshToken == "" {
+		refreshToken, err = h.jwt.CreateToken(auth.User.ID, jwt.TokenTypeRefresh)
 		if err != nil {
 			log.Error("Generate refresh token for login", zap.Error(err))
 			return nil, connect.NewError(connect.CodeInternal, nil)
@@ -296,7 +296,7 @@ func (h *authHandler) DeleteAccount(ctx context.Context, req *connect.Request[ap
 	// InvalidArgument rather than Unauthenticated: the access token is fine, and
 	// the web client treats Unauthenticated as a dead session and logs out —
 	// which would answer a mistyped password by ending the session.
-	if err = h.repo.CompareEmailAndPassword(ctx, user.R.Auth.Email, req.Msg.GetPassword()); err != nil {
+	if err = h.repo.CompareEmailAndPassword(ctx, user.Email, req.Msg.GetPassword()); err != nil {
 		log.Warn("Invalid password for account deletion", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInvalidArgument, ErrInvalidCredentials)
 	}
@@ -373,14 +373,14 @@ func (h *authHandler) ResendVerificationEmail(ctx context.Context, req *connect.
 		return res, nil
 	}
 
-	if !account.VerificationResendAllowed(auth.EmailVerificationSentAt.GetOrZero(), time.Now().UTC()) {
+	if !account.VerificationResendAllowed(auth.EmailVerificationSentAt, time.Now().UTC()) {
 		// Do not expose information about the address being rate limited.
 		log.Warn("Verification email rate limited")
 		return res, nil
 	}
 
 	if err = h.email.SendVerification(ctx, email.SendVerification{
-		Name:  auth.R.User.Name,
+		Name:  auth.User.Name,
 		Email: auth.Email,
 		Token: auth.EmailToken.String(),
 	}); err != nil {
@@ -420,7 +420,7 @@ func (h *authHandler) ResetPassword(ctx context.Context, req *connect.Request[ap
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	if !account.PasswordResetResendAllowed(auth.PasswordResetTokenValidUntil.GetOrZero(), time.Now().UTC()) {
+	if !account.PasswordResetResendAllowed(auth.PasswordResetTokenValidUntil, time.Now().UTC()) {
 		// Do not expose information about the address being rate limited.
 		log.Warn("Password reset email rate limited")
 		return res, nil
@@ -433,7 +433,7 @@ func (h *authHandler) ResetPassword(ctx context.Context, req *connect.Request[ap
 	}
 
 	if err = h.email.SendPasswordReset(ctx, email.SendPasswordReset{
-		Name:  auth.R.User.Name,
+		Name:  auth.User.Name,
 		Email: auth.Email,
 		Token: token.String(),
 	}); err != nil {
@@ -468,7 +468,7 @@ func (h *authHandler) UpdatePassword(ctx context.Context, req *connect.Request[a
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	if account.PasswordResetTokenExpired(auth.PasswordResetTokenValidUntil.GetOrZero(), time.Now().UTC()) {
+	if account.PasswordResetTokenExpired(auth.PasswordResetTokenValidUntil, time.Now().UTC()) {
 		log.Warn("Password reset token expired")
 		return nil, connect.NewError(connect.CodeFailedPrecondition, nil)
 	}

@@ -1,10 +1,6 @@
 package training
 
-import (
-	"time"
-
-	"github.com/crlssn/getstronger/server/gen/models"
-)
+import "time"
 
 const (
 	daysPerWeek         = 7
@@ -31,7 +27,7 @@ func (w Week) Start() time.Time {
 
 // Summarise counts the workouts finished within the week and the tonnage they
 // added up to, ignoring any workout that finished before the week began.
-func (w Week) Summarise(workouts models.WorkoutSlice) WeekSummary {
+func (w Week) Summarise(workouts []*Workout) WeekSummary {
 	var summary WeekSummary
 	for _, workout := range workouts {
 		if workout.FinishedAt.Before(w.start) {
@@ -39,7 +35,7 @@ func (w Week) Summarise(workouts models.WorkoutSlice) WeekSummary {
 		}
 
 		summary.Workouts++
-		summary.Volume += TotalVolume(workout.R.Sets)
+		summary.Volume += TotalVolume(workout.Sets)
 	}
 
 	return summary
