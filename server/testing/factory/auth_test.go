@@ -8,10 +8,9 @@ import (
 
 	"github.com/brianvoe/gofakeit/v7"
 	"github.com/google/uuid"
+	"github.com/stephenafamo/bob"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/crypto/bcrypt"
-
-	"github.com/stephenafamo/bob"
 
 	"github.com/crlssn/getstronger/server/account"
 	"github.com/crlssn/getstronger/server/gen/models"

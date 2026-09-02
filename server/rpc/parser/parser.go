@@ -7,7 +7,6 @@ import (
 	"slices"
 
 	"github.com/gofrs/uuid/v5"
-
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/crlssn/getstronger/server/distanceunit"

@@ -9,15 +9,14 @@ import (
 	"os"
 	"time"
 
-	"github.com/joho/godotenv"
-
 	"github.com/aarondl/opt/omit"
-	"github.com/crlssn/getstronger/server/config"
-	"github.com/crlssn/getstronger/server/db"
-	"github.com/crlssn/getstronger/server/notification"
+	"github.com/joho/godotenv"
 	"github.com/stephenafamo/bob"
 
+	"github.com/crlssn/getstronger/server/config"
+	"github.com/crlssn/getstronger/server/db"
 	"github.com/crlssn/getstronger/server/gen/models"
+	"github.com/crlssn/getstronger/server/notification"
 	"github.com/crlssn/getstronger/server/testing/factory"
 	"github.com/crlssn/getstronger/server/weightunit"
 )

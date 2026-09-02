@@ -6,10 +6,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stephenafamo/bob"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/crypto/bcrypt"
-
-	"github.com/stephenafamo/bob"
 
 	"github.com/crlssn/getstronger/server/config"
 	"github.com/crlssn/getstronger/server/gen/models"

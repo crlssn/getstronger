@@ -29,15 +29,16 @@ type formatResult struct {
 	output   string
 }
 
-func TestHookFormatsGoFilesWithGoimportsThenGofumpt(t *testing.T) {
+// golangci-lint reads .golangci.yml from the working directory, so the hook
+// runs it from the root with the file's relative path.
+func TestHookFormatsGoFilesWithGolangciLintFromTheRoot(t *testing.T) {
 	root := newTree(t, "server/rpc/handler.go")
 
 	result := runFormatHook(t, root, payload("Edit", filepath.Join(root, "server/rpc/handler.go")))
 
 	require.Equal(t, 0, result.exitCode, result.output)
 	require.Equal(t, []string{
-		root + "|exec -- goimports -w " + filepath.Join(root, "server/rpc/handler.go"),
-		root + "|exec -- gofumpt -w " + filepath.Join(root, "server/rpc/handler.go"),
+		root + "|exec -- golangci-lint fmt server/rpc/handler.go",
 	}, result.calls)
 }
 

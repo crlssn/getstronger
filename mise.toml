@@ -8,7 +8,6 @@ aws-cli = "2.36.31"
 buf = "1.50.0"
 bun = "1.4.0"
 go = "1.26.6"
-gofumpt = "0.10.0"
 golangci-lint = "2.12.2"
 node = "24.19.0"
 # Records which test reached which line, for 'test:backend:coverage'. It
@@ -30,10 +29,6 @@ node = "24.19.0"
 }
 "go:go.uber.org/mock/mockgen" = {
     version = "v0.6.0",
-    depends = ["go"]
-}
-"go:golang.org/x/tools/cmd/goimports" = {
-    version = "v0.48.0",
     depends = ["go"]
 }
 
@@ -455,7 +450,9 @@ run = ["bunx sort-package-json", "npm run format"]
 [tasks."format:backend"]
 alias = "format_backend"
 description = "Format backend code"
-run = ["goimports -w .", "gofumpt -l -w ."]
+# The formatters .golangci.yml enables, so what this writes is what
+# 'lint:backend' checks. Resolved through mise for the reason given there.
+run = '"$(mise which golangci-lint)" fmt ./...'
 
 [tasks.lint]
 description = "Lint all code"

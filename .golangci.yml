@@ -78,9 +78,19 @@ linters:
           - mnd
 formatters:
   enable:
+    - gci
     - gofmt
     - gofumpt
     - goimports
+  settings:
+    # Imports in three groups: standard library, third party, this module.
+    # goimports only guarantees the first split; gci fails the lint when a
+    # third-party import drifts into its own group or the module's.
+    gci:
+      sections:
+        - standard
+        - default
+        - localmodule
   exclusions:
     generated: lax
     paths:

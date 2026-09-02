@@ -9,7 +9,6 @@ import (
 	"testing"
 
 	"connectrpc.com/connect"
-
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/zap"

@@ -42,10 +42,12 @@ run() {
   fi
 }
 
+# The formatters .golangci.yml enables, so the file leaves here as
+# 'lint:backend' expects it. Run from the root so the config is found.
 case "$file" in
 *.go)
-  run goimports goimports -w "$file"
-  run gofumpt gofumpt -w "$file"
+  cd "$root" || exit 0
+  run golangci-lint golangci-lint fmt "$rel"
   exit 0
   ;;
 esac
