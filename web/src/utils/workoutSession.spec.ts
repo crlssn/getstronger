@@ -9,11 +9,12 @@ import { defaultRestSeconds } from '@/utils/routineGroups'
 import {
   activeSetIndex,
   circuitRound,
+  circuitRoundCount,
   elapsedLabel,
   finishBlocker,
   incompleteSetCount,
   loggedSetCount,
-  nextCircuitStep,
+  nextCircuitRound,
   nextStationOutsideGroup,
   nextUnfinishedStation,
   savedGroups,
@@ -350,21 +351,32 @@ describe('circuitRound', () => {
   })
 })
 
-describe('nextCircuitStep', () => {
+describe('circuitRoundCount', () => {
   const group = () => sessionGroups([circuit('two', ['a', 'b'])], [lift('a'), lift('b')])[0]
+  const prescribed = () =>
+    sessionGroups([circuit('two', ['a', 'b'], [], 3)], [lift('a'), lift('b')])[0]
 
-  test('walks to the next exercise inside the round', () => {
-    expect(nextCircuitStep(group(), 'a', 0)).toEqual({
-      kind: 'nextStation',
-      key: 'b',
-      restSeconds: 15,
-    })
+  test('is one round before anything is laid out', () => {
+    expect(circuitRoundCount(group(), {})).toBe(1)
   })
 
-  test('rests for the round when the last exercise closes it', () => {
-    expect(nextCircuitStep(group(), 'b', 1)).toEqual({
+  // The rows are rounds, so the block is as long as its longest station.
+  test('is as many rounds as the longest station has rows', () => {
+    expect(circuitRoundCount(group(), { a: 3, b: 2 })).toBe(3)
+  })
+
+  test('lays out every prescribed round, and any taken past them', () => {
+    expect(circuitRoundCount(prescribed(), { a: 1, b: 1 })).toBe(3)
+    expect(circuitRoundCount(prescribed(), { a: 5, b: 5 })).toBe(5)
+  })
+})
+
+describe('nextCircuitRound', () => {
+  const group = () => sessionGroups([circuit('two', ['a', 'b'])], [lift('a'), lift('b')])[0]
+
+  test('goes into the next round, resting for the round that closed', () => {
+    expect(nextCircuitRound(group(), 1, 1)).toEqual({
       kind: 'nextRound',
-      key: 'a',
       round: 2,
       restSeconds: 90,
     })
@@ -372,51 +384,50 @@ describe('nextCircuitStep', () => {
 
   // Only the session ends a circuit, so the walk itself always has a next step.
   test('starts another round however many have been taken', () => {
-    expect(nextCircuitStep(group(), 'b', 9)).toEqual({
+    expect(nextCircuitRound(group(), 9, 9)).toEqual({
       kind: 'nextRound',
-      key: 'a',
       round: 10,
       restSeconds: 90,
     })
   })
 
-  test('finishes the group when the station is not in it', () => {
-    expect(nextCircuitStep(group(), 'missing', 1)).toEqual({ kind: 'groupComplete' })
+  // A round reopened to correct it is not where the block is: completing it
+  // again goes back to the round the block had reached.
+  test('returns to the round the block has reached from a reopened one', () => {
+    expect(nextCircuitRound(group(), 1, 3)).toEqual({
+      kind: 'nextRound',
+      round: 4,
+      restSeconds: 90,
+    })
   })
 
-  // A prescribed circuit closes itself: the last set of the last round is the
-  // end of the block, not the way into another lap of it.
+  // A prescribed circuit closes itself: the last round is the end of the block,
+  // not the way into another lap of it.
   describe('prescribed for a number of rounds', () => {
     const prescribed = () =>
       sessionGroups([circuit('two', ['a', 'b'], [], 2)], [lift('a'), lift('b')])[0]
 
     test('walks the rounds it was given', () => {
-      expect(nextCircuitStep(prescribed(), 'b', 1)).toEqual({
+      expect(nextCircuitRound(prescribed(), 1, 1)).toEqual({
         kind: 'nextRound',
-        key: 'a',
         round: 2,
         restSeconds: 90,
       })
     })
 
     test('finishes the group as the last round closes', () => {
-      expect(nextCircuitStep(prescribed(), 'b', 2)).toEqual({ kind: 'groupComplete' })
+      expect(nextCircuitRound(prescribed(), 2, 2)).toEqual({ kind: 'groupComplete' })
+    })
+
+    // A station left blank does not hold the block open past its last round.
+    test('finishes the group from its last round whatever was left blank', () => {
+      expect(nextCircuitRound(prescribed(), 2, 0)).toEqual({ kind: 'groupComplete' })
     })
 
     // Reopened and taken round again: the prescription is a target, so a block
     // past it still ends rather than starting another lap on its own.
     test('finishes a group that has gone past its prescription', () => {
-      expect(nextCircuitStep(prescribed(), 'b', 5)).toEqual({ kind: 'groupComplete' })
-    })
-
-    // Inside a round nothing has closed yet, so the walk carries on to the next
-    // exercise however many rounds have been taken.
-    test('still walks to the next exercise inside the last round', () => {
-      expect(nextCircuitStep(prescribed(), 'a', 2)).toEqual({
-        kind: 'nextStation',
-        key: 'b',
-        restSeconds: 15,
-      })
+      expect(nextCircuitRound(prescribed(), 1, 5)).toEqual({ kind: 'groupComplete' })
     })
   })
 })

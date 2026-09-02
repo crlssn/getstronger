@@ -14,6 +14,7 @@ import { create } from '@bufbuild/protobuf'
 import { timestampFromDate } from '@bufbuild/protobuf/wkt'
 import { Code, ConnectError } from '@connectrpc/connect'
 import {
+  CheckIcon,
   ChevronDownIcon,
   FlagIcon,
   PlusIcon,
@@ -73,6 +74,7 @@ import { AppSheet, SheetAction } from '@/ui/components/AppSheet'
 import { AppTextarea } from '@/ui/components/AppTextarea'
 import { ExerciseTags } from '@/ui/exercises/ExerciseTags'
 import { ExercisePickerSheet } from '@/ui/workouts/ExercisePickerSheet'
+import { RoundTable, type RoundRow } from '@/ui/workouts/RoundTable'
 import { WorkoutRestBanner } from '@/ui/workouts/WorkoutRestBanner'
 import { SetTable } from '@/ui/workouts/SetTable'
 import blurActiveElement from '@/utils/blurActiveElement'
@@ -85,11 +87,12 @@ import { defaultRestSeconds } from '@/utils/routineGroups'
 import {
   activeSetIndex,
   circuitRound,
+  circuitRoundCount,
   completedCircuitRounds,
   elapsedLabel,
   finishBlocker,
   loggedSetCount,
-  nextCircuitStep,
+  nextCircuitRound,
   nextStationOutsideGroup,
   nextUnfinishedStation,
   restExtensionSeconds,
@@ -156,11 +159,11 @@ const focusNextSetInput = (panel: HTMLElement | null, suppress: RefObject<boolea
  * Gives every station the row it opens on, and the shape it is being worked to.
  *
  * Straight sets open on as many rows as the exercise took last session, which
- * is the session being repeated. A prescribed circuit opens on a row per round,
- * because that is the block laid out in front of you. One prescribed for no
- * rounds opens on a single row: its rows are rounds nobody has walked yet, and a
- * row for a round you have not reached takes the emphasis that says "type here
- * next" when what comes next is another exercise.
+ * is the session being repeated. A circuit's rows are its rounds, so every
+ * station in it holds a row for each prescribed round and for the round the
+ * block has reached — never one for a round nobody has walked yet, which would
+ * lay out a round the session has not decided to take. A circuit already ended
+ * keeps the rows it closed with.
  */
 const fillEmptySets = (
   routineID: string,
@@ -169,14 +172,27 @@ const fillEmptySets = (
 ) => {
   const { weightUnit, distanceUnit } = usePreferencesStore.getState()
   const store = () => useWorkoutStore.getState()
+  const done = selectCompletedExerciseIds(store(), routineID)
 
   blocks.forEach((block) => {
+    const logged = Object.fromEntries(
+      block.stations.map(({ key, exercise }) => [
+        key,
+        selectSets(store(), routineID, key).filter((set) => isExerciseSetComplete(set, exercise))
+          .length,
+      ]),
+    )
+    const circuitRows = Math.max(block.rounds, circuitRound(block, logged))
+
     block.stations.forEach(({ key, exercise }) => {
-      store().addEmptySetIfNone(routineID, key, exercise.metrics, weightUnit, distanceUnit)
+      if (block.mode === 'circuit' && done.includes(key)) return
+      if (block.mode !== 'circuit') {
+        store().addEmptySetIfNone(routineID, key, exercise.metrics, weightUnit, distanceUnit)
+      }
 
       const rows =
         block.mode === 'circuit'
-          ? block.rounds
+          ? circuitRows
           : (previous.find((entry) => entry.exercise?.id === exercise.id)?.sets.length ?? 0)
 
       for (let index = selectSets(store(), routineID, key).length; index < rows; index += 1) {
@@ -197,6 +213,34 @@ const completedSetKeys = (routineID: string, stations: readonly SessionStation[]
   })
 
   return keys
+}
+
+/**
+ * The round each circuit opens on when the session loads.
+ *
+ * The round the block has reached, or the last one it closed on. Read once
+ * rather than derived on every render: a round fully logged is still the round
+ * in front of you until it is completed, and a panel that moved on by itself
+ * the moment the last field filled would take the button's job away from it.
+ */
+const initialOpenRounds = (routineID: string, blocks: readonly SessionGroup[]) => {
+  const state = useWorkoutStore.getState()
+  const rounds: Record<string, number> = {}
+
+  blocks.forEach((block) => {
+    if (block.mode !== 'circuit') return
+
+    const logged: Record<string, number> = {}
+    const counts: Record<string, number> = {}
+    block.stations.forEach(({ key, exercise }) => {
+      const sets = selectSets(state, routineID, key)
+      counts[key] = sets.length
+      logged[key] = sets.filter((set) => isExerciseSetComplete(set, exercise)).length
+    })
+    rounds[block.id] = Math.min(circuitRound(block, logged), circuitRoundCount(block, counts))
+  })
+
+  return rounds
 }
 
 /**
@@ -224,6 +268,9 @@ export const StartWorkout = () => {
   const [session, setSession] = useState<Session>()
   const [previousSets, setPreviousSets] = useState<ExerciseSets[]>([])
   const [activeStationIndex, setActiveStationIndex] = useState(0)
+  // The round each circuit has open, by block. Unset, a block opens on the
+  // round it has reached; set, on the one the athlete chose to look at.
+  const [openRounds, setOpenRounds] = useState<Record<string, number>>({})
   const [now, setNow] = useState(() => Date.now())
   const [submitting, setSubmitting] = useState(false)
   const [finishError, setFinishError] = useState('')
@@ -278,6 +325,10 @@ export const StartWorkout = () => {
           (allSets?.[key] ?? []).filter((set) => isExerciseSetComplete(set, exercise)).length,
         ]),
       ),
+    [stations, allSets],
+  )
+  const setCounts = useMemo(
+    () => Object.fromEntries(stations.map(({ key }) => [key, (allSets?.[key] ?? []).length])),
     [stations, allSets],
   )
 
@@ -353,6 +404,7 @@ export const StartWorkout = () => {
       const sessionStations = sessionBlocks.flatMap((block) => block.stations)
       fillEmptySets(routineID, sessionBlocks, previous)
       completedSets.current = completedSetKeys(routineID, sessionStations)
+      setOpenRounds(initialOpenRounds(routineID, sessionBlocks))
 
       const done = selectCompletedExerciseIds(store(), routineID)
       setActiveStationIndex(
@@ -404,14 +456,16 @@ export const StartWorkout = () => {
   const allExercisesComplete = unfinishedCount === 0
 
   const activeBlock = activeStation ? blockOf.get(activeStation.key) : undefined
-  const activeIndexInBlock = Math.max(
-    0,
-    activeBlock?.stations.findIndex((station) => station.key === activeStation?.key) ?? 0,
-  )
   const inCircuit = activeBlock?.mode === 'circuit' && !allExercisesComplete
-  const activeRound = activeBlock ? circuitRound(activeBlock, loggedCounts) : 1
   const roundOf = (block: SessionGroup) => circuitRound(block, loggedCounts)
   const completedRoundsOf = (block: SessionGroup) => completedCircuitRounds(block, loggedCounts)
+  const roundCountOf = (block: SessionGroup) => circuitRoundCount(block, setCounts)
+  // The round a circuit shows open: the one pinned when the block was opened,
+  // else the one it has reached — which, once a block is closed, is the last
+  // one it took.
+  const openRoundOf = (block: SessionGroup) =>
+    Math.min(openRounds[block.id] ?? roundOf(block), roundCountOf(block))
+  const activeRound = activeBlock ? openRoundOf(activeBlock) : 1
 
   const blocker = finishBlocker(session ? entries : undefined, quickWorkout)
   const finishStatus = !blocker
@@ -449,8 +503,8 @@ export const StartWorkout = () => {
 
   const nextIndex = nextUnfinishedStation(stations, completed, activeStationIndex)
   const circuitStep =
-    inCircuit && activeBlock && activeStation
-      ? nextCircuitStep(activeBlock, activeStation.key, completedRoundsOf(activeBlock))
+    inCircuit && activeBlock
+      ? nextCircuitRound(activeBlock, openRoundOf(activeBlock), completedRoundsOf(activeBlock))
       : undefined
   // A circuit that closes here ticks off every exercise in it at once, so what
   // comes next is the first station outside the block rather than the one below.
@@ -458,13 +512,16 @@ export const StartWorkout = () => {
     circuitStep?.kind === 'groupComplete'
       ? activeBlock && nextStationOutsideGroup(stations, activeBlock, completed)
       : circuitStep
-        ? stations.find((station) => station.key === circuitStep.key)
+        ? undefined
         : stations[nextIndex]
-  const nextUpHint = nextStation
-    ? t('workout.thenNext', { name: nextStation.exercise.name })
-    : t('workout.thenFinish')
-  // The last set of the last round is the end of the block, not the way into
-  // another lap of it, so the button says so.
+  const nextUpHint =
+    circuitStep?.kind === 'nextRound'
+      ? t('workout.thenRound', { round: circuitStep.round })
+      : nextStation
+        ? t('workout.thenNext', { name: nextStation.exercise.name })
+        : t('workout.thenFinish')
+  // The last round is the end of the block, not the way into another lap of
+  // it, so the button says so.
   const closesCircuit = circuitStep?.kind === 'groupComplete'
   const primaryActionLabel = allExercisesComplete
     ? submitting
@@ -473,7 +530,7 @@ export const StartWorkout = () => {
     : inCircuit
       ? closesCircuit
         ? t('workout.completeCircuit')
-        : t('workout.completeSet')
+        : t('workout.completeRound')
       : t('workout.completeExercise')
 
   const setsFor = (key: string) => selectSets(useWorkoutStore.getState(), routineID, key)
@@ -529,9 +586,14 @@ export const StartWorkout = () => {
     if (set && isExerciseSetComplete(set, station.exercise)) {
       if (!completedSets.current.has(key)) {
         completedSets.current.add(key)
-        // A circuit rests on the way to the next exercise or into the next
-        // round, so its rest belongs to moving on rather than to the set.
-        if (blockOf.get(station.key)?.mode !== 'circuit') startSetRest(station)
+        const block = blockOf.get(station.key)
+        if (block?.mode !== 'circuit') startSetRest(station)
+        // In a circuit, a set logged inside a round is the walk to the next
+        // exercise in it. The round's last set has nowhere to walk to: the
+        // rest after it is the round's, and completing the round starts it.
+        else if (roundStillOpen(block, station, index)) {
+          startRestOrClear(block.restBetweenExercisesSeconds)
+        }
       }
       return
     }
@@ -539,18 +601,43 @@ export const StartWorkout = () => {
     completedSets.current.delete(key)
   }
 
+  // Whether another exercise in the round still has its set to take.
+  const roundStillOpen = (block: SessionGroup, station: SessionStation, index: number) =>
+    block.stations.some(
+      (other) =>
+        other.key !== station.key &&
+        !isExerciseSetComplete(setsFor(other.key)[index] ?? {}, other.exercise),
+    )
+
+  // Every station in the block holds a row for the round, so a round opened
+  // early or on a reloaded draft has somewhere to write.
+  const ensureRoundRows = (block: SessionGroup, round: number) => {
+    const store = useWorkoutStore.getState()
+    block.stations.forEach(({ key }) => {
+      for (let count = setsFor(key).length; count < round; count += 1) {
+        store.addEmptySet(routineID, key, weightUnit, distanceUnit)
+      }
+    })
+  }
+
   const onSetChange = (station: SessionStation, index: number, changes: WorkoutSet) => {
     const store = useWorkoutStore.getState()
+    const block = blockOf.get(station.key)
 
     setFinishError('')
+    if (block?.mode === 'circuit') ensureRoundRows(block, index + 1)
     store.updateSet(routineID, station.key, index, changes)
-    store.addEmptySetIfNone(
-      routineID,
-      station.key,
-      station.exercise.metrics,
-      weightUnit,
-      distanceUnit,
-    )
+    // A circuit's rows are its rounds, and a round is laid out when it is
+    // reached rather than the moment the row above it fills.
+    if (block?.mode !== 'circuit') {
+      store.addEmptySetIfNone(
+        routineID,
+        station.key,
+        station.exercise.metrics,
+        weightUnit,
+        distanceUnit,
+      )
+    }
     syncSetCompletion(station, index)
   }
 
@@ -607,9 +694,31 @@ export const StartWorkout = () => {
   }
 
   const selectStation = (index: number) => {
-    if (!stations[index] || index === activeStationIndex) return
+    const station = stations[index]
+    if (!station || index === activeStationIndex) return
 
+    // A circuit walked into from outside opens on the round it has reached,
+    // and stays there until the round is completed or another is chosen.
+    const block = blockOf.get(station.key)
+    if (block?.mode === 'circuit') {
+      const reached = openRoundOf(block)
+      setOpenRounds((rounds) =>
+        rounds[block.id] === undefined ? { ...rounds, [block.id]: reached } : rounds,
+      )
+    }
     setActiveStationIndex(index)
+    setFocusRequest((request) => request + 1)
+  }
+
+  // Opening a round makes its block the session's place: the block's first
+  // station stands for it wherever the session counts stations.
+  const selectRound = (block: SessionGroup, round: number) => {
+    const first = stationIndex.get(block.stations[0]?.key ?? '') ?? -1
+    if (first < 0) return
+
+    ensureRoundRows(block, round)
+    setOpenRounds((rounds) => ({ ...rounds, [block.id]: round }))
+    setActiveStationIndex(first)
     setFocusRequest((request) => request + 1)
   }
 
@@ -658,30 +767,37 @@ export const StartWorkout = () => {
    */
   const completeCircuit = (block: SessionGroup) => {
     block.stations.forEach((station) => completeStation(station))
+    // Closed, the block shows the round it closed on rather than one chosen
+    // while it was being worked.
+    setOpenRounds((rounds) =>
+      Object.fromEntries(Object.entries(rounds).filter(([id]) => id !== block.id)),
+    )
     moveToNextUnfinished()
   }
 
+  // Reopened, a circuit carries on from the round after the one it closed on.
+  const reopenCircuit = (block: SessionGroup) => {
+    const store = useWorkoutStore.getState()
+    block.stations.forEach(({ key }) => store.setExerciseCompleted(routineID, key, false))
+    selectRound(block, roundOf(block))
+  }
+
   /**
-   * One step around the circuit: along the group, and back to the top when the
-   * round closes.
+   * One round of the circuit done: into the next, resting for the one that
+   * closed.
    *
    * Nothing is ticked off on the way round, because an exercise in a circuit is
    * not finished with until the circuit is — and how many rounds that takes is
    * decided here, in the session, not in the routine.
    */
   const advanceCircuit = (block: SessionGroup) => {
-    if (!activeStation) return
-
-    const step = nextCircuitStep(block, activeStation.key, completedRoundsOf(block))
+    const step = nextCircuitRound(block, openRoundOf(block), completedRoundsOf(block))
     if (step.kind === 'groupComplete') {
       completeCircuit(block)
       return
     }
 
-    const next = stationIndex.get(step.key) ?? -1
-    if (next < 0) return
-
-    selectStation(next)
+    selectRound(block, step.round)
     startRestOrClear(step.restSeconds)
   }
 
@@ -908,10 +1024,6 @@ export const StartWorkout = () => {
         ? `${t('workout.exerciseCompleted')} · ${t('workout.loggedSets', { count: logged })}`
         : t('workout.exerciseCompleted')
     }
-    const block = blockOf.get(station.key)
-    if (block?.mode === 'circuit') {
-      return logged ? t('workout.roundsLogged', { count: logged }) : t('workout.notStarted')
-    }
 
     if (logged) return t('workout.loggedSets', { count: logged })
 
@@ -920,6 +1032,84 @@ export const StartWorkout = () => {
       return t('workout.lastSet', { set: formatExerciseSet(previous, station.exercise) })
     return t('workout.notStarted')
   }
+
+  // A round's rows: every station's set for it, beside the same round of the
+  // last session.
+  const roundRows = (block: SessionGroup, round: number): RoundRow[] =>
+    block.stations.map((station) => ({
+      station,
+      set: allSets?.[station.key]?.[round - 1],
+      previous: previousSetFor(station.exercise.id, round - 1),
+    }))
+
+  const rowLogged = ({ station, set }: RoundRow) =>
+    Boolean(set && isExerciseSetComplete(set, station.exercise))
+
+  // The one line a collapsed round gets: what was logged in it, what it is
+  // still waiting for, or that nobody has reached it.
+  const roundStatus = (rows: readonly RoundRow[]) => {
+    const logged = rows.filter(rowLogged).length
+
+    if (logged === rows.length) {
+      return rows
+        .map(({ station, set }) => formatExerciseSet(set ?? {}, station.exercise))
+        .join(' / ')
+    }
+    if (logged) return t('workout.roundLoggedOf', { count: logged, total: rows.length })
+    return t('workout.notStarted')
+  }
+
+  // The one forward action lives inside the panel it acts on, so pressing
+  // forward never means travelling past the page.
+  const renderActions = (block: SessionGroup, done: boolean) => (
+    <div className={styles.actionBlock}>
+      {statusMessage && (
+        <strong
+          id="workout-dock-status"
+          className={cn(
+            finishError && styles.failed,
+            !finishError && shownBlocked && styles.blocked,
+          )}
+        >
+          {statusMessage}
+        </strong>
+      )}
+      {/* Described by the status rather than aria-disabled: the whole point is
+          that this control is pressable, and aria-disabled would announce the
+          same "broken" that a grey fill used to. */}
+      <AppButton
+        type="submit"
+        colour="primary"
+        size="lg"
+        aria-describedby={
+          [
+            statusMessage ? 'workout-dock-status' : '',
+            allExercisesComplete ? '' : 'workout-next-up',
+          ]
+            .filter(Boolean)
+            .join(' ') || undefined
+        }
+        disabled={submitting}
+      >
+        {primaryActionLabel}
+      </AppButton>
+      {/* The label stays on the work in front of you; where the session goes
+          next is a hint, not a promotion. */}
+      {!allExercisesComplete && (
+        <small id="workout-next-up" className={styles.nextUp}>
+          {nextUpHint}
+        </small>
+      )}
+      {/* A circuit runs for as many rounds as the session takes, so ending it
+          is a decision — and it belongs next to the button that takes another
+          round, which is where that decision is made. */}
+      {block.mode === 'circuit' && !done && !closesCircuit && (
+        <AppButton type="button" colour="secondary" onClick={() => completeCircuit(block)}>
+          {t('workout.completeCircuit')}
+        </AppButton>
+      )}
+    </div>
+  )
 
   return (
     <form
@@ -955,14 +1145,9 @@ export const StartWorkout = () => {
                 {inCircuit && activeBlock
                   ? t(
                       activeBlock.rounds > 0
-                        ? 'workout.circuitPositionOfRounds'
-                        : 'workout.circuitPosition',
-                      {
-                        round: activeRound,
-                        rounds: activeBlock.rounds,
-                        current: activeIndexInBlock + 1,
-                        total: activeBlock.stations.length,
-                      },
+                        ? 'workout.roundPositionOfRounds'
+                        : 'workout.roundPosition',
+                      { round: activeRound, rounds: activeBlock.rounds },
                     )
                   : t('workout.exercisePosition', {
                       current: Math.min(activeStationIndex + 1, stations.length),
@@ -1014,166 +1199,206 @@ export const StartWorkout = () => {
             exactly one open. Tapping any collapsed header opens it and closes
             whichever was open: the primary action is the guided path through
             the session, not a gate on leaving the exercise you are in. */}
-        {/* One list per block. A circuit wears a band saying which round it is
-            on, because that is the number being tracked in a circuit — the set
-            count on any one exercise is not. */}
-        {blocks.map((block) => (
-          <section key={block.id} className={styles.exerciseList}>
-            {block.mode === 'circuit' && (
+        {/* One list per block. A straight block lists its exercises; a circuit
+            lists its rounds, because a round — one set of every exercise, then
+            round again — is the unit a circuit is worked in, and a list of
+            exercises each with its sets hides exactly that. */}
+        {blocks.map((block) =>
+          block.mode === 'circuit' ? (
+            <section key={block.id} className={styles.exerciseList}>
               <div className={styles.circuitBand}>
                 <strong>{t('workout.circuit')}</strong>
-                <span>
-                  {t(block.rounds > 0 ? 'workout.roundPositionOfRounds' : 'workout.roundPosition', {
-                    round: roundOf(block),
-                    rounds: block.rounds,
-                  })}
-                </span>
+                <span>{block.stations.map(({ exercise }) => exercise.name).join(' · ')}</span>
               </div>
-            )}
-            <ul>
-              {block.stations.map((station) => {
-                const { key, exercise } = station
-                const index = stationIndex.get(key) ?? 0
-                const open = index === activeStationIndex
-                const sets = allSets?.[key] ?? []
+              <ul>
+                {Array.from({ length: roundCountOf(block) }, (_, index) => index + 1).map(
+                  (round) => {
+                    const rows = roundRows(block, round)
+                    const blockDone = block.stations.every(({ key }) => completed[key])
+                    // Only the block being worked has a round open, so the
+                    // page still opens on exactly one thing.
+                    const open = activeBlock?.id === block.id && round === openRoundOf(block)
+                    const roundDone = rows.every(rowLogged)
 
-                return (
-                  <li
-                    key={key}
-                    ref={open ? openItemRef : undefined}
-                    className={cn(
-                      styles.exerciseItem,
-                      open && styles.open,
-                      completed[key] && styles.completed,
-                    )}
-                  >
-                    <h2>
-                      <AppOptionRow
-                        className={styles.exerciseHeader}
-                        aria-expanded={open}
-                        aria-controls={`exercise-panel-${index}`}
-                        leading={<span className={styles.exerciseIndex}>{index + 1}</span>}
-                        trailing={
-                          <ChevronDownIcon className={styles.exerciseToggle} aria-hidden="true" />
-                        }
-                        onClick={() => selectStation(index)}
+                    return (
+                      <li
+                        key={round}
+                        ref={open ? openItemRef : undefined}
+                        className={cn(
+                          styles.exerciseItem,
+                          open && styles.open,
+                          blockDone && styles.completed,
+                        )}
                       >
-                        <strong className={styles.exerciseName}>{exercise.name}</strong>
-                        <ExerciseTags compact tags={exercise.tags} />
-                        <small>{stationStatus(station)}</small>
-                      </AppOptionRow>
-                    </h2>
+                        <h2>
+                          <AppOptionRow
+                            className={styles.exerciseHeader}
+                            aria-expanded={open}
+                            aria-controls={`round-panel-${block.id}-${round}`}
+                            leading={
+                              <span className={styles.exerciseIndex}>
+                                {roundDone ? <CheckIcon aria-hidden="true" /> : round}
+                              </span>
+                            }
+                            trailing={
+                              <ChevronDownIcon
+                                className={styles.exerciseToggle}
+                                aria-hidden="true"
+                              />
+                            }
+                            onClick={() => selectRound(block, round)}
+                          >
+                            <strong className={styles.exerciseName}>
+                              {t('workout.roundPosition', { round })}
+                            </strong>
+                            <small>{roundStatus(rows)}</small>
+                          </AppOptionRow>
+                        </h2>
 
-                    {open && (
-                      <div
-                        id={`exercise-panel-${index}`}
-                        ref={panelRef}
-                        className={styles.exercisePanel}
-                      >
-                        {/* Ticked off, not hidden: the label sits above the sets
-                            so a completed exercise still shows what was logged. */}
-                        {completed[key] && (
-                          <div className={styles.completedExercise}>
-                            <div>
-                              <strong>{t('workout.exerciseCompleted')}</strong>
-                              <p>{t('workout.loggedSets', { count: loggedFor(station) })}</p>
-                            </div>
-                            <AppButton
-                              type="button"
-                              colour="ghost"
-                              size="sm"
-                              width="auto"
-                              className={styles.reopenExercise}
-                              onClick={() => reopenStation(station)}
-                            >
-                              {t('workout.reopen')}
-                            </AppButton>
+                        {open && (
+                          <div
+                            id={`round-panel-${block.id}-${round}`}
+                            ref={panelRef}
+                            className={styles.exercisePanel}
+                          >
+                            {blockDone && (
+                              <div className={styles.completedExercise}>
+                                <div>
+                                  <strong>{t('workout.circuitCompleted')}</strong>
+                                  <p>
+                                    {t('workout.roundsLogged', {
+                                      count: completedRoundsOf(block),
+                                    })}
+                                  </p>
+                                </div>
+                                <AppButton
+                                  type="button"
+                                  colour="ghost"
+                                  size="sm"
+                                  width="auto"
+                                  className={styles.reopenExercise}
+                                  onClick={() => reopenCircuit(block)}
+                                >
+                                  {t('workout.reopen')}
+                                </AppButton>
+                              </div>
+                            )}
+
+                            <RoundTable
+                              round={round}
+                              rows={rows}
+                              activeKey={rows.find((row) => !rowLogged(row))?.station.key}
+                              weightUnit={weightUnit}
+                              distanceUnit={distanceUnit}
+                              onChange={(station, changes) =>
+                                onSetChange(station, round - 1, changes)
+                              }
+                              onFocusField={(station, field, target) =>
+                                onFocusField(station, round - 1, field, target)
+                              }
+                            />
+
+                            {(!blockDone || allExercisesComplete || finishError) &&
+                              renderActions(block, blockDone)}
                           </div>
                         )}
+                      </li>
+                    )
+                  },
+                )}
+              </ul>
+            </section>
+          ) : (
+            <section key={block.id} className={styles.exerciseList}>
+              <ul>
+                {block.stations.map((station) => {
+                  const { key, exercise } = station
+                  const index = stationIndex.get(key) ?? 0
+                  const open = index === activeStationIndex
+                  const sets = allSets?.[key] ?? []
 
-                        <SetTable
-                          exercise={exercise}
-                          mode="log"
-                          sets={sets}
-                          previousSets={previousSetsFor(exercise.id)}
-                          activeIndex={activeSetIndex(sets, exercise)}
-                          weightUnit={weightUnit}
-                          distanceUnit={distanceUnit}
-                          onChange={(setIndex, changes) => onSetChange(station, setIndex, changes)}
-                          onFocusField={(setIndex, field, target) =>
-                            onFocusField(station, setIndex, field, target)
+                  return (
+                    <li
+                      key={key}
+                      ref={open ? openItemRef : undefined}
+                      className={cn(
+                        styles.exerciseItem,
+                        open && styles.open,
+                        completed[key] && styles.completed,
+                      )}
+                    >
+                      <h2>
+                        <AppOptionRow
+                          className={styles.exerciseHeader}
+                          aria-expanded={open}
+                          aria-controls={`exercise-panel-${index}`}
+                          leading={<span className={styles.exerciseIndex}>{index + 1}</span>}
+                          trailing={
+                            <ChevronDownIcon className={styles.exerciseToggle} aria-hidden="true" />
                           }
-                          onRemove={(setIndex) => onRemoveSet(station, setIndex)}
-                        />
+                          onClick={() => selectStation(index)}
+                        >
+                          <strong className={styles.exerciseName}>{exercise.name}</strong>
+                          <ExerciseTags compact tags={exercise.tags} />
+                          <small>{stationStatus(station)}</small>
+                        </AppOptionRow>
+                      </h2>
 
-                        {/* The one forward action lives inside the exercise it
-                            acts on, so pressing forward never means travelling
-                            past the page. */}
-                        {(!completed[key] || allExercisesComplete || finishError) && (
-                          <div className={styles.actionBlock}>
-                            {statusMessage && (
-                              <strong
-                                id="workout-dock-status"
-                                className={cn(
-                                  finishError && styles.failed,
-                                  !finishError && shownBlocked && styles.blocked,
-                                )}
-                              >
-                                {statusMessage}
-                              </strong>
-                            )}
-                            {/* Described by the status rather than
-                                aria-disabled: the whole point is that this
-                                control is pressable, and aria-disabled would
-                                announce the same "broken" that a grey fill used
-                                to. */}
-                            <AppButton
-                              type="submit"
-                              colour="primary"
-                              size="lg"
-                              aria-describedby={
-                                [
-                                  statusMessage ? 'workout-dock-status' : '',
-                                  allExercisesComplete ? '' : 'workout-next-up',
-                                ]
-                                  .filter(Boolean)
-                                  .join(' ') || undefined
-                              }
-                              disabled={submitting}
-                            >
-                              {primaryActionLabel}
-                            </AppButton>
-                            {/* The label stays on the exercise in front of you;
-                                where the session goes next is a hint, not a
-                                promotion. */}
-                            {!allExercisesComplete && (
-                              <small id="workout-next-up" className={styles.nextUp}>
-                                {nextUpHint}
-                              </small>
-                            )}
-                            {/* A circuit runs for as many rounds as the session
-                                takes, so ending it is a decision — and it
-                                belongs next to the button that takes another
-                                round, which is where that decision is made. */}
-                            {block.mode === 'circuit' && !completed[key] && !closesCircuit && (
+                      {open && (
+                        <div
+                          id={`exercise-panel-${index}`}
+                          ref={panelRef}
+                          className={styles.exercisePanel}
+                        >
+                          {/* Ticked off, not hidden: the label sits above the sets
+                              so a completed exercise still shows what was logged. */}
+                          {completed[key] && (
+                            <div className={styles.completedExercise}>
+                              <div>
+                                <strong>{t('workout.exerciseCompleted')}</strong>
+                                <p>{t('workout.loggedSets', { count: loggedFor(station) })}</p>
+                              </div>
                               <AppButton
                                 type="button"
-                                colour="secondary"
-                                onClick={() => completeCircuit(block)}
+                                colour="ghost"
+                                size="sm"
+                                width="auto"
+                                className={styles.reopenExercise}
+                                onClick={() => reopenStation(station)}
                               >
-                                {t('workout.completeCircuit')}
+                                {t('workout.reopen')}
                               </AppButton>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </li>
-                )
-              })}
-            </ul>
-          </section>
-        ))}
+                            </div>
+                          )}
+
+                          <SetTable
+                            exercise={exercise}
+                            mode="log"
+                            sets={sets}
+                            previousSets={previousSetsFor(exercise.id)}
+                            activeIndex={activeSetIndex(sets, exercise)}
+                            weightUnit={weightUnit}
+                            distanceUnit={distanceUnit}
+                            onChange={(setIndex, changes) =>
+                              onSetChange(station, setIndex, changes)
+                            }
+                            onFocusField={(setIndex, field, target) =>
+                              onFocusField(station, setIndex, field, target)
+                            }
+                            onRemove={(setIndex) => onRemoveSet(station, setIndex)}
+                          />
+
+                          {(!completed[key] || allExercisesComplete || finishError) &&
+                            renderActions(block, Boolean(completed[key]))}
+                        </div>
+                      )}
+                    </li>
+                  )
+                })}
+              </ul>
+            </section>
+          ),
+        )}
 
         {(!quickWorkout || exercises.length > 0) && (
           <section className={styles.workoutTools}>

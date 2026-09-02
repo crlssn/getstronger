@@ -447,7 +447,7 @@ test.describe('routine lifecycle', () => {
   })
 
   // The whole circuit, end to end: built in groups and prescribed for a number
-  // of rounds, saved, read back, and then trained one set at a time until the
+  // of rounds, saved, read back, and then trained one round at a time until the
   // last round walks the block out.
   //
   // It brings its own exercises rather than borrowing seeded ones: a saved
@@ -516,46 +516,49 @@ test.describe('routine lifecycle', () => {
       ).toBeVisible()
 
       await page.getByRole('link', { name: 'Start workout' }).click()
-      await expect(page.getByText('Round 1 of 2 · exercise 1 of 2')).toBeVisible()
+      await expect(page.getByText('Round 1 of 2', { exact: true })).toBeVisible()
 
+      // The circuit is walked a round at a time: the open round holds a row for
+      // every exercise in it, and the rounds still to come sit folded below.
       const complete = page.locator('button[type="submit"]')
-      await expect(complete).toHaveText('Complete set')
-
-      // A row per round: the block is laid out in front of you, because the
-      // routine says how many times round it goes.
+      await expect(complete).toHaveText('Complete round')
+      const round = (number: number) =>
+        page.getByRole('button', { name: new RegExp(`Round ${number}(?!\\d)`) })
+      await expect(round(1)).toHaveAttribute('aria-expanded', 'true')
+      await expect(round(2)).toHaveAttribute('aria-expanded', 'false')
+      await expect(
+        page.getByRole('textbox', { name: `${second} set 1 weight`, exact: true }),
+      ).toBeVisible()
       await expect(
         page.getByRole('textbox', { name: `${first} set 2 weight`, exact: true }),
-      ).toBeVisible()
+      ).toHaveCount(0)
 
       await page.getByRole('textbox', { name: `${first} set 1 weight`, exact: true }).fill('25')
       await page.getByRole('textbox', { name: `${first} set 1 reps`, exact: true }).fill('8')
-      // A circuit rests on the way to the next station, not the moment the set
-      // is complete.
-      await expect(page.getByRole('region', { name: 'Rest timer' })).toHaveCount(0)
-
-      await complete.click()
-      await expect(page.getByText('Round 1 of 2 · exercise 2 of 2')).toBeVisible()
+      // A set inside the round is the walk to the next exercise, and rests for
+      // it.
       await expect(page.getByRole('region', { name: 'Rest timer' })).toBeVisible()
 
       await page.getByRole('textbox', { name: `${second} set 1 weight`, exact: true }).fill('30')
       await page.getByRole('textbox', { name: `${second} set 1 reps`, exact: true }).fill('6')
       await complete.click()
 
-      // The round only turns over once every exercise in it has taken its set.
-      await expect(page.getByText('Round 2 of 2 · exercise 1 of 2')).toBeVisible()
+      // The round that closed folds down to what was logged in it, and the
+      // last round is the end of the block, so the button that closes it says
+      // so — and pressing it ticks off every exercise at once.
+      await expect(page.getByText('Round 2 of 2', { exact: true })).toBeVisible()
+      await expect(page.getByText('25 kg × 8 / 30 kg × 6')).toBeVisible()
+      await expect(round(2)).toHaveAttribute('aria-expanded', 'true')
+      await expect(complete).toHaveText('Complete circuit')
 
       await page.getByRole('textbox', { name: `${first} set 2 weight`, exact: true }).fill('25')
       await page.getByRole('textbox', { name: `${first} set 2 reps`, exact: true }).fill('8')
-      await complete.click()
-
-      // The last set of the last round is the end of the block, so the button
-      // that logs it says so — and pressing it ticks off every exercise at once.
       await page.getByRole('textbox', { name: `${second} set 2 weight`, exact: true }).fill('30')
       await page.getByRole('textbox', { name: `${second} set 2 reps`, exact: true }).fill('6')
-      await expect(complete).toHaveText('Complete circuit')
 
       await complete.click()
       await expect(page.getByRole('button', { name: 'Complete circuit' })).toHaveCount(0)
+      await expect(page.getByText('Circuit completed')).toBeVisible()
       await expect(complete).toHaveText('Finish workout')
 
       await page.getByRole('button', { name: 'Finish workout' }).first().click()

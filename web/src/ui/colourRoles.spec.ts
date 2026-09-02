@@ -26,6 +26,8 @@ const roles = {
     'shell/AppRestTimerBanner.module.css',
     'shell/AppToaster.module.css',
     'workouts/WorkoutRestBanner.module.css',
+    // The tick on a row just logged, in a round as in a table of sets.
+    'workouts/RoundTable.module.css',
     'workouts/SetTable.module.css',
   ],
   // Destructive only. Not a notification count, and not a way out of a

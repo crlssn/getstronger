@@ -265,11 +265,11 @@ export const flows: Flow[] = [
         name: 'saved',
       },
       {
-        // The session as a circuit is trained: banded by round, and asking for
-        // one set rather than for the exercise to be finished with.
+        // The session as a circuit is trained: a round at a time, with a row
+        // for every exercise in the open round and the rest folded below it.
         act: async (page) => {
           await page.getByRole('link', { name: 'Start workout' }).click()
-          await expect(page.getByText(/^Round 1\b.*exercise 1 of 2$/)).toBeVisible()
+          await expect(page.getByText(/^Round 1 of \d+$/)).toBeVisible()
         },
         name: 'session',
       },
@@ -285,7 +285,6 @@ export const flows: Flow[] = [
           // than a single pass indistinguishable from straight sets.
           for (const round of [1, 2]) {
             await logSet(page, press ?? '', round, '60', '8')
-            await complete.click()
             await logSet(page, squat ?? '', round, '90', '5')
             await complete.click()
           }
