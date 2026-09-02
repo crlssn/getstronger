@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
-	gofrsuuid "github.com/gofrs/uuid/v5"
+	"github.com/gofrs/uuid/v5"
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/zap"
 
@@ -140,7 +140,7 @@ func (s *feedSuite) TestListFeedItemsPaginates() {
 }
 
 func (s *feedSuite) TestListFeedItemsRejectsAMalformedPageToken() {
-	ctx := xcontext.WithUserID(context.Background(), gofrsuuid.Must(gofrsuuid.NewV4()))
+	ctx := xcontext.WithUserID(context.Background(), uuid.Must(uuid.NewV4()))
 	ctx = xcontext.WithLogger(ctx, zap.NewExample())
 
 	res, err := s.handler.ListFeedItems(ctx, &connect.Request[apiv1.ListFeedItemsRequest]{

@@ -8,8 +8,7 @@ import (
 
 	"connectrpc.com/connect"
 	"github.com/brianvoe/gofakeit/v7"
-	gofrsuuid "github.com/gofrs/uuid/v5"
-	"github.com/google/uuid"
+	"github.com/gofrs/uuid/v5"
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/zap"
 
@@ -214,19 +213,19 @@ func (s *notificationSuite) TestListNotifications() {
 					Msg: &apiv1.ListNotificationsResponse{
 						Notifications: []*apiv1.Notification{
 							{
-								Id:             uuid.NewString(),
+								Id:             uuid.Must(uuid.NewV4()).String(),
 								NotifiedAtUnix: time.Now().UTC().Unix(),
 								Type: &apiv1.Notification_WorkoutComment_{
 									WorkoutComment: &apiv1.Notification_WorkoutComment{
 										Actor: &apiv1.User{
-											Id:   uuid.NewString(),
+											Id:   uuid.Must(uuid.NewV4()).String(),
 											Name: gofakeit.Name(),
 										},
 										Workout: &apiv1.Workout{
-											Id:   uuid.NewString(),
+											Id:   uuid.Must(uuid.NewV4()).String(),
 											Name: gofakeit.Name(),
 											User: &apiv1.User{
-												Id:   uuid.NewString(),
+												Id:   uuid.Must(uuid.NewV4()).String(),
 												Name: gofakeit.Name(),
 											},
 										},
@@ -270,12 +269,12 @@ func (s *notificationSuite) TestListNotifications() {
 					Msg: &apiv1.ListNotificationsResponse{
 						Notifications: []*apiv1.Notification{
 							{
-								Id:             uuid.NewString(),
+								Id:             uuid.Must(uuid.NewV4()).String(),
 								NotifiedAtUnix: time.Now().UTC().Unix(),
 								Type: &apiv1.Notification_UserFollowed_{
 									UserFollowed: &apiv1.Notification_UserFollowed{
 										Actor: &apiv1.User{
-											Id:   uuid.NewString(),
+											Id:   uuid.Must(uuid.NewV4()).String(),
 											Name: gofakeit.Name(),
 										},
 									},
@@ -302,7 +301,7 @@ func (s *notificationSuite) TestListNotifications() {
 					factory.NotificationUserID(userID),
 					factory.NotificationPayload(notification.Payload{
 						ActorID:   s.testFactory.NewUser().ID,
-						WorkoutID: gofrsuuid.Must(gofrsuuid.NewV4()),
+						WorkoutID: uuid.Must(uuid.NewV4()),
 					}),
 				)
 			},
@@ -405,7 +404,7 @@ func (s *notificationSuite) TestListNotificationsPaginates() {
 
 func (s *notificationSuite) TestListNotificationsRejectsAMalformedPageToken() {
 	ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
-	ctx = xcontext.WithUserID(ctx, gofrsuuid.Must(gofrsuuid.NewV4()))
+	ctx = xcontext.WithUserID(ctx, uuid.Must(uuid.NewV4()))
 
 	res, err := s.handler.ListNotifications(ctx, &connect.Request[apiv1.ListNotificationsRequest]{
 		Msg: &apiv1.ListNotificationsRequest{
@@ -424,7 +423,7 @@ func (s *notificationSuite) TestListNotificationsFailsOnAnUnreadablePayload() {
 	n := s.testFactory.NewNotification(
 		factory.NotificationUserID(user.ID),
 		factory.NotificationType(notification.TypeFollow),
-		factory.NotificationPayload(notification.Payload{ActorID: gofrsuuid.Must(gofrsuuid.NewV4())}),
+		factory.NotificationPayload(notification.Payload{ActorID: uuid.Must(uuid.NewV4())}),
 	)
 
 	_, err := s.testContainer.DB.ExecContext(context.Background(),

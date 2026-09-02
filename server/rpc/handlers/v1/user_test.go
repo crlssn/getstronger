@@ -8,8 +8,7 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
-	gofrsuuid "github.com/gofrs/uuid/v5"
-	"github.com/google/uuid"
+	"github.com/gofrs/uuid/v5"
 	"github.com/stephenafamo/bob"
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/zap"
@@ -85,7 +84,7 @@ func (s *userSuite) TestUpdateUserName() {
 		// An update that matches no row is the handler's internal-error path;
 		// what it must not do is leak that the account is missing.
 		ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
-		ctx = xcontext.WithUserID(ctx, gofrsuuid.Must(gofrsuuid.NewV4()))
+		ctx = xcontext.WithUserID(ctx, uuid.Must(uuid.NewV4()))
 
 		res, err := s.handler.UpdateUserName(ctx, &connect.Request[v1.UpdateUserNameRequest]{
 			Msg: &v1.UpdateUserNameRequest{Name: "Robin Fields"},
@@ -431,7 +430,7 @@ func (s *userSuite) TestListFollowees() {
 // that do match it. Their names are identical, so similarity cannot order them
 // and the tiebreak is what has to keep the pages disjoint.
 func (s *userSuite) searchable(count int) (string, map[string]bool) {
-	query := strings.ReplaceAll(uuid.NewString(), "-", "")
+	query := strings.ReplaceAll(uuid.Must(uuid.NewV4()).String(), "-", "")
 	ids := make(map[string]bool, count)
 	for range count {
 		user := s.factory.NewUser(factory.UserName(query + " lifter"))
@@ -480,7 +479,7 @@ func (s *userSuite) TestSearchUsersReturnsTheNextPage() {
 // page: the further a name drifts from the query, the later it must appear.
 func (s *userSuite) TestSearchUsersPagesInRankOrder() {
 	ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
-	query := strings.ReplaceAll(uuid.NewString(), "-", "")
+	query := strings.ReplaceAll(uuid.Must(uuid.NewV4()).String(), "-", "")
 
 	ranked := make([]string, 0, 3)
 	for _, suffix := range []string{"", " a", " a much longer trailing name"} {
@@ -561,7 +560,7 @@ func (s *userSuite) TestFollowUser() {
 		ctx = xcontext.WithUserID(ctx, follower.ID)
 
 		res, err := s.handler.FollowUser(ctx, &connect.Request[v1.FollowUserRequest]{
-			Msg: &v1.FollowUserRequest{FollowId: uuid.NewString()},
+			Msg: &v1.FollowUserRequest{FollowId: uuid.Must(uuid.NewV4()).String()},
 		})
 		s.Require().Nil(res)
 		s.Require().Equal(connect.NewError(connect.CodeInternal, nil).Error(), err.Error())
@@ -597,7 +596,7 @@ func (s *userSuite) TestUnfollowUser() {
 		ctx = xcontext.WithUserID(ctx, follower.ID)
 
 		_, err := s.handler.UnfollowUser(ctx, &connect.Request[v1.UnfollowUserRequest]{
-			Msg: &v1.UnfollowUserRequest{UnfollowId: uuid.NewString()},
+			Msg: &v1.UnfollowUserRequest{UnfollowId: uuid.Must(uuid.NewV4()).String()},
 		})
 		s.Require().NoError(err)
 	})
@@ -622,10 +621,10 @@ func (s *userSuite) TestGetUserReportsWhetherTheViewerFollows() {
 
 func (s *userSuite) TestGetUserNotFound() {
 	ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
-	ctx = xcontext.WithUserID(ctx, gofrsuuid.Must(gofrsuuid.NewV4()))
+	ctx = xcontext.WithUserID(ctx, uuid.Must(uuid.NewV4()))
 
 	res, err := s.handler.GetUser(ctx, &connect.Request[v1.GetUserRequest]{
-		Msg: &v1.GetUserRequest{Id: uuid.NewString()},
+		Msg: &v1.GetUserRequest{Id: uuid.Must(uuid.NewV4()).String()},
 	})
 	s.Require().Nil(res)
 	s.Require().Equal(connect.NewError(connect.CodeNotFound, nil).Error(), err.Error())

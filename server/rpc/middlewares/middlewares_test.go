@@ -7,7 +7,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/google/uuid"
+	"github.com/gofrs/uuid/v5"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 
@@ -104,7 +104,7 @@ func TestRefreshTokenCookie(t *testing.T) {
 	t.Run("reaches the handler that will refresh the session", func(t *testing.T) {
 		t.Parallel()
 
-		token := uuid.NewString()
+		token := uuid.Must(uuid.NewV4()).String()
 		req := newRequest(t, http.MethodPost, "/api.v1.AuthService/RefreshToken")
 		req.AddCookie(writer.RefreshToken(token))
 
@@ -130,7 +130,7 @@ func TestRefreshTokenCookie(t *testing.T) {
 		t.Parallel()
 
 		req := newRequest(t, http.MethodPost, "/api.v1.AuthService/RefreshToken")
-		req.AddCookie(&http.Cookie{Name: "accessToken", Value: uuid.NewString()})
+		req.AddCookie(&http.Cookie{Name: "accessToken", Value: uuid.Must(uuid.NewV4()).String()})
 
 		seen := serveWithRefreshToken(t, req)
 

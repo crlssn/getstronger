@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"testing"
 
-	gofrsuuid "github.com/gofrs/uuid/v5"
+	"github.com/gofrs/uuid/v5"
 	"github.com/lib/pq"
 	"github.com/stretchr/testify/suite"
 
@@ -135,7 +135,7 @@ func (s *parserSuite) TestRoutineWithGroups() {
 	exercises := s.factory.NewExerciseSlice(3)
 	routine.R.Exercises = exercises
 
-	straightID, circuitID := gofrsuuid.Must(gofrsuuid.NewV4()), gofrsuuid.Must(gofrsuuid.NewV4())
+	straightID, circuitID := uuid.Must(uuid.NewV4()), uuid.Must(uuid.NewV4())
 
 	parsed := parser.RoutineWithGroups(routine, []*training.RoutineGroup{
 		{
@@ -693,8 +693,8 @@ func (s *parserSuite) TestSetSlice() {
 // unknown metric — the parser is the second line, not the first.
 func (s *parserSuite) TestUnknownExerciseMetricsAreDropped() {
 	exercise := &models.Exercise{
-		ID:      gofrsuuid.Must(gofrsuuid.NewV4()),
-		UserID:  gofrsuuid.Must(gofrsuuid.NewV4()),
+		ID:      uuid.Must(uuid.NewV4()),
+		UserID:  uuid.Must(uuid.NewV4()),
 		Title:   "Rowing",
 		Metrics: pq.StringArray{"weight", "cadence", "reps"},
 	}

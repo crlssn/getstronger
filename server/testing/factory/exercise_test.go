@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/brianvoe/gofakeit/v7"
-	"github.com/google/uuid"
+	"github.com/gofrs/uuid/v5"
 	"github.com/stretchr/testify/require"
 
 	"github.com/stephenafamo/bob"
@@ -44,7 +44,7 @@ func TestFactory_Exercise(t *testing.T) {
 
 	t.Run("ExerciseID", func(t *testing.T) {
 		t.Parallel()
-		id := uuid.NewString()
+		id := uuid.Must(uuid.NewV4()).String()
 		expected := f.NewExercise(factory.ExerciseID(id))
 		created, err := models.FindExercise(ctx, bob.NewDB(c.DB), expected.ID)
 		require.NoError(t, err)

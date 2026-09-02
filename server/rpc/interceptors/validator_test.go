@@ -7,7 +7,7 @@ import (
 
 	"buf.build/go/protovalidate"
 	"connectrpc.com/connect"
-	"github.com/google/uuid"
+	"github.com/gofrs/uuid/v5"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -29,7 +29,7 @@ func TestValidatorAllowsQuickWorkoutWithoutRoutine(t *testing.T) {
 	_, err = interceptor.WrapUnary(next)(context.Background(), connect.NewRequest(&apiv1.CreateWorkoutRequest{
 		WorkoutName: "Quick Workout",
 		ExerciseSets: []*apiv1.ExerciseSets{{
-			Exercise: &apiv1.Exercise{Id: uuid.NewString()},
+			Exercise: &apiv1.Exercise{Id: uuid.Must(uuid.NewV4()).String()},
 			Sets:     []*apiv1.Set{{Reps: 10}},
 		}},
 		StartedAt:  timestamppb.Now(),
@@ -123,7 +123,7 @@ func TestValidatorRejectsAPasswordBcryptCannotHash(t *testing.T) {
 			Username: "athlete",
 		}),
 		"update password": connect.NewRequest(&apiv1.UpdatePasswordRequest{
-			Token:    uuid.NewString(),
+			Token:    uuid.Must(uuid.NewV4()).String(),
 			Password: tooLong,
 		}),
 	} {
@@ -188,16 +188,16 @@ func TestValidatorRejectsAMalformedID(t *testing.T) {
 		}),
 		"create routine": connect.NewRequest(&apiv1.CreateRoutineRequest{
 			Name:        "Push",
-			ExerciseIds: []string{uuid.NewString(), "not-a-uuid"},
+			ExerciseIds: []string{uuid.Must(uuid.NewV4()).String(), "not-a-uuid"},
 		}),
 		"update exercise order": connect.NewRequest(&apiv1.UpdateExerciseOrderRequest{
-			RoutineId:   uuid.NewString(),
+			RoutineId:   uuid.Must(uuid.NewV4()).String(),
 			ExerciseIds: []string{"not-a-uuid"},
 		}),
 		"workout routine": connect.NewRequest(&apiv1.CreateWorkoutRequest{
 			RoutineId: "not-a-uuid",
 			ExerciseSets: []*apiv1.ExerciseSets{{
-				Exercise: &apiv1.Exercise{Id: uuid.NewString()},
+				Exercise: &apiv1.Exercise{Id: uuid.Must(uuid.NewV4()).String()},
 				Sets:     []*apiv1.Set{{Reps: 10}},
 			}},
 			StartedAt:  timestamppb.Now(),
@@ -206,7 +206,7 @@ func TestValidatorRejectsAMalformedID(t *testing.T) {
 		"workout plan": connect.NewRequest(&apiv1.CreateWorkoutRequest{
 			PlanId: "not-a-uuid",
 			ExerciseSets: []*apiv1.ExerciseSets{{
-				Exercise: &apiv1.Exercise{Id: uuid.NewString()},
+				Exercise: &apiv1.Exercise{Id: uuid.Must(uuid.NewV4()).String()},
 				Sets:     []*apiv1.Set{{Reps: 10}},
 			}},
 			StartedAt:  timestamppb.Now(),
@@ -248,7 +248,7 @@ func TestValidatorAllowsAnOmittedOptionalID(t *testing.T) {
 			RoutineId: "",
 			PlanId:    "",
 			ExerciseSets: []*apiv1.ExerciseSets{{
-				Exercise: &apiv1.Exercise{Id: uuid.NewString()},
+				Exercise: &apiv1.Exercise{Id: uuid.Must(uuid.NewV4()).String()},
 				Sets:     []*apiv1.Set{{Reps: 10}},
 			}},
 			StartedAt:  timestamppb.Now(),
@@ -256,7 +256,7 @@ func TestValidatorAllowsAnOmittedOptionalID(t *testing.T) {
 		}),
 		"dashboard without a preference": connect.NewRequest(&apiv1.GetDashboardRequest{}),
 		"sets of one athlete, every exercise": connect.NewRequest(&apiv1.ListSetsRequest{
-			UserIds:    []string{uuid.NewString()},
+			UserIds:    []string{uuid.Must(uuid.NewV4()).String()},
 			Pagination: &apiv1.PaginationRequest{PageLimit: 10},
 		}),
 	} {
@@ -286,7 +286,7 @@ func TestValidatorRejectsAnUnboundedIDList(t *testing.T) {
 
 	ids := make([]string, 101)
 	for i := range ids {
-		ids[i] = uuid.NewString()
+		ids[i] = uuid.Must(uuid.NewV4()).String()
 	}
 
 	reached := false
@@ -321,7 +321,7 @@ func TestValidatorRejectsAMalformedIdempotencyKey(t *testing.T) {
 	_, err = interceptor.WrapUnary(next)(context.Background(), connect.NewRequest(&apiv1.CreateWorkoutRequest{
 		WorkoutName: "Quick Workout",
 		ExerciseSets: []*apiv1.ExerciseSets{{
-			Exercise: &apiv1.Exercise{Id: uuid.NewString()},
+			Exercise: &apiv1.Exercise{Id: uuid.Must(uuid.NewV4()).String()},
 			Sets:     []*apiv1.Set{{Reps: 10}},
 		}},
 		StartedAt:      timestamppb.Now(),

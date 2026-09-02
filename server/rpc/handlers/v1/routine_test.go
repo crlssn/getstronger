@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"connectrpc.com/connect"
-	"github.com/google/uuid"
+	"github.com/gofrs/uuid/v5"
 	"github.com/stephenafamo/bob"
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/zap"
@@ -645,7 +645,7 @@ func groupExercises(ids ...string) []*apiv1.RoutineExercise {
 func (s *routineSuite) TestRoutineEndpointsRejectAMissingRoutine() {
 	ctx, user := s.athlete()
 	exercise := s.factory.NewExercise(factory.ExerciseUserID(user.ID))
-	missing := uuid.NewString()
+	missing := uuid.Must(uuid.NewV4()).String()
 
 	s.Run("get", func() {
 		_, err := s.handler.GetRoutine(ctx, connect.NewRequest(&apiv1.GetRoutineRequest{Id: missing}))
