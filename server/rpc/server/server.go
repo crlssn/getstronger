@@ -97,15 +97,30 @@ func (s *Server) serve(listener net.Listener) error {
 	return s.server.Serve(listener) //nolint:wrapcheck
 }
 
-func NewMultiplexer(f []handlers.HandlerFunc, o []connect.HandlerOption, m *middlewares.Middleware) *http.ServeMux {
+type MultiplexerParams struct {
+	fx.In
+
+	Log        *zap.Logger
+	Config     *config.Config
+	Handlers   []handlers.HandlerFunc
+	Options    []connect.HandlerOption
+	Middleware *middlewares.Middleware
+}
+
+func NewMultiplexer(p MultiplexerParams) *http.ServeMux {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Cache-Control", "no-store")
 		w.WriteHeader(http.StatusNoContent)
 	})
-	for _, h := range f {
-		path, handler := h(o...)
-		mux.Handle(path, m.Register(handler))
+
+	// Neither /healthz nor the profiles are browser traffic, so both sit
+	// outside the CORS, cookie and tracing chain the Connect handlers get.
+	registerProfiles(mux, p.Config.Pprof, p.Log)
+
+	for _, h := range p.Handlers {
+		path, handler := h(p.Options...)
+		mux.Handle(path, p.Middleware.Register(handler))
 	}
 
 	return mux

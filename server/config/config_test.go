@@ -1,6 +1,7 @@
 package config_test
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -91,4 +92,48 @@ func TestEnvironmentLocal(t *testing.T) {
 	require.False(t, config.EnvironmentBeta.Local())
 	require.False(t, config.EnvironmentProduction.Local())
 	require.False(t, config.Environment("").Local())
+}
+
+func TestPprofEnabled(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name     string
+		pprof    config.Pprof
+		expected bool
+	}{
+		{
+			name:     "an_unset_token_serves_no_profiles",
+			pprof:    config.Pprof{},
+			expected: false,
+		},
+		{
+			name:     "a_guessable_token_serves_no_profiles",
+			pprof:    config.Pprof{Token: "hunter2"},
+			expected: false,
+		},
+		{
+			name:     "a_token_one_byte_short_serves_no_profiles",
+			pprof:    config.Pprof{Token: strings.Repeat("a", config.PprofTokenMinLength-1)},
+			expected: false,
+		},
+		{
+			name:     "a_long_enough_token_serves_profiles",
+			pprof:    config.Pprof{Token: strings.Repeat("a", config.PprofTokenMinLength)},
+			expected: true,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+			require.Equal(t, test.expected, test.pprof.Enabled())
+		})
+	}
+}
+
+func TestNewReadsThePprofToken(t *testing.T) {
+	token := strings.Repeat("f", config.PprofTokenMinLength)
+	t.Setenv("PPROF_TOKEN", token)
+	require.Equal(t, token, config.New().Pprof.Token)
 }
