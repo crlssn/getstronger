@@ -46,6 +46,7 @@ func userFromRow(row *models.User) *account.User {
 		DistanceUnit: distanceunit.Normalize(row.DistanceUnit),
 		AutofillSets: row.AutofillSets,
 		CreatedAt:    row.CreatedAt,
+		FeedSeenAt:   row.FeedSeenAt.GetOrZero(),
 	}
 	if row.R.Auth != nil {
 		user.Email = row.R.Auth.Email

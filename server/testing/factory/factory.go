@@ -183,6 +183,9 @@ type SeedUser struct {
 	Name      string
 	Username  string
 	CreatedAt time.Time
+	// FeedSeenAt is when the persona last had the home feed in front of them;
+	// zero leaves them never having looked.
+	FeedSeenAt time.Time
 }
 
 type SeedParams struct {
@@ -218,6 +221,9 @@ func (f *Factory) Seed(p SeedParams) *models.User {
 		}
 		if !p.User.CreatedAt.IsZero() {
 			userOpts = append(userOpts, UserCreatedAt(p.User.CreatedAt))
+		}
+		if !p.User.FeedSeenAt.IsZero() {
+			userOpts = append(userOpts, UserFeedSeenAt(p.User.FeedSeenAt))
 		}
 		primaryUser = f.NewUser(userOpts...)
 		f.seedUserAt(p, primaryUser, 0)

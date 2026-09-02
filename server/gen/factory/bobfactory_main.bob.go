@@ -659,6 +659,7 @@ func (f *Factory) fromExistingUser(ctx context.Context, m *models.User) *UserTem
 	o.FullNameSearch = func() string { return m.FullNameSearch }
 	o.Username = func() string { return m.Username }
 	o.AutofillSets = func() bool { return m.AutofillSets }
+	o.FeedSeenAt = func() null.Val[time.Time] { return m.FeedSeenAt }
 
 	if visited, ok := factoryVisitedCtx.Value(ctx); ok {
 		ptr := uintptr(unsafe.Pointer(m))

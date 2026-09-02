@@ -1,12 +1,14 @@
 import type { Workout } from '@/proto/api/v1/workout_service_pb'
 
+import { timestampDate } from '@bufbuild/protobuf/wkt'
 import { CheckIcon, FireIcon } from '@heroicons/react/24/outline'
 import { DateTime } from 'luxon'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { listFeedItems } from '@/http/requests'
+import { listFeedItems, markFeedAsSeen } from '@/http/requests'
 import { dateLocale } from '@/i18n'
+import { useAuthStore } from '@/stores/auth'
 import { selectActivePlan, selectNextRoutine, useDashboardStore } from '@/stores/dashboard'
 import { cn } from '@/ui/cn'
 import { AppButton } from '@/ui/components/AppButton'
@@ -28,6 +30,12 @@ import styles from './HomeView.module.css'
 // reaches the end of this one.
 const feedPrefetchMargin = '500px 0px'
 
+/** A feed row, and whether it arrived since the reader last looked. */
+interface FeedEntry {
+  workout: Workout
+  unseen: boolean
+}
+
 const greetingKey = (hour: number) => {
   if (hour < 12) return 'home.morning'
   if (hour < 18) return 'home.afternoon'
@@ -47,7 +55,7 @@ export const HomeView = () => {
   const [searchOpen, setSearchOpen] = useState(false)
   const [routinePickerOpen, setRoutinePickerOpen] = useState(false)
 
-  const [feedWorkouts, setFeedWorkouts] = useState<Workout[]>([])
+  const [feedEntries, setFeedEntries] = useState<FeedEntry[]>([])
   const [feedLoading, setFeedLoading] = useState(false)
   const [feedLoaded, setFeedLoaded] = useState(false)
   const [feedReachedEnd, setFeedReachedEnd] = useState(false)
@@ -57,6 +65,11 @@ export const HomeView = () => {
   // state would put the loader's identity at the mercy of a render.
   const pageToken = useRef<Uint8Array>(new Uint8Array(0))
   const inFlight = useRef(false)
+  // Where the feed draws its line between new and seen, as the first page
+  // reported it: `at` is unset for a first look, which has nothing to catch up
+  // on. Showing the first page moves the server's line to now, so the pages
+  // after report a line that would hide what this visit is here to see.
+  const seenLine = useRef<{ at?: Date }>(undefined)
 
   const loadMoreFeed = useCallback(async () => {
     if (inFlight.current) return
@@ -65,6 +78,7 @@ export const HomeView = () => {
     setFeedError(false)
 
     try {
+      const firstPage = pageToken.current.length === 0
       const feed = await listFeedItems(pageToken.current, true)
       setFeedLoaded(true)
 
@@ -73,13 +87,29 @@ export const HomeView = () => {
         return
       }
 
-      setFeedWorkouts((current) => {
-        const seen = new Set(current.map((workout) => workout.id))
-        const fresh: Workout[] = []
+      if (firstPage) {
+        seenLine.current = { at: feed.seenAt && timestampDate(feed.seenAt) }
+        // Shown is seen: nothing has to be opened for the next visit to start
+        // from here.
+        void markFeedAsSeen()
+      }
+
+      // Read once here rather than subscribed to, so the loader's identity
+      // does not depend on the session.
+      const { userId } = useAuthStore.getState()
+      const line = seenLine.current?.at
+      const arrivedAfterLine = (item: (typeof feed.items)[number]) =>
+        line !== undefined && item.createdAt !== undefined && timestampDate(item.createdAt) > line
+
+      setFeedEntries((current) => {
+        const seen = new Set(current.map((entry) => entry.workout.id))
+        const fresh: FeedEntry[] = []
         for (const item of feed.items) {
           if (item.type.case !== 'workout' || seen.has(item.type.value.id)) continue
           seen.add(item.type.value.id)
-          fresh.push(item.type.value)
+          // Your own session is never news to you.
+          const unseen = arrivedAfterLine(item) && item.type.value.user?.id !== userId
+          fresh.push({ workout: item.type.value, unseen })
         }
         return fresh.length ? [...current, ...fresh] : current
       })
@@ -170,10 +200,10 @@ export const HomeView = () => {
                 <h2>{t('home.latestWorkouts')}</h2>
               </header>
 
-              {feedWorkouts.length > 0 && (
+              {feedEntries.length > 0 && (
                 <AppList>
-                  {feedWorkouts.map((workout) => (
-                    <CardWorkout key={workout.id} compact workout={workout} />
+                  {feedEntries.map(({ workout, unseen }) => (
+                    <CardWorkout key={workout.id} compact unseen={unseen} workout={workout} />
                   ))}
                 </AppList>
               )}
@@ -186,7 +216,7 @@ export const HomeView = () => {
                   title={t('home.loadFailed')}
                   onRetry={() => void loadMoreFeed()}
                 />
-              ) : feedWorkouts.length === 0 ? (
+              ) : feedEntries.length === 0 ? (
                 <AppEmptyState
                   action={{ label: t('home.emptyFeedAction') }}
                   body={t('home.emptyFeed')}

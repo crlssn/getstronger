@@ -14,6 +14,7 @@ import (
 	_ "buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go/buf/validate"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 )
 
 const (
@@ -76,9 +77,13 @@ func (x *ListFeedItemsRequest) GetPagination() *PaginationRequest {
 }
 
 type ListFeedItemsResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Items         []*FeedItem            `protobuf:"bytes,1,rep,name=items,proto3" json:"items,omitempty"`
-	Pagination    *PaginationResponse    `protobuf:"bytes,2,opt,name=pagination,proto3" json:"pagination,omitempty"`
+	state      protoimpl.MessageState `protogen:"open.v1"`
+	Items      []*FeedItem            `protobuf:"bytes,1,rep,name=items,proto3" json:"items,omitempty"`
+	Pagination *PaginationResponse    `protobuf:"bytes,2,opt,name=pagination,proto3" json:"pagination,omitempty"`
+	// When the caller last marked the feed as seen. An item that arrived after
+	// it is new to them; unset for a caller who has never seen the feed, who has
+	// nothing to catch up on.
+	SeenAt        *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=seen_at,json=seenAt,proto3" json:"seen_at,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -127,19 +132,101 @@ func (x *ListFeedItemsResponse) GetPagination() *PaginationResponse {
 	return nil
 }
 
+func (x *ListFeedItemsResponse) GetSeenAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.SeenAt
+	}
+	return nil
+}
+
+type MarkFeedAsSeenRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *MarkFeedAsSeenRequest) Reset() {
+	*x = MarkFeedAsSeenRequest{}
+	mi := &file_api_v1_feed_service_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MarkFeedAsSeenRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MarkFeedAsSeenRequest) ProtoMessage() {}
+
+func (x *MarkFeedAsSeenRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_api_v1_feed_service_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MarkFeedAsSeenRequest.ProtoReflect.Descriptor instead.
+func (*MarkFeedAsSeenRequest) Descriptor() ([]byte, []int) {
+	return file_api_v1_feed_service_proto_rawDescGZIP(), []int{2}
+}
+
+type MarkFeedAsSeenResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *MarkFeedAsSeenResponse) Reset() {
+	*x = MarkFeedAsSeenResponse{}
+	mi := &file_api_v1_feed_service_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MarkFeedAsSeenResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MarkFeedAsSeenResponse) ProtoMessage() {}
+
+func (x *MarkFeedAsSeenResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_api_v1_feed_service_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MarkFeedAsSeenResponse.ProtoReflect.Descriptor instead.
+func (*MarkFeedAsSeenResponse) Descriptor() ([]byte, []int) {
+	return file_api_v1_feed_service_proto_rawDescGZIP(), []int{3}
+}
+
 type FeedItem struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Types that are valid to be assigned to Type:
 	//
 	//	*FeedItem_Workout
-	Type          isFeedItem_Type `protobuf_oneof:"type"`
+	Type isFeedItem_Type `protobuf_oneof:"type"`
+	// When the item entered the feed: the moment the workout was logged, which
+	// is not when it was trained. The feed is ordered by it.
+	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *FeedItem) Reset() {
 	*x = FeedItem{}
-	mi := &file_api_v1_feed_service_proto_msgTypes[2]
+	mi := &file_api_v1_feed_service_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -151,7 +238,7 @@ func (x *FeedItem) String() string {
 func (*FeedItem) ProtoMessage() {}
 
 func (x *FeedItem) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_feed_service_proto_msgTypes[2]
+	mi := &file_api_v1_feed_service_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -164,7 +251,7 @@ func (x *FeedItem) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FeedItem.ProtoReflect.Descriptor instead.
 func (*FeedItem) Descriptor() ([]byte, []int) {
-	return file_api_v1_feed_service_proto_rawDescGZIP(), []int{2}
+	return file_api_v1_feed_service_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *FeedItem) GetType() isFeedItem_Type {
@@ -183,6 +270,13 @@ func (x *FeedItem) GetWorkout() *Workout {
 	return nil
 }
 
+func (x *FeedItem) GetCreatedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.CreatedAt
+	}
+	return nil
+}
+
 type isFeedItem_Type interface {
 	isFeedItem_Type()
 }
@@ -197,22 +291,28 @@ var File_api_v1_feed_service_proto protoreflect.FileDescriptor
 
 const file_api_v1_feed_service_proto_rawDesc = "" +
 	"\n" +
-	"\x19api/v1/feed_service.proto\x12\x06api.v1\x1a\x13api/v1/shared.proto\x1a\x1capi/v1/workout_service.proto\x1a\x1bbuf/validate/validate.proto\"~\n" +
+	"\x19api/v1/feed_service.proto\x12\x06api.v1\x1a\x13api/v1/shared.proto\x1a\x1capi/v1/workout_service.proto\x1a\x1bbuf/validate/validate.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"~\n" +
 	"\x14ListFeedItemsRequest\x12#\n" +
 	"\rfollowed_only\x18\x01 \x01(\bR\ffollowedOnly\x12A\n" +
 	"\n" +
 	"pagination\x18\x02 \x01(\v2\x19.api.v1.PaginationRequestB\x06\xbaH\x03\xc8\x01\x01R\n" +
-	"pagination\"{\n" +
+	"pagination\"\xb0\x01\n" +
 	"\x15ListFeedItemsResponse\x12&\n" +
 	"\x05items\x18\x01 \x03(\v2\x10.api.v1.FeedItemR\x05items\x12:\n" +
 	"\n" +
 	"pagination\x18\x02 \x01(\v2\x1a.api.v1.PaginationResponseR\n" +
-	"pagination\"?\n" +
+	"pagination\x123\n" +
+	"\aseen_at\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\x06seenAt\"\x17\n" +
+	"\x15MarkFeedAsSeenRequest\"\x18\n" +
+	"\x16MarkFeedAsSeenResponse\"z\n" +
 	"\bFeedItem\x12+\n" +
-	"\aworkout\x18\x01 \x01(\v2\x0f.api.v1.WorkoutH\x00R\aworkoutB\x06\n" +
-	"\x04type2]\n" +
+	"\aworkout\x18\x01 \x01(\v2\x0f.api.v1.WorkoutH\x00R\aworkout\x129\n" +
+	"\n" +
+	"created_at\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAtB\x06\n" +
+	"\x04type2\xb0\x01\n" +
 	"\vFeedService\x12N\n" +
-	"\rListFeedItems\x12\x1c.api.v1.ListFeedItemsRequest\x1a\x1d.api.v1.ListFeedItemsResponse\"\x00B\x94\x01\n" +
+	"\rListFeedItems\x12\x1c.api.v1.ListFeedItemsRequest\x1a\x1d.api.v1.ListFeedItemsResponse\"\x00\x12Q\n" +
+	"\x0eMarkFeedAsSeen\x12\x1d.api.v1.MarkFeedAsSeenRequest\x1a\x1e.api.v1.MarkFeedAsSeenResponse\"\x00B\x94\x01\n" +
 	"\n" +
 	"com.api.v1B\x10FeedServiceProtoP\x01Z;github.com/crlssn/getstronger/server/gen/proto/api/v1;apiv1\xa2\x02\x03AXX\xaa\x02\x06Api.V1\xca\x02\x06Api\\V1\xe2\x02\x12Api\\V1\\GPBMetadata\xea\x02\aApi::V1b\x06proto3"
 
@@ -228,27 +328,34 @@ func file_api_v1_feed_service_proto_rawDescGZIP() []byte {
 	return file_api_v1_feed_service_proto_rawDescData
 }
 
-var file_api_v1_feed_service_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
+var file_api_v1_feed_service_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
 var file_api_v1_feed_service_proto_goTypes = []any{
-	(*ListFeedItemsRequest)(nil),  // 0: api.v1.ListFeedItemsRequest
-	(*ListFeedItemsResponse)(nil), // 1: api.v1.ListFeedItemsResponse
-	(*FeedItem)(nil),              // 2: api.v1.FeedItem
-	(*PaginationRequest)(nil),     // 3: api.v1.PaginationRequest
-	(*PaginationResponse)(nil),    // 4: api.v1.PaginationResponse
-	(*Workout)(nil),               // 5: api.v1.Workout
+	(*ListFeedItemsRequest)(nil),   // 0: api.v1.ListFeedItemsRequest
+	(*ListFeedItemsResponse)(nil),  // 1: api.v1.ListFeedItemsResponse
+	(*MarkFeedAsSeenRequest)(nil),  // 2: api.v1.MarkFeedAsSeenRequest
+	(*MarkFeedAsSeenResponse)(nil), // 3: api.v1.MarkFeedAsSeenResponse
+	(*FeedItem)(nil),               // 4: api.v1.FeedItem
+	(*PaginationRequest)(nil),      // 5: api.v1.PaginationRequest
+	(*PaginationResponse)(nil),     // 6: api.v1.PaginationResponse
+	(*timestamppb.Timestamp)(nil),  // 7: google.protobuf.Timestamp
+	(*Workout)(nil),                // 8: api.v1.Workout
 }
 var file_api_v1_feed_service_proto_depIdxs = []int32{
-	3, // 0: api.v1.ListFeedItemsRequest.pagination:type_name -> api.v1.PaginationRequest
-	2, // 1: api.v1.ListFeedItemsResponse.items:type_name -> api.v1.FeedItem
-	4, // 2: api.v1.ListFeedItemsResponse.pagination:type_name -> api.v1.PaginationResponse
-	5, // 3: api.v1.FeedItem.workout:type_name -> api.v1.Workout
-	0, // 4: api.v1.FeedService.ListFeedItems:input_type -> api.v1.ListFeedItemsRequest
-	1, // 5: api.v1.FeedService.ListFeedItems:output_type -> api.v1.ListFeedItemsResponse
-	5, // [5:6] is the sub-list for method output_type
-	4, // [4:5] is the sub-list for method input_type
-	4, // [4:4] is the sub-list for extension type_name
-	4, // [4:4] is the sub-list for extension extendee
-	0, // [0:4] is the sub-list for field type_name
+	5, // 0: api.v1.ListFeedItemsRequest.pagination:type_name -> api.v1.PaginationRequest
+	4, // 1: api.v1.ListFeedItemsResponse.items:type_name -> api.v1.FeedItem
+	6, // 2: api.v1.ListFeedItemsResponse.pagination:type_name -> api.v1.PaginationResponse
+	7, // 3: api.v1.ListFeedItemsResponse.seen_at:type_name -> google.protobuf.Timestamp
+	8, // 4: api.v1.FeedItem.workout:type_name -> api.v1.Workout
+	7, // 5: api.v1.FeedItem.created_at:type_name -> google.protobuf.Timestamp
+	0, // 6: api.v1.FeedService.ListFeedItems:input_type -> api.v1.ListFeedItemsRequest
+	2, // 7: api.v1.FeedService.MarkFeedAsSeen:input_type -> api.v1.MarkFeedAsSeenRequest
+	1, // 8: api.v1.FeedService.ListFeedItems:output_type -> api.v1.ListFeedItemsResponse
+	3, // 9: api.v1.FeedService.MarkFeedAsSeen:output_type -> api.v1.MarkFeedAsSeenResponse
+	8, // [8:10] is the sub-list for method output_type
+	6, // [6:8] is the sub-list for method input_type
+	6, // [6:6] is the sub-list for extension type_name
+	6, // [6:6] is the sub-list for extension extendee
+	0, // [0:6] is the sub-list for field type_name
 }
 
 func init() { file_api_v1_feed_service_proto_init() }
@@ -258,7 +365,7 @@ func file_api_v1_feed_service_proto_init() {
 	}
 	file_api_v1_shared_proto_init()
 	file_api_v1_workout_service_proto_init()
-	file_api_v1_feed_service_proto_msgTypes[2].OneofWrappers = []any{
+	file_api_v1_feed_service_proto_msgTypes[4].OneofWrappers = []any{
 		(*FeedItem_Workout)(nil),
 	}
 	type x struct{}
@@ -267,7 +374,7 @@ func file_api_v1_feed_service_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_api_v1_feed_service_proto_rawDesc), len(file_api_v1_feed_service_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   3,
+			NumMessages:   5,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

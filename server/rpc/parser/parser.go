@@ -569,11 +569,12 @@ func NotificationSlice(
 
 func FeedItemSlice(workouts []*training.Workout, personalBests []*training.Set) []*apiv1.FeedItem {
 	items := make([]*apiv1.FeedItem, 0, len(workouts))
-	for _, workout := range WorkoutSlice(workouts, personalBests) {
+	for i, workout := range WorkoutSlice(workouts, personalBests) {
 		items = append(items, &apiv1.FeedItem{
 			Type: &apiv1.FeedItem_Workout{
 				Workout: workout,
 			},
+			CreatedAt: timestamppb.New(workouts[i].CreatedAt),
 		})
 	}
 

@@ -13,6 +13,7 @@ import (
 
 	"github.com/aarondl/opt/null"
 	"github.com/aarondl/opt/omit"
+	"github.com/aarondl/opt/omitnull"
 	"github.com/gofrs/uuid/v5"
 	"github.com/stephenafamo/bob"
 	"github.com/stephenafamo/bob/dialect/psql"
@@ -29,15 +30,16 @@ import (
 
 // User is an object representing the database table.
 type User struct {
-	ID             uuid.UUID `db:"id,pk" `
-	CreatedAt      time.Time `db:"created_at" `
-	AuthID         uuid.UUID `db:"auth_id" `
-	WeightUnit     string    `db:"weight_unit" `
-	DistanceUnit   string    `db:"distance_unit" `
-	Name           string    `db:"name" `
-	FullNameSearch string    `db:"full_name_search,generated" `
-	Username       string    `db:"username" `
-	AutofillSets   bool      `db:"autofill_sets" `
+	ID             uuid.UUID           `db:"id,pk" `
+	CreatedAt      time.Time           `db:"created_at" `
+	AuthID         uuid.UUID           `db:"auth_id" `
+	WeightUnit     string              `db:"weight_unit" `
+	DistanceUnit   string              `db:"distance_unit" `
+	Name           string              `db:"name" `
+	FullNameSearch string              `db:"full_name_search,generated" `
+	Username       string              `db:"username" `
+	AutofillSets   bool                `db:"autofill_sets" `
+	FeedSeenAt     null.Val[time.Time] `db:"feed_seen_at" `
 
 	R userR `db:"-" `
 
@@ -86,7 +88,7 @@ type userRLoaded struct {
 
 func buildUserColumns(tableName string) userColumns {
 	columnsExpr := expr.NewColumnsExpr(
-		"id", "created_at", "auth_id", "weight_unit", "distance_unit", "name", "full_name_search", "username", "autofill_sets",
+		"id", "created_at", "auth_id", "weight_unit", "distance_unit", "name", "full_name_search", "username", "autofill_sets", "feed_seen_at",
 	)
 
 	if tableName != "" {
@@ -105,6 +107,7 @@ func buildUserColumns(tableName string) userColumns {
 		FullNameSearch: buildUserColumn(tableName, "full_name_search"),
 		Username:       buildUserColumn(tableName, "username"),
 		AutofillSets:   buildUserColumn(tableName, "autofill_sets"),
+		FeedSeenAt:     buildUserColumn(tableName, "feed_seen_at"),
 	}
 }
 
@@ -120,6 +123,7 @@ type userColumns struct {
 	FullNameSearch userColumn
 	Username       userColumn
 	AutofillSets   userColumn
+	FeedSeenAt     userColumn
 }
 
 // Alias returns the current table alias for the columns set.
@@ -165,18 +169,19 @@ func (c userColumn) ShouldOmitParens() bool {
 // All values are optional, and do not have to be set
 // Generated columns are not included
 type UserSetter struct {
-	ID           omit.Val[uuid.UUID] `db:"id,pk" `
-	CreatedAt    omit.Val[time.Time] `db:"created_at" `
-	AuthID       omit.Val[uuid.UUID] `db:"auth_id" `
-	WeightUnit   omit.Val[string]    `db:"weight_unit" `
-	DistanceUnit omit.Val[string]    `db:"distance_unit" `
-	Name         omit.Val[string]    `db:"name" `
-	Username     omit.Val[string]    `db:"username" `
-	AutofillSets omit.Val[bool]      `db:"autofill_sets" `
+	ID           omit.Val[uuid.UUID]     `db:"id,pk" `
+	CreatedAt    omit.Val[time.Time]     `db:"created_at" `
+	AuthID       omit.Val[uuid.UUID]     `db:"auth_id" `
+	WeightUnit   omit.Val[string]        `db:"weight_unit" `
+	DistanceUnit omit.Val[string]        `db:"distance_unit" `
+	Name         omit.Val[string]        `db:"name" `
+	Username     omit.Val[string]        `db:"username" `
+	AutofillSets omit.Val[bool]          `db:"autofill_sets" `
+	FeedSeenAt   omitnull.Val[time.Time] `db:"feed_seen_at" `
 }
 
 func (s UserSetter) SetColumns() []string {
-	vals := make([]string, 0, 8)
+	vals := make([]string, 0, 9)
 	if s.ID.IsValue() {
 		vals = append(vals, "id")
 	}
@@ -200,6 +205,9 @@ func (s UserSetter) SetColumns() []string {
 	}
 	if s.AutofillSets.IsValue() {
 		vals = append(vals, "autofill_sets")
+	}
+	if s.FeedSeenAt.IsValue() || s.FeedSeenAt.IsNull() {
+		vals = append(vals, "feed_seen_at")
 	}
 	return vals
 }
@@ -228,6 +236,9 @@ func (s UserSetter) Overwrite(t *User) {
 	}
 	if s.AutofillSets.IsValue() {
 		t.AutofillSets = s.AutofillSets.MustGet()
+	}
+	if s.FeedSeenAt.IsValue() || s.FeedSeenAt.IsNull() {
+		t.FeedSeenAt = s.FeedSeenAt.MustGetNull()
 	}
 }
 
@@ -277,6 +288,11 @@ func (s *UserSetter) Apply(q *dialect.InsertQuery) {
 				return psql.Raw("DEFAULT").WriteSQL(ctx, w, d, start)
 			}
 			return psql.Arg(s.AutofillSets.MustGet()).WriteSQL(ctx, w, d, start)
+		}), bob.ExpressionFunc(func(ctx context.Context, w io.StringWriter, d bob.Dialect, start int) ([]any, error) {
+			if s.FeedSeenAt.IsUnset() {
+				return psql.Raw("DEFAULT").WriteSQL(ctx, w, d, start)
+			}
+			return psql.Arg(s.FeedSeenAt.MustGetNull()).WriteSQL(ctx, w, d, start)
 		}))
 }
 
@@ -285,7 +301,7 @@ func (s UserSetter) UpdateMod() bob.Mod[*dialect.UpdateQuery] {
 }
 
 func (s UserSetter) Expressions(prefix ...string) []bob.Expression {
-	exprs := make([]bob.Expression, 0, 8)
+	exprs := make([]bob.Expression, 0, 9)
 
 	if s.ID.IsValue() {
 		exprs = append(exprs, expr.Join{Sep: " = ", Exprs: []bob.Expression{
@@ -343,6 +359,13 @@ func (s UserSetter) Expressions(prefix ...string) []bob.Expression {
 		}})
 	}
 
+	if s.FeedSeenAt.IsValue() || s.FeedSeenAt.IsNull() {
+		exprs = append(exprs, expr.Join{Sep: " = ", Exprs: []bob.Expression{
+			psql.Quote(append(prefix, "feed_seen_at")...),
+			psql.Arg(s.FeedSeenAt),
+		}})
+	}
+
 	return exprs
 }
 
@@ -353,7 +376,7 @@ func userScanMapper(ctx context.Context, cols []string) (scan.BeforeFunc, func(a
 		idx int
 		dst func(o *User) any
 	}
-	targets := make([]target, 0, 9)
+	targets := make([]target, 0, 10)
 	for i, col := range cols {
 		switch col {
 		case "id":
@@ -374,6 +397,8 @@ func userScanMapper(ctx context.Context, cols []string) (scan.BeforeFunc, func(a
 			targets = append(targets, target{i, func(o *User) any { return &o.Username }})
 		case "autofill_sets":
 			targets = append(targets, target{i, func(o *User) any { return &o.AutofillSets }})
+		case "feed_seen_at":
+			targets = append(targets, target{i, func(o *User) any { return &o.FeedSeenAt }})
 		}
 	}
 
@@ -1472,6 +1497,7 @@ type userWhere[Q psql.Filterable] struct {
 	FullNameSearch psql.WhereMod[Q, string]
 	Username       psql.WhereMod[Q, string]
 	AutofillSets   psql.WhereMod[Q, bool]
+	FeedSeenAt     psql.WhereNullMod[Q, time.Time]
 	R              userWhereR[Q]
 }
 
@@ -1491,6 +1517,7 @@ func buildUserWhere[Q psql.Filterable](cols userColumns) userWhere[Q] {
 		FullNameSearch: psql.Where[Q, string](cols.FullNameSearch.Expression),
 		Username:       psql.Where[Q, string](cols.Username.Expression),
 		AutofillSets:   psql.Where[Q, bool](cols.AutofillSets.Expression),
+		FeedSeenAt:     psql.WhereNull[Q, time.Time](cols.FeedSeenAt.Expression),
 		R:              userWhereR[Q]{cols: cols},
 	}
 }
@@ -1647,6 +1674,7 @@ type userPreloadBuf struct {
 	FullNameSearch null.Val[string]
 	Username       null.Val[string]
 	AutofillSets   null.Val[bool]
+	FeedSeenAt     null.Val[time.Time]
 }
 
 // userScanMapperNullable maps the preloaded user
@@ -1661,7 +1689,7 @@ func userScanMapperNullable(prefix string) scan.Mapper[*User] {
 			idx int
 			dst func(b *userPreloadBuf) any
 		}
-		targets := make([]target, 0, 9)
+		targets := make([]target, 0, 10)
 		for i, col := range cols {
 			name, ok := strings.CutPrefix(col, prefix)
 			if !ok {
@@ -1686,6 +1714,8 @@ func userScanMapperNullable(prefix string) scan.Mapper[*User] {
 				targets = append(targets, target{i, func(b *userPreloadBuf) any { return &b.Username }})
 			case "autofill_sets":
 				targets = append(targets, target{i, func(b *userPreloadBuf) any { return &b.AutofillSets }})
+			case "feed_seen_at":
+				targets = append(targets, target{i, func(b *userPreloadBuf) any { return &b.FeedSeenAt }})
 			}
 		}
 
@@ -1716,7 +1746,8 @@ func userScanMapperNullable(prefix string) scan.Mapper[*User] {
 					!(buf.Name.IsValue()) &&
 					!(buf.FullNameSearch.IsValue()) &&
 					!(buf.Username.IsValue()) &&
-					!(buf.AutofillSets.IsValue()) {
+					!(buf.AutofillSets.IsValue()) &&
+					!(buf.FeedSeenAt.IsValue()) {
 					return nil, nil
 				}
 
@@ -1748,6 +1779,7 @@ func userScanMapperNullable(prefix string) scan.Mapper[*User] {
 				if buf.AutofillSets.IsValue() {
 					o.AutofillSets = buf.AutofillSets.MustGet()
 				}
+				o.FeedSeenAt = buf.FeedSeenAt
 				return o, nil
 			}
 	}

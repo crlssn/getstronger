@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/aarondl/opt/null"
 	"github.com/aarondl/opt/omit"
+	"github.com/aarondl/opt/omitnull"
 	"github.com/stephenafamo/bob/dialect/psql/im"
 
 	"github.com/crlssn/getstronger/server/distanceunit"
@@ -69,7 +71,7 @@ func (f *Factory) NewUser(opts ...UserOpt) *models.User {
 // userSetterMods translates the values set through UserOpts into factory mods
 // so they override the defaults above.
 func userSetterMods(setter *models.UserSetter) []bobfactory.UserMod {
-	const modCount = 7
+	const modCount = 8
 	mods := make([]bobfactory.UserMod, 0, modCount)
 	if value, ok := setter.ID.Get(); ok {
 		mods = append(mods, bobfactory.UserMods.ID(value))
@@ -91,6 +93,9 @@ func userSetterMods(setter *models.UserSetter) []bobfactory.UserMod {
 	}
 	if value, ok := setter.AutofillSets.Get(); ok {
 		mods = append(mods, bobfactory.UserMods.AutofillSets(value))
+	}
+	if value, ok := setter.FeedSeenAt.Get(); ok {
+		mods = append(mods, bobfactory.UserMods.FeedSeenAt(null.From(value)))
 	}
 
 	return mods
@@ -141,5 +146,11 @@ func UserDistanceUnit(unit distanceunit.Unit) UserOpt {
 func UserAutofillSets(enabled bool) UserOpt {
 	return func(m *models.UserSetter) {
 		m.AutofillSets = omit.From(enabled)
+	}
+}
+
+func UserFeedSeenAt(seenAt time.Time) UserOpt {
+	return func(m *models.UserSetter) {
+		m.FeedSeenAt = omitnull.From(seenAt)
 	}
 }

@@ -51,6 +51,9 @@ func TestSeedPersonas(t *testing.T) {
 	require.NoError(t, err)
 	require.NoError(t, bcrypt.CompareHashAndPassword(activeAuth.Password, []byte(config.active.Password)))
 	require.WithinDuration(t, time.Now().UTC().Add(-365*24*time.Hour), active.CreatedAt, 24*time.Hour)
+	// A day since the feed was last shown, so the home page has workouts to
+	// mark as new: the followees each logged one within the last day.
+	require.WithinDuration(t, time.Now().UTC().Add(-24*time.Hour), active.FeedSeenAt.GetOrZero(), time.Minute)
 
 	activeWorkouts, err := models.Workouts.Query(
 		models.SelectWhere.Workouts.UserID.EQ(active.ID),

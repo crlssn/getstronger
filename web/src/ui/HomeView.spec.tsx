@@ -3,6 +3,7 @@
 import type { MessageInitShape } from '@bufbuild/protobuf'
 
 import { create } from '@bufbuild/protobuf'
+import { timestampFromDate } from '@bufbuild/protobuf/wkt'
 import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
@@ -10,27 +11,48 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 vi.mock('@/http/requests', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/http/requests')>()),
   listFeedItems: vi.fn(),
+  markFeedAsSeen: vi.fn(),
 }))
 
 import * as requests from '@/http/requests'
 import { ListFeedItemsResponseSchema } from '@/proto/api/v1/feed_service_pb'
 import { GetDashboardResponseSchema } from '@/proto/api/v1/routine_service_pb'
+import { useAuthStore } from '@/stores/auth'
 import { useDashboardStore } from '@/stores/dashboard'
 import { useStreakStore } from '@/stores/streak'
 import { renderWithProviders } from '@/ui/testing'
 import { HomeView } from './HomeView'
 
 const listFeedItems = vi.mocked(requests.listFeedItems)
+const markFeedAsSeen = vi.mocked(requests.markFeedAsSeen)
 
 const dashboard = (fields: MessageInitShape<typeof GetDashboardResponseSchema> = {}) =>
   create(GetDashboardResponseSchema, fields)
 
-const feedPage = (workouts: { id: string; name: string }[], nextPageToken = new Uint8Array(0)) =>
+interface FeedWorkout {
+  id: string
+  name: string
+  /** When it entered the feed; left off when a test does not care. */
+  createdAt?: Date
+  userId?: string
+}
+
+const feedPage = (
+  workouts: FeedWorkout[],
+  nextPageToken = new Uint8Array(0),
+  // When the reader last saw the feed; left off for a first look.
+  seenAt?: Date,
+) =>
   create(ListFeedItemsResponseSchema, {
-    items: workouts.map((workout) => ({
-      type: { case: 'workout' as const, value: { ...workout, user: { id: 'u1', username: 'bo' } } },
+    items: workouts.map(({ createdAt, userId = 'u1', ...workout }) => ({
+      type: {
+        case: 'workout' as const,
+        value: { ...workout, user: { id: userId, username: 'bo' } },
+      },
+      createdAt: createdAt && timestampFromDate(createdAt),
     })),
     pagination: { nextPageToken },
+    seenAt: seenAt && timestampFromDate(seenAt),
   })
 
 const render = () => renderWithProviders(<HomeView />, { route: '/home' })
@@ -57,6 +79,9 @@ describe('HomeView', () => {
     vi.setSystemTime(new Date('2026-08-14T09:00:00Z'))
     listFeedItems.mockReset()
     listFeedItems.mockResolvedValue(feedPage([]))
+    markFeedAsSeen.mockReset()
+    markFeedAsSeen.mockResolvedValue(undefined)
+    useAuthStore.setState({ userId: 'me' })
     vi.spyOn(useDashboardStore.getState(), 'load').mockResolvedValue(undefined)
     useDashboardStore.setState({ dashboard: undefined, loading: false, failed: false })
     // The streak card fetches on mount and is covered by its own spec.
@@ -335,6 +360,96 @@ describe('HomeView', () => {
 
       await waitFor(() => expect(listFeedItems).toHaveBeenCalledTimes(2))
       expect(listFeedItems).toHaveBeenLastCalledWith(second, true)
+    })
+  })
+
+  // A workout logged since the feed was last shown is marked as new, and is
+  // marked so in words: the row's tint says nothing to a screen reader.
+  describe('what is new', () => {
+    const seen = new Date('2026-08-13T09:00:00Z')
+    const before = new Date('2026-08-12T09:00:00Z')
+    const after = new Date('2026-08-14T08:00:00Z')
+
+    const row = async (name: string) =>
+      (await screen.findByRole('heading', { name })).closest('li') as HTMLElement
+
+    test('marks the workouts logged since the feed was last seen', async () => {
+      listFeedItems.mockResolvedValue(
+        feedPage(
+          [
+            { id: 'w1', name: 'Leg day', createdAt: after },
+            { id: 'w2', name: 'Push day', createdAt: before },
+          ],
+          undefined,
+          seen,
+        ),
+      )
+      render()
+
+      expect(within(await row('Leg day')).getByText('New workout')).toBeInTheDocument()
+      expect(within(await row('Push day')).queryByText('New workout')).not.toBeInTheDocument()
+    })
+
+    // A first look has nothing to catch up on, so nothing is new rather than
+    // everything.
+    test('marks nothing on a first look at the feed', async () => {
+      listFeedItems.mockResolvedValue(feedPage([{ id: 'w1', name: 'Leg day', createdAt: after }]))
+      render()
+
+      expect(within(await row('Leg day')).queryByText('New workout')).not.toBeInTheDocument()
+    })
+
+    test('never marks your own workout as new', async () => {
+      listFeedItems.mockResolvedValue(
+        feedPage([{ id: 'w1', name: 'Leg day', createdAt: after, userId: 'me' }], undefined, seen),
+      )
+      render()
+
+      expect(within(await row('Leg day')).queryByText('New workout')).not.toBeInTheDocument()
+    })
+
+    // Shown is seen: nothing has to be opened for the next visit to start
+    // from here.
+    test('tells the server the feed has been seen once the first page lands', async () => {
+      listFeedItems.mockResolvedValue(feedPage([{ id: 'w1', name: 'Leg day' }]))
+      render()
+
+      await row('Leg day')
+      await waitFor(() => expect(markFeedAsSeen).toHaveBeenCalledTimes(1))
+    })
+
+    test('does not call the feed seen until it has been shown', async () => {
+      listFeedItems.mockResolvedValueOnce(undefined)
+      render()
+
+      expect(await screen.findByRole('alert')).toBeInTheDocument()
+      expect(markFeedAsSeen).not.toHaveBeenCalled()
+
+      listFeedItems.mockResolvedValue(feedPage([{ id: 'w1', name: 'Leg day' }]))
+      await userEvent.click(within(screen.getByRole('alert')).getByRole('button'))
+
+      await row('Leg day')
+      await waitFor(() => expect(markFeedAsSeen).toHaveBeenCalledTimes(1))
+    })
+
+    // The first page moves the line to now, so a later page reports it there.
+    // What was new when the reader arrived stays new for the whole visit.
+    test('keeps the line where the first page drew it for the pages after', async () => {
+      listFeedItems
+        .mockResolvedValueOnce(
+          feedPage([{ id: 'w1', name: 'Leg day', createdAt: after }], new Uint8Array([1]), seen),
+        )
+        .mockResolvedValue(
+          feedPage(
+            [{ id: 'w2', name: 'Push day', createdAt: after }],
+            undefined,
+            new Date('2026-08-14T09:00:00Z'),
+          ),
+        )
+      render()
+
+      expect(within(await row('Push day')).getByText('New workout')).toBeInTheDocument()
+      expect(markFeedAsSeen).toHaveBeenCalledTimes(1)
     })
   })
 })

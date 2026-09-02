@@ -110,6 +110,7 @@ const cases: Array<[string, () => Promise<unknown>]> = [
   ['user.updateUserAutofillSets', () => requests.updateUserAutofillSets(true)],
 
   ['feed.listFeedItems', () => requests.listFeedItems(page, true)],
+  ['feed.markFeedAsSeen', () => requests.markFeedAsSeen()],
 
   ['notification.listNotifications', () => requests.listNotifications(page)],
   ['notification.markNotificationsAsRead', () => requests.markNotificationAsRead('n1')],

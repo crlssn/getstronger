@@ -1772,6 +1772,24 @@ func (r *Repo) MarkNotificationsAsRead(ctx context.Context, userID uuid.UUID, no
 	return nil
 }
 
+// MarkFeedAsSeen records that the athlete has the home feed in front of them
+// now, which is the line the feed draws between what is new and what is not.
+func (r *Repo) MarkFeedAsSeen(ctx context.Context, userID uuid.UUID) error {
+	rows, err := models.Users.Update(
+		um.SetCol(models.Users.Columns.FeedSeenAt.Name()).ToArg(time.Now().UTC()),
+		models.UpdateWhere.Users.ID.EQ(userID),
+	).Exec(ctx, r.bobExec())
+	if err != nil {
+		return fmt.Errorf("user feed seen update: %w", err)
+	}
+
+	if rows != 1 {
+		return fmt.Errorf("%w: expected 1, got %d", ErrUpdateRowsAffected, rows)
+	}
+
+	return nil
+}
+
 func (r *Repo) IsUserFollowedByUserID(ctx context.Context, user *account.User, userID uuid.UUID) (bool, error) {
 	exists, err := models.Followers.Query(
 		models.SelectWhere.Followers.FolloweeID.EQ(user.ID),

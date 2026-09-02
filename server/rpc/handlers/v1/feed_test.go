@@ -139,14 +139,74 @@ func (s *feedSuite) TestListFeedItemsPaginates() {
 	s.Require().Empty(second.Msg.GetPagination().GetNextPageToken())
 }
 
-func (s *feedSuite) TestListFeedItemsRejectsAMalformedPageToken() {
+func (s *feedSuite) TestListFeedItemsRejectsAnUnknownViewer() {
 	ctx := xcontext.WithUserID(context.Background(), uuid.Must(uuid.NewV4()))
+	ctx = xcontext.WithLogger(ctx, zap.NewExample())
+
+	res, err := s.handler.ListFeedItems(ctx, &connect.Request[apiv1.ListFeedItemsRequest]{
+		Msg: &apiv1.ListFeedItemsRequest{
+			Pagination: &apiv1.PaginationRequest{PageLimit: 2},
+		},
+	})
+	s.Require().Nil(res)
+	s.Require().Equal(connect.CodeInternal, connect.CodeOf(err))
+}
+
+func (s *feedSuite) TestListFeedItemsRejectsAMalformedPageToken() {
+	viewer := s.factory.NewUser()
+	ctx := xcontext.WithUserID(context.Background(), viewer.ID)
 	ctx = xcontext.WithLogger(ctx, zap.NewExample())
 
 	res, err := s.handler.ListFeedItems(ctx, &connect.Request[apiv1.ListFeedItemsRequest]{
 		Msg: &apiv1.ListFeedItemsRequest{
 			Pagination: &apiv1.PaginationRequest{PageLimit: 2, PageToken: []byte("not a token")},
 		},
+	})
+	s.Require().Nil(res)
+	s.Require().Equal(connect.CodeInternal, connect.CodeOf(err))
+}
+
+func (s *feedSuite) TestListFeedItemsDrawsTheSeenLineWhereMarkFeedAsSeenLeftIt() {
+	viewer := s.factory.NewUser()
+	loggedAt := time.Now().UTC().Add(-time.Minute).Truncate(time.Microsecond)
+	s.factory.NewWorkout(factory.WorkoutUserID(viewer.ID), factory.WorkoutCreatedAt(loggedAt))
+
+	ctx := xcontext.WithUserID(context.Background(), viewer.ID)
+	ctx = xcontext.WithLogger(ctx, zap.NewExample())
+	list := func() *apiv1.ListFeedItemsResponse {
+		res, err := s.handler.ListFeedItems(ctx, &connect.Request[apiv1.ListFeedItemsRequest]{
+			Msg: &apiv1.ListFeedItemsRequest{
+				FollowedOnly: true,
+				Pagination:   &apiv1.PaginationRequest{PageLimit: 10},
+			},
+		})
+		s.Require().NoError(err)
+		return res.Msg
+	}
+
+	// Never seen: no line to draw, so nothing is new.
+	before := list()
+	s.Require().Nil(before.GetSeenAt())
+	s.Require().Len(before.GetItems(), 1)
+	s.Require().True(loggedAt.Equal(before.GetItems()[0].GetCreatedAt().AsTime()))
+
+	_, err := s.handler.MarkFeedAsSeen(ctx, &connect.Request[apiv1.MarkFeedAsSeenRequest]{
+		Msg: &apiv1.MarkFeedAsSeenRequest{},
+	})
+	s.Require().NoError(err)
+
+	after := list()
+	s.Require().NotNil(after.GetSeenAt())
+	s.Require().WithinDuration(time.Now(), after.GetSeenAt().AsTime(), 5*time.Second)
+	s.Require().True(after.GetSeenAt().AsTime().After(loggedAt))
+}
+
+func (s *feedSuite) TestMarkFeedAsSeenRejectsAnUnknownUser() {
+	ctx := xcontext.WithUserID(context.Background(), uuid.Must(uuid.NewV4()))
+	ctx = xcontext.WithLogger(ctx, zap.NewExample())
+
+	res, err := s.handler.MarkFeedAsSeen(ctx, &connect.Request[apiv1.MarkFeedAsSeenRequest]{
+		Msg: &apiv1.MarkFeedAsSeenRequest{},
 	})
 	s.Require().Nil(res)
 	s.Require().Equal(connect.CodeInternal, connect.CodeOf(err))

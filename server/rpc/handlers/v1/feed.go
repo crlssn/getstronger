@@ -2,12 +2,15 @@ package v1
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"connectrpc.com/connect"
 	"github.com/gofrs/uuid/v5"
 	"go.uber.org/zap"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"github.com/crlssn/getstronger/server/account"
 	apiv1 "github.com/crlssn/getstronger/server/gen/proto/api/v1"
 	"github.com/crlssn/getstronger/server/gen/proto/api/v1/apiv1connect"
 	"github.com/crlssn/getstronger/server/repo"
@@ -29,6 +32,12 @@ func NewFeedHandler(r *repo.Repo) apiv1connect.FeedServiceHandler {
 func (h *feedHandler) ListFeedItems(ctx context.Context, req *connect.Request[apiv1.ListFeedItemsRequest]) (*connect.Response[apiv1.ListFeedItemsResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
+
+	viewer, err := h.repo.GetUser(ctx, repo.GetUserWithID(userID))
+	if err != nil {
+		log.Error("Get viewer for feed", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
 
 	limit := int(req.Msg.GetPagination().GetPageLimit())
 	opts := []repo.ListWorkoutsOpt{
@@ -69,30 +78,63 @@ func (h *feedHandler) ListFeedItems(ctx context.Context, req *connect.Request[ap
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	workoutUserIDs := make(map[uuid.UUID]struct{}, len(paginated.Items))
-	for _, workout := range paginated.Items {
-		workoutUserIDs[workout.UserID] = struct{}{}
-	}
-
-	personalBestUserIDs := make([]uuid.UUID, 0, len(workoutUserIDs))
-	for id := range workoutUserIDs {
-		personalBestUserIDs = append(personalBestUserIDs, id)
-	}
-
-	personalBests, err := h.repo.GetPersonalBests(ctx, personalBestUserIDs...)
+	personalBests, err := h.personalBestsOf(ctx, paginated.Items)
 	if err != nil {
 		log.Error("Get personal bests for feed", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	feedItems := parser.FeedItemSlice(paginated.Items, personalBests)
-
 	return &connect.Response[apiv1.ListFeedItemsResponse]{
 		Msg: &apiv1.ListFeedItemsResponse{
-			Items: feedItems,
+			Items: parser.FeedItemSlice(paginated.Items, personalBests),
 			Pagination: &apiv1.PaginationResponse{
 				NextPageToken: paginated.NextPageToken,
 			},
+			SeenAt: feedSeenAt(viewer),
 		},
 	}, nil
+}
+
+// personalBestsOf is every personal best held by the owners of the workouts,
+// so the feed can mark the sets that set one.
+func (h *feedHandler) personalBestsOf(ctx context.Context, workouts []*training.Workout) ([]*training.Set, error) {
+	ownerIDs := make(map[uuid.UUID]struct{}, len(workouts))
+	for _, workout := range workouts {
+		ownerIDs[workout.UserID] = struct{}{}
+	}
+
+	ids := make([]uuid.UUID, 0, len(ownerIDs))
+	for id := range ownerIDs {
+		ids = append(ids, id)
+	}
+
+	bests, err := h.repo.GetPersonalBests(ctx, ids...)
+	if err != nil {
+		return nil, fmt.Errorf("personal bests get: %w", err)
+	}
+
+	return bests, nil
+}
+
+// feedSeenAt is where the feed draws its line for the viewer, or nil for one
+// who has never seen it: with no line to draw, a client highlights nothing
+// rather than everything.
+func feedSeenAt(viewer *account.User) *timestamppb.Timestamp {
+	if viewer.FeedSeenAt.IsZero() {
+		return nil
+	}
+
+	return timestamppb.New(viewer.FeedSeenAt)
+}
+
+func (h *feedHandler) MarkFeedAsSeen(ctx context.Context, _ *connect.Request[apiv1.MarkFeedAsSeenRequest]) (*connect.Response[apiv1.MarkFeedAsSeenResponse], error) {
+	log := xcontext.MustExtractLogger(ctx)
+	userID := xcontext.MustExtractUserID(ctx)
+
+	if err := h.repo.MarkFeedAsSeen(ctx, userID); err != nil {
+		log.Error("Mark feed as seen", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
+
+	return &connect.Response[apiv1.MarkFeedAsSeenResponse]{}, nil
 }
