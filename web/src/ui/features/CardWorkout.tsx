@@ -15,6 +15,7 @@ import { AppChip } from '@/ui/components/AppChip'
 import { AppEmptyInline } from '@/ui/components/AppEmptyInline'
 import { AppButton } from '@/ui/components/AppButton'
 import { AppTextarea } from '@/ui/components/AppTextarea'
+import { AppUnreadDot } from '@/ui/components/AppUnreadDot'
 import { PageNavAction } from '@/ui/components/PageNavAction'
 import { cn } from '@/ui/cn'
 import { CardWorkoutCircuit } from '@/ui/features/CardWorkoutCircuit'
@@ -37,6 +38,8 @@ interface Props {
   workout: Workout
   /** The feed card: one tappable summary rather than the full session. */
   compact: boolean
+  /** Logged since the feed was last shown: the row is tinted, and says so in words. */
+  unseen?: boolean
 }
 
 /**
@@ -47,7 +50,7 @@ interface Props {
  * the full one is read under the title the nav bar already shows, and adds the
  * exercises and the comments.
  */
-export const CardWorkout = ({ workout, compact }: Props) => {
+export const CardWorkout = ({ workout, compact, unseen = false }: Props) => {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const userId = useAuthStore((state) => state.userId)
@@ -194,7 +197,7 @@ export const CardWorkout = ({ workout, compact }: Props) => {
     // title band and a 2x2 stat grid — around 340px, and a phone showed one
     // and a half.
     return (
-      <li className={styles.feedItem}>
+      <li className={cn(styles.feedItem, unseen && styles.unseen)}>
         <Link
           to={`/workouts/${workout.id}`}
           className={styles.feedCardLink}
@@ -210,6 +213,10 @@ export const CardWorkout = ({ workout, compact }: Props) => {
           </span>
 
           <div className={styles.feedCopy}>
+            {/* The tint says nothing to a screen reader, so the row says it in
+                words. */}
+            {unseen && <span className="sr-only">{t('home.newWorkout')}</span>}
+
             {/* Session and account on one line: whose it is belongs with what
                 it was, not on a row of its own. */}
             <div className={cn(styles.feedTitle, styles.feedCardControl)}>
@@ -232,6 +239,8 @@ export const CardWorkout = ({ workout, compact }: Props) => {
                 .join(' · ')}
             </p>
           </div>
+
+          {unseen && <AppUnreadDot />}
 
           {/* Every card opens the workout, including your own: editing and
               deleting live in the nav bar once it is open. */}

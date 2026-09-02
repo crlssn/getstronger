@@ -52,7 +52,7 @@ export const test = base.extend<{ runtimeErrors: string[]; stillness: void }>({
 export { expect } from '@playwright/test'
 // Re-exported so a spec file has one place to import from; what it does, and
 // why it is cheap enough to run in every file, is in seed.ts.
-export { resetSeedData } from './seed'
+export { newUserEmail, resetSeedData, seedPassword } from './seed'
 
 // End-to-end runs use the noop email provider, so the verification link has to
 // be read from the database instead of an inbox.

@@ -225,6 +225,17 @@
   @apply relative transition hover:bg-ink-surface/50;
 }
 
+/* Logged since the feed was last shown. As in the notification list, new is a
+   state rather than a colour of its own: the paper firms, the avatar tile
+   takes the ink tint, and the dot before the chevron says so at a glance. */
+.feedItem.unseen {
+  @apply bg-ink-tint/40 hover:bg-ink-tint/60;
+}
+
+.feedItem.unseen .avatar {
+  @apply bg-ink-tint text-ink-strong;
+}
+
 /* The whole feed row is one link, with the controls sitting above it so a tap
    on the author or the menu still reaches them. */
 .feedCardLink {

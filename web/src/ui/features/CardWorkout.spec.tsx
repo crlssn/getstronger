@@ -181,6 +181,20 @@ describe('CardWorkout', () => {
       expect(screen.queryByText('Personal records')).not.toBeInTheDocument()
     })
 
+    // The tint on a new row says nothing to a screen reader, so the row says
+    // it in words.
+    test('says it is new, in words, while it has not been seen', () => {
+      render(<CardWorkout compact unseen workout={workout()} />)
+
+      expect(screen.getByText('New workout')).toBeInTheDocument()
+    })
+
+    test('says nothing about newness once it has been seen', () => {
+      render(<CardWorkout compact workout={workout()} />)
+
+      expect(screen.queryByText('New workout')).not.toBeInTheDocument()
+    })
+
     test('flags a session that set a personal best', () => {
       render(<CardWorkout compact workout={withSets()} />)
 

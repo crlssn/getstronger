@@ -8,6 +8,8 @@ export const seedEmail =
   process.env.E2E_USER_EMAIL ?? process.env.USER_EMAIL ?? 'active@getstronger.test'
 export const seedPassword =
   process.env.E2E_USER_PASSWORD ?? process.env.USER_PASSWORD ?? 'password123'
+// The other persona who can log in: an account with no history of its own.
+export const newUserEmail = process.env.NEW_USER_EMAIL ?? 'new@getstronger.test'
 
 // A deployed target owns its own data, so a run against one neither seeds nor
 // resets anything.
@@ -36,7 +38,7 @@ export const seedDatabase = () => {
     `-email=${seedEmail}`,
     `-password=${seedPassword}`,
     `-name=${process.env.USER_NAME ?? 'Alex Morgan'}`,
-    `-new-email=${process.env.NEW_USER_EMAIL ?? 'new@getstronger.test'}`,
+    `-new-email=${newUserEmail}`,
     `-new-name=${process.env.NEW_USER_NAME ?? 'Sam Taylor'}`,
   ])
   captureSnapshot()

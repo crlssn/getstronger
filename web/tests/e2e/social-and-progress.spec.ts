@@ -2,11 +2,15 @@ import {
   allowRuntimeErrors,
   expect,
   logIn,
+  logInAs,
+  newUserEmail,
   openProfileActions,
   resetSeedData,
   scrollToListEnd,
+  seedPassword,
   test,
   uniqueName,
+  waitForHome,
 } from './fixtures'
 
 test.beforeAll(resetSeedData)
@@ -52,6 +56,77 @@ test.describe('social feed and discovery', () => {
     await page.getByLabel('Add a comment').fill(comment)
     await page.getByRole('button', { name: 'Post comment' }).click()
     await expect(page.getByText(comment, { exact: true })).toBeVisible()
+  })
+
+  // Shown is seen: the feed marks what arrived since it was last on screen,
+  // and showing it once is what clears the mark — nothing has to be opened.
+  test('marks a workout logged since the feed was last shown @mutation', async ({
+    browser,
+    page,
+  }) => {
+    // Every home visit moves the line to now, so a visit is only over once
+    // the server has been told about it.
+    const showHome = async () => {
+      const marked = page.waitForResponse('**/api.v1.FeedService/MarkFeedAsSeen')
+      await page.goto('/home')
+      await waitForHome(page)
+      await marked
+    }
+
+    // Nobody follows the new persona, so the active one does: a followee whose
+    // only workout will be the one logged during this test.
+    await page.getByRole('button', { name: 'Search', exact: true }).click()
+    await page
+      .getByRole('searchbox', { name: 'Search people, routines, plans, exercises', exact: true })
+      .fill('Sam Taylor')
+    await page
+      .getByRole('region', { name: 'Search' })
+      .getByRole('link', { name: /Sam Taylor/ })
+      .click()
+    await page.getByRole('button', { name: 'Follow Sam Taylor' }).click()
+    await expect(page.getByRole('button', { name: 'Profile actions' })).toBeVisible()
+
+    // Logging in showed the feed once already, so nothing is new now.
+    await showHome()
+    await expect(page.getByText('New workout')).toHaveCount(0)
+
+    // Sam logs a session in a browser of their own.
+    const samsBrowser = await browser.newContext()
+    const sam = await samsBrowser.newPage()
+    await logInAs(sam, newUserEmail, seedPassword)
+    const exerciseName = uniqueName('Goblet squat')
+    await sam.goto('/exercises')
+    await sam.getByRole('link', { name: 'New exercise' }).click()
+    await sam.locator('form input[type="text"]').first().fill(exerciseName)
+    await sam.getByRole('button', { name: 'Create exercise' }).click()
+    await expect(sam).toHaveURL(/\/exercises$/)
+    await sam.goto('/workouts/quick')
+    await sam.getByRole('button', { name: 'Choose exercise' }).click()
+    await sam
+      .getByRole('dialog', { name: 'Add exercise' })
+      .getByRole('button', { name: exerciseName })
+      .click()
+    await sam.getByRole('textbox', { name: `${exerciseName} set 1 weight`, exact: true }).fill('20')
+    await sam.getByRole('textbox', { name: `${exerciseName} set 1 reps`, exact: true }).fill('10')
+    await sam.getByRole('button', { name: 'Complete exercise' }).click()
+    await sam.getByRole('button', { name: 'Finish workout' }).click()
+    await sam
+      .getByRole('dialog', { name: 'Finish workout?' })
+      .getByRole('button', { name: 'Finish and save' })
+      .click()
+    await expect(sam).toHaveURL(/\/workouts\/[0-9a-f-]+$/)
+    await samsBrowser.close()
+
+    // Sam's session is the one new thing on the feed.
+    await showHome()
+    const fresh = page.getByRole('listitem').filter({ hasText: 'New workout' })
+    await expect(fresh).toHaveCount(1)
+    await expect(fresh).toContainText('@sam')
+
+    // Shown once, it is no longer new.
+    await page.reload()
+    await waitForHome(page)
+    await expect(page.getByText('New workout')).toHaveCount(0)
   })
 
   test('shows a recoverable feed error and retries successfully', async ({ page }) => {

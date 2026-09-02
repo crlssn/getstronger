@@ -11,6 +11,7 @@ import { Error, ErrorDetailSchema } from '@/proto/api/v1/errors_pb'
 import {
   ListFeedItemsRequestSchema,
   type ListFeedItemsResponse,
+  MarkFeedAsSeenRequestSchema,
 } from '@/proto/api/v1/feed_service_pb'
 import {
   ListNotificationsRequestSchema,
@@ -495,6 +496,12 @@ export const listFeedItems = async (
     },
   })
   return tryCatch(() => feedClient.listFeedItems(req))
+}
+
+// Failure costs a highlight on the next visit at most, so it is not reported.
+export const markFeedAsSeen = async (): Promise<void> => {
+  const req = create(MarkFeedAsSeenRequestSchema, {})
+  await tryCatch(() => feedClient.markFeedAsSeen(req), { ignoreErrors: true })
 }
 
 export const getUser = async (id: string): Promise<GetUserResponse | void> => {
