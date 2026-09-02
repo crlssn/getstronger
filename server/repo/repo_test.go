@@ -2,6 +2,7 @@
 package repo_test
 
 import (
+	"bytes"
 	"context"
 	"database/sql"
 	"database/sql/driver"
@@ -17,8 +18,7 @@ import (
 	"github.com/aarondl/opt/null"
 	"github.com/aarondl/opt/omit"
 	"github.com/brianvoe/gofakeit/v7"
-	gofrsuuid "github.com/gofrs/uuid/v5"
-	"github.com/google/uuid"
+	"github.com/gofrs/uuid/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/lib/pq"
 	"github.com/stretchr/testify/require"
@@ -265,14 +265,14 @@ func (s *repoSuite) TestUpdateAuth() {
 		name     string
 		init     func(*test)
 		expected expected
-		authID   string
+		authID   uuid.UUID
 		opts     []repo.UpdateAuthOpt
 	}
 
 	tests := []test{
 		{
 			name:   "ok_update_auth_password",
-			authID: uuid.NewString(),
+			authID: uuid.Must(uuid.NewV4()),
 			opts: []repo.UpdateAuthOpt{
 				repo.UpdateAuthPassword("new_password"),
 			},
@@ -286,7 +286,7 @@ func (s *repoSuite) TestUpdateAuth() {
 		},
 		{
 			name:   "ok_update_auth_email_verified",
-			authID: uuid.NewString(),
+			authID: uuid.Must(uuid.NewV4()),
 			opts: []repo.UpdateAuthOpt{
 				repo.UpdateAuthEmailVerified(),
 			},
@@ -300,7 +300,7 @@ func (s *repoSuite) TestUpdateAuth() {
 		},
 		{
 			name:   "ok_update_auth_password_reset_token",
-			authID: uuid.NewString(),
+			authID: uuid.Must(uuid.NewV4()),
 			opts: []repo.UpdateAuthOpt{
 				repo.UpdateAuthPasswordResetToken(factory.UUID(0)),
 			},
@@ -316,7 +316,7 @@ func (s *repoSuite) TestUpdateAuth() {
 		},
 		{
 			name:   "ok_update_auth_delete_password_reset_token",
-			authID: uuid.NewString(),
+			authID: uuid.Must(uuid.NewV4()),
 			opts: []repo.UpdateAuthOpt{
 				repo.UpdateAuthDeletePasswordResetToken(),
 			},
@@ -324,7 +324,7 @@ func (s *repoSuite) TestUpdateAuth() {
 				t.expected.auth = s.factory.NewAuth(
 					factory.AuthID(t.authID),
 				)
-				t.expected.auth.PasswordResetToken = null.Val[gofrsuuid.UUID]{}
+				t.expected.auth.PasswordResetToken = null.Val[uuid.UUID]{}
 				t.expected.auth.PasswordResetTokenValidUntil = null.Val[time.Time]{}
 			},
 			expected: expected{
@@ -333,7 +333,7 @@ func (s *repoSuite) TestUpdateAuth() {
 		},
 		{
 			name:   "ok_update_auth_refresh_token",
-			authID: uuid.NewString(),
+			authID: uuid.Must(uuid.NewV4()),
 			opts: []repo.UpdateAuthOpt{
 				repo.UpdateAuthRefreshToken("refresh_token"),
 			},
@@ -347,7 +347,7 @@ func (s *repoSuite) TestUpdateAuth() {
 		},
 		{
 			name:   "ok_update_auth_delete_refresh_token",
-			authID: uuid.NewString(),
+			authID: uuid.Must(uuid.NewV4()),
 			opts: []repo.UpdateAuthOpt{
 				repo.UpdateAuthDeleteRefreshToken(),
 			},
@@ -365,7 +365,7 @@ func (s *repoSuite) TestUpdateAuth() {
 		},
 		{
 			name:   "err_auth_does_not_exist",
-			authID: uuid.NewString(),
+			authID: uuid.Must(uuid.NewV4()),
 			opts: []repo.UpdateAuthOpt{
 				repo.UpdateAuthEmailVerified(),
 			},
@@ -376,7 +376,7 @@ func (s *repoSuite) TestUpdateAuth() {
 		},
 		{
 			name:   "err_duplicate_options",
-			authID: uuid.NewString(),
+			authID: uuid.Must(uuid.NewV4()),
 			opts: []repo.UpdateAuthOpt{
 				repo.UpdateAuthEmailVerified(),
 				repo.UpdateAuthEmailVerified(),
@@ -388,7 +388,7 @@ func (s *repoSuite) TestUpdateAuth() {
 		},
 		{
 			name:   "err_missing_options",
-			authID: uuid.NewString(),
+			authID: uuid.Must(uuid.NewV4()),
 			opts:   nil,
 			init:   func(_ *test) {},
 			expected: expected{
@@ -408,7 +408,7 @@ func (s *repoSuite) TestUpdateAuth() {
 			}
 			s.Require().NoError(err)
 
-			auth, err := models.FindAuth(context.Background(), bob.NewDB(s.container.DB), nativeUUID(t.authID))
+			auth, err := models.FindAuth(context.Background(), bob.NewDB(s.container.DB), t.authID)
 			s.Require().NoError(err)
 			s.Require().Equal(t.expected.auth.Email, auth.Email)
 			s.Require().Equal(t.expected.auth.EmailVerified, auth.EmailVerified)
@@ -512,27 +512,29 @@ func (s *repoSuite) TestCompareEmailAndPassword() {
 
 // An email that matches no row must still cost a bcrypt comparison, or the
 // response time tells anyone with a stopwatch which addresses are registered.
+//
+// The bar is what a comparison costs on the machine running this, taken as the
+// cheapest of a few so that a runner descheduling one of them cannot raise it.
+// Timing the registered path instead weighed two numbers that both wander, and
+// a busy runner put them at a ratio of 0.48.
 func (s *repoSuite) TestCompareEmailAndPasswordHidesUnregisteredEmails() {
-	registered := gofakeit.Email()
-	s.factory.NewAuth(
-		factory.AuthEmail(registered),
-		factory.AuthPassword("actual_password"),
-	)
+	hashed := repo.MustHashPassword("actual_password")
 
-	timeCompare := func(email string, expected error) time.Duration {
+	comparison := time.Hour
+	for range 3 {
 		start := time.Now()
-		err := s.repo.CompareEmailAndPassword(context.Background(), email, "wrong_password")
-		elapsed := time.Since(start)
-		s.Require().ErrorIs(err, expected)
-		return elapsed
+		_ = bcrypt.CompareHashAndPassword(hashed, []byte("wrong_password"))
+		comparison = min(comparison, time.Since(start))
 	}
 
-	registeredDuration := timeCompare(registered, bcrypt.ErrMismatchedHashAndPassword)
-	unregisteredDuration := timeCompare(gofakeit.Email(), sql.ErrNoRows)
+	start := time.Now()
+	err := s.repo.CompareEmailAndPassword(context.Background(), gofakeit.Email(), "wrong_password")
+	unregistered := time.Since(start)
+	s.Require().ErrorIs(err, sql.ErrNoRows)
 
-	// Half the registered cost sits far above the sub-millisecond lookup an
-	// early return takes and far below the bcrypt work both paths should do.
-	s.Require().Greater(unregisteredDuration, registeredDuration/2)
+	// Half a comparison sits far above the sub-millisecond lookup an early
+	// return takes and far below the work this path should be doing.
+	s.Require().Greater(unregistered, comparison/2)
 }
 
 func (s *repoSuite) TestRefreshTokenExists() {
@@ -605,7 +607,7 @@ func (s *repoSuite) TestCreateUser() {
 		{
 			name: "ok_user_created",
 			params: repo.CreateUserParams{
-				AuthID:   s.factory.NewAuth().ID.String(),
+				AuthID:   s.factory.NewAuth().ID,
 				Name:     "John Doe",
 				Username: "john",
 			},
@@ -621,7 +623,7 @@ func (s *repoSuite) TestCreateUser() {
 		{
 			name: "ok_username_normalized_to_lowercase",
 			params: repo.CreateUserParams{
-				AuthID:   s.factory.NewAuth().ID.String(),
+				AuthID:   s.factory.NewAuth().ID,
 				Name:     "John Casing",
 				Username: " John.Casing ",
 			},
@@ -637,7 +639,7 @@ func (s *repoSuite) TestCreateUser() {
 		{
 			name: "err_username_exists_case_insensitively",
 			params: repo.CreateUserParams{
-				AuthID:   s.factory.NewAuth().ID.String(),
+				AuthID:   s.factory.NewAuth().ID,
 				Name:     "John Dupe",
 				Username: "Taken",
 			},
@@ -652,7 +654,7 @@ func (s *repoSuite) TestCreateUser() {
 		{
 			name: "err_auth_id_missing",
 			params: repo.CreateUserParams{
-				AuthID:   "",
+				AuthID:   uuid.Nil,
 				Name:     "John Doe",
 				Username: "john2",
 			},
@@ -665,7 +667,7 @@ func (s *repoSuite) TestCreateUser() {
 		{
 			name: "err_unknown_auth_id",
 			params: repo.CreateUserParams{
-				AuthID:   uuid.NewString(),
+				AuthID:   uuid.Must(uuid.NewV4()),
 				Name:     "Jane Doe",
 				Username: "jane2",
 			},
@@ -695,7 +697,7 @@ func (s *repoSuite) TestCreateUser() {
 
 			s.Require().NoError(err)
 			s.Require().NotNil(user)
-			s.Require().Equal(t.params.AuthID, user.AuthID.String())
+			s.Require().Equal(t.params.AuthID, user.AuthID)
 			s.Require().Equal(t.expected.user.Name, user.Name)
 			s.Require().Equal(t.expected.user.Username, user.Username)
 			s.Require().Equal(string(weightunit.Kilograms), user.WeightUnit)
@@ -732,7 +734,7 @@ func (s *repoSuite) TestUpdateUser() {
 		name     string
 		init     func(*test)
 		opts     []repo.UpdateUserOpt
-		userID   string
+		userID   uuid.UUID
 		expected expected
 	}
 
@@ -743,7 +745,7 @@ func (s *repoSuite) TestUpdateUser() {
 				repo.UpdateUserWeightUnit(string(weightunit.Pounds)),
 			},
 			init: func(t *test) {
-				t.userID = s.factory.NewUser(factory.UserWeightUnit(weightunit.Kilograms)).ID.String()
+				t.userID = s.factory.NewUser(factory.UserWeightUnit(weightunit.Kilograms)).ID
 			},
 			expected: expected{
 				err:        nil,
@@ -756,7 +758,7 @@ func (s *repoSuite) TestUpdateUser() {
 				repo.UpdateUserWeightUnit("stone"),
 			},
 			init: func(t *test) {
-				t.userID = s.factory.NewUser(factory.UserWeightUnit(weightunit.Pounds)).ID.String()
+				t.userID = s.factory.NewUser(factory.UserWeightUnit(weightunit.Pounds)).ID
 			},
 			expected: expected{
 				err:        nil,
@@ -769,7 +771,7 @@ func (s *repoSuite) TestUpdateUser() {
 				repo.UpdateUserName("  Robin  Fields  "),
 			},
 			init: func(t *test) {
-				t.userID = s.factory.NewUser().ID.String()
+				t.userID = s.factory.NewUser().ID
 			},
 			expected: expected{
 				err:  nil,
@@ -778,7 +780,7 @@ func (s *repoSuite) TestUpdateUser() {
 		},
 		{
 			name:   "err_unknown_user_id",
-			userID: uuid.NewString(),
+			userID: uuid.Must(uuid.NewV4()),
 			opts: []repo.UpdateUserOpt{
 				repo.UpdateUserWeightUnit(string(weightunit.Pounds)),
 			},
@@ -801,7 +803,7 @@ func (s *repoSuite) TestUpdateUser() {
 			}
 
 			s.Require().NoError(err)
-			user, err := models.Users.Query(models.SelectWhere.Users.ID.EQ(gofrsuuid.FromStringOrNil(t.userID))).One(context.Background(), bob.NewDB(s.container.DB))
+			user, err := models.Users.Query(models.SelectWhere.Users.ID.EQ(t.userID)).One(context.Background(), bob.NewDB(s.container.DB))
 			s.Require().NoError(err)
 			if t.expected.name != "" {
 				s.Require().Equal(t.expected.name, user.Name)
@@ -830,7 +832,7 @@ func (s *repoSuite) TestCreateExercise() {
 		{
 			name: "ok_exercise_created_with_tags",
 			params: repo.CreateExerciseParams{
-				UserID: s.factory.NewUser().ID.String(),
+				UserID: s.factory.NewUser().ID,
 				Name:   "Bench Press",
 				Tags:   []string{"Chest", "Barbell"},
 			},
@@ -846,7 +848,7 @@ func (s *repoSuite) TestCreateExercise() {
 		{
 			name: "ok_exercise_created_without_tags",
 			params: repo.CreateExerciseParams{
-				UserID: s.factory.NewUser().ID.String(),
+				UserID: s.factory.NewUser().ID,
 				Name:   "Squat",
 				Tags:   nil,
 			},
@@ -862,7 +864,7 @@ func (s *repoSuite) TestCreateExercise() {
 		{
 			name: "err_unknown_user_id",
 			params: repo.CreateExerciseParams{
-				UserID: uuid.NewString(),
+				UserID: uuid.Must(uuid.NewV4()),
 				Name:   "Deadlift",
 				Tags:   []string{"Back"},
 			},
@@ -888,7 +890,7 @@ func (s *repoSuite) TestCreateExercise() {
 
 			s.Require().NoError(err)
 			s.Require().NotNil(exercise)
-			s.Require().Equal(t.params.UserID, exercise.UserID.String())
+			s.Require().Equal(t.params.UserID, exercise.UserID)
 			s.Require().Equal(t.expected.exercise.Title, exercise.Title)
 			s.Require().ElementsMatch(t.expected.exercise.Tags, exercise.Tags)
 		})
@@ -911,8 +913,8 @@ func (s *repoSuite) TestSoftDeleteExercise() {
 		{
 			name: "ok_soft_delete_exercise_with_routines",
 			params: repo.SoftDeleteExerciseParams{
-				UserID:     s.factory.NewUser().ID.String(),
-				ExerciseID: uuid.NewString(),
+				UserID:     s.factory.NewUser().ID,
+				ExerciseID: uuid.Must(uuid.NewV4()),
 			},
 			init: func(t test) (models.RoutineSlice, []string) {
 				exercises := models.ExerciseSlice{
@@ -947,8 +949,8 @@ func (s *repoSuite) TestSoftDeleteExercise() {
 		{
 			name: "ok_soft_delete_exercise_without_routines",
 			params: repo.SoftDeleteExerciseParams{
-				UserID:     s.factory.NewUser().ID.String(),
-				ExerciseID: uuid.NewString(),
+				UserID:     s.factory.NewUser().ID,
+				ExerciseID: uuid.Must(uuid.NewV4()),
 			},
 			init: func(t test) (models.RoutineSlice, []string) {
 				s.factory.NewExercise(
@@ -964,8 +966,8 @@ func (s *repoSuite) TestSoftDeleteExercise() {
 		{
 			name: "err_exercise_not_found",
 			params: repo.SoftDeleteExerciseParams{
-				UserID:     s.factory.NewUser().ID.String(),
-				ExerciseID: uuid.NewString(),
+				UserID:     s.factory.NewUser().ID,
+				ExerciseID: uuid.Must(uuid.NewV4()),
 			},
 			expected: expected{
 				err: sql.ErrNoRows,
@@ -990,7 +992,7 @@ func (s *repoSuite) TestSoftDeleteExercise() {
 			s.Require().NoError(err)
 
 			exists, err := models.Exercises.Query(
-				models.SelectWhere.Exercises.ID.EQ(nativeUUID(t.params.ExerciseID)),
+				models.SelectWhere.Exercises.ID.EQ(t.params.ExerciseID),
 				models.SelectWhere.Exercises.DeletedAt.IsNull(),
 			).Exists(context.Background(), bob.NewDB(s.container.DB))
 			s.Require().NoError(err)
@@ -1000,7 +1002,7 @@ func (s *repoSuite) TestSoftDeleteExercise() {
 			for _, routine := range routines {
 				fetched, fetchErr := s.repo.GetRoutine(
 					context.Background(),
-					repo.GetRoutineWithID(routine.ID.String()),
+					repo.GetRoutineWithID(routine.ID),
 					repo.GetRoutineWithExercises(),
 				)
 				s.Require().NoError(fetchErr)
@@ -1035,7 +1037,7 @@ func (s *repoSuite) TestListExercises() {
 		{
 			name: "ok_valid_access_token",
 			opts: []repo.ListExercisesOpt{
-				repo.ListExercisesWithUserID(user.ID.String()),
+				repo.ListExercisesWithUserID(user.ID),
 				repo.ListExercisesWithLimit(2),
 			},
 			init: func(_ test) {
@@ -1074,14 +1076,14 @@ func (s *repoSuite) TestCountSets() {
 	exercise := s.factory.NewExercise(factory.ExerciseUserID(user.ID))
 	other := s.factory.NewExercise(factory.ExerciseUserID(user.ID))
 
-	count, err := s.repo.CountSets(ctx, repo.CountSetsWithExerciseID(exercise.ID.String()))
+	count, err := s.repo.CountSets(ctx, repo.CountSetsWithExerciseID(exercise.ID))
 	s.Require().NoError(err)
 	s.Require().Zero(count)
 
 	s.factory.NewSetSlice(2, factory.SetUserID(user.ID), factory.SetExerciseID(exercise.ID))
 	s.factory.NewSet(factory.SetUserID(user.ID), factory.SetExerciseID(other.ID))
 
-	count, err = s.repo.CountSets(ctx, repo.CountSetsWithExerciseID(exercise.ID.String()))
+	count, err = s.repo.CountSets(ctx, repo.CountSetsWithExerciseID(exercise.ID))
 	s.Require().NoError(err)
 	s.Require().Equal(int64(2), count)
 }
@@ -1093,7 +1095,7 @@ func (s *repoSuite) TestUpdateRoutine() {
 
 	type test struct {
 		name      string
-		routineID string
+		routineID uuid.UUID
 		opts      []repo.UpdateRoutineOpt
 		init      func(test)
 		expected  expected
@@ -1102,7 +1104,7 @@ func (s *repoSuite) TestUpdateRoutine() {
 	tests := []test{
 		{
 			name:      "ok_update_routine_name",
-			routineID: uuid.NewString(),
+			routineID: uuid.Must(uuid.NewV4()),
 			opts: []repo.UpdateRoutineOpt{
 				repo.UpdateRoutineName("new"),
 			},
@@ -1118,7 +1120,7 @@ func (s *repoSuite) TestUpdateRoutine() {
 		},
 		{
 			name:      "err_duplicate_column_update",
-			routineID: uuid.NewString(),
+			routineID: uuid.Must(uuid.NewV4()),
 			opts: []repo.UpdateRoutineOpt{
 				repo.UpdateRoutineName("new"),
 				repo.UpdateRoutineName("newer"),
@@ -1146,15 +1148,15 @@ func (s *repoSuite) TestUpdateRoutine() {
 // one the app offers as up next, so a tie moves the home, workout and training screens at once.
 func (s *repoSuite) TestListsBreakTiesOnID() {
 	ctx := context.Background()
-	userID := s.factory.NewUser().ID.String()
+	userID := s.factory.NewUser().ID
 
 	// Written in ascending id order, so a list that fell back to the order the rows were written in
 	// would hand them back the other way round from one ordered by id descending.
-	ids := make([]string, 0, 5)
+	ids := make([]uuid.UUID, 0, 5)
 	for range 5 {
-		ids = append(ids, uuid.NewString())
+		ids = append(ids, uuid.Must(uuid.NewV4()))
 	}
-	slices.Sort(ids)
+	slices.SortFunc(ids, func(a, b uuid.UUID) int { return bytes.Compare(a[:], b[:]) })
 
 	createdAt := time.Now()
 	for _, id := range ids {
@@ -1178,9 +1180,9 @@ func (s *repoSuite) TestListsBreakTiesOnID() {
 		repo.ListRoutinesWithPageToken(nil),
 	)
 	s.Require().NoError(err)
-	routineIDs := make([]string, 0, len(routines))
+	routineIDs := make([]uuid.UUID, 0, len(routines))
 	for _, routine := range routines {
-		routineIDs = append(routineIDs, routine.ID.String())
+		routineIDs = append(routineIDs, routine.ID)
 	}
 	s.Require().Equal(newestFirst, routineIDs)
 
@@ -1190,9 +1192,9 @@ func (s *repoSuite) TestListsBreakTiesOnID() {
 		repo.ListWorkoutsWithPageToken(nil),
 	)
 	s.Require().NoError(err)
-	workoutIDs := make([]string, 0, len(workouts))
+	workoutIDs := make([]uuid.UUID, 0, len(workouts))
 	for _, workout := range workouts {
-		workoutIDs = append(workoutIDs, workout.ID.String())
+		workoutIDs = append(workoutIDs, workout.ID)
 	}
 	s.Require().Equal(newestFirst, workoutIDs)
 }
@@ -1204,8 +1206,8 @@ func (s *repoSuite) TestListsBreakTiesOnID() {
 // column recorded on the relationship table must keep the order fixed.
 func (s *repoSuite) TestGetRoutineExercisesAreStablyOrdered() {
 	ctx := context.Background()
-	userID := s.factory.NewUser().ID.String()
-	routineID := uuid.NewString()
+	userID := s.factory.NewUser().ID
+	routineID := uuid.Must(uuid.NewV4())
 
 	routine := s.factory.NewRoutine(
 		factory.RoutineID(routineID),
@@ -1258,7 +1260,7 @@ func (s *repoSuite) TestGetRoutineExercisesAreStablyOrdered() {
 }
 
 // routineExerciseIDs loads the routine's exercises in their recorded order.
-func (s *repoSuite) routineExerciseIDs(routineID string) []string {
+func (s *repoSuite) routineExerciseIDs(routineID uuid.UUID) []uuid.UUID {
 	fetched, err := s.repo.GetRoutine(
 		context.Background(),
 		repo.GetRoutineWithID(routineID),
@@ -1266,9 +1268,9 @@ func (s *repoSuite) routineExerciseIDs(routineID string) []string {
 	)
 	s.Require().NoError(err)
 
-	exerciseIDs := make([]string, 0, len(fetched.R.Exercises))
+	exerciseIDs := make([]uuid.UUID, 0, len(fetched.R.Exercises))
 	for _, exercise := range fetched.R.Exercises {
-		exerciseIDs = append(exerciseIDs, exercise.ID.String())
+		exerciseIDs = append(exerciseIDs, exercise.ID)
 	}
 	return exerciseIDs
 }
@@ -1278,24 +1280,24 @@ func (s *repoSuite) TestCreateRoutineKeepsRequestedExerciseOrder() {
 	exercises := s.factory.NewExerciseSlice(3, factory.ExerciseUserID(user.ID))
 
 	// Deliberately not the creation order of the exercises.
-	exerciseIDs := []string{
-		exercises[2].ID.String(),
-		exercises[0].ID.String(),
-		exercises[1].ID.String(),
+	exerciseIDs := []uuid.UUID{
+		exercises[2].ID,
+		exercises[0].ID,
+		exercises[1].ID,
 	}
 
 	routine, err := s.repo.CreateRoutine(context.Background(), repo.CreateRoutineParams{
-		UserID:      user.ID.String(),
+		UserID:      user.ID,
 		Name:        "Legs",
 		ExerciseIDs: exerciseIDs,
 	})
 	s.Require().NoError(err)
-	s.Require().Equal(exerciseIDs, s.routineExerciseIDs(routine.ID.String()))
+	s.Require().Equal(exerciseIDs, s.routineExerciseIDs(routine.ID))
 }
 
 // routineExercises names a group's exercises, none of them overriding the rest
 // the exercise library already says they take.
-func routineExercises(ids ...string) []training.RoutineExerciseDraft {
+func routineExercises(ids ...uuid.UUID) []training.RoutineExerciseDraft {
 	drafts := make([]training.RoutineExerciseDraft, 0, len(ids))
 	for _, id := range ids {
 		drafts = append(drafts, training.RoutineExerciseDraft{ExerciseID: id})
@@ -1304,15 +1306,15 @@ func routineExercises(ids ...string) []training.RoutineExerciseDraft {
 	return drafts
 }
 
-func (s *repoSuite) routineGroupExerciseIDs(routineID string) [][]string {
+func (s *repoSuite) routineGroupExerciseIDs(routineID uuid.UUID) [][]uuid.UUID {
 	groups, err := s.repo.ListRoutineGroups(context.Background(), routineID)
 	s.Require().NoError(err)
 
-	grouped := make([][]string, 0, len(groups))
+	grouped := make([][]uuid.UUID, 0, len(groups))
 	for _, group := range groups {
-		exerciseIDs := make([]string, 0, len(group.Exercises))
+		exerciseIDs := make([]uuid.UUID, 0, len(group.Exercises))
 		for _, exercise := range group.Exercises {
-			exerciseIDs = append(exerciseIDs, exercise.Exercise.ID.String())
+			exerciseIDs = append(exerciseIDs, exercise.Exercise.ID)
 		}
 		grouped = append(grouped, exerciseIDs)
 	}
@@ -1322,32 +1324,32 @@ func (s *repoSuite) routineGroupExerciseIDs(routineID string) [][]string {
 func (s *repoSuite) TestCreateRoutineWithoutGroupsHoldsOneStraightGroup() {
 	user := s.factory.NewUser()
 	exercises := s.factory.NewExerciseSlice(2, factory.ExerciseUserID(user.ID))
-	exerciseIDs := []string{exercises[0].ID.String(), exercises[1].ID.String()}
+	exerciseIDs := []uuid.UUID{exercises[0].ID, exercises[1].ID}
 
 	routine, err := s.repo.CreateRoutine(context.Background(), repo.CreateRoutineParams{
-		UserID:      user.ID.String(),
+		UserID:      user.ID,
 		Name:        "Legs",
 		ExerciseIDs: exerciseIDs,
 	})
 	s.Require().NoError(err)
 
-	groups, err := s.repo.ListRoutineGroups(context.Background(), routine.ID.String())
+	groups, err := s.repo.ListRoutineGroups(context.Background(), routine.ID)
 	s.Require().NoError(err)
 	s.Require().Len(groups, 1)
 	s.Require().Equal(training.RoutineGroupModeStraight, groups[0].Mode)
-	s.Require().Equal([][]string{exerciseIDs}, s.routineGroupExerciseIDs(routine.ID.String()))
+	s.Require().Equal([][]uuid.UUID{exerciseIDs}, s.routineGroupExerciseIDs(routine.ID))
 }
 
 func (s *repoSuite) TestCreateRoutineWithGroups() {
 	user := s.factory.NewUser()
 	exercises := s.factory.NewExerciseSlice(3, factory.ExerciseUserID(user.ID))
-	warmUpID := exercises[0].ID.String()
-	circuitIDs := []string{exercises[1].ID.String(), exercises[2].ID.String()}
+	warmUpID := exercises[0].ID
+	circuitIDs := []uuid.UUID{exercises[1].ID, exercises[2].ID}
 
 	routine, err := s.repo.CreateRoutine(context.Background(), repo.CreateRoutineParams{
-		UserID:      user.ID.String(),
+		UserID:      user.ID,
 		Name:        "Full body",
-		ExerciseIDs: append([]string{warmUpID}, circuitIDs...),
+		ExerciseIDs: append([]uuid.UUID{warmUpID}, circuitIDs...),
 		Groups: []training.RoutineGroupDraft{
 			{
 				Mode:      training.RoutineGroupModeStraight,
@@ -1364,7 +1366,7 @@ func (s *repoSuite) TestCreateRoutineWithGroups() {
 	})
 	s.Require().NoError(err)
 
-	groups, err := s.repo.ListRoutineGroups(context.Background(), routine.ID.String())
+	groups, err := s.repo.ListRoutineGroups(context.Background(), routine.ID)
 	s.Require().NoError(err)
 	s.Require().Len(groups, 2)
 
@@ -1374,18 +1376,18 @@ func (s *repoSuite) TestCreateRoutineWithGroups() {
 	s.Require().Equal(int32(90), groups[1].RestBetweenRoundsSeconds)
 	s.Require().Equal(int32(3), groups[1].Rounds)
 
-	s.Require().Equal([][]string{{warmUpID}, circuitIDs}, s.routineGroupExerciseIDs(routine.ID.String()))
+	s.Require().Equal([][]uuid.UUID{{warmUpID}, circuitIDs}, s.routineGroupExerciseIDs(routine.ID))
 	// The flat exercise order is the groups read end to end.
-	s.Require().Equal(append([]string{warmUpID}, circuitIDs...), s.routineExerciseIDs(routine.ID.String()))
+	s.Require().Equal(append([]uuid.UUID{warmUpID}, circuitIDs...), s.routineExerciseIDs(routine.ID))
 }
 
 func (s *repoSuite) TestSetRoutineGroupsReplacesTheWholeStructure() {
 	user := s.factory.NewUser()
 	exercises := s.factory.NewExerciseSlice(3, factory.ExerciseUserID(user.ID))
-	exerciseIDs := []string{exercises[0].ID.String(), exercises[1].ID.String(), exercises[2].ID.String()}
+	exerciseIDs := []uuid.UUID{exercises[0].ID, exercises[1].ID, exercises[2].ID}
 
 	routine, err := s.repo.CreateRoutine(context.Background(), repo.CreateRoutineParams{
-		UserID:      user.ID.String(),
+		UserID:      user.ID,
 		Name:        "Full body",
 		ExerciseIDs: exerciseIDs,
 	})
@@ -1404,12 +1406,12 @@ func (s *repoSuite) TestSetRoutineGroupsReplacesTheWholeStructure() {
 	}, exercises))
 
 	s.Require().Equal(
-		[][]string{{exerciseIDs[2]}, {exerciseIDs[0], exerciseIDs[1]}},
-		s.routineGroupExerciseIDs(routine.ID.String()),
+		[][]uuid.UUID{{exerciseIDs[2]}, {exerciseIDs[0], exerciseIDs[1]}},
+		s.routineGroupExerciseIDs(routine.ID),
 	)
 	s.Require().Equal(
-		[]string{exerciseIDs[2], exerciseIDs[0], exerciseIDs[1]},
-		s.routineExerciseIDs(routine.ID.String()),
+		[]uuid.UUID{exerciseIDs[2], exerciseIDs[0], exerciseIDs[1]},
+		s.routineExerciseIDs(routine.ID),
 	)
 }
 
@@ -1419,10 +1421,10 @@ func (s *repoSuite) TestSetRoutineGroupsReplacesTheWholeStructure() {
 func (s *repoSuite) TestSetRoutineGroupsKeepsThePerExerciseRest() {
 	user := s.factory.NewUser()
 	exercises := s.factory.NewExerciseSlice(3, factory.ExerciseUserID(user.ID))
-	exerciseIDs := []string{exercises[0].ID.String(), exercises[1].ID.String(), exercises[2].ID.String()}
+	exerciseIDs := []uuid.UUID{exercises[0].ID, exercises[1].ID, exercises[2].ID}
 
 	routine, err := s.repo.CreateRoutine(context.Background(), repo.CreateRoutineParams{
-		UserID:      user.ID.String(),
+		UserID:      user.ID,
 		Name:        "Heavy day",
 		ExerciseIDs: exerciseIDs,
 	})
@@ -1439,7 +1441,7 @@ func (s *repoSuite) TestSetRoutineGroupsKeepsThePerExerciseRest() {
 		},
 	}, exercises))
 
-	groups, err := s.repo.ListRoutineGroups(context.Background(), routine.ID.String())
+	groups, err := s.repo.ListRoutineGroups(context.Background(), routine.ID)
 	s.Require().NoError(err)
 	s.Require().Len(groups, 1)
 	s.Require().Len(groups[0].Exercises, 3)
@@ -1464,9 +1466,9 @@ func (s *repoSuite) TestSetRoutineGroupsRestsTimeMeasuredExercisesForNothing() {
 	exercises := models.ExerciseSlice{lift, plank}
 
 	routine, err := s.repo.CreateRoutine(context.Background(), repo.CreateRoutineParams{
-		UserID:      user.ID.String(),
+		UserID:      user.ID,
 		Name:        "Core day",
-		ExerciseIDs: []string{lift.ID.String(), plank.ID.String()},
+		ExerciseIDs: []uuid.UUID{lift.ID, plank.ID},
 	})
 	s.Require().NoError(err)
 
@@ -1474,13 +1476,13 @@ func (s *repoSuite) TestSetRoutineGroupsRestsTimeMeasuredExercisesForNothing() {
 		{
 			Mode: training.RoutineGroupModeStraight,
 			Exercises: []training.RoutineExerciseDraft{
-				{ExerciseID: lift.ID.String()},
-				{ExerciseID: plank.ID.String()},
+				{ExerciseID: lift.ID},
+				{ExerciseID: plank.ID},
 			},
 		},
 	}, exercises))
 
-	groups, err := s.repo.ListRoutineGroups(context.Background(), routine.ID.String())
+	groups, err := s.repo.ListRoutineGroups(context.Background(), routine.ID)
 	s.Require().NoError(err)
 	s.Require().Len(groups[0].Exercises, 2)
 	s.Require().Equal(int32(training.DefaultRestSeconds), groups[0].Exercises[0].RestSeconds)
@@ -1492,7 +1494,7 @@ func (s *repoSuite) TestSetRoutineGroupsRestsTimeMeasuredExercisesForNothing() {
 func (s *repoSuite) TestAddExerciseToRoutineRestsByDefault() {
 	user := s.factory.NewUser()
 	routine, err := s.repo.CreateRoutine(context.Background(), repo.CreateRoutineParams{
-		UserID: user.ID.String(),
+		UserID: user.ID,
 		Name:   "Core day",
 	})
 	s.Require().NoError(err)
@@ -1505,7 +1507,7 @@ func (s *repoSuite) TestAddExerciseToRoutineRestsByDefault() {
 	s.Require().NoError(s.repo.AddExerciseToRoutine(context.Background(), lift, routine))
 	s.Require().NoError(s.repo.AddExerciseToRoutine(context.Background(), plank, routine))
 
-	groups, err := s.repo.ListRoutineGroups(context.Background(), routine.ID.String())
+	groups, err := s.repo.ListRoutineGroups(context.Background(), routine.ID)
 	s.Require().NoError(err)
 	s.Require().Len(groups[0].Exercises, 2)
 	s.Require().Equal(int32(training.DefaultRestSeconds), groups[0].Exercises[0].RestSeconds)
@@ -1519,12 +1521,12 @@ func (s *repoSuite) TestAddExerciseToRoutineJoinsTheLastGroup() {
 	exercises := s.factory.NewExerciseSlice(2, factory.ExerciseUserID(user.ID))
 
 	routine, err := s.repo.CreateRoutine(context.Background(), repo.CreateRoutineParams{
-		UserID:      user.ID.String(),
+		UserID:      user.ID,
 		Name:        "Full body",
-		ExerciseIDs: []string{exercises[0].ID.String(), exercises[1].ID.String()},
+		ExerciseIDs: []uuid.UUID{exercises[0].ID, exercises[1].ID},
 		Groups: []training.RoutineGroupDraft{
-			{Mode: training.RoutineGroupModeStraight, Exercises: routineExercises(exercises[0].ID.String())},
-			{Mode: training.RoutineGroupModeCircuit, Exercises: routineExercises(exercises[1].ID.String())},
+			{Mode: training.RoutineGroupModeStraight, Exercises: routineExercises(exercises[0].ID)},
+			{Mode: training.RoutineGroupModeCircuit, Exercises: routineExercises(exercises[1].ID)},
 		},
 	})
 	s.Require().NoError(err)
@@ -1533,8 +1535,8 @@ func (s *repoSuite) TestAddExerciseToRoutineJoinsTheLastGroup() {
 	s.Require().NoError(s.repo.AddExerciseToRoutine(context.Background(), added, routine))
 
 	s.Require().Equal(
-		[][]string{{exercises[0].ID.String()}, {exercises[1].ID.String(), added.ID.String()}},
-		s.routineGroupExerciseIDs(routine.ID.String()),
+		[][]uuid.UUID{{exercises[0].ID}, {exercises[1].ID, added.ID}},
+		s.routineGroupExerciseIDs(routine.ID),
 	)
 }
 
@@ -1548,14 +1550,14 @@ func (s *repoSuite) TestAddExerciseToRoutinePlacesLast() {
 	s.Require().NoError(s.repo.AddExerciseToRoutine(context.Background(), added, routine))
 
 	s.Require().Equal(
-		[]string{exercises[0].ID.String(), exercises[1].ID.String(), added.ID.String()},
-		s.routineExerciseIDs(routine.ID.String()),
+		[]uuid.UUID{exercises[0].ID, exercises[1].ID, added.ID},
+		s.routineExerciseIDs(routine.ID),
 	)
 
 	// An empty routine gets position one rather than an error from the missing maximum.
 	emptyRoutine := s.factory.NewRoutine(factory.RoutineUserID(user.ID))
 	s.Require().NoError(s.repo.AddExerciseToRoutine(context.Background(), added, emptyRoutine))
-	s.Require().Equal([]string{added.ID.String()}, s.routineExerciseIDs(emptyRoutine.ID.String()))
+	s.Require().Equal([]uuid.UUID{added.ID}, s.routineExerciseIDs(emptyRoutine.ID))
 }
 
 func (s *repoSuite) TestUpdateRoutineExerciseOrder() {
@@ -1564,14 +1566,14 @@ func (s *repoSuite) TestUpdateRoutineExerciseOrder() {
 	exercises := s.factory.NewExerciseSlice(3, factory.ExerciseUserID(user.ID))
 	s.factory.AddRoutineExercise(routine, exercises...)
 
-	newOrder := []string{
-		exercises[1].ID.String(),
-		exercises[2].ID.String(),
-		exercises[0].ID.String(),
+	newOrder := []uuid.UUID{
+		exercises[1].ID,
+		exercises[2].ID,
+		exercises[0].ID,
 	}
-	s.Require().NoError(s.repo.UpdateRoutineExerciseOrder(context.Background(), routine.ID.String(), newOrder))
+	s.Require().NoError(s.repo.UpdateRoutineExerciseOrder(context.Background(), routine.ID, newOrder))
 
-	s.Require().Equal(newOrder, s.routineExerciseIDs(routine.ID.String()))
+	s.Require().Equal(newOrder, s.routineExerciseIDs(routine.ID))
 }
 
 func (s *repoSuite) TestGetPreviousWorkoutSets() {
@@ -1582,17 +1584,17 @@ func (s *repoSuite) TestGetPreviousWorkoutSets() {
 
 	type test struct {
 		name        string
-		exerciseIDs []string
+		exerciseIDs []uuid.UUID
 		init        func(test)
 		expected    expected
 	}
 
-	exerciseIDs := []string{factory.UUID(0), factory.UUID(1)}
+	exerciseIDs := []uuid.UUID{factory.UUID(0), factory.UUID(1)}
 	for _, exerciseID := range exerciseIDs {
 		s.factory.NewExercise(factory.ExerciseID(exerciseID))
 	}
 
-	workoutIDs := []string{factory.UUID(0), factory.UUID(1)}
+	workoutIDs := []uuid.UUID{factory.UUID(0), factory.UUID(1)}
 	for _, workoutID := range workoutIDs {
 		s.factory.NewWorkout(factory.WorkoutID(workoutID))
 	}
@@ -1630,29 +1632,29 @@ func (s *repoSuite) TestGetPreviousWorkoutSets() {
 				err: nil,
 				sets: models.SetSlice{
 					{
-						WorkoutID:  nativeUUID(workoutIDs[0]),
-						ExerciseID: nativeUUID(exerciseIDs[0]),
+						WorkoutID:  workoutIDs[0],
+						ExerciseID: exerciseIDs[0],
 						Reps:       1,
 						Weight:     1,
 						CreatedAt:  s.factory.Now(),
 					},
 					{
-						WorkoutID:  nativeUUID(workoutIDs[0]),
-						ExerciseID: nativeUUID(exerciseIDs[0]),
+						WorkoutID:  workoutIDs[0],
+						ExerciseID: exerciseIDs[0],
 						Reps:       2,
 						Weight:     2,
 						CreatedAt:  s.factory.Now().Add(time.Second),
 					},
 					{
-						WorkoutID:  nativeUUID(workoutIDs[1]),
-						ExerciseID: nativeUUID(exerciseIDs[1]),
+						WorkoutID:  workoutIDs[1],
+						ExerciseID: exerciseIDs[1],
 						Reps:       3,
 						Weight:     3,
 						CreatedAt:  s.factory.Now().Add(2 * time.Second),
 					},
 					{
-						WorkoutID:  nativeUUID(workoutIDs[1]),
-						ExerciseID: nativeUUID(exerciseIDs[1]),
+						WorkoutID:  workoutIDs[1],
+						ExerciseID: exerciseIDs[1],
 						Reps:       4,
 						Weight:     4,
 						CreatedAt:  s.factory.Now().Add(3 * time.Second),
@@ -1698,8 +1700,8 @@ func (s *repoSuite) TestDeleteWorkout() {
 		expected expected
 	}
 
-	userID := uuid.NewString()
-	workoutID := uuid.NewString()
+	userID := uuid.Must(uuid.NewV4())
+	workoutID := uuid.Must(uuid.NewV4())
 
 	tests := []test{
 		{
@@ -1732,7 +1734,7 @@ func (s *repoSuite) TestDeleteWorkout() {
 				s.factory.NewSet(factory.SetWorkoutID(workout.ID))
 				s.factory.NewWorkoutComment(factory.WorkoutCommentWorkoutID(workout.ID))
 				s.factory.NewNotification(factory.NotificationPayload(notification.Payload{
-					WorkoutID: workout.ID.String(),
+					WorkoutID: workout.ID,
 				}))
 
 				return workout
@@ -1793,15 +1795,15 @@ func (s *repoSuite) TestDeleteUser() {
 	)
 
 	plan, err := s.repo.CreatePlan(ctx, repo.CreatePlanParams{
-		UserID:     user.ID.String(),
+		UserID:     user.ID,
 		Name:       "Plan",
-		RoutineIDs: []string{routine.ID.String()},
+		RoutineIDs: []uuid.UUID{routine.ID},
 	})
 	s.Require().NoError(err)
 
 	s.Require().NoError(s.repo.Follow(ctx, repo.FollowParams{
-		FollowerID: user.ID.String(),
-		FolloweeID: other.ID.String(),
+		FollowerID: user.ID,
+		FolloweeID: other.ID,
 	}))
 
 	own := s.factory.NewNotification(factory.NotificationUserID(user.ID))
@@ -1809,11 +1811,11 @@ func (s *repoSuite) TestDeleteUser() {
 	// account as its actor, and would otherwise keep their badge lit forever.
 	aboutUser := s.factory.NewNotification(
 		factory.NotificationUserID(other.ID),
-		factory.NotificationPayload(notification.Payload{ActorID: user.ID.String()}),
+		factory.NotificationPayload(notification.Payload{ActorID: user.ID}),
 	)
 	unrelated := s.factory.NewNotification(factory.NotificationUserID(other.ID))
 
-	s.Require().NoError(s.repo.DeleteUser(ctx, user.ID.String()))
+	s.Require().NoError(s.repo.DeleteUser(ctx, user.ID))
 
 	gone := []struct {
 		name   string
@@ -1865,12 +1867,12 @@ func (s *repoSuite) TestDeleteUser() {
 	s.Require().NoError(err)
 	s.Require().True(exists)
 
-	_, err = s.repo.GetPlan(ctx, plan.ID, user.ID.String())
+	_, err = s.repo.GetPlan(ctx, plan.ID, user.ID)
 	s.Require().ErrorIs(err, sql.ErrNoRows)
 }
 
 func (s *repoSuite) TestDeleteUserNotFound() {
-	err := s.repo.DeleteUser(context.Background(), uuid.NewString())
+	err := s.repo.DeleteUser(context.Background(), uuid.Must(uuid.NewV4()))
 	s.Require().ErrorIs(err, sql.ErrNoRows)
 }
 
@@ -1890,10 +1892,10 @@ func (s *repoSuite) TestUpdateWorkoutSets() {
 		{
 			name: "ok",
 			params: repo.UpdateWorkoutSetsParams{
-				WorkoutID: uuid.NewString(),
+				WorkoutID: uuid.Must(uuid.NewV4()),
 				ExerciseSets: []repo.ExerciseSet{
 					{
-						ExerciseID: uuid.NewString(),
+						ExerciseID: uuid.Must(uuid.NewV4()),
 						Sets: []repo.Set{
 							{
 								Reps:   1,
@@ -1902,7 +1904,7 @@ func (s *repoSuite) TestUpdateWorkoutSets() {
 						},
 					},
 					{
-						ExerciseID: uuid.NewString(),
+						ExerciseID: uuid.Must(uuid.NewV4()),
 						Sets: []repo.Set{
 							{
 								Reps:   3,
@@ -1936,7 +1938,7 @@ func (s *repoSuite) TestUpdateWorkoutSets() {
 			}
 
 			s.Require().NoError(err)
-			workout, err := models.FindWorkout(context.Background(), bob.NewDB(s.container.DB), nativeUUID(t.params.WorkoutID))
+			workout, err := models.FindWorkout(context.Background(), bob.NewDB(s.container.DB), t.params.WorkoutID)
 			s.Require().NoError(err)
 
 			sets, err := workout.Sets(
@@ -1949,15 +1951,15 @@ func (s *repoSuite) TestUpdateWorkoutSets() {
 			}
 
 			var setCount int
-			mapExpectedExerciseSets := make(map[string][]repo.Set)
+			mapExpectedExerciseSets := make(map[uuid.UUID][]repo.Set)
 			for _, exerciseSet := range t.params.ExerciseSets {
 				setCount += len(exerciseSet.Sets)
 				mapExpectedExerciseSets[exerciseSet.ExerciseID] = exerciseSet.Sets
 			}
 
-			mapReceivedExerciseSets := make(map[string]models.SetSlice)
+			mapReceivedExerciseSets := make(map[uuid.UUID]models.SetSlice)
 			for _, set := range sets {
-				mapReceivedExerciseSets[set.ExerciseID.String()] = append(mapReceivedExerciseSets[set.ExerciseID.String()], set)
+				mapReceivedExerciseSets[set.ExerciseID] = append(mapReceivedExerciseSets[set.ExerciseID], set)
 			}
 
 			s.Require().Len(sets, setCount)
@@ -2042,13 +2044,13 @@ func (s *repoSuite) TestCreateWorkoutRejectsARepeatedIdempotencyKey() {
 	press := s.factory.NewExercise(factory.ExerciseUserID(user.ID))
 	params := repo.CreateWorkoutParams{
 		Name:       "Push",
-		UserID:     user.ID.String(),
+		UserID:     user.ID,
 		StartedAt:  time.Now(),
 		FinishedAt: time.Now().Add(time.Hour),
 		ExerciseSets: []repo.ExerciseSet{
-			{ExerciseID: press.ID.String(), Sets: []repo.Set{{Reps: 8, Weight: 60}}},
+			{ExerciseID: press.ID, Sets: []repo.Set{{Reps: 8, Weight: 60}}},
 		},
-		IdempotencyKey: uuid.NewString(),
+		IdempotencyKey: uuid.Must(uuid.NewV4()),
 	}
 
 	first, err := s.repo.CreateWorkout(context.Background(), params)
@@ -2058,13 +2060,14 @@ func (s *repoSuite) TestCreateWorkoutRejectsARepeatedIdempotencyKey() {
 
 	saved, err := s.repo.GetWorkout(
 		context.Background(),
-		repo.GetWorkoutWithUserID(user.ID.String()),
+		repo.GetWorkoutWithUserID(user.ID),
 		repo.GetWorkoutWithIdempotencyKey(params.IdempotencyKey),
 	)
 	s.Require().NoError(err)
 	s.Require().Equal(first.ID, saved.ID)
 
-	params.IdempotencyKey = ""
+	// A save that names no attempt is stored as none and never a repeat.
+	params.IdempotencyKey = uuid.Nil
 	_, err = s.repo.CreateWorkout(context.Background(), params)
 	s.Require().NoError(err)
 	_, err = s.repo.CreateWorkout(context.Background(), params)
@@ -2081,20 +2084,20 @@ func (s *repoSuite) TestUpdateWorkoutSetsKeepsTheBlocks() {
 
 	workout, err := s.repo.CreateWorkout(context.Background(), repo.CreateWorkoutParams{
 		Name:       "Circuit",
-		UserID:     user.ID.String(),
+		UserID:     user.ID,
 		StartedAt:  time.Now(),
 		FinishedAt: time.Now().Add(time.Hour),
 		ExerciseSets: []repo.ExerciseSet{
-			{ExerciseID: press.ID.String(), Sets: []repo.Set{{Reps: 8, Weight: 60}, {Reps: 8, Weight: 60}}},
-			{ExerciseID: squat.ID.String(), Sets: []repo.Set{{Reps: 5, Weight: 90}}},
+			{ExerciseID: press.ID, Sets: []repo.Set{{Reps: 8, Weight: 60}, {Reps: 8, Weight: 60}}},
+			{ExerciseID: squat.ID, Sets: []repo.Set{{Reps: 5, Weight: 90}}},
 		},
 		Groups: []training.WorkoutGroup{
 			{
 				Mode:   training.RoutineGroupModeCircuit,
 				Rounds: 2,
 				Exercises: []training.WorkoutGroupExerciseSets{
-					{ExerciseID: press.ID.String(), SetPositions: []int{0, 1}},
-					{ExerciseID: squat.ID.String(), SetPositions: []int{0}},
+					{ExerciseID: press.ID, SetPositions: []int{0, 1}},
+					{ExerciseID: squat.ID, SetPositions: []int{0}},
 				},
 			},
 		},
@@ -2103,20 +2106,20 @@ func (s *repoSuite) TestUpdateWorkoutSetsKeepsTheBlocks() {
 
 	// The same session, one press set corrected and one squat set added.
 	s.Require().NoError(s.repo.UpdateWorkoutSets(context.Background(), repo.UpdateWorkoutSetsParams{
-		WorkoutID: workout.ID.String(),
+		WorkoutID: workout.ID,
 		ExerciseSets: []repo.ExerciseSet{
-			{ExerciseID: press.ID.String(), Sets: []repo.Set{{Reps: 8, Weight: 65}, {Reps: 8, Weight: 60}}},
-			{ExerciseID: squat.ID.String(), Sets: []repo.Set{{Reps: 5, Weight: 90}, {Reps: 5, Weight: 95}}},
+			{ExerciseID: press.ID, Sets: []repo.Set{{Reps: 8, Weight: 65}, {Reps: 8, Weight: 60}}},
+			{ExerciseID: squat.ID, Sets: []repo.Set{{Reps: 5, Weight: 90}, {Reps: 5, Weight: 95}}},
 		},
 	}))
 
-	groups, err := s.repo.ListWorkoutGroups(context.Background(), workout.ID.String())
+	groups, err := s.repo.ListWorkoutGroups(context.Background(), workout.ID)
 	s.Require().NoError(err)
-	s.Require().Len(groups[workout.ID.String()], 1)
+	s.Require().Len(groups[workout.ID], 1)
 
 	updated, err := s.repo.GetWorkout(
 		context.Background(),
-		repo.GetWorkoutWithID(workout.ID.String()),
+		repo.GetWorkoutWithID(workout.ID),
 		repo.GetWorkoutLoadSets(),
 	)
 	s.Require().NoError(err)
@@ -2206,7 +2209,7 @@ func (s *repoSuite) TestUpdateWorkout() {
 		{
 			name: "err_not_found",
 			workout: &models.Workout{
-				ID: nativeUUID(uuid.NewString()),
+				ID: uuid.Must(uuid.NewV4()),
 			},
 			opts: []repo.UpdateWorkoutOpt{
 				repo.UpdateWorkoutName("Name"),
@@ -2227,7 +2230,7 @@ func (s *repoSuite) TestUpdateWorkout() {
 
 	for _, t := range tests {
 		s.Run(t.name, func() {
-			err := s.repo.UpdateWorkout(context.Background(), t.workout.ID.String(), t.opts...)
+			err := s.repo.UpdateWorkout(context.Background(), t.workout.ID, t.opts...)
 			if t.expected.err != nil {
 				s.Require().Error(err)
 				s.Require().ErrorIs(err, t.expected.err)
@@ -2260,20 +2263,20 @@ func (s *repoSuite) TestListFollowersAndFollowees() {
 	followee := s.factory.NewUser()
 
 	s.Require().NoError(s.repo.Follow(ctx, repo.FollowParams{
-		FollowerID: follower.ID.String(),
-		FolloweeID: user.ID.String(),
+		FollowerID: follower.ID,
+		FolloweeID: user.ID,
 	}))
 	s.Require().NoError(s.repo.Follow(ctx, repo.FollowParams{
-		FollowerID: user.ID.String(),
-		FolloweeID: followee.ID.String(),
+		FollowerID: user.ID,
+		FolloweeID: followee.ID,
 	}))
 
-	followers, err := s.repo.ListFollowers(ctx, user.ID.String())
+	followers, err := s.repo.ListFollowers(ctx, user.ID)
 	s.Require().NoError(err)
 	s.Require().Len(followers, 1)
 	s.Require().Equal(follower.ID, followers[0].ID)
 
-	followees, err := s.repo.ListFollowees(ctx, user.ID.String())
+	followees, err := s.repo.ListFollowees(ctx, user.ID)
 	s.Require().NoError(err)
 	s.Require().Len(followees, 1)
 	s.Require().Equal(followee.ID, followees[0].ID)
@@ -2300,7 +2303,7 @@ func (s *repoSuite) TestListPageTokens() {
 
 		listed, listErr := s.repo.ListExercises(
 			ctx,
-			repo.ListExercisesWithUserID(user.ID.String()),
+			repo.ListExercisesWithUserID(user.ID),
 			repo.ListExercisesWithPageToken(token),
 		)
 		s.Require().NoError(listErr)
@@ -2317,7 +2320,7 @@ func (s *repoSuite) TestListPageTokens() {
 
 		listed, listErr := s.repo.ListWorkouts(
 			ctx,
-			repo.ListWorkoutsWithUserIDs(user.ID.String()),
+			repo.ListWorkoutsWithUserIDs(user.ID),
 			repo.ListWorkoutsWithPageToken(token),
 		)
 		s.Require().NoError(listErr)
@@ -2334,7 +2337,7 @@ func (s *repoSuite) TestListPageTokens() {
 
 		listed, listErr := s.repo.ListNotifications(
 			ctx,
-			repo.ListNotificationsWithUserID(user.ID.String()),
+			repo.ListNotificationsWithUserID(user.ID),
 			repo.ListNotificationsWithPageToken(token),
 		)
 		s.Require().NoError(listErr)
@@ -2352,7 +2355,7 @@ func (s *repoSuite) TestListPageTokens() {
 
 		listed, listErr := s.repo.ListSets(
 			ctx,
-			repo.ListSetsWithExerciseID(exercise.ID.String()),
+			repo.ListSetsWithExerciseID(exercise.ID),
 			repo.ListSetsWithPageToken(token),
 		)
 		s.Require().NoError(listErr)
@@ -2368,8 +2371,8 @@ func (s *repoSuite) TestListPageTokens() {
 // without a next token: the client would otherwise stop at a partial list.
 func (s *repoSuite) TestPaginateSliceReportsAnUnmarshalableCursor() {
 	items := models.WorkoutSlice{{}, {}}
-	_, err := repo.PaginateSlice(items, 1, func(*models.Workout) (time.Time, string) {
-		return time.Date(-1, time.January, 1, 0, 0, 0, 0, time.UTC), ""
+	_, err := repo.PaginateSlice(items, 1, func(*models.Workout) (time.Time, uuid.UUID) {
+		return time.Date(-1, time.January, 1, 0, 0, 0, 0, time.UTC), uuid.Nil
 	})
 	s.Require().Error(err)
 }
@@ -2410,13 +2413,13 @@ func (s *repoSuite) TestListPageTokensSurviveCreatedAtTies() {
 		seen := walk(func(token []byte) ([]string, []byte) {
 			listed, err := s.repo.ListWorkouts(
 				ctx,
-				repo.ListWorkoutsWithUserIDs(user.ID.String()),
+				repo.ListWorkoutsWithUserIDs(user.ID),
 				repo.ListWorkoutsWithLimit(pageLimit+1),
 				repo.ListWorkoutsWithPageToken(token),
 			)
 			s.Require().NoError(err)
-			page, err := repo.PaginateSlice(listed, pageLimit, func(w *models.Workout) (time.Time, string) {
-				return w.CreatedAt, w.ID.String()
+			page, err := repo.PaginateSlice(listed, pageLimit, func(w *models.Workout) (time.Time, uuid.UUID) {
+				return w.CreatedAt, w.ID
 			})
 			s.Require().NoError(err)
 			ids := make([]string, 0, len(page.Items))
@@ -2442,14 +2445,14 @@ func (s *repoSuite) TestListPageTokensSurviveCreatedAtTies() {
 		seen := walk(func(token []byte) ([]string, []byte) {
 			listed, err := s.repo.ListSets(
 				ctx,
-				repo.ListSetsWithExerciseID(exercise.ID.String()),
+				repo.ListSetsWithExerciseID(exercise.ID),
 				repo.ListSetsWithLimit(pageLimit+1),
 				repo.ListSetsWithPageToken(token),
 				repo.ListSetsOrderByCreatedAt(repo.DESC),
 			)
 			s.Require().NoError(err)
-			page, err := repo.PaginateSlice(listed, pageLimit, func(set *models.Set) (time.Time, string) {
-				return set.CreatedAt, set.ID.String()
+			page, err := repo.PaginateSlice(listed, pageLimit, func(set *models.Set) (time.Time, uuid.UUID) {
+				return set.CreatedAt, set.ID
 			})
 			s.Require().NoError(err)
 			ids := make([]string, 0, len(page.Items))
@@ -2472,13 +2475,13 @@ func (s *repoSuite) TestListPageTokensSurviveCreatedAtTies() {
 		seen := walk(func(token []byte) ([]string, []byte) {
 			listed, err := s.repo.ListExercises(
 				ctx,
-				repo.ListExercisesWithUserID(user.ID.String()),
+				repo.ListExercisesWithUserID(user.ID),
 				repo.ListExercisesWithLimit(pageLimit+1),
 				repo.ListExercisesWithPageToken(token),
 			)
 			s.Require().NoError(err)
-			page, err := repo.PaginateSlice(listed, pageLimit, func(exercise *models.Exercise) (time.Time, string) {
-				return exercise.CreatedAt, exercise.ID.String()
+			page, err := repo.PaginateSlice(listed, pageLimit, func(exercise *models.Exercise) (time.Time, uuid.UUID) {
+				return exercise.CreatedAt, exercise.ID
 			})
 			s.Require().NoError(err)
 			ids := make([]string, 0, len(page.Items))
@@ -2501,13 +2504,13 @@ func (s *repoSuite) TestListPageTokensSurviveCreatedAtTies() {
 		seen := walk(func(token []byte) ([]string, []byte) {
 			listed, err := s.repo.ListRoutines(
 				ctx,
-				repo.ListRoutinesWithUserID(user.ID.String()),
+				repo.ListRoutinesWithUserID(user.ID),
 				repo.ListRoutinesWithLimit(pageLimit+1),
 				repo.ListRoutinesWithPageToken(token),
 			)
 			s.Require().NoError(err)
-			page, err := repo.PaginateSlice(listed, pageLimit, func(routine *models.Routine) (time.Time, string) {
-				return routine.CreatedAt, routine.ID.String()
+			page, err := repo.PaginateSlice(listed, pageLimit, func(routine *models.Routine) (time.Time, uuid.UUID) {
+				return routine.CreatedAt, routine.ID
 			})
 			s.Require().NoError(err)
 			ids := make([]string, 0, len(page.Items))
@@ -2532,13 +2535,13 @@ func (s *repoSuite) TestListPageTokensSurviveCreatedAtTies() {
 		seen := walk(func(token []byte) ([]string, []byte) {
 			listed, err := s.repo.ListNotifications(
 				ctx,
-				repo.ListNotificationsWithUserID(user.ID.String()),
+				repo.ListNotificationsWithUserID(user.ID),
 				repo.ListNotificationsWithLimit(pageLimit+1),
 				repo.ListNotificationsWithPageToken(token),
 			)
 			s.Require().NoError(err)
-			page, err := repo.PaginateSlice(listed, pageLimit, func(n *models.Notification) (time.Time, string) {
-				return n.CreatedAt, n.ID.String()
+			page, err := repo.PaginateSlice(listed, pageLimit, func(n *models.Notification) (time.Time, uuid.UUID) {
+				return n.CreatedAt, n.ID
 			})
 			s.Require().NoError(err)
 			ids := make([]string, 0, len(page.Items))
@@ -2563,7 +2566,7 @@ func (s *repoSuite) TestListPageTokensSurviveCreatedAtTies() {
 
 		listed, err := s.repo.ListWorkouts(
 			ctx,
-			repo.ListWorkoutsWithUserIDs(user.ID.String()),
+			repo.ListWorkoutsWithUserIDs(user.ID),
 			repo.ListWorkoutsWithPageToken(token),
 		)
 		s.Require().NoError(err)
@@ -2582,9 +2585,9 @@ func (s *repoSuite) TestCreateRoutineRefusesExercisesItMayNotHold() {
 		theirs := s.factory.NewExercise(factory.ExerciseUserID(s.factory.NewUser().ID))
 
 		_, err := s.repo.CreateRoutine(ctx, repo.CreateRoutineParams{
-			UserID:      user.ID.String(),
+			UserID:      user.ID,
 			Name:        "Borrowed",
-			ExerciseIDs: []string{theirs.ID.String()},
+			ExerciseIDs: []uuid.UUID{theirs.ID},
 		})
 		s.Require().ErrorIs(err, repo.ErrRoutineExerciseBelongsToAnotherUser)
 	})
@@ -2592,14 +2595,14 @@ func (s *repoSuite) TestCreateRoutineRefusesExercisesItMayNotHold() {
 	s.Run("err_deleted_exercise", func() {
 		deleted := s.factory.NewExercise(factory.ExerciseUserID(user.ID))
 		s.Require().NoError(s.repo.SoftDeleteExercise(ctx, repo.SoftDeleteExerciseParams{
-			UserID:     user.ID.String(),
-			ExerciseID: deleted.ID.String(),
+			UserID:     user.ID,
+			ExerciseID: deleted.ID,
 		}))
 
 		_, err := s.repo.CreateRoutine(ctx, repo.CreateRoutineParams{
-			UserID:      user.ID.String(),
+			UserID:      user.ID,
 			Name:        "Retired",
-			ExerciseIDs: []string{deleted.ID.String()},
+			ExerciseIDs: []uuid.UUID{deleted.ID},
 		})
 		s.Require().ErrorIs(err, repo.ErrRoutineExerciseDeleted)
 	})
@@ -2620,7 +2623,7 @@ func (s *repoSuite) TestListExercisesWithNoIDsDoesNotFilter() {
 
 	listed, err := s.repo.ListExercises(
 		ctx,
-		repo.ListExercisesWithUserID(user.ID.String()),
+		repo.ListExercisesWithUserID(user.ID),
 		repo.ListExercisesWithIDs(nil),
 	)
 	s.Require().NoError(err)
@@ -2635,7 +2638,7 @@ func (s *repoSuite) TestCountNotificationsCountsReadOnesToo() {
 
 	unread, err := s.repo.CountNotifications(
 		ctx,
-		repo.CountNotificationsWithUserID(user.ID.String()),
+		repo.CountNotificationsWithUserID(user.ID),
 		repo.CountNotificationsWithUnreadOnly(true),
 	)
 	s.Require().NoError(err)
@@ -2643,7 +2646,7 @@ func (s *repoSuite) TestCountNotificationsCountsReadOnesToo() {
 
 	all, err := s.repo.CountNotifications(
 		ctx,
-		repo.CountNotificationsWithUserID(user.ID.String()),
+		repo.CountNotificationsWithUserID(user.ID),
 		repo.CountNotificationsWithUnreadOnly(false),
 	)
 	s.Require().NoError(err)
@@ -2670,18 +2673,18 @@ func (s *repoSuite) TestWorkoutSavesDropAnExerciseWithNoSets() {
 
 	workout, err := s.repo.CreateWorkout(ctx, repo.CreateWorkoutParams{
 		Name:      "Session",
-		UserID:    user.ID.String(),
-		RoutineID: routine.ID.String(),
+		UserID:    user.ID,
+		RoutineID: routine.ID,
 		ExerciseSets: []repo.ExerciseSet{
-			{ExerciseID: logged.ID.String(), Sets: []repo.Set{{Reps: 5, Weight: 50}}},
-			{ExerciseID: empty.ID.String(), Sets: nil},
+			{ExerciseID: logged.ID, Sets: []repo.Set{{Reps: 5, Weight: 50}}},
+			{ExerciseID: empty.ID, Sets: nil},
 		},
 		StartedAt:  time.Now().UTC(),
 		FinishedAt: time.Now().UTC().Add(time.Hour),
 	})
 	s.Require().NoError(err)
 
-	created, err := s.repo.ListSets(ctx, repo.ListSetsWithExerciseID(logged.ID.String(), empty.ID.String()))
+	created, err := s.repo.ListSets(ctx, repo.ListSetsWithExerciseID(logged.ID, empty.ID))
 	s.Require().NoError(err)
 	s.Require().Len(created, 1)
 	s.Require().Equal(logged.ID, created[0].ExerciseID)
@@ -2696,14 +2699,14 @@ func (s *repoSuite) TestUpdateWorkoutSetsDropsAnExerciseWithNoSets() {
 	empty := s.factory.NewExercise(factory.ExerciseUserID(user.ID))
 
 	s.Require().NoError(s.repo.UpdateWorkoutSets(ctx, repo.UpdateWorkoutSetsParams{
-		WorkoutID: workout.ID.String(),
+		WorkoutID: workout.ID,
 		ExerciseSets: []repo.ExerciseSet{
-			{ExerciseID: logged.ID.String(), Sets: []repo.Set{{Reps: 5, Weight: 50}}},
-			{ExerciseID: empty.ID.String(), Sets: nil},
+			{ExerciseID: logged.ID, Sets: []repo.Set{{Reps: 5, Weight: 50}}},
+			{ExerciseID: empty.ID, Sets: nil},
 		},
 	}))
 
-	sets, err := s.repo.ListSets(ctx, repo.ListSetsWithExerciseID(logged.ID.String(), empty.ID.String()))
+	sets, err := s.repo.ListSets(ctx, repo.ListSetsWithExerciseID(logged.ID, empty.ID))
 	s.Require().NoError(err)
 	s.Require().Len(sets, 1)
 	s.Require().Equal(logged.ID, sets[0].ExerciseID)

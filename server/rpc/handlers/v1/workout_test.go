@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
-	"github.com/google/uuid"
+	"github.com/gofrs/uuid/v5"
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -79,15 +79,15 @@ func (s *workoutSuite) TestCreateWorkout() {
 			name: "ok_create_workout",
 			req: &connect.Request[apiv1.CreateWorkoutRequest]{
 				Msg: &apiv1.CreateWorkoutRequest{
-					RoutineId: uuid.NewString(),
+					RoutineId: uuid.Must(uuid.NewV4()).String(),
 					ExerciseSets: []*apiv1.ExerciseSets{
 						{
 							Exercise: &apiv1.Exercise{
-								Id: uuid.NewString(),
+								Id: uuid.Must(uuid.NewV4()).String(),
 							},
 							Sets: []*apiv1.Set{
 								{
-									Id:     uuid.NewString(),
+									Id:     uuid.Must(uuid.NewV4()).String(),
 									Reps:   s.factory.Faker.Int32(),
 									Weight: s.factory.Faker.Float64(),
 								},
@@ -117,12 +117,12 @@ func (s *workoutSuite) TestCreateWorkout() {
 			name: "err_routine_not_found_unexpected_routine_id",
 			req: &connect.Request[apiv1.CreateWorkoutRequest]{
 				Msg: &apiv1.CreateWorkoutRequest{
-					RoutineId: uuid.NewString(),
+					RoutineId: uuid.Must(uuid.NewV4()).String(),
 				},
 			},
 			init: func(_ test, userID string) {
 				s.factory.NewRoutine(
-					factory.RoutineID(uuid.NewString()),
+					factory.RoutineID(uuid.Must(uuid.NewV4()).String()),
 					factory.RoutineUserID(userID),
 				)
 			},
@@ -134,7 +134,7 @@ func (s *workoutSuite) TestCreateWorkout() {
 			name: "err_routine_not_found_unexpected_user_id",
 			req: &connect.Request[apiv1.CreateWorkoutRequest]{
 				Msg: &apiv1.CreateWorkoutRequest{
-					RoutineId: uuid.NewString(),
+					RoutineId: uuid.Must(uuid.NewV4()).String(),
 				},
 			},
 			init: func(t test, _ string) {
@@ -166,7 +166,7 @@ func (s *workoutSuite) TestCreateWorkout() {
 	for _, t := range tests {
 		s.Run(t.name, func() {
 			user := s.factory.NewUser()
-			ctx := xcontext.WithUserID(context.Background(), user.ID.String())
+			ctx := xcontext.WithUserID(context.Background(), user.ID)
 			ctx = xcontext.WithLogger(ctx, zap.NewExample())
 
 			t.init(t, user.ID.String())
@@ -195,19 +195,19 @@ func (s *workoutSuite) TestCreateWorkoutAdvancesActivePlan() {
 	exercise := s.factory.NewExercise(factory.ExerciseUserID(user.ID))
 	planRepo := repo.New(s.container.DB)
 	plan, err := planRepo.CreatePlan(context.Background(), repo.CreatePlanParams{
-		UserID:     user.ID.String(),
+		UserID:     user.ID,
 		Name:       "Rotation",
-		RoutineIDs: []string{routine.ID.String(), nextRoutine.ID.String()},
+		RoutineIDs: []uuid.UUID{routine.ID, nextRoutine.ID},
 	})
 	s.Require().NoError(err)
-	plan, err = planRepo.SetActivePlan(context.Background(), plan.ID, user.ID.String())
+	plan, err = planRepo.SetActivePlan(context.Background(), plan.ID, user.ID)
 	s.Require().NoError(err)
 
-	ctx := xcontext.WithUserID(context.Background(), user.ID.String())
+	ctx := xcontext.WithUserID(context.Background(), user.ID)
 	ctx = xcontext.WithLogger(ctx, zap.NewExample())
 	response, err := s.handler.CreateWorkout(ctx, connect.NewRequest(&apiv1.CreateWorkoutRequest{
 		RoutineId: routine.ID.String(),
-		PlanId:    plan.ID,
+		PlanId:    plan.ID.String(),
 		ExerciseSets: []*apiv1.ExerciseSets{{
 			Exercise: &apiv1.Exercise{Id: exercise.ID.String()},
 			Sets:     []*apiv1.Set{{Reps: 5, Weight: 50}},
@@ -218,7 +218,7 @@ func (s *workoutSuite) TestCreateWorkoutAdvancesActivePlan() {
 	s.Require().NoError(err)
 	s.Require().NotEmpty(response.Msg.GetWorkoutId())
 
-	advanced, err := planRepo.GetActivePlan(context.Background(), user.ID.String())
+	advanced, err := planRepo.GetActivePlan(context.Background(), user.ID)
 	s.Require().NoError(err)
 	s.Require().Equal(1, advanced.CurrentPosition)
 }
@@ -234,21 +234,21 @@ func (s *workoutSuite) TestCreateWorkoutRepeatedWithItsKeyIsSavedOnce() {
 	exercise := s.factory.NewExercise(factory.ExerciseUserID(user.ID))
 	planRepo := repo.New(s.container.DB)
 	plan, err := planRepo.CreatePlan(context.Background(), repo.CreatePlanParams{
-		UserID:     user.ID.String(),
+		UserID:     user.ID,
 		Name:       "Rotation",
-		RoutineIDs: []string{routine.ID.String(), nextRoutine.ID.String()},
+		RoutineIDs: []uuid.UUID{routine.ID, nextRoutine.ID},
 	})
 	s.Require().NoError(err)
-	plan, err = planRepo.SetActivePlan(context.Background(), plan.ID, user.ID.String())
+	plan, err = planRepo.SetActivePlan(context.Background(), plan.ID, user.ID)
 	s.Require().NoError(err)
 
-	ctx := xcontext.WithUserID(context.Background(), user.ID.String())
+	ctx := xcontext.WithUserID(context.Background(), user.ID)
 	ctx = xcontext.WithLogger(ctx, zap.NewExample())
-	key := uuid.NewString()
+	key := uuid.Must(uuid.NewV4()).String()
 	request := func() *connect.Request[apiv1.CreateWorkoutRequest] {
 		return connect.NewRequest(&apiv1.CreateWorkoutRequest{
 			RoutineId: routine.ID.String(),
-			PlanId:    plan.ID,
+			PlanId:    plan.ID.String(),
 			ExerciseSets: []*apiv1.ExerciseSets{{
 				Exercise: &apiv1.Exercise{Id: exercise.ID.String()},
 				Sets:     []*apiv1.Set{{Reps: 5, Weight: 50}},
@@ -270,7 +270,7 @@ func (s *workoutSuite) TestCreateWorkoutRepeatedWithItsKeyIsSavedOnce() {
 	s.Require().NoError(err)
 	s.Require().EqualValues(1, saved)
 
-	advanced, err := planRepo.GetActivePlan(context.Background(), user.ID.String())
+	advanced, err := planRepo.GetActivePlan(context.Background(), user.ID)
 	s.Require().NoError(err)
 	s.Require().Equal(1, advanced.CurrentPosition)
 }
@@ -278,8 +278,8 @@ func (s *workoutSuite) TestCreateWorkoutRepeatedWithItsKeyIsSavedOnce() {
 // The key is the client's own, so two users may well mint the same one: each
 // keeps their workout, and a new key from the same user is a new workout.
 func (s *workoutSuite) TestCreateWorkoutKeyIsUniquePerUser() {
-	key := uuid.NewString()
-	save := func(userID, key string) string {
+	key := uuid.Must(uuid.NewV4()).String()
+	save := func(userID uuid.UUID, key string) string {
 		s.T().Helper()
 		exercise := s.factory.NewExercise(factory.ExerciseUserID(userID))
 		ctx := xcontext.WithUserID(context.Background(), userID)
@@ -300,8 +300,8 @@ func (s *workoutSuite) TestCreateWorkoutKeyIsUniquePerUser() {
 
 	one := s.factory.NewUser()
 	other := s.factory.NewUser()
-	s.Require().NotEqual(save(one.ID.String(), key), save(other.ID.String(), key))
-	s.Require().NotEqual(save(one.ID.String(), key), save(one.ID.String(), uuid.NewString()))
+	s.Require().NotEqual(save(one.ID, key), save(other.ID, key))
+	s.Require().NotEqual(save(one.ID, key), save(one.ID, uuid.Must(uuid.NewV4()).String()))
 }
 
 // The whole point of the snapshot: a session trained in blocks is read back in
@@ -312,7 +312,7 @@ func (s *workoutSuite) TestCreateWorkoutRecordsTheBlocksItWasTrainedIn() {
 	press := s.factory.NewExercise(factory.ExerciseUserID(user.ID))
 	squat := s.factory.NewExercise(factory.ExerciseUserID(user.ID))
 
-	ctx := xcontext.WithUserID(context.Background(), user.ID.String())
+	ctx := xcontext.WithUserID(context.Background(), user.ID)
 	ctx = xcontext.WithLogger(ctx, zap.NewExample())
 	created, err := s.handler.CreateWorkout(ctx, connect.NewRequest(&apiv1.CreateWorkoutRequest{
 		RoutineId: routine.ID.String(),
@@ -401,7 +401,7 @@ func (s *workoutSuite) TestCreateWorkoutWithoutBlocksIsUngrouped() {
 	routine := s.factory.NewRoutine(factory.RoutineUserID(user.ID))
 	exercise := s.factory.NewExercise(factory.ExerciseUserID(user.ID))
 
-	ctx := xcontext.WithUserID(context.Background(), user.ID.String())
+	ctx := xcontext.WithUserID(context.Background(), user.ID)
 	ctx = xcontext.WithLogger(ctx, zap.NewExample())
 	created, err := s.handler.CreateWorkout(ctx, connect.NewRequest(&apiv1.CreateWorkoutRequest{
 		RoutineId: routine.ID.String(),
@@ -427,7 +427,7 @@ func (s *workoutSuite) TestCreateWorkoutLinksTheRoutine() {
 	routine := s.factory.NewRoutine(factory.RoutineUserID(user.ID))
 	exercise := s.factory.NewExercise(factory.ExerciseUserID(user.ID))
 
-	ctx := xcontext.WithUserID(context.Background(), user.ID.String())
+	ctx := xcontext.WithUserID(context.Background(), user.ID)
 	ctx = xcontext.WithLogger(ctx, zap.NewExample())
 	created, err := s.handler.CreateWorkout(ctx, connect.NewRequest(&apiv1.CreateWorkoutRequest{
 		RoutineId: routine.ID.String(),
@@ -454,7 +454,7 @@ func (s *workoutSuite) TestCreateQuickWorkoutHasNoRoutine() {
 	user := s.factory.NewUser()
 	exercise := s.factory.NewExercise(factory.ExerciseUserID(user.ID))
 
-	ctx := xcontext.WithUserID(context.Background(), user.ID.String())
+	ctx := xcontext.WithUserID(context.Background(), user.ID)
 	ctx = xcontext.WithLogger(ctx, zap.NewExample())
 	_, err := s.handler.CreateWorkout(ctx, connect.NewRequest(&apiv1.CreateWorkoutRequest{
 		WorkoutName: "Quick Workout",
@@ -483,21 +483,21 @@ func (s *workoutSuite) TestCreateWorkoutSavesWhenRoutineIsNoLongerNextInPlan() {
 	exercise := s.factory.NewExercise(factory.ExerciseUserID(user.ID))
 	planRepo := repo.New(s.container.DB)
 	plan, err := planRepo.CreatePlan(context.Background(), repo.CreatePlanParams{
-		UserID:     user.ID.String(),
+		UserID:     user.ID,
 		Name:       "Rotation",
-		RoutineIDs: []string{completedRoutine.ID.String(), nextRoutine.ID.String()},
+		RoutineIDs: []uuid.UUID{completedRoutine.ID, nextRoutine.ID},
 	})
 	s.Require().NoError(err)
-	plan, err = planRepo.SetActivePlan(context.Background(), plan.ID, user.ID.String())
+	plan, err = planRepo.SetActivePlan(context.Background(), plan.ID, user.ID)
 	s.Require().NoError(err)
-	_, err = planRepo.AdvancePlan(context.Background(), plan.ID, user.ID.String(), completedRoutine.ID.String())
+	_, err = planRepo.AdvancePlan(context.Background(), plan.ID, user.ID, completedRoutine.ID)
 	s.Require().NoError(err)
 
-	ctx := xcontext.WithUserID(context.Background(), user.ID.String())
+	ctx := xcontext.WithUserID(context.Background(), user.ID)
 	ctx = xcontext.WithLogger(ctx, zap.NewExample())
 	response, err := s.handler.CreateWorkout(ctx, connect.NewRequest(&apiv1.CreateWorkoutRequest{
 		RoutineId: completedRoutine.ID.String(),
-		PlanId:    plan.ID,
+		PlanId:    plan.ID.String(),
 		ExerciseSets: []*apiv1.ExerciseSets{{
 			Exercise: &apiv1.Exercise{Id: exercise.ID.String()},
 			Sets:     []*apiv1.Set{{Reps: 5, Weight: 50}},
@@ -512,7 +512,7 @@ func (s *workoutSuite) TestCreateWorkoutSavesWhenRoutineIsNoLongerNextInPlan() {
 	s.Require().NoError(err)
 	s.Require().Equal(completedRoutine.Title, savedWorkout.Name)
 
-	unchanged, err := planRepo.GetActivePlan(context.Background(), user.ID.String())
+	unchanged, err := planRepo.GetActivePlan(context.Background(), user.ID)
 	s.Require().NoError(err)
 	s.Require().Equal(1, unchanged.CurrentPosition)
 	s.Require().Equal(nextRoutine.ID, unchanged.Routines[unchanged.CurrentPosition].ID)
@@ -521,7 +521,7 @@ func (s *workoutSuite) TestCreateWorkoutSavesWhenRoutineIsNoLongerNextInPlan() {
 func (s *workoutSuite) TestCreateQuickWorkoutWithoutRoutine() {
 	user := s.factory.NewUser()
 	exercise := s.factory.NewExercise(factory.ExerciseUserID(user.ID))
-	ctx := xcontext.WithUserID(context.Background(), user.ID.String())
+	ctx := xcontext.WithUserID(context.Background(), user.ID)
 	ctx = xcontext.WithLogger(ctx, zap.NewExample())
 
 	response, err := s.handler.CreateWorkout(ctx, connect.NewRequest(&apiv1.CreateWorkoutRequest{
@@ -542,10 +542,10 @@ func (s *workoutSuite) TestCreateQuickWorkoutWithoutRoutine() {
 
 func (s *workoutSuite) TestGetWorkoutNotFound() {
 	ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
-	ctx = xcontext.WithUserID(ctx, uuid.NewString())
+	ctx = xcontext.WithUserID(ctx, uuid.Must(uuid.NewV4()))
 
 	res, err := s.handler.GetWorkout(ctx, connect.NewRequest(&apiv1.GetWorkoutRequest{
-		Id: uuid.NewString(),
+		Id: uuid.Must(uuid.NewV4()).String(),
 	}))
 	s.Require().Nil(res)
 	s.Require().Equal(connect.NewError(connect.CodeNotFound, nil).Error(), err.Error())
@@ -562,7 +562,7 @@ func (s *workoutSuite) TestListWorkoutsPaginates() {
 	}
 
 	ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
-	ctx = xcontext.WithUserID(ctx, user.ID.String())
+	ctx = xcontext.WithUserID(ctx, user.ID)
 
 	first, err := s.handler.ListWorkouts(ctx, connect.NewRequest(&apiv1.ListWorkoutsRequest{
 		UserIds:    []string{user.ID.String()},
@@ -586,10 +586,10 @@ func (s *workoutSuite) TestListWorkoutsPaginates() {
 
 func (s *workoutSuite) TestListWorkoutsRejectsAMalformedPageToken() {
 	ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
-	ctx = xcontext.WithUserID(ctx, uuid.NewString())
+	ctx = xcontext.WithUserID(ctx, uuid.Must(uuid.NewV4()))
 
 	res, err := s.handler.ListWorkouts(ctx, connect.NewRequest(&apiv1.ListWorkoutsRequest{
-		UserIds:    []string{uuid.NewString()},
+		UserIds:    []string{uuid.Must(uuid.NewV4()).String()},
 		Pagination: &apiv1.PaginationRequest{PageLimit: 2, PageToken: []byte("not a token")},
 	}))
 	s.Require().Nil(res)
@@ -603,14 +603,14 @@ func (s *workoutSuite) TestDeleteWorkout() {
 		s.factory.NewSet(factory.SetWorkoutID(workout.ID), factory.SetUserID(user.ID))
 
 		ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
-		ctx = xcontext.WithUserID(ctx, user.ID.String())
+		ctx = xcontext.WithUserID(ctx, user.ID)
 
 		_, err := s.handler.DeleteWorkout(ctx, connect.NewRequest(&apiv1.DeleteWorkoutRequest{
 			Id: workout.ID.String(),
 		}))
 		s.Require().NoError(err)
 
-		_, err = s.repo.GetWorkout(context.Background(), repo.GetWorkoutWithID(workout.ID.String()))
+		_, err = s.repo.GetWorkout(context.Background(), repo.GetWorkoutWithID(workout.ID))
 		s.Require().ErrorIs(err, sql.ErrNoRows)
 	})
 
@@ -620,7 +620,7 @@ func (s *workoutSuite) TestDeleteWorkout() {
 		workout := s.factory.NewWorkout(factory.WorkoutUserID(owner.ID))
 
 		ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
-		ctx = xcontext.WithUserID(ctx, intruder.ID.String())
+		ctx = xcontext.WithUserID(ctx, intruder.ID)
 
 		res, err := s.handler.DeleteWorkout(ctx, connect.NewRequest(&apiv1.DeleteWorkoutRequest{
 			Id: workout.ID.String(),
@@ -629,16 +629,16 @@ func (s *workoutSuite) TestDeleteWorkout() {
 		s.Require().Equal(connect.NewError(connect.CodeFailedPrecondition, nil).Error(), err.Error())
 
 		// The owner still has it.
-		_, err = s.repo.GetWorkout(context.Background(), repo.GetWorkoutWithID(workout.ID.String()))
+		_, err = s.repo.GetWorkout(context.Background(), repo.GetWorkoutWithID(workout.ID))
 		s.Require().NoError(err)
 	})
 
 	s.Run("err_workout_not_found", func() {
 		ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
-		ctx = xcontext.WithUserID(ctx, uuid.NewString())
+		ctx = xcontext.WithUserID(ctx, uuid.Must(uuid.NewV4()))
 
 		res, err := s.handler.DeleteWorkout(ctx, connect.NewRequest(&apiv1.DeleteWorkoutRequest{
-			Id: uuid.NewString(),
+			Id: uuid.Must(uuid.NewV4()).String(),
 		}))
 		s.Require().Nil(res)
 		s.Require().Equal(connect.NewError(connect.CodeFailedPrecondition, nil).Error(), err.Error())
@@ -652,7 +652,7 @@ func (s *workoutSuite) TestPostComment() {
 		workout := s.factory.NewWorkout(factory.WorkoutUserID(owner.ID))
 
 		ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
-		ctx = xcontext.WithUserID(ctx, commenter.ID.String())
+		ctx = xcontext.WithUserID(ctx, commenter.ID)
 
 		res, err := s.handler.PostComment(ctx, connect.NewRequest(&apiv1.PostCommentRequest{
 			WorkoutId: workout.ID.String(),
@@ -666,7 +666,7 @@ func (s *workoutSuite) TestPostComment() {
 
 		comment, err := s.repo.GetWorkoutComment(
 			context.Background(),
-			repo.GetWorkoutCommentWithID(res.Msg.GetComment().GetId()),
+			repo.GetWorkoutCommentWithID(nativeUUID(res.Msg.GetComment().GetId())),
 			repo.GetWorkoutCommentWithWorkout(),
 		)
 		s.Require().NoError(err)
@@ -682,10 +682,10 @@ func (s *workoutSuite) TestPostComment() {
 
 	s.Run("err_comment_on_a_workout_that_does_not_exist", func() {
 		ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
-		ctx = xcontext.WithUserID(ctx, s.factory.NewUser().ID.String())
+		ctx = xcontext.WithUserID(ctx, s.factory.NewUser().ID)
 
 		res, err := s.handler.PostComment(ctx, connect.NewRequest(&apiv1.PostCommentRequest{
-			WorkoutId: uuid.NewString(),
+			WorkoutId: uuid.Must(uuid.NewV4()).String(),
 			Comment:   "Nobody's session.",
 		}))
 		s.Require().Nil(res)
@@ -704,7 +704,7 @@ func (s *workoutSuite) TestUpdateWorkout() {
 		s.factory.NewSet(factory.SetWorkoutID(workout.ID), factory.SetUserID(user.ID), factory.SetExerciseID(exercise.ID))
 
 		ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
-		ctx = xcontext.WithUserID(ctx, user.ID.String())
+		ctx = xcontext.WithUserID(ctx, user.ID)
 
 		_, err := s.handler.UpdateWorkout(ctx, connect.NewRequest(&apiv1.UpdateWorkoutRequest{
 			Workout: &apiv1.Workout{
@@ -739,7 +739,7 @@ func (s *workoutSuite) TestUpdateWorkout() {
 		workout := s.factory.NewWorkout(factory.WorkoutUserID(user.ID))
 
 		ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
-		ctx = xcontext.WithUserID(ctx, user.ID.String())
+		ctx = xcontext.WithUserID(ctx, user.ID)
 
 		res, err := s.handler.UpdateWorkout(ctx, connect.NewRequest(&apiv1.UpdateWorkoutRequest{
 			Workout: &apiv1.Workout{
@@ -754,11 +754,11 @@ func (s *workoutSuite) TestUpdateWorkout() {
 
 	s.Run("err_workout_not_found", func() {
 		ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
-		ctx = xcontext.WithUserID(ctx, uuid.NewString())
+		ctx = xcontext.WithUserID(ctx, uuid.Must(uuid.NewV4()))
 
 		res, err := s.handler.UpdateWorkout(ctx, connect.NewRequest(&apiv1.UpdateWorkoutRequest{
 			Workout: &apiv1.Workout{
-				Id:         uuid.NewString(),
+				Id:         uuid.Must(uuid.NewV4()).String(),
 				StartedAt:  timestamppb.New(startedAt),
 				FinishedAt: timestamppb.New(finishedAt),
 			},
@@ -773,7 +773,7 @@ func (s *workoutSuite) TestUpdateWorkout() {
 		workout := s.factory.NewWorkout(factory.WorkoutUserID(owner.ID), factory.WorkoutName("Untouched"))
 
 		ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
-		ctx = xcontext.WithUserID(ctx, intruder.ID.String())
+		ctx = xcontext.WithUserID(ctx, intruder.ID)
 
 		res, err := s.handler.UpdateWorkout(ctx, connect.NewRequest(&apiv1.UpdateWorkoutRequest{
 			Workout: &apiv1.Workout{
@@ -786,7 +786,7 @@ func (s *workoutSuite) TestUpdateWorkout() {
 		s.Require().Nil(res)
 		s.Require().Equal(connect.NewError(connect.CodePermissionDenied, nil).Error(), err.Error())
 
-		unchanged, err := s.repo.GetWorkout(context.Background(), repo.GetWorkoutWithID(workout.ID.String()))
+		unchanged, err := s.repo.GetWorkout(context.Background(), repo.GetWorkoutWithID(workout.ID))
 		s.Require().NoError(err)
 		s.Require().Equal("Untouched", unchanged.Name)
 	})
@@ -797,10 +797,10 @@ func (s *workoutSuite) TestUpdateWorkout() {
 func (s *workoutSuite) TestCreateWorkoutRejectsAPlanWithoutARoutine() {
 	user := s.factory.NewUser()
 	ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
-	ctx = xcontext.WithUserID(ctx, user.ID.String())
+	ctx = xcontext.WithUserID(ctx, user.ID)
 
 	res, err := s.handler.CreateWorkout(ctx, connect.NewRequest(&apiv1.CreateWorkoutRequest{
-		PlanId:     uuid.NewString(),
+		PlanId:     uuid.Must(uuid.NewV4()).String(),
 		StartedAt:  timestamppb.Now(),
 		FinishedAt: timestamppb.New(time.Now().Add(time.Hour)),
 	}))

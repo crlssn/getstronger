@@ -18,6 +18,13 @@ linters:
   settings:
     depguard:
       rules:
+        # One UUID package. The row types bobgen generates are gofrs UUIDs, so
+        # a second one only ever arrives as a value that has to be converted
+        # back before the store will take it.
+        uuid:
+          deny:
+            - pkg: github.com/google/uuid
+              desc: use github.com/gofrs/uuid/v5, which is what the generated models and the database driver speak
         # The bounded contexts own the business rules and nothing else. A rule
         # that needs a query, a request, an event or a log line has been put in
         # the wrong package: see server/CLAUDE.md. `internal/` would not catch

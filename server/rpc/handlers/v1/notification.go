@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
+	"github.com/gofrs/uuid/v5"
 	"go.uber.org/zap"
 
 	"github.com/crlssn/getstronger/server/gen/models"
@@ -43,16 +44,16 @@ func (h *notificationHandler) ListNotifications(ctx context.Context, req *connec
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	paginated, err := repo.PaginateSlice(notifications, limit, func(n *models.Notification) (time.Time, string) {
-		return n.CreatedAt, n.ID.String()
+	paginated, err := repo.PaginateSlice(notifications, limit, func(n *models.Notification) (time.Time, uuid.UUID) {
+		return n.CreatedAt, n.ID
 	})
 	if err != nil {
 		log.Error("Paginate notifications", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	var actorIDs []string
-	var workoutIDs []string
+	var actorIDs []uuid.UUID
+	var workoutIDs []uuid.UUID
 
 	for _, n := range paginated.Items {
 		var payload notification.Payload
@@ -61,10 +62,10 @@ func (h *notificationHandler) ListNotifications(ctx context.Context, req *connec
 			return nil, connect.NewError(connect.CodeInternal, nil)
 		}
 
-		if payload.ActorID != "" {
+		if !payload.ActorID.IsNil() {
 			actorIDs = append(actorIDs, payload.ActorID)
 		}
-		if payload.WorkoutID != "" {
+		if !payload.WorkoutID.IsNil() {
 			workoutIDs = append(workoutIDs, payload.WorkoutID)
 		}
 	}
@@ -105,7 +106,12 @@ func (h *notificationHandler) MarkNotificationsAsRead(ctx context.Context, req *
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
 
-	if err := h.repo.MarkNotificationsAsRead(ctx, userID, req.Msg.NotificationId); err != nil {
+	notificationID, err := notificationIDFromRequest(req.Msg)
+	if err != nil {
+		return nil, err
+	}
+
+	if err = h.repo.MarkNotificationsAsRead(ctx, userID, notificationID); err != nil {
 		log.Error("Mark notifications as read", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
@@ -123,7 +129,7 @@ func (h *notificationHandler) GetUnreadNotificationCount(ctx context.Context, _ 
 	return connect.NewResponse(&apiv1.GetUnreadNotificationCountResponse{Count: count}), nil
 }
 
-func (h *notificationHandler) countUnreadNotifications(ctx context.Context, userID string) (int64, error) {
+func (h *notificationHandler) countUnreadNotifications(ctx context.Context, userID uuid.UUID) (int64, error) {
 	count, err := h.repo.CountNotifications(
 		ctx,
 		repo.CountNotificationsWithUserID(userID),
@@ -136,4 +142,19 @@ func (h *notificationHandler) countUnreadNotifications(ctx context.Context, user
 	}
 
 	return count, nil
+}
+
+// notificationIDFromRequest reads the one notification a request marks read, or
+// nothing at all when it marks the lot.
+func notificationIDFromRequest(msg *apiv1.MarkNotificationsAsReadRequest) (*uuid.UUID, error) {
+	if msg.NotificationId == nil {
+		return nil, nil //nolint:nilnil // No id is the request to mark them all.
+	}
+
+	notificationID, err := parser.UUID(msg.GetNotificationId())
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInvalidArgument, nil)
+	}
+
+	return &notificationID, nil
 }

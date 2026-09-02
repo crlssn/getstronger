@@ -21,8 +21,8 @@ const (
 
 // ListRoutineGroups returns a routine's groups in training order, each carrying
 // its exercises in the order the routine works through them.
-func (r *Repo) ListRoutineGroups(ctx context.Context, routineID string) ([]*training.RoutineGroup, error) {
-	id := uuidFromString(routineID)
+func (r *Repo) ListRoutineGroups(ctx context.Context, routineID uuid.UUID) ([]*training.RoutineGroup, error) {
+	id := routineID
 
 	groups, err := models.RoutineGroups.Query(
 		models.SelectWhere.RoutineGroups.RoutineID.EQ(id),
@@ -49,7 +49,7 @@ func (r *Repo) ListRoutineGroups(ctx context.Context, routineID string) ([]*trai
 	byID := make(map[uuid.UUID]*training.RoutineGroup, len(groups))
 	for _, group := range groups {
 		parsedGroup := &training.RoutineGroup{
-			ID:                          group.ID.String(),
+			ID:                          group.ID,
 			Mode:                        group.Mode,
 			RestBetweenExercisesSeconds: group.RestBetweenExercisesSeconds,
 			RestBetweenRoundsSeconds:    group.RestBetweenRoundsSeconds,
@@ -107,9 +107,9 @@ func (r *Repo) exercisesByID(ctx context.Context, links models.ExercisesRoutineS
 // SetRoutineGroups replaces a routine's groups and the exercises in them. The
 // flat exercise order follows the groups read end to end.
 func (r *Repo) SetRoutineGroups(ctx context.Context, routine *models.Routine, groups []training.RoutineGroupDraft, exercises models.ExerciseSlice) error {
-	exerciseIDs := make([]string, 0, len(exercises))
+	exerciseIDs := make([]uuid.UUID, 0, len(exercises))
 	for _, exercise := range exercises {
-		exerciseIDs = append(exerciseIDs, exercise.ID.String())
+		exerciseIDs = append(exerciseIDs, exercise.ID)
 	}
 
 	if err := setRoutineGroups(
@@ -129,10 +129,10 @@ func newOccurrenceRestSeconds(exercise *models.Exercise) int32 {
 
 // newOccurrenceRests is what each of these exercises rests for where a routine
 // has just started training it, by exercise ID.
-func newOccurrenceRests(exercises models.ExerciseSlice) map[string]int32 {
-	rests := make(map[string]int32, len(exercises))
+func newOccurrenceRests(exercises models.ExerciseSlice) map[uuid.UUID]int32 {
+	rests := make(map[uuid.UUID]int32, len(exercises))
 	for _, exercise := range exercises {
-		rests[exercise.ID.String()] = newOccurrenceRestSeconds(exercise)
+		rests[exercise.ID] = newOccurrenceRestSeconds(exercise)
 	}
 
 	return rests
@@ -141,7 +141,7 @@ func newOccurrenceRests(exercises models.ExerciseSlice) map[string]int32 {
 // occurrenceRest is the rest a link row stores. Every row carries one, so a
 // save that says nothing about an occurrence — an older client, or one that
 // named no groups at all — takes the rest a new occurrence starts at.
-func occurrenceRest(exercise training.RoutineExerciseDraft, newRests map[string]int32) int32 {
+func occurrenceRest(exercise training.RoutineExerciseDraft, newRests map[uuid.UUID]int32) int32 {
 	if exercise.RestSeconds != nil {
 		return *exercise.RestSeconds
 	}
@@ -191,7 +191,7 @@ func setRoutineGroups(
 		for _, exercise := range group.Exercises {
 			links = append(links, &models.ExercisesRoutineSetter{
 				RoutineID:   omit.From(routineID),
-				ExerciseID:  omit.From(uuidFromString(exercise.ExerciseID)),
+				ExerciseID:  omit.From(exercise.ExerciseID),
 				GroupID:     omit.From(inserted.ID),
 				Position:    omit.From(safe.Int32FromInt(position)),
 				RestSeconds: omit.From(occurrenceRest(exercise, newRests)),
@@ -213,7 +213,7 @@ func setRoutineGroups(
 
 // ensureRoutineGroup gives a routine somewhere to put an exercise. Routines
 // always have at least one group; this covers the ones that somehow do not.
-func ensureRoutineGroup(ctx context.Context, exec sqlExecutor, routineID string) error {
+func ensureRoutineGroup(ctx context.Context, exec sqlExecutor, routineID uuid.UUID) error {
 	if _, err := exec.ExecContext(
 		ctx, `
 INSERT INTO public.routine_groups (routine_id, position, mode)

@@ -472,8 +472,8 @@ func seedJaneComments(exec bob.Executor, f *factory.Factory, active, jane *model
 			factory.NotificationUserID(active.ID),
 			factory.NotificationType(notification.TypeWorkoutComment),
 			factory.NotificationPayload(notification.Payload{
-				ActorID:   jane.ID.String(),
-				WorkoutID: workout.ID.String(),
+				ActorID:   jane.ID,
+				WorkoutID: workout.ID,
 			}),
 			factory.NotificationCreatedAt(seededComment.createdAt),
 		}

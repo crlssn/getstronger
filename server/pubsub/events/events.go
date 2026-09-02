@@ -4,6 +4,8 @@
 package events
 
 import (
+	"github.com/gofrs/uuid/v5"
+
 	"github.com/crlssn/getstronger/server/gen/models/enums"
 )
 
@@ -26,13 +28,13 @@ type RequestTraced struct {
 
 // WorkoutCommentPosted reports that somebody commented on a workout.
 type WorkoutCommentPosted struct {
-	CommentID string `json:"commentId"`
-	EventID   string `json:"eventId"`
+	CommentID uuid.UUID `json:"commentId"`
+	EventID   uuid.UUID `json:"eventId"`
 }
 
 // UserFollowed reports that one athlete started following another.
 type UserFollowed struct {
-	FollowerID string `json:"followerId"`
-	FolloweeID string `json:"followeeId"`
-	EventID    string `json:"eventId"`
+	FollowerID uuid.UUID `json:"followerId"`
+	FolloweeID uuid.UUID `json:"followeeId"`
+	EventID    uuid.UUID `json:"eventId"`
 }

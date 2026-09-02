@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/google/uuid"
+	"github.com/gofrs/uuid/v5"
 	"github.com/stretchr/testify/require"
 
 	"github.com/stephenafamo/bob"
@@ -44,7 +44,7 @@ func TestFactory_Routine(t *testing.T) {
 
 	t.Run("RoutineID", func(t *testing.T) {
 		t.Parallel()
-		id := uuid.NewString()
+		id := uuid.Must(uuid.NewV4()).String()
 		expected := f.NewRoutine(factory.RoutineID(id))
 		created, err := models.FindRoutine(ctx, bob.NewDB(c.DB), expected.ID)
 		require.NoError(t, err)

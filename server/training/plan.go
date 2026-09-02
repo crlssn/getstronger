@@ -13,8 +13,8 @@ import (
 // of an athlete's plans is active at a time, and the active plan remembers the
 // position it has reached so the app can say what to train next.
 type Plan struct {
-	ID              string
-	UserID          string
+	ID              uuid.UUID
+	UserID          uuid.UUID
 	Name            string
 	Active          bool
 	CurrentPosition int
@@ -41,9 +41,9 @@ func (p *Plan) CurrentRoutine() *models.Routine {
 }
 
 // Advance reports the position the plan rotates to once routineID has been
-// trained, wrapping back to the start of the rotation. An empty routineID
-// skips whichever routine is current without naming it.
-func (p *Plan) Advance(routineID string) (int, error) {
+// trained, wrapping back to the start of the rotation. A nil routineID skips
+// whichever routine is current without naming it.
+func (p *Plan) Advance(routineID uuid.UUID) (int, error) {
 	if !p.Active {
 		return 0, ErrPlanNotActive
 	}
@@ -53,7 +53,7 @@ func (p *Plan) Advance(routineID string) (int, error) {
 		return 0, ErrPlanUnexpectedRoutine
 	}
 
-	if routineID != "" && current.ID.String() != routineID {
+	if !routineID.IsNil() && current.ID != routineID {
 		return 0, ErrPlanUnexpectedRoutine
 	}
 
@@ -63,14 +63,14 @@ func (p *Plan) Advance(routineID string) (int, error) {
 // PositionAfterReplacing is the position that keeps the plan pointing at the
 // routine it is on once its rotation is replaced by routineIDs. A rotation that
 // drops the current routine starts again from the beginning.
-func (p *Plan) PositionAfterReplacing(routineIDs []string) int {
+func (p *Plan) PositionAfterReplacing(routineIDs []uuid.UUID) int {
 	current := p.CurrentRoutine()
 	if current == nil {
 		return 0
 	}
 
 	for position, routineID := range routineIDs {
-		if routineID == current.ID.String() {
+		if routineID == current.ID {
 			return position
 		}
 	}
@@ -82,7 +82,7 @@ func (p *Plan) PositionAfterReplacing(routineIDs []string) int {
 // routines still in the loop, where the plan now points, and whether it can
 // still be the plan the athlete is following.
 type Rotation struct {
-	RoutineIDs      []string
+	RoutineIDs      []uuid.UUID
 	CurrentPosition int
 	Active          bool
 }
@@ -91,13 +91,13 @@ type Rotation struct {
 // keeps pointing at the routine it was on, restarting when that is the routine
 // removed, and a plan left with nothing to train pauses: it can no longer
 // answer what comes next.
-func (p *Plan) RotationWithout(routineID string) Rotation {
-	remaining := make([]string, 0, len(p.Routines))
+func (p *Plan) RotationWithout(routineID uuid.UUID) Rotation {
+	remaining := make([]uuid.UUID, 0, len(p.Routines))
 	for _, routine := range p.Routines {
-		if routine.ID.String() == routineID {
+		if routine.ID == routineID {
 			continue
 		}
-		remaining = append(remaining, routine.ID.String())
+		remaining = append(remaining, routine.ID)
 	}
 
 	return Rotation{
@@ -123,12 +123,12 @@ func (p *Plan) ValidateActivation() error {
 // needs at least one routine and may not train the same one twice per cycle.
 // Whether each routine exists and belongs to the athlete is a separate question
 // that only the store can answer.
-func ValidatePlanRotation(routineIDs []string) error {
+func ValidatePlanRotation(routineIDs []uuid.UUID) error {
 	if len(routineIDs) == 0 {
 		return ErrPlanRequiresRoutine
 	}
 
-	seen := make(map[string]struct{}, len(routineIDs))
+	seen := make(map[uuid.UUID]struct{}, len(routineIDs))
 	for _, routineID := range routineIDs {
 		if _, duplicate := seen[routineID]; duplicate {
 			return ErrPlanRoutineDuplicate
@@ -146,8 +146,8 @@ var (
 
 // ValidatePlanRoutine checks that a routine may take part in an athlete's
 // rotation: they must own it, and a deleted routine cannot be trained.
-func ValidatePlanRoutine(routine *models.Routine, userID string) error {
-	if routine.UserID != uuid.FromStringOrNil(userID) {
+func ValidatePlanRoutine(routine *models.Routine, userID uuid.UUID) error {
+	if routine.UserID != userID {
 		return ErrPlanRoutineBelongsToAnotherUser
 	}
 

@@ -1,5 +1,7 @@
 package training
 
+import "github.com/gofrs/uuid/v5"
+
 // WorkoutGroupDraft is one block of a finished workout as a save describes it.
 //
 // It carries no sets: the sets travel with the workout, and a block states how
@@ -18,7 +20,7 @@ type WorkoutGroupDraft struct {
 // WorkoutGroupExerciseDraft is one exercise where a block trained it, and how
 // many of that exercise's sets the block took.
 type WorkoutGroupExerciseDraft struct {
-	ExerciseID string
+	ExerciseID uuid.UUID
 	SetCount   int
 }
 
@@ -26,7 +28,7 @@ type WorkoutGroupExerciseDraft struct {
 // to the positions of the sets it took. Positions index the exercise's sets in
 // the order the workout recorded them.
 type WorkoutGroupExerciseSets struct {
-	ExerciseID   string
+	ExerciseID   uuid.UUID
 	SetPositions []int
 }
 
@@ -48,8 +50,8 @@ type WorkoutGroup struct {
 // holding nothing is dropped, because a block with no work in it is not part of
 // the session that happened. A save naming no blocks stores none, which is how
 // every workout logged before blocks were recorded reads.
-func NormalizeWorkoutGroups(groups []WorkoutGroupDraft, setCounts map[string]int) []WorkoutGroup {
-	taken := make(map[string]int, len(setCounts))
+func NormalizeWorkoutGroups(groups []WorkoutGroupDraft, setCounts map[uuid.UUID]int) []WorkoutGroup {
+	taken := make(map[uuid.UUID]int, len(setCounts))
 
 	normalized := make([]WorkoutGroup, 0, len(groups))
 	for _, group := range groups {
@@ -77,7 +79,7 @@ func NormalizeWorkoutGroups(groups []WorkoutGroupDraft, setCounts map[string]int
 }
 
 func takePositions(
-	exercise WorkoutGroupExerciseDraft, setCounts map[string]int, taken map[string]int,
+	exercise WorkoutGroupExerciseDraft, setCounts map[uuid.UUID]int, taken map[uuid.UUID]int,
 ) []int {
 	logged, ok := setCounts[exercise.ExerciseID]
 	if !ok {

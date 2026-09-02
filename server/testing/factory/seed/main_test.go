@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gofrs/uuid/v5"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/crypto/bcrypt"
 
@@ -185,12 +186,12 @@ func TestSeedJaneDoe(t *testing.T) {
 	).All(ctx, bob.NewDB(c.DB))
 	require.NoError(t, err)
 	require.Len(t, comments, 4)
-	johnWorkoutIDs := make(map[string]struct{}, len(johnWorkouts))
+	johnWorkoutIDs := make(map[uuid.UUID]struct{}, len(johnWorkouts))
 	for _, workout := range johnWorkouts {
-		johnWorkoutIDs[workout.ID.String()] = struct{}{}
+		johnWorkoutIDs[workout.ID] = struct{}{}
 	}
 	for _, comment := range comments {
-		_, commentsOnJohnWorkout := johnWorkoutIDs[comment.WorkoutID.String()]
+		_, commentsOnJohnWorkout := johnWorkoutIDs[comment.WorkoutID]
 		require.True(t, commentsOnJohnWorkout)
 		require.NotEmpty(t, comment.Comment)
 	}
@@ -212,7 +213,7 @@ func TestSeedJaneDoe(t *testing.T) {
 
 		var payload notification.Payload
 		require.NoError(t, json.Unmarshal(stored.Payload.Val, &payload))
-		require.Equal(t, jane.ID.String(), payload.ActorID)
+		require.Equal(t, jane.ID, payload.ActorID)
 		_, notifiesAboutJohnWorkout := johnWorkoutIDs[payload.WorkoutID]
 		require.True(t, notifiesAboutJohnWorkout)
 	}

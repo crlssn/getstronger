@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/google/uuid"
+	"github.com/gofrs/uuid/v5"
 	"github.com/stretchr/testify/require"
 
 	"github.com/stephenafamo/bob"
@@ -73,7 +73,7 @@ func TestFactory_Set(t *testing.T) {
 
 	t.Run("SetID", func(t *testing.T) {
 		t.Parallel()
-		id := uuid.NewString()
+		id := uuid.Must(uuid.NewV4()).String()
 		expected := f.NewSet(factory.SetID(id))
 		created, err := models.FindSet(ctx, bob.NewDB(c.DB), expected.ID)
 		require.NoError(t, err)

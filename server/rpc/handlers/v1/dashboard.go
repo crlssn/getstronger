@@ -4,16 +4,17 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"math"
 	"time"
 
 	"connectrpc.com/connect"
+	"github.com/gofrs/uuid/v5"
 	"go.uber.org/zap"
 
 	"github.com/crlssn/getstronger/server/gen/models"
 	apiv1 "github.com/crlssn/getstronger/server/gen/proto/api/v1"
 	"github.com/crlssn/getstronger/server/repo"
 	"github.com/crlssn/getstronger/server/rpc/parser"
+	"github.com/crlssn/getstronger/server/safe"
 	"github.com/crlssn/getstronger/server/training"
 	"github.com/crlssn/getstronger/server/xcontext"
 )
@@ -23,9 +24,9 @@ import (
 type dashboardSources interface {
 	ListRoutines(ctx context.Context, opts ...repo.ListRoutineOpt) (models.RoutineSlice, error)
 	ListWorkouts(ctx context.Context, opts ...repo.ListWorkoutsOpt) (models.WorkoutSlice, error)
-	GetActivePlan(ctx context.Context, userID string) (*training.Plan, error)
-	GetPersonalBests(ctx context.Context, userIDs ...string) (models.SetSlice, error)
-	CountWorkouts(ctx context.Context, userID string) (int64, error)
+	GetActivePlan(ctx context.Context, userID uuid.UUID) (*training.Plan, error)
+	GetPersonalBests(ctx context.Context, userIDs ...uuid.UUID) (models.SetSlice, error)
+	CountWorkouts(ctx context.Context, userID uuid.UUID) (int64, error)
 }
 
 const (
@@ -45,6 +46,11 @@ func (d *dashboard) GetDashboard(ctx context.Context, req *connect.Request[apiv1
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
 
+	preferredRoutineID, err := parser.OptionalUUID(req.Msg.GetPreferredRoutineId())
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInvalidArgument, nil)
+	}
+
 	routines, err := d.sources.ListRoutines(
 		ctx,
 		repo.ListRoutinesLoadExercises(),
@@ -63,7 +69,7 @@ func (d *dashboard) GetDashboard(ctx context.Context, req *connect.Request[apiv1
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	nextRoutine := training.NextRoutine(activePlan, routines, req.Msg.GetPreferredRoutineId())
+	nextRoutine := training.NextRoutine(activePlan, routines, preferredRoutineID)
 
 	workouts, err := d.sources.ListWorkouts(
 		ctx,
@@ -92,34 +98,36 @@ func (d *dashboard) GetDashboard(ctx context.Context, req *connect.Request[apiv1
 		log.Error("Count workouts for dashboard", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
-	// Unreachable in practice, but the response field is 32-bit and a silent
-	// wrap would read as a negative workout count.
-	if workoutCount > math.MaxInt32 {
-		workoutCount = math.MaxInt32
-	}
-
 	thisWeek := training.WeekOf(time.Now().UTC()).Summarise(workouts)
-
-	recentWorkouts := workouts
-	if len(recentWorkouts) > recentWorkoutLimit {
-		recentWorkouts = recentWorkouts[:recentWorkoutLimit]
-	}
-	parsedWorkouts := parser.WorkoutSlice(recentWorkouts, personalBests)
-
-	var parsedNextRoutine *apiv1.Routine
-	if nextRoutine != nil {
-		parsedNextRoutine = parser.Routine(nextRoutine)
-	}
 
 	log.Info("Dashboard returned")
 	return connect.NewResponse(&apiv1.GetDashboardResponse{
-		NextRoutine:      parsedNextRoutine,
+		NextRoutine:      nextRoutineOf(nextRoutine),
 		Routines:         parser.RoutineSlice(routines),
 		WorkoutsThisWeek: thisWeek.Workouts,
 		VolumeThisWeek:   thisWeek.Volume.Float64(),
 		PersonalBests:    parser.ExerciseSetSlice(personalBests),
-		RecentWorkouts:   parsedWorkouts,
+		RecentWorkouts:   parser.WorkoutSlice(recentOf(workouts), personalBests),
 		ActivePlan:       parser.Plan(activePlan),
-		WorkoutCount:     int32(workoutCount),
+		WorkoutCount:     safe.Int32FromInt64(workoutCount),
 	}), nil
+}
+
+// nextRoutineOf renders the routine to train next, which an athlete with none
+// does not have.
+func nextRoutineOf(routine *models.Routine) *apiv1.Routine {
+	if routine == nil {
+		return nil
+	}
+
+	return parser.Routine(routine)
+}
+
+// recentOf is the tail of the log the dashboard shows.
+func recentOf(workouts models.WorkoutSlice) models.WorkoutSlice {
+	if len(workouts) > recentWorkoutLimit {
+		return workouts[:recentWorkoutLimit]
+	}
+
+	return workouts
 }

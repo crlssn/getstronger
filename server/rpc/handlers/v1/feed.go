@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
+	"github.com/gofrs/uuid/v5"
 	"go.uber.org/zap"
 
 	"github.com/crlssn/getstronger/server/gen/models"
@@ -46,9 +47,9 @@ func (h *feedHandler) ListFeedItems(ctx context.Context, req *connect.Request[ap
 			return nil, connect.NewError(connect.CodeInternal, nil)
 		}
 
-		followeeIDs := make([]string, 0, len(followees))
+		followeeIDs := make([]uuid.UUID, 0, len(followees))
 		for _, follower := range followees {
-			followeeIDs = append(followeeIDs, follower.ID.String())
+			followeeIDs = append(followeeIDs, follower.ID)
 		}
 
 		opts = append(opts, repo.ListWorkoutsWithUserIDs(append(followeeIDs, userID)...))
@@ -60,20 +61,20 @@ func (h *feedHandler) ListFeedItems(ctx context.Context, req *connect.Request[ap
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	paginated, err := repo.PaginateSlice(workouts, limit, func(workout *models.Workout) (time.Time, string) {
-		return workout.CreatedAt, workout.ID.String()
+	paginated, err := repo.PaginateSlice(workouts, limit, func(workout *models.Workout) (time.Time, uuid.UUID) {
+		return workout.CreatedAt, workout.ID
 	})
 	if err != nil {
 		log.Error("Paginate feed workouts", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	workoutUserIDs := make(map[string]struct{}, len(paginated.Items))
+	workoutUserIDs := make(map[uuid.UUID]struct{}, len(paginated.Items))
 	for _, workout := range paginated.Items {
-		workoutUserIDs[workout.UserID.String()] = struct{}{}
+		workoutUserIDs[workout.UserID] = struct{}{}
 	}
 
-	personalBestUserIDs := make([]string, 0, len(workoutUserIDs))
+	personalBestUserIDs := make([]uuid.UUID, 0, len(workoutUserIDs))
 	for id := range workoutUserIDs {
 		personalBestUserIDs = append(personalBestUserIDs, id)
 	}

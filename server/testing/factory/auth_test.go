@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/brianvoe/gofakeit/v7"
-	"github.com/google/uuid"
+	"github.com/gofrs/uuid/v5"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/crypto/bcrypt"
 
@@ -49,7 +49,7 @@ func TestFactory_Auth(t *testing.T) {
 
 	t.Run("AuthID", func(t *testing.T) {
 		t.Parallel()
-		id := uuid.NewString()
+		id := uuid.Must(uuid.NewV4()).String()
 		expected := f.NewAuth(factory.AuthID(id))
 		created, err := models.FindAuth(ctx, bob.NewDB(c.DB), expected.ID)
 		require.NoError(t, err)
@@ -67,7 +67,7 @@ func TestFactory_Auth(t *testing.T) {
 
 	t.Run("AuthPassword", func(t *testing.T) {
 		t.Parallel()
-		refreshToken := uuid.NewString()
+		refreshToken := uuid.Must(uuid.NewV4()).String()
 		expected := f.NewAuth(factory.AuthRefreshToken(refreshToken))
 		created, err := models.FindAuth(ctx, bob.NewDB(c.DB), expected.ID)
 		require.NoError(t, err)
@@ -76,7 +76,7 @@ func TestFactory_Auth(t *testing.T) {
 
 	t.Run("AuthEmailToken", func(t *testing.T) {
 		t.Parallel()
-		token := uuid.NewString()
+		token := uuid.Must(uuid.NewV4()).String()
 		expected := f.NewAuth(factory.AuthEmailToken(token))
 		created, err := models.FindAuth(ctx, bob.NewDB(c.DB), expected.ID)
 		require.NoError(t, err)
@@ -85,7 +85,7 @@ func TestFactory_Auth(t *testing.T) {
 
 	t.Run("AuthEmailVerified", func(t *testing.T) {
 		t.Parallel()
-		passwordResetToken := uuid.NewString()
+		passwordResetToken := uuid.Must(uuid.NewV4()).String()
 		expected := f.NewAuth(factory.AuthPasswordResetToken(passwordResetToken, account.PasswordResetTokenTTL))
 		created, err := models.FindAuth(ctx, bob.NewDB(c.DB), expected.ID)
 		require.NoError(t, err)
@@ -95,7 +95,7 @@ func TestFactory_Auth(t *testing.T) {
 
 	t.Run("AuthRefreshToken", func(t *testing.T) {
 		t.Parallel()
-		password := uuid.NewString()
+		password := uuid.Must(uuid.NewV4()).String()
 		expected := f.NewAuth(factory.AuthPassword(password))
 		created, err := models.FindAuth(ctx, bob.NewDB(c.DB), expected.ID)
 		require.NoError(t, err)

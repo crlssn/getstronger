@@ -74,7 +74,7 @@ message LogoutRequest {}
 message LogoutResponse {}
 
 message VerifyEmailRequest {
-  string token = 1 [(buf.validate.field).string.min_len = 1];
+  string token = 1 [(buf.validate.field).string.uuid = true];
 }
 message VerifyEmailResponse {}
 

@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/gofrs/uuid/v5"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 
@@ -24,16 +25,17 @@ func TestContextCarriesWhatWasPutOnIt(t *testing.T) {
 	t.Parallel()
 
 	logger := zap.NewExample()
+	id := uuid.Must(uuid.NewV4())
 	ctx := xcontext.WithLogger(context.Background(), logger)
-	ctx = xcontext.WithUserID(ctx, "user-id")
+	ctx = xcontext.WithUserID(ctx, id)
 	ctx = xcontext.WithRefreshToken(ctx, "refresh-token")
 
 	require.Same(t, logger, xcontext.MustExtractLogger(ctx))
-	require.Equal(t, "user-id", xcontext.MustExtractUserID(ctx))
+	require.Equal(t, id, xcontext.MustExtractUserID(ctx))
 
 	userID, ok := xcontext.ExtractUserID(ctx)
 	require.True(t, ok)
-	require.Equal(t, "user-id", userID)
+	require.Equal(t, id, userID)
 
 	token, ok := xcontext.ExtractRefreshToken(ctx)
 	require.True(t, ok)

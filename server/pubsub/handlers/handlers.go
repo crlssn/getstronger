@@ -70,7 +70,7 @@ func (w *WorkoutCommentPosted) HandlePayload(payload any) {
 		w.log.Error("Unexpected payload type for workout comment event", zap.Any("payload", payload))
 		return
 	}
-	if p.EventID == "" {
+	if p.EventID.IsNil() {
 		w.log.Error("Workout comment event is missing an ID")
 		return
 	}
@@ -86,7 +86,7 @@ func (w *WorkoutCommentPosted) HandlePayload(payload any) {
 
 	workout, err := w.comments.GetWorkout(
 		ctx,
-		repo.GetWorkoutWithID(comment.WorkoutID.String()),
+		repo.GetWorkoutWithID(comment.WorkoutID),
 		repo.GetWorkoutLoadComments(),
 	)
 	if err != nil {
@@ -97,11 +97,11 @@ func (w *WorkoutCommentPosted) HandlePayload(payload any) {
 	for _, userID := range notification.CommentAudience(comment.UserID, workout.UserID, workout.R.WorkoutComments) {
 		if err = w.comments.CreateNotification(ctx, repo.CreateNotificationParams{
 			Type:   notification.TypeWorkoutComment,
-			UserID: userID.String(),
+			UserID: userID,
 			Payload: notification.Payload{
-				ActorID:   comment.UserID.String(),
+				ActorID:   comment.UserID,
 				EventID:   p.EventID,
-				WorkoutID: comment.WorkoutID.String(),
+				WorkoutID: comment.WorkoutID,
 			},
 		}); err != nil {
 			w.log.Error("Create workout comment notification", zap.Error(err))
@@ -127,7 +127,7 @@ func (u *FollowedUser) HandlePayload(payload any) {
 		u.log.Error("Unexpected payload type for followed user event", zap.Any("payload", payload))
 		return
 	}
-	if p.EventID == "" {
+	if p.EventID.IsNil() {
 		u.log.Error("Followed user event is missing an ID")
 		return
 	}

@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"connectrpc.com/connect"
-	"github.com/google/uuid"
+	"github.com/gofrs/uuid/v5"
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/zap"
 
@@ -50,7 +50,7 @@ func (s *planSuite) SetupSuite() {
 // athlete returns a context authenticated as a new user, and that user.
 func (s *planSuite) athlete() (context.Context, *models.User) {
 	user := s.factory.NewUser()
-	ctx := xcontext.WithUserID(context.Background(), user.ID.String())
+	ctx := xcontext.WithUserID(context.Background(), user.ID)
 
 	return xcontext.WithLogger(ctx, zap.NewExample()), user
 }
@@ -323,7 +323,7 @@ func (s *planSuite) TestSetActivePlanIsNotFoundForAPlanTheAthleteCannotSee() {
 
 	s.Run("a_plan_that_does_not_exist", func() {
 		_, err := s.handler.SetActivePlan(ctx, connect.NewRequest(&apiv1.SetActivePlanRequest{
-			Id: uuid.NewString(),
+			Id: uuid.Must(uuid.NewV4()).String(),
 		}))
 		s.Require().Equal(connect.CodeNotFound, connect.CodeOf(err))
 	})
@@ -333,7 +333,7 @@ func (s *planSuite) TestSkipPlanRoutineIsNotFoundForAPlanThatDoesNotExist() {
 	ctx, _ := s.athlete()
 
 	_, err := s.handler.SkipPlanRoutine(ctx, connect.NewRequest(&apiv1.SkipPlanRoutineRequest{
-		Id: uuid.NewString(),
+		Id: uuid.Must(uuid.NewV4()).String(),
 	}))
 	s.Require().Equal(connect.CodeNotFound, connect.CodeOf(err))
 }

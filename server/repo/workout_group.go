@@ -18,7 +18,7 @@ import (
 // setOccurrence names the block occurrence a set belongs to: which exercise of
 // which block, keyed by the exercise and the set's position within it.
 type setOccurrence struct {
-	exerciseID string
+	exerciseID uuid.UUID
 	position   int
 }
 
@@ -46,7 +46,7 @@ func writeWorkoutGroups(
 		for position, exercise := range group.Exercises {
 			occurrence, err := models.WorkoutGroupExercises.Insert(&models.WorkoutGroupExerciseSetter{
 				WorkoutGroupID: omit.From(inserted.ID),
-				ExerciseID:     omit.From(uuidFromString(exercise.ExerciseID)),
+				ExerciseID:     omit.From(exercise.ExerciseID),
 				Position:       omit.From(safe.Int32FromInt(position)),
 			}).One(ctx, exec)
 			if err != nil {
@@ -76,16 +76,13 @@ type WorkoutGroupRecord struct {
 // ListWorkoutGroups returns the blocks of each of these workouts, in training
 // order, keyed by workout ID. Workouts logged before blocks were recorded have
 // none, and are simply absent.
-func (r *Repo) ListWorkoutGroups(ctx context.Context, workoutIDs ...string) (map[string][]WorkoutGroupRecord, error) {
-	byWorkout := make(map[string][]WorkoutGroupRecord, len(workoutIDs))
+func (r *Repo) ListWorkoutGroups(ctx context.Context, workoutIDs ...uuid.UUID) (map[uuid.UUID][]WorkoutGroupRecord, error) {
+	byWorkout := make(map[uuid.UUID][]WorkoutGroupRecord, len(workoutIDs))
 	if len(workoutIDs) == 0 {
 		return byWorkout, nil
 	}
 
-	ids := make([]uuid.UUID, 0, len(workoutIDs))
-	for _, id := range workoutIDs {
-		ids = append(ids, uuidFromString(id))
-	}
+	ids := workoutIDs
 
 	groups, err := models.WorkoutGroups.Query(
 		models.SelectWhere.WorkoutGroups.WorkoutID.In(ids...),
@@ -117,7 +114,7 @@ func (r *Repo) ListWorkoutGroups(ctx context.Context, workoutIDs ...string) (map
 	}
 
 	for _, group := range groups {
-		workoutID := group.WorkoutID.String()
+		workoutID := group.WorkoutID
 		byWorkout[workoutID] = append(byWorkout[workoutID], WorkoutGroupRecord{
 			Group:     group,
 			Exercises: byGroup[group.ID],
@@ -150,7 +147,7 @@ func setOccurrencesOf(sets models.SetSlice) map[setOccurrence]uuid.UUID {
 		}
 
 		occurrences[setOccurrence{
-			exerciseID: set.ExerciseID.String(),
+			exerciseID: set.ExerciseID,
 			position:   int(set.Position),
 		}] = set.WorkoutGroupExerciseID.GetOrZero()
 	}

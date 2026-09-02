@@ -3,6 +3,7 @@ package training_test
 import (
 	"testing"
 
+	"github.com/gofrs/uuid/v5"
 	"github.com/stretchr/testify/require"
 
 	"github.com/crlssn/getstronger/server/training"
@@ -16,12 +17,12 @@ func TestNormalizeWorkoutGroups(t *testing.T) {
 	tests := []struct {
 		name      string
 		groups    []training.WorkoutGroupDraft
-		setCounts map[string]int
+		setCounts map[uuid.UUID]int
 		expected  []training.WorkoutGroup
 	}{
 		{
 			name:      "a save naming no blocks stores none",
-			setCounts: map[string]int{"a": 3},
+			setCounts: map[uuid.UUID]int{exerciseID("a"): 3},
 			expected:  []training.WorkoutGroup{},
 		},
 		{
@@ -29,7 +30,7 @@ func TestNormalizeWorkoutGroups(t *testing.T) {
 			groups: []training.WorkoutGroupDraft{
 				{Mode: training.RoutineGroupModeStraight, Exercises: took("a", 3)},
 			},
-			setCounts: map[string]int{"a": 3},
+			setCounts: map[uuid.UUID]int{exerciseID("a"): 3},
 			expected: []training.WorkoutGroup{
 				{Mode: training.RoutineGroupModeStraight, Exercises: positions(0, 1, 2)},
 			},
@@ -43,7 +44,7 @@ func TestNormalizeWorkoutGroups(t *testing.T) {
 				{Mode: training.RoutineGroupModeStraight, Exercises: took("a", 2)},
 				{Mode: training.RoutineGroupModeCircuit, Exercises: took("a", 3)},
 			},
-			setCounts: map[string]int{"a": 5},
+			setCounts: map[uuid.UUID]int{exerciseID("a"): 5},
 			expected: []training.WorkoutGroup{
 				{Mode: training.RoutineGroupModeStraight, Exercises: positions(0, 1)},
 				{Mode: training.RoutineGroupModeCircuit, Exercises: positions(2, 3, 4)},
@@ -55,7 +56,7 @@ func TestNormalizeWorkoutGroups(t *testing.T) {
 			groups: []training.WorkoutGroupDraft{
 				{Mode: training.RoutineGroupModeStraight, Exercises: took("a", 9)},
 			},
-			setCounts: map[string]int{"a": 2},
+			setCounts: map[uuid.UUID]int{exerciseID("a"): 2},
 			expected: []training.WorkoutGroup{
 				{Mode: training.RoutineGroupModeStraight, Exercises: positions(0, 1)},
 			},
@@ -65,7 +66,7 @@ func TestNormalizeWorkoutGroups(t *testing.T) {
 			groups: []training.WorkoutGroupDraft{
 				{Mode: training.RoutineGroupModeStraight, Exercises: took("a", 1, "stranger", 1)},
 			},
-			setCounts: map[string]int{"a": 1},
+			setCounts: map[uuid.UUID]int{exerciseID("a"): 1},
 			expected: []training.WorkoutGroup{
 				{Mode: training.RoutineGroupModeStraight, Exercises: positions(0)},
 			},
@@ -77,7 +78,7 @@ func TestNormalizeWorkoutGroups(t *testing.T) {
 				{Mode: training.RoutineGroupModeStraight, Exercises: took("a", 2)},
 				{Mode: training.RoutineGroupModeCircuit, Exercises: took("a", 2)},
 			},
-			setCounts: map[string]int{"a": 2},
+			setCounts: map[uuid.UUID]int{exerciseID("a"): 2},
 			expected: []training.WorkoutGroup{
 				{Mode: training.RoutineGroupModeStraight, Exercises: positions(0, 1)},
 			},
@@ -93,7 +94,7 @@ func TestNormalizeWorkoutGroups(t *testing.T) {
 					Exercises:                   took("a", 1),
 				},
 			},
-			setCounts: map[string]int{"a": 1},
+			setCounts: map[uuid.UUID]int{exerciseID("a"): 1},
 			expected: []training.WorkoutGroup{
 				{
 					Mode:                        training.RoutineGroupModeStraight,
@@ -113,7 +114,7 @@ func TestNormalizeWorkoutGroups(t *testing.T) {
 					Exercises:                   took("a", 1),
 				},
 			},
-			setCounts: map[string]int{"a": 1},
+			setCounts: map[uuid.UUID]int{exerciseID("a"): 1},
 			expected: []training.WorkoutGroup{
 				{
 					Mode:                        training.RoutineGroupModeCircuit,
@@ -129,7 +130,7 @@ func TestNormalizeWorkoutGroups(t *testing.T) {
 			groups: []training.WorkoutGroupDraft{
 				{Exercises: took("a", 1)},
 			},
-			setCounts: map[string]int{"a": 1},
+			setCounts: map[uuid.UUID]int{exerciseID("a"): 1},
 			expected: []training.WorkoutGroup{
 				{Mode: training.RoutineGroupModeStraight, Exercises: positions(0)},
 			},
@@ -150,7 +151,7 @@ func took(pairs ...any) []training.WorkoutGroupExerciseDraft {
 	for index := 0; index+1 < len(pairs); index += 2 {
 		id, _ := pairs[index].(string)
 		count, _ := pairs[index+1].(int)
-		drafts = append(drafts, training.WorkoutGroupExerciseDraft{ExerciseID: id, SetCount: count})
+		drafts = append(drafts, training.WorkoutGroupExerciseDraft{ExerciseID: exerciseID(id), SetCount: count})
 	}
 
 	return drafts
@@ -160,6 +161,6 @@ func took(pairs ...any) []training.WorkoutGroupExerciseDraft {
 // exercise the workout logged, so only the set positions vary.
 func positions(taken ...int) []training.WorkoutGroupExerciseSets {
 	return []training.WorkoutGroupExerciseSets{
-		{ExerciseID: "a", SetPositions: taken},
+		{ExerciseID: exerciseID("a"), SetPositions: taken},
 	}
 }

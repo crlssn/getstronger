@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"testing"
 
+	"github.com/gofrs/uuid/v5"
 	"github.com/stephenafamo/bob"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/fx"
@@ -45,9 +46,9 @@ func TestModuleSubscribesEveryTopic(t *testing.T) {
 	require.NoError(t, app.Start(ctx))
 
 	bus.Publish(ctx, events.TopicFollowedUser, events.UserFollowed{
-		FollowerID: follower.ID.String(),
-		FolloweeID: followee.ID.String(),
-		EventID:    "event",
+		FollowerID: follower.ID,
+		FolloweeID: followee.ID,
+		EventID:    uuid.Must(uuid.NewV4()),
 	})
 
 	// Stop drains the queue and waits for the workers out, so the subscriber

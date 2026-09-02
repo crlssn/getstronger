@@ -9,7 +9,7 @@ import (
 
 	"connectrpc.com/connect"
 	"github.com/brianvoe/gofakeit/v7"
-	"github.com/google/uuid"
+	"github.com/gofrs/uuid/v5"
 	"github.com/stephenafamo/bob"
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/mock/gomock"
@@ -107,7 +107,7 @@ func (s *authSuite) TestSignup() {
 					Do(func(_ context.Context, req email.SendVerification) {
 						s.Require().Equal(t.req.Msg.GetEmail(), req.Email)
 						s.Require().Equal(t.req.Msg.GetName(), req.Name)
-						_, err := uuid.Parse(req.Token)
+						_, err := uuid.FromString(req.Token)
 						s.Require().NoError(err)
 					})
 			},
@@ -422,7 +422,7 @@ func (s *authSuite) TestRefreshToken() {
 	tests := []test{
 		{
 			name:  "ok_token_refreshed",
-			token: s.jwt.MustCreateToken(uuid.NewString(), jwt.TokenTypeRefresh),
+			token: s.jwt.MustCreateToken(uuid.Must(uuid.NewV4()), jwt.TokenTypeRefresh),
 			init: func(t test) context.Context {
 				s.factory.NewAuth(factory.AuthRefreshToken(t.token))
 				ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
@@ -434,7 +434,7 @@ func (s *authSuite) TestRefreshToken() {
 		},
 		{
 			name:  "err_token_not_found",
-			token: s.jwt.MustCreateToken(uuid.NewString(), jwt.TokenTypeRefresh),
+			token: s.jwt.MustCreateToken(uuid.Must(uuid.NewV4()), jwt.TokenTypeRefresh),
 			init: func(t test) context.Context {
 				ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
 				return xcontext.WithRefreshToken(ctx, t.token)
@@ -445,7 +445,7 @@ func (s *authSuite) TestRefreshToken() {
 		},
 		{
 			name:  "err_access_token_provided",
-			token: s.jwt.MustCreateToken(uuid.NewString(), jwt.TokenTypeAccess),
+			token: s.jwt.MustCreateToken(uuid.Must(uuid.NewV4()), jwt.TokenTypeAccess),
 			init: func(t test) context.Context {
 				s.factory.NewAuth(factory.AuthRefreshToken(t.token))
 				ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
@@ -493,7 +493,7 @@ func (s *authSuite) TestLogout() {
 	tests := []test{
 		{
 			name:  "ok_logged_out",
-			token: s.jwt.MustCreateToken(uuid.NewString(), jwt.TokenTypeRefresh),
+			token: s.jwt.MustCreateToken(uuid.Must(uuid.NewV4()), jwt.TokenTypeRefresh),
 			init: func(t test) context.Context {
 				auth := s.factory.NewAuth(factory.AuthRefreshToken(t.token))
 				ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
@@ -518,7 +518,7 @@ func (s *authSuite) TestLogout() {
 			// holding that cookie is a session already ended. Logout says so
 			// and expires the cookie rather than refusing.
 			name:  "ok_refresh_token_already_deleted",
-			token: s.jwt.MustCreateToken(uuid.NewString(), jwt.TokenTypeRefresh),
+			token: s.jwt.MustCreateToken(uuid.Must(uuid.NewV4()), jwt.TokenTypeRefresh),
 			init: func(t test) context.Context {
 				ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
 				return xcontext.WithRefreshToken(ctx, t.token)
@@ -589,7 +589,7 @@ func (s *authSuite) TestExpectedAuthFailuresLogAtWarn() {
 			name:    "refresh_with_unparseable_token",
 			message: "Parse refresh token",
 			call: func(logger *zap.Logger) {
-				token := s.jwt.MustCreateToken(uuid.NewString(), jwt.TokenTypeAccess)
+				token := s.jwt.MustCreateToken(uuid.Must(uuid.NewV4()), jwt.TokenTypeAccess)
 				s.factory.NewAuth(factory.AuthRefreshToken(token))
 				ctx := xcontext.WithRefreshToken(xcontext.WithLogger(context.Background(), logger), token)
 				_, err := s.handler.RefreshToken(ctx, &connect.Request[v1.RefreshTokenRequest]{
@@ -637,7 +637,7 @@ func (s *authSuite) TestDeleteAccount() {
 			init: func(_ test) (context.Context, *models.User) {
 				user := newAccount()
 				ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
-				return xcontext.WithUserID(ctx, user.ID.String()), user
+				return xcontext.WithUserID(ctx, user.ID), user
 			},
 			expected: expected{
 				err: nil,
@@ -649,7 +649,7 @@ func (s *authSuite) TestDeleteAccount() {
 			init: func(_ test) (context.Context, *models.User) {
 				user := newAccount()
 				ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
-				return xcontext.WithUserID(ctx, user.ID.String()), user
+				return xcontext.WithUserID(ctx, user.ID), user
 			},
 			expected: expected{
 				err: connect.NewError(connect.CodeInvalidArgument, handlers.ErrInvalidCredentials),
@@ -660,7 +660,7 @@ func (s *authSuite) TestDeleteAccount() {
 			password: password,
 			init: func(_ test) (context.Context, *models.User) {
 				ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
-				return xcontext.WithUserID(ctx, uuid.NewString()), nil
+				return xcontext.WithUserID(ctx, uuid.Must(uuid.NewV4())), nil
 			},
 			expected: expected{
 				err: connect.NewError(connect.CodeNotFound, nil),
@@ -729,7 +729,7 @@ func (s *authSuite) TestVerifyEmail() {
 			name: "ok_email_verified",
 			req: &connect.Request[v1.VerifyEmailRequest]{
 				Msg: &v1.VerifyEmailRequest{
-					Token: uuid.NewString(),
+					Token: uuid.Must(uuid.NewV4()).String(),
 				},
 			},
 			init: func(t test) {
@@ -746,12 +746,26 @@ func (s *authSuite) TestVerifyEmail() {
 			name: "err_email_token_not_found",
 			req: &connect.Request[v1.VerifyEmailRequest]{
 				Msg: &v1.VerifyEmailRequest{
-					Token: uuid.NewString(),
+					Token: uuid.Must(uuid.NewV4()).String(),
 				},
 			},
 			init: func(_ test) {},
 			expected: expected{
 				err: connect.NewError(connect.CodeFailedPrecondition, nil),
+			},
+		},
+		{
+			// The schema turns this away before the handler runs; the handler
+			// answers the same way for a request that reaches it anyway.
+			name: "err_email_token_not_a_token",
+			req: &connect.Request[v1.VerifyEmailRequest]{
+				Msg: &v1.VerifyEmailRequest{
+					Token: "not-a-uuid",
+				},
+			},
+			init: func(_ test) {},
+			expected: expected{
+				err: connect.NewError(connect.CodeInvalidArgument, nil),
 			},
 		},
 	}
@@ -966,7 +980,7 @@ func (s *authSuite) TestResetPassword() {
 					Do(func(_ context.Context, req email.SendPasswordReset) {
 						s.Require().Equal(user.Name, req.Name)
 						s.Require().Equal(t.req.Msg.GetEmail(), req.Email)
-						_, err := uuid.Parse(req.Token)
+						_, err := uuid.FromString(req.Token)
 						s.Require().NoError(err)
 					})
 			},
@@ -1029,7 +1043,7 @@ func (s *authSuite) TestResetPassword() {
 			init: func(t test) {
 				auth := s.factory.NewAuth(
 					factory.AuthEmail(t.req.Msg.GetEmail()),
-					factory.AuthPasswordResetToken(uuid.NewString(), account.PasswordResetTokenTTL),
+					factory.AuthPasswordResetToken(uuid.Must(uuid.NewV4()).String(), account.PasswordResetTokenTTL),
 				)
 				s.factory.NewUser(
 					factory.UserAuthID(auth.ID),
@@ -1053,7 +1067,7 @@ func (s *authSuite) TestResetPassword() {
 				auth := s.factory.NewAuth(
 					factory.AuthEmail(t.req.Msg.GetEmail()),
 					factory.AuthPasswordResetToken(
-						uuid.NewString(),
+						uuid.Must(uuid.NewV4()).String(),
 						account.PasswordResetTokenTTL-account.PasswordResetCooldown*3/2,
 					),
 				)
@@ -1108,7 +1122,7 @@ func (s *authSuite) TestUpdatePassword() {
 			name: "ok_password_updated",
 			req: &connect.Request[v1.UpdatePasswordRequest]{
 				Msg: &v1.UpdatePasswordRequest{
-					Token:                uuid.NewString(),
+					Token:                uuid.Must(uuid.NewV4()).String(),
 					Password:             "new_password",
 					PasswordConfirmation: "new_password",
 				},
@@ -1116,7 +1130,7 @@ func (s *authSuite) TestUpdatePassword() {
 			init: func(t test) {
 				s.factory.NewAuth(
 					factory.AuthPasswordResetToken(t.req.Msg.GetToken(), account.PasswordResetTokenTTL),
-					factory.AuthRefreshToken(uuid.NewString()),
+					factory.AuthRefreshToken(uuid.Must(uuid.NewV4()).String()),
 				)
 			},
 			expected: expected{
@@ -1127,7 +1141,7 @@ func (s *authSuite) TestUpdatePassword() {
 			name: "err_password_mismatch",
 			req: &connect.Request[v1.UpdatePasswordRequest]{
 				Msg: &v1.UpdatePasswordRequest{
-					Token:                uuid.NewString(),
+					Token:                uuid.Must(uuid.NewV4()).String(),
 					Password:             "new_password",
 					PasswordConfirmation: "different_password",
 				},
@@ -1141,7 +1155,7 @@ func (s *authSuite) TestUpdatePassword() {
 			name: "err_token_not_found",
 			req: &connect.Request[v1.UpdatePasswordRequest]{
 				Msg: &v1.UpdatePasswordRequest{
-					Token:                uuid.NewString(),
+					Token:                uuid.Must(uuid.NewV4()).String(),
 					Password:             "new_password",
 					PasswordConfirmation: "new_password",
 				},
@@ -1155,7 +1169,7 @@ func (s *authSuite) TestUpdatePassword() {
 			name: "err_token_expired",
 			req: &connect.Request[v1.UpdatePasswordRequest]{
 				Msg: &v1.UpdatePasswordRequest{
-					Token:                uuid.NewString(),
+					Token:                uuid.Must(uuid.NewV4()).String(),
 					Password:             "new_password",
 					PasswordConfirmation: "new_password",
 				},

@@ -7,7 +7,7 @@ import (
 	"sync/atomic"
 	"testing"
 
-	"github.com/google/uuid"
+	"github.com/gofrs/uuid/v5"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/stdlib"
 	"github.com/stretchr/testify/require"
@@ -38,42 +38,42 @@ func TestPlanLifecycle(t *testing.T) {
 	pull := f.NewRoutine(factory.RoutineUserID(user.ID), factory.RoutineName("Pull"))
 
 	plan, err := r.CreatePlan(ctx, repo.CreatePlanParams{
-		UserID:     user.ID.String(),
+		UserID:     user.ID,
 		Name:       "Strength Rotation",
-		RoutineIDs: []string{lower.ID.String(), chest.ID.String(), pull.ID.String()},
+		RoutineIDs: []uuid.UUID{lower.ID, chest.ID, pull.ID},
 	})
 	require.NoError(t, err)
 	require.False(t, plan.Active)
-	require.Equal(t, []string{lower.ID.String(), chest.ID.String(), pull.ID.String()}, planRoutineIDs(plan))
+	require.Equal(t, []uuid.UUID{lower.ID, chest.ID, pull.ID}, planRoutineIDs(plan))
 
-	plan, err = r.SetActivePlan(ctx, plan.ID, user.ID.String())
+	plan, err = r.SetActivePlan(ctx, plan.ID, user.ID)
 	require.NoError(t, err)
 	require.True(t, plan.Active)
 	require.Zero(t, plan.CurrentPosition)
 
-	plan, err = r.AdvancePlan(ctx, plan.ID, user.ID.String(), lower.ID.String())
+	plan, err = r.AdvancePlan(ctx, plan.ID, user.ID, lower.ID)
 	require.NoError(t, err)
 	require.Equal(t, 1, plan.CurrentPosition)
 
 	plan, err = r.UpdatePlan(ctx, repo.UpdatePlanParams{
 		ID:         plan.ID,
-		UserID:     user.ID.String(),
+		UserID:     user.ID,
 		Name:       "Updated Rotation",
-		RoutineIDs: []string{pull.ID.String(), chest.ID.String(), lower.ID.String()},
+		RoutineIDs: []uuid.UUID{pull.ID, chest.ID, lower.ID},
 	})
 	require.NoError(t, err)
 	require.Equal(t, "Updated Rotation", plan.Name)
 	require.Equal(t, 1, plan.CurrentPosition, "the current Chest routine should remain current")
 
-	plan, err = r.AdvancePlan(ctx, plan.ID, user.ID.String(), chest.ID.String())
+	plan, err = r.AdvancePlan(ctx, plan.ID, user.ID, chest.ID)
 	require.NoError(t, err)
 	require.Equal(t, 2, plan.CurrentPosition)
-	plan, err = r.AdvancePlan(ctx, plan.ID, user.ID.String(), lower.ID.String())
+	plan, err = r.AdvancePlan(ctx, plan.ID, user.ID, lower.ID)
 	require.NoError(t, err)
 	require.Zero(t, plan.CurrentPosition, "the sequence should repeat indefinitely")
 
-	require.NoError(t, r.PauseActivePlan(ctx, user.ID.String()))
-	_, err = r.GetActivePlan(ctx, user.ID.String())
+	require.NoError(t, r.PauseActivePlan(ctx, user.ID))
+	_, err = r.GetActivePlan(ctx, user.ID)
 	require.Error(t, err)
 }
 
@@ -95,22 +95,22 @@ func TestPlanReadRoundTrips(t *testing.T) {
 	f := factory.NewFactory(testContainer.DB)
 	r := repo.New(testContainer.DB)
 	user := f.NewUser()
-	userID := user.ID.String()
+	userID := user.ID
 
 	routines := make([]*models.Routine, 0, 3)
-	routineIDs := make([]string, 0, 3)
-	exerciseIDs := make(map[string][]string, cap(routines))
+	routineIDs := make([]uuid.UUID, 0, 3)
+	exerciseIDs := make(map[uuid.UUID][]uuid.UUID, cap(routines))
 	for range cap(routines) {
 		routine := f.NewRoutine(factory.RoutineUserID(user.ID))
 		first := f.NewExercise(factory.ExerciseUserID(user.ID))
 		second := f.NewExercise(factory.ExerciseUserID(user.ID))
 		f.AddRoutineExercise(routine, first, second)
 		routines = append(routines, routine)
-		routineIDs = append(routineIDs, routine.ID.String())
-		exerciseIDs[routine.ID.String()] = []string{first.ID.String(), second.ID.String()}
+		routineIDs = append(routineIDs, routine.ID)
+		exerciseIDs[routine.ID] = []uuid.UUID{first.ID, second.ID}
 	}
 
-	rotation := []string{routineIDs[2], routineIDs[0], routineIDs[1]}
+	rotation := []uuid.UUID{routineIDs[2], routineIDs[0], routineIDs[1]}
 	active, err := r.CreatePlan(ctx, repo.CreatePlanParams{
 		UserID: userID, Name: "Rotation", RoutineIDs: rotation,
 	})
@@ -133,7 +133,7 @@ func TestPlanReadRoundTrips(t *testing.T) {
 	require.Equal(t, int64(4), queries.Load(), "GetActivePlan should not query per routine")
 	require.Equal(t, rotation, planRoutineIDs(plan))
 	for _, routine := range plan.Routines {
-		require.Equal(t, exerciseIDs[routine.ID.String()], routineExerciseIDs(routine),
+		require.Equal(t, exerciseIDs[routine.ID], routineExerciseIDs(routine),
 			"loading every routine at once must keep each one's exercises in their own order")
 	}
 
@@ -167,31 +167,31 @@ func TestPlanRotationRejections(t *testing.T) {
 	theirs := f.NewRoutine(factory.RoutineUserID(stranger.ID))
 
 	_, err := r.CreatePlan(ctx, repo.CreatePlanParams{
-		UserID:     user.ID.String(),
+		UserID:     user.ID,
 		Name:       "Unknown",
-		RoutineIDs: []string{own.ID.String(), uuid.NewString()},
+		RoutineIDs: []uuid.UUID{own.ID, uuid.Must(uuid.NewV4())},
 	})
 	require.ErrorIs(t, err, sql.ErrNoRows)
 
 	_, err = r.CreatePlan(ctx, repo.CreatePlanParams{
-		UserID:     user.ID.String(),
+		UserID:     user.ID,
 		Name:       "Not mine",
-		RoutineIDs: []string{own.ID.String(), theirs.ID.String()},
+		RoutineIDs: []uuid.UUID{own.ID, theirs.ID},
 	})
 	require.ErrorIs(t, err, training.ErrPlanRoutineBelongsToAnotherUser)
 
 	plan, err := r.CreatePlan(ctx, repo.CreatePlanParams{
-		UserID:     user.ID.String(),
+		UserID:     user.ID,
 		Name:       "Mine",
-		RoutineIDs: []string{own.ID.String()},
+		RoutineIDs: []uuid.UUID{own.ID},
 	})
 	require.NoError(t, err)
 
 	_, err = r.UpdatePlan(ctx, repo.UpdatePlanParams{
 		ID:         plan.ID,
-		UserID:     user.ID.String(),
+		UserID:     user.ID,
 		Name:       "Mine",
-		RoutineIDs: []string{theirs.ID.String()},
+		RoutineIDs: []uuid.UUID{theirs.ID},
 	})
 	require.ErrorIs(t, err, training.ErrPlanRoutineBelongsToAnotherUser)
 }
@@ -232,18 +232,18 @@ func (q queryCounter) TraceQueryStart(ctx context.Context, _ *pgx.Conn, _ pgx.Tr
 
 func (queryCounter) TraceQueryEnd(context.Context, *pgx.Conn, pgx.TraceQueryEndData) {}
 
-func routineExerciseIDs(routine *models.Routine) []string {
-	ids := make([]string, 0, len(routine.R.Exercises))
+func routineExerciseIDs(routine *models.Routine) []uuid.UUID {
+	ids := make([]uuid.UUID, 0, len(routine.R.Exercises))
 	for _, exercise := range routine.R.Exercises {
-		ids = append(ids, exercise.ID.String())
+		ids = append(ids, exercise.ID)
 	}
 	return ids
 }
 
-func planRoutineIDs(plan *training.Plan) []string {
-	ids := make([]string, 0, len(plan.Routines))
+func planRoutineIDs(plan *training.Plan) []uuid.UUID {
+	ids := make([]uuid.UUID, 0, len(plan.Routines))
 	for _, routine := range plan.Routines {
-		ids = append(ids, routine.ID.String())
+		ids = append(ids, routine.ID)
 	}
 	return ids
 }
@@ -269,15 +269,15 @@ func TestSoftDeleteRoutineLeavesPlansPointingWhereTheyWere(t *testing.T) {
 	pull := f.NewRoutine(factory.RoutineUserID(user.ID), factory.RoutineName("Pull"))
 
 	plan, err := r.CreatePlan(ctx, repo.CreatePlanParams{
-		UserID:     user.ID.String(),
+		UserID:     user.ID,
 		Name:       "Strength Rotation",
-		RoutineIDs: []string{lower.ID.String(), chest.ID.String(), pull.ID.String()},
+		RoutineIDs: []uuid.UUID{lower.ID, chest.ID, pull.ID},
 	})
 	require.NoError(t, err)
 
-	plan, err = r.SetActivePlan(ctx, plan.ID, user.ID.String())
+	plan, err = r.SetActivePlan(ctx, plan.ID, user.ID)
 	require.NoError(t, err)
-	plan, err = r.AdvancePlan(ctx, plan.ID, user.ID.String(), lower.ID.String())
+	plan, err = r.AdvancePlan(ctx, plan.ID, user.ID, lower.ID)
 	require.NoError(t, err)
 	require.Equal(t, chest.ID, plan.CurrentRoutine().ID)
 
@@ -286,47 +286,47 @@ func TestSoftDeleteRoutineLeavesPlansPointingWhereTheyWere(t *testing.T) {
 	press := f.NewRoutine(factory.RoutineUserID(user.ID), factory.RoutineName("Press"))
 	squat := f.NewRoutine(factory.RoutineUserID(user.ID), factory.RoutineName("Squat"))
 	untouched, err := r.CreatePlan(ctx, repo.CreatePlanParams{
-		UserID:     user.ID.String(),
+		UserID:     user.ID,
 		Name:       "Other Rotation",
-		RoutineIDs: []string{press.ID.String(), squat.ID.String()},
+		RoutineIDs: []uuid.UUID{press.ID, squat.ID},
 	})
 	require.NoError(t, err)
 
-	require.NoError(t, r.SoftDeleteRoutine(ctx, lower.ID.String()))
-	plan, err = r.GetPlan(ctx, plan.ID, user.ID.String())
+	require.NoError(t, r.SoftDeleteRoutine(ctx, lower.ID))
+	plan, err = r.GetPlan(ctx, plan.ID, user.ID)
 	require.NoError(t, err)
-	require.Equal(t, []string{chest.ID.String(), pull.ID.String()}, planRoutineIDs(plan))
+	require.Equal(t, []uuid.UUID{chest.ID, pull.ID}, planRoutineIDs(plan))
 	require.Equal(t, chest.ID, plan.CurrentRoutine().ID, "the plan was on Chest before Lower went")
 	require.True(t, plan.Active)
 
-	require.NoError(t, r.SoftDeleteRoutine(ctx, chest.ID.String()))
-	plan, err = r.GetPlan(ctx, plan.ID, user.ID.String())
+	require.NoError(t, r.SoftDeleteRoutine(ctx, chest.ID))
+	plan, err = r.GetPlan(ctx, plan.ID, user.ID)
 	require.NoError(t, err)
-	require.Equal(t, []string{pull.ID.String()}, planRoutineIDs(plan))
+	require.Equal(t, []uuid.UUID{pull.ID}, planRoutineIDs(plan))
 	require.Equal(t, pull.ID, plan.CurrentRoutine().ID, "a rotation that loses its current routine starts again")
 	require.True(t, plan.Active)
 
-	require.NoError(t, r.SoftDeleteRoutine(ctx, pull.ID.String()))
-	plan, err = r.GetPlan(ctx, plan.ID, user.ID.String())
+	require.NoError(t, r.SoftDeleteRoutine(ctx, pull.ID))
+	plan, err = r.GetPlan(ctx, plan.ID, user.ID)
 	require.NoError(t, err)
 	require.Empty(t, planRoutineIDs(plan))
 	require.Zero(t, plan.CurrentPosition)
 	require.False(t, plan.Active, "a plan with nothing to train cannot say what is next")
 
-	untouched, err = r.GetPlan(ctx, untouched.ID, user.ID.String())
+	untouched, err = r.GetPlan(ctx, untouched.ID, user.ID)
 	require.NoError(t, err)
-	require.Equal(t, []string{press.ID.String(), squat.ID.String()}, planRoutineIDs(untouched),
+	require.Equal(t, []uuid.UUID{press.ID, squat.ID}, planRoutineIDs(untouched),
 		"a plan none of the retired routines were in keeps its rotation")
 	require.Zero(t, untouched.CurrentPosition)
 
 	// The routines are retired rather than erased, so the workouts that trained
 	// them still point at a row.
-	_, err = r.GetRoutine(ctx, repo.GetRoutineWithID(lower.ID.String()))
+	_, err = r.GetRoutine(ctx, repo.GetRoutineWithID(lower.ID))
 	require.ErrorIs(t, err, sql.ErrNoRows)
 	require.NoError(t, testContainer.DB.QueryRowContext(ctx,
 		`SELECT 1 FROM public.routines WHERE id = $1 AND deleted_at IS NOT NULL`,
 		lower.ID.String()).Scan(new(int)))
 
 	// A routine already retired is not there to retire again.
-	require.ErrorIs(t, r.SoftDeleteRoutine(ctx, lower.ID.String()), sql.ErrNoRows)
+	require.ErrorIs(t, r.SoftDeleteRoutine(ctx, lower.ID), sql.ErrNoRows)
 }

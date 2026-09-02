@@ -8,7 +8,7 @@ import (
 
 	"connectrpc.com/connect"
 	"github.com/brianvoe/gofakeit/v7"
-	"github.com/google/uuid"
+	"github.com/gofrs/uuid/v5"
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/zap"
 
@@ -55,7 +55,7 @@ func (s *notificationSuite) TestMarkSingleNotificationAsRead() {
 	s.testFactory.NewNotification(factory.NotificationUserID(user.ID.String()))
 	otherNotification := s.testFactory.NewNotification()
 
-	ctx := xcontext.WithUserID(context.Background(), user.ID.String())
+	ctx := xcontext.WithUserID(context.Background(), user.ID)
 	ctx = xcontext.WithLogger(ctx, zap.NewExample())
 	notificationID := notification.ID.String()
 	res, err := s.handler.MarkNotificationsAsRead(
@@ -69,7 +69,7 @@ func (s *notificationSuite) TestMarkSingleNotificationAsRead() {
 
 	count, err := repo.New(s.testContainer.DB).CountNotifications(
 		ctx,
-		repo.CountNotificationsWithUserID(user.ID.String()),
+		repo.CountNotificationsWithUserID(user.ID),
 		repo.CountNotificationsWithUnreadOnly(true),
 	)
 	s.Require().NoError(err)
@@ -77,7 +77,7 @@ func (s *notificationSuite) TestMarkSingleNotificationAsRead() {
 
 	otherCount, err := repo.New(s.testContainer.DB).CountNotifications(
 		ctx,
-		repo.CountNotificationsWithUserID(otherNotification.UserID.String()),
+		repo.CountNotificationsWithUserID(otherNotification.UserID),
 		repo.CountNotificationsWithUnreadOnly(true),
 	)
 	s.Require().NoError(err)
@@ -89,7 +89,7 @@ func (s *notificationSuite) TestMarkAllNotificationsAsRead() {
 	s.testFactory.NewNotificationSlice(2, factory.NotificationUserID(user.ID.String()))
 	otherNotification := s.testFactory.NewNotification()
 
-	ctx := xcontext.WithUserID(context.Background(), user.ID.String())
+	ctx := xcontext.WithUserID(context.Background(), user.ID)
 	ctx = xcontext.WithLogger(ctx, zap.NewExample())
 	res, err := s.handler.MarkNotificationsAsRead(
 		ctx,
@@ -100,7 +100,7 @@ func (s *notificationSuite) TestMarkAllNotificationsAsRead() {
 
 	count, err := repo.New(s.testContainer.DB).CountNotifications(
 		ctx,
-		repo.CountNotificationsWithUserID(user.ID.String()),
+		repo.CountNotificationsWithUserID(user.ID),
 		repo.CountNotificationsWithUnreadOnly(true),
 	)
 	s.Require().NoError(err)
@@ -108,7 +108,7 @@ func (s *notificationSuite) TestMarkAllNotificationsAsRead() {
 
 	otherCount, err := repo.New(s.testContainer.DB).CountNotifications(
 		ctx,
-		repo.CountNotificationsWithUserID(otherNotification.UserID.String()),
+		repo.CountNotificationsWithUserID(otherNotification.UserID),
 		repo.CountNotificationsWithUnreadOnly(true),
 	)
 	s.Require().NoError(err)
@@ -123,7 +123,7 @@ func (s *notificationSuite) TestGetUnreadNotificationCount() {
 		factory.NotificationRead(),
 	)
 
-	ctx := xcontext.WithUserID(context.Background(), user.ID.String())
+	ctx := xcontext.WithUserID(context.Background(), user.ID)
 	ctx = xcontext.WithLogger(ctx, zap.NewExample())
 	res, err := s.handler.GetUnreadNotificationCount(
 		ctx,
@@ -201,8 +201,8 @@ func (s *notificationSuite) TestListNotifications() {
 						factory.NotificationUserID(userID),
 						factory.NotificationCreatedAt(time.Unix(n.GetNotifiedAtUnix(), 0)),
 						factory.NotificationPayload(notification.Payload{
-							ActorID:   comment.UserID.String(),
-							WorkoutID: workout.ID.String(),
+							ActorID:   comment.UserID,
+							WorkoutID: workout.ID,
 						}),
 					)
 				}
@@ -213,19 +213,19 @@ func (s *notificationSuite) TestListNotifications() {
 					Msg: &apiv1.ListNotificationsResponse{
 						Notifications: []*apiv1.Notification{
 							{
-								Id:             uuid.NewString(),
+								Id:             uuid.Must(uuid.NewV4()).String(),
 								NotifiedAtUnix: time.Now().UTC().Unix(),
 								Type: &apiv1.Notification_WorkoutComment_{
 									WorkoutComment: &apiv1.Notification_WorkoutComment{
 										Actor: &apiv1.User{
-											Id:   uuid.NewString(),
+											Id:   uuid.Must(uuid.NewV4()).String(),
 											Name: gofakeit.Name(),
 										},
 										Workout: &apiv1.Workout{
-											Id:   uuid.NewString(),
+											Id:   uuid.Must(uuid.NewV4()).String(),
 											Name: gofakeit.Name(),
 											User: &apiv1.User{
-												Id:   uuid.NewString(),
+												Id:   uuid.Must(uuid.NewV4()).String(),
 												Name: gofakeit.Name(),
 											},
 										},
@@ -258,7 +258,7 @@ func (s *notificationSuite) TestListNotifications() {
 							ActorID: s.testFactory.NewUser(
 								factory.UserID(n.GetUserFollowed().GetActor().GetId()),
 								factory.UserName(n.GetUserFollowed().GetActor().GetName()),
-							).ID.String(),
+							).ID,
 						}),
 					)
 				}
@@ -269,12 +269,12 @@ func (s *notificationSuite) TestListNotifications() {
 					Msg: &apiv1.ListNotificationsResponse{
 						Notifications: []*apiv1.Notification{
 							{
-								Id:             uuid.NewString(),
+								Id:             uuid.Must(uuid.NewV4()).String(),
 								NotifiedAtUnix: time.Now().UTC().Unix(),
 								Type: &apiv1.Notification_UserFollowed_{
 									UserFollowed: &apiv1.Notification_UserFollowed{
 										Actor: &apiv1.User{
-											Id:   uuid.NewString(),
+											Id:   uuid.Must(uuid.NewV4()).String(),
 											Name: gofakeit.Name(),
 										},
 									},
@@ -300,8 +300,8 @@ func (s *notificationSuite) TestListNotifications() {
 					factory.NotificationType(notification.TypeWorkoutComment),
 					factory.NotificationUserID(userID),
 					factory.NotificationPayload(notification.Payload{
-						ActorID:   s.testFactory.NewUser().ID.String(),
-						WorkoutID: uuid.NewString(),
+						ActorID:   s.testFactory.NewUser().ID,
+						WorkoutID: uuid.Must(uuid.NewV4()),
 					}),
 				)
 			},
@@ -319,7 +319,7 @@ func (s *notificationSuite) TestListNotifications() {
 	for _, t := range tests {
 		s.Run(t.name, func() {
 			user := s.testFactory.NewUser()
-			ctx := xcontext.WithUserID(context.Background(), user.ID.String())
+			ctx := xcontext.WithUserID(context.Background(), user.ID)
 			ctx = xcontext.WithLogger(ctx, zap.NewExample())
 
 			t.init(t, user.ID.String())
@@ -372,13 +372,13 @@ func (s *notificationSuite) TestListNotificationsPaginates() {
 		s.testFactory.NewNotification(
 			factory.NotificationUserID(user.ID),
 			factory.NotificationType(notification.TypeFollow),
-			factory.NotificationPayload(notification.Payload{ActorID: actor.ID.String()}),
+			factory.NotificationPayload(notification.Payload{ActorID: actor.ID}),
 			factory.NotificationCreatedAt(now.Add(-time.Duration(i)*time.Second)),
 		)
 	}
 
 	ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
-	ctx = xcontext.WithUserID(ctx, user.ID.String())
+	ctx = xcontext.WithUserID(ctx, user.ID)
 
 	first, err := s.handler.ListNotifications(ctx, &connect.Request[apiv1.ListNotificationsRequest]{
 		Msg: &apiv1.ListNotificationsRequest{
@@ -404,7 +404,7 @@ func (s *notificationSuite) TestListNotificationsPaginates() {
 
 func (s *notificationSuite) TestListNotificationsRejectsAMalformedPageToken() {
 	ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
-	ctx = xcontext.WithUserID(ctx, uuid.NewString())
+	ctx = xcontext.WithUserID(ctx, uuid.Must(uuid.NewV4()))
 
 	res, err := s.handler.ListNotifications(ctx, &connect.Request[apiv1.ListNotificationsRequest]{
 		Msg: &apiv1.ListNotificationsRequest{
@@ -423,7 +423,7 @@ func (s *notificationSuite) TestListNotificationsFailsOnAnUnreadablePayload() {
 	n := s.testFactory.NewNotification(
 		factory.NotificationUserID(user.ID),
 		factory.NotificationType(notification.TypeFollow),
-		factory.NotificationPayload(notification.Payload{ActorID: uuid.NewString()}),
+		factory.NotificationPayload(notification.Payload{ActorID: uuid.Must(uuid.NewV4())}),
 	)
 
 	_, err := s.testContainer.DB.ExecContext(context.Background(),
@@ -431,7 +431,7 @@ func (s *notificationSuite) TestListNotificationsFailsOnAnUnreadablePayload() {
 	s.Require().NoError(err)
 
 	ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
-	ctx = xcontext.WithUserID(ctx, user.ID.String())
+	ctx = xcontext.WithUserID(ctx, user.ID)
 
 	res, err := s.handler.ListNotifications(ctx, &connect.Request[apiv1.ListNotificationsRequest]{
 		Msg: &apiv1.ListNotificationsRequest{

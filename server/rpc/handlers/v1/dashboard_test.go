@@ -50,7 +50,7 @@ func (s *dashboardSuite) SetupSuite() {
 
 func (s *dashboardSuite) athlete() (context.Context, *models.User) {
 	user := s.factory.NewUser()
-	ctx := xcontext.WithUserID(context.Background(), user.ID.String())
+	ctx := xcontext.WithUserID(context.Background(), user.ID)
 
 	return xcontext.WithLogger(ctx, zap.NewExample()), user
 }

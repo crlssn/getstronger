@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"connectrpc.com/connect"
-	"github.com/google/uuid"
+	"github.com/gofrs/uuid/v5"
 	"github.com/stephenafamo/bob"
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/zap"
@@ -51,7 +51,7 @@ func (s *routineSuite) SetupSuite() {
 
 func (s *routineSuite) athlete() (context.Context, *models.User) {
 	user := s.factory.NewUser()
-	ctx := xcontext.WithUserID(context.Background(), user.ID.String())
+	ctx := xcontext.WithUserID(context.Background(), user.ID)
 
 	return xcontext.WithLogger(ctx, zap.NewExample()), user
 }
@@ -83,6 +83,18 @@ func (s *routineSuite) TestUpdateRoutineRearrangesItsExercises() {
 		[]string{second.ID.String(), first.ID.String()},
 		routineExerciseIDs(updated.Msg.GetRoutine()),
 	)
+}
+
+// A routine the athlete does not have is a stale client rather than a bad
+// request: the id is well formed, it just names nothing they own.
+func (s *routineSuite) TestUpdateRoutineRejectsARoutineTheAthleteDoesNotHave() {
+	ctx, _ := s.athlete()
+
+	_, err := s.handler.UpdateRoutine(ctx, connect.NewRequest(&apiv1.UpdateRoutineRequest{
+		Routine: &apiv1.Routine{Id: uuid.Must(uuid.NewV4()).String(), Name: "Push"},
+	}))
+	s.Require().Error(err)
+	s.Require().Equal(connect.CodeFailedPrecondition, connect.CodeOf(err))
 }
 
 func (s *routineSuite) TestUpdateRoutineRejectsAnExerciseTheAthleteDoesNotOwn() {
@@ -241,7 +253,7 @@ func routineExerciseIDs(routine *apiv1.Routine) []string {
 
 func (s *routineSuite) context(user *models.User) context.Context {
 	ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
-	return xcontext.WithUserID(ctx, user.ID.String())
+	return xcontext.WithUserID(ctx, user.ID)
 }
 
 func (s *routineSuite) exerciseIDs(exercises models.ExerciseSlice) []string {
@@ -645,7 +657,7 @@ func groupExercises(ids ...string) []*apiv1.RoutineExercise {
 func (s *routineSuite) TestRoutineEndpointsRejectAMissingRoutine() {
 	ctx, user := s.athlete()
 	exercise := s.factory.NewExercise(factory.ExerciseUserID(user.ID))
-	missing := uuid.NewString()
+	missing := uuid.Must(uuid.NewV4()).String()
 
 	s.Run("get", func() {
 		_, err := s.handler.GetRoutine(ctx, connect.NewRequest(&apiv1.GetRoutineRequest{Id: missing}))

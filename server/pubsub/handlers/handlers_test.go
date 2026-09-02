@@ -7,8 +7,7 @@ import (
 	"fmt"
 	"testing"
 
-	gofrsuuid "github.com/gofrs/uuid/v5"
-	"github.com/google/uuid"
+	"github.com/gofrs/uuid/v5"
 	"github.com/stephenafamo/bob"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
@@ -68,8 +67,8 @@ func TestWorkoutCommentPosted_HandlePayload(t *testing.T) {
 	t.Run("ok_workout_comment_posted", func(t *testing.T) {
 		t.Parallel()
 		payload := events.WorkoutCommentPosted{
-			CommentID: uuid.NewString(),
-			EventID:   uuid.NewString(),
+			CommentID: uuid.Must(uuid.NewV4()),
+			EventID:   uuid.Must(uuid.NewV4()),
 		}
 
 		f.NewUser(factory.UserID(factory.UUID(0)))
@@ -102,15 +101,15 @@ func TestWorkoutCommentPosted_HandlePayload(t *testing.T) {
 		handler.HandlePayload(payload)
 
 		count, err := models.Notifications.Query(models.SelectWhere.Notifications.UserID.In(
-			gofrsuuid.FromStringOrNil(factory.UUID(0)),
-			gofrsuuid.FromStringOrNil(factory.UUID(1)),
-			gofrsuuid.FromStringOrNil(factory.UUID(2)),
+			factory.UUID(0),
+			factory.UUID(1),
+			factory.UUID(2),
 		)).Count(ctx, bob.NewDB(c.DB))
 		require.NoError(t, err)
 		require.Equal(t, 3, int(count))
 
 		exists, err := models.Notifications.Query(models.SelectWhere.Notifications.UserID.EQ(
-			gofrsuuid.FromStringOrNil(factory.UUID(3)),
+			factory.UUID(3),
 		)).Exists(ctx, bob.NewDB(c.DB))
 		require.NoError(t, err)
 		require.False(t, exists)
@@ -138,9 +137,9 @@ func TestFollowedUser_HandlePayload(t *testing.T) {
 	t.Run("ok_user_followed", func(t *testing.T) {
 		t.Parallel()
 		payload := events.UserFollowed{
-			FollowerID: "follower_id",
-			FolloweeID: "followee_id",
-			EventID:    "event_id",
+			FollowerID: uuid.Must(uuid.NewV4()),
+			FolloweeID: uuid.Must(uuid.NewV4()),
+			EventID:    uuid.Must(uuid.NewV4()),
 		}
 
 		notifications.EXPECT().CreateNotification(gomock.Any(), repo.CreateNotificationParams{
@@ -192,9 +191,9 @@ func TestHandlersSurviveAFailingStore(t *testing.T) {
 
 		handlers.NewFollowedUser(zap.NewExample(), notifications).
 			HandlePayload(events.UserFollowed{
-				FollowerID: uuid.NewString(),
-				FolloweeID: uuid.NewString(),
-				EventID:    uuid.NewString(),
+				FollowerID: uuid.Must(uuid.NewV4()),
+				FolloweeID: uuid.Must(uuid.NewV4()),
+				EventID:    uuid.Must(uuid.NewV4()),
 			})
 	})
 
@@ -205,8 +204,8 @@ func TestHandlersSurviveAFailingStore(t *testing.T) {
 
 		handlers.NewWorkoutCommentPosted(zap.NewExample(), comments).
 			HandlePayload(events.WorkoutCommentPosted{
-				CommentID: uuid.NewString(),
-				EventID:   uuid.NewString(),
+				CommentID: uuid.Must(uuid.NewV4()),
+				EventID:   uuid.Must(uuid.NewV4()),
 			})
 	})
 
@@ -215,23 +214,23 @@ func TestHandlersSurviveAFailingStore(t *testing.T) {
 		comments := handlers.NewMockCommentThread(controller)
 		comments.EXPECT().GetWorkoutComment(gomock.Any(), gomock.Any()).
 			Return(&models.WorkoutComment{
-				UserID:    gofrsuuid.Must(gofrsuuid.NewV4()),
-				WorkoutID: gofrsuuid.Must(gofrsuuid.NewV4()),
+				UserID:    uuid.Must(uuid.NewV4()),
+				WorkoutID: uuid.Must(uuid.NewV4()),
 			}, nil)
 		comments.EXPECT().GetWorkout(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, errStore)
 
 		handlers.NewWorkoutCommentPosted(zap.NewExample(), comments).
 			HandlePayload(events.WorkoutCommentPosted{
-				CommentID: uuid.NewString(),
-				EventID:   uuid.NewString(),
+				CommentID: uuid.Must(uuid.NewV4()),
+				EventID:   uuid.Must(uuid.NewV4()),
 			})
 	})
 
 	t.Run("workout_comment_unwritable_notification", func(t *testing.T) {
 		t.Parallel()
-		commenter := gofrsuuid.Must(gofrsuuid.NewV4())
-		owner := gofrsuuid.Must(gofrsuuid.NewV4())
-		workoutID := gofrsuuid.Must(gofrsuuid.NewV4())
+		commenter := uuid.Must(uuid.NewV4())
+		owner := uuid.Must(uuid.NewV4())
+		workoutID := uuid.Must(uuid.NewV4())
 
 		comments := handlers.NewMockCommentThread(controller)
 		comments.EXPECT().GetWorkoutComment(gomock.Any(), gomock.Any()).
@@ -242,8 +241,8 @@ func TestHandlersSurviveAFailingStore(t *testing.T) {
 
 		handlers.NewWorkoutCommentPosted(zap.NewExample(), comments).
 			HandlePayload(events.WorkoutCommentPosted{
-				CommentID: uuid.NewString(),
-				EventID:   uuid.NewString(),
+				CommentID: uuid.Must(uuid.NewV4()),
+				EventID:   uuid.Must(uuid.NewV4()),
 			})
 	})
 }
@@ -262,8 +261,8 @@ func TestHandlersDropAnEventWithoutAnID(t *testing.T) {
 
 		handlers.NewFollowedUser(zap.NewExample(), notifications).
 			HandlePayload(events.UserFollowed{
-				FollowerID: uuid.NewString(),
-				FolloweeID: uuid.NewString(),
+				FollowerID: uuid.Must(uuid.NewV4()),
+				FolloweeID: uuid.Must(uuid.NewV4()),
 			})
 	})
 
@@ -273,6 +272,6 @@ func TestHandlersDropAnEventWithoutAnID(t *testing.T) {
 		comments.EXPECT().GetWorkoutComment(gomock.Any(), gomock.Any()).Times(0)
 
 		handlers.NewWorkoutCommentPosted(zap.NewExample(), comments).
-			HandlePayload(events.WorkoutCommentPosted{CommentID: uuid.NewString()})
+			HandlePayload(events.WorkoutCommentPosted{CommentID: uuid.Must(uuid.NewV4())})
 	})
 }

@@ -97,7 +97,7 @@ func AuthEmail(email string) AuthOpt {
 	}
 }
 
-func AuthEmailToken(token string) AuthOpt {
+func AuthEmailToken(token any) AuthOpt {
 	return func(m *models.AuthSetter) {
 		m.EmailToken = omit.From(nativeUUID(token))
 	}
@@ -115,7 +115,7 @@ func AuthRefreshToken(token string) AuthOpt {
 	}
 }
 
-func AuthPasswordResetToken(token string, ttl time.Duration) AuthOpt {
+func AuthPasswordResetToken(token any, ttl time.Duration) AuthOpt {
 	return func(m *models.AuthSetter) {
 		m.PasswordResetToken = omitnull.From(nativeUUID(token))
 		m.PasswordResetTokenValidUntil = omitnull.From(time.Now().UTC().Add(ttl).Truncate(time.Microsecond))

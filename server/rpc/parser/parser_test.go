@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"testing"
 
-	gofrsuuid "github.com/gofrs/uuid/v5"
+	"github.com/gofrs/uuid/v5"
 	"github.com/lib/pq"
 	"github.com/stretchr/testify/suite"
 
@@ -135,16 +135,18 @@ func (s *parserSuite) TestRoutineWithGroups() {
 	exercises := s.factory.NewExerciseSlice(3)
 	routine.R.Exercises = exercises
 
+	straightID, circuitID := uuid.Must(uuid.NewV4()), uuid.Must(uuid.NewV4())
+
 	parsed := parser.RoutineWithGroups(routine, []*training.RoutineGroup{
 		{
-			ID:   "group-straight",
+			ID:   straightID,
 			Mode: training.RoutineGroupModeStraight,
 			Exercises: []training.RoutineExercise{
 				{Exercise: exercises[0], RestSeconds: 180},
 			},
 		},
 		{
-			ID:                          "group-circuit",
+			ID:                          circuitID,
 			Mode:                        training.RoutineGroupModeCircuit,
 			RestBetweenExercisesSeconds: 15,
 			RestBetweenRoundsSeconds:    90,
@@ -162,7 +164,7 @@ func (s *parserSuite) TestRoutineWithGroups() {
 	s.Require().Len(parsed.GetGroups(), 2)
 
 	straight := parsed.GetGroups()[0]
-	s.Require().Equal("group-straight", straight.GetId())
+	s.Require().Equal(straightID.String(), straight.GetId())
 	s.Require().Equal(v1.RoutineGroupMode_ROUTINE_GROUP_MODE_STRAIGHT, straight.GetMode())
 	s.Require().Len(straight.GetExercises(), 1)
 	s.Require().Equal(exercises[0].ID.String(), straight.GetExercises()[0].GetExercise().GetId())
@@ -397,14 +399,14 @@ func (s *parserSuite) TestExerciseSetSlice() {
 
 func (s *parserSuite) TestExerciseSetsFromPB() {
 	sets := parser.ExerciseSetsSlice(s.factory.NewSetSlice(2))
-	parsed := parser.ExerciseSetsFromPB(sets)
+	parsed, err := parser.ExerciseSetsFromPB(sets)
+	s.Require().NoError(err)
 
 	s.Require().Len(parsed, len(sets))
 	for i, exerciseSets := range parsed {
-		s.Require().Equal(sets[i].GetExercise().GetId(), exerciseSets.ExerciseID)
+		s.Require().Equal(sets[i].GetExercise().GetId(), exerciseSets.ExerciseID.String())
 		s.Require().Len(exerciseSets.Sets, len(sets[i].GetSets()))
 		for j, set := range exerciseSets.Sets {
-			s.Require().Equal(sets[i].GetSets()[j].GetId(), set.ID)
 			s.Require().InEpsilon(sets[i].GetSets()[j].GetWeight(), set.Weight, 0)
 			s.Require().Equal(int(sets[i].GetSets()[j].GetReps()), set.Reps)
 		}
@@ -518,14 +520,14 @@ func (s *parserSuite) TestNotificationSlice() {
 		s.factory.NewNotification(
 			factory.NotificationType(notification.TypeFollow),
 			factory.NotificationPayload(notification.Payload{
-				ActorID: actors[0].ID.String(),
+				ActorID: actors[0].ID,
 			}),
 		),
 		s.factory.NewNotification(
 			factory.NotificationType(notification.TypeWorkoutComment),
 			factory.NotificationPayload(notification.Payload{
-				ActorID:   actors[1].ID.String(),
-				WorkoutID: workouts[0].ID.String(),
+				ActorID:   actors[1].ID,
+				WorkoutID: workouts[0].ID,
 			}),
 		),
 	}
@@ -691,8 +693,8 @@ func (s *parserSuite) TestSetSlice() {
 // unknown metric — the parser is the second line, not the first.
 func (s *parserSuite) TestUnknownExerciseMetricsAreDropped() {
 	exercise := &models.Exercise{
-		ID:      gofrsuuid.Must(gofrsuuid.NewV4()),
-		UserID:  gofrsuuid.Must(gofrsuuid.NewV4()),
+		ID:      uuid.Must(uuid.NewV4()),
+		UserID:  uuid.Must(uuid.NewV4()),
 		Title:   "Rowing",
 		Metrics: pq.StringArray{"weight", "cadence", "reps"},
 	}

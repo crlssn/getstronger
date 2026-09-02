@@ -11,6 +11,7 @@ import (
 
 	"github.com/aarondl/opt/omit"
 	"github.com/aarondl/opt/omitnull"
+	"github.com/gofrs/uuid/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/lib/pq"
 	"github.com/stephenafamo/bob"
@@ -105,12 +106,12 @@ func (r *Repo) sqlExec() sqlExecutor {
 }
 
 // scanIDs collects the single id column a raw query projects.
-func scanIDs(rows *sql.Rows) ([]string, error) {
+func scanIDs(rows *sql.Rows) ([]uuid.UUID, error) {
 	defer func() { _ = rows.Close() }()
 
-	var ids []string
+	var ids []uuid.UUID
 	for rows.Next() {
-		var id string
+		var id uuid.UUID
 		if err := rows.Scan(&id); err != nil {
 			return nil, fmt.Errorf("scan id: %w", err)
 		}
@@ -212,7 +213,7 @@ func UpdateAuthRefreshToken(refreshToken string) UpdateAuthOpt {
 	}
 }
 
-func UpdateAuthPasswordResetToken(token string) UpdateAuthOpt {
+func UpdateAuthPasswordResetToken(token uuid.UUID) UpdateAuthOpt {
 	return func() (columns, error) {
 		return columns{
 			models.Auths.Columns.PasswordResetToken.Name():           token,
@@ -230,7 +231,7 @@ func UpdateAuthDeletePasswordResetToken() UpdateAuthOpt {
 	}
 }
 
-func (r *Repo) UpdateAuth(ctx context.Context, authID string, opts ...UpdateAuthOpt) error {
+func (r *Repo) UpdateAuth(ctx context.Context, authID uuid.UUID, opts ...UpdateAuthOpt) error {
 	cols, err := updateColumnsFromOpts(opts)
 	if err != nil {
 		return fmt.Errorf("auth update columns: %w", err)
@@ -283,7 +284,7 @@ func (r *Repo) RefreshTokenExists(ctx context.Context, refreshToken string) (boo
 }
 
 type CreateUserParams struct {
-	AuthID   string
+	AuthID   uuid.UUID
 	Name     string
 	Username string
 }
@@ -292,7 +293,7 @@ type CreateUserParams struct {
 // then on.
 func (r *Repo) CreateUser(ctx context.Context, p CreateUserParams) (*models.User, error) {
 	user, err := models.Users.Insert(&models.UserSetter{
-		AuthID:       omit.From(uuidFromString(p.AuthID)),
+		AuthID:       omit.From(p.AuthID),
 		Name:         omit.From(p.Name),
 		Username:     omit.From(account.NormalizeUsername(p.Username)),
 		WeightUnit:   omit.From(string(weightunit.Kilograms)),
@@ -355,13 +356,13 @@ func UpdateUserDistanceUnit(unit string) UpdateUserOpt {
 	}
 }
 
-func (r *Repo) UpdateUser(ctx context.Context, userID string, opts ...UpdateUserOpt) error {
+func (r *Repo) UpdateUser(ctx context.Context, userID uuid.UUID, opts ...UpdateUserOpt) error {
 	cols, err := updateColumnsFromOpts(opts)
 	if err != nil {
 		return fmt.Errorf("user update columns: %w", err)
 	}
 
-	mods := append(cols.updateMods(), models.UpdateWhere.Users.ID.EQ(uuidFromString(userID)))
+	mods := append(cols.updateMods(), models.UpdateWhere.Users.ID.EQ(userID))
 	rows, err := models.Users.Update(mods...).Exec(ctx, r.bobExec())
 	if err != nil {
 		return fmt.Errorf("user update: %w", translateUserError(err))
@@ -380,10 +381,10 @@ func (r *Repo) UpdateUser(ctx context.Context, userID string, opts ...UpdateUser
 // thing to sweep by hand is what other people's rows say about the account:
 // notifications naming it as their actor, which the notification list would
 // silently skip while the unread badge kept counting them.
-func (r *Repo) DeleteUser(ctx context.Context, userID string) error {
+func (r *Repo) DeleteUser(ctx context.Context, userID uuid.UUID) error {
 	return r.NewTx(ctx, func(tx *Repo) error {
 		user, err := models.Users.Query(
-			models.SelectWhere.Users.ID.EQ(uuidFromString(userID)),
+			models.SelectWhere.Users.ID.EQ(userID),
 		).One(ctx, tx.bobExec())
 		if err != nil {
 			return fmt.Errorf("user fetch: %w", err)
@@ -406,7 +407,7 @@ func (r *Repo) DeleteUser(ctx context.Context, userID string) error {
 }
 
 type CreateExerciseParams struct {
-	UserID  string
+	UserID  uuid.UUID
 	Name    string
 	Tags    []string
 	Metrics []string
@@ -422,7 +423,7 @@ func (r *Repo) CreateExercise(ctx context.Context, p CreateExerciseParams) (*mod
 		p.Tags = []string{}
 	}
 	exercise, err := models.Exercises.Insert(&models.ExerciseSetter{
-		UserID:  omit.From(uuidFromString(p.UserID)),
+		UserID:  omit.From(p.UserID),
 		Title:   omit.From(p.Name),
 		Tags:    omit.From(pq.StringArray(p.Tags)),
 		Metrics: omit.From(pq.StringArray(p.Metrics)),
@@ -435,15 +436,15 @@ func (r *Repo) CreateExercise(ctx context.Context, p CreateExerciseParams) (*mod
 }
 
 type SoftDeleteExerciseParams struct {
-	UserID     string
-	ExerciseID string
+	UserID     uuid.UUID
+	ExerciseID uuid.UUID
 }
 
 func (r *Repo) SoftDeleteExercise(ctx context.Context, p SoftDeleteExerciseParams) error {
 	return r.NewTx(ctx, func(tx *Repo) error {
 		exercise, err := models.Exercises.Query(
-			models.SelectWhere.Exercises.ID.EQ(uuidFromString(p.ExerciseID)),
-			models.SelectWhere.Exercises.UserID.EQ(uuidFromString(p.UserID)),
+			models.SelectWhere.Exercises.ID.EQ(p.ExerciseID),
+			models.SelectWhere.Exercises.UserID.EQ(p.UserID),
 		).One(ctx, tx.bobExec())
 		if err != nil {
 			return fmt.Errorf("exercise fetch: %w", err)
@@ -496,14 +497,14 @@ func ListExercisesWithoutDeleted() ListExercisesOpt {
 	}
 }
 
-func ListExercisesWithIDs(ids []string) ListExercisesOpt {
+func ListExercisesWithIDs(ids []uuid.UUID) ListExercisesOpt {
 	return func() ([]bob.Mod[*dialect.SelectQuery], error) {
 		if len(ids) == 0 {
 			return nil, nil
 		}
 
 		return []bob.Mod[*dialect.SelectQuery]{
-			models.SelectWhere.Exercises.ID.In(uuidsFromStrings(ids)...),
+			models.SelectWhere.Exercises.ID.In(ids...),
 		}, nil
 	}
 }
@@ -516,10 +517,10 @@ func ListExercisesWithName(name string) ListExercisesOpt {
 	}
 }
 
-func ListExercisesWithUserID(userID string) ListExercisesOpt {
+func ListExercisesWithUserID(userID uuid.UUID) ListExercisesOpt {
 	return func() ([]bob.Mod[*dialect.SelectQuery], error) {
 		return []bob.Mod[*dialect.SelectQuery]{
-			models.SelectWhere.Exercises.UserID.EQ(uuidFromString(userID)),
+			models.SelectWhere.Exercises.UserID.EQ(userID),
 		}, nil
 	}
 }
@@ -552,15 +553,15 @@ func (r *Repo) ListExercises(ctx context.Context, opts ...ListExercisesOpt) (mod
 
 type GetExerciseOpt func() bob.Mod[*dialect.SelectQuery]
 
-func GetExerciseWithID(id string) GetExerciseOpt {
+func GetExerciseWithID(id uuid.UUID) GetExerciseOpt {
 	return func() bob.Mod[*dialect.SelectQuery] {
-		return models.SelectWhere.Exercises.ID.EQ(uuidFromString(id))
+		return models.SelectWhere.Exercises.ID.EQ(id)
 	}
 }
 
-func GetExerciseWithUserID(userID string) GetExerciseOpt {
+func GetExerciseWithUserID(userID uuid.UUID) GetExerciseOpt {
 	return func() bob.Mod[*dialect.SelectQuery] {
-		return models.SelectWhere.Exercises.UserID.EQ(uuidFromString(userID))
+		return models.SelectWhere.Exercises.UserID.EQ(userID)
 	}
 }
 
@@ -597,13 +598,13 @@ func UpdateExerciseMetrics(metrics []string) UpdateExerciseOpt {
 	}
 }
 
-func (r *Repo) UpdateExercise(ctx context.Context, exerciseID string, opts ...UpdateExerciseOpt) error {
+func (r *Repo) UpdateExercise(ctx context.Context, exerciseID uuid.UUID, opts ...UpdateExerciseOpt) error {
 	cols, err := updateColumnsFromOpts(opts)
 	if err != nil {
 		return fmt.Errorf("exercise update columns: %w", err)
 	}
 
-	mods := append(cols.updateMods(), models.UpdateWhere.Exercises.ID.EQ(uuidFromString(exerciseID)))
+	mods := append(cols.updateMods(), models.UpdateWhere.Exercises.ID.EQ(exerciseID))
 	rows, err := models.Exercises.Update(mods...).Exec(ctx, r.bobExec())
 	if err != nil {
 		return fmt.Errorf("exercise update: %w", err)
@@ -617,9 +618,9 @@ func (r *Repo) UpdateExercise(ctx context.Context, exerciseID string, opts ...Up
 }
 
 type CreateRoutineParams struct {
-	UserID      string
+	UserID      uuid.UUID
 	Name        string
-	ExerciseIDs []string
+	ExerciseIDs []uuid.UUID
 	// Optional. When empty the routine gets a single straight-sets group
 	// holding every exercise in ExerciseIDs.
 	Groups []training.RoutineGroupDraft
@@ -632,14 +633,14 @@ var (
 
 func (r *Repo) CreateRoutine(ctx context.Context, p CreateRoutineParams) (*models.Routine, error) {
 	exercises, err := models.Exercises.Query(
-		models.SelectWhere.Exercises.ID.In(uuidsFromStrings(p.ExerciseIDs)...),
+		models.SelectWhere.Exercises.ID.In(p.ExerciseIDs...),
 	).All(ctx, r.bobExec())
 	if err != nil {
 		return nil, fmt.Errorf("exercises fetch: %w", err)
 	}
 
 	for _, exercise := range exercises {
-		if exercise.UserID != uuidFromString(p.UserID) {
+		if exercise.UserID != p.UserID {
 			return nil, ErrRoutineExerciseBelongsToAnotherUser
 		}
 		if !exercise.DeletedAt.IsNull() {
@@ -650,7 +651,7 @@ func (r *Repo) CreateRoutine(ctx context.Context, p CreateRoutineParams) (*model
 	var routine *models.Routine
 	if err = r.NewTx(ctx, func(tx *Repo) error {
 		routine, err = models.Routines.Insert(&models.RoutineSetter{
-			UserID: omit.From(uuidFromString(p.UserID)),
+			UserID: omit.From(p.UserID),
 			Title:  omit.From(p.Name),
 		}).One(ctx, tx.bobExec())
 		if err != nil {
@@ -658,9 +659,9 @@ func (r *Repo) CreateRoutine(ctx context.Context, p CreateRoutineParams) (*model
 		}
 
 		ordered := training.OrderExercisesByIDs(exercises, p.ExerciseIDs)
-		exerciseIDs := make([]string, 0, len(ordered))
+		exerciseIDs := make([]uuid.UUID, 0, len(ordered))
 		for _, exercise := range ordered {
-			exerciseIDs = append(exerciseIDs, exercise.ID.String())
+			exerciseIDs = append(exerciseIDs, exercise.ID)
 		}
 
 		if err = setRoutineGroups(
@@ -678,15 +679,15 @@ func (r *Repo) CreateRoutine(ctx context.Context, p CreateRoutineParams) (*model
 
 type GetRoutineOpt func() bob.Mod[*dialect.SelectQuery]
 
-func GetRoutineWithID(id string) GetRoutineOpt {
+func GetRoutineWithID(id uuid.UUID) GetRoutineOpt {
 	return func() bob.Mod[*dialect.SelectQuery] {
-		return models.SelectWhere.Routines.ID.EQ(uuidFromString(id))
+		return models.SelectWhere.Routines.ID.EQ(id)
 	}
 }
 
-func GetRoutineWithUserID(userID string) GetRoutineOpt {
+func GetRoutineWithUserID(userID uuid.UUID) GetRoutineOpt {
 	return func() bob.Mod[*dialect.SelectQuery] {
-		return models.SelectWhere.Routines.UserID.EQ(uuidFromString(userID))
+		return models.SelectWhere.Routines.UserID.EQ(userID)
 	}
 }
 
@@ -714,12 +715,12 @@ func newestFirst(createdAt, id any) []bob.Mod[*dialect.SelectQuery] {
 // id compares on the timestamp alone, which skips rows tied with the boundary
 // — the reason the id is there.
 func pageTokenBoundary(createdAt, id bob.Expression, pt PageToken) bob.Mod[*dialect.SelectQuery] {
-	if pt.ID == "" {
+	if pt.ID.IsNil() {
 		return sm.Where(psql.Group(createdAt).LT(psql.Arg(pt.CreatedAt)))
 	}
 
 	return sm.Where(psql.Group(createdAt, id).
-		LT(psql.Group(psql.Arg(pt.CreatedAt), psql.Arg(uuidFromString(pt.ID)))))
+		LT(psql.Group(psql.Arg(pt.CreatedAt), psql.Arg(pt.ID))))
 }
 
 // stableExerciseOrder orders a routine's exercise load by the position recorded on the
@@ -756,7 +757,7 @@ func (r *Repo) GetRoutine(ctx context.Context, opts ...GetRoutineOpt) (*models.R
 // exercise is retired: the row stays so the workouts that trained it still
 // resolve, while every plan that rotated through it drops it and keeps
 // pointing at the routine it was on.
-func (r *Repo) SoftDeleteRoutine(ctx context.Context, id string) error {
+func (r *Repo) SoftDeleteRoutine(ctx context.Context, id uuid.UUID) error {
 	return r.NewTx(ctx, func(tx *Repo) error {
 		routine, err := tx.GetRoutine(ctx, GetRoutineWithID(id))
 		if err != nil {
@@ -805,22 +806,22 @@ func ListRoutinesWithName(name string) ListRoutineOpt {
 	}
 }
 
-func ListRoutinesWithIDs(ids []string) ListRoutineOpt {
+func ListRoutinesWithIDs(ids []uuid.UUID) ListRoutineOpt {
 	return func() ([]bob.Mod[*dialect.SelectQuery], error) {
 		if len(ids) == 0 {
 			return nil, nil
 		}
 
 		return []bob.Mod[*dialect.SelectQuery]{
-			models.SelectWhere.Routines.ID.In(uuidsFromStrings(ids)...),
+			models.SelectWhere.Routines.ID.In(ids...),
 		}, nil
 	}
 }
 
-func ListRoutinesWithUserID(userID string) ListRoutineOpt {
+func ListRoutinesWithUserID(userID uuid.UUID) ListRoutineOpt {
 	return func() ([]bob.Mod[*dialect.SelectQuery], error) {
 		return []bob.Mod[*dialect.SelectQuery]{
-			models.SelectWhere.Routines.UserID.EQ(uuidFromString(userID)),
+			models.SelectWhere.Routines.UserID.EQ(userID),
 		}, nil
 	}
 }
@@ -868,13 +869,13 @@ func UpdateRoutineName(name string) UpdateRoutineOpt {
 	}
 }
 
-func (r *Repo) UpdateRoutine(ctx context.Context, routineID string, opts ...UpdateRoutineOpt) error {
+func (r *Repo) UpdateRoutine(ctx context.Context, routineID uuid.UUID, opts ...UpdateRoutineOpt) error {
 	cols, err := updateColumnsFromOpts(opts)
 	if err != nil {
 		return fmt.Errorf("routine update columns: %w", err)
 	}
 
-	mods := append(cols.updateMods(), models.UpdateWhere.Routines.ID.EQ(uuidFromString(routineID)))
+	mods := append(cols.updateMods(), models.UpdateWhere.Routines.ID.EQ(routineID))
 	rows, err := models.Routines.Update(mods...).Exec(ctx, r.bobExec())
 	if err != nil {
 		return fmt.Errorf("routine update: %w", err)
@@ -890,7 +891,7 @@ func (r *Repo) UpdateRoutine(ctx context.Context, routineID string, opts ...Upda
 // UpdateRoutineExerciseOrder rewrites the positions of a routine's exercises to match the given ID
 // order. The single statement keeps the rewrite atomic; IDs that match no row are ignored, so the
 // caller is expected to have validated the set.
-func (r *Repo) UpdateRoutineExerciseOrder(ctx context.Context, routineID string, exerciseIDs []string) error {
+func (r *Repo) UpdateRoutineExerciseOrder(ctx context.Context, routineID uuid.UUID, exerciseIDs []uuid.UUID) error {
 	if _, err := r.sqlExec().ExecContext(ctx, `
 UPDATE public.exercises_routines er
 SET position = ordered.position
@@ -906,7 +907,7 @@ WHERE er.routine_id = $1
 // AddExerciseToRoutine appends the exercise to the routine by inserting it after the routine's
 // current last position, which puts it in the routine's last group.
 func (r *Repo) AddExerciseToRoutine(ctx context.Context, exercise *models.Exercise, routine *models.Routine) error {
-	if err := ensureRoutineGroup(ctx, r.sqlExec(), routine.ID.String()); err != nil {
+	if err := ensureRoutineGroup(ctx, r.sqlExec(), routine.ID); err != nil {
 		return err
 	}
 
@@ -948,9 +949,9 @@ func (r *Repo) ListWorkouts(ctx context.Context, opts ...ListWorkoutsOpt) (model
 
 // CountWorkouts is every workout the user has ever logged. Callers that show a
 // lifetime figure want this rather than the length of a listed page.
-func (r *Repo) CountWorkouts(ctx context.Context, userID string) (int64, error) {
+func (r *Repo) CountWorkouts(ctx context.Context, userID uuid.UUID) (int64, error) {
 	count, err := models.Workouts.Query(
-		models.SelectWhere.Workouts.UserID.EQ(uuidFromString(userID)),
+		models.SelectWhere.Workouts.UserID.EQ(userID),
 	).Count(ctx, r.bobExec())
 	if err != nil {
 		return 0, fmt.Errorf("workouts count: %w", err)
@@ -959,10 +960,10 @@ func (r *Repo) CountWorkouts(ctx context.Context, userID string) (int64, error) 
 	return count, nil
 }
 
-func ListWorkoutsWithIDs(ids []string) ListWorkoutsOpt {
+func ListWorkoutsWithIDs(ids []uuid.UUID) ListWorkoutsOpt {
 	return func() ([]bob.Mod[*dialect.SelectQuery], error) {
 		return []bob.Mod[*dialect.SelectQuery]{
-			models.SelectWhere.Workouts.ID.In(uuidsFromStrings(ids)...),
+			models.SelectWhere.Workouts.ID.In(ids...),
 		}, nil
 	}
 }
@@ -991,10 +992,10 @@ func ListWorkoutsLoadSets() ListWorkoutsOpt {
 	}
 }
 
-func ListWorkoutsWithUserIDs(userIDs ...string) ListWorkoutsOpt {
+func ListWorkoutsWithUserIDs(userIDs ...uuid.UUID) ListWorkoutsOpt {
 	return func() ([]bob.Mod[*dialect.SelectQuery], error) {
 		return []bob.Mod[*dialect.SelectQuery]{
-			models.SelectWhere.Workouts.UserID.In(uuidsFromStrings(userIDs)...),
+			models.SelectWhere.Workouts.UserID.In(userIDs...),
 		}, nil
 	}
 }
@@ -1028,8 +1029,8 @@ func ListWorkoutsWithPageToken(token []byte) ListWorkoutsOpt {
 type CreateWorkoutParams struct {
 	Name         string
 	Note         string
-	UserID       string
-	RoutineID    string
+	UserID       uuid.UUID
+	RoutineID    uuid.UUID
 	ExerciseSets []ExerciseSet
 	// Groups is how the session was trained, resolved against ExerciseSets. An
 	// empty slice stores the workout ungrouped.
@@ -1037,18 +1038,17 @@ type CreateWorkoutParams struct {
 	StartedAt  time.Time
 	FinishedAt time.Time
 	// IdempotencyKey names the save attempt. A key this user already saved
-	// under is rejected with training.ErrWorkoutAlreadySaved; an empty one is
+	// under is rejected with training.ErrWorkoutAlreadySaved; a nil one is
 	// stored as none and never a repeat.
-	IdempotencyKey string
+	IdempotencyKey uuid.UUID
 }
 
 type ExerciseSet struct {
-	ExerciseID string
+	ExerciseID uuid.UUID
 	Sets       []Set
 }
 
 type Set struct {
-	ID              string
 	Reps            int
 	Weight          float64
 	Distance        float64
@@ -1065,12 +1065,12 @@ func (r *Repo) CreateWorkout(ctx context.Context, p CreateWorkoutParams) (*model
 		workout, err = models.Workouts.Insert(&models.WorkoutSetter{
 			Name:       omit.From(p.Name),
 			Note:       nullIfEmpty(p.Note),
-			UserID:     omit.From(uuidFromString(p.UserID)),
-			RoutineID:  nullUUIDFromString(p.RoutineID),
+			UserID:     omit.From(p.UserID),
+			RoutineID:  nullUUID(p.RoutineID),
 			StartedAt:  omit.From(p.StartedAt.Truncate(time.Minute).UTC()),
 			FinishedAt: omit.From(p.FinishedAt.Truncate(time.Minute).UTC()),
 
-			IdempotencyKey: nullUUIDFromString(p.IdempotencyKey),
+			IdempotencyKey: nullUUID(p.IdempotencyKey),
 		}).One(ctx, tx.bobExec())
 		if err != nil {
 			return fmt.Errorf("workout insert: %w", translateWorkoutError(err))
@@ -1091,9 +1091,9 @@ func (r *Repo) CreateWorkout(ctx context.Context, p CreateWorkoutParams) (*model
 					Distance:        omit.From(distanceunit.ToKilometers(set.Distance, set.DistanceUnit)),
 					DistanceUnit:    omit.From(string(distanceunit.Normalize(set.DistanceUnit))),
 					DurationSeconds: omit.From(safe.Int32FromInt(set.DurationSeconds)),
-					UserID:          omit.From(uuidFromString(p.UserID)),
+					UserID:          omit.From(p.UserID),
 					WorkoutID:       omit.From(workout.ID),
-					ExerciseID:      omit.From(uuidFromString(exerciseSet.ExerciseID)),
+					ExerciseID:      omit.From(exerciseSet.ExerciseID),
 					// The order the session logged them in, which is what a
 					// circuit's rounds are read off; every set of a workout
 					// shares created_at, so it cannot answer.
@@ -1135,21 +1135,21 @@ func translateWorkoutError(err error) error {
 
 type GetWorkoutOpt func() bob.Mod[*dialect.SelectQuery]
 
-func GetWorkoutWithID(id string) GetWorkoutOpt {
+func GetWorkoutWithID(id uuid.UUID) GetWorkoutOpt {
 	return func() bob.Mod[*dialect.SelectQuery] {
-		return models.SelectWhere.Workouts.ID.EQ(uuidFromString(id))
+		return models.SelectWhere.Workouts.ID.EQ(id)
 	}
 }
 
-func GetWorkoutWithUserID(userID string) GetWorkoutOpt {
+func GetWorkoutWithUserID(userID uuid.UUID) GetWorkoutOpt {
 	return func() bob.Mod[*dialect.SelectQuery] {
-		return models.SelectWhere.Workouts.UserID.EQ(uuidFromString(userID))
+		return models.SelectWhere.Workouts.UserID.EQ(userID)
 	}
 }
 
-func GetWorkoutWithIdempotencyKey(key string) GetWorkoutOpt {
+func GetWorkoutWithIdempotencyKey(key uuid.UUID) GetWorkoutOpt {
 	return func() bob.Mod[*dialect.SelectQuery] {
-		return models.SelectWhere.Workouts.IdempotencyKey.EQ(uuidFromString(key))
+		return models.SelectWhere.Workouts.IdempotencyKey.EQ(key)
 	}
 }
 
@@ -1199,15 +1199,15 @@ func (r *Repo) GetWorkout(ctx context.Context, opts ...GetWorkoutOpt) (*models.W
 
 type DeleteWorkoutOpt func() bob.Mod[*dialect.SelectQuery]
 
-func DeleteWorkoutWithID(id string) DeleteWorkoutOpt {
+func DeleteWorkoutWithID(id uuid.UUID) DeleteWorkoutOpt {
 	return func() bob.Mod[*dialect.SelectQuery] {
-		return models.SelectWhere.Workouts.ID.EQ(uuidFromString(id))
+		return models.SelectWhere.Workouts.ID.EQ(id)
 	}
 }
 
-func DeleteWorkoutWithUserID(userID string) DeleteWorkoutOpt {
+func DeleteWorkoutWithUserID(userID uuid.UUID) DeleteWorkoutOpt {
 	return func() bob.Mod[*dialect.SelectQuery] {
-		return models.SelectWhere.Workouts.UserID.EQ(uuidFromString(userID))
+		return models.SelectWhere.Workouts.UserID.EQ(userID)
 	}
 }
 
@@ -1255,7 +1255,7 @@ func (r *Repo) DeleteWorkout(ctx context.Context, opts ...DeleteWorkoutOpt) erro
 	})
 }
 
-func (r *Repo) GetPreviousWorkoutSets(ctx context.Context, exerciseIDs []string) (models.SetSlice, error) {
+func (r *Repo) GetPreviousWorkoutSets(ctx context.Context, exerciseIDs []uuid.UUID) (models.SetSlice, error) {
 	rawQuery := `
 SELECT id FROM public.sets
 WHERE (exercise_id, workout_id) IN (
@@ -1285,7 +1285,7 @@ ORDER BY created_at;
 	)
 }
 
-func (r *Repo) GetPersonalBests(ctx context.Context, userIDs ...string) (models.SetSlice, error) {
+func (r *Repo) GetPersonalBests(ctx context.Context, userIDs ...uuid.UUID) (models.SetSlice, error) {
 	workouts, err := r.ListWorkouts(ctx, ListWorkoutsWithUserIDs(userIDs...))
 	if err != nil {
 		return nil, fmt.Errorf("workouts fetch: %w", err)
@@ -1329,14 +1329,14 @@ func (r *Repo) GetPersonalBests(ctx context.Context, userIDs ...string) (models.
 }
 
 type FollowParams struct {
-	FollowerID string
-	FolloweeID string
+	FollowerID uuid.UUID
+	FolloweeID uuid.UUID
 }
 
 func (r *Repo) Follow(ctx context.Context, p FollowParams) error {
 	if _, err := models.Followers.Insert(&models.FollowerSetter{
-		FollowerID: omit.From(uuidFromString(p.FollowerID)),
-		FolloweeID: omit.From(uuidFromString(p.FolloweeID)),
+		FollowerID: omit.From(p.FollowerID),
+		FolloweeID: omit.From(p.FolloweeID),
 	}).Exec(ctx, r.bobExec()); err != nil {
 		return fmt.Errorf("follow add: %w", err)
 	}
@@ -1345,14 +1345,14 @@ func (r *Repo) Follow(ctx context.Context, p FollowParams) error {
 }
 
 type UnfollowParams struct {
-	FollowerID string
-	FolloweeID string
+	FollowerID uuid.UUID
+	FolloweeID uuid.UUID
 }
 
 func (r *Repo) Unfollow(ctx context.Context, p UnfollowParams) error {
 	if _, err := models.Followers.Delete(
-		models.DeleteWhere.Followers.FollowerID.EQ(uuidFromString(p.FollowerID)),
-		models.DeleteWhere.Followers.FolloweeID.EQ(uuidFromString(p.FolloweeID)),
+		models.DeleteWhere.Followers.FollowerID.EQ(p.FollowerID),
+		models.DeleteWhere.Followers.FolloweeID.EQ(p.FolloweeID),
 	).Exec(ctx, r.bobExec()); err != nil {
 		return fmt.Errorf("follow remove: %w", err)
 	}
@@ -1363,7 +1363,7 @@ func (r *Repo) Unfollow(ctx context.Context, p UnfollowParams) error {
 // followerIDsOf selects the users following userID, and followeeIDsOf the users
 // they follow. Bob collapses both foreign keys of the self-referencing
 // followers table into one relationship, so each direction is spelled out.
-func followerIDsOf(userID string) bob.Expression {
+func followerIDsOf(userID uuid.UUID) bob.Expression {
 	return psql.Select(
 		sm.Columns(models.Followers.Columns.FollowerID),
 		sm.From(models.Followers.NameAsExpr()),
@@ -1371,7 +1371,7 @@ func followerIDsOf(userID string) bob.Expression {
 	)
 }
 
-func followeeIDsOf(userID string) bob.Expression {
+func followeeIDsOf(userID uuid.UUID) bob.Expression {
 	return psql.Select(
 		sm.Columns(models.Followers.Columns.FolloweeID),
 		sm.From(models.Followers.NameAsExpr()),
@@ -1379,7 +1379,7 @@ func followeeIDsOf(userID string) bob.Expression {
 	)
 }
 
-func (r *Repo) ListFollowers(ctx context.Context, userID string) (models.UserSlice, error) {
+func (r *Repo) ListFollowers(ctx context.Context, userID uuid.UUID) (models.UserSlice, error) {
 	query := []bob.Mod[*dialect.SelectQuery]{
 		sm.Where(models.Users.Columns.ID.In(followerIDsOf(userID))),
 	}
@@ -1392,7 +1392,7 @@ func (r *Repo) ListFollowers(ctx context.Context, userID string) (models.UserSli
 	return users, nil
 }
 
-func (r *Repo) ListFollowees(ctx context.Context, userID string) (models.UserSlice, error) {
+func (r *Repo) ListFollowees(ctx context.Context, userID uuid.UUID) (models.UserSlice, error) {
 	query := []bob.Mod[*dialect.SelectQuery]{
 		sm.Where(models.Users.Columns.ID.In(followeeIDsOf(userID))),
 	}
@@ -1407,9 +1407,9 @@ func (r *Repo) ListFollowees(ctx context.Context, userID string) (models.UserSli
 
 type GetUserOpt func() bob.Mod[*dialect.SelectQuery]
 
-func GetUserWithID(id string) GetUserOpt {
+func GetUserWithID(id uuid.UUID) GetUserOpt {
 	return func() bob.Mod[*dialect.SelectQuery] {
-		return models.SelectWhere.Users.ID.EQ(uuidFromString(id))
+		return models.SelectWhere.Users.ID.EQ(id)
 	}
 }
 
@@ -1435,10 +1435,10 @@ func (r *Repo) GetUser(ctx context.Context, opts ...GetUserOpt) (*models.User, e
 
 type ListUsersOpt func() ([]bob.Mod[*dialect.SelectQuery], error)
 
-func ListUsersWithIDs(ids []string) ListUsersOpt {
+func ListUsersWithIDs(ids []uuid.UUID) ListUsersOpt {
 	return func() ([]bob.Mod[*dialect.SelectQuery], error) {
 		return []bob.Mod[*dialect.SelectQuery]{
-			models.SelectWhere.Users.ID.In(uuidsFromStrings(ids)...),
+			models.SelectWhere.Users.ID.In(ids...),
 		}, nil
 	}
 }
@@ -1481,7 +1481,7 @@ const userSearchCursor = "cursor"
 // on the query, so the token names the last user of the page and the next query
 // re-scores that user, rather than carrying a score no other query agrees with.
 type UserSearchPageToken struct {
-	ID string `json:"id"`
+	ID uuid.UUID `json:"id"`
 }
 
 // ListUsersWithPageToken resumes a name search after the user the token names.
@@ -1499,7 +1499,7 @@ func ListUsersWithPageToken(query string, token []byte) ListUsersOpt {
 			return nil, fmt.Errorf("page token unmarshal: %w", err)
 		}
 
-		cursorID := psql.Arg(uuidFromString(pt.ID))
+		cursorID := psql.Arg(pt.ID)
 		cursorRank := psql.Select(
 			sm.Columns(userSearchRank(
 				psql.Quote(userSearchCursor, models.Users.Columns.FullNameSearch.Name()),
@@ -1546,8 +1546,8 @@ func (r *Repo) ListUsers(ctx context.Context, opts ...ListUsersOpt) (models.User
 }
 
 type CreateWorkoutCommentParams struct {
-	UserID    string
-	WorkoutID string
+	UserID    uuid.UUID
+	WorkoutID uuid.UUID
 	Comment   string
 }
 
@@ -1571,8 +1571,8 @@ func (r *Repo) PostCreateWorkoutCommentLoadUser(ctx context.Context) CreateWorko
 
 func (r *Repo) CreateWorkoutComment(ctx context.Context, p CreateWorkoutCommentParams, opts ...CreateWorkoutCommentOpts) (*models.WorkoutComment, error) {
 	comment, err := models.WorkoutComments.Insert(&models.WorkoutCommentSetter{
-		UserID:    omit.From(uuidFromString(p.UserID)),
-		WorkoutID: omit.From(uuidFromString(p.WorkoutID)),
+		UserID:    omit.From(p.UserID),
+		WorkoutID: omit.From(p.WorkoutID),
 		Comment:   omit.From(p.Comment),
 	}).One(ctx, r.bobExec())
 	if err != nil {
@@ -1608,7 +1608,7 @@ func (r *Repo) StoreTrace(ctx context.Context, p StoreTraceParams) error {
 
 type CreateNotificationParams struct {
 	Type    notification.Type
-	UserID  string
+	UserID  uuid.UUID
 	Payload notification.Payload
 }
 
@@ -1620,7 +1620,7 @@ func (r *Repo) CreateNotification(ctx context.Context, p CreateNotificationParam
 
 	if _, err = models.Notifications.Insert(
 		&models.NotificationSetter{
-			UserID:  omit.From(uuidFromString(p.UserID)),
+			UserID:  omit.From(p.UserID),
 			Type:    omit.From(p.Type),
 			Payload: omit.From(bobtypes.NewJSON[json.RawMessage](payload)),
 		},
@@ -1634,9 +1634,9 @@ func (r *Repo) CreateNotification(ctx context.Context, p CreateNotificationParam
 
 type GetWorkoutCommentOpt func() bob.Mod[*dialect.SelectQuery]
 
-func GetWorkoutCommentWithID(id string) GetWorkoutCommentOpt {
+func GetWorkoutCommentWithID(id uuid.UUID) GetWorkoutCommentOpt {
 	return func() bob.Mod[*dialect.SelectQuery] {
-		return models.SelectWhere.WorkoutComments.ID.EQ(uuidFromString(id))
+		return models.SelectWhere.WorkoutComments.ID.EQ(id)
 	}
 }
 
@@ -1670,10 +1670,10 @@ func ListNotificationsWithLimit(limit int) ListNotificationsOpt {
 	}
 }
 
-func ListNotificationsWithUserID(userID string) ListNotificationsOpt {
+func ListNotificationsWithUserID(userID uuid.UUID) ListNotificationsOpt {
 	return func() ([]bob.Mod[*dialect.SelectQuery], error) {
 		return []bob.Mod[*dialect.SelectQuery]{
-			models.SelectWhere.Notifications.UserID.EQ(uuidFromString(userID)),
+			models.SelectWhere.Notifications.UserID.EQ(userID),
 		}, nil
 	}
 }
@@ -1717,9 +1717,9 @@ func (r *Repo) ListNotifications(ctx context.Context, opts ...ListNotificationsO
 
 type CountNotificationsOpt func() bob.Mod[*dialect.SelectQuery]
 
-func CountNotificationsWithUserID(userID string) CountNotificationsOpt {
+func CountNotificationsWithUserID(userID uuid.UUID) CountNotificationsOpt {
 	return func() bob.Mod[*dialect.SelectQuery] {
-		return models.SelectWhere.Notifications.UserID.EQ(uuidFromString(userID))
+		return models.SelectWhere.Notifications.UserID.EQ(userID)
 	}
 }
 
@@ -1750,16 +1750,16 @@ func (r *Repo) CountNotifications(ctx context.Context, opts ...CountNotification
 	return count, nil
 }
 
-func (r *Repo) MarkNotificationsAsRead(ctx context.Context, userID string, notificationID *string) error {
+func (r *Repo) MarkNotificationsAsRead(ctx context.Context, userID uuid.UUID, notificationID *uuid.UUID) error {
 	setReadAt := um.SetCol(models.Notifications.Columns.ReadAt.Name()).ToArg(time.Now().UTC())
-	ownedByUser := models.UpdateWhere.Notifications.UserID.EQ(uuidFromString(userID))
+	ownedByUser := models.UpdateWhere.Notifications.UserID.EQ(userID)
 	unread := models.UpdateWhere.Notifications.ReadAt.IsNull()
 
 	updateMods := []bob.Mod[*dialect.UpdateQuery]{setReadAt, ownedByUser, unread}
 	if notificationID != nil {
 		updateMods = append(
 			updateMods,
-			models.UpdateWhere.Notifications.ID.EQ(uuidFromString(*notificationID)),
+			models.UpdateWhere.Notifications.ID.EQ(*notificationID),
 		)
 	}
 
@@ -1770,10 +1770,10 @@ func (r *Repo) MarkNotificationsAsRead(ctx context.Context, userID string, notif
 	return nil
 }
 
-func (r *Repo) IsUserFollowedByUserID(ctx context.Context, user *models.User, userID string) (bool, error) {
+func (r *Repo) IsUserFollowedByUserID(ctx context.Context, user *models.User, userID uuid.UUID) (bool, error) {
 	exists, err := models.Followers.Query(
 		models.SelectWhere.Followers.FolloweeID.EQ(user.ID),
-		models.SelectWhere.Followers.FollowerID.EQ(uuidFromString(userID)),
+		models.SelectWhere.Followers.FollowerID.EQ(userID),
 	).Exists(ctx, r.bobExec())
 	if err != nil {
 		return false, fmt.Errorf("user exists check: %w", err)
@@ -1790,9 +1790,9 @@ func GetAuthByEmail(email string) GetAuthOpt {
 	}
 }
 
-func GetAuthByEmailToken(token string) GetAuthOpt {
+func GetAuthByEmailToken(token uuid.UUID) GetAuthOpt {
 	return func() bob.Mod[*dialect.SelectQuery] {
-		return models.SelectWhere.Auths.EmailToken.EQ(uuidFromString(token))
+		return models.SelectWhere.Auths.EmailToken.EQ(token)
 	}
 }
 
@@ -1802,9 +1802,9 @@ func GetAuthWithUser() GetAuthOpt {
 	}
 }
 
-func GetAuthByPasswordResetToken(token string) GetAuthOpt {
+func GetAuthByPasswordResetToken(token uuid.UUID) GetAuthOpt {
 	return func() bob.Mod[*dialect.SelectQuery] {
-		return models.SelectWhere.Auths.PasswordResetToken.EQ(uuidFromString(token))
+		return models.SelectWhere.Auths.PasswordResetToken.EQ(token)
 	}
 }
 
@@ -1836,15 +1836,15 @@ func ListSetsWithLimit(limit int) ListSetsOpt {
 	}
 }
 
-func ListSetsWithUserID(userID ...string) ListSetsOpt {
+func ListSetsWithUserID(userID ...uuid.UUID) ListSetsOpt {
 	return func() (bob.Mod[*dialect.SelectQuery], error) {
-		return models.SelectWhere.Sets.UserID.In(uuidsFromStrings(userID)...), nil
+		return models.SelectWhere.Sets.UserID.In(userID...), nil
 	}
 }
 
-func ListSetsWithExerciseID(exerciseID ...string) ListSetsOpt {
+func ListSetsWithExerciseID(exerciseID ...uuid.UUID) ListSetsOpt {
 	return func() (bob.Mod[*dialect.SelectQuery], error) {
-		return models.SelectWhere.Sets.ExerciseID.In(uuidsFromStrings(exerciseID)...), nil
+		return models.SelectWhere.Sets.ExerciseID.In(exerciseID...), nil
 	}
 }
 
@@ -1863,9 +1863,9 @@ func ListSetsWithPageToken(token []byte) ListSetsOpt {
 	}
 }
 
-func ListSetsWithID(id ...string) ListSetsOpt {
+func ListSetsWithID(id ...uuid.UUID) ListSetsOpt {
 	return func() (bob.Mod[*dialect.SelectQuery], error) {
-		return models.SelectWhere.Sets.ID.In(uuidsFromStrings(id)...), nil
+		return models.SelectWhere.Sets.ID.In(id...), nil
 	}
 }
 
@@ -1912,9 +1912,9 @@ func (r *Repo) ListSets(ctx context.Context, opts ...ListSetsOpt) (models.SetSli
 
 type CountSetsOpt func() bob.Mod[*dialect.SelectQuery]
 
-func CountSetsWithExerciseID(exerciseID string) CountSetsOpt {
+func CountSetsWithExerciseID(exerciseID uuid.UUID) CountSetsOpt {
 	return func() bob.Mod[*dialect.SelectQuery] {
-		return models.SelectWhere.Sets.ExerciseID.EQ(uuidFromString(exerciseID))
+		return models.SelectWhere.Sets.ExerciseID.EQ(exerciseID)
 	}
 }
 
@@ -1966,7 +1966,7 @@ func UpdateWorkoutFinishedAt(finishedAt time.Time) UpdateWorkoutOpt {
 	}
 }
 
-func (r *Repo) UpdateWorkout(ctx context.Context, workoutID string, opts ...UpdateWorkoutOpt) error {
+func (r *Repo) UpdateWorkout(ctx context.Context, workoutID uuid.UUID, opts ...UpdateWorkoutOpt) error {
 	if _, err := r.GetWorkout(ctx, GetWorkoutWithID(workoutID)); err != nil {
 		return fmt.Errorf("workout fetch: %w", err)
 	}
@@ -1976,7 +1976,7 @@ func (r *Repo) UpdateWorkout(ctx context.Context, workoutID string, opts ...Upda
 		return fmt.Errorf("workout update columns: %w", err)
 	}
 
-	mods := append(cols.updateMods(), models.UpdateWhere.Workouts.ID.EQ(uuidFromString(workoutID)))
+	mods := append(cols.updateMods(), models.UpdateWhere.Workouts.ID.EQ(workoutID))
 	rows, err := models.Workouts.Update(mods...).Exec(ctx, r.bobExec())
 	if err != nil {
 		return fmt.Errorf("workout update: %w", err)
@@ -1990,7 +1990,7 @@ func (r *Repo) UpdateWorkout(ctx context.Context, workoutID string, opts ...Upda
 }
 
 type UpdateWorkoutSetsParams struct {
-	WorkoutID    string
+	WorkoutID    uuid.UUID
 	ExerciseSets []ExerciseSet
 }
 
@@ -2023,7 +2023,7 @@ func (r *Repo) UpdateWorkoutSets(ctx context.Context, p UpdateWorkoutSetsParams)
 				sets = append(sets, &models.SetSetter{
 					UserID:          omit.From(workout.UserID),
 					WorkoutID:       omit.From(workout.ID),
-					ExerciseID:      omit.From(uuidFromString(exerciseSet.ExerciseID)),
+					ExerciseID:      omit.From(exerciseSet.ExerciseID),
 					Reps:            omit.From(safe.Int32FromInt(set.Reps)),
 					Weight:          omit.From(weightunit.ToKilograms(set.Weight, set.WeightUnit)),
 					WeightUnit:      omit.From(string(weightunit.Normalize(set.WeightUnit))),

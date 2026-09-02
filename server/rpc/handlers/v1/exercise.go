@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
+	"github.com/gofrs/uuid/v5"
 	"go.uber.org/zap"
 
 	"github.com/crlssn/getstronger/server/gen/models"
@@ -60,9 +61,14 @@ func (h *exerciseHandler) CreateExercise(ctx context.Context, req *connect.Reque
 }
 
 func (h *exerciseHandler) GetExercise(ctx context.Context, req *connect.Request[apiv1.GetExerciseRequest]) (*connect.Response[apiv1.GetExerciseResponse], error) {
-	log := xcontext.MustExtractLogger(ctx).With(xzap.FieldExerciseID(req.Msg.GetId()))
+	exerciseID, err := parser.UUID(req.Msg.GetId())
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInvalidArgument, nil)
+	}
 
-	exercise, err := h.repo.GetExercise(ctx, repo.GetExerciseWithID(req.Msg.GetId()))
+	log := xcontext.MustExtractLogger(ctx).With(xzap.FieldExerciseID(exerciseID))
+
+	exercise, err := h.repo.GetExercise(ctx, repo.GetExerciseWithID(exerciseID))
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			log.Warn("Exercise not found")
@@ -81,12 +87,16 @@ func (h *exerciseHandler) GetExercise(ctx context.Context, req *connect.Request[
 var ErrInvalidUpdateMaskPath = errors.New("invalid update mask path")
 
 func (h *exerciseHandler) UpdateExercise(ctx context.Context, req *connect.Request[apiv1.UpdateExerciseRequest]) (*connect.Response[apiv1.UpdateExerciseResponse], error) {
-	log := xcontext.MustExtractLogger(ctx).
-		With(xzap.FieldExerciseID(req.Msg.GetExercise().GetId()))
+	exerciseID, err := parser.UUID(req.Msg.GetExercise().GetId())
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInvalidArgument, nil)
+	}
+
+	log := xcontext.MustExtractLogger(ctx).With(xzap.FieldExerciseID(exerciseID))
 	userID := xcontext.MustExtractUserID(ctx)
 
 	exercise, err := h.repo.GetExercise(ctx,
-		repo.GetExerciseWithID(req.Msg.GetExercise().GetId()),
+		repo.GetExerciseWithID(exerciseID),
 		repo.GetExerciseWithUserID(userID))
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -116,12 +126,12 @@ func (h *exerciseHandler) UpdateExercise(ctx context.Context, req *connect.Reque
 		opts = append(opts, opt)
 	}
 
-	if err = h.repo.UpdateExercise(ctx, exercise.ID.String(), opts...); err != nil {
+	if err = h.repo.UpdateExercise(ctx, exercise.ID, opts...); err != nil {
 		log.Error("Update exercise", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	exercise, err = h.repo.GetExercise(ctx, repo.GetExerciseWithID(exercise.ID.String()))
+	exercise, err = h.repo.GetExercise(ctx, repo.GetExerciseWithID(exercise.ID))
 	if err != nil {
 		log.Error("Get exercise after update", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
@@ -148,7 +158,7 @@ func (h *exerciseHandler) metricsLocked(ctx context.Context, log *zap.Logger, ex
 		return false, connect.NewError(connect.CodeInvalidArgument, err)
 	}
 
-	sets, err := h.repo.CountSets(ctx, repo.CountSetsWithExerciseID(exercise.ID.String()))
+	sets, err := h.repo.CountSets(ctx, repo.CountSetsWithExerciseID(exercise.ID))
 	if err != nil {
 		log.Error("Count sets for exercise measurement change", zap.Error(err))
 		return false, connect.NewError(connect.CodeInternal, nil)
@@ -179,13 +189,17 @@ func (h *exerciseHandler) pathToUpdateExerciseOpt(path string, exercise *apiv1.E
 }
 
 func (h *exerciseHandler) DeleteExercise(ctx context.Context, req *connect.Request[apiv1.DeleteExerciseRequest]) (*connect.Response[apiv1.DeleteExerciseResponse], error) {
-	log := xcontext.MustExtractLogger(ctx).
-		With(xzap.FieldExerciseID(req.Msg.GetId()))
+	exerciseID, err := parser.UUID(req.Msg.GetId())
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInvalidArgument, nil)
+	}
+
+	log := xcontext.MustExtractLogger(ctx).With(xzap.FieldExerciseID(exerciseID))
 	userID := xcontext.MustExtractUserID(ctx)
 
-	if _, err := h.repo.GetExercise(
+	if _, err = h.repo.GetExercise(
 		ctx,
-		repo.GetExerciseWithID(req.Msg.GetId()),
+		repo.GetExerciseWithID(exerciseID),
 		repo.GetExerciseWithUserID(userID),
 	); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -197,9 +211,9 @@ func (h *exerciseHandler) DeleteExercise(ctx context.Context, req *connect.Reque
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	if err := h.repo.SoftDeleteExercise(ctx, repo.SoftDeleteExerciseParams{
+	if err = h.repo.SoftDeleteExercise(ctx, repo.SoftDeleteExerciseParams{
 		UserID:     userID,
-		ExerciseID: req.Msg.GetId(),
+		ExerciseID: exerciseID,
 	}); err != nil {
 		log.Error("Delete exercise", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
@@ -227,7 +241,11 @@ func (h *exerciseHandler) ListExercises(ctx context.Context, req *connect.Reques
 	}
 
 	if req.Msg.GetExerciseIds() != nil {
-		opts = append(opts, repo.ListExercisesWithIDs(req.Msg.GetExerciseIds()))
+		exerciseIDs, err := parser.UUIDs(req.Msg.GetExerciseIds())
+		if err != nil {
+			return nil, connect.NewError(connect.CodeInvalidArgument, nil)
+		}
+		opts = append(opts, repo.ListExercisesWithIDs(exerciseIDs))
 	}
 
 	exercises, err := h.repo.ListExercises(ctx, opts...)
@@ -236,8 +254,8 @@ func (h *exerciseHandler) ListExercises(ctx context.Context, req *connect.Reques
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	pagination, err := repo.PaginateSlice(exercises, limit, func(exercise *models.Exercise) (time.Time, string) {
-		return exercise.CreatedAt, exercise.ID.String()
+	pagination, err := repo.PaginateSlice(exercises, limit, func(exercise *models.Exercise) (time.Time, uuid.UUID) {
+		return exercise.CreatedAt, exercise.ID
 	})
 	if err != nil {
 		log.Error("Paginate exercises", zap.Error(err))
@@ -256,7 +274,12 @@ func (h *exerciseHandler) ListExercises(ctx context.Context, req *connect.Reques
 func (h *exerciseHandler) GetPreviousWorkoutSets(ctx context.Context, req *connect.Request[apiv1.GetPreviousWorkoutSetsRequest]) (*connect.Response[apiv1.GetPreviousWorkoutSetsResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
 
-	sets, err := h.repo.GetPreviousWorkoutSets(ctx, req.Msg.GetExerciseIds())
+	exerciseIDs, err := parser.UUIDs(req.Msg.GetExerciseIds())
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInvalidArgument, nil)
+	}
+
+	sets, err := h.repo.GetPreviousWorkoutSets(ctx, exerciseIDs)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return &connect.Response[apiv1.GetPreviousWorkoutSetsResponse]{
@@ -280,7 +303,12 @@ func (h *exerciseHandler) GetPreviousWorkoutSets(ctx context.Context, req *conne
 func (h *exerciseHandler) GetPersonalBests(ctx context.Context, req *connect.Request[apiv1.GetPersonalBestsRequest]) (*connect.Response[apiv1.GetPersonalBestsResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
 
-	personalBests, err := h.repo.GetPersonalBests(ctx, req.Msg.GetUserId())
+	userID, err := parser.UUID(req.Msg.GetUserId())
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInvalidArgument, nil)
+	}
+
+	personalBests, err := h.repo.GetPersonalBests(ctx, userID)
 	if err != nil {
 		log.Error("List personal bests for exercise", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
@@ -302,11 +330,19 @@ func (h *exerciseHandler) ListSets(ctx context.Context, req *connect.Request[api
 	}
 
 	if req.Msg.GetExerciseIds() != nil {
-		opts = append(opts, repo.ListSetsWithExerciseID(req.Msg.GetExerciseIds()...))
+		exerciseIDs, err := parser.UUIDs(req.Msg.GetExerciseIds())
+		if err != nil {
+			return nil, connect.NewError(connect.CodeInvalidArgument, nil)
+		}
+		opts = append(opts, repo.ListSetsWithExerciseID(exerciseIDs...))
 	}
 
 	if req.Msg.GetUserIds() != nil {
-		opts = append(opts, repo.ListSetsWithUserID(req.Msg.GetUserIds()...))
+		userIDs, err := parser.UUIDs(req.Msg.GetUserIds())
+		if err != nil {
+			return nil, connect.NewError(connect.CodeInvalidArgument, nil)
+		}
+		opts = append(opts, repo.ListSetsWithUserID(userIDs...))
 	}
 
 	sets, err := h.repo.ListSets(ctx, opts...)
@@ -315,17 +351,17 @@ func (h *exerciseHandler) ListSets(ctx context.Context, req *connect.Request[api
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	paginated, err := repo.PaginateSlice(sets, limit, func(set *models.Set) (time.Time, string) {
-		return set.CreatedAt, set.ID.String()
+	paginated, err := repo.PaginateSlice(sets, limit, func(set *models.Set) (time.Time, uuid.UUID) {
+		return set.CreatedAt, set.ID
 	})
 	if err != nil {
 		log.Error("Paginate exercise sets", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	userIDs := make([]string, 0, len(paginated.Items))
+	userIDs := make([]uuid.UUID, 0, len(paginated.Items))
 	for _, set := range paginated.Items {
-		userIDs = append(userIDs, set.UserID.String())
+		userIDs = append(userIDs, set.UserID)
 	}
 
 	personalBests, err := h.repo.GetPersonalBests(ctx, userIDs...)

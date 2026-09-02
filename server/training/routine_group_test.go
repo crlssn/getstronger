@@ -3,6 +3,7 @@ package training_test
 import (
 	"testing"
 
+	"github.com/gofrs/uuid/v5"
 	"github.com/stretchr/testify/require"
 
 	"github.com/crlssn/getstronger/server/training"
@@ -23,7 +24,7 @@ func runNormalizeCases(t *testing.T, tests []normalizeCase) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
-			require.Equal(t, test.expected, training.NormalizeRoutineGroups(test.groups, test.ordered))
+			require.Equal(t, test.expected, training.NormalizeRoutineGroups(test.groups, exerciseIDs(test.ordered...)))
 		})
 	}
 }
@@ -188,9 +189,9 @@ func TestNormalizeRoutineGroupSettings(t *testing.T) {
 				{
 					Mode: training.RoutineGroupModeStraight,
 					Exercises: []training.RoutineExerciseDraft{
-						{ExerciseID: "a", RestSeconds: new(int32(180))},
-						{ExerciseID: "b"},
-						{ExerciseID: "c", RestSeconds: new(int32(0))},
+						{ExerciseID: exerciseID("a"), RestSeconds: new(int32(180))},
+						{ExerciseID: exerciseID("b")},
+						{ExerciseID: exerciseID("c"), RestSeconds: new(int32(0))},
 					},
 				},
 			},
@@ -200,11 +201,11 @@ func TestNormalizeRoutineGroupSettings(t *testing.T) {
 					Mode: training.RoutineGroupModeStraight,
 					Exercises: []training.RoutineExerciseDraft{
 						// Set, so the routine says how long to rest.
-						{ExerciseID: "a", RestSeconds: new(int32(180))},
+						{ExerciseID: exerciseID("a"), RestSeconds: new(int32(180))},
 						// Unset, so the rest a new occurrence starts at answers.
-						{ExerciseID: "b"},
+						{ExerciseID: exerciseID("b")},
 						// Zero is an answer of its own: no timer here.
-						{ExerciseID: "c", RestSeconds: new(int32(0))},
+						{ExerciseID: exerciseID("c"), RestSeconds: new(int32(0))},
 					},
 				},
 			},
@@ -215,8 +216,8 @@ func TestNormalizeRoutineGroupSettings(t *testing.T) {
 				{
 					Mode: training.RoutineGroupModeStraight,
 					Exercises: []training.RoutineExerciseDraft{
-						{ExerciseID: "a", RestSeconds: new(int32(-5))},
-						{ExerciseID: "b", RestSeconds: new(int32(99999))},
+						{ExerciseID: exerciseID("a"), RestSeconds: new(int32(-5))},
+						{ExerciseID: exerciseID("b"), RestSeconds: new(int32(99999))},
 					},
 				},
 			},
@@ -225,8 +226,8 @@ func TestNormalizeRoutineGroupSettings(t *testing.T) {
 				{
 					Mode: training.RoutineGroupModeStraight,
 					Exercises: []training.RoutineExerciseDraft{
-						{ExerciseID: "a", RestSeconds: new(int32(0))},
-						{ExerciseID: "b", RestSeconds: new(int32(3600))},
+						{ExerciseID: exerciseID("a"), RestSeconds: new(int32(0))},
+						{ExerciseID: exerciseID("b"), RestSeconds: new(int32(3600))},
 					},
 				},
 			},
@@ -242,7 +243,7 @@ func TestNormalizeRoutineGroupSettings(t *testing.T) {
 					Mode:                     training.RoutineGroupModeCircuit,
 					RestBetweenRoundsSeconds: 120,
 					Exercises: []training.RoutineExerciseDraft{
-						{ExerciseID: "a", RestSeconds: new(int32(180))},
+						{ExerciseID: exerciseID("a"), RestSeconds: new(int32(180))},
 					},
 				},
 			},
@@ -252,7 +253,7 @@ func TestNormalizeRoutineGroupSettings(t *testing.T) {
 					Mode:                     training.RoutineGroupModeCircuit,
 					RestBetweenRoundsSeconds: 120,
 					Exercises: []training.RoutineExerciseDraft{
-						{ExerciseID: "a", RestSeconds: new(int32(180))},
+						{ExerciseID: exerciseID("a"), RestSeconds: new(int32(180))},
 					},
 				},
 			},
@@ -309,11 +310,26 @@ func TestNormalizeRoutineGroupSettings(t *testing.T) {
 
 // exercises names a group's exercises, none of them saying anything about rest
 // — which is every routine written before a routine could.
-func exercises(ids ...string) []training.RoutineExerciseDraft {
-	drafts := make([]training.RoutineExerciseDraft, 0, len(ids))
-	for _, id := range ids {
-		drafts = append(drafts, training.RoutineExerciseDraft{ExerciseID: id})
+func exercises(names ...string) []training.RoutineExerciseDraft {
+	drafts := make([]training.RoutineExerciseDraft, 0, len(names))
+	for _, name := range names {
+		drafts = append(drafts, training.RoutineExerciseDraft{ExerciseID: exerciseID(name)})
 	}
 
 	return drafts
+}
+
+// exerciseID is the row id a test's name stands for. Names read better than
+// ids in a table of cases, and the same name always means the same row.
+func exerciseID(name string) uuid.UUID {
+	return uuid.NewV5(uuid.NamespaceOID, name)
+}
+
+func exerciseIDs(names ...string) []uuid.UUID {
+	ids := make([]uuid.UUID, 0, len(names))
+	for _, name := range names {
+		ids = append(ids, exerciseID(name))
+	}
+
+	return ids
 }
