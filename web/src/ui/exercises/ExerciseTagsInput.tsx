@@ -33,6 +33,11 @@ export const ExerciseTagsInput = ({ value, onChange, suggestions = [] }: Props) 
   const matches = matchingSuggestions(suggestions, value, draft)
   const suggestionsOpen = focused && matches.length > 0
 
+  // Focus never leaves the field, so the field is what has to say which option
+  // the arrows are on. A highlight the option only draws is a highlight a
+  // screen reader never hears about.
+  const optionId = (index: number) => `${suggestionsId}-option-${index}`
+
   const rejectionMessage = (reason: TagRejection) => {
     if (reason.reason === 'tooLong') {
       return t('exercise.tagInput.tooLong', { count: maxTagLength })
@@ -131,6 +136,9 @@ export const ExerciseTagsInput = ({ value, onChange, suggestions = [] }: Props) 
           aria-autocomplete="list"
           aria-controls={suggestionsId}
           aria-expanded={suggestionsOpen}
+          aria-activedescendant={
+            suggestionsOpen && highlighted >= 0 ? optionId(highlighted) : undefined
+          }
           value={draft}
           onChange={(event) => {
             setDraft(event.target.value)
@@ -159,6 +167,7 @@ export const ExerciseTagsInput = ({ value, onChange, suggestions = [] }: Props) 
             // eslint-disable-next-line no-restricted-syntax
             <button
               key={suggestion}
+              id={optionId(index)}
               type="button"
               role="option"
               aria-selected={index === highlighted}
