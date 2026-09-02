@@ -2684,6 +2684,23 @@ func (s *repoSuite) TestCountNotificationsCountsReadOnesToo() {
 	s.Require().Equal(int64(2), all)
 }
 
+// A payload that cannot be read is a notification nothing can be rendered
+// from, so the list reports it rather than handing back a row with no subject.
+func (s *repoSuite) TestListNotificationsRefusesAnUnreadablePayload() {
+	ctx := context.Background()
+	user := s.factory.NewUser()
+
+	_, err := models.Notifications.Insert(&models.NotificationSetter{
+		UserID:  omit.From(user.ID),
+		Type:    omit.From(notification.TypeFollow),
+		Payload: omit.From(bobtypes.NewJSON[json.RawMessage]([]byte(`{"actorId":"not-a-uuid"}`))),
+	}).Exec(ctx, bob.NewDB(s.container.DB))
+	s.Require().NoError(err)
+
+	_, err = s.repo.ListNotifications(ctx, repo.ListNotificationsWithUserID(user.ID))
+	s.Require().Error(err)
+}
+
 // Asking about no workouts is not an error and not a query: the caller gets an
 // empty map back without the database being touched.
 func (s *repoSuite) TestListWorkoutGroupsOfNothing() {
