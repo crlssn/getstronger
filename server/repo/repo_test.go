@@ -512,27 +512,29 @@ func (s *repoSuite) TestCompareEmailAndPassword() {
 
 // An email that matches no row must still cost a bcrypt comparison, or the
 // response time tells anyone with a stopwatch which addresses are registered.
+//
+// The bar is what a comparison costs on the machine running this, taken as the
+// cheapest of a few so that a runner descheduling one of them cannot raise it.
+// Timing the registered path instead weighed two numbers that both wander, and
+// a busy runner put them at a ratio of 0.48.
 func (s *repoSuite) TestCompareEmailAndPasswordHidesUnregisteredEmails() {
-	registered := gofakeit.Email()
-	s.factory.NewAuth(
-		factory.AuthEmail(registered),
-		factory.AuthPassword("actual_password"),
-	)
+	hashed := repo.MustHashPassword("actual_password")
 
-	timeCompare := func(email string, expected error) time.Duration {
+	comparison := time.Hour
+	for range 3 {
 		start := time.Now()
-		err := s.repo.CompareEmailAndPassword(context.Background(), email, "wrong_password")
-		elapsed := time.Since(start)
-		s.Require().ErrorIs(err, expected)
-		return elapsed
+		_ = bcrypt.CompareHashAndPassword(hashed, []byte("wrong_password"))
+		comparison = min(comparison, time.Since(start))
 	}
 
-	registeredDuration := timeCompare(registered, bcrypt.ErrMismatchedHashAndPassword)
-	unregisteredDuration := timeCompare(gofakeit.Email(), sql.ErrNoRows)
+	start := time.Now()
+	err := s.repo.CompareEmailAndPassword(context.Background(), gofakeit.Email(), "wrong_password")
+	unregistered := time.Since(start)
+	s.Require().ErrorIs(err, sql.ErrNoRows)
 
-	// Half the registered cost sits far above the sub-millisecond lookup an
-	// early return takes and far below the bcrypt work both paths should do.
-	s.Require().Greater(unregisteredDuration, registeredDuration/2)
+	// Half a comparison sits far above the sub-millisecond lookup an early
+	// return takes and far below the work this path should be doing.
+	s.Require().Greater(unregistered, comparison/2)
 }
 
 func (s *repoSuite) TestRefreshTokenExists() {
