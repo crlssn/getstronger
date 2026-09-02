@@ -6,9 +6,13 @@ import "api/v1/shared.proto";
 import "api/v1/workout_service.proto";
 
 import "buf/validate/validate.proto";
+import "google/protobuf/timestamp.proto";
 
 service FeedService {
   rpc ListFeedItems (ListFeedItemsRequest) returns (ListFeedItemsResponse) {}
+  // Records that the caller has the feed in front of them now, so the next
+  // ListFeedItems draws its seen_at line here.
+  rpc MarkFeedAsSeen (MarkFeedAsSeenRequest) returns (MarkFeedAsSeenResponse) {}
 }
 
 message ListFeedItemsRequest {
@@ -18,10 +22,20 @@ message ListFeedItemsRequest {
 message ListFeedItemsResponse {
   repeated FeedItem items = 1;
   PaginationResponse pagination = 2;
+  // When the caller last marked the feed as seen. An item that arrived after
+  // it is new to them; unset for a caller who has never seen the feed, who has
+  // nothing to catch up on.
+  google.protobuf.Timestamp seen_at = 3;
 }
+
+message MarkFeedAsSeenRequest {}
+message MarkFeedAsSeenResponse {}
 
 message FeedItem {
   oneof type {
     Workout workout = 1;
   }
+  // When the item entered the feed: the moment the workout was logged, which
+  // is not when it was trained. The feed is ordered by it.
+  google.protobuf.Timestamp created_at = 2;
 }

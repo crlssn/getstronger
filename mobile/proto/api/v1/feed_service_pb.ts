@@ -9,13 +9,15 @@ import { file_api_v1_shared } from "./shared_pb";
 import type { Workout } from "./workout_service_pb";
 import { file_api_v1_workout_service } from "./workout_service_pb";
 import { file_buf_validate_validate } from "../../buf/validate/validate_pb";
+import type { Timestamp } from "@bufbuild/protobuf/wkt";
+import { file_google_protobuf_timestamp } from "@bufbuild/protobuf/wkt";
 import type { Message } from "@bufbuild/protobuf";
 
 /**
  * Describes the file api/v1/feed_service.proto.
  */
 export const file_api_v1_feed_service: GenFile = /*@__PURE__*/
-  fileDesc("ChlhcGkvdjEvZmVlZF9zZXJ2aWNlLnByb3RvEgZhcGkudjEiZAoUTGlzdEZlZWRJdGVtc1JlcXVlc3QSFQoNZm9sbG93ZWRfb25seRgBIAEoCBI1CgpwYWdpbmF0aW9uGAIgASgLMhkuYXBpLnYxLlBhZ2luYXRpb25SZXF1ZXN0Qga6SAPIAQEiaAoVTGlzdEZlZWRJdGVtc1Jlc3BvbnNlEh8KBWl0ZW1zGAEgAygLMhAuYXBpLnYxLkZlZWRJdGVtEi4KCnBhZ2luYXRpb24YAiABKAsyGi5hcGkudjEuUGFnaW5hdGlvblJlc3BvbnNlIjYKCEZlZWRJdGVtEiIKB3dvcmtvdXQYASABKAsyDy5hcGkudjEuV29ya291dEgAQgYKBHR5cGUyXQoLRmVlZFNlcnZpY2USTgoNTGlzdEZlZWRJdGVtcxIcLmFwaS52MS5MaXN0RmVlZEl0ZW1zUmVxdWVzdBodLmFwaS52MS5MaXN0RmVlZEl0ZW1zUmVzcG9uc2UiAEKUAQoKY29tLmFwaS52MUIQRmVlZFNlcnZpY2VQcm90b1ABWjtnaXRodWIuY29tL2NybHNzbi9nZXRzdHJvbmdlci9zZXJ2ZXIvZ2VuL3Byb3RvL2FwaS92MTthcGl2MaICA0FYWKoCBkFwaS5WMcoCBkFwaVxWMeICEkFwaVxWMVxHUEJNZXRhZGF0YeoCB0FwaTo6VjFiBnByb3RvMw", [file_api_v1_shared, file_api_v1_workout_service, file_buf_validate_validate]);
+  fileDesc("ChlhcGkvdjEvZmVlZF9zZXJ2aWNlLnByb3RvEgZhcGkudjEiZAoUTGlzdEZlZWRJdGVtc1JlcXVlc3QSFQoNZm9sbG93ZWRfb25seRgBIAEoCBI1CgpwYWdpbmF0aW9uGAIgASgLMhkuYXBpLnYxLlBhZ2luYXRpb25SZXF1ZXN0Qga6SAPIAQEilQEKFUxpc3RGZWVkSXRlbXNSZXNwb25zZRIfCgVpdGVtcxgBIAMoCzIQLmFwaS52MS5GZWVkSXRlbRIuCgpwYWdpbmF0aW9uGAIgASgLMhouYXBpLnYxLlBhZ2luYXRpb25SZXNwb25zZRIrCgdzZWVuX2F0GAMgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcCIXChVNYXJrRmVlZEFzU2VlblJlcXVlc3QiGAoWTWFya0ZlZWRBc1NlZW5SZXNwb25zZSJmCghGZWVkSXRlbRIiCgd3b3Jrb3V0GAEgASgLMg8uYXBpLnYxLldvcmtvdXRIABIuCgpjcmVhdGVkX2F0GAIgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcEIGCgR0eXBlMrABCgtGZWVkU2VydmljZRJOCg1MaXN0RmVlZEl0ZW1zEhwuYXBpLnYxLkxpc3RGZWVkSXRlbXNSZXF1ZXN0Gh0uYXBpLnYxLkxpc3RGZWVkSXRlbXNSZXNwb25zZSIAElEKDk1hcmtGZWVkQXNTZWVuEh0uYXBpLnYxLk1hcmtGZWVkQXNTZWVuUmVxdWVzdBoeLmFwaS52MS5NYXJrRmVlZEFzU2VlblJlc3BvbnNlIgBClAEKCmNvbS5hcGkudjFCEEZlZWRTZXJ2aWNlUHJvdG9QAVo7Z2l0aHViLmNvbS9jcmxzc24vZ2V0c3Ryb25nZXIvc2VydmVyL2dlbi9wcm90by9hcGkvdjE7YXBpdjGiAgNBWFiqAgZBcGkuVjHKAgZBcGlcVjHiAhJBcGlcVjFcR1BCTWV0YWRhdGHqAgdBcGk6OlYxYgZwcm90bzM", [file_api_v1_shared, file_api_v1_workout_service, file_buf_validate_validate, file_google_protobuf_timestamp]);
 
 /**
  * @generated from message api.v1.ListFeedItemsRequest
@@ -52,6 +54,15 @@ export type ListFeedItemsResponse = Message<"api.v1.ListFeedItemsResponse"> & {
    * @generated from field: api.v1.PaginationResponse pagination = 2;
    */
   pagination?: PaginationResponse | undefined;
+
+  /**
+   * When the caller last marked the feed as seen. An item that arrived after
+   * it is new to them; unset for a caller who has never seen the feed, who has
+   * nothing to catch up on.
+   *
+   * @generated from field: google.protobuf.Timestamp seen_at = 3;
+   */
+  seenAt?: Timestamp | undefined;
 };
 
 /**
@@ -60,6 +71,32 @@ export type ListFeedItemsResponse = Message<"api.v1.ListFeedItemsResponse"> & {
  */
 export const ListFeedItemsResponseSchema: GenMessage<ListFeedItemsResponse> = /*@__PURE__*/
   messageDesc(file_api_v1_feed_service, 1);
+
+/**
+ * @generated from message api.v1.MarkFeedAsSeenRequest
+ */
+export type MarkFeedAsSeenRequest = Message<"api.v1.MarkFeedAsSeenRequest"> & {
+};
+
+/**
+ * Describes the message api.v1.MarkFeedAsSeenRequest.
+ * Use `create(MarkFeedAsSeenRequestSchema)` to create a new message.
+ */
+export const MarkFeedAsSeenRequestSchema: GenMessage<MarkFeedAsSeenRequest> = /*@__PURE__*/
+  messageDesc(file_api_v1_feed_service, 2);
+
+/**
+ * @generated from message api.v1.MarkFeedAsSeenResponse
+ */
+export type MarkFeedAsSeenResponse = Message<"api.v1.MarkFeedAsSeenResponse"> & {
+};
+
+/**
+ * Describes the message api.v1.MarkFeedAsSeenResponse.
+ * Use `create(MarkFeedAsSeenResponseSchema)` to create a new message.
+ */
+export const MarkFeedAsSeenResponseSchema: GenMessage<MarkFeedAsSeenResponse> = /*@__PURE__*/
+  messageDesc(file_api_v1_feed_service, 3);
 
 /**
  * @generated from message api.v1.FeedItem
@@ -75,6 +112,14 @@ export type FeedItem = Message<"api.v1.FeedItem"> & {
     value: Workout;
     case: "workout";
   } | { case: undefined; value?: undefined };
+
+  /**
+   * When the item entered the feed: the moment the workout was logged, which
+   * is not when it was trained. The feed is ordered by it.
+   *
+   * @generated from field: google.protobuf.Timestamp created_at = 2;
+   */
+  createdAt?: Timestamp | undefined;
 };
 
 /**
@@ -82,7 +127,7 @@ export type FeedItem = Message<"api.v1.FeedItem"> & {
  * Use `create(FeedItemSchema)` to create a new message.
  */
 export const FeedItemSchema: GenMessage<FeedItem> = /*@__PURE__*/
-  messageDesc(file_api_v1_feed_service, 2);
+  messageDesc(file_api_v1_feed_service, 4);
 
 /**
  * @generated from service api.v1.FeedService
@@ -95,6 +140,17 @@ export const FeedService: GenService<{
     methodKind: "unary";
     input: typeof ListFeedItemsRequestSchema;
     output: typeof ListFeedItemsResponseSchema;
+  },
+  /**
+   * Records that the caller has the feed in front of them now, so the next
+   * ListFeedItems draws its seen_at line here.
+   *
+   * @generated from rpc api.v1.FeedService.MarkFeedAsSeen
+   */
+  markFeedAsSeen: {
+    methodKind: "unary";
+    input: typeof MarkFeedAsSeenRequestSchema;
+    output: typeof MarkFeedAsSeenResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_api_v1_feed_service, 0);

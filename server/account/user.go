@@ -41,6 +41,9 @@ type User struct {
 	DistanceUnit distanceunit.Unit
 	AutofillSets bool
 	CreatedAt    time.Time
+	// FeedSeenAt is when the athlete last had the home feed in front of them,
+	// or zero while they never have.
+	FeedSeenAt time.Time
 
 	// Email is only filled in when the read loaded the account behind the
 	// athlete: it is the account holder's to see and nobody else's.

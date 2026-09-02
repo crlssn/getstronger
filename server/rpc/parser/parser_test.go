@@ -644,12 +644,14 @@ func TestFeedItemSlice(t *testing.T) {
 	workout := newWorkout()
 	workout.Sets = []*training.Set{newSet(newExercise(), 60, 5)}
 	workout.Sets[0].WorkoutID = workout.ID
+	workout.CreatedAt = time.Now().UTC()
 	workouts := []*training.Workout{workout}
 
 	parsed := parser.FeedItemSlice(workouts, nil)
 	require.Len(t, parsed, len(workouts))
 
 	feedItem := parsed[0]
+	require.True(t, workout.CreatedAt.Equal(feedItem.GetCreatedAt().AsTime()))
 	require.NotNil(t, feedItem.GetWorkout())
 	require.Equal(t, workout.ID.String(), feedItem.GetWorkout().GetId())
 	require.Equal(t, workout.Name, feedItem.GetWorkout().GetName())

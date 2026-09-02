@@ -37,11 +37,17 @@ const (
 	// FeedServiceListFeedItemsProcedure is the fully-qualified name of the FeedService's ListFeedItems
 	// RPC.
 	FeedServiceListFeedItemsProcedure = "/api.v1.FeedService/ListFeedItems"
+	// FeedServiceMarkFeedAsSeenProcedure is the fully-qualified name of the FeedService's
+	// MarkFeedAsSeen RPC.
+	FeedServiceMarkFeedAsSeenProcedure = "/api.v1.FeedService/MarkFeedAsSeen"
 )
 
 // FeedServiceClient is a client for the api.v1.FeedService service.
 type FeedServiceClient interface {
 	ListFeedItems(context.Context, *connect.Request[v1.ListFeedItemsRequest]) (*connect.Response[v1.ListFeedItemsResponse], error)
+	// Records that the caller has the feed in front of them now, so the next
+	// ListFeedItems draws its seen_at line here.
+	MarkFeedAsSeen(context.Context, *connect.Request[v1.MarkFeedAsSeenRequest]) (*connect.Response[v1.MarkFeedAsSeenResponse], error)
 }
 
 // NewFeedServiceClient constructs a client for the api.v1.FeedService service. By default, it uses
@@ -61,12 +67,19 @@ func NewFeedServiceClient(httpClient connect.HTTPClient, baseURL string, opts ..
 			connect.WithSchema(feedServiceMethods.ByName("ListFeedItems")),
 			connect.WithClientOptions(opts...),
 		),
+		markFeedAsSeen: connect.NewClient[v1.MarkFeedAsSeenRequest, v1.MarkFeedAsSeenResponse](
+			httpClient,
+			baseURL+FeedServiceMarkFeedAsSeenProcedure,
+			connect.WithSchema(feedServiceMethods.ByName("MarkFeedAsSeen")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
 // feedServiceClient implements FeedServiceClient.
 type feedServiceClient struct {
-	listFeedItems *connect.Client[v1.ListFeedItemsRequest, v1.ListFeedItemsResponse]
+	listFeedItems  *connect.Client[v1.ListFeedItemsRequest, v1.ListFeedItemsResponse]
+	markFeedAsSeen *connect.Client[v1.MarkFeedAsSeenRequest, v1.MarkFeedAsSeenResponse]
 }
 
 // ListFeedItems calls api.v1.FeedService.ListFeedItems.
@@ -74,9 +87,17 @@ func (c *feedServiceClient) ListFeedItems(ctx context.Context, req *connect.Requ
 	return c.listFeedItems.CallUnary(ctx, req)
 }
 
+// MarkFeedAsSeen calls api.v1.FeedService.MarkFeedAsSeen.
+func (c *feedServiceClient) MarkFeedAsSeen(ctx context.Context, req *connect.Request[v1.MarkFeedAsSeenRequest]) (*connect.Response[v1.MarkFeedAsSeenResponse], error) {
+	return c.markFeedAsSeen.CallUnary(ctx, req)
+}
+
 // FeedServiceHandler is an implementation of the api.v1.FeedService service.
 type FeedServiceHandler interface {
 	ListFeedItems(context.Context, *connect.Request[v1.ListFeedItemsRequest]) (*connect.Response[v1.ListFeedItemsResponse], error)
+	// Records that the caller has the feed in front of them now, so the next
+	// ListFeedItems draws its seen_at line here.
+	MarkFeedAsSeen(context.Context, *connect.Request[v1.MarkFeedAsSeenRequest]) (*connect.Response[v1.MarkFeedAsSeenResponse], error)
 }
 
 // NewFeedServiceHandler builds an HTTP handler from the service implementation. It returns the path
@@ -92,10 +113,18 @@ func NewFeedServiceHandler(svc FeedServiceHandler, opts ...connect.HandlerOption
 		connect.WithSchema(feedServiceMethods.ByName("ListFeedItems")),
 		connect.WithHandlerOptions(opts...),
 	)
+	feedServiceMarkFeedAsSeenHandler := connect.NewUnaryHandler(
+		FeedServiceMarkFeedAsSeenProcedure,
+		svc.MarkFeedAsSeen,
+		connect.WithSchema(feedServiceMethods.ByName("MarkFeedAsSeen")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/api.v1.FeedService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case FeedServiceListFeedItemsProcedure:
 			feedServiceListFeedItemsHandler.ServeHTTP(w, r)
+		case FeedServiceMarkFeedAsSeenProcedure:
+			feedServiceMarkFeedAsSeenHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -107,4 +136,8 @@ type UnimplementedFeedServiceHandler struct{}
 
 func (UnimplementedFeedServiceHandler) ListFeedItems(context.Context, *connect.Request[v1.ListFeedItemsRequest]) (*connect.Response[v1.ListFeedItemsResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.FeedService.ListFeedItems is not implemented"))
+}
+
+func (UnimplementedFeedServiceHandler) MarkFeedAsSeen(context.Context, *connect.Request[v1.MarkFeedAsSeenRequest]) (*connect.Response[v1.MarkFeedAsSeenResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.FeedService.MarkFeedAsSeen is not implemented"))
 }

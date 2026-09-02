@@ -8,7 +8,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/aarondl/opt/null"
 	"github.com/aarondl/opt/omit"
+	"github.com/aarondl/opt/omitnull"
 	models "github.com/crlssn/getstronger/server/gen/models"
 	"github.com/gofrs/uuid/v5"
 	"github.com/jaswdr/faker/v2"
@@ -45,6 +47,7 @@ type UserTemplate struct {
 	FullNameSearch func() string
 	Username       func() string
 	AutofillSets   func() bool
+	FeedSeenAt     func() null.Val[time.Time]
 
 	r userR
 	f *Factory
@@ -272,6 +275,10 @@ func (o UserTemplate) BuildSetter() *models.UserSetter {
 		val := o.AutofillSets()
 		m.AutofillSets = omit.From(val)
 	}
+	if o.FeedSeenAt != nil {
+		val := o.FeedSeenAt()
+		m.FeedSeenAt = omitnull.FromNull(val)
+	}
 
 	return m
 }
@@ -320,6 +327,9 @@ func (o UserTemplate) Build() *models.User {
 	}
 	if o.AutofillSets != nil {
 		m.AutofillSets = o.AutofillSets()
+	}
+	if o.FeedSeenAt != nil {
+		m.FeedSeenAt = o.FeedSeenAt()
 	}
 
 	o.setModelRels(m)
@@ -682,6 +692,7 @@ func (m userMods) RandomizeAllColumns(f *faker.Faker) UserMod {
 		UserMods.RandomFullNameSearch(f),
 		UserMods.RandomUsername(f),
 		UserMods.RandomAutofillSets(f),
+		UserMods.RandomFeedSeenAt(f),
 	}
 }
 
@@ -960,6 +971,59 @@ func (m userMods) RandomAutofillSets(f *faker.Faker) UserMod {
 	return UserModFunc(func(_ context.Context, o *UserTemplate) {
 		o.AutofillSets = func() bool {
 			return random_bool(f)
+		}
+	})
+}
+
+// Set the model columns to this value
+func (m userMods) FeedSeenAt(val null.Val[time.Time]) UserMod {
+	return UserModFunc(func(_ context.Context, o *UserTemplate) {
+		o.FeedSeenAt = func() null.Val[time.Time] { return val }
+	})
+}
+
+// Set the Column from the function
+func (m userMods) FeedSeenAtFunc(f func() null.Val[time.Time]) UserMod {
+	return UserModFunc(func(_ context.Context, o *UserTemplate) {
+		o.FeedSeenAt = f
+	})
+}
+
+// Clear any values for the column
+func (m userMods) UnsetFeedSeenAt() UserMod {
+	return UserModFunc(func(_ context.Context, o *UserTemplate) {
+		o.FeedSeenAt = nil
+	})
+}
+
+// Generates a random value for the column using the given faker
+// if faker is nil, a default faker is used
+// The generated value is sometimes null
+func (m userMods) RandomFeedSeenAt(f *faker.Faker) UserMod {
+	return UserModFunc(func(_ context.Context, o *UserTemplate) {
+		o.FeedSeenAt = func() null.Val[time.Time] {
+			if f == nil {
+				f = &defaultFaker
+			}
+
+			val := random_time_Time(f)
+			return null.From(val)
+		}
+	})
+}
+
+// Generates a random value for the column using the given faker
+// if faker is nil, a default faker is used
+// The generated value is never null
+func (m userMods) RandomFeedSeenAtNotNull(f *faker.Faker) UserMod {
+	return UserModFunc(func(_ context.Context, o *UserTemplate) {
+		o.FeedSeenAt = func() null.Val[time.Time] {
+			if f == nil {
+				f = &defaultFaker
+			}
+
+			val := random_time_Time(f)
+			return null.From(val)
 		}
 	})
 }

@@ -96,6 +96,15 @@ var Users = Table[
 			Generated: false,
 			AutoIncr:  false,
 		},
+		FeedSeenAt: column{
+			Name:      "feed_seen_at",
+			DBType:    "timestamp without time zone",
+			Default:   "NULL",
+			Comment:   "",
+			Nullable:  true,
+			Generated: false,
+			AutoIncr:  false,
+		},
 	},
 	Indexes: userIndexes{
 		UsersPkey: index{
@@ -221,11 +230,12 @@ type userColumns struct {
 	FullNameSearch column
 	Username       column
 	AutofillSets   column
+	FeedSeenAt     column
 }
 
 func (c userColumns) AsSlice() []column {
 	return []column{
-		c.ID, c.CreatedAt, c.AuthID, c.WeightUnit, c.DistanceUnit, c.Name, c.FullNameSearch, c.Username, c.AutofillSets,
+		c.ID, c.CreatedAt, c.AuthID, c.WeightUnit, c.DistanceUnit, c.Name, c.FullNameSearch, c.Username, c.AutofillSets, c.FeedSeenAt,
 	}
 }
 

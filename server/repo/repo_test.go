@@ -2759,3 +2759,21 @@ func (s *repoSuite) TestUpdateWorkoutSetsDropsAnExerciseWithNoSets() {
 	s.Require().Len(sets, 1)
 	s.Require().Equal(logged.ID, sets[0].ExerciseID)
 }
+
+func (s *repoSuite) TestMarkFeedAsSeen() {
+	ctx := context.Background()
+	user := s.factory.NewUser()
+
+	fresh, err := s.repo.GetUser(ctx, repo.GetUserWithID(user.ID))
+	s.Require().NoError(err)
+	s.Require().True(fresh.FeedSeenAt.IsZero())
+
+	s.Require().NoError(s.repo.MarkFeedAsSeen(ctx, user.ID))
+
+	seen, err := s.repo.GetUser(ctx, repo.GetUserWithID(user.ID))
+	s.Require().NoError(err)
+	s.Require().WithinDuration(time.Now(), seen.FeedSeenAt, 5*time.Second)
+
+	err = s.repo.MarkFeedAsSeen(ctx, uuid.Must(uuid.NewV4()))
+	s.Require().ErrorIs(err, repo.ErrUpdateRowsAffected)
+}
