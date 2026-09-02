@@ -787,6 +787,9 @@ export const StartWorkout = () => {
       note: workout?.note ?? '',
       planId: quickWorkout ? '' : (workout?.planId ?? ''),
       workoutName: quickWorkout ? t('workout.quick') : '',
+      // The same key on every attempt, queued replay included: the server
+      // answers a repeat with the workout it already saved.
+      idempotencyKey: workout?.idempotencyKey,
     })
 
     try {

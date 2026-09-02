@@ -300,3 +300,31 @@ func TestValidatorRejectsAnUnboundedIDList(t *testing.T) {
 	require.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
 	require.False(t, reached)
 }
+
+// The idempotency key is optional, but one that is sent has to be a UUID.
+func TestValidatorRejectsAMalformedIdempotencyKey(t *testing.T) {
+	t.Parallel()
+	validator, err := protovalidate.New()
+	require.NoError(t, err)
+
+	reached := false
+	next := func(_ context.Context, _ connect.AnyRequest) (connect.AnyResponse, error) {
+		reached = true
+		return connect.NewResponse(&apiv1.CreateWorkoutResponse{}), nil
+	}
+	interceptor := newValidator(zap.NewNop(), validator)
+
+	key := "not-a-uuid"
+	_, err = interceptor.WrapUnary(next)(context.Background(), connect.NewRequest(&apiv1.CreateWorkoutRequest{
+		WorkoutName: "Quick Workout",
+		ExerciseSets: []*apiv1.ExerciseSets{{
+			Exercise: &apiv1.Exercise{Id: uuid.NewString()},
+			Sets:     []*apiv1.Set{{Reps: 10}},
+		}},
+		StartedAt:      timestamppb.Now(),
+		FinishedAt:     timestamppb.Now(),
+		IdempotencyKey: &key,
+	}))
+	require.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
+	require.False(t, reached)
+}

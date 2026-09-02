@@ -40,9 +40,14 @@ type CreateWorkoutRequest struct {
 	// sets it took, and the groups are matched against exercise_sets in the order
 	// they are listed. A request that names none is stored ungrouped, which is
 	// what every client sent before blocks were recorded.
-	Groups        []*WorkoutGroup `protobuf:"bytes,8,rep,name=groups,proto3" json:"groups,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	Groups []*WorkoutGroup `protobuf:"bytes,8,rep,name=groups,proto3" json:"groups,omitempty"`
+	// Optional. A key the client mints once per session and sends with every
+	// attempt to save it, so a save the server committed but never answered is
+	// recognised when it is sent again and answered with the workout it already
+	// has rather than saved twice. Unique per user.
+	IdempotencyKey *string `protobuf:"bytes,9,opt,name=idempotency_key,json=idempotencyKey,proto3,oneof" json:"idempotency_key,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
 }
 
 func (x *CreateWorkoutRequest) Reset() {
@@ -129,6 +134,13 @@ func (x *CreateWorkoutRequest) GetGroups() []*WorkoutGroup {
 		return x.Groups
 	}
 	return nil
+}
+
+func (x *CreateWorkoutRequest) GetIdempotencyKey() string {
+	if x != nil && x.IdempotencyKey != nil {
+		return *x.IdempotencyKey
+	}
+	return ""
 }
 
 type CreateWorkoutResponse struct {
@@ -981,7 +993,7 @@ var File_api_v1_workout_service_proto protoreflect.FileDescriptor
 
 const file_api_v1_workout_service_proto_rawDesc = "" +
 	"\n" +
-	"\x1capi/v1/workout_service.proto\x12\x06api.v1\x1a\x13api/v1/shared.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1bbuf/validate/validate.proto\"\x9a\x03\n" +
+	"\x1capi/v1/workout_service.proto\x12\x06api.v1\x1a\x13api/v1/shared.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1bbuf/validate/validate.proto\"\xe6\x03\n" +
 	"\x14CreateWorkoutRequest\x12*\n" +
 	"\n" +
 	"routine_id\x18\x01 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\xb0\x01\x01R\troutineId\x12C\n" +
@@ -993,7 +1005,9 @@ const file_api_v1_workout_service_proto_rawDesc = "" +
 	"\x04note\x18\x05 \x01(\tR\x04note\x12$\n" +
 	"\aplan_id\x18\x06 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\xb0\x01\x01R\x06planId\x12!\n" +
 	"\fworkout_name\x18\a \x01(\tR\vworkoutName\x12,\n" +
-	"\x06groups\x18\b \x03(\v2\x14.api.v1.WorkoutGroupR\x06groups\"6\n" +
+	"\x06groups\x18\b \x03(\v2\x14.api.v1.WorkoutGroupR\x06groups\x126\n" +
+	"\x0fidempotency_key\x18\t \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01H\x00R\x0eidempotencyKey\x88\x01\x01B\x12\n" +
+	"\x10_idempotency_key\"6\n" +
 	"\x15CreateWorkoutResponse\x12\x1d\n" +
 	"\n" +
 	"workout_id\x18\x01 \x01(\tR\tworkoutId\"\x84\x01\n" +
@@ -1156,6 +1170,7 @@ func file_api_v1_workout_service_proto_init() {
 		return
 	}
 	file_api_v1_shared_proto_init()
+	file_api_v1_workout_service_proto_msgTypes[0].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{

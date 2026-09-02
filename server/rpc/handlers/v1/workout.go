@@ -49,6 +49,9 @@ func (h *workoutHandler) CreateWorkout(ctx context.Context, req *connect.Request
 	}
 
 	workout, planAdvanceSkipped, err := h.createWorkout(ctx, req.Msg, userID, workoutName, period)
+	if errors.Is(err, training.ErrWorkoutAlreadySaved) {
+		return h.savedWorkout(ctx, req.Msg.GetIdempotencyKey(), userID)
+	}
 	if err != nil {
 		log.Error("Create workout", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
@@ -63,6 +66,29 @@ func (h *workoutHandler) CreateWorkout(ctx context.Context, req *connect.Request
 	}
 
 	log.Info("Workout finished")
+	return &connect.Response[apiv1.CreateWorkoutResponse]{
+		Msg: &apiv1.CreateWorkoutResponse{
+			WorkoutId: workout.ID.String(),
+		},
+	}, nil
+}
+
+// savedWorkout answers a repeated save — one the offline queue replayed, or a
+// finish pressed again after its reply was lost — with the workout the first
+// attempt stored, so a session is never saved twice.
+func (h *workoutHandler) savedWorkout(ctx context.Context, key, userID string) (*connect.Response[apiv1.CreateWorkoutResponse], error) {
+	log := xcontext.MustExtractLogger(ctx)
+	workout, err := h.repo.GetWorkout(
+		ctx,
+		repo.GetWorkoutWithUserID(userID),
+		repo.GetWorkoutWithIdempotencyKey(key),
+	)
+	if err != nil {
+		log.Error("Get workout for repeated save", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
+
+	log.Info("Repeated workout save answered with the saved workout")
 	return &connect.Response[apiv1.CreateWorkoutResponse]{
 		Msg: &apiv1.CreateWorkoutResponse{
 			WorkoutId: workout.ID.String(),
@@ -119,6 +145,8 @@ func (h *workoutHandler) createWorkout(
 			FinishedAt:   period.FinishedAt,
 			ExerciseSets: exerciseSets,
 			Groups:       workoutGroups(request.GetGroups(), exerciseSets),
+
+			IdempotencyKey: request.GetIdempotencyKey(),
 		})
 		if createErr != nil {
 			return fmt.Errorf("create workout: %w", createErr)

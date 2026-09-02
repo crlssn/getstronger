@@ -15,6 +15,37 @@ test.describe('offline mode', () => {
   const navLink = (page: Parameters<typeof logIn>[0], name: string) =>
     page.getByRole('navigation', { name: 'Primary navigation' }).getByRole('link', { name })
 
+  // Opens a quick workout with one exercise chosen, and returns its name. The
+  // options are the buttons that name something; the sheet's close and
+  // load-more controls carry no name of their own. The seeded cardio exercise
+  // is skipped: the callers log weight and reps.
+  const startQuickWorkout = async (page: Parameters<typeof logIn>[0]) => {
+    await page.goto('/workouts/quick')
+    await page.getByRole('button', { name: 'Choose exercise' }).click()
+    const picker = page.getByRole('dialog', { name: 'Add exercise' })
+    const option = picker
+      .getByRole('button')
+      .filter({ has: page.locator('strong') })
+      .filter({ hasNotText: 'Cardio' })
+      .first()
+    const exerciseName = (await option.locator('strong').innerText()).trim()
+    await option.click()
+    return exerciseName
+  }
+
+  const logFirstSet = async (page: Parameters<typeof logIn>[0], exerciseName: string) => {
+    await page
+      .getByRole('textbox', { name: `${exerciseName} set 1 weight`, exact: true })
+      .fill('40')
+    await page.getByRole('textbox', { name: `${exerciseName} set 1 reps`, exact: true }).fill('12')
+  }
+
+  const finishAndSave = async (page: Parameters<typeof logIn>[0]) => {
+    await page.getByRole('button', { name: 'Complete exercise' }).click()
+    await page.getByRole('button', { name: 'Finish workout' }).click()
+    await page.getByRole('dialog').getByRole('button', { name: 'Finish and save' }).click()
+  }
+
   test('serves cached pages and shows the banner while offline', async ({
     context,
     page,
@@ -91,35 +122,16 @@ test.describe('offline mode', () => {
   }, testInfo) => {
     testInfo.annotations.push(allowRuntimeErrors)
 
-    await page.goto('/workouts/quick')
-    await page.getByRole('button', { name: 'Choose exercise' }).click()
-    const picker = page.getByRole('dialog', { name: 'Add exercise' })
-    // The options are the buttons that name something; the sheet's close and
-    // load-more controls carry no name of their own. The seeded cardio
-    // exercise is skipped: the lines below log weight and reps.
-    const option = picker
-      .getByRole('button')
-      .filter({ has: page.locator('strong') })
-      .filter({ hasNotText: 'Cardio' })
-      .first()
-    const exerciseName = (await option.locator('strong').innerText()).trim()
-    await option.click()
+    const exerciseName = await startQuickWorkout(page)
 
     await context.setOffline(true)
     let synced: Promise<unknown> | undefined
     try {
-      await page
-        .getByRole('textbox', { name: `${exerciseName} set 1 weight`, exact: true })
-        .fill('40')
-      await page
-        .getByRole('textbox', { name: `${exerciseName} set 1 reps`, exact: true })
-        .fill('12')
+      await logFirstSet(page, exerciseName)
 
       // Finishing without internet is a success, not an error: the workout is
       // stored on the device, the draft is gone, and the user is back home.
-      await page.getByRole('button', { name: 'Complete exercise' }).click()
-      await page.getByRole('button', { name: 'Finish workout' }).click()
-      await page.getByRole('dialog').getByRole('button', { name: 'Finish and save' }).click()
+      await finishAndSave(page)
       await expect(page.getByText('Workout saved on this device')).toBeVisible()
       await expect(page).toHaveURL(/\/home$/)
       await expect(offlineBanner(page)).toContainText('1 change will sync')
@@ -141,5 +153,53 @@ test.describe('offline mode', () => {
       .locator('section')
       .filter({ has: page.getByRole('heading', { name: 'Previous workouts' }) })
     await expect(history.getByRole('link', { name: /Quick workout/ }).first()).toBeVisible()
+  })
+
+  // A save the server committed but whose reply never arrived is queued and
+  // sent again on reconnect. It used to be stored twice; the key the request
+  // carries lets the server answer the repeat with the workout it already has.
+  test('saves a workout once when the reply to its save is lost @mutation', async ({
+    context,
+    page,
+  }, testInfo) => {
+    testInfo.annotations.push(allowRuntimeErrors)
+
+    const workoutsStat = page
+      .getByRole('region', { name: 'Training summary' })
+      .locator('article')
+      .filter({ hasText: 'workouts' })
+      .locator('strong')
+    await page.goto('/profile')
+    await expect(workoutsStat).toBeVisible()
+    const before = Number((await workoutsStat.innerText()).replace(/\D/g, ''))
+
+    const exerciseName = await startQuickWorkout(page)
+    await logFirstSet(page, exerciseName)
+
+    // The server commits the save, and the reply is lost on the way back.
+    await page.route(
+      '**/api.v1.WorkoutService/CreateWorkout',
+      async (route) => {
+        await route.fetch()
+        await route.abort('failed')
+      },
+      { times: 1 },
+    )
+    await finishAndSave(page)
+    await expect(page.getByText('Workout saved on this device')).toBeVisible()
+    await expect(offlineBanner(page)).toContainText('1 change will sync')
+
+    // The queue replays when the browser reports the connection back.
+    const synced = page.waitForResponse(
+      (response) => response.url().includes('CreateWorkout') && response.ok(),
+    )
+    await context.setOffline(true)
+    await context.setOffline(false)
+    await synced
+    await expect(offlineBanner(page)).toHaveCount(0)
+
+    await page.goto('/profile')
+    // Rendered through formatNumber(), so the expectation carries separators too.
+    await expect(workoutsStat).toHaveText((before + 1).toLocaleString('en-US'))
   })
 })

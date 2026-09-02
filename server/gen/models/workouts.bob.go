@@ -29,14 +29,15 @@ import (
 
 // Workout is an object representing the database table.
 type Workout struct {
-	ID         uuid.UUID           `db:"id,pk" `
-	UserID     uuid.UUID           `db:"user_id" `
-	FinishedAt time.Time           `db:"finished_at" `
-	CreatedAt  time.Time           `db:"created_at" `
-	Name       string              `db:"name" `
-	StartedAt  time.Time           `db:"started_at" `
-	Note       null.Val[string]    `db:"note" `
-	RoutineID  null.Val[uuid.UUID] `db:"routine_id" `
+	ID             uuid.UUID           `db:"id,pk" `
+	UserID         uuid.UUID           `db:"user_id" `
+	FinishedAt     time.Time           `db:"finished_at" `
+	CreatedAt      time.Time           `db:"created_at" `
+	Name           string              `db:"name" `
+	StartedAt      time.Time           `db:"started_at" `
+	Note           null.Val[string]    `db:"note" `
+	RoutineID      null.Val[uuid.UUID] `db:"routine_id" `
+	IdempotencyKey null.Val[uuid.UUID] `db:"idempotency_key" `
 
 	R workoutR `db:"-" `
 
@@ -77,7 +78,7 @@ type workoutRLoaded struct {
 
 func buildWorkoutColumns(tableName string) workoutColumns {
 	columnsExpr := expr.NewColumnsExpr(
-		"id", "user_id", "finished_at", "created_at", "name", "started_at", "note", "routine_id",
+		"id", "user_id", "finished_at", "created_at", "name", "started_at", "note", "routine_id", "idempotency_key",
 	)
 
 	if tableName != "" {
@@ -85,30 +86,32 @@ func buildWorkoutColumns(tableName string) workoutColumns {
 	}
 
 	return workoutColumns{
-		ColumnsExpr: columnsExpr,
-		tableAlias:  tableName,
-		ID:          buildWorkoutColumn(tableName, "id"),
-		UserID:      buildWorkoutColumn(tableName, "user_id"),
-		FinishedAt:  buildWorkoutColumn(tableName, "finished_at"),
-		CreatedAt:   buildWorkoutColumn(tableName, "created_at"),
-		Name:        buildWorkoutColumn(tableName, "name"),
-		StartedAt:   buildWorkoutColumn(tableName, "started_at"),
-		Note:        buildWorkoutColumn(tableName, "note"),
-		RoutineID:   buildWorkoutColumn(tableName, "routine_id"),
+		ColumnsExpr:    columnsExpr,
+		tableAlias:     tableName,
+		ID:             buildWorkoutColumn(tableName, "id"),
+		UserID:         buildWorkoutColumn(tableName, "user_id"),
+		FinishedAt:     buildWorkoutColumn(tableName, "finished_at"),
+		CreatedAt:      buildWorkoutColumn(tableName, "created_at"),
+		Name:           buildWorkoutColumn(tableName, "name"),
+		StartedAt:      buildWorkoutColumn(tableName, "started_at"),
+		Note:           buildWorkoutColumn(tableName, "note"),
+		RoutineID:      buildWorkoutColumn(tableName, "routine_id"),
+		IdempotencyKey: buildWorkoutColumn(tableName, "idempotency_key"),
 	}
 }
 
 type workoutColumns struct {
 	expr.ColumnsExpr
-	tableAlias string
-	ID         workoutColumn
-	UserID     workoutColumn
-	FinishedAt workoutColumn
-	CreatedAt  workoutColumn
-	Name       workoutColumn
-	StartedAt  workoutColumn
-	Note       workoutColumn
-	RoutineID  workoutColumn
+	tableAlias     string
+	ID             workoutColumn
+	UserID         workoutColumn
+	FinishedAt     workoutColumn
+	CreatedAt      workoutColumn
+	Name           workoutColumn
+	StartedAt      workoutColumn
+	Note           workoutColumn
+	RoutineID      workoutColumn
+	IdempotencyKey workoutColumn
 }
 
 // Alias returns the current table alias for the columns set.
@@ -154,18 +157,19 @@ func (c workoutColumn) ShouldOmitParens() bool {
 // All values are optional, and do not have to be set
 // Generated columns are not included
 type WorkoutSetter struct {
-	ID         omit.Val[uuid.UUID]     `db:"id,pk" `
-	UserID     omit.Val[uuid.UUID]     `db:"user_id" `
-	FinishedAt omit.Val[time.Time]     `db:"finished_at" `
-	CreatedAt  omit.Val[time.Time]     `db:"created_at" `
-	Name       omit.Val[string]        `db:"name" `
-	StartedAt  omit.Val[time.Time]     `db:"started_at" `
-	Note       omitnull.Val[string]    `db:"note" `
-	RoutineID  omitnull.Val[uuid.UUID] `db:"routine_id" `
+	ID             omit.Val[uuid.UUID]     `db:"id,pk" `
+	UserID         omit.Val[uuid.UUID]     `db:"user_id" `
+	FinishedAt     omit.Val[time.Time]     `db:"finished_at" `
+	CreatedAt      omit.Val[time.Time]     `db:"created_at" `
+	Name           omit.Val[string]        `db:"name" `
+	StartedAt      omit.Val[time.Time]     `db:"started_at" `
+	Note           omitnull.Val[string]    `db:"note" `
+	RoutineID      omitnull.Val[uuid.UUID] `db:"routine_id" `
+	IdempotencyKey omitnull.Val[uuid.UUID] `db:"idempotency_key" `
 }
 
 func (s WorkoutSetter) SetColumns() []string {
-	vals := make([]string, 0, 8)
+	vals := make([]string, 0, 9)
 	if s.ID.IsValue() {
 		vals = append(vals, "id")
 	}
@@ -189,6 +193,9 @@ func (s WorkoutSetter) SetColumns() []string {
 	}
 	if s.RoutineID.IsValue() || s.RoutineID.IsNull() {
 		vals = append(vals, "routine_id")
+	}
+	if s.IdempotencyKey.IsValue() || s.IdempotencyKey.IsNull() {
+		vals = append(vals, "idempotency_key")
 	}
 	return vals
 }
@@ -217,6 +224,9 @@ func (s WorkoutSetter) Overwrite(t *Workout) {
 	}
 	if s.RoutineID.IsValue() || s.RoutineID.IsNull() {
 		t.RoutineID = s.RoutineID.MustGetNull()
+	}
+	if s.IdempotencyKey.IsValue() || s.IdempotencyKey.IsNull() {
+		t.IdempotencyKey = s.IdempotencyKey.MustGetNull()
 	}
 }
 
@@ -266,6 +276,11 @@ func (s *WorkoutSetter) Apply(q *dialect.InsertQuery) {
 				return psql.Raw("DEFAULT").WriteSQL(ctx, w, d, start)
 			}
 			return psql.Arg(s.RoutineID.MustGetNull()).WriteSQL(ctx, w, d, start)
+		}), bob.ExpressionFunc(func(ctx context.Context, w io.StringWriter, d bob.Dialect, start int) ([]any, error) {
+			if s.IdempotencyKey.IsUnset() {
+				return psql.Raw("DEFAULT").WriteSQL(ctx, w, d, start)
+			}
+			return psql.Arg(s.IdempotencyKey.MustGetNull()).WriteSQL(ctx, w, d, start)
 		}))
 }
 
@@ -274,7 +289,7 @@ func (s WorkoutSetter) UpdateMod() bob.Mod[*dialect.UpdateQuery] {
 }
 
 func (s WorkoutSetter) Expressions(prefix ...string) []bob.Expression {
-	exprs := make([]bob.Expression, 0, 8)
+	exprs := make([]bob.Expression, 0, 9)
 
 	if s.ID.IsValue() {
 		exprs = append(exprs, expr.Join{Sep: " = ", Exprs: []bob.Expression{
@@ -332,6 +347,13 @@ func (s WorkoutSetter) Expressions(prefix ...string) []bob.Expression {
 		}})
 	}
 
+	if s.IdempotencyKey.IsValue() || s.IdempotencyKey.IsNull() {
+		exprs = append(exprs, expr.Join{Sep: " = ", Exprs: []bob.Expression{
+			psql.Quote(append(prefix, "idempotency_key")...),
+			psql.Arg(s.IdempotencyKey),
+		}})
+	}
+
 	return exprs
 }
 
@@ -342,7 +364,7 @@ func workoutScanMapper(ctx context.Context, cols []string) (scan.BeforeFunc, fun
 		idx int
 		dst func(o *Workout) any
 	}
-	targets := make([]target, 0, 8)
+	targets := make([]target, 0, 9)
 	for i, col := range cols {
 		switch col {
 		case "id":
@@ -361,6 +383,8 @@ func workoutScanMapper(ctx context.Context, cols []string) (scan.BeforeFunc, fun
 			targets = append(targets, target{i, func(o *Workout) any { return &o.Note }})
 		case "routine_id":
 			targets = append(targets, target{i, func(o *Workout) any { return &o.RoutineID }})
+		case "idempotency_key":
+			targets = append(targets, target{i, func(o *Workout) any { return &o.IdempotencyKey }})
 		}
 	}
 
@@ -1076,16 +1100,17 @@ func (workout0 *Workout) AttachUser(ctx context.Context, exec bob.Executor, user
 }
 
 type workoutWhere[Q psql.Filterable] struct {
-	cols       workoutColumns
-	ID         psql.WhereMod[Q, uuid.UUID]
-	UserID     psql.WhereMod[Q, uuid.UUID]
-	FinishedAt psql.WhereMod[Q, time.Time]
-	CreatedAt  psql.WhereMod[Q, time.Time]
-	Name       psql.WhereMod[Q, string]
-	StartedAt  psql.WhereMod[Q, time.Time]
-	Note       psql.WhereNullMod[Q, string]
-	RoutineID  psql.WhereNullMod[Q, uuid.UUID]
-	R          workoutWhereR[Q]
+	cols           workoutColumns
+	ID             psql.WhereMod[Q, uuid.UUID]
+	UserID         psql.WhereMod[Q, uuid.UUID]
+	FinishedAt     psql.WhereMod[Q, time.Time]
+	CreatedAt      psql.WhereMod[Q, time.Time]
+	Name           psql.WhereMod[Q, string]
+	StartedAt      psql.WhereMod[Q, time.Time]
+	Note           psql.WhereNullMod[Q, string]
+	RoutineID      psql.WhereNullMod[Q, uuid.UUID]
+	IdempotencyKey psql.WhereNullMod[Q, uuid.UUID]
+	R              workoutWhereR[Q]
 }
 
 func (workoutWhere[Q]) AliasedAs(alias string) workoutWhere[Q] {
@@ -1094,16 +1119,17 @@ func (workoutWhere[Q]) AliasedAs(alias string) workoutWhere[Q] {
 
 func buildWorkoutWhere[Q psql.Filterable](cols workoutColumns) workoutWhere[Q] {
 	return workoutWhere[Q]{
-		cols:       cols,
-		ID:         psql.Where[Q, uuid.UUID](cols.ID.Expression),
-		UserID:     psql.Where[Q, uuid.UUID](cols.UserID.Expression),
-		FinishedAt: psql.Where[Q, time.Time](cols.FinishedAt.Expression),
-		CreatedAt:  psql.Where[Q, time.Time](cols.CreatedAt.Expression),
-		Name:       psql.Where[Q, string](cols.Name.Expression),
-		StartedAt:  psql.Where[Q, time.Time](cols.StartedAt.Expression),
-		Note:       psql.WhereNull[Q, string](cols.Note.Expression),
-		RoutineID:  psql.WhereNull[Q, uuid.UUID](cols.RoutineID.Expression),
-		R:          workoutWhereR[Q]{cols: cols},
+		cols:           cols,
+		ID:             psql.Where[Q, uuid.UUID](cols.ID.Expression),
+		UserID:         psql.Where[Q, uuid.UUID](cols.UserID.Expression),
+		FinishedAt:     psql.Where[Q, time.Time](cols.FinishedAt.Expression),
+		CreatedAt:      psql.Where[Q, time.Time](cols.CreatedAt.Expression),
+		Name:           psql.Where[Q, string](cols.Name.Expression),
+		StartedAt:      psql.Where[Q, time.Time](cols.StartedAt.Expression),
+		Note:           psql.WhereNull[Q, string](cols.Note.Expression),
+		RoutineID:      psql.WhereNull[Q, uuid.UUID](cols.RoutineID.Expression),
+		IdempotencyKey: psql.WhereNull[Q, uuid.UUID](cols.IdempotencyKey.Expression),
+		R:              workoutWhereR[Q]{cols: cols},
 	}
 }
 
@@ -1188,14 +1214,15 @@ func (w workoutWhereR[Q]) HasUser(filters ...bob.Mod[*dialect.SelectQuery]) mods
 // on a LEFT JOIN miss every column comes back NULL, so each field uses the
 // nullable version of the column type even when the column itself is NOT NULL.
 type workoutPreloadBuf struct {
-	ID         null.Val[uuid.UUID]
-	UserID     null.Val[uuid.UUID]
-	FinishedAt null.Val[time.Time]
-	CreatedAt  null.Val[time.Time]
-	Name       null.Val[string]
-	StartedAt  null.Val[time.Time]
-	Note       null.Val[string]
-	RoutineID  null.Val[uuid.UUID]
+	ID             null.Val[uuid.UUID]
+	UserID         null.Val[uuid.UUID]
+	FinishedAt     null.Val[time.Time]
+	CreatedAt      null.Val[time.Time]
+	Name           null.Val[string]
+	StartedAt      null.Val[time.Time]
+	Note           null.Val[string]
+	RoutineID      null.Val[uuid.UUID]
+	IdempotencyKey null.Val[uuid.UUID]
 }
 
 // workoutScanMapperNullable maps the preloaded workout
@@ -1210,7 +1237,7 @@ func workoutScanMapperNullable(prefix string) scan.Mapper[*Workout] {
 			idx int
 			dst func(b *workoutPreloadBuf) any
 		}
-		targets := make([]target, 0, 8)
+		targets := make([]target, 0, 9)
 		for i, col := range cols {
 			name, ok := strings.CutPrefix(col, prefix)
 			if !ok {
@@ -1233,6 +1260,8 @@ func workoutScanMapperNullable(prefix string) scan.Mapper[*Workout] {
 				targets = append(targets, target{i, func(b *workoutPreloadBuf) any { return &b.Note }})
 			case "routine_id":
 				targets = append(targets, target{i, func(b *workoutPreloadBuf) any { return &b.RoutineID }})
+			case "idempotency_key":
+				targets = append(targets, target{i, func(b *workoutPreloadBuf) any { return &b.IdempotencyKey }})
 			}
 		}
 
@@ -1262,7 +1291,8 @@ func workoutScanMapperNullable(prefix string) scan.Mapper[*Workout] {
 					!(buf.Name.IsValue()) &&
 					!(buf.StartedAt.IsValue()) &&
 					!(buf.Note.IsValue()) &&
-					!(buf.RoutineID.IsValue()) {
+					!(buf.RoutineID.IsValue()) &&
+					!(buf.IdempotencyKey.IsValue()) {
 					return nil, nil
 				}
 
@@ -1287,6 +1317,7 @@ func workoutScanMapperNullable(prefix string) scan.Mapper[*Workout] {
 				}
 				o.Note = buf.Note
 				o.RoutineID = buf.RoutineID
+				o.IdempotencyKey = buf.IdempotencyKey
 				return o, nil
 			}
 	}

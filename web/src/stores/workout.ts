@@ -109,6 +109,9 @@ export const useWorkoutStore = create<WorkoutState>()(
           const workout = (state.workouts[routineID] ??= {})
           workout.exerciseSets ??= {}
           workout.startedAt ??= new Date().toISOString()
+          // Kept with the draft rather than the screen, so a save pressed
+          // again after a reload still names the same session.
+          workout.idempotencyKey ??= crypto.randomUUID()
           if (planId) workout.planId = planId
         }),
 

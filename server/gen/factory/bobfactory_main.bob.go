@@ -880,6 +880,7 @@ func (f *Factory) fromExistingWorkout(ctx context.Context, m *models.Workout) *W
 	o.StartedAt = func() time.Time { return m.StartedAt }
 	o.Note = func() null.Val[string] { return m.Note }
 	o.RoutineID = func() null.Val[uuid.UUID] { return m.RoutineID }
+	o.IdempotencyKey = func() null.Val[uuid.UUID] { return m.IdempotencyKey }
 
 	if visited, ok := factoryVisitedCtx.Value(ctx); ok {
 		ptr := uintptr(unsafe.Pointer(m))

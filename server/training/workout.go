@@ -13,6 +13,10 @@ const QuickWorkoutName = "Quick Workout"
 // ErrWorkoutStartsAfterFinish reports a workout whose clock runs backwards.
 var ErrWorkoutStartsAfterFinish = errors.New("workout must start before it finishes")
 
+// ErrWorkoutAlreadySaved reports a save the user already made: the same
+// idempotency key was sent again, as a replayed or retried request is.
+var ErrWorkoutAlreadySaved = errors.New("workout is already saved")
+
 // Period is the stretch of time a workout occupied.
 type Period struct {
 	StartedAt  time.Time
