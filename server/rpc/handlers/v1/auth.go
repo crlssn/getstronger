@@ -319,8 +319,7 @@ func (h *authHandler) VerifyEmail(ctx context.Context, req *connect.Request[apiv
 
 	token, err := parser.UUID(req.Msg.GetToken())
 	if err != nil {
-		log.Warn("Email token is not a token this server issues")
-		return nil, connect.NewError(connect.CodeFailedPrecondition, nil)
+		return nil, connect.NewError(connect.CodeInvalidArgument, nil)
 	}
 
 	auth, err := h.repo.GetAuth(ctx, repo.GetAuthByEmailToken(token))
@@ -455,8 +454,7 @@ func (h *authHandler) UpdatePassword(ctx context.Context, req *connect.Request[a
 
 	token, err := parser.UUID(req.Msg.GetToken())
 	if err != nil {
-		log.Warn("Password reset token is not a token this server issues")
-		return nil, connect.NewError(connect.CodeFailedPrecondition, nil)
+		return nil, connect.NewError(connect.CodeInvalidArgument, nil)
 	}
 
 	auth, err := h.repo.GetAuth(ctx, repo.GetAuthByPasswordResetToken(token))

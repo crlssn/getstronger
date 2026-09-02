@@ -755,6 +755,20 @@ func (s *authSuite) TestVerifyEmail() {
 				err: connect.NewError(connect.CodeFailedPrecondition, nil),
 			},
 		},
+		{
+			// The schema turns this away before the handler runs; the handler
+			// answers the same way for a request that reaches it anyway.
+			name: "err_email_token_not_a_token",
+			req: &connect.Request[v1.VerifyEmailRequest]{
+				Msg: &v1.VerifyEmailRequest{
+					Token: "not-a-uuid",
+				},
+			},
+			init: func(_ test) {},
+			expected: expected{
+				err: connect.NewError(connect.CodeInvalidArgument, nil),
+			},
+		},
 	}
 
 	for _, t := range tests {

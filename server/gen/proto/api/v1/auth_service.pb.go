@@ -835,9 +835,9 @@ const file_api_v1_auth_service_proto_rawDesc = "" +
 	"\x14RefreshTokenResponse\x12!\n" +
 	"\faccess_token\x18\x01 \x01(\tR\vaccessToken\"\x0f\n" +
 	"\rLogoutRequest\"\x10\n" +
-	"\x0eLogoutResponse\"3\n" +
-	"\x12VerifyEmailRequest\x12\x1d\n" +
-	"\x05token\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x05token\"\x15\n" +
+	"\x0eLogoutResponse\"4\n" +
+	"\x12VerifyEmailRequest\x12\x1e\n" +
+	"\x05token\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x05token\"\x15\n" +
 	"\x13VerifyEmailResponse\"?\n" +
 	"\x1eResendVerificationEmailRequest\x12\x1d\n" +
 	"\x05email\x18\x01 \x01(\tB\a\xbaH\x04r\x02`\x01R\x05email\"Q\n" +

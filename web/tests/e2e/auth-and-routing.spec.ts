@@ -52,6 +52,19 @@ test.describe('guest authentication and routing', () => {
     await expect(page.locator('form').getByRole('alert')).toBeVisible()
   })
 
+  // A link the schema turns away and one it lets through to a token nothing
+  // matches read the same to whoever clicked it: the page says the address
+  // could not be verified rather than showing nothing.
+  test('explains a verification link that names no account @smoke', async ({ page }) => {
+    test.info().annotations.push(allowRuntimeErrors)
+
+    for (const token of ['not-a-token', '00000000-0000-0000-0000-000000000000']) {
+      await page.goto(`/verify-email?token=${token}`)
+      await expect(page.getByText('Sorry, we couldn’t verify your email.')).toBeVisible()
+      await expect(page).toHaveURL(/\/verify-email/)
+    }
+  })
+
   test('signs up, resends the verification link, verifies and logs in @mutation', async ({
     page,
   }) => {

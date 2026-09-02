@@ -215,6 +215,9 @@ func TestValidatorRejectsAMalformedID(t *testing.T) {
 		"dashboard preference": connect.NewRequest(&apiv1.GetDashboardRequest{
 			PreferredRoutineId: "not-a-uuid",
 		}),
+		"verify email token": connect.NewRequest(&apiv1.VerifyEmailRequest{
+			Token: "not-a-uuid",
+		}),
 	} {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
