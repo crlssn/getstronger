@@ -139,8 +139,22 @@ func (s *feedSuite) TestListFeedItemsPaginates() {
 	s.Require().Empty(second.Msg.GetPagination().GetNextPageToken())
 }
 
-func (s *feedSuite) TestListFeedItemsRejectsAMalformedPageToken() {
+func (s *feedSuite) TestListFeedItemsRejectsAnUnknownViewer() {
 	ctx := xcontext.WithUserID(context.Background(), uuid.Must(uuid.NewV4()))
+	ctx = xcontext.WithLogger(ctx, zap.NewExample())
+
+	res, err := s.handler.ListFeedItems(ctx, &connect.Request[apiv1.ListFeedItemsRequest]{
+		Msg: &apiv1.ListFeedItemsRequest{
+			Pagination: &apiv1.PaginationRequest{PageLimit: 2},
+		},
+	})
+	s.Require().Nil(res)
+	s.Require().Equal(connect.CodeInternal, connect.CodeOf(err))
+}
+
+func (s *feedSuite) TestListFeedItemsRejectsAMalformedPageToken() {
+	viewer := s.factory.NewUser()
+	ctx := xcontext.WithUserID(context.Background(), viewer.ID)
 	ctx = xcontext.WithLogger(ctx, zap.NewExample())
 
 	res, err := s.handler.ListFeedItems(ctx, &connect.Request[apiv1.ListFeedItemsRequest]{

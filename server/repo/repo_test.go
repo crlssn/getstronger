@@ -2776,4 +2776,10 @@ func (s *repoSuite) TestMarkFeedAsSeen() {
 
 	err = s.repo.MarkFeedAsSeen(ctx, uuid.Must(uuid.NewV4()))
 	s.Require().ErrorIs(err, repo.ErrUpdateRowsAffected)
+
+	// A query the database refuses is wrapped rather than swallowed.
+	cancelled, cancel := context.WithCancel(ctx)
+	cancel()
+	err = s.repo.MarkFeedAsSeen(cancelled, user.ID)
+	s.Require().ErrorIs(err, context.Canceled)
 }
