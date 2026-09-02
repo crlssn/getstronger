@@ -8,7 +8,6 @@ package notification
 import (
 	"cmp"
 	"encoding/json"
-	"fmt"
 	"slices"
 
 	"github.com/gofrs/uuid/v5"
@@ -51,16 +50,12 @@ type storedPayload struct {
 // index on (user_id, eventId) covers rows that carry the key at all, so a nil
 // id there reads as one event every notification shares.
 func (p Payload) MarshalJSON() ([]byte, error) {
-	stored, err := json.Marshal(storedPayload{
+	// Three optional ids and nothing else, so there is no error branch to take.
+	return json.Marshal(storedPayload{ //nolint:wrapcheck // Nothing here can fail.
 		ActorID:   named(p.ActorID),
 		EventID:   named(p.EventID),
 		WorkoutID: named(p.WorkoutID),
 	})
-	if err != nil {
-		return nil, fmt.Errorf("notification payload marshal: %w", err)
-	}
-
-	return stored, nil
 }
 
 // named is the id to store, or nothing when it names no row.

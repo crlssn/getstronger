@@ -85,6 +85,18 @@ func (s *routineSuite) TestUpdateRoutineRearrangesItsExercises() {
 	)
 }
 
+// A routine the athlete does not have is a stale client rather than a bad
+// request: the id is well formed, it just names nothing they own.
+func (s *routineSuite) TestUpdateRoutineRejectsARoutineTheAthleteDoesNotHave() {
+	ctx, _ := s.athlete()
+
+	_, err := s.handler.UpdateRoutine(ctx, connect.NewRequest(&apiv1.UpdateRoutineRequest{
+		Routine: &apiv1.Routine{Id: uuid.Must(uuid.NewV4()).String(), Name: "Push"},
+	}))
+	s.Require().Error(err)
+	s.Require().Equal(connect.CodeFailedPrecondition, connect.CodeOf(err))
+}
+
 func (s *routineSuite) TestUpdateRoutineRejectsAnExerciseTheAthleteDoesNotOwn() {
 	ctx, user := s.athlete()
 	own := s.factory.NewExercise(factory.ExerciseUserID(user.ID))
