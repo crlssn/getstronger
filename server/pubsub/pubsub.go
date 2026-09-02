@@ -86,14 +86,11 @@ func (ps *PubSub) Subscribe(handlers map[events.Topic]handlers.Handler) {
 	ps.mu.Unlock()
 
 	for range workers {
-		ps.wg.Add(1)
-		go ps.startWorker()
+		ps.wg.Go(ps.startWorker)
 	}
 }
 
 func (ps *PubSub) startWorker() {
-	defer ps.wg.Done()
-
 	for event := range ps.events {
 		log := ps.log.With(zap.String("topic", event.topic.String()))
 		log.Info("Received event")

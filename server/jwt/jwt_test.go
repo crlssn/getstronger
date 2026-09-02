@@ -92,22 +92,18 @@ func TestValidateClaimsRejectsAnExpiredToken(t *testing.T) {
 	issuer := jwt.NewIssuer([]byte("access_key"), []byte("refresh_key"))
 
 	expired := &jwt.Claims{
-		UserID: uuid.Must(uuid.NewV4()),
-		RegisteredClaims: jwtlib.RegisteredClaims{
-			ExpiresAt: jwtlib.NewNumericDate(time.Now().UTC().Add(-jwt.ExpiryTimeAccess)),
-			IssuedAt:  jwtlib.NewNumericDate(time.Now().UTC().Add(-2 * jwt.ExpiryTimeAccess)),
-			Subject:   jwt.TokenTypeAccess.String(),
-		},
+		UserID:    uuid.Must(uuid.NewV4()),
+		ExpiresAt: jwtlib.NewNumericDate(time.Now().UTC().Add(-jwt.ExpiryTimeAccess)),
+		IssuedAt:  jwtlib.NewNumericDate(time.Now().UTC().Add(-2 * jwt.ExpiryTimeAccess)),
+		Subject:   jwt.TokenTypeAccess.String(),
 	}
 	require.Error(t, issuer.ValidateClaims(expired))
 
 	live := &jwt.Claims{
-		UserID: uuid.Must(uuid.NewV4()),
-		RegisteredClaims: jwtlib.RegisteredClaims{
-			ExpiresAt: jwtlib.NewNumericDate(time.Now().UTC().Add(jwt.ExpiryTimeAccess)),
-			IssuedAt:  jwtlib.NewNumericDate(time.Now().UTC()),
-			Subject:   jwt.TokenTypeAccess.String(),
-		},
+		UserID:    uuid.Must(uuid.NewV4()),
+		ExpiresAt: jwtlib.NewNumericDate(time.Now().UTC().Add(jwt.ExpiryTimeAccess)),
+		IssuedAt:  jwtlib.NewNumericDate(time.Now().UTC()),
+		Subject:   jwt.TokenTypeAccess.String(),
 	}
 	require.NoError(t, issuer.ValidateClaims(live))
 }
@@ -119,11 +115,9 @@ func TestClaimsFromTokenRejectsAnUnexpectedSigningMethod(t *testing.T) {
 	issuer := jwt.NewIssuer([]byte("access_key"), []byte("refresh_key"))
 
 	unsigned, err := jwtlib.NewWithClaims(jwtlib.SigningMethodNone, &jwt.Claims{
-		UserID: uuid.Must(uuid.NewV4()),
-		RegisteredClaims: jwtlib.RegisteredClaims{
-			ExpiresAt: jwtlib.NewNumericDate(time.Now().UTC().Add(jwt.ExpiryTimeAccess)),
-			Subject:   jwt.TokenTypeAccess.String(),
-		},
+		UserID:    uuid.Must(uuid.NewV4()),
+		ExpiresAt: jwtlib.NewNumericDate(time.Now().UTC().Add(jwt.ExpiryTimeAccess)),
+		Subject:   jwt.TokenTypeAccess.String(),
 	}).SignedString(jwtlib.UnsafeAllowNoneSignatureType)
 	require.NoError(t, err)
 

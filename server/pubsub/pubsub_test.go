@@ -18,6 +18,7 @@ import (
 	"github.com/crlssn/getstronger/server/pubsub/handlers"
 	"github.com/crlssn/getstronger/server/repo"
 	"github.com/crlssn/getstronger/server/testing/container"
+	"github.com/crlssn/getstronger/server/testing/leak"
 )
 
 type pubSubSuite struct {
@@ -171,4 +172,38 @@ func TestPublishNeverFailsTheCaller(t *testing.T) {
 
 		require.Equal(t, int64(overflow), store.published.Load())
 	})
+}
+
+// handlerFunc adapts a plain function to handlers.Handler.
+type handlerFunc func(payload any)
+
+func (f handlerFunc) HandlePayload(payload any) { f(payload) }
+
+// stopAfterOneEvent runs a PubSub through a whole life and drops every
+// reference to it. The workers park on a channel nobody else holds, so a Stop
+// that ever stopped draining leaves them unreachable and blocked — which is
+// what the goroutine leak profile reports. Keeping the PubSub in the test's
+// own frame would defeat that: a channel the test can still reach is a channel
+// the detector assumes something might still send on.
+func stopAfterOneEvent() {
+	handled := make(chan struct{})
+
+	ps := pubsub.New(pubsub.Params{Log: zap.NewExample(), Store: new(stubStore)})
+	ps.Subscribe(map[events.Topic]handlers.Handler{
+		events.TopicFollowedUser: handlerFunc(func(any) { close(handled) }),
+	})
+
+	ps.Publish(context.Background(), events.TopicFollowedUser, events.UserFollowed{
+		EventID: uuid.Must(uuid.NewV4()),
+	})
+
+	<-handled
+	ps.Stop()
+}
+
+func TestStopLeavesNoWorkerBehind(t *testing.T) {
+	t.Parallel()
+
+	stopAfterOneEvent()
+	leak.None(t, "pubsub.(*PubSub).startWorker")
 }

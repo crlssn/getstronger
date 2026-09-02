@@ -6,6 +6,7 @@ linters:
     - noinlineerr
     - wsl_v5
     - exhaustruct
+    - exhaustruct_v5
     - funlen
     - godox
     - ireturn

@@ -139,12 +139,10 @@ func (i *Issuer) CreateToken(userID uuid.UUID, tokenType TokenType) (string, err
 
 	now := time.Now().UTC()
 	claims := &Claims{
-		UserID: userID,
-		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(now.Add(tokenType.ExpiryTime())),
-			IssuedAt:  jwt.NewNumericDate(now),
-			Subject:   tokenType.String(),
-		},
+		UserID:    userID,
+		ExpiresAt: jwt.NewNumericDate(now.Add(tokenType.ExpiryTime())),
+		IssuedAt:  jwt.NewNumericDate(now),
+		Subject:   tokenType.String(),
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)

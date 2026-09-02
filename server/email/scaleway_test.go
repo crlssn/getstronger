@@ -8,11 +8,17 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"testing/synctest"
 
 	"github.com/stretchr/testify/require"
 
 	"github.com/crlssn/getstronger/server/config"
 )
+
+// An in-memory test server answers every request its own client makes, whatever
+// address they carry, so this only has to look like Scaleway's API for the path
+// and payload assertions below to mean something.
+const testBaseURL = "https://api.scaleway.test"
 
 func TestScalewaySendVerification(t *testing.T) {
 	t.Parallel()
@@ -20,7 +26,7 @@ func TestScalewaySendVerification(t *testing.T) {
 	var received createEmailRequest
 	var authToken string
 	var path string
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	server := httptest.NewTestServer(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		path = r.URL.Path
 		authToken = r.Header.Get("X-Auth-Token")
 		if err := json.NewDecoder(r.Body).Decode(&received); err != nil {
@@ -29,10 +35,9 @@ func TestScalewaySendVerification(t *testing.T) {
 		}
 		w.WriteHeader(http.StatusOK)
 	}))
-	t.Cleanup(server.Close)
 
 	c := scalewayConfig()
-	provider, err := newScaleway(c, server.Client(), server.URL)
+	provider, err := newScaleway(c, server.Client(), testBaseURL)
 	require.NoError(t, err)
 
 	err = provider.SendVerification(context.Background(), SendVerification{
@@ -53,12 +58,11 @@ func TestScalewaySendVerification(t *testing.T) {
 func TestScalewaySendError(t *testing.T) {
 	t.Parallel()
 
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+	server := httptest.NewTestServer(t, http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		http.Error(w, "denied", http.StatusForbidden)
 	}))
-	t.Cleanup(server.Close)
 
-	provider, err := newScaleway(scalewayConfig(), server.Client(), server.URL)
+	provider, err := newScaleway(scalewayConfig(), server.Client(), testBaseURL)
 	require.NoError(t, err)
 
 	err = provider.SendPasswordReset(context.Background(), SendPasswordReset{
@@ -93,7 +97,12 @@ func scalewayConfig() *config.Config {
 func TestScalewaySendFailsWhenTheEndpointIsUnreachable(t *testing.T) {
 	t.Parallel()
 
-	server := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {}))
+	// The one test here that needs a real socket. Closing an in-memory server
+	// does not refuse the next connection the way a released port does; the
+	// dial simply never completes.
+	server := httptest.NewTestServer(t, http.HandlerFunc(func(http.ResponseWriter, *http.Request) {}))
+	server.Start()
+
 	client := server.Client()
 	url := server.URL
 	server.Close()
@@ -157,3 +166,37 @@ var errUnreadableBody = errors.New("body unreadable")
 type errReader struct{}
 
 func (errReader) Read([]byte) (int, error) { return 0, errUnreadableBody }
+
+// A hung endpoint must not hold a signup open, which is what the client's
+// timeout is for. synctest runs the wait on a fake clock that only moves once
+// every goroutine in the bubble is blocked, so the five seconds cost no wall
+// clock and cannot flake on a loaded machine.
+func TestScalewaySendGivesUpOnAHungEndpoint(t *testing.T) {
+	t.Parallel()
+
+	synctest.Test(t, func(t *testing.T) {
+		// The handler answers only once the assertions are done. Blocking it is
+		// what lets the fake clock reach the timeout; releasing it before the
+		// bubble ends is what lets the server shut down.
+		release := make(chan struct{})
+		server := httptest.NewTestServer(t, http.HandlerFunc(func(http.ResponseWriter, *http.Request) {
+			<-release
+		}))
+
+		client := server.Client()
+		client.Timeout = timeout
+
+		provider, err := newScaleway(scalewayConfig(), client, testBaseURL)
+		require.NoError(t, err)
+
+		err = provider.SendVerification(t.Context(), SendVerification{
+			Name:  "John Doe",
+			Email: "john@example.com",
+			Token: "token",
+		})
+		require.ErrorContains(t, err, "send Scaleway email")
+		require.ErrorIs(t, err, context.DeadlineExceeded)
+
+		close(release)
+	})
+}
