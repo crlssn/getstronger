@@ -58,6 +58,7 @@ type userR struct {
 	Notifications   []*userRNotificationsR
 	Plans           []*userRPlansR
 	Routines        []*userRRoutinesR
+	Sets            []*userRSetsR
 	Auth            *userRAuthR
 	WorkoutComments []*userRWorkoutCommentsR
 	Workouts        []*userRWorkoutsR
@@ -82,6 +83,10 @@ type userRPlansR struct {
 type userRRoutinesR struct {
 	number int
 	o      *RoutineTemplate
+}
+type userRSetsR struct {
+	number int
+	o      *SetTemplate
 }
 type userRAuthR struct {
 	o *AuthTemplate
@@ -173,6 +178,21 @@ func (t UserTemplate) setModelRels(o *models.User) {
 		}
 		o.R.Routines = rel
 		o.R.Loaded.Routines = true
+	}
+
+	if t.r.Sets != nil {
+		rel := models.SetSlice{}
+		for _, r := range t.r.Sets {
+			related := r.o.BuildMany(r.number)
+			for _, rel := range related {
+				rel.UserID = o.ID // h2
+				rel.R.User = o
+				rel.R.Loaded.User = true
+			}
+			rel = append(rel, related...)
+		}
+		o.R.Sets = rel
+		o.R.Loaded.Sets = true
 	}
 
 	if t.r.Auth != nil {
@@ -441,6 +461,26 @@ func (o *UserTemplate) insertOptRels(ctx context.Context, exec bob.Executor, m *
 		}
 	}
 
+	isSetsDone, _ := userRelSetsCtx.Value(ctx)
+	if !isSetsDone && o.r.Sets != nil {
+		ctx = userRelSetsCtx.WithValue(ctx, true)
+		for _, r := range o.r.Sets {
+			if r.o.alreadyPersisted {
+				m.R.Sets = append(m.R.Sets, r.o.Build())
+			} else {
+				rel5, err := r.o.CreateMany(ctx, exec, r.number)
+				if err != nil {
+					return err
+				}
+
+				err = m.AttachSets(ctx, exec, rel5...)
+				if err != nil {
+					return err
+				}
+			}
+		}
+	}
+
 	isWorkoutCommentsDone, _ := userRelWorkoutCommentsCtx.Value(ctx)
 	if !isWorkoutCommentsDone && o.r.WorkoutComments != nil {
 		ctx = userRelWorkoutCommentsCtx.WithValue(ctx, true)
@@ -448,12 +488,12 @@ func (o *UserTemplate) insertOptRels(ctx context.Context, exec bob.Executor, m *
 			if r.o.alreadyPersisted {
 				m.R.WorkoutComments = append(m.R.WorkoutComments, r.o.Build())
 			} else {
-				rel6, err := r.o.CreateMany(ctx, exec, r.number)
+				rel7, err := r.o.CreateMany(ctx, exec, r.number)
 				if err != nil {
 					return err
 				}
 
-				err = m.AttachWorkoutComments(ctx, exec, rel6...)
+				err = m.AttachWorkoutComments(ctx, exec, rel7...)
 				if err != nil {
 					return err
 				}
@@ -468,12 +508,12 @@ func (o *UserTemplate) insertOptRels(ctx context.Context, exec bob.Executor, m *
 			if r.o.alreadyPersisted {
 				m.R.Workouts = append(m.R.Workouts, r.o.Build())
 			} else {
-				rel7, err := r.o.CreateMany(ctx, exec, r.number)
+				rel8, err := r.o.CreateMany(ctx, exec, r.number)
 				if err != nil {
 					return err
 				}
 
-				err = m.AttachWorkouts(ctx, exec, rel7...)
+				err = m.AttachWorkouts(ctx, exec, rel8...)
 				if err != nil {
 					return err
 				}
@@ -496,36 +536,36 @@ func (o *UserTemplate) Create(ctx context.Context, exec bob.Executor) (*models.U
 	// This works regardless of NoBackReferencing since it only uses child-side metadata.
 	mInCreation, _ := modelsInCreationCtx.Value(ctx)
 
-	var rel5 *models.Auth
+	var rel6 *models.Auth
 
 	if o.r.Auth == nil {
 		if parentModel, found := mInCreation["auth:users:users.users_auth_id_fkey"]; found {
 			if pModel, ok := parentModel.(*models.Auth); ok {
-				rel5 = pModel
+				rel6 = pModel
 			}
 		}
 	}
 
-	if rel5 == nil {
+	if rel6 == nil {
 		if o.r.Auth == nil {
 			UserMods.WithNewAuth().Apply(ctx, o)
 		}
 
 		if o.r.Auth.o.alreadyPersisted {
-			rel5 = o.r.Auth.o.Build()
+			rel6 = o.r.Auth.o.Build()
 		} else {
 			// A user's required auth parent has an optional inverse user relation.
 			// Clear it before creating the parent so a cascading factory does not
 			// insert a second user for the same unique auth ID.
 			AuthMods.WithoutUser().Apply(ctx, o.r.Auth.o)
-			rel5, err = o.r.Auth.o.Create(ctx, exec)
+			rel6, err = o.r.Auth.o.Create(ctx, exec)
 			if err != nil {
 				return nil, err
 			}
 		}
 	}
 
-	opt.AuthID = omit.From(rel5.ID)
+	opt.AuthID = omit.From(rel6.ID)
 
 	m, err := models.Users.Insert(opt).One(ctx, exec)
 	if err != nil {
@@ -547,12 +587,13 @@ func (o *UserTemplate) Create(ctx context.Context, exec bob.Executor) (*models.U
 	newMInCreation["users:notifications:notifications.notifications_user_id_fkey"] = m
 	newMInCreation["users:plans:plans.plans_user_id_fkey"] = m
 	newMInCreation["users:routines:routines.routines_user_id_fkey"] = m
+	newMInCreation["users:sets:sets.sets_user_id_fkey"] = m
 	newMInCreation["users:workout_comments:workout_comments.workout_comments_user_id_fkey"] = m
 	newMInCreation["users:workouts:workouts.workouts_user_id_fkey"] = m
 
 	ctx = modelsInCreationCtx.WithValue(ctx, newMInCreation)
 
-	m.R.Auth = rel5
+	m.R.Auth = rel6
 	m.R.Loaded.Auth = true
 
 	if err := o.insertOptRels(ctx, exec, m); err != nil {
@@ -1204,6 +1245,54 @@ func (m userMods) AddExistingRoutines(existingModels ...*models.Routine) UserMod
 func (m userMods) WithoutRoutines() UserMod {
 	return UserModFunc(func(ctx context.Context, o *UserTemplate) {
 		o.r.Routines = nil
+	})
+}
+
+func (m userMods) WithSets(number int, related *SetTemplate) UserMod {
+	return UserModFunc(func(ctx context.Context, o *UserTemplate) {
+		o.r.Sets = []*userRSetsR{{
+			number: number,
+			o:      related,
+		}}
+	})
+}
+
+func (m userMods) WithNewSets(number int, mods ...SetMod) UserMod {
+	return UserModFunc(func(ctx context.Context, o *UserTemplate) {
+		related := o.f.NewSetWithContext(ctx, mods...)
+		m.WithSets(number, related).Apply(ctx, o)
+	})
+}
+
+func (m userMods) AddSets(number int, related *SetTemplate) UserMod {
+	return UserModFunc(func(ctx context.Context, o *UserTemplate) {
+		o.r.Sets = append(o.r.Sets, &userRSetsR{
+			number: number,
+			o:      related,
+		})
+	})
+}
+
+func (m userMods) AddNewSets(number int, mods ...SetMod) UserMod {
+	return UserModFunc(func(ctx context.Context, o *UserTemplate) {
+		related := o.f.NewSetWithContext(ctx, mods...)
+		m.AddSets(number, related).Apply(ctx, o)
+	})
+}
+
+func (m userMods) AddExistingSets(existingModels ...*models.Set) UserMod {
+	return UserModFunc(func(ctx context.Context, o *UserTemplate) {
+		for _, em := range existingModels {
+			o.r.Sets = append(o.r.Sets, &userRSetsR{
+				o: o.f.fromExistingSet(ctx, em),
+			})
+		}
+	})
+}
+
+func (m userMods) WithoutSets() UserMod {
+	return UserModFunc(func(ctx context.Context, o *UserTemplate) {
+		o.r.Sets = nil
 	})
 }
 

@@ -195,6 +195,33 @@ var Sets = Table[
 			Where:         "",
 			Include:       []string{},
 		},
+		SetsUserIDCreatedAtIDIdx: index{
+			Type: "btree",
+			Name: "sets_user_id_created_at_id_idx",
+			Columns: []indexColumn{
+				{
+					Name:         "user_id",
+					Desc:         null.FromCond(false, true),
+					IsExpression: false,
+				},
+				{
+					Name:         "created_at",
+					Desc:         null.FromCond(false, true),
+					IsExpression: false,
+				},
+				{
+					Name:         "id",
+					Desc:         null.FromCond(false, true),
+					IsExpression: false,
+				},
+			},
+			Unique:        false,
+			Comment:       "",
+			NullsFirst:    []bool{false, false, false},
+			NullsDistinct: false,
+			Where:         "",
+			Include:       []string{},
+		},
 		SetsWorkoutGroupExerciseIDIdx: index{
 			Type: "btree",
 			Name: "sets_workout_group_exercise_id_idx",
@@ -243,6 +270,15 @@ var Sets = Table[
 				Comment: "",
 			},
 			ForeignTable:   "exercises",
+			ForeignColumns: []string{"id"},
+		},
+		SetsSetsUserIDFkey: foreignKey{
+			constraint: constraint{
+				Name:    "sets.sets_user_id_fkey",
+				Columns: []string{"user_id"},
+				Comment: "",
+			},
+			ForeignTable:   "users",
 			ForeignColumns: []string{"id"},
 		},
 		SetsSetsWorkoutGroupExerciseIDFkey: foreignKey{
@@ -336,25 +372,27 @@ type setIndexes struct {
 	SetsPkey                      index
 	SetsExerciseIDCreatedAtIDIdx  index
 	SetsExerciseIDIdx             index
+	SetsUserIDCreatedAtIDIdx      index
 	SetsWorkoutGroupExerciseIDIdx index
 	SetsWorkoutIDIdx              index
 }
 
 func (i setIndexes) AsSlice() []index {
 	return []index{
-		i.SetsPkey, i.SetsExerciseIDCreatedAtIDIdx, i.SetsExerciseIDIdx, i.SetsWorkoutGroupExerciseIDIdx, i.SetsWorkoutIDIdx,
+		i.SetsPkey, i.SetsExerciseIDCreatedAtIDIdx, i.SetsExerciseIDIdx, i.SetsUserIDCreatedAtIDIdx, i.SetsWorkoutGroupExerciseIDIdx, i.SetsWorkoutIDIdx,
 	}
 }
 
 type setForeignKeys struct {
 	SetsSetsExerciseIDFkey             foreignKey
+	SetsSetsUserIDFkey                 foreignKey
 	SetsSetsWorkoutGroupExerciseIDFkey foreignKey
 	SetsSetsWorkoutIDFkey              foreignKey
 }
 
 func (f setForeignKeys) AsSlice() []foreignKey {
 	return []foreignKey{
-		f.SetsSetsExerciseIDFkey, f.SetsSetsWorkoutGroupExerciseIDFkey, f.SetsSetsWorkoutIDFkey,
+		f.SetsSetsExerciseIDFkey, f.SetsSetsUserIDFkey, f.SetsSetsWorkoutGroupExerciseIDFkey, f.SetsSetsWorkoutIDFkey,
 	}
 }
 

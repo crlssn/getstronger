@@ -327,6 +327,9 @@ func TestUserCountStruct(t *testing.T) {
 	// Verify Routines count field exists and is *int64
 	var _ *int64 = m.C.Routines
 
+	// Verify Sets count field exists and is *int64
+	var _ *int64 = m.C.Sets
+
 	// Verify WorkoutComments count field exists and is *int64
 	var _ *int64 = m.C.WorkoutComments
 
@@ -370,6 +373,12 @@ func TestUserLoadCountMethods(t *testing.T) {
 	// Verify LoadCountRoutines method exists on slice
 	_ = ms.LoadCountRoutines(ctx, nil)
 
+	// Verify LoadCountSets method exists on single model
+	_ = m.LoadCountSets(ctx, nil)
+
+	// Verify LoadCountSets method exists on slice
+	_ = ms.LoadCountSets(ctx, nil)
+
 	// Verify LoadCountWorkoutComments method exists on single model
 	_ = m.LoadCountWorkoutComments(ctx, nil)
 
@@ -402,6 +411,9 @@ func TestSelectThenLoadCountUser(t *testing.T) {
 	// Verify Routines loader exists
 	_ = SelectThenLoadCount.User.Routines
 
+	// Verify Sets loader exists
+	_ = SelectThenLoadCount.User.Sets
+
 	// Verify WorkoutComments loader exists
 	_ = SelectThenLoadCount.User.WorkoutComments
 
@@ -428,6 +440,9 @@ func TestPreloadCountUser(t *testing.T) {
 	// Verify Routines preloader exists and returns a Preloader
 	_ = PreloadCount.User.Routines()
 
+	// Verify Sets preloader exists and returns a Preloader
+	_ = PreloadCount.User.Sets()
+
 	// Verify WorkoutComments preloader exists and returns a Preloader
 	_ = PreloadCount.User.WorkoutComments()
 
@@ -448,6 +463,8 @@ func TestUserPreloadCountMethod(t *testing.T) {
 	_ = m.PreloadCount("Plans", 0)
 
 	_ = m.PreloadCount("Routines", 0)
+
+	_ = m.PreloadCount("Sets", 0)
 
 	_ = m.PreloadCount("WorkoutComments", 0)
 

@@ -67,6 +67,7 @@ var (
 	// Relationship Contexts for sets
 	setWithParentsCascadingCtx    = newContextual[bool]("setWithParentsCascading")
 	setRelExerciseCtx             = newContextual[bool]("exercises.sets.sets.sets_exercise_id_fkey")
+	setRelUserCtx                 = newContextual[bool]("sets.users.sets.sets_user_id_fkey")
 	setRelWorkoutGroupExerciseCtx = newContextual[bool]("sets.workout_group_exercises.sets.sets_workout_group_exercise_id_fkey")
 	setRelWorkoutCtx              = newContextual[bool]("sets.workouts.sets.sets_workout_id_fkey")
 
@@ -80,6 +81,7 @@ var (
 	userRelNotificationsCtx     = newContextual[bool]("notifications.users.notifications.notifications_user_id_fkey")
 	userRelPlansCtx             = newContextual[bool]("plans.users.plans.plans_user_id_fkey")
 	userRelRoutinesCtx          = newContextual[bool]("routines.users.routines.routines_user_id_fkey")
+	userRelSetsCtx              = newContextual[bool]("sets.users.sets.sets_user_id_fkey")
 	userRelAuthCtx              = newContextual[bool]("auth.users.users.users_auth_id_fkey")
 	userRelWorkoutCommentsCtx   = newContextual[bool]("users.workout_comments.workout_comments.workout_comments_user_id_fkey")
 	userRelWorkoutsCtx          = newContextual[bool]("users.workouts.workouts.workouts_user_id_fkey")

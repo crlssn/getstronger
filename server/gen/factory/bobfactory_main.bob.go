@@ -580,6 +580,9 @@ func (f *Factory) fromExistingSet(ctx context.Context, m *models.Set) *SetTempla
 	if m.R.Exercise != nil {
 		SetMods.WithExistingExercise(m.R.Exercise).Apply(ctx, o)
 	}
+	if m.R.User != nil {
+		SetMods.WithExistingUser(m.R.User).Apply(ctx, o)
+	}
 	if m.R.WorkoutGroupExercise != nil {
 		SetMods.WithExistingWorkoutGroupExercise(m.R.WorkoutGroupExercise).Apply(ctx, o)
 	}
@@ -678,6 +681,9 @@ func (f *Factory) fromExistingUser(ctx context.Context, m *models.User) *UserTem
 	}
 	if len(m.R.Routines) > 0 {
 		UserMods.AddExistingRoutines(m.R.Routines...).Apply(ctx, o)
+	}
+	if len(m.R.Sets) > 0 {
+		UserMods.AddExistingSets(m.R.Sets...).Apply(ctx, o)
 	}
 	if m.R.Auth != nil {
 		UserMods.WithExistingAuth(m.R.Auth).Apply(ctx, o)
