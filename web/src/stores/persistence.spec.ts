@@ -6,7 +6,7 @@ import { beforeEach, describe, expect, test } from 'vitest'
 
 import { useAuthStore } from '@/stores/auth'
 import { useWorkoutStore } from '@/stores/workout'
-import { migratedStorage } from './persistence'
+import { disposableCachePrefix, migratedStorage } from './persistence'
 
 interface Saved {
   userId: string
@@ -97,5 +97,90 @@ describe('migratedStorage', () => {
 
     expect(sessionStorage.getItem('auth')).not.toBeNull()
     expect(localStorage.getItem('auth')).toBeNull()
+  })
+})
+
+/**
+ * A storage with a ceiling, the way a browser out of room behaves.
+ *
+ * `accepts` decides whether the next write fits, so a test can make room by
+ * removing something. Reading and removing keep working throughout.
+ */
+const bounded = (accepts: () => boolean): Storage & { entries: Map<string, string> } => {
+  const entries = new Map<string, string>()
+  return {
+    entries,
+    clear: () => entries.clear(),
+    getItem: (key: string) => entries.get(key) ?? null,
+    key: (index: number) => [...entries.keys()][index] ?? null,
+    get length() {
+      return entries.size
+    },
+    removeItem: (key: string) => void entries.delete(key),
+    setItem: (key: string, value: string) => {
+      if (!accepts()) throw new DOMException('full', 'QuotaExceededError')
+      entries.set(key, value)
+    },
+  }
+}
+
+const saved: StorageValue<Saved> = {
+  state: { userId: 'user-1', accessToken: 'token' },
+  version: 0,
+}
+
+// `persist` writes from inside `set`, so anything thrown here comes back out of
+// the action that changed the state. Mid-workout that is every keystroke in a
+// set, which is the one moment the app must not fall over.
+describe('migratedStorage, out of room', () => {
+  beforeEach(() => localStorage.clear())
+
+  test('lets the update through when the write cannot land', () => {
+    const storage = migratedStorage<Saved>(() => bounded(() => false))
+
+    expect(() => storage.setItem('workouts', saved)).not.toThrow()
+  })
+
+  test('lets the update through when the storage refuses to be removed from', () => {
+    const sealed = {
+      ...bounded(() => false),
+      removeItem: () => {
+        throw new Error('denied')
+      },
+    } as Storage
+
+    expect(() => migratedStorage<Saved>(() => sealed).removeItem('workouts')).not.toThrow()
+  })
+
+  test('reads nothing rather than throwing when the storage refuses to be read', () => {
+    const sealed = {
+      ...bounded(() => true),
+      getItem: () => {
+        throw new Error('denied')
+      },
+    } as Storage
+
+    expect(migratedStorage<Saved>(() => sealed).getItem('auth')).toBeNull()
+  })
+
+  // A cached response can be fetched again; a workout in progress cannot. So
+  // the cache is what gives up its room.
+  test('drops the cached responses to make room for the write', () => {
+    let full = true
+    const storage = bounded(() => !full)
+    storage.entries.set(`${disposableCachePrefix}user-1:ListExercises`, 'stale')
+    storage.entries.set('unrelated', 'kept')
+    // Room appears the moment anything is let go of.
+    const remove = storage.removeItem.bind(storage)
+    storage.removeItem = (key: string) => {
+      remove(key)
+      full = false
+    }
+
+    migratedStorage<Saved>(() => storage).setItem('workouts', saved)
+
+    expect(JSON.parse(storage.entries.get('workouts') ?? '')).toHaveProperty('state')
+    expect(storage.entries.has(`${disposableCachePrefix}user-1:ListExercises`)).toBe(false)
+    expect(storage.entries.get('unrelated')).toBe('kept')
   })
 })

@@ -1,6 +1,31 @@
 import type { PersistStorage, StorageValue } from 'zustand/middleware'
 
 /**
+ * Namespaces the responses `http/offlineCache.ts` keeps for reading offline.
+ *
+ * It lives here because this is where the room they take is reclaimed, and a
+ * prefix only one side of that agreed on would reclaim nothing.
+ */
+export const disposableCachePrefix = 'offlineCache:'
+
+/**
+ * Lets go of every cached response, which is the only thing in storage that can
+ * always be fetched again.
+ */
+export const dropDisposableCache = (storage: Storage = localStorage): void => {
+  try {
+    const doomed: string[] = []
+    for (let index = 0; index < storage.length; index++) {
+      const key = storage.key(index)
+      if (key?.startsWith(disposableCachePrefix)) doomed.push(key)
+    }
+    doomed.forEach((key) => storage.removeItem(key))
+  } catch {
+    // An unavailable storage holds nothing worth clearing.
+  }
+}
+
+/**
  * Storage for `persist` that can also read what the Vue app left behind.
  *
  * `pinia-plugin-persistedstate` wrote a store's state bare under its id;
@@ -21,7 +46,13 @@ export const migratedStorage = <T>(
   getStorage: () => Storage = () => localStorage,
 ): PersistStorage<T> => ({
   getItem: (name) => {
-    const raw = getStorage().getItem(name)
+    let raw: string | null
+    try {
+      raw = getStorage().getItem(name)
+    } catch {
+      // A storage that will not be read holds nothing to start from.
+      return null
+    }
     if (!raw) return null
 
     let parsed: unknown
@@ -39,7 +70,32 @@ export const migratedStorage = <T>(
     return { state: parsed as T, version: 0 }
   },
 
-  setItem: (name, value) => getStorage().setItem(name, JSON.stringify(value)),
+  // `persist` writes from inside `set`, so a storage that refuses the write
+  // throws out of whatever action changed the state — mid-workout, that is
+  // every keystroke in a set. Nothing here is worth dropping a rep over.
+  setItem: (name, value) => {
+    const storage = getStorage()
+    const raw = JSON.stringify(value)
+    try {
+      storage.setItem(name, raw)
+    } catch {
+      // Out of room. A cached response can be fetched again and a workout in
+      // progress cannot, so the cache is what gives up its space.
+      try {
+        dropDisposableCache(storage)
+        storage.setItem(name, raw)
+      } catch {
+        // Nothing left to give: this device stops persisting rather than
+        // stopping the user.
+      }
+    }
+  },
 
-  removeItem: (name) => getStorage().removeItem(name),
+  removeItem: (name) => {
+    try {
+      getStorage().removeItem(name)
+    } catch {
+      // A storage that will not be written to is already not holding this.
+    }
+  },
 })
