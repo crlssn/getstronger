@@ -6,7 +6,6 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/crlssn/getstronger/server/gen/models"
 	"github.com/crlssn/getstronger/server/training"
 )
 
@@ -39,7 +38,7 @@ func TestWorkoutName(t *testing.T) {
 func TestTotalVolume(t *testing.T) {
 	t.Parallel()
 
-	sets := models.SetSlice{
+	sets := []*training.Set{
 		{Weight: 100, Reps: 5},
 		{Weight: 60.5, Reps: 10},
 	}
@@ -62,12 +61,16 @@ func TestWeekSummarise(t *testing.T) {
 	t.Parallel()
 
 	week := training.WeekOf(time.Date(2026, time.August, 19, 12, 0, 0, 0, time.UTC))
-	thisWeek := &models.Workout{FinishedAt: week.Start().Add(time.Hour)}
-	thisWeek.R.Sets = models.SetSlice{{Weight: 100, Reps: 5}}
-	lastWeek := &models.Workout{FinishedAt: week.Start().Add(-time.Hour)}
-	lastWeek.R.Sets = models.SetSlice{{Weight: 100, Reps: 5}}
+	thisWeek := &training.Workout{
+		FinishedAt: week.Start().Add(time.Hour),
+		Sets:       []*training.Set{{Weight: 100, Reps: 5}},
+	}
+	lastWeek := &training.Workout{
+		FinishedAt: week.Start().Add(-time.Hour),
+		Sets:       []*training.Set{{Weight: 100, Reps: 5}},
+	}
 
-	summary := week.Summarise(models.WorkoutSlice{thisWeek, lastWeek})
+	summary := week.Summarise([]*training.Workout{thisWeek, lastWeek})
 	require.Equal(t, int32(1), summary.Workouts)
 	require.InDelta(t, 500.0, summary.Volume.Float64(), 0.001)
 }

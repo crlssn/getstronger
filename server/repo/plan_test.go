@@ -232,9 +232,9 @@ func (q queryCounter) TraceQueryStart(ctx context.Context, _ *pgx.Conn, _ pgx.Tr
 
 func (queryCounter) TraceQueryEnd(context.Context, *pgx.Conn, pgx.TraceQueryEndData) {}
 
-func routineExerciseIDs(routine *models.Routine) []uuid.UUID {
-	ids := make([]uuid.UUID, 0, len(routine.R.Exercises))
-	for _, exercise := range routine.R.Exercises {
+func routineExerciseIDs(routine *training.Routine) []uuid.UUID {
+	ids := make([]uuid.UUID, 0, len(routine.Exercises))
+	for _, exercise := range routine.Exercises {
 		ids = append(ids, exercise.ID)
 	}
 	return ids

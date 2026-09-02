@@ -2,14 +2,12 @@ package v1
 
 import (
 	"context"
-	"encoding/json"
 	"time"
 
 	"connectrpc.com/connect"
 	"github.com/gofrs/uuid/v5"
 	"go.uber.org/zap"
 
-	"github.com/crlssn/getstronger/server/gen/models"
 	apiv1 "github.com/crlssn/getstronger/server/gen/proto/api/v1"
 	"github.com/crlssn/getstronger/server/gen/proto/api/v1/apiv1connect"
 	"github.com/crlssn/getstronger/server/notification"
@@ -44,7 +42,7 @@ func (h *notificationHandler) ListNotifications(ctx context.Context, req *connec
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	paginated, err := repo.PaginateSlice(notifications, limit, func(n *models.Notification) (time.Time, uuid.UUID) {
+	paginated, err := repo.PaginateSlice(notifications, limit, func(n *notification.Notification) (time.Time, uuid.UUID) {
 		return n.CreatedAt, n.ID
 	})
 	if err != nil {
@@ -56,17 +54,11 @@ func (h *notificationHandler) ListNotifications(ctx context.Context, req *connec
 	var workoutIDs []uuid.UUID
 
 	for _, n := range paginated.Items {
-		var payload notification.Payload
-		if err = json.Unmarshal(n.Payload.Val, &payload); err != nil {
-			log.Error("Unmarshal notification payload", zap.Error(err))
-			return nil, connect.NewError(connect.CodeInternal, nil)
+		if !n.Payload.ActorID.IsNil() {
+			actorIDs = append(actorIDs, n.Payload.ActorID)
 		}
-
-		if !payload.ActorID.IsNil() {
-			actorIDs = append(actorIDs, payload.ActorID)
-		}
-		if !payload.WorkoutID.IsNil() {
-			workoutIDs = append(workoutIDs, payload.WorkoutID)
+		if !n.Payload.WorkoutID.IsNil() {
+			workoutIDs = append(workoutIDs, n.Payload.WorkoutID)
 		}
 	}
 
@@ -86,15 +78,9 @@ func (h *notificationHandler) ListNotifications(ctx context.Context, req *connec
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	notificationSlice, err := parser.NotificationSlice(paginated.Items, actors, workouts)
-	if err != nil {
-		log.Error("Parse notifications", zap.Error(err))
-		return nil, connect.NewError(connect.CodeInternal, nil)
-	}
-
 	return &connect.Response[apiv1.ListNotificationsResponse]{
 		Msg: &apiv1.ListNotificationsResponse{
-			Notifications: notificationSlice,
+			Notifications: parser.NotificationSlice(paginated.Items, actors, workouts),
 			Pagination: &apiv1.PaginationResponse{
 				NextPageToken: paginated.NextPageToken,
 			},

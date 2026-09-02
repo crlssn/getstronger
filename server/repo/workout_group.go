@@ -65,19 +65,11 @@ func writeWorkoutGroups(
 	return occurrences, nil
 }
 
-// WorkoutGroupRecord is a stored block and the exercises it held, in training
-// order. The sets belonging to it are read off the workout's own sets, each of
-// which names the occurrence that logged it.
-type WorkoutGroupRecord struct {
-	Group     *models.WorkoutGroup
-	Exercises models.WorkoutGroupExerciseSlice
-}
-
 // ListWorkoutGroups returns the blocks of each of these workouts, in training
 // order, keyed by workout ID. Workouts logged before blocks were recorded have
 // none, and are simply absent.
-func (r *Repo) ListWorkoutGroups(ctx context.Context, workoutIDs ...uuid.UUID) (map[uuid.UUID][]WorkoutGroupRecord, error) {
-	byWorkout := make(map[uuid.UUID][]WorkoutGroupRecord, len(workoutIDs))
+func (r *Repo) ListWorkoutGroups(ctx context.Context, workoutIDs ...uuid.UUID) (map[uuid.UUID][]training.WorkoutGroupRecord, error) {
+	byWorkout := make(map[uuid.UUID][]training.WorkoutGroupRecord, len(workoutIDs))
 	if len(workoutIDs) == 0 {
 		return byWorkout, nil
 	}
@@ -108,16 +100,23 @@ func (r *Repo) ListWorkoutGroups(ctx context.Context, workoutIDs ...uuid.UUID) (
 		return nil, fmt.Errorf("workout group exercises fetch: %w", err)
 	}
 
-	byGroup := make(map[uuid.UUID]models.WorkoutGroupExerciseSlice, len(groups))
+	byGroup := make(map[uuid.UUID][]training.WorkoutGroupOccurrence, len(groups))
 	for _, exercise := range exercises {
-		byGroup[exercise.WorkoutGroupID] = append(byGroup[exercise.WorkoutGroupID], exercise)
+		byGroup[exercise.WorkoutGroupID] = append(byGroup[exercise.WorkoutGroupID], training.WorkoutGroupOccurrence{
+			ID:         exercise.ID,
+			ExerciseID: exercise.ExerciseID,
+		})
 	}
 
 	for _, group := range groups {
 		workoutID := group.WorkoutID
-		byWorkout[workoutID] = append(byWorkout[workoutID], WorkoutGroupRecord{
-			Group:     group,
-			Exercises: byGroup[group.ID],
+		byWorkout[workoutID] = append(byWorkout[workoutID], training.WorkoutGroupRecord{
+			ID:                          group.ID,
+			Mode:                        group.Mode,
+			RestBetweenExercisesSeconds: group.RestBetweenExercisesSeconds,
+			RestBetweenRoundsSeconds:    group.RestBetweenRoundsSeconds,
+			Rounds:                      group.Rounds,
+			Exercises:                   byGroup[group.ID],
 		})
 	}
 
@@ -139,17 +138,17 @@ func occurrenceOf(occurrences map[setOccurrence]uuid.UUID, set setOccurrence) om
 
 // setOccurrencesOf reads the blocks a workout's stored sets belong to, so an
 // edit that rewrites the rows can put each of them back where it was.
-func setOccurrencesOf(sets models.SetSlice) map[setOccurrence]uuid.UUID {
+func setOccurrencesOf(sets []*training.Set) map[setOccurrence]uuid.UUID {
 	occurrences := make(map[setOccurrence]uuid.UUID, len(sets))
 	for _, set := range sets {
-		if set.WorkoutGroupExerciseID.IsNull() {
+		if set.OccurrenceID.IsNil() {
 			continue
 		}
 
 		occurrences[setOccurrence{
 			exerciseID: set.ExerciseID,
 			position:   int(set.Position),
-		}] = set.WorkoutGroupExerciseID.GetOrZero()
+		}] = set.OccurrenceID
 	}
 
 	return occurrences

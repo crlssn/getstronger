@@ -11,7 +11,6 @@ import (
 	"github.com/gofrs/uuid/v5"
 	"go.uber.org/zap"
 
-	"github.com/crlssn/getstronger/server/gen/models"
 	apiv1 "github.com/crlssn/getstronger/server/gen/proto/api/v1"
 	"github.com/crlssn/getstronger/server/repo"
 	"github.com/crlssn/getstronger/server/rpc/parser"
@@ -183,7 +182,7 @@ func routineUpdateFrom(routine *apiv1.Routine) (routineUpdate, error) {
 // routineToUpdate is the athlete's own routine the request names.
 func (h *routineLibrary) routineToUpdate(
 	ctx context.Context, log *zap.Logger, routineID, userID uuid.UUID,
-) (*models.Routine, error) {
+) (*training.Routine, error) {
 	routine, err := h.repo.GetRoutine(
 		ctx,
 		repo.GetRoutineWithID(routineID),
@@ -344,7 +343,7 @@ func (h *routineLibrary) ListRoutines(ctx context.Context, req *connect.Request[
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	pagination, err := repo.PaginateSlice(routines, limit, func(routine *models.Routine) (time.Time, uuid.UUID) {
+	pagination, err := repo.PaginateSlice(routines, limit, func(routine *training.Routine) (time.Time, uuid.UUID) {
 		return routine.CreatedAt, routine.ID
 	})
 	if err != nil {
@@ -448,7 +447,7 @@ func (h *routineLibrary) UpdateExerciseOrder(ctx context.Context, req *connect.R
 		return nil, connect.NewError(connect.CodePermissionDenied, nil)
 	}
 
-	if err = training.ValidateExerciseOrder(routine.R.Exercises, exerciseIDs); err != nil {
+	if err = training.ValidateExerciseOrder(routine.Exercises, exerciseIDs); err != nil {
 		log.Warn("Exercise order does not match routine", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInvalidArgument, nil)
 	}

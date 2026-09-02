@@ -13,12 +13,15 @@ import (
 	"github.com/stephenafamo/bob/dialect/psql/um"
 	"golang.org/x/crypto/bcrypt"
 
-	"github.com/crlssn/getstronger/server/gen/models"
+	"github.com/crlssn/getstronger/server/account"
+	"github.com/crlssn/getstronger/server/notification"
+	"github.com/crlssn/getstronger/server/training"
 )
 
+// ModelItem is an entity a list can be paged over.
 type ModelItem interface {
-	*models.Workout | *models.Exercise | *models.Routine | *models.Set | *models.WorkoutComment |
-		*models.Notification | *models.Auth | *models.User
+	*training.Workout | *training.Exercise | *training.Routine | *training.Set | *training.WorkoutComment |
+		*notification.Notification | *account.Auth | *account.User
 }
 
 type ModelSlice[T any] interface {

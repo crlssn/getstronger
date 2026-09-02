@@ -3,8 +3,8 @@ package handlers
 import (
 	"context"
 
-	"github.com/crlssn/getstronger/server/gen/models"
 	"github.com/crlssn/getstronger/server/repo"
+	"github.com/crlssn/getstronger/server/training"
 )
 
 //go:generate mockgen -package handlers -source=ports.go -destination=ports_mock.go
@@ -23,6 +23,6 @@ type NotificationStore interface {
 // conversation it joined, so that the audience can be worked out.
 type CommentThread interface {
 	NotificationStore
-	GetWorkoutComment(ctx context.Context, opts ...repo.GetWorkoutCommentOpt) (*models.WorkoutComment, error)
-	GetWorkout(ctx context.Context, opts ...repo.GetWorkoutOpt) (*models.Workout, error)
+	GetWorkoutComment(ctx context.Context, opts ...repo.GetWorkoutCommentOpt) (*training.WorkoutComment, error)
+	GetWorkout(ctx context.Context, opts ...repo.GetWorkoutOpt) (*training.Workout, error)
 }

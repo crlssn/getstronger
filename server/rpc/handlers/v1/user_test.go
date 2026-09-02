@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/zap"
 
+	"github.com/crlssn/getstronger/server/account"
 	"github.com/crlssn/getstronger/server/distanceunit"
 	"github.com/crlssn/getstronger/server/gen/models"
 	v1 "github.com/crlssn/getstronger/server/gen/proto/api/v1"
@@ -525,7 +526,7 @@ func (s *userSuite) TestFollowUser() {
 		})
 		s.Require().NoError(err)
 
-		followed, err := s.repo.IsUserFollowedByUserID(ctx, followee, follower.ID)
+		followed, err := s.repo.IsUserFollowedByUserID(ctx, &account.User{ID: followee.ID}, follower.ID)
 		s.Require().NoError(err)
 		s.Require().True(followed)
 
@@ -583,7 +584,7 @@ func (s *userSuite) TestUnfollowUser() {
 		})
 		s.Require().NoError(err)
 
-		followed, err := s.repo.IsUserFollowedByUserID(ctx, followee, follower.ID)
+		followed, err := s.repo.IsUserFollowedByUserID(ctx, &account.User{ID: followee.ID}, follower.ID)
 		s.Require().NoError(err)
 		s.Require().False(followed)
 	})

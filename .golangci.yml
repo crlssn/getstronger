@@ -38,7 +38,9 @@ linters:
             - pkg: database/sql
               desc: the domain does not read or write rows; let the store run the query and pass the result in
             - pkg: github.com/stephenafamo/bob
-              desc: the domain does not build queries; gen/models is the shared row type, the ORM is the store's business
+              desc: the domain does not build queries; the ORM is the store's business
+            - pkg: github.com/crlssn/getstronger/server/gen/models$
+              desc: the domain speaks in its own entities; the store reads rows into them
             - pkg: connectrpc.com/connect
               desc: the domain does not answer requests; map its errors to a code in the handler
             - pkg: net/http

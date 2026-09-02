@@ -5,8 +5,6 @@ import (
 	"time"
 
 	"github.com/gofrs/uuid/v5"
-
-	"github.com/crlssn/getstronger/server/gen/models"
 )
 
 // Plan is a rotation of routines an athlete works through in order. Exactly one
@@ -20,7 +18,7 @@ type Plan struct {
 	CurrentPosition int
 	CreatedAt       time.Time
 	UpdatedAt       time.Time
-	Routines        models.RoutineSlice
+	Routines        []*Routine
 }
 
 var (
@@ -32,7 +30,7 @@ var (
 
 // CurrentRoutine is the routine the plan expects to be trained next, or nil
 // when the plan has rotated past its routines or holds none at all.
-func (p *Plan) CurrentRoutine() *models.Routine {
+func (p *Plan) CurrentRoutine() *Routine {
 	if p == nil || p.CurrentPosition < 0 || p.CurrentPosition >= len(p.Routines) {
 		return nil
 	}
@@ -146,12 +144,12 @@ var (
 
 // ValidatePlanRoutine checks that a routine may take part in an athlete's
 // rotation: they must own it, and a deleted routine cannot be trained.
-func ValidatePlanRoutine(routine *models.Routine, userID uuid.UUID) error {
+func ValidatePlanRoutine(routine *Routine, userID uuid.UUID) error {
 	if routine.UserID != userID {
 		return ErrPlanRoutineBelongsToAnotherUser
 	}
 
-	if !routine.DeletedAt.IsNull() {
+	if routine.Deleted() {
 		return ErrPlanRoutineDeleted
 	}
 

@@ -5,7 +5,6 @@ import (
 
 	"github.com/gofrs/uuid/v5"
 
-	"github.com/crlssn/getstronger/server/gen/models"
 	"github.com/crlssn/getstronger/server/gen/models/enums"
 )
 
@@ -43,7 +42,7 @@ type RoutineGroup struct {
 // in another group, or in another routine, is a different occurrence and rests
 // for its own length.
 type RoutineExercise struct {
-	Exercise *models.Exercise
+	Exercise *Exercise
 	// RestSeconds is how long this occurrence rests between sets; zero turns
 	// the timer off here alone.
 	RestSeconds int32

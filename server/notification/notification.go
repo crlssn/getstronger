@@ -9,11 +9,12 @@ import (
 	"cmp"
 	"encoding/json"
 	"slices"
+	"time"
 
 	"github.com/gofrs/uuid/v5"
 
-	"github.com/crlssn/getstronger/server/gen/models"
 	"github.com/crlssn/getstronger/server/gen/models/enums"
+	"github.com/crlssn/getstronger/server/training"
 )
 
 // Type is what a notification is about. The database stores types as an enum,
@@ -70,7 +71,7 @@ func named(id uuid.UUID) *uuid.UUID {
 // CommentAudience is who hears about a new comment on a workout: the athlete
 // whose workout it is, plus everyone already in the conversation. Nobody is
 // notified about their own comment, and nobody is notified twice.
-func CommentAudience(commenterID, workoutOwnerID uuid.UUID, comments models.WorkoutCommentSlice) []uuid.UUID {
+func CommentAudience(commenterID, workoutOwnerID uuid.UUID, comments []*training.WorkoutComment) []uuid.UUID {
 	audience := make(map[uuid.UUID]struct{}, len(comments)+1)
 	if commenterID != workoutOwnerID {
 		audience[workoutOwnerID] = struct{}{}
@@ -95,4 +96,21 @@ func CommentAudience(commenterID, workoutOwnerID uuid.UUID, comments models.Work
 	})
 
 	return recipients
+}
+
+// Notification is one thing an athlete was told about, and whether they have
+// seen it yet.
+type Notification struct {
+	ID      uuid.UUID
+	UserID  uuid.UUID
+	Type    Type
+	Payload Payload
+	// ReadAt is when the athlete saw it, or zero while they have not.
+	ReadAt    time.Time
+	CreatedAt time.Time
+}
+
+// Read reports whether the athlete has seen the notification.
+func (n *Notification) Read() bool {
+	return !n.ReadAt.IsZero()
 }

@@ -11,7 +11,6 @@ import (
 	"github.com/gofrs/uuid/v5"
 	"go.uber.org/zap"
 
-	"github.com/crlssn/getstronger/server/gen/models"
 	apiv1 "github.com/crlssn/getstronger/server/gen/proto/api/v1"
 	"github.com/crlssn/getstronger/server/gen/proto/api/v1/apiv1connect"
 	"github.com/crlssn/getstronger/server/pubsub"
@@ -132,7 +131,7 @@ func (h *workoutHandler) resolveWorkoutName(ctx context.Context, request *apiv1.
 		return "", connect.NewError(connect.CodeInternal, nil)
 	}
 
-	return training.WorkoutName(routine.Title, request.GetWorkoutName()), nil
+	return training.WorkoutName(routine.Name, request.GetWorkoutName()), nil
 }
 
 func (h *workoutHandler) createWorkout(
@@ -142,8 +141,8 @@ func (h *workoutHandler) createWorkout(
 	workoutName string,
 	period training.Period,
 	session workoutSession,
-) (*models.Workout, error, error) {
-	var workout *models.Workout
+) (*training.Workout, error, error) {
+	var workout *training.Workout
 	var planAdvanceSkipped error
 	err := h.repo.NewTx(ctx, func(tx *repo.Repo) error {
 		createdWorkout, createErr := tx.CreateWorkout(ctx, repo.CreateWorkoutParams{
@@ -272,9 +271,9 @@ func (h *workoutHandler) GetWorkout(ctx context.Context, req *connect.Request[ap
 		Msg: &apiv1.GetWorkoutResponse{
 			Workout: parser.Workout(
 				workout,
-				parser.WorkoutIntensity(workout.R.Sets),
-				parser.WorkoutExerciseSets(workout.R.Sets, personalBests),
-				parser.WorkoutBlocks(groups[workout.ID], workout.R.Sets, personalBests),
+				parser.WorkoutIntensity(workout.Sets),
+				parser.WorkoutExerciseSets(workout.Sets, personalBests),
+				parser.WorkoutBlocks(groups[workout.ID], workout.Sets, personalBests),
 			),
 		},
 	}, nil
@@ -303,7 +302,7 @@ func (h *workoutHandler) ListWorkouts(ctx context.Context, req *connect.Request[
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	pagination, err := repo.PaginateSlice(workouts, limit, func(workout *models.Workout) (time.Time, uuid.UUID) {
+	pagination, err := repo.PaginateSlice(workouts, limit, func(workout *training.Workout) (time.Time, uuid.UUID) {
 		return workout.CreatedAt, workout.ID
 	})
 	if err != nil {

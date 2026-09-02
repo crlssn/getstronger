@@ -8,11 +8,11 @@ import (
 	"github.com/gofrs/uuid/v5"
 	"go.uber.org/zap"
 
-	"github.com/crlssn/getstronger/server/gen/models"
 	apiv1 "github.com/crlssn/getstronger/server/gen/proto/api/v1"
 	"github.com/crlssn/getstronger/server/gen/proto/api/v1/apiv1connect"
 	"github.com/crlssn/getstronger/server/repo"
 	"github.com/crlssn/getstronger/server/rpc/parser"
+	"github.com/crlssn/getstronger/server/training"
 	"github.com/crlssn/getstronger/server/xcontext"
 )
 
@@ -61,7 +61,7 @@ func (h *feedHandler) ListFeedItems(ctx context.Context, req *connect.Request[ap
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	paginated, err := repo.PaginateSlice(workouts, limit, func(workout *models.Workout) (time.Time, uuid.UUID) {
+	paginated, err := repo.PaginateSlice(workouts, limit, func(workout *training.Workout) (time.Time, uuid.UUID) {
 		return workout.CreatedAt, workout.ID
 	})
 	if err != nil {

@@ -43,11 +43,13 @@ build if one starts to — the deny list in `.golangci.yml` says why for each:
 Around them sit the packages that talk to the outside world, and which hold no
 business rules of their own:
 
-- `repo/` is the single persistence adapter. `repo.Repo` reads and writes rows;
-  a `Repo` bound to a transaction is the same type as one bound to the pool,
-  which is what lets `NewTx` hand a use case a transactional store.
+- `repo/` is the single persistence adapter. `repo.Repo` reads and writes rows
+  and hands back the bounded contexts' own entities, so the generated row
+  types never leave it. A `Repo` bound to a transaction is the same type as
+  one bound to the pool, which is what lets `NewTx` hand a use case a
+  transactional store.
 - `rpc/` is the Connect edge. Handlers authenticate, translate, log once and
-  return; `rpc/parser` is the only place proto and stored rows meet.
+  return; `rpc/parser` is the only place proto and the domain entities meet.
 - `pubsub/`, `email/`, `jwt/`, `cookies/`, `trace/`, `db/` are the remaining
   adapters. `gen/` is generated and never edited by hand.
 

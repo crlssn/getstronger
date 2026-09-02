@@ -20,6 +20,7 @@ import (
 	"github.com/crlssn/getstronger/server/repo"
 	"github.com/crlssn/getstronger/server/testing/container"
 	"github.com/crlssn/getstronger/server/testing/factory"
+	"github.com/crlssn/getstronger/server/training"
 )
 
 func TestRequestTraced_HandlePayload(t *testing.T) {
@@ -213,7 +214,7 @@ func TestHandlersSurviveAFailingStore(t *testing.T) {
 		t.Parallel()
 		comments := handlers.NewMockCommentThread(controller)
 		comments.EXPECT().GetWorkoutComment(gomock.Any(), gomock.Any()).
-			Return(&models.WorkoutComment{
+			Return(&training.WorkoutComment{
 				UserID:    uuid.Must(uuid.NewV4()),
 				WorkoutID: uuid.Must(uuid.NewV4()),
 			}, nil)
@@ -234,9 +235,9 @@ func TestHandlersSurviveAFailingStore(t *testing.T) {
 
 		comments := handlers.NewMockCommentThread(controller)
 		comments.EXPECT().GetWorkoutComment(gomock.Any(), gomock.Any()).
-			Return(&models.WorkoutComment{UserID: commenter, WorkoutID: workoutID}, nil)
+			Return(&training.WorkoutComment{UserID: commenter, WorkoutID: workoutID}, nil)
 		comments.EXPECT().GetWorkout(gomock.Any(), gomock.Any(), gomock.Any()).
-			Return(&models.Workout{ID: workoutID, UserID: owner}, nil)
+			Return(&training.Workout{ID: workoutID, UserID: owner}, nil)
 		comments.EXPECT().CreateNotification(gomock.Any(), gomock.Any()).Return(errStore)
 
 		handlers.NewWorkoutCommentPosted(zap.NewExample(), comments).

@@ -11,7 +11,6 @@ import (
 	"github.com/gofrs/uuid/v5"
 	"go.uber.org/zap"
 
-	"github.com/crlssn/getstronger/server/gen/models"
 	apiv1 "github.com/crlssn/getstronger/server/gen/proto/api/v1"
 	"github.com/crlssn/getstronger/server/gen/proto/api/v1/apiv1connect"
 	"github.com/crlssn/getstronger/server/repo"
@@ -148,7 +147,7 @@ func (h *exerciseHandler) UpdateExercise(ctx context.Context, req *connect.Reque
 // measurements alone, so the whole-message updates the web client sends keep
 // working, and it runs the "has it been logged" query the rule needs rather
 // than letting the domain reach for a store.
-func (h *exerciseHandler) metricsLocked(ctx context.Context, log *zap.Logger, exercise *models.Exercise, msg *apiv1.UpdateExerciseRequest) (bool, error) {
+func (h *exerciseHandler) metricsLocked(ctx context.Context, log *zap.Logger, exercise *training.Exercise, msg *apiv1.UpdateExerciseRequest) (bool, error) {
 	if !slices.Contains(msg.GetUpdateMask().GetPaths(), "metrics") {
 		return false, nil
 	}
@@ -164,7 +163,7 @@ func (h *exerciseHandler) metricsLocked(ctx context.Context, log *zap.Logger, ex
 		return false, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	return training.MetricsLocked(training.MetricsFromStrings(exercise.Metrics), requested, sets > 0), nil
+	return training.MetricsLocked(exercise.Metrics, requested, sets > 0), nil
 }
 
 func (h *exerciseHandler) pathToUpdateExerciseOpt(path string, exercise *apiv1.Exercise) (repo.UpdateExerciseOpt, error) {
@@ -254,7 +253,7 @@ func (h *exerciseHandler) ListExercises(ctx context.Context, req *connect.Reques
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	pagination, err := repo.PaginateSlice(exercises, limit, func(exercise *models.Exercise) (time.Time, uuid.UUID) {
+	pagination, err := repo.PaginateSlice(exercises, limit, func(exercise *training.Exercise) (time.Time, uuid.UUID) {
 		return exercise.CreatedAt, exercise.ID
 	})
 	if err != nil {
@@ -351,7 +350,7 @@ func (h *exerciseHandler) ListSets(ctx context.Context, req *connect.Request[api
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	paginated, err := repo.PaginateSlice(sets, limit, func(set *models.Set) (time.Time, uuid.UUID) {
+	paginated, err := repo.PaginateSlice(sets, limit, func(set *training.Set) (time.Time, uuid.UUID) {
 		return set.CreatedAt, set.ID
 	})
 	if err != nil {

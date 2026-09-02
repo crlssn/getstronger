@@ -79,13 +79,13 @@ func (r *Repo) ListRoutineGroups(ctx context.Context, routineID uuid.UUID) ([]*t
 	return parsed, nil
 }
 
-func (r *Repo) exercisesByID(ctx context.Context, links models.ExercisesRoutineSlice) (map[uuid.UUID]*models.Exercise, error) {
+func (r *Repo) exercisesByID(ctx context.Context, links models.ExercisesRoutineSlice) (map[uuid.UUID]*training.Exercise, error) {
 	exerciseIDs := make([]uuid.UUID, 0, len(links))
 	for _, link := range links {
 		exerciseIDs = append(exerciseIDs, link.ExerciseID)
 	}
 
-	exercisesByID := make(map[uuid.UUID]*models.Exercise, len(exerciseIDs))
+	exercisesByID := make(map[uuid.UUID]*training.Exercise, len(exerciseIDs))
 	if len(exerciseIDs) == 0 {
 		return exercisesByID, nil
 	}
@@ -98,7 +98,7 @@ func (r *Repo) exercisesByID(ctx context.Context, links models.ExercisesRoutineS
 	}
 
 	for _, exercise := range exercises {
-		exercisesByID[exercise.ID] = exercise
+		exercisesByID[exercise.ID] = exerciseFromRow(exercise)
 	}
 
 	return exercisesByID, nil
@@ -106,7 +106,7 @@ func (r *Repo) exercisesByID(ctx context.Context, links models.ExercisesRoutineS
 
 // SetRoutineGroups replaces a routine's groups and the exercises in them. The
 // flat exercise order follows the groups read end to end.
-func (r *Repo) SetRoutineGroups(ctx context.Context, routine *models.Routine, groups []training.RoutineGroupDraft, exercises models.ExerciseSlice) error {
+func (r *Repo) SetRoutineGroups(ctx context.Context, routine *training.Routine, groups []training.RoutineGroupDraft, exercises []*training.Exercise) error {
 	exerciseIDs := make([]uuid.UUID, 0, len(exercises))
 	for _, exercise := range exercises {
 		exerciseIDs = append(exerciseIDs, exercise.ID)
@@ -121,18 +121,12 @@ func (r *Repo) SetRoutineGroups(ctx context.Context, routine *models.Routine, gr
 	return nil
 }
 
-// newOccurrenceRestSeconds is the rest a link row starts at when nothing says
-// otherwise, read off what the exercise measures.
-func newOccurrenceRestSeconds(exercise *models.Exercise) int32 {
-	return training.NewOccurrenceRestSeconds(training.MetricsFromStrings(exercise.Metrics))
-}
-
 // newOccurrenceRests is what each of these exercises rests for where a routine
 // has just started training it, by exercise ID.
-func newOccurrenceRests(exercises models.ExerciseSlice) map[uuid.UUID]int32 {
+func newOccurrenceRests(exercises []*training.Exercise) map[uuid.UUID]int32 {
 	rests := make(map[uuid.UUID]int32, len(exercises))
 	for _, exercise := range exercises {
-		rests[exercise.ID] = newOccurrenceRestSeconds(exercise)
+		rests[exercise.ID] = training.NewOccurrenceRestSeconds(exercise.Metrics)
 	}
 
 	return rests
@@ -157,7 +151,7 @@ func occurrenceRest(exercise training.RoutineExerciseDraft, newRests map[uuid.UU
 // owner and appears exactly once.
 func setRoutineGroups(
 	ctx context.Context, exec bob.Executor, routineID uuid.UUID,
-	groups []training.RoutineGroupDraft, exercises models.ExerciseSlice,
+	groups []training.RoutineGroupDraft, exercises []*training.Exercise,
 ) error {
 	newRests := newOccurrenceRests(exercises)
 

@@ -8,7 +8,6 @@ import (
 	"github.com/gofrs/uuid/v5"
 	"github.com/lib/pq"
 
-	"github.com/crlssn/getstronger/server/gen/models"
 	"github.com/crlssn/getstronger/server/training"
 )
 
@@ -37,7 +36,7 @@ func (r *Repo) validatePlanRoutines(ctx context.Context, userID uuid.UUID, routi
 		return fmt.Errorf("plan routines fetch: %w", err)
 	}
 
-	routinesByID := make(map[uuid.UUID]*models.Routine, len(routines))
+	routinesByID := make(map[uuid.UUID]*training.Routine, len(routines))
 	for _, routine := range routines {
 		routinesByID[routine.ID] = routine
 	}
@@ -83,7 +82,7 @@ VALUES ($1, $2, $3)`, planID, routineID, position); err != nil {
 // Reading the athlete's plans costs no more than reading only the ones holding
 // the routine: ListPlans loads every rotation in the same two queries. It must
 // run before the routine is retired, while its rows still resolve.
-func (r *Repo) dropRoutineFromPlans(ctx context.Context, routine *models.Routine) error {
+func (r *Repo) dropRoutineFromPlans(ctx context.Context, routine *training.Routine) error {
 	userID := routine.UserID
 	plans, err := r.ListPlans(ctx, userID)
 	if err != nil {

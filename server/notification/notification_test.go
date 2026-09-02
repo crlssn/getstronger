@@ -3,12 +3,13 @@ package notification_test
 import (
 	"encoding/json"
 	"testing"
+	"time"
 
 	"github.com/gofrs/uuid/v5"
 	"github.com/stretchr/testify/require"
 
-	"github.com/crlssn/getstronger/server/gen/models"
 	"github.com/crlssn/getstronger/server/notification"
+	"github.com/crlssn/getstronger/server/training"
 )
 
 func TestCommentAudience(t *testing.T) {
@@ -18,13 +19,13 @@ func TestCommentAudience(t *testing.T) {
 	commenter := uuid.Must(uuid.NewV4())
 	other := uuid.Must(uuid.NewV4())
 
-	comment := func(userID uuid.UUID) *models.WorkoutComment {
-		return &models.WorkoutComment{UserID: userID}
+	comment := func(userID uuid.UUID) *training.WorkoutComment {
+		return &training.WorkoutComment{UserID: userID}
 	}
 
 	t.Run("tells the owner and everyone already in the conversation", func(t *testing.T) {
 		t.Parallel()
-		audience := notification.CommentAudience(commenter, owner, models.WorkoutCommentSlice{
+		audience := notification.CommentAudience(commenter, owner, []*training.WorkoutComment{
 			comment(other), comment(commenter), comment(other),
 		})
 		require.ElementsMatch(t, []uuid.UUID{owner, other}, audience)
@@ -32,7 +33,7 @@ func TestCommentAudience(t *testing.T) {
 
 	t.Run("never tells the commenter about their own comment", func(t *testing.T) {
 		t.Parallel()
-		audience := notification.CommentAudience(commenter, commenter, models.WorkoutCommentSlice{
+		audience := notification.CommentAudience(commenter, commenter, []*training.WorkoutComment{
 			comment(commenter),
 		})
 		require.Empty(t, audience)
@@ -40,7 +41,7 @@ func TestCommentAudience(t *testing.T) {
 
 	t.Run("is ordered so one comment always notifies the same way", func(t *testing.T) {
 		t.Parallel()
-		comments := models.WorkoutCommentSlice{comment(other), comment(owner)}
+		comments := []*training.WorkoutComment{comment(other), comment(owner)}
 		first := notification.CommentAudience(commenter, owner, comments)
 		for range 10 {
 			require.Equal(t, first, notification.CommentAudience(commenter, owner, comments))
@@ -81,4 +82,12 @@ func TestPayloadReadsWhatIsStored(t *testing.T) {
 	require.Equal(t, actor, read.ActorID)
 	require.Equal(t, event, read.EventID)
 	require.Equal(t, workout, read.WorkoutID)
+}
+
+// A notification is read once its read time is set; nothing else says so.
+func TestNotificationRead(t *testing.T) {
+	t.Parallel()
+
+	require.False(t, (&notification.Notification{}).Read())
+	require.True(t, (&notification.Notification{ReadAt: time.Now().UTC()}).Read())
 }

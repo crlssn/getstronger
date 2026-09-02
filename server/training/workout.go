@@ -4,7 +4,9 @@ import (
 	"errors"
 	"time"
 
-	"github.com/crlssn/getstronger/server/gen/models"
+	"github.com/gofrs/uuid/v5"
+
+	"github.com/crlssn/getstronger/server/account"
 )
 
 // QuickWorkoutName names a workout logged without following a routine.
@@ -58,11 +60,71 @@ func (v Volume) Float64() float64 {
 }
 
 // TotalVolume is the tonnage of a collection of sets.
-func TotalVolume(sets models.SetSlice) Volume {
+func TotalVolume(sets []*Set) Volume {
 	var total Volume
 	for _, set := range sets {
 		total += Volume(set.Weight * float64(set.Reps))
 	}
 
 	return total
+}
+
+// Workout is a session an athlete has logged. The relations are filled in
+// only when the read asked for them, so a nil slice means "not loaded" rather
+// than "none".
+type Workout struct {
+	ID     uuid.UUID
+	UserID uuid.UUID
+	// RoutineID names the routine the session followed, or is nil for a
+	// session logged without one.
+	RoutineID  uuid.UUID
+	Name       string
+	Note       string
+	StartedAt  time.Time
+	FinishedAt time.Time
+	CreatedAt  time.Time
+
+	User     *account.User
+	Comments []*WorkoutComment
+	Sets     []*Set
+}
+
+// Set is one set of one exercise within a workout. Weight is stored in
+// kilograms and distance in kilometres whatever unit the athlete entered; the
+// unit says how to show it back.
+type Set struct {
+	ID              uuid.UUID
+	WorkoutID       uuid.UUID
+	ExerciseID      uuid.UUID
+	UserID          uuid.UUID
+	Weight          float64
+	Reps            int32
+	Distance        float64
+	DurationSeconds int32
+	WeightUnit      string
+	DistanceUnit    string
+	// Position is where the set came in the order the session logged them,
+	// which is what a circuit's rounds are read off.
+	Position int32
+	// OccurrenceID names the block occurrence that logged the set, or is nil
+	// for a set stored ungrouped.
+	OccurrenceID uuid.UUID
+	CreatedAt    time.Time
+
+	// Exercise is the exercise the set is of, when the read loaded it.
+	Exercise *Exercise
+}
+
+// WorkoutComment is something somebody said about a workout.
+type WorkoutComment struct {
+	ID        uuid.UUID
+	UserID    uuid.UUID
+	WorkoutID uuid.UUID
+	Comment   string
+	CreatedAt time.Time
+
+	// User is who said it and Workout what they said it about, each when the
+	// read loaded it.
+	User    *account.User
+	Workout *Workout
 }
