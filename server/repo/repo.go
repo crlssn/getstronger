@@ -309,12 +309,18 @@ func (r *Repo) CreateUser(ctx context.Context, p CreateUserParams) (*models.User
 // index on lower(username) rather than a column constraint. That index is not
 // in the generated dberrors vocabulary, so its violation is translated here.
 func translateUserError(err error) error {
-	var pgErr *pgconn.PgError
-	if errors.As(err, &pgErr) && pgErr.Code == "23505" && pgErr.ConstraintName == "idx_users_username_lower" {
+	if uniqueViolation(err, "idx_users_username_lower") {
 		return account.ErrUsernameTaken
 	}
 
 	return err
+}
+
+// uniqueViolation reports whether err is Postgres refusing a duplicate under
+// the named unique index or constraint.
+func uniqueViolation(err error, name string) bool {
+	var pgErr *pgconn.PgError
+	return errors.As(err, &pgErr) && pgErr.Code == "23505" && pgErr.ConstraintName == name
 }
 
 type UpdateUserOpt func() (columns, error)
@@ -1030,6 +1036,10 @@ type CreateWorkoutParams struct {
 	Groups     []training.WorkoutGroup
 	StartedAt  time.Time
 	FinishedAt time.Time
+	// IdempotencyKey names the save attempt. A key this user already saved
+	// under is rejected with training.ErrWorkoutAlreadySaved; an empty one is
+	// stored as none and never a repeat.
+	IdempotencyKey string
 }
 
 type ExerciseSet struct {
@@ -1059,9 +1069,11 @@ func (r *Repo) CreateWorkout(ctx context.Context, p CreateWorkoutParams) (*model
 			RoutineID:  nullUUIDFromString(p.RoutineID),
 			StartedAt:  omit.From(p.StartedAt.Truncate(time.Minute).UTC()),
 			FinishedAt: omit.From(p.FinishedAt.Truncate(time.Minute).UTC()),
+
+			IdempotencyKey: nullUUIDFromString(p.IdempotencyKey),
 		}).One(ctx, tx.bobExec())
 		if err != nil {
-			return fmt.Errorf("workout insert: %w", err)
+			return fmt.Errorf("workout insert: %w", translateWorkoutError(err))
 		}
 
 		occurrences, err := writeWorkoutGroups(ctx, tx.bobExec(), workout.ID, p.Groups)
@@ -1110,11 +1122,34 @@ func (r *Repo) CreateWorkout(ctx context.Context, p CreateWorkoutParams) (*model
 	return workout, nil
 }
 
+// A repeated save trips the unique index on (user_id, idempotency_key). An
+// index rather than a constraint, so it is outside the generated dberrors
+// vocabulary and its violation is translated here.
+func translateWorkoutError(err error) error {
+	if uniqueViolation(err, "workouts_user_id_idempotency_key_idx") {
+		return training.ErrWorkoutAlreadySaved
+	}
+
+	return err
+}
+
 type GetWorkoutOpt func() bob.Mod[*dialect.SelectQuery]
 
 func GetWorkoutWithID(id string) GetWorkoutOpt {
 	return func() bob.Mod[*dialect.SelectQuery] {
 		return models.SelectWhere.Workouts.ID.EQ(uuidFromString(id))
+	}
+}
+
+func GetWorkoutWithUserID(userID string) GetWorkoutOpt {
+	return func() bob.Mod[*dialect.SelectQuery] {
+		return models.SelectWhere.Workouts.UserID.EQ(uuidFromString(userID))
+	}
+}
+
+func GetWorkoutWithIdempotencyKey(key string) GetWorkoutOpt {
+	return func() bob.Mod[*dialect.SelectQuery] {
+		return models.SelectWhere.Workouts.IdempotencyKey.EQ(uuidFromString(key))
 	}
 }
 

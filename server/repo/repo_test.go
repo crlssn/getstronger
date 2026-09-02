@@ -2035,6 +2035,42 @@ func (s *repoSuite) TestPublishEvent() {
 	}
 }
 
+// The same key sent twice is one save, and the second attempt is told so
+// rather than stored; a save sent without a key is never taken for a repeat.
+func (s *repoSuite) TestCreateWorkoutRejectsARepeatedIdempotencyKey() {
+	user := s.factory.NewUser()
+	press := s.factory.NewExercise(factory.ExerciseUserID(user.ID))
+	params := repo.CreateWorkoutParams{
+		Name:       "Push",
+		UserID:     user.ID.String(),
+		StartedAt:  time.Now(),
+		FinishedAt: time.Now().Add(time.Hour),
+		ExerciseSets: []repo.ExerciseSet{
+			{ExerciseID: press.ID.String(), Sets: []repo.Set{{Reps: 8, Weight: 60}}},
+		},
+		IdempotencyKey: uuid.NewString(),
+	}
+
+	first, err := s.repo.CreateWorkout(context.Background(), params)
+	s.Require().NoError(err)
+	_, err = s.repo.CreateWorkout(context.Background(), params)
+	s.Require().ErrorIs(err, training.ErrWorkoutAlreadySaved)
+
+	saved, err := s.repo.GetWorkout(
+		context.Background(),
+		repo.GetWorkoutWithUserID(user.ID.String()),
+		repo.GetWorkoutWithIdempotencyKey(params.IdempotencyKey),
+	)
+	s.Require().NoError(err)
+	s.Require().Equal(first.ID, saved.ID)
+
+	params.IdempotencyKey = ""
+	_, err = s.repo.CreateWorkout(context.Background(), params)
+	s.Require().NoError(err)
+	_, err = s.repo.CreateWorkout(context.Background(), params)
+	s.Require().NoError(err)
+}
+
 // An edit rewrites every set row, so the block each of them was logged in has
 // to be carried across: changing what was lifted must not change how the
 // session was structured.

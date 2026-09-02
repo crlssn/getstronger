@@ -38,14 +38,15 @@ func (mods WorkoutModSlice) Apply(ctx context.Context, n *WorkoutTemplate) {
 // WorkoutTemplate is an object representing the database table.
 // all columns are optional and should be set by mods
 type WorkoutTemplate struct {
-	ID         func() uuid.UUID
-	UserID     func() uuid.UUID
-	FinishedAt func() time.Time
-	CreatedAt  func() time.Time
-	Name       func() string
-	StartedAt  func() time.Time
-	Note       func() null.Val[string]
-	RoutineID  func() null.Val[uuid.UUID]
+	ID             func() uuid.UUID
+	UserID         func() uuid.UUID
+	FinishedAt     func() time.Time
+	CreatedAt      func() time.Time
+	Name           func() string
+	StartedAt      func() time.Time
+	Note           func() null.Val[string]
+	RoutineID      func() null.Val[uuid.UUID]
+	IdempotencyKey func() null.Val[uuid.UUID]
 
 	r workoutR
 	f *Factory
@@ -189,6 +190,10 @@ func (o WorkoutTemplate) BuildSetter() *models.WorkoutSetter {
 		val := o.RoutineID()
 		m.RoutineID = omitnull.FromNull(val)
 	}
+	if o.IdempotencyKey != nil {
+		val := o.IdempotencyKey()
+		m.IdempotencyKey = omitnull.FromNull(val)
+	}
 
 	return m
 }
@@ -234,6 +239,9 @@ func (o WorkoutTemplate) Build() *models.Workout {
 	}
 	if o.RoutineID != nil {
 		m.RoutineID = o.RoutineID()
+	}
+	if o.IdempotencyKey != nil {
+		m.IdempotencyKey = o.IdempotencyKey()
 	}
 
 	o.setModelRels(m)
@@ -508,6 +516,7 @@ func (m workoutMods) RandomizeAllColumns(f *faker.Faker) WorkoutMod {
 		WorkoutMods.RandomStartedAt(f),
 		WorkoutMods.RandomNote(f),
 		WorkoutMods.RandomRoutineID(f),
+		WorkoutMods.RandomIdempotencyKey(f),
 	}
 }
 
@@ -793,6 +802,59 @@ func (m workoutMods) RandomRoutineID(f *faker.Faker) WorkoutMod {
 func (m workoutMods) RandomRoutineIDNotNull(f *faker.Faker) WorkoutMod {
 	return WorkoutModFunc(func(_ context.Context, o *WorkoutTemplate) {
 		o.RoutineID = func() null.Val[uuid.UUID] {
+			if f == nil {
+				f = &defaultFaker
+			}
+
+			val := random_uuid_UUID(f)
+			return null.From(val)
+		}
+	})
+}
+
+// Set the model columns to this value
+func (m workoutMods) IdempotencyKey(val null.Val[uuid.UUID]) WorkoutMod {
+	return WorkoutModFunc(func(_ context.Context, o *WorkoutTemplate) {
+		o.IdempotencyKey = func() null.Val[uuid.UUID] { return val }
+	})
+}
+
+// Set the Column from the function
+func (m workoutMods) IdempotencyKeyFunc(f func() null.Val[uuid.UUID]) WorkoutMod {
+	return WorkoutModFunc(func(_ context.Context, o *WorkoutTemplate) {
+		o.IdempotencyKey = f
+	})
+}
+
+// Clear any values for the column
+func (m workoutMods) UnsetIdempotencyKey() WorkoutMod {
+	return WorkoutModFunc(func(_ context.Context, o *WorkoutTemplate) {
+		o.IdempotencyKey = nil
+	})
+}
+
+// Generates a random value for the column using the given faker
+// if faker is nil, a default faker is used
+// The generated value is sometimes null
+func (m workoutMods) RandomIdempotencyKey(f *faker.Faker) WorkoutMod {
+	return WorkoutModFunc(func(_ context.Context, o *WorkoutTemplate) {
+		o.IdempotencyKey = func() null.Val[uuid.UUID] {
+			if f == nil {
+				f = &defaultFaker
+			}
+
+			val := random_uuid_UUID(f)
+			return null.From(val)
+		}
+	})
+}
+
+// Generates a random value for the column using the given faker
+// if faker is nil, a default faker is used
+// The generated value is never null
+func (m workoutMods) RandomIdempotencyKeyNotNull(f *faker.Faker) WorkoutMod {
+	return WorkoutModFunc(func(_ context.Context, o *WorkoutTemplate) {
+		o.IdempotencyKey = func() null.Val[uuid.UUID] {
 			if f == nil {
 				f = &defaultFaker
 			}

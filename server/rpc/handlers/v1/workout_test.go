@@ -223,6 +223,87 @@ func (s *workoutSuite) TestCreateWorkoutAdvancesActivePlan() {
 	s.Require().Equal(1, advanced.CurrentPosition)
 }
 
+// A save the server committed but never answered is sent again: the offline
+// queue replays it on reconnect, and a finish that timed out is pressed again.
+// The key it carries makes the repeat answer with the first save rather than
+// store a second one, and the plan the first advanced stays where it is.
+func (s *workoutSuite) TestCreateWorkoutRepeatedWithItsKeyIsSavedOnce() {
+	user := s.factory.NewUser()
+	routine := s.factory.NewRoutine(factory.RoutineUserID(user.ID))
+	nextRoutine := s.factory.NewRoutine(factory.RoutineUserID(user.ID))
+	exercise := s.factory.NewExercise(factory.ExerciseUserID(user.ID))
+	planRepo := repo.New(s.container.DB)
+	plan, err := planRepo.CreatePlan(context.Background(), repo.CreatePlanParams{
+		UserID:     user.ID.String(),
+		Name:       "Rotation",
+		RoutineIDs: []string{routine.ID.String(), nextRoutine.ID.String()},
+	})
+	s.Require().NoError(err)
+	plan, err = planRepo.SetActivePlan(context.Background(), plan.ID, user.ID.String())
+	s.Require().NoError(err)
+
+	ctx := xcontext.WithUserID(context.Background(), user.ID.String())
+	ctx = xcontext.WithLogger(ctx, zap.NewExample())
+	key := uuid.NewString()
+	request := func() *connect.Request[apiv1.CreateWorkoutRequest] {
+		return connect.NewRequest(&apiv1.CreateWorkoutRequest{
+			RoutineId: routine.ID.String(),
+			PlanId:    plan.ID,
+			ExerciseSets: []*apiv1.ExerciseSets{{
+				Exercise: &apiv1.Exercise{Id: exercise.ID.String()},
+				Sets:     []*apiv1.Set{{Reps: 5, Weight: 50}},
+			}},
+			StartedAt:      timestamppb.Now(),
+			FinishedAt:     timestamppb.New(time.Now().Add(time.Hour)),
+			IdempotencyKey: &key,
+		})
+	}
+
+	first, err := s.handler.CreateWorkout(ctx, request())
+	s.Require().NoError(err)
+	repeat, err := s.handler.CreateWorkout(ctx, request())
+	s.Require().NoError(err)
+	s.Require().Equal(first.Msg.GetWorkoutId(), repeat.Msg.GetWorkoutId())
+
+	saved, err := models.Workouts.Query(models.SelectWhere.Workouts.UserID.EQ(user.ID)).
+		Count(ctx, bob.NewDB(s.container.DB))
+	s.Require().NoError(err)
+	s.Require().EqualValues(1, saved)
+
+	advanced, err := planRepo.GetActivePlan(context.Background(), user.ID.String())
+	s.Require().NoError(err)
+	s.Require().Equal(1, advanced.CurrentPosition)
+}
+
+// The key is the client's own, so two users may well mint the same one: each
+// keeps their workout, and a new key from the same user is a new workout.
+func (s *workoutSuite) TestCreateWorkoutKeyIsUniquePerUser() {
+	key := uuid.NewString()
+	save := func(userID, key string) string {
+		s.T().Helper()
+		exercise := s.factory.NewExercise(factory.ExerciseUserID(userID))
+		ctx := xcontext.WithUserID(context.Background(), userID)
+		ctx = xcontext.WithLogger(ctx, zap.NewExample())
+		response, err := s.handler.CreateWorkout(ctx, connect.NewRequest(&apiv1.CreateWorkoutRequest{
+			WorkoutName: "Quick Workout",
+			ExerciseSets: []*apiv1.ExerciseSets{{
+				Exercise: &apiv1.Exercise{Id: exercise.ID.String()},
+				Sets:     []*apiv1.Set{{Reps: 5, Weight: 50}},
+			}},
+			StartedAt:      timestamppb.Now(),
+			FinishedAt:     timestamppb.New(time.Now().Add(time.Hour)),
+			IdempotencyKey: &key,
+		}))
+		s.Require().NoError(err)
+		return response.Msg.GetWorkoutId()
+	}
+
+	one := s.factory.NewUser()
+	other := s.factory.NewUser()
+	s.Require().NotEqual(save(one.ID.String(), key), save(other.ID.String(), key))
+	s.Require().NotEqual(save(one.ID.String(), key), save(one.ID.String(), uuid.NewString()))
+}
+
 // The whole point of the snapshot: a session trained in blocks is read back in
 // them, and an exercise trained in two blocks keeps its sets apart.
 func (s *workoutSuite) TestCreateWorkoutRecordsTheBlocksItWasTrainedIn() {

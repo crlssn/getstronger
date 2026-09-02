@@ -39,6 +39,11 @@ message CreateWorkoutRequest {
   // they are listed. A request that names none is stored ungrouped, which is
   // what every client sent before blocks were recorded.
   repeated WorkoutGroup groups = 8;
+  // Optional. A key the client mints once per session and sends with every
+  // attempt to save it, so a save the server committed but never answered is
+  // recognised when it is sent again and answered with the workout it already
+  // has rather than saved twice. Unique per user.
+  optional string idempotency_key = 9 [(buf.validate.field).string.uuid = true];
 }
 message CreateWorkoutResponse {
   string workout_id = 1;

@@ -87,6 +87,15 @@ var Workouts = Table[
 			Generated: false,
 			AutoIncr:  false,
 		},
+		IdempotencyKey: column{
+			Name:      "idempotency_key",
+			DBType:    "uuid",
+			Default:   "NULL",
+			Comment:   "",
+			Nullable:  true,
+			Generated: false,
+			AutoIncr:  false,
+		},
 	},
 	Indexes: workoutIndexes{
 		WorkoutsPkey: index{
@@ -150,6 +159,28 @@ var Workouts = Table[
 			Where:         "",
 			Include:       []string{},
 		},
+		WorkoutsUserIDIdempotencyKeyIdx: index{
+			Type: "btree",
+			Name: "workouts_user_id_idempotency_key_idx",
+			Columns: []indexColumn{
+				{
+					Name:         "user_id",
+					Desc:         null.FromCond(false, true),
+					IsExpression: false,
+				},
+				{
+					Name:         "idempotency_key",
+					Desc:         null.FromCond(false, true),
+					IsExpression: false,
+				},
+			},
+			Unique:        true,
+			Comment:       "",
+			NullsFirst:    []bool{false, false},
+			NullsDistinct: false,
+			Where:         "",
+			Include:       []string{},
+		},
 		WorkoutsUserIDIdx: index{
 			Type: "btree",
 			Name: "workouts_user_id_idx",
@@ -198,32 +229,34 @@ var Workouts = Table[
 }
 
 type workoutColumns struct {
-	ID         column
-	UserID     column
-	FinishedAt column
-	CreatedAt  column
-	Name       column
-	StartedAt  column
-	Note       column
-	RoutineID  column
+	ID             column
+	UserID         column
+	FinishedAt     column
+	CreatedAt      column
+	Name           column
+	StartedAt      column
+	Note           column
+	RoutineID      column
+	IdempotencyKey column
 }
 
 func (c workoutColumns) AsSlice() []column {
 	return []column{
-		c.ID, c.UserID, c.FinishedAt, c.CreatedAt, c.Name, c.StartedAt, c.Note, c.RoutineID,
+		c.ID, c.UserID, c.FinishedAt, c.CreatedAt, c.Name, c.StartedAt, c.Note, c.RoutineID, c.IdempotencyKey,
 	}
 }
 
 type workoutIndexes struct {
-	WorkoutsPkey                 index
-	WorkoutsRoutineIDIdx         index
-	WorkoutsUserIDCreatedAtIDIdx index
-	WorkoutsUserIDIdx            index
+	WorkoutsPkey                    index
+	WorkoutsRoutineIDIdx            index
+	WorkoutsUserIDCreatedAtIDIdx    index
+	WorkoutsUserIDIdempotencyKeyIdx index
+	WorkoutsUserIDIdx               index
 }
 
 func (i workoutIndexes) AsSlice() []index {
 	return []index{
-		i.WorkoutsPkey, i.WorkoutsRoutineIDIdx, i.WorkoutsUserIDCreatedAtIDIdx, i.WorkoutsUserIDIdx,
+		i.WorkoutsPkey, i.WorkoutsRoutineIDIdx, i.WorkoutsUserIDCreatedAtIDIdx, i.WorkoutsUserIDIdempotencyKeyIdx, i.WorkoutsUserIDIdx,
 	}
 }
 
