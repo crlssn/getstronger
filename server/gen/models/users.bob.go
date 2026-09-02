@@ -61,6 +61,7 @@ type userR struct {
 	Notifications   NotificationSlice   // notifications.notifications_user_id_fkey
 	Plans           PlanSlice           // plans.plans_user_id_fkey
 	Routines        RoutineSlice        // routines.routines_user_id_fkey
+	Sets            SetSlice            // sets.sets_user_id_fkey
 	Auth            *Auth               // users.users_auth_id_fkey
 	WorkoutComments WorkoutCommentSlice // workout_comments.workout_comments_user_id_fkey
 	Workouts        WorkoutSlice        // workouts.workouts_user_id_fkey
@@ -77,6 +78,7 @@ type userRLoaded struct {
 	Notifications   bool // notifications.notifications_user_id_fkey
 	Plans           bool // plans.plans_user_id_fkey
 	Routines        bool // routines.routines_user_id_fkey
+	Sets            bool // sets.sets_user_id_fkey
 	Auth            bool // users.users_auth_id_fkey
 	WorkoutComments bool // workout_comments.workout_comments_user_id_fkey
 	Workouts        bool // workouts.workouts_user_id_fkey
@@ -767,6 +769,29 @@ func (os UserSlice) Routines(mods ...bob.Mod[*dialect.SelectQuery]) RoutinesQuer
 	)...)
 }
 
+// Sets starts a query for related objects on sets
+func (o *User) Sets(mods ...bob.Mod[*dialect.SelectQuery]) SetsQuery {
+	return Sets.Query(append(mods,
+		sm.Where(Sets.Columns.UserID.EQ(psql.Arg(o.ID))),
+	)...)
+}
+
+func (os UserSlice) Sets(mods ...bob.Mod[*dialect.SelectQuery]) SetsQuery {
+	pkID := make(pgtypes.Array[uuid.UUID], 0, len(os))
+
+	for _, o := range os {
+		if o == nil {
+			continue
+		}
+		pkID = append(pkID, o.ID)
+	}
+	PKArgExpr := psql.Any(psql.Cast(psql.Arg(pkID), "uuid[]"))
+
+	return Sets.Query(append(mods,
+		sm.Where(Sets.Columns.UserID.EQ(PKArgExpr)),
+	)...)
+}
+
 // Auth starts a query for related objects on auth
 func (o *User) Auth(mods ...bob.Mod[*dialect.SelectQuery]) AuthsQuery {
 	return Auths.Query(append(mods,
@@ -1174,6 +1199,76 @@ func (user0 *User) AttachRoutines(ctx context.Context, exec bob.Executor, relate
 	return nil
 }
 
+func insertUserSets0(ctx context.Context, exec bob.Executor, sets1 []*SetSetter, user0 *User) (SetSlice, error) {
+	for i := range sets1 {
+		sets1[i].UserID = omit.From(user0.ID)
+	}
+
+	ret, err := Sets.Insert(bob.ToMods(sets1...)).All(ctx, exec)
+	if err != nil {
+		return ret, fmt.Errorf("insertUserSets0: %w", err)
+	}
+
+	return ret, nil
+}
+
+func attachUserSets0(ctx context.Context, exec bob.Executor, count int, sets1 SetSlice, user0 *User) (SetSlice, error) {
+	setter := &SetSetter{
+		UserID: omit.From(user0.ID),
+	}
+
+	err := sets1.UpdateAll(ctx, exec, *setter)
+	if err != nil {
+		return nil, fmt.Errorf("attachUserSets0: %w", err)
+	}
+
+	return sets1, nil
+}
+
+func (user0 *User) InsertSets(ctx context.Context, exec bob.Executor, related ...*SetSetter) error {
+	if len(related) == 0 {
+		return nil
+	}
+
+	var err error
+
+	sets1, err := insertUserSets0(ctx, exec, related, user0)
+	if err != nil {
+		return err
+	}
+
+	user0.R.Sets = append(user0.R.Sets, sets1...)
+
+	for _, rel := range sets1 {
+		rel.R.User = user0
+		rel.R.Loaded.User = true
+	}
+	return nil
+}
+
+func (user0 *User) AttachSets(ctx context.Context, exec bob.Executor, related ...*Set) error {
+	if len(related) == 0 {
+		return nil
+	}
+
+	var err error
+	sets1 := SetSlice(related)
+
+	_, err = attachUserSets0(ctx, exec, len(related), sets1, user0)
+	if err != nil {
+		return err
+	}
+
+	user0.R.Sets = append(user0.R.Sets, sets1...)
+
+	for _, rel := range related {
+		rel.R.User = user0
+		rel.R.Loaded.User = true
+	}
+
+	return nil
+}
+
 func attachUserAuth0(ctx context.Context, exec bob.Executor, count int, user0 *User, auth1 *Auth) (*User, error) {
 	setter := &UserSetter{
 		AuthID: omit.From(auth1.ID),
@@ -1463,6 +1558,20 @@ func (w userWhereR[Q]) HasRoutines(filters ...bob.Mod[*dialect.SelectQuery]) mod
 	return mods.Where[Q]{E: psql.Exists(q)}
 }
 
+// HasSets filters parents that have a matching Sets using a
+// correlated EXISTS subquery (semi-join). Unlike an INNER JOIN it does not
+// multiply parent rows, so no DISTINCT is needed. The optional filters are
+// applied to the subquery (i.e. to Sets).
+func (w userWhereR[Q]) HasSets(filters ...bob.Mod[*dialect.SelectQuery]) mods.Where[Q] {
+	q := psql.Select(
+		sm.Columns(psql.Raw("1")),
+		sm.From(Sets.NameExpr()),
+		sm.Where(Sets.Columns.UserID.EQ(w.cols.ID)),
+	)
+	q.Apply(filters...)
+	return mods.Where[Q]{E: psql.Exists(q)}
+}
+
 // HasAuth filters parents that have a matching Auth using a
 // correlated EXISTS subquery (semi-join). Unlike an INNER JOIN it does not
 // multiply parent rows, so no DISTINCT is needed. The optional filters are
@@ -1724,6 +1833,22 @@ func (o *User) Preload(name string, retrieved any) error {
 			}
 		}
 		return nil
+	case "Sets":
+		rels, ok := retrieved.(SetSlice)
+		if !ok {
+			return fmt.Errorf("user cannot load %T as %q", retrieved, name)
+		}
+
+		o.R.Sets = rels
+		o.R.Loaded.Sets = true
+
+		for _, rel := range rels {
+			if rel != nil {
+				rel.R.User = o
+				rel.R.Loaded.User = true
+			}
+		}
+		return nil
 	case "Auth":
 		rel, ok := retrieved.(*Auth)
 		if !ok {
@@ -1803,6 +1928,7 @@ type userThenLoader[Q orm.Loadable] struct {
 	Notifications   func(...bob.Mod[*dialect.SelectQuery]) orm.Loader[Q]
 	Plans           func(...bob.Mod[*dialect.SelectQuery]) orm.Loader[Q]
 	Routines        func(...bob.Mod[*dialect.SelectQuery]) orm.Loader[Q]
+	Sets            func(...bob.Mod[*dialect.SelectQuery]) orm.Loader[Q]
 	Auth            func(...bob.Mod[*dialect.SelectQuery]) orm.Loader[Q]
 	WorkoutComments func(...bob.Mod[*dialect.SelectQuery]) orm.Loader[Q]
 	Workouts        func(...bob.Mod[*dialect.SelectQuery]) orm.Loader[Q]
@@ -1823,6 +1949,9 @@ func buildUserThenLoader[Q orm.Loadable]() userThenLoader[Q] {
 	}
 	type RoutinesLoadInterface interface {
 		LoadRoutines(context.Context, bob.Executor, ...bob.Mod[*dialect.SelectQuery]) error
+	}
+	type SetsLoadInterface interface {
+		LoadSets(context.Context, bob.Executor, ...bob.Mod[*dialect.SelectQuery]) error
 	}
 	type AuthLoadInterface interface {
 		LoadAuth(context.Context, bob.Executor, ...bob.Mod[*dialect.SelectQuery]) error
@@ -1863,6 +1992,12 @@ func buildUserThenLoader[Q orm.Loadable]() userThenLoader[Q] {
 			"Routines",
 			func(ctx context.Context, exec bob.Executor, retrieved RoutinesLoadInterface, mods ...bob.Mod[*dialect.SelectQuery]) error {
 				return retrieved.LoadRoutines(ctx, exec, mods...)
+			},
+		),
+		Sets: thenLoadBuilder[Q](
+			"Sets",
+			func(ctx context.Context, exec bob.Executor, retrieved SetsLoadInterface, mods ...bob.Mod[*dialect.SelectQuery]) error {
+				return retrieved.LoadSets(ctx, exec, mods...)
 			},
 		),
 		Auth: thenLoadBuilder[Q](
@@ -2285,6 +2420,80 @@ func (os UserSlice) LoadRoutines(ctx context.Context, exec bob.Executor, mods ..
 	return nil
 }
 
+// LoadSets loads the user's Sets into the .R struct
+func (o *User) LoadSets(ctx context.Context, exec bob.Executor, mods ...bob.Mod[*dialect.SelectQuery]) error {
+	if o == nil {
+		return nil
+	}
+
+	// Reset the relationship
+	o.R.Sets = nil
+	o.R.Loaded.Sets = false
+
+	related, err := o.Sets(mods...).All(ctx, exec)
+	if err != nil {
+		return err
+	}
+
+	for _, rel := range related {
+		rel.R.User = o
+		rel.R.Loaded.User = true
+	}
+
+	o.R.Sets = related
+	o.R.Loaded.Sets = true
+	return nil
+}
+
+// LoadSets loads the user's Sets into the .R struct
+func (os UserSlice) LoadSets(ctx context.Context, exec bob.Executor, mods ...bob.Mod[*dialect.SelectQuery]) error {
+	if len(os) == 0 {
+		return nil
+	}
+
+	sets, err := os.Sets(mods...).All(ctx, exec)
+	if err != nil {
+		return err
+	}
+
+	for _, o := range os {
+		if o == nil {
+			continue
+		}
+
+		o.R.Sets = nil
+		o.R.Loaded.Sets = true
+	}
+	// O(N+M) stitch via a map keyed by the join column (key -> []parent; was O(N*M)).
+	userByKey := make(map[uuid.UUID][]*User, len(os))
+	for _, o := range os {
+		if o == nil {
+			continue
+		}
+
+		userByKey[o.ID] = append(userByKey[o.ID], o)
+	}
+
+	for _, rel := range sets {
+
+		owners, ok := userByKey[rel.UserID]
+		if !ok {
+			continue
+		}
+
+		for _, o := range owners {
+
+			rel.R.User = o
+			rel.R.Loaded.User = true
+
+			o.R.Sets = append(o.R.Sets, rel)
+
+		}
+	}
+
+	return nil
+}
+
 // LoadAuth loads the user's Auth into the .R struct
 func (o *User) LoadAuth(ctx context.Context, exec bob.Executor, mods ...bob.Mod[*dialect.SelectQuery]) error {
 	if o == nil {
@@ -2517,6 +2726,7 @@ type userC struct {
 	Notifications   *int64
 	Plans           *int64
 	Routines        *int64
+	Sets            *int64
 	WorkoutComments *int64
 	Workouts        *int64
 }
@@ -2538,6 +2748,8 @@ func (o *User) PreloadCount(name string, count int64) error {
 		o.C.Plans = &count
 	case "Routines":
 		o.C.Routines = &count
+	case "Sets":
+		o.C.Sets = &count
 	case "WorkoutComments":
 		o.C.WorkoutComments = &count
 	case "Workouts":
@@ -2552,6 +2764,7 @@ type userCountPreloader struct {
 	Notifications   func(...bob.Mod[*dialect.SelectQuery]) psql.Preloader
 	Plans           func(...bob.Mod[*dialect.SelectQuery]) psql.Preloader
 	Routines        func(...bob.Mod[*dialect.SelectQuery]) psql.Preloader
+	Sets            func(...bob.Mod[*dialect.SelectQuery]) psql.Preloader
 	WorkoutComments func(...bob.Mod[*dialect.SelectQuery]) psql.Preloader
 	Workouts        func(...bob.Mod[*dialect.SelectQuery]) psql.Preloader
 }
@@ -2646,6 +2859,23 @@ func buildUserCountPreloader() userCountPreloader {
 				return psql.Group(psql.Select(subqueryMods...).Expression)
 			})
 		},
+		Sets: func(mods ...bob.Mod[*dialect.SelectQuery]) psql.Preloader {
+			return countPreloader[*User]("Sets", func(parent string) bob.Expression {
+				// Build a correlated subquery: (SELECT COUNT(*) FROM related WHERE fk = parent.pk)
+				if parent == "" {
+					parent = Users.Alias()
+				}
+
+				subqueryMods := []bob.Mod[*dialect.SelectQuery]{
+					sm.Columns(psql.Raw("count(*)")),
+
+					sm.From(Sets.NameAsExpr()),
+					sm.Where(psql.Quote(Sets.Alias(), "user_id").EQ(psql.Quote(parent, "id"))),
+				}
+				subqueryMods = append(subqueryMods, mods...)
+				return psql.Group(psql.Select(subqueryMods...).Expression)
+			})
+		},
 		WorkoutComments: func(mods ...bob.Mod[*dialect.SelectQuery]) psql.Preloader {
 			return countPreloader[*User]("WorkoutComments", func(parent string) bob.Expression {
 				// Build a correlated subquery: (SELECT COUNT(*) FROM related WHERE fk = parent.pk)
@@ -2689,6 +2919,7 @@ type userCountThenLoader[Q orm.Loadable] struct {
 	Notifications   func(...bob.Mod[*dialect.SelectQuery]) orm.Loader[Q]
 	Plans           func(...bob.Mod[*dialect.SelectQuery]) orm.Loader[Q]
 	Routines        func(...bob.Mod[*dialect.SelectQuery]) orm.Loader[Q]
+	Sets            func(...bob.Mod[*dialect.SelectQuery]) orm.Loader[Q]
 	WorkoutComments func(...bob.Mod[*dialect.SelectQuery]) orm.Loader[Q]
 	Workouts        func(...bob.Mod[*dialect.SelectQuery]) orm.Loader[Q]
 }
@@ -2708,6 +2939,9 @@ func buildUserCountThenLoader[Q orm.Loadable]() userCountThenLoader[Q] {
 	}
 	type RoutinesCountInterface interface {
 		LoadCountRoutines(context.Context, bob.Executor, ...bob.Mod[*dialect.SelectQuery]) error
+	}
+	type SetsCountInterface interface {
+		LoadCountSets(context.Context, bob.Executor, ...bob.Mod[*dialect.SelectQuery]) error
 	}
 	type WorkoutCommentsCountInterface interface {
 		LoadCountWorkoutComments(context.Context, bob.Executor, ...bob.Mod[*dialect.SelectQuery]) error
@@ -2745,6 +2979,12 @@ func buildUserCountThenLoader[Q orm.Loadable]() userCountThenLoader[Q] {
 			"Routines",
 			func(ctx context.Context, exec bob.Executor, retrieved RoutinesCountInterface, mods ...bob.Mod[*dialect.SelectQuery]) error {
 				return retrieved.LoadCountRoutines(ctx, exec, mods...)
+			},
+		),
+		Sets: countThenLoadBuilder[Q](
+			"Sets",
+			func(ctx context.Context, exec bob.Executor, retrieved SetsCountInterface, mods ...bob.Mod[*dialect.SelectQuery]) error {
+				return retrieved.LoadCountSets(ctx, exec, mods...)
 			},
 		),
 		WorkoutComments: countThenLoadBuilder[Q](
@@ -3160,6 +3400,85 @@ func (os UserSlice) LoadCountRoutines(ctx context.Context, exec bob.Executor, mo
 	return nil
 }
 
+// LoadCountSets loads the count of Sets into the C struct
+func (o *User) LoadCountSets(ctx context.Context, exec bob.Executor, mods ...bob.Mod[*dialect.SelectQuery]) error {
+	if o == nil {
+		return nil
+	}
+
+	count, err := o.Sets(mods...).Count(ctx, exec)
+	if err != nil {
+		return err
+	}
+
+	o.C.Sets = &count
+	return nil
+}
+
+// LoadCountSets loads the count of Sets for a slice in a single batch query
+func (os UserSlice) LoadCountSets(ctx context.Context, exec bob.Executor, mods ...bob.Mod[*dialect.SelectQuery]) error {
+	if len(os) == 0 {
+		return nil
+	}
+
+	// Build the IN arg expression from parent PKs
+
+	pkID := make(pgtypes.Array[uuid.UUID], 0, len(os))
+	for _, o := range os {
+		if o == nil {
+			continue
+		}
+		pkID = append(pkID, o.ID)
+	}
+	PKArgExpr := psql.Any(psql.Cast(psql.Arg(pkID), "uuid[]"))
+
+	// countResult holds one scanned row from the batch count query.
+	// FK columns are aliased to the parent PK column names for direct map lookup.
+	type countResult struct {
+		ID    uuid.UUID
+		Count int64
+	}
+
+	batchMods := []bob.Mod[*dialect.SelectQuery]{
+		// SELECT fk AS parent_pk, count(*)
+		sm.Columns(
+			Sets.Columns.UserID.As("id"),
+			psql.Raw("count(*) as count"),
+		),
+		// Single-hop: FROM related table directly
+		sm.From(Sets.NameAsExpr()),
+
+		// WHERE fk IN (parent PKs) — psql single-column FK uses `= ANY(array)` (see PKArgExpr above)
+		sm.Where(Sets.Columns.UserID.EQ(PKArgExpr)),
+		// GROUP BY fk columns
+		sm.GroupBy(Sets.Columns.UserID),
+	}
+	batchMods = append(batchMods, mods...)
+
+	results, err := bob.All(ctx, exec,
+		psql.Select(batchMods...),
+		scan.StructMapper[countResult](),
+	)
+	if err != nil {
+		return err
+	}
+
+	// Single-column FK: direct map lookup
+	countMap := make(map[uuid.UUID]int64, len(results))
+	for _, r := range results {
+		countMap[r.ID] = r.Count
+	}
+	for _, o := range os {
+		if o == nil {
+			continue
+		}
+		count := countMap[o.ID]
+		o.C.Sets = &count
+	}
+
+	return nil
+}
+
 // LoadCountWorkoutComments loads the count of WorkoutComments into the C struct
 func (o *User) LoadCountWorkoutComments(ctx context.Context, exec bob.Executor, mods ...bob.Mod[*dialect.SelectQuery]) error {
 	if o == nil {
@@ -3325,6 +3644,7 @@ type userJoins[Q dialect.Joinable] struct {
 	Notifications   modAs[Q, notificationColumns]
 	Plans           modAs[Q, planColumns]
 	Routines        modAs[Q, routineColumns]
+	Sets            modAs[Q, setColumns]
 	Auth            modAs[Q, authColumns]
 	WorkoutComments modAs[Q, workoutCommentColumns]
 	Workouts        modAs[Q, workoutColumns]
@@ -3408,6 +3728,20 @@ func buildUserJoins[Q dialect.Joinable](cols userColumns, typ string) userJoins[
 
 				{
 					mods = append(mods, dialect.Join[Q](typ, Routines.NameExpr().As(to.Alias())).On(
+						to.UserID.EQ(cols.ID),
+					))
+				}
+
+				return mods
+			},
+		},
+		Sets: modAs[Q, setColumns]{
+			c: Sets.Columns,
+			f: func(to setColumns) bob.Mod[Q] {
+				mods := make(mods.QueryMods[Q], 0, 1)
+
+				{
+					mods = append(mods, dialect.Join[Q](typ, Sets.NameExpr().As(to.Alias())).On(
 						to.UserID.EQ(cols.ID),
 					))
 				}

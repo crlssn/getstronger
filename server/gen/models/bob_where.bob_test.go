@@ -432,6 +432,20 @@ func TestSetHasRelationsEmitExists(t *testing.T) {
 		}
 	})
 
+	t.Run("User", func(t *testing.T) {
+		q := psql.Select(
+			sm.From(Sets.NameExpr()),
+			SelectWhere.Sets.R.HasUser(),
+		)
+		sql, _, err := bob.Build(ctx, q)
+		if err != nil {
+			t.Fatalf("HasUser: build error: %v", err)
+		}
+		if !strings.Contains(sql, "EXISTS") {
+			t.Errorf("HasUser: expected EXISTS in query, got: %s", sql)
+		}
+	})
+
 	t.Run("WorkoutGroupExercise", func(t *testing.T) {
 		q := psql.Select(
 			sm.From(Sets.NameExpr()),
@@ -534,6 +548,20 @@ func TestUserHasRelationsEmitExists(t *testing.T) {
 		}
 		if !strings.Contains(sql, "EXISTS") {
 			t.Errorf("HasRoutines: expected EXISTS in query, got: %s", sql)
+		}
+	})
+
+	t.Run("Sets", func(t *testing.T) {
+		q := psql.Select(
+			sm.From(Users.NameExpr()),
+			SelectWhere.Users.R.HasSets(),
+		)
+		sql, _, err := bob.Build(ctx, q)
+		if err != nil {
+			t.Fatalf("HasSets: build error: %v", err)
+		}
+		if !strings.Contains(sql, "EXISTS") {
+			t.Errorf("HasSets: expected EXISTS in query, got: %s", sql)
 		}
 	})
 

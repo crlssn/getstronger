@@ -58,6 +58,7 @@ type SetsQuery = *psql.ViewQuery[*Set, SetSlice]
 // setR is where relationships are stored.
 type setR struct {
 	Exercise             *Exercise             // sets.sets_exercise_id_fkey
+	User                 *User                 // sets.sets_user_id_fkey
 	WorkoutGroupExercise *WorkoutGroupExercise // sets.sets_workout_group_exercise_id_fkey
 	Workout              *Workout              // sets.sets_workout_id_fkey
 	// Loaded reports whether each relationship has been loaded.
@@ -69,6 +70,7 @@ type setR struct {
 // setRLoaded tracks which relationships on Set have been loaded.
 type setRLoaded struct {
 	Exercise             bool // sets.sets_exercise_id_fkey
+	User                 bool // sets.sets_user_id_fkey
 	WorkoutGroupExercise bool // sets.sets_workout_group_exercise_id_fkey
 	Workout              bool // sets.sets_workout_id_fkey
 }
@@ -779,6 +781,36 @@ func (os SetSlice) Exercise(mods ...bob.Mod[*dialect.SelectQuery]) ExercisesQuer
 	)...)
 }
 
+// User starts a query for related objects on users
+func (o *Set) User(mods ...bob.Mod[*dialect.SelectQuery]) UsersQuery {
+	return Users.Query(append(mods,
+		sm.Where(Users.Columns.ID.EQ(psql.Arg(o.UserID))),
+	)...)
+}
+
+func (os SetSlice) User(mods ...bob.Mod[*dialect.SelectQuery]) UsersQuery {
+	pkUserID := make(pgtypes.Array[uuid.UUID], 0, len(os))
+
+	// the array is only a filter (semi-join), so duplicate keys can be
+	// dropped before they are sent over the wire
+	seenUserID := make(map[uuid.UUID]struct{}, len(os))
+	for _, o := range os {
+		if o == nil {
+			continue
+		}
+		if _, ok := seenUserID[o.UserID]; ok {
+			continue
+		}
+		seenUserID[o.UserID] = struct{}{}
+		pkUserID = append(pkUserID, o.UserID)
+	}
+	PKArgExpr := psql.Any(psql.Cast(psql.Arg(pkUserID), "uuid[]"))
+
+	return Users.Query(append(mods,
+		sm.Where(Users.Columns.ID.EQ(PKArgExpr)),
+	)...)
+}
+
 // WorkoutGroupExercise starts a query for related objects on workout_group_exercises
 func (o *Set) WorkoutGroupExercise(mods ...bob.Mod[*dialect.SelectQuery]) WorkoutGroupExercisesQuery {
 	return WorkoutGroupExercises.Query(append(mods,
@@ -885,6 +917,56 @@ func (set0 *Set) AttachExercise(ctx context.Context, exec bob.Executor, exercise
 	set0.R.Loaded.Exercise = true
 
 	exercise1.R.Sets = append(exercise1.R.Sets, set0)
+
+	return nil
+}
+
+func attachSetUser0(ctx context.Context, exec bob.Executor, count int, set0 *Set, user1 *User) (*Set, error) {
+	setter := &SetSetter{
+		UserID: omit.From(user1.ID),
+	}
+
+	err := set0.Update(ctx, exec, setter)
+	if err != nil {
+		return nil, fmt.Errorf("attachSetUser0: %w", err)
+	}
+
+	return set0, nil
+}
+
+func (set0 *Set) InsertUser(ctx context.Context, exec bob.Executor, related *UserSetter) error {
+	var err error
+
+	user1, err := Users.Insert(related).One(ctx, exec)
+	if err != nil {
+		return fmt.Errorf("inserting related objects: %w", err)
+	}
+
+	_, err = attachSetUser0(ctx, exec, 1, set0, user1)
+	if err != nil {
+		return err
+	}
+
+	set0.R.User = user1
+	set0.R.Loaded.User = true
+
+	user1.R.Sets = append(user1.R.Sets, set0)
+
+	return nil
+}
+
+func (set0 *Set) AttachUser(ctx context.Context, exec bob.Executor, user1 *User) error {
+	var err error
+
+	_, err = attachSetUser0(ctx, exec, 1, set0, user1)
+	if err != nil {
+		return err
+	}
+
+	set0.R.User = user1
+	set0.R.Loaded.User = true
+
+	user1.R.Sets = append(user1.R.Sets, set0)
 
 	return nil
 }
@@ -1052,6 +1134,20 @@ func (w setWhereR[Q]) HasExercise(filters ...bob.Mod[*dialect.SelectQuery]) mods
 	return mods.Where[Q]{E: psql.Exists(q)}
 }
 
+// HasUser filters parents that have a matching User using a
+// correlated EXISTS subquery (semi-join). Unlike an INNER JOIN it does not
+// multiply parent rows, so no DISTINCT is needed. The optional filters are
+// applied to the subquery (i.e. to Users).
+func (w setWhereR[Q]) HasUser(filters ...bob.Mod[*dialect.SelectQuery]) mods.Where[Q] {
+	q := psql.Select(
+		sm.Columns(psql.Raw("1")),
+		sm.From(Users.NameExpr()),
+		sm.Where(Users.Columns.ID.EQ(w.cols.UserID)),
+	)
+	q.Apply(filters...)
+	return mods.Where[Q]{E: psql.Exists(q)}
+}
+
 // HasWorkoutGroupExercise filters parents that have a matching WorkoutGroupExercise using a
 // correlated EXISTS subquery (semi-join). Unlike an INNER JOIN it does not
 // multiply parent rows, so no DISTINCT is needed. The optional filters are
@@ -1099,6 +1195,19 @@ func (o *Set) Preload(name string, retrieved any) error {
 			rel.R.Sets = SetSlice{o}
 		}
 		return nil
+	case "User":
+		rel, ok := retrieved.(*User)
+		if !ok {
+			return fmt.Errorf("set cannot load %T as %q", retrieved, name)
+		}
+
+		o.R.User = rel
+		o.R.Loaded.User = true
+
+		if rel != nil {
+			rel.R.Sets = SetSlice{o}
+		}
+		return nil
 	case "WorkoutGroupExercise":
 		rel, ok := retrieved.(*WorkoutGroupExercise)
 		if !ok {
@@ -1132,6 +1241,7 @@ func (o *Set) Preload(name string, retrieved any) error {
 
 type setPreloader struct {
 	Exercise             func(...psql.PreloadOption) psql.Preloader
+	User                 func(...psql.PreloadOption) psql.Preloader
 	WorkoutGroupExercise func(...psql.PreloadOption) psql.Preloader
 	Workout              func(...psql.PreloadOption) psql.Preloader
 }
@@ -1150,6 +1260,19 @@ func buildSetPreloader() setPreloader {
 					},
 				},
 			}, Exercises.Columns.Names(), exerciseScanMapperNullable, opts...)
+		},
+		User: func(opts ...psql.PreloadOption) psql.Preloader {
+			return psql.Preload[*User, UserSlice](psql.PreloadRel{
+				Name: "User",
+				Sides: []psql.PreloadSide{
+					{
+						From:        Sets,
+						To:          Users,
+						FromColumns: []string{"user_id"},
+						ToColumns:   []string{"id"},
+					},
+				},
+			}, Users.Columns.Names(), userScanMapperNullable, opts...)
 		},
 		WorkoutGroupExercise: func(opts ...psql.PreloadOption) psql.Preloader {
 			return psql.Preload[*WorkoutGroupExercise, WorkoutGroupExerciseSlice](psql.PreloadRel{
@@ -1182,6 +1305,7 @@ func buildSetPreloader() setPreloader {
 
 type setThenLoader[Q orm.Loadable] struct {
 	Exercise             func(...bob.Mod[*dialect.SelectQuery]) orm.Loader[Q]
+	User                 func(...bob.Mod[*dialect.SelectQuery]) orm.Loader[Q]
 	WorkoutGroupExercise func(...bob.Mod[*dialect.SelectQuery]) orm.Loader[Q]
 	Workout              func(...bob.Mod[*dialect.SelectQuery]) orm.Loader[Q]
 }
@@ -1189,6 +1313,9 @@ type setThenLoader[Q orm.Loadable] struct {
 func buildSetThenLoader[Q orm.Loadable]() setThenLoader[Q] {
 	type ExerciseLoadInterface interface {
 		LoadExercise(context.Context, bob.Executor, ...bob.Mod[*dialect.SelectQuery]) error
+	}
+	type UserLoadInterface interface {
+		LoadUser(context.Context, bob.Executor, ...bob.Mod[*dialect.SelectQuery]) error
 	}
 	type WorkoutGroupExerciseLoadInterface interface {
 		LoadWorkoutGroupExercise(context.Context, bob.Executor, ...bob.Mod[*dialect.SelectQuery]) error
@@ -1202,6 +1329,12 @@ func buildSetThenLoader[Q orm.Loadable]() setThenLoader[Q] {
 			"Exercise",
 			func(ctx context.Context, exec bob.Executor, retrieved ExerciseLoadInterface, mods ...bob.Mod[*dialect.SelectQuery]) error {
 				return retrieved.LoadExercise(ctx, exec, mods...)
+			},
+		),
+		User: thenLoadBuilder[Q](
+			"User",
+			func(ctx context.Context, exec bob.Executor, retrieved UserLoadInterface, mods ...bob.Mod[*dialect.SelectQuery]) error {
+				return retrieved.LoadUser(ctx, exec, mods...)
 			},
 		),
 		WorkoutGroupExercise: thenLoadBuilder[Q](
@@ -1287,6 +1420,81 @@ func (os SetSlice) LoadExercise(ctx context.Context, exec bob.Executor, mods ...
 			rel.R.Sets = append(rel.R.Sets, o)
 
 			o.R.Exercise = rel
+
+		}
+	}
+
+	return nil
+}
+
+// LoadUser loads the set's User into the .R struct
+func (o *Set) LoadUser(ctx context.Context, exec bob.Executor, mods ...bob.Mod[*dialect.SelectQuery]) error {
+	if o == nil {
+		return nil
+	}
+
+	// Reset the relationship
+	o.R.User = nil
+	o.R.Loaded.User = false
+
+	related, err := o.User(mods...).One(ctx, exec)
+	if err != nil {
+		return err
+	}
+
+	related.R.Sets = SetSlice{o}
+
+	o.R.User = related
+	o.R.Loaded.User = true
+	return nil
+}
+
+// LoadUser loads the set's User into the .R struct
+func (os SetSlice) LoadUser(ctx context.Context, exec bob.Executor, mods ...bob.Mod[*dialect.SelectQuery]) error {
+	if len(os) == 0 {
+		return nil
+	}
+
+	users, err := os.User(mods...).All(ctx, exec)
+	if err != nil {
+		return err
+	}
+
+	for _, o := range os {
+		if o == nil {
+			continue
+		}
+
+		o.R.User = nil
+		o.R.Loaded.User = true
+	}
+	// O(N+M) stitch via a map keyed by the join column (key -> []parent; was O(N*M)).
+	setByKey := make(map[uuid.UUID][]*Set, len(os))
+	for _, o := range os {
+		if o == nil {
+			continue
+		}
+
+		setByKey[o.UserID] = append(setByKey[o.UserID], o)
+	}
+
+	for _, rel := range users {
+
+		owners, ok := setByKey[rel.ID]
+		if !ok {
+			continue
+		}
+
+		for _, o := range owners {
+
+			// to-one: keep only the first matching child (matches the previous break)
+			if o.R.User != nil {
+				continue
+			}
+
+			rel.R.Sets = append(rel.R.Sets, o)
+
+			o.R.User = rel
 
 		}
 	}
@@ -1452,6 +1660,7 @@ func (os SetSlice) LoadWorkout(ctx context.Context, exec bob.Executor, mods ...b
 type setJoins[Q dialect.Joinable] struct {
 	typ                  string
 	Exercise             modAs[Q, exerciseColumns]
+	User                 modAs[Q, userColumns]
 	WorkoutGroupExercise modAs[Q, workoutGroupExerciseColumns]
 	Workout              modAs[Q, workoutColumns]
 }
@@ -1471,6 +1680,20 @@ func buildSetJoins[Q dialect.Joinable](cols setColumns, typ string) setJoins[Q] 
 				{
 					mods = append(mods, dialect.Join[Q](typ, Exercises.NameExpr().As(to.Alias())).On(
 						to.ID.EQ(cols.ExerciseID),
+					))
+				}
+
+				return mods
+			},
+		},
+		User: modAs[Q, userColumns]{
+			c: Users.Columns,
+			f: func(to userColumns) bob.Mod[Q] {
+				mods := make(mods.QueryMods[Q], 0, 1)
+
+				{
+					mods = append(mods, dialect.Join[Q](typ, Users.NameExpr().As(to.Alias())).On(
+						to.ID.EQ(cols.UserID),
 					))
 				}
 

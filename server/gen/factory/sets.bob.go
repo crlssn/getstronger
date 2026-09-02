@@ -60,12 +60,16 @@ type SetTemplate struct {
 
 type setR struct {
 	Exercise             *setRExerciseR
+	User                 *setRUserR
 	WorkoutGroupExercise *setRWorkoutGroupExerciseR
 	Workout              *setRWorkoutR
 }
 
 type setRExerciseR struct {
 	o *ExerciseTemplate
+}
+type setRUserR struct {
+	o *UserTemplate
 }
 type setRWorkoutGroupExerciseR struct {
 	o *WorkoutGroupExerciseTemplate
@@ -90,6 +94,14 @@ func (t SetTemplate) setModelRels(o *models.Set) {
 		o.ExerciseID = rel.ID // h2
 		o.R.Exercise = rel
 		o.R.Loaded.Exercise = true
+	}
+
+	if t.r.User != nil {
+		rel := t.r.User.o.Build()
+		rel.R.Sets = append(rel.R.Sets, o)
+		o.UserID = rel.ID // h2
+		o.R.User = rel
+		o.R.Loaded.User = true
 	}
 
 	if t.r.WorkoutGroupExercise != nil {
@@ -282,12 +294,12 @@ func (o *SetTemplate) insertOptRels(ctx context.Context, exec bob.Executor, m *m
 			m.R.WorkoutGroupExercise = o.r.WorkoutGroupExercise.o.Build()
 			m.R.Loaded.WorkoutGroupExercise = true
 		} else {
-			var rel1 *models.WorkoutGroupExercise
-			rel1, err = o.r.WorkoutGroupExercise.o.Create(ctx, exec)
+			var rel2 *models.WorkoutGroupExercise
+			rel2, err = o.r.WorkoutGroupExercise.o.Create(ctx, exec)
 			if err != nil {
 				return err
 			}
-			err = m.AttachWorkoutGroupExercise(ctx, exec, rel1)
+			err = m.AttachWorkoutGroupExercise(ctx, exec, rel2)
 			if err != nil {
 				return err
 			}
@@ -337,32 +349,59 @@ func (o *SetTemplate) Create(ctx context.Context, exec bob.Executor) (*models.Se
 
 	opt.ExerciseID = omit.From(rel0.ID)
 
-	var rel2 *models.Workout
+	var rel1 *models.User
 
-	if o.r.Workout == nil {
-		if parentModel, found := mInCreation["workouts:sets:sets.sets_workout_id_fkey"]; found {
-			if pModel, ok := parentModel.(*models.Workout); ok {
-				rel2 = pModel
+	if o.r.User == nil {
+		if parentModel, found := mInCreation["users:sets:sets.sets_user_id_fkey"]; found {
+			if pModel, ok := parentModel.(*models.User); ok {
+				rel1 = pModel
 			}
 		}
 	}
 
-	if rel2 == nil {
-		if o.r.Workout == nil {
-			SetMods.WithNewWorkout().Apply(ctx, o)
+	if rel1 == nil {
+		if o.r.User == nil {
+			SetMods.WithNewUser().Apply(ctx, o)
 		}
 
-		if o.r.Workout.o.alreadyPersisted {
-			rel2 = o.r.Workout.o.Build()
+		if o.r.User.o.alreadyPersisted {
+			rel1 = o.r.User.o.Build()
 		} else {
-			rel2, err = o.r.Workout.o.Create(ctx, exec)
+			rel1, err = o.r.User.o.Create(ctx, exec)
 			if err != nil {
 				return nil, err
 			}
 		}
 	}
 
-	opt.WorkoutID = omit.From(rel2.ID)
+	opt.UserID = omit.From(rel1.ID)
+
+	var rel3 *models.Workout
+
+	if o.r.Workout == nil {
+		if parentModel, found := mInCreation["workouts:sets:sets.sets_workout_id_fkey"]; found {
+			if pModel, ok := parentModel.(*models.Workout); ok {
+				rel3 = pModel
+			}
+		}
+	}
+
+	if rel3 == nil {
+		if o.r.Workout == nil {
+			SetMods.WithNewWorkout().Apply(ctx, o)
+		}
+
+		if o.r.Workout.o.alreadyPersisted {
+			rel3 = o.r.Workout.o.Build()
+		} else {
+			rel3, err = o.r.Workout.o.Create(ctx, exec)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	opt.WorkoutID = omit.From(rel3.ID)
 
 	m, err := models.Sets.Insert(opt).One(ctx, exec)
 	if err != nil {
@@ -382,7 +421,9 @@ func (o *SetTemplate) Create(ctx context.Context, exec bob.Executor) (*models.Se
 
 	m.R.Exercise = rel0
 	m.R.Loaded.Exercise = true
-	m.R.Workout = rel2
+	m.R.User = rel1
+	m.R.Loaded.User = true
+	m.R.Workout = rel3
 	m.R.Loaded.Workout = true
 
 	if err := o.insertOptRels(ctx, exec, m); err != nil {
@@ -916,6 +957,11 @@ func (m setMods) WithParentsCascading() SetMod {
 		}
 		{
 
+			related := o.f.NewUserWithContext(ctx, UserMods.WithParentsCascading())
+			m.WithUser(related).Apply(ctx, o)
+		}
+		{
+
 			related := o.f.NewWorkoutGroupExerciseWithContext(ctx, WorkoutGroupExerciseMods.WithParentsCascading())
 			m.WithWorkoutGroupExercise(related).Apply(ctx, o)
 		}
@@ -954,6 +1000,36 @@ func (m setMods) WithExistingExercise(em *models.Exercise) SetMod {
 func (m setMods) WithoutExercise() SetMod {
 	return SetModFunc(func(ctx context.Context, o *SetTemplate) {
 		o.r.Exercise = nil
+	})
+}
+
+func (m setMods) WithUser(rel *UserTemplate) SetMod {
+	return SetModFunc(func(ctx context.Context, o *SetTemplate) {
+		o.r.User = &setRUserR{
+			o: rel,
+		}
+	})
+}
+
+func (m setMods) WithNewUser(mods ...UserMod) SetMod {
+	return SetModFunc(func(ctx context.Context, o *SetTemplate) {
+		related := o.f.NewUserWithContext(ctx, mods...)
+
+		m.WithUser(related).Apply(ctx, o)
+	})
+}
+
+func (m setMods) WithExistingUser(em *models.User) SetMod {
+	return SetModFunc(func(ctx context.Context, o *SetTemplate) {
+		o.r.User = &setRUserR{
+			o: o.f.fromExistingUser(ctx, em),
+		}
+	})
+}
+
+func (m setMods) WithoutUser() SetMod {
+	return SetModFunc(func(ctx context.Context, o *SetTemplate) {
+		o.r.User = nil
 	})
 }
 
