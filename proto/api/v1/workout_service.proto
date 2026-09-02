@@ -18,12 +18,20 @@ service WorkoutService {
 }
 
 message CreateWorkoutRequest {
-  string routine_id = 1;
+  // Optional: a quick workout follows no routine and so names none.
+  string routine_id = 1 [
+    (buf.validate.field).string.uuid = true,
+    (buf.validate.field).ignore = IGNORE_IF_UNPOPULATED
+  ];
   repeated ExerciseSets exercise_sets = 2 [(buf.validate.field).repeated.min_items = 1];
   google.protobuf.Timestamp started_at = 3 [(buf.validate.field).required = true];
   google.protobuf.Timestamp finished_at = 4 [(buf.validate.field).required = true];
   string note = 5;
-  string plan_id = 6;
+  // Optional: a session trained outside a plan names none.
+  string plan_id = 6 [
+    (buf.validate.field).string.uuid = true,
+    (buf.validate.field).ignore = IGNORE_IF_UNPOPULATED
+  ];
   string workout_name = 7;
   // Optional. The blocks the session was trained in, which say how to read the
   // sets rather than carrying them: a block states how many of each exercise's

@@ -95,8 +95,11 @@ message GetPersonalBestsResponse {
 }
 
 message ListSetsRequest {
-  repeated string user_ids = 1;
-  repeated string exercise_ids = 2;
+  // Both lists are optional filters, and an empty one means "every row". They
+  // are bounded because each becomes an IN clause; 100 is the page limit's
+  // ceiling, which is as many rows as one call can return anyway.
+  repeated string user_ids = 1 [(buf.validate.field).repeated = { max_items: 100, items: { string: { uuid: true }}}];
+  repeated string exercise_ids = 2 [(buf.validate.field).repeated = { max_items: 100, items: { string: { uuid: true }}}];
   PaginationRequest pagination = 3 [(buf.validate.field).required = true];
 }
 message ListSetsResponse {

@@ -681,10 +681,13 @@ func (x *GetPersonalBestsResponse) GetPersonalBests() []*ExerciseSet {
 }
 
 type ListSetsRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	UserIds       []string               `protobuf:"bytes,1,rep,name=user_ids,json=userIds,proto3" json:"user_ids,omitempty"`
-	ExerciseIds   []string               `protobuf:"bytes,2,rep,name=exercise_ids,json=exerciseIds,proto3" json:"exercise_ids,omitempty"`
-	Pagination    *PaginationRequest     `protobuf:"bytes,3,opt,name=pagination,proto3" json:"pagination,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Both lists are optional filters, and an empty one means "every row". They
+	// are bounded because each becomes an IN clause; 100 is the page limit's
+	// ceiling, which is as many rows as one call can return anyway.
+	UserIds       []string           `protobuf:"bytes,1,rep,name=user_ids,json=userIds,proto3" json:"user_ids,omitempty"`
+	ExerciseIds   []string           `protobuf:"bytes,2,rep,name=exercise_ids,json=exerciseIds,proto3" json:"exercise_ids,omitempty"`
+	Pagination    *PaginationRequest `protobuf:"bytes,3,opt,name=pagination,proto3" json:"pagination,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -837,10 +840,10 @@ const file_api_v1_exercise_service_proto_rawDesc = "" +
 	"\x17GetPersonalBestsRequest\x12!\n" +
 	"\auser_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x06userId\"V\n" +
 	"\x18GetPersonalBestsResponse\x12:\n" +
-	"\x0epersonal_bests\x18\x01 \x03(\v2\x13.api.v1.ExerciseSetR\rpersonalBests\"\x92\x01\n" +
-	"\x0fListSetsRequest\x12\x19\n" +
-	"\buser_ids\x18\x01 \x03(\tR\auserIds\x12!\n" +
-	"\fexercise_ids\x18\x02 \x03(\tR\vexerciseIds\x12A\n" +
+	"\x0epersonal_bests\x18\x01 \x03(\v2\x13.api.v1.ExerciseSetR\rpersonalBests\"\xb4\x01\n" +
+	"\x0fListSetsRequest\x12*\n" +
+	"\buser_ids\x18\x01 \x03(\tB\x0f\xbaH\f\x92\x01\t\x10d\"\x05r\x03\xb0\x01\x01R\auserIds\x122\n" +
+	"\fexercise_ids\x18\x02 \x03(\tB\x0f\xbaH\f\x92\x01\t\x10d\"\x05r\x03\xb0\x01\x01R\vexerciseIds\x12A\n" +
 	"\n" +
 	"pagination\x18\x03 \x01(\v2\x19.api.v1.PaginationRequestB\x06\xbaH\x03\xc8\x01\x01R\n" +
 	"pagination\"o\n" +

@@ -167,3 +167,136 @@ func TestValidatorAllowsAPasswordOfSeventyTwoBytes(t *testing.T) {
 	require.NoError(t, err)
 	require.True(t, called)
 }
+
+// Every field naming a row is a UUID, and the repository turns a malformed one
+// into the nil UUID rather than failing, so the schema has to refuse it here:
+// otherwise a filter quietly matches nothing and a write quietly drops a row.
+func TestValidatorRejectsAMalformedID(t *testing.T) {
+	t.Parallel()
+	validator, err := protovalidate.New()
+	require.NoError(t, err)
+
+	page := &apiv1.PaginationRequest{PageLimit: 10}
+	for name, req := range map[string]connect.AnyRequest{
+		"list sets by user": connect.NewRequest(&apiv1.ListSetsRequest{
+			UserIds:    []string{"not-a-uuid"},
+			Pagination: page,
+		}),
+		"list sets by exercise": connect.NewRequest(&apiv1.ListSetsRequest{
+			ExerciseIds: []string{"not-a-uuid"},
+			Pagination:  page,
+		}),
+		"create routine": connect.NewRequest(&apiv1.CreateRoutineRequest{
+			Name:        "Push",
+			ExerciseIds: []string{uuid.NewString(), "not-a-uuid"},
+		}),
+		"update exercise order": connect.NewRequest(&apiv1.UpdateExerciseOrderRequest{
+			RoutineId:   uuid.NewString(),
+			ExerciseIds: []string{"not-a-uuid"},
+		}),
+		"workout routine": connect.NewRequest(&apiv1.CreateWorkoutRequest{
+			RoutineId: "not-a-uuid",
+			ExerciseSets: []*apiv1.ExerciseSets{{
+				Exercise: &apiv1.Exercise{Id: uuid.NewString()},
+				Sets:     []*apiv1.Set{{Reps: 10}},
+			}},
+			StartedAt:  timestamppb.Now(),
+			FinishedAt: timestamppb.Now(),
+		}),
+		"workout plan": connect.NewRequest(&apiv1.CreateWorkoutRequest{
+			PlanId: "not-a-uuid",
+			ExerciseSets: []*apiv1.ExerciseSets{{
+				Exercise: &apiv1.Exercise{Id: uuid.NewString()},
+				Sets:     []*apiv1.Set{{Reps: 10}},
+			}},
+			StartedAt:  timestamppb.Now(),
+			FinishedAt: timestamppb.Now(),
+		}),
+		"dashboard preference": connect.NewRequest(&apiv1.GetDashboardRequest{
+			PreferredRoutineId: "not-a-uuid",
+		}),
+	} {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			reached := false
+			next := func(_ context.Context, _ connect.AnyRequest) (connect.AnyResponse, error) {
+				reached = true
+				return connect.NewResponse(&apiv1.ListSetsResponse{}), nil
+			}
+			interceptor := newValidator(zap.NewNop(), validator)
+
+			_, err := interceptor.WrapUnary(next)(context.Background(), req)
+			require.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
+			require.False(t, reached)
+		})
+	}
+}
+
+// The three ids that are optional say "none" with the empty string, so the UUID
+// rule has to skip an unset one rather than demand it.
+func TestValidatorAllowsAnOmittedOptionalID(t *testing.T) {
+	t.Parallel()
+	validator, err := protovalidate.New()
+	require.NoError(t, err)
+
+	for name, req := range map[string]connect.AnyRequest{
+		"quick workout": connect.NewRequest(&apiv1.CreateWorkoutRequest{
+			RoutineId: "",
+			PlanId:    "",
+			ExerciseSets: []*apiv1.ExerciseSets{{
+				Exercise: &apiv1.Exercise{Id: uuid.NewString()},
+				Sets:     []*apiv1.Set{{Reps: 10}},
+			}},
+			StartedAt:  timestamppb.Now(),
+			FinishedAt: timestamppb.Now(),
+		}),
+		"dashboard without a preference": connect.NewRequest(&apiv1.GetDashboardRequest{}),
+		"sets of one athlete, every exercise": connect.NewRequest(&apiv1.ListSetsRequest{
+			UserIds:    []string{uuid.NewString()},
+			Pagination: &apiv1.PaginationRequest{PageLimit: 10},
+		}),
+	} {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			called := false
+			next := func(_ context.Context, _ connect.AnyRequest) (connect.AnyResponse, error) {
+				called = true
+				return connect.NewResponse(&apiv1.ListSetsResponse{}), nil
+			}
+			interceptor := newValidator(zap.NewNop(), validator)
+
+			_, err := interceptor.WrapUnary(next)(context.Background(), req)
+			require.NoError(t, err)
+			require.True(t, called)
+		})
+	}
+}
+
+// ListSets turns its id lists into an IN clause, so the schema bounds them the
+// way the page limit above them is bounded.
+func TestValidatorRejectsAnUnboundedIDList(t *testing.T) {
+	t.Parallel()
+	validator, err := protovalidate.New()
+	require.NoError(t, err)
+
+	ids := make([]string, 101)
+	for i := range ids {
+		ids[i] = uuid.NewString()
+	}
+
+	reached := false
+	next := func(_ context.Context, _ connect.AnyRequest) (connect.AnyResponse, error) {
+		reached = true
+		return connect.NewResponse(&apiv1.ListSetsResponse{}), nil
+	}
+	interceptor := newValidator(zap.NewNop(), validator)
+
+	_, err = interceptor.WrapUnary(next)(context.Background(), connect.NewRequest(&apiv1.ListSetsRequest{
+		ExerciseIds: ids,
+		Pagination:  &apiv1.PaginationRequest{PageLimit: 10},
+	}))
+	require.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
+	require.False(t, reached)
+}
