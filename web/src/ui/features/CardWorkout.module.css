@@ -227,9 +227,11 @@
 
 /* Logged since the feed was last shown. As in the notification list, new is a
    state rather than a colour of its own: the paper firms, the avatar tile
-   takes the ink tint, and the dot before the chevron says so at a glance. */
+   takes the ink tint, and the dot before the chevron says so at a glance. The
+   tint stays close to the card's own paper — at 40% it matched the page's
+   ground, and a new row read as a hole in the card. */
 .feedItem.unseen {
-  @apply bg-ink-tint/40 hover:bg-ink-tint/60;
+  @apply bg-ink-tint/20 hover:bg-ink-tint/35;
 }
 
 .feedItem.unseen .avatar {
