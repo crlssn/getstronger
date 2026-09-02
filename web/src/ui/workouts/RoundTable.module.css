@@ -1,0 +1,86 @@
+@reference '../../assets/base.css';
+
+.rows {
+  @apply divide-y divide-border;
+}
+
+/* One row per exercise, each its own grid: the exercises in a round need not
+   share their measurements, so every row carries its own field labels and the
+   columns line up within the row rather than down the table. */
+.row {
+  /* Scrolls for many-metric exercises, without drawing a scrollbar under every
+     row for the few that need it. */
+  scrollbar-width: none;
+  @apply grid items-center gap-2 overflow-x-auto py-2.5;
+  grid-template-columns:
+    minmax(6rem, max-content)
+    repeat(var(--metric-count), minmax(4.25rem, 1fr));
+}
+
+.row::-webkit-scrollbar {
+  display: none;
+}
+
+/* The exercise and what it did last time, stacked where the set number and
+   the previous column sit in the set table. Capped so a long name shares the
+   row with the fields instead of pushing them off it. */
+.lead {
+  @apply grid min-w-0 max-w-52 gap-0.5;
+}
+
+.exerciseName {
+  @apply flex items-center gap-1.5 text-sm font-semibold text-text;
+}
+
+.exerciseName > span {
+  @apply truncate;
+}
+
+/* The tick says "just logged" the way the set number does in the set table. */
+.exerciseName svg {
+  @apply size-4 shrink-0 text-success-strong;
+}
+
+.previousValue {
+  @apply truncate text-meta text-text-subtle;
+}
+
+.field {
+  @apply grid gap-1;
+}
+
+.fieldLabel {
+  @apply text-eyebrow font-semibold uppercase text-text-subtle;
+}
+
+/* The fields are AppNumberField and AppDurationInput; the row only says what
+   its own state does to them. */
+.row.active input,
+.row.active .field > div {
+  @apply border-ink;
+}
+
+.row.complete input,
+.row.complete .field > div {
+  @apply bg-surface-sunken text-text;
+}
+
+/* Focus reveal must land below the session chrome — the header, and the rest
+   band that covers it — not behind it. */
+.row input,
+.row .field > div {
+  scroll-margin-top: 9rem;
+}
+
+@media (max-width: 520px) {
+  .row {
+    @apply gap-1.5;
+    grid-template-columns:
+      minmax(5rem, max-content)
+      repeat(var(--metric-count), minmax(5.5rem, 1fr));
+  }
+
+  .row input {
+    @apply px-1;
+  }
+}

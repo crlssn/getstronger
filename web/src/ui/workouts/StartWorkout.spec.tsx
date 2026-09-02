@@ -138,11 +138,33 @@ const setField = (label: string) => screen.getByRole('textbox', { name: label })
 const primaryAction = () =>
   screen
     .getAllByRole('button', {
-      name: /Complete exercise|Complete set|Complete circuit|Finish workout|Saving/,
+      name: /Complete exercise|Complete round|Complete circuit|Finish workout|Saving/,
     })
     .find((button) => button.getAttribute('type') === 'submit')!
 
 const restBanner = () => screen.queryByRole('region', { name: 'Rest timer' })
+
+// The session chrome, where the position line lives: a round's own header says
+// "Round 1" too, so the line is read from where it is.
+const chrome = () => within(screen.getByRole('heading', { level: 1 }).closest('header')!)
+
+// A round's header, found by its title: the summary that follows it in the
+// accessible name runs straight on from the number.
+const roundHeader = (round: number) =>
+  screen.getByText(`Round ${round}`, { selector: 'strong' }).closest('button')!
+
+const roundHeaders = () => screen.queryAllByText(/^Round \d+$/, { selector: 'strong' })
+
+const completedIds = () =>
+  useWorkoutStore.getState().workouts[routineID]?.completedExerciseIds ?? []
+
+// One row of every exercise in the circuit, which is what a round is.
+const logRound = async (user: ReturnType<typeof userEvent.setup>, round: number) => {
+  await user.type(setField(`Bench Press set ${round} weight`), '80')
+  await user.type(setField(`Bench Press set ${round} reps`), '8')
+  await user.type(setField(`Squat set ${round} weight`), '100')
+  await user.type(setField(`Squat set ${round} reps`), '5')
+}
 
 const logFirstSet = async (user: ReturnType<typeof userEvent.setup>) => {
   await user.type(setField('Bench Press set 1 weight'), '80')
@@ -240,72 +262,83 @@ describe('StartWorkout', () => {
     test('counts rounds rather than exercises', async () => {
       await renderWorkout()
 
-      expect(screen.getByText('Round 1 · exercise 1 of 2')).toBeInTheDocument()
+      expect(chrome().getByText('Round 1')).toBeInTheDocument()
       expect(screen.getByText('Circuit')).toBeInTheDocument()
     })
 
-    // A circuit has no round count to lay rows out from, and a row for a round
-    // nobody has walked would take the emphasis that says "type here next".
-    test('opens on one row, whatever was logged last time', async () => {
-      mocked.getPreviousWorkoutSets.mockResolvedValue(
-        create(GetPreviousWorkoutSetsResponseSchema, {
-          exerciseSets: [
-            create(ExerciseSetsSchema, {
-              exercise: { id: benchPress.id },
-              sets: Array.from({ length: 6 }, () => ({ reps: 8, weight: 80 })),
-            }),
-          ],
-        }),
-      )
+    // A round is one row of every exercise, laid out together: the athlete
+    // walks down the round, not across the exercises.
+    test('opens on the first round with a row for every exercise in it', async () => {
       await renderWorkout()
 
+      expect(roundHeader(1)).toHaveAttribute('aria-expanded', 'true')
       expect(setField('Bench Press set 1 weight')).toBeVisible()
-      expect(
-        screen.queryByRole('textbox', { name: 'Bench Press set 2 weight' }),
-      ).not.toBeInTheDocument()
+      expect(setField('Squat set 1 weight')).toBeVisible()
+      // Nothing says how many rounds an open-ended circuit takes, so a round
+      // nobody has reached is not laid out yet.
+      expect(roundHeaders()).toHaveLength(1)
     })
 
-    test('grows the next row as the set in front of you is filled in', async () => {
+    test('completes a round rather than a set, and opens the next one under it', async () => {
       const user = userEvent.setup()
       await renderWorkout()
 
-      await logFirstSet(user)
+      expect(primaryAction()).toHaveTextContent('Complete round')
+      expect(screen.getByText('then: round 2')).toBeInTheDocument()
 
-      expect(setField('Bench Press set 2 weight')).toBeVisible()
+      await logRound(user, 1)
+      await user.click(primaryAction())
+
+      expect(chrome().getByText('Round 2')).toBeInTheDocument()
+      expect(roundHeader(2)).toHaveAttribute('aria-expanded', 'true')
+      expect(await screen.findByRole('textbox', { name: 'Bench Press set 2 weight' })).toBeVisible()
+      expect(
+        screen.queryByRole('textbox', { name: 'Bench Press set 1 weight' }),
+      ).not.toBeInTheDocument()
+      // Nothing is ticked off on the way round: an exercise in a circuit is not
+      // finished with until the circuit is.
+      expect(completedIds()).toEqual([])
     })
 
-    test('walks to the next exercise instead of finishing the one in front of you', async () => {
+    // The round that closed stays readable without reopening it.
+    test('folds a completed round down to what was logged in it', async () => {
+      const user = userEvent.setup()
+      await renderWorkout()
+
+      await logRound(user, 1)
+      await user.click(primaryAction())
+
+      expect(roundHeader(1)).toHaveAttribute('aria-expanded', 'false')
+      expect(roundHeader(1)).toHaveTextContent('80 kg × 8 / 100 kg × 5')
+    })
+
+    test('says what a collapsed round is still waiting for', async () => {
       const user = userEvent.setup()
       await renderWorkout()
 
       await logFirstSet(user)
       await user.click(primaryAction())
 
-      // Still the first round: the round only turns over once every exercise in
-      // it has taken its set.
-      expect(screen.getByText('Round 1 · exercise 2 of 2')).toBeInTheDocument()
-      expect(await screen.findByRole('textbox', { name: 'Squat set 1 weight' })).toBeVisible()
-      expect(useWorkoutStore.getState().workouts[routineID]?.completedExerciseIds ?? []).toEqual([])
+      expect(roundHeader(1)).toHaveTextContent('1 of 2 exercises logged')
+      expect(roundHeader(2)).toHaveTextContent('Not started')
     })
 
     test('rests for the walk between exercises and for the round that closed', async () => {
       const user = userEvent.setup()
       await renderWorkout()
 
+      // Completing a set inside the round is the walk to the next exercise.
       await logFirstSet(user)
-      // The set alone starts nothing: a circuit rests on the way to the next
-      // station, not the moment the numbers are in.
-      expect(restBanner()).not.toBeInTheDocument()
-
-      await user.click(primaryAction())
       expect(within(restBanner()!).getByText('00:15')).toBeInTheDocument()
 
-      await user.type(await screen.findByRole('textbox', { name: 'Squat set 1 weight' }), '100')
+      // The last exercise in the round has nowhere to walk to: the rest that
+      // follows it is the round's, and it starts when the round is completed.
+      await user.type(setField('Squat set 1 weight'), '100')
       await user.type(setField('Squat set 1 reps'), '5')
-      await user.click(primaryAction())
+      expect(useWorkoutStore.getState().workouts[routineID]?.restTimerTotalSeconds).toBe(15)
 
+      await user.click(primaryAction())
       expect(within(restBanner()!).getByText('02:00')).toBeInTheDocument()
-      expect(screen.getByText('Round 2 · exercise 1 of 2')).toBeInTheDocument()
     })
 
     // A circuit runs until it is ended: taking another round is always the next
@@ -314,11 +347,35 @@ describe('StartWorkout', () => {
       const user = userEvent.setup()
       await renderWorkout()
 
-      await completeBothExercises(user)
+      await logRound(user, 1)
+      await user.click(primaryAction())
+      await logRound(user, 2)
+      await user.click(primaryAction())
 
-      expect(screen.getByText('Round 2 · exercise 1 of 2')).toBeInTheDocument()
-      expect(useWorkoutStore.getState().workouts[routineID]?.completedExerciseIds ?? []).toEqual([])
-      expect(primaryAction()).toHaveTextContent('Complete set')
+      expect(chrome().getByText('Round 3')).toBeInTheDocument()
+      expect(completedIds()).toEqual([])
+      expect(primaryAction()).toHaveTextContent('Complete round')
+    })
+
+    // A round reopened to correct it is not where the block is: completing it
+    // again returns to the round the block had reached.
+    test('reopens an earlier round on tap and returns to where the block is', async () => {
+      const user = userEvent.setup()
+      await renderWorkout()
+
+      await logRound(user, 1)
+      await user.click(primaryAction())
+      await user.click(roundHeader(1))
+
+      expect(roundHeader(1)).toHaveAttribute('aria-expanded', 'true')
+      expect(setField('Bench Press set 1 weight')).toHaveValue('80')
+      expect(
+        screen.queryByRole('textbox', { name: 'Bench Press set 2 weight' }),
+      ).not.toBeInTheDocument()
+
+      await user.click(primaryAction())
+      expect(roundHeader(2)).toHaveAttribute('aria-expanded', 'true')
+      expect(chrome().getByText('Round 2')).toBeInTheDocument()
     })
 
     test('ends the circuit when the session says so, ticking off every exercise in it', async () => {
@@ -328,11 +385,25 @@ describe('StartWorkout', () => {
       await logFirstSet(user)
       await user.click(screen.getByRole('button', { name: 'Complete circuit' }))
 
-      expect(useWorkoutStore.getState().workouts[routineID]?.completedExerciseIds).toEqual([
-        benchPress.id,
-        squat.id,
-      ])
+      expect(completedIds()).toEqual([benchPress.id, squat.id])
       expect(primaryAction()).toHaveTextContent('Finish workout')
+    })
+
+    test('keeps a completed circuit ticked off above its rounds, and reopens it', async () => {
+      const user = userEvent.setup()
+      await renderWorkout()
+
+      await logRound(user, 1)
+      await user.click(screen.getByRole('button', { name: 'Complete circuit' }))
+
+      expect(screen.getByText('Circuit completed')).toBeInTheDocument()
+      expect(screen.getByText('1 round logged')).toBeInTheDocument()
+
+      await user.click(screen.getByRole('button', { name: 'Reopen' }))
+
+      expect(completedIds()).toEqual([])
+      expect(roundHeader(2)).toHaveAttribute('aria-expanded', 'true')
+      expect(setField('Bench Press set 2 weight')).toBeVisible()
     })
 
     describe('prescribed for a number of rounds', () => {
@@ -343,44 +414,36 @@ describe('StartWorkout', () => {
       test('counts towards the rounds it was prescribed', async () => {
         await renderWorkout()
 
-        expect(screen.getByText('Round 1 of 2 · exercise 1 of 2')).toBeInTheDocument()
-        expect(screen.getByText('Round 1 of 2')).toBeInTheDocument()
+        expect(chrome().getByText('Round 1 of 2')).toBeInTheDocument()
       })
 
-      // The block is laid out in front of you: a row per round is the session
-      // as prescribed, not a row for a round nobody has reached.
-      test('opens on a row for every round', async () => {
+      // The block is laid out in front of you: a round for every one prescribed,
+      // folded away until it is reached.
+      test('lays every round out, collapsed below the first', async () => {
         await renderWorkout()
 
-        expect(setField('Bench Press set 1 weight')).toBeVisible()
-        expect(setField('Bench Press set 2 weight')).toBeVisible()
+        expect(roundHeader(1)).toHaveAttribute('aria-expanded', 'true')
+        expect(roundHeader(2)).toHaveAttribute('aria-expanded', 'false')
+        expect(roundHeaders()).toHaveLength(2)
         expect(
-          screen.queryByRole('textbox', { name: 'Bench Press set 3 weight' }),
+          screen.queryByRole('textbox', { name: 'Bench Press set 2 weight' }),
         ).not.toBeInTheDocument()
       })
 
-      // The last set of the last round ends the block, so the button that logs
-      // it says what it is about to do.
+      // The last round is the end of the block, so the button that closes it
+      // says what it is about to do.
       test('closes itself as the last round is walked out of', async () => {
         const user = userEvent.setup()
         await renderWorkout()
 
-        await completeBothExercises(user)
-        expect(screen.getByText('Round 2 of 2 · exercise 1 of 2')).toBeInTheDocument()
-
-        await user.type(setField('Bench Press set 2 weight'), '80')
-        await user.type(setField('Bench Press set 2 reps'), '8')
+        await logRound(user, 1)
         await user.click(primaryAction())
-
-        await user.type(await screen.findByRole('textbox', { name: 'Squat set 2 weight' }), '100')
-        await user.type(setField('Squat set 2 reps'), '5')
+        expect(chrome().getByText('Round 2 of 2')).toBeInTheDocument()
         expect(primaryAction()).toHaveTextContent('Complete circuit')
 
+        await logRound(user, 2)
         await user.click(primaryAction())
-        expect(useWorkoutStore.getState().workouts[routineID]?.completedExerciseIds).toEqual([
-          benchPress.id,
-          squat.id,
-        ])
+        expect(completedIds()).toEqual([benchPress.id, squat.id])
       })
 
       // Two controls saying "Complete circuit" side by side is one too many:
@@ -393,12 +456,8 @@ describe('StartWorkout', () => {
           screen.getByRole('button', { name: 'Complete circuit', hidden: false }),
         ).toHaveAttribute('type', 'button')
 
-        await completeBothExercises(user)
-        await user.type(setField('Bench Press set 2 weight'), '80')
-        await user.type(setField('Bench Press set 2 reps'), '8')
+        await logRound(user, 1)
         await user.click(primaryAction())
-        await user.type(await screen.findByRole('textbox', { name: 'Squat set 2 weight' }), '100')
-        await user.type(setField('Squat set 2 reps'), '5')
 
         expect(
           screen
@@ -416,10 +475,7 @@ describe('StartWorkout', () => {
         await logFirstSet(user)
         await user.click(screen.getByRole('button', { name: 'Complete circuit' }))
 
-        expect(useWorkoutStore.getState().workouts[routineID]?.completedExerciseIds).toEqual([
-          benchPress.id,
-          squat.id,
-        ])
+        expect(completedIds()).toEqual([benchPress.id, squat.id])
       })
     })
 
@@ -719,13 +775,10 @@ describe('StartWorkout', () => {
       await renderWorkout()
 
       await logFirstSet(user)
-      // Completing the set starts nothing: the three minutes stored against the
-      // bench press are not this group's to take.
-      expect(restBanner()).not.toBeInTheDocument()
 
-      await user.click(primaryAction())
-
-      // Only the walk to the next station rests, for the length the group says.
+      // Only the walk to the next exercise rests, for the length the group
+      // says: the three minutes stored against the bench press are not this
+      // group's to take.
       expect(within(restBanner()!).getByText('00:15')).toBeInTheDocument()
     })
   })

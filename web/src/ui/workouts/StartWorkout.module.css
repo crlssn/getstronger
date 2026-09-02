@@ -157,6 +157,13 @@
   @apply grid size-8 place-items-center rounded-control bg-info-surface text-xs font-semibold text-text-muted;
 }
 
+/* A round's tile turns into a tick once the round is logged, so the list reads
+   down without opening any round. Ink rather than green: a column of green
+   discs is the status light the exercise tiles already refused. */
+.exerciseIndex svg {
+  @apply size-4;
+}
+
 /* Clear of the session card above, with room between its own two actions. */
 .workoutTools {
   @apply mt-6 space-y-3;

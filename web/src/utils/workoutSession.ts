@@ -286,59 +286,39 @@ export const completedCircuitRounds = (
   return Math.min(...group.stations.map((station) => loggedCounts[station.key] ?? 0))
 }
 
-/** Where completing a set in a circuit leaves the session. */
+/**
+ * How many rounds a circuit lays out, read off the rows its stations hold.
+ *
+ * A round is one row of every station, so the block is as long as its longest
+ * station — never shorter than the prescription, and never shorter than one.
+ */
+export const circuitRoundCount = (group: SessionGroup, setCounts: Record<string, number>): number =>
+  Math.max(group.rounds, 1, ...group.stations.map((station) => setCounts[station.key] ?? 0))
+
+/** Where completing a round of a circuit leaves the session. */
 export type CircuitStep =
-  | { kind: 'nextStation'; key: string; restSeconds: number }
-  | { kind: 'nextRound'; key: string; round: number; restSeconds: number }
-  | { kind: 'groupComplete' }
+  { kind: 'nextRound'; round: number; restSeconds: number } | { kind: 'groupComplete' }
 
 /**
- * The step a circuit takes after the exercise in front of you.
+ * The step a circuit takes after the round in front of you.
  *
- * Along the group inside a round, and back to the top when the round closes.
- * Each step carries the rest that belongs to it: the shorter one on the way to
- * the next exercise, the longer one on the way into the next round.
+ * Into the round after it, resting for the one that closed — or, from a round
+ * reopened to correct it, back to the round the block had already reached.
  *
  * A circuit prescribed for a number of rounds walks out of its last one, and
  * that is where `groupComplete` comes from. One prescribed for none has no last
  * round: it ends when the session says so.
  *
- * `completedRounds` is how many rounds the whole group has been through, which
- * is what numbers the round being started. The round on the header is already
- * counting the one being walked.
+ * `completedRounds` is how many rounds every station in the group has logged.
  */
-export const nextCircuitStep = (
+export const nextCircuitRound = (
   group: SessionGroup,
-  key: string,
+  round: number,
   completedRounds: number,
 ): CircuitStep => {
-  const index = group.stations.findIndex((station) => station.key === key)
-  if (index < 0) return { kind: 'groupComplete' }
+  const next = Math.max(round + 1, completedRounds + 1)
 
-  // Inside the round nothing has closed yet, so the walk carries on to the next
-  // exercise however many rounds the block has already been through.
-  const next = group.stations[index + 1]
-  if (next) {
-    return {
-      kind: 'nextStation',
-      key: next.key,
-      restSeconds: group.restBetweenExercisesSeconds,
-    }
-  }
+  if (group.rounds > 0 && next > group.rounds) return { kind: 'groupComplete' }
 
-  const first = group.stations[0]
-  if (!first) return { kind: 'groupComplete' }
-
-  // The round just walked is already counted, so a prescription this many
-  // rounds in has been worked through and there is no next round to start.
-  if (group.rounds > 0 && completedRounds >= group.rounds) {
-    return { kind: 'groupComplete' }
-  }
-
-  return {
-    kind: 'nextRound',
-    key: first.key,
-    round: completedRounds + 1,
-    restSeconds: group.restBetweenRoundsSeconds,
-  }
+  return { kind: 'nextRound', round: next, restSeconds: group.restBetweenRoundsSeconds }
 }
