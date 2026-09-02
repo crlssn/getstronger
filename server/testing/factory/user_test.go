@@ -68,6 +68,15 @@ func TestFactory_User(t *testing.T) {
 		require.Equal(t, name, created.Name)
 	})
 
+	t.Run("UserFeedSeenAt", func(t *testing.T) {
+		t.Parallel()
+		seenAt := time.Now().UTC().Add(-time.Hour).Truncate(time.Microsecond)
+		expected := f.NewUser(factory.UserFeedSeenAt(seenAt))
+		created, err := models.FindUser(ctx, bob.NewDB(c.DB), expected.ID)
+		require.NoError(t, err)
+		require.True(t, seenAt.Equal(created.FeedSeenAt.GetOrZero()))
+	})
+
 	t.Cleanup(func() {
 		require.NoError(t, c.Terminate(ctx))
 	})

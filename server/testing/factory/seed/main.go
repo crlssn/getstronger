@@ -34,6 +34,10 @@ const (
 	workoutCommentCount    = 2
 	activeAccountAge       = 365 * 24 * time.Hour
 	activeWorkoutInterval  = 7 * 24 * time.Hour
+	// A day since the feed was last shown, so the home page opens the way it
+	// does for a returning athlete: with what the followees logged since
+	// marked as new.
+	activeFeedSeenAge = 24 * time.Hour
 	// Without these the background accounts finish every workout at seed time,
 	// and the feed is a dozen consecutive "Just now" cards — which reads as
 	// broken rather than as fresh.
@@ -144,6 +148,7 @@ func main() {
 
 func seedPersonas(exec bob.Executor, f *factory.Factory, config personaConfig) (*models.User, *models.User) {
 	config.active.CreatedAt = f.Now().Add(-activeAccountAge)
+	config.active.FeedSeenAt = f.Now().Add(-activeFeedSeenAge)
 	active := f.Seed(factory.SeedParams{
 		User:                      &config.active,
 		ExerciseCount:             exerciseCount,
