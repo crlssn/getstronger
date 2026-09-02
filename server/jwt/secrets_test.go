@@ -3,6 +3,7 @@ package jwt_test
 import (
 	"testing"
 
+	"github.com/gofrs/uuid/v5"
 	"github.com/stretchr/testify/require"
 
 	"github.com/crlssn/getstronger/server/jwt"
@@ -65,10 +66,12 @@ func TestAnUnsetKeySignsAndVerifiesAnyway(t *testing.T) {
 
 	issuer := jwt.NewIssuer(nil, []byte("refresh_key"))
 
-	token, err := issuer.CreateToken("123", jwt.TokenTypeAccess)
+	userID := uuid.Must(uuid.NewV4())
+
+	token, err := issuer.CreateToken(userID, jwt.TokenTypeAccess)
 	require.NoError(t, err)
 
 	claims, err := issuer.ClaimsFromToken(token, jwt.TokenTypeAccess)
 	require.NoError(t, err)
-	require.Equal(t, "123", claims.UserID)
+	require.Equal(t, userID, claims.UserID)
 }

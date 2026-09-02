@@ -7,7 +7,7 @@ import (
 	"sync/atomic"
 	"testing"
 
-	"github.com/google/uuid"
+	gofrsuuid "github.com/gofrs/uuid/v5"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/mock/gomock"
@@ -76,9 +76,9 @@ func (s *pubSubSuite) TestPublish() {
 			name:  "ok_handler_found",
 			topic: events.TopicFollowedUser,
 			payload: events.UserFollowed{
-				FollowerID: uuid.NewString(),
-				FolloweeID: uuid.NewString(),
-				EventID:    uuid.NewString(),
+				FollowerID: gofrsuuid.Must(gofrsuuid.NewV4()),
+				FolloweeID: gofrsuuid.Must(gofrsuuid.NewV4()),
+				EventID:    gofrsuuid.Must(gofrsuuid.NewV4()),
 			},
 			init: func(t test) {
 				wg.Add(1)
@@ -91,8 +91,8 @@ func (s *pubSubSuite) TestPublish() {
 			name:  "ok_handler_not_found",
 			topic: events.TopicRequestTraced,
 			payload: events.WorkoutCommentPosted{
-				CommentID: uuid.NewString(),
-				EventID:   uuid.NewString(),
+				CommentID: gofrsuuid.Must(gofrsuuid.NewV4()),
+				EventID:   gofrsuuid.Must(gofrsuuid.NewV4()),
 			},
 			init: func(t test) {
 				s.mocks.handler.EXPECT().HandlePayload(t.payload).Times(0)
@@ -150,7 +150,7 @@ func TestPublishNeverFailsTheCaller(t *testing.T) {
 
 		require.NotPanics(t, func() {
 			ps.Publish(context.Background(), events.TopicFollowedUser, events.UserFollowed{
-				EventID: uuid.NewString(),
+				EventID: gofrsuuid.Must(gofrsuuid.NewV4()),
 			})
 		})
 	})
@@ -165,7 +165,7 @@ func TestPublishNeverFailsTheCaller(t *testing.T) {
 		const overflow = 1100
 		for range overflow {
 			ps.Publish(context.Background(), events.TopicFollowedUser, events.UserFollowed{
-				EventID: uuid.NewString(),
+				EventID: gofrsuuid.Must(gofrsuuid.NewV4()),
 			})
 		}
 

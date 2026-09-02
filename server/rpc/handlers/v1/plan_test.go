@@ -50,7 +50,7 @@ func (s *planSuite) SetupSuite() {
 // athlete returns a context authenticated as a new user, and that user.
 func (s *planSuite) athlete() (context.Context, *models.User) {
 	user := s.factory.NewUser()
-	ctx := xcontext.WithUserID(context.Background(), user.ID.String())
+	ctx := xcontext.WithUserID(context.Background(), user.ID)
 
 	return xcontext.WithLogger(ctx, zap.NewExample()), user
 }

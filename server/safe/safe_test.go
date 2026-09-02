@@ -54,3 +54,14 @@ func TestInt32FromIntClampsToTheRange(t *testing.T) {
 	require.Equal(t, int32(math.MinInt32), safe.Int32FromInt(math.MinInt32))
 	require.Equal(t, int32(42), safe.Int32FromInt(42))
 }
+
+// A lifetime total is counted as an int64 and reported in a 32-bit field.
+func TestInt32FromInt64ClampsToTheRange(t *testing.T) {
+	t.Parallel()
+
+	require.Equal(t, int32(math.MaxInt32), safe.Int32FromInt64(math.MaxInt32+1))
+	require.Equal(t, int32(math.MinInt32), safe.Int32FromInt64(math.MinInt32-1))
+	require.Equal(t, int32(math.MaxInt32), safe.Int32FromInt64(math.MaxInt32))
+	require.Equal(t, int32(math.MinInt32), safe.Int32FromInt64(math.MinInt32))
+	require.Equal(t, int32(42), safe.Int32FromInt64(42))
+}

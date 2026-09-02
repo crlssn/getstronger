@@ -51,7 +51,7 @@ func (s *routineSuite) SetupSuite() {
 
 func (s *routineSuite) athlete() (context.Context, *models.User) {
 	user := s.factory.NewUser()
-	ctx := xcontext.WithUserID(context.Background(), user.ID.String())
+	ctx := xcontext.WithUserID(context.Background(), user.ID)
 
 	return xcontext.WithLogger(ctx, zap.NewExample()), user
 }
@@ -241,7 +241,7 @@ func routineExerciseIDs(routine *apiv1.Routine) []string {
 
 func (s *routineSuite) context(user *models.User) context.Context {
 	ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
-	return xcontext.WithUserID(ctx, user.ID.String())
+	return xcontext.WithUserID(ctx, user.ID)
 }
 
 func (s *routineSuite) exerciseIDs(exercises models.ExerciseSlice) []string {

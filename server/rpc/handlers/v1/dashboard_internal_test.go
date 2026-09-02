@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"connectrpc.com/connect"
+	"github.com/gofrs/uuid/v5"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 
@@ -40,7 +41,7 @@ func (s stubSources) ListWorkouts(_ context.Context, _ ...repo.ListWorkoutsOpt) 
 	return nil, s.listWorkoutsErr
 }
 
-func (s stubSources) GetActivePlan(_ context.Context, _ string) (*training.Plan, error) {
+func (s stubSources) GetActivePlan(_ context.Context, _ uuid.UUID) (*training.Plan, error) {
 	if s.activePlanErr != nil {
 		return nil, s.activePlanErr
 	}
@@ -48,17 +49,17 @@ func (s stubSources) GetActivePlan(_ context.Context, _ string) (*training.Plan,
 	return nil, sql.ErrNoRows
 }
 
-func (s stubSources) GetPersonalBests(_ context.Context, _ ...string) (models.SetSlice, error) {
+func (s stubSources) GetPersonalBests(_ context.Context, _ ...uuid.UUID) (models.SetSlice, error) {
 	return nil, s.personalBestsErr
 }
 
-func (s stubSources) CountWorkouts(_ context.Context, _ string) (int64, error) {
+func (s stubSources) CountWorkouts(_ context.Context, _ uuid.UUID) (int64, error) {
 	return s.workoutCount, s.workoutCountErr
 }
 
 func dashboardOf(t *testing.T, sources stubSources) (context.Context, *dashboard) {
 	t.Helper()
-	ctx := xcontext.WithUserID(context.Background(), "b0f0a1e4-0c7b-4d3b-9f3a-8c5f1d2e3a4b")
+	ctx := xcontext.WithUserID(context.Background(), uuid.Must(uuid.NewV4()))
 
 	return xcontext.WithLogger(ctx, zap.NewExample()), &dashboard{sources: sources}
 }

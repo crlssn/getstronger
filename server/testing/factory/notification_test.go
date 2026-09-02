@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	gofrsuuid "github.com/gofrs/uuid/v5"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 
@@ -74,8 +75,8 @@ func TestFactory_Notification(t *testing.T) {
 	t.Run("NotificationPayload", func(t *testing.T) {
 		t.Parallel()
 		payload := notification.Payload{
-			ActorID:   uuid.NewString(),
-			WorkoutID: uuid.NewString(),
+			ActorID:   gofrsuuid.Must(gofrsuuid.NewV4()),
+			WorkoutID: gofrsuuid.Must(gofrsuuid.NewV4()),
 		}
 		expected := f.NewNotification(factory.NotificationPayload(payload))
 		created, err := models.FindNotification(ctx, bob.NewDB(c.DB), expected.ID)

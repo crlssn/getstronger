@@ -1,6 +1,7 @@
 package notification_test
 
 import (
+	"encoding/json"
 	"testing"
 
 	"github.com/gofrs/uuid/v5"
@@ -45,4 +46,39 @@ func TestCommentAudience(t *testing.T) {
 			require.Equal(t, first, notification.CommentAudience(commenter, owner, comments))
 		}
 	})
+}
+
+// The store's unique index on (user_id, eventId) covers every row that carries
+// the key, so a payload naming no event must not write one: the nil UUID would
+// read as an event every notification of a user shares.
+func TestPayloadStoresOnlyTheIDsItNames(t *testing.T) {
+	t.Parallel()
+
+	actor := uuid.Must(uuid.NewV4())
+
+	stored, err := json.Marshal(notification.Payload{ActorID: actor})
+	require.NoError(t, err)
+	require.JSONEq(t, `{"actorId":"`+actor.String()+`"}`, string(stored))
+
+	var read notification.Payload
+	require.NoError(t, json.Unmarshal(stored, &read))
+	require.Equal(t, actor, read.ActorID)
+	require.True(t, read.EventID.IsNil())
+	require.True(t, read.WorkoutID.IsNil())
+}
+
+// A payload written before the ids were typed still reads back.
+func TestPayloadReadsWhatIsStored(t *testing.T) {
+	t.Parallel()
+
+	actor, event, workout := uuid.Must(uuid.NewV4()), uuid.Must(uuid.NewV4()), uuid.Must(uuid.NewV4())
+
+	var read notification.Payload
+	require.NoError(t, json.Unmarshal([]byte(
+		`{"actorId":"`+actor.String()+`","eventId":"`+event.String()+`","workoutId":"`+workout.String()+`"}`,
+	), &read))
+
+	require.Equal(t, actor, read.ActorID)
+	require.Equal(t, event, read.EventID)
+	require.Equal(t, workout, read.WorkoutID)
 }

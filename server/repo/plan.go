@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 
-	"github.com/google/uuid"
+	"github.com/gofrs/uuid/v5"
 	"github.com/lib/pq"
 
 	"github.com/crlssn/getstronger/server/gen/models"
@@ -13,21 +13,21 @@ import (
 )
 
 type CreatePlanParams struct {
-	UserID     string
+	UserID     uuid.UUID
 	Name       string
-	RoutineIDs []string
+	RoutineIDs []uuid.UUID
 }
 
 type UpdatePlanParams struct {
-	ID         string
-	UserID     string
+	ID         uuid.UUID
+	UserID     uuid.UUID
 	Name       string
-	RoutineIDs []string
+	RoutineIDs []uuid.UUID
 }
 
 // validatePlanRoutines answers the half of the rotation rules that needs the
 // database: whether each routine exists and may be trained by this athlete.
-func (r *Repo) validatePlanRoutines(ctx context.Context, userID string, routineIDs []string) error {
+func (r *Repo) validatePlanRoutines(ctx context.Context, userID uuid.UUID, routineIDs []uuid.UUID) error {
 	if err := training.ValidatePlanRotation(routineIDs); err != nil {
 		return fmt.Errorf("plan rotation validate: %w", err)
 	}
@@ -37,9 +37,9 @@ func (r *Repo) validatePlanRoutines(ctx context.Context, userID string, routineI
 		return fmt.Errorf("plan routines fetch: %w", err)
 	}
 
-	routinesByID := make(map[string]*models.Routine, len(routines))
+	routinesByID := make(map[uuid.UUID]*models.Routine, len(routines))
 	for _, routine := range routines {
-		routinesByID[routine.ID.String()] = routine
+		routinesByID[routine.ID] = routine
 	}
 
 	// Walking the requested order rather than the rows keeps two rejections the
@@ -59,7 +59,7 @@ func (r *Repo) validatePlanRoutines(ctx context.Context, userID string, routineI
 	return nil
 }
 
-func (r *Repo) replacePlanRoutines(ctx context.Context, planID string, routineIDs []string) error {
+func (r *Repo) replacePlanRoutines(ctx context.Context, planID uuid.UUID, routineIDs []uuid.UUID) error {
 	if _, err := r.sqlExec().ExecContext(ctx, `DELETE FROM public.plan_routines WHERE plan_id = $1`, planID); err != nil {
 		return fmt.Errorf("plan routines delete: %w", err)
 	}
@@ -84,14 +84,14 @@ VALUES ($1, $2, $3)`, planID, routineID, position); err != nil {
 // the routine: ListPlans loads every rotation in the same two queries. It must
 // run before the routine is retired, while its rows still resolve.
 func (r *Repo) dropRoutineFromPlans(ctx context.Context, routine *models.Routine) error {
-	userID := routine.UserID.String()
+	userID := routine.UserID
 	plans, err := r.ListPlans(ctx, userID)
 	if err != nil {
 		return fmt.Errorf("plans before routine removal: %w", err)
 	}
 
 	for _, plan := range plans {
-		rotation := plan.RotationWithout(routine.ID.String())
+		rotation := plan.RotationWithout(routine.ID)
 		if len(rotation.RoutineIDs) == len(plan.Routines) {
 			continue
 		}
@@ -112,13 +112,13 @@ WHERE id = $3 AND user_id = $4`, rotation.CurrentPosition, rotation.Active, plan
 }
 
 func (r *Repo) CreatePlan(ctx context.Context, p CreatePlanParams) (*training.Plan, error) {
-	var planID string
+	var planID uuid.UUID
 	if err := r.NewTx(ctx, func(tx *Repo) error {
 		if err := tx.validatePlanRoutines(ctx, p.UserID, p.RoutineIDs); err != nil {
 			return err
 		}
 
-		planID = uuid.NewString()
+		planID = uuid.Must(uuid.NewV4())
 		if _, err := tx.exec().ExecContext(ctx, `
 INSERT INTO public.plans (id, user_id, name)
 VALUES ($1, $2, $3)`, planID, p.UserID, p.Name); err != nil {
@@ -170,7 +170,7 @@ func (r *Repo) loadPlanRoutines(ctx context.Context, plans []*training.Plan) err
 		return nil
 	}
 
-	planIDs := make([]string, 0, len(plans))
+	planIDs := make([]uuid.UUID, 0, len(plans))
 	for _, plan := range plans {
 		planIDs = append(planIDs, plan.ID)
 	}
@@ -180,7 +180,7 @@ func (r *Repo) loadPlanRoutines(ctx context.Context, plans []*training.Plan) err
 		return err
 	}
 
-	var routineIDs []string
+	var routineIDs []uuid.UUID
 	for _, planID := range planIDs {
 		routineIDs = append(routineIDs, rotations[planID]...)
 	}
@@ -213,7 +213,7 @@ func (r *Repo) loadPlanRoutines(ctx context.Context, plans []*training.Plan) err
 }
 
 // planRotations reads which routines each plan trains and in what order.
-func (r *Repo) planRotations(ctx context.Context, planIDs []string) (map[string][]string, error) {
+func (r *Repo) planRotations(ctx context.Context, planIDs []uuid.UUID) (map[uuid.UUID][]uuid.UUID, error) {
 	rows, err := r.sqlExec().QueryContext(ctx, `
 SELECT plan_id, routine_id
 FROM public.plan_routines
@@ -224,9 +224,9 @@ ORDER BY plan_id, position`, pq.Array(planIDs))
 	}
 	defer rows.Close()
 
-	rotations := make(map[string][]string, len(planIDs))
+	rotations := make(map[uuid.UUID][]uuid.UUID, len(planIDs))
 	for rows.Next() {
-		var planID, routineID string
+		var planID, routineID uuid.UUID
 		if err = rows.Scan(&planID, &routineID); err != nil {
 			return nil, fmt.Errorf("plan routine scan: %w", err)
 		}
@@ -246,17 +246,17 @@ const selectPlanColumns = `
 SELECT id, user_id, name, active, current_position, created_at, updated_at
 FROM public.plans`
 
-func (r *Repo) GetPlan(ctx context.Context, planID, userID string) (*training.Plan, error) {
+func (r *Repo) GetPlan(ctx context.Context, planID, userID uuid.UUID) (*training.Plan, error) {
 	return r.scanPlan(ctx, r.sqlExec().QueryRowContext(ctx,
 		selectPlanColumns+` WHERE id = $1 AND user_id = $2`, planID, userID))
 }
 
-func (r *Repo) GetActivePlan(ctx context.Context, userID string) (*training.Plan, error) {
+func (r *Repo) GetActivePlan(ctx context.Context, userID uuid.UUID) (*training.Plan, error) {
 	return r.scanPlan(ctx, r.sqlExec().QueryRowContext(ctx,
 		selectPlanColumns+` WHERE user_id = $1 AND active = TRUE`, userID))
 }
 
-func (r *Repo) ListPlans(ctx context.Context, userID string) ([]*training.Plan, error) {
+func (r *Repo) ListPlans(ctx context.Context, userID uuid.UUID) ([]*training.Plan, error) {
 	rows, err := r.sqlExec().QueryContext(ctx,
 		selectPlanColumns+` WHERE user_id = $1 ORDER BY active DESC, created_at DESC`, userID)
 	if err != nil {
@@ -313,7 +313,7 @@ WHERE id = $3 AND user_id = $4`, p.Name, currentPosition, p.ID, p.UserID); err !
 	return r.GetPlan(ctx, p.ID, p.UserID)
 }
 
-func (r *Repo) DeletePlan(ctx context.Context, planID, userID string) error {
+func (r *Repo) DeletePlan(ctx context.Context, planID, userID uuid.UUID) error {
 	result, err := r.sqlExec().ExecContext(ctx,
 		`DELETE FROM public.plans WHERE id = $1 AND user_id = $2`, planID, userID)
 	if err != nil {
@@ -329,7 +329,7 @@ func (r *Repo) DeletePlan(ctx context.Context, planID, userID string) error {
 	return nil
 }
 
-func (r *Repo) SetActivePlan(ctx context.Context, planID, userID string) (*training.Plan, error) {
+func (r *Repo) SetActivePlan(ctx context.Context, planID, userID uuid.UUID) (*training.Plan, error) {
 	if err := r.NewTx(ctx, func(tx *Repo) error {
 		plan, err := tx.GetPlan(ctx, planID, userID)
 		if err != nil {
@@ -354,7 +354,7 @@ func (r *Repo) SetActivePlan(ctx context.Context, planID, userID string) (*train
 	return r.GetPlan(ctx, planID, userID)
 }
 
-func (r *Repo) PauseActivePlan(ctx context.Context, userID string) error {
+func (r *Repo) PauseActivePlan(ctx context.Context, userID uuid.UUID) error {
 	if _, err := r.sqlExec().ExecContext(ctx,
 		`UPDATE public.plans SET active = FALSE, updated_at = (NOW() AT TIME ZONE 'UTC') WHERE user_id = $1 AND active = TRUE`, userID); err != nil {
 		return fmt.Errorf("active plan pause: %w", err)
@@ -362,7 +362,7 @@ func (r *Repo) PauseActivePlan(ctx context.Context, userID string) error {
 	return nil
 }
 
-func (r *Repo) AdvancePlan(ctx context.Context, planID, userID, expectedRoutineID string) (*training.Plan, error) {
+func (r *Repo) AdvancePlan(ctx context.Context, planID, userID, expectedRoutineID uuid.UUID) (*training.Plan, error) {
 	if err := r.NewTx(ctx, func(tx *Repo) error {
 		plan, err := tx.GetPlan(ctx, planID, userID)
 		if err != nil {

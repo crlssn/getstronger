@@ -150,7 +150,7 @@ func RoutineGroupSlice(groups []*training.RoutineGroup) []*apiv1.RoutineGroup {
 	parsed := make([]*apiv1.RoutineGroup, 0, len(groups))
 	for _, group := range groups {
 		parsed = append(parsed, &apiv1.RoutineGroup{
-			Id:                          group.ID,
+			Id:                          group.ID.String(),
 			Mode:                        RoutineGroupModeToProto(group.Mode),
 			RestBetweenExercisesSeconds: group.RestBetweenExercisesSeconds,
 			RestBetweenRoundsSeconds:    group.RestBetweenRoundsSeconds,
@@ -198,7 +198,7 @@ func Plan(plan *training.Plan) *apiv1.Plan {
 	}
 
 	return &apiv1.Plan{
-		Id:              plan.ID,
+		Id:              plan.ID.String(),
 		Name:            plan.Name,
 		Routines:        RoutineSlice(plan.Routines),
 		CurrentPosition: safe.Int32FromInt(plan.CurrentPosition),
@@ -437,13 +437,17 @@ func ExerciseSetSlice(sets models.SetSlice) []*apiv1.ExerciseSet {
 	return exerciseSets
 }
 
-func ExerciseSetsFromPB(exerciseSets []*apiv1.ExerciseSets) []repo.ExerciseSet {
+func ExerciseSetsFromPB(exerciseSets []*apiv1.ExerciseSets) ([]repo.ExerciseSet, error) {
 	exerciseSetSlice := make([]repo.ExerciseSet, 0, len(exerciseSets))
 	for _, exerciseSet := range exerciseSets {
+		exerciseID, err := UUID(exerciseSet.GetExercise().GetId())
+		if err != nil {
+			return nil, err
+		}
+
 		sets := make([]repo.Set, 0, len(exerciseSet.GetSets()))
 		for _, set := range exerciseSet.GetSets() {
 			sets = append(sets, repo.Set{
-				ID:              set.GetId(),
 				Reps:            int(set.GetReps()),
 				Weight:          set.GetWeight(),
 				WeightUnit:      WeightUnitFromProto(set.GetWeightUnit()),
@@ -454,12 +458,12 @@ func ExerciseSetsFromPB(exerciseSets []*apiv1.ExerciseSets) []repo.ExerciseSet {
 		}
 
 		exerciseSetSlice = append(exerciseSetSlice, repo.ExerciseSet{
-			ExerciseID: exerciseSet.GetExercise().GetId(),
+			ExerciseID: exerciseID,
 			Sets:       sets,
 		})
 	}
 
-	return exerciseSetSlice
+	return exerciseSetSlice, nil
 }
 
 type NotificationOpt func(*apiv1.Notification)
@@ -531,14 +535,14 @@ func Notification(notification *models.Notification, opts ...NotificationOpt) *a
 }
 
 func NotificationSlice(notifications models.NotificationSlice, actors models.UserSlice, workouts models.WorkoutSlice) ([]*apiv1.Notification, error) {
-	mapActors := make(map[string]*models.User)
+	mapActors := make(map[uuid.UUID]*models.User)
 	for _, a := range actors {
-		mapActors[a.ID.String()] = a
+		mapActors[a.ID] = a
 	}
 
-	mapWorkouts := make(map[string]*models.Workout)
+	mapWorkouts := make(map[uuid.UUID]*models.Workout)
 	for _, w := range workouts {
-		mapWorkouts[w.ID.String()] = w
+		mapWorkouts[w.ID] = w
 	}
 
 	nSlice := make([]*apiv1.Notification, 0, len(notifications))

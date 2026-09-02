@@ -3,6 +3,7 @@ package xcontext
 import (
 	"context"
 
+	"github.com/gofrs/uuid/v5"
 	"go.uber.org/zap"
 )
 
@@ -27,16 +28,16 @@ func MustExtractLogger(ctx context.Context) *zap.Logger {
 	return logger
 }
 
-func WithUserID(ctx context.Context, userID string) context.Context {
+func WithUserID(ctx context.Context, userID uuid.UUID) context.Context {
 	return context.WithValue(ctx, keyUserID{}, userID)
 }
 
-func ExtractUserID(ctx context.Context) (string, bool) {
-	userID, ok := ctx.Value(keyUserID{}).(string)
+func ExtractUserID(ctx context.Context) (uuid.UUID, bool) {
+	userID, ok := ctx.Value(keyUserID{}).(uuid.UUID)
 	return userID, ok
 }
 
-func MustExtractUserID(ctx context.Context) string {
+func MustExtractUserID(ctx context.Context) uuid.UUID {
 	userID, ok := ExtractUserID(ctx)
 	if !ok {
 		// The user ID is provided to all authenticated requests in the auth interceptor.

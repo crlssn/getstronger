@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
+	gofrsuuid "github.com/gofrs/uuid/v5"
 	"github.com/google/uuid"
 	"github.com/stephenafamo/bob"
 	"github.com/stretchr/testify/suite"
@@ -67,7 +68,7 @@ func (s *userSuite) TestUpdateUserName() {
 	s.Run("ok_name_updated_and_trimmed", func() {
 		user := s.factory.NewUser()
 		ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
-		ctx = xcontext.WithUserID(ctx, user.ID.String())
+		ctx = xcontext.WithUserID(ctx, user.ID)
 
 		res, err := s.handler.UpdateUserName(ctx, &connect.Request[v1.UpdateUserNameRequest]{
 			Msg: &v1.UpdateUserNameRequest{Name: "  Robin Fields  "},
@@ -75,7 +76,7 @@ func (s *userSuite) TestUpdateUserName() {
 		s.Require().NoError(err)
 		s.Require().Equal("Robin Fields", res.Msg.GetUser().GetName())
 
-		persisted, err := s.repo.GetUser(ctx, repo.GetUserWithID(user.ID.String()))
+		persisted, err := s.repo.GetUser(ctx, repo.GetUserWithID(user.ID))
 		s.Require().NoError(err)
 		s.Require().Equal("Robin Fields", persisted.Name)
 	})
@@ -84,7 +85,7 @@ func (s *userSuite) TestUpdateUserName() {
 		// An update that matches no row is the handler's internal-error path;
 		// what it must not do is leak that the account is missing.
 		ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
-		ctx = xcontext.WithUserID(ctx, uuid.NewString())
+		ctx = xcontext.WithUserID(ctx, gofrsuuid.Must(gofrsuuid.NewV4()))
 
 		res, err := s.handler.UpdateUserName(ctx, &connect.Request[v1.UpdateUserNameRequest]{
 			Msg: &v1.UpdateUserNameRequest{Name: "Robin Fields"},
@@ -99,7 +100,7 @@ func (s *userSuite) TestUpdateUserUsername() {
 	s.Run("ok_username_updated_and_lowercased", func() {
 		user := s.factory.NewUser()
 		ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
-		ctx = xcontext.WithUserID(ctx, user.ID.String())
+		ctx = xcontext.WithUserID(ctx, user.ID)
 
 		res, err := s.handler.UpdateUserUsername(ctx, &connect.Request[v1.UpdateUserUsernameRequest]{
 			Msg: &v1.UpdateUserUsernameRequest{Username: "Fresh.Handle"},
@@ -107,7 +108,7 @@ func (s *userSuite) TestUpdateUserUsername() {
 		s.Require().NoError(err)
 		s.Require().Equal("fresh.handle", res.Msg.GetUser().GetUsername())
 
-		persisted, err := s.repo.GetUser(ctx, repo.GetUserWithID(user.ID.String()))
+		persisted, err := s.repo.GetUser(ctx, repo.GetUserWithID(user.ID))
 		s.Require().NoError(err)
 		s.Require().Equal("fresh.handle", persisted.Username)
 	})
@@ -116,7 +117,7 @@ func (s *userSuite) TestUpdateUserUsername() {
 		s.factory.NewUser(factory.UserUsername("held.handle"))
 		user := s.factory.NewUser()
 		ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
-		ctx = xcontext.WithUserID(ctx, user.ID.String())
+		ctx = xcontext.WithUserID(ctx, user.ID)
 
 		res, err := s.handler.UpdateUserUsername(ctx, &connect.Request[v1.UpdateUserUsernameRequest]{
 			Msg: &v1.UpdateUserUsernameRequest{Username: "Held.Handle"},
@@ -132,7 +133,7 @@ func (s *userSuite) TestUpdateUserUsername() {
 	s.Run("err_username_reserved", func() {
 		user := s.factory.NewUser()
 		ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
-		ctx = xcontext.WithUserID(ctx, user.ID.String())
+		ctx = xcontext.WithUserID(ctx, user.ID)
 
 		for _, username := range []string{"Get.Stronger", "login"} {
 			res, err := s.handler.UpdateUserUsername(ctx, &connect.Request[v1.UpdateUserUsernameRequest]{
@@ -145,7 +146,7 @@ func (s *userSuite) TestUpdateUserUsername() {
 		}
 
 		// The refusal changed nothing.
-		persisted, err := s.repo.GetUser(ctx, repo.GetUserWithID(user.ID.String()))
+		persisted, err := s.repo.GetUser(ctx, repo.GetUserWithID(user.ID))
 		s.Require().NoError(err)
 		s.Require().Equal(user.Username, persisted.Username)
 	})
@@ -175,7 +176,7 @@ func (s *userSuite) TestUpdateUserWeightUnit() {
 			init: func(_ test) context.Context {
 				user := s.factory.NewUser(factory.UserWeightUnit(weightunit.Kilograms))
 				ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
-				return xcontext.WithUserID(ctx, user.ID.String())
+				return xcontext.WithUserID(ctx, user.ID)
 			},
 			expected: expected{
 				err:        nil,
@@ -192,7 +193,7 @@ func (s *userSuite) TestUpdateUserWeightUnit() {
 			init: func(_ test) context.Context {
 				user := s.factory.NewUser(factory.UserWeightUnit(weightunit.Pounds))
 				ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
-				return xcontext.WithUserID(ctx, user.ID.String())
+				return xcontext.WithUserID(ctx, user.ID)
 			},
 			expected: expected{
 				err:        nil,
@@ -240,7 +241,7 @@ func (s *userSuite) TestUpdateUserAutofillSets() {
 		s.Run(t.name, func() {
 			user := s.factory.NewUser(factory.UserAutofillSets(t.initial))
 			ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
-			ctx = xcontext.WithUserID(ctx, user.ID.String())
+			ctx = xcontext.WithUserID(ctx, user.ID)
 
 			res, err := s.handler.UpdateUserAutofillSets(ctx, &connect.Request[v1.UpdateUserAutofillSetsRequest]{
 				Msg: &v1.UpdateUserAutofillSetsRequest{Enabled: t.enabled},
@@ -249,7 +250,7 @@ func (s *userSuite) TestUpdateUserAutofillSets() {
 			s.Require().NotNil(res)
 			s.Require().Equal(t.enabled, res.Msg.GetUser().GetAutofillSets())
 
-			stored, err := s.repo.GetUser(ctx, repo.GetUserWithID(user.ID.String()))
+			stored, err := s.repo.GetUser(ctx, repo.GetUserWithID(user.ID))
 			s.Require().NoError(err)
 			s.Require().Equal(t.enabled, stored.AutofillSets)
 		})
@@ -263,7 +264,7 @@ func (s *userSuite) TestGetUser_EmailAddressVisibility() {
 		auth := s.factory.NewAuth()
 		user := s.factory.NewUser(factory.UserAuthID(auth.ID))
 		ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
-		ctx = xcontext.WithUserID(ctx, user.ID.String())
+		ctx = xcontext.WithUserID(ctx, user.ID)
 
 		res, err := s.handler.GetUser(ctx, &connect.Request[v1.GetUserRequest]{
 			Msg: &v1.GetUserRequest{Id: user.ID.String()},
@@ -277,7 +278,7 @@ func (s *userSuite) TestGetUser_EmailAddressVisibility() {
 		user := s.factory.NewUser(factory.UserAuthID(auth.ID))
 		viewer := s.factory.NewUser()
 		ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
-		ctx = xcontext.WithUserID(ctx, viewer.ID.String())
+		ctx = xcontext.WithUserID(ctx, viewer.ID)
 
 		res, err := s.handler.GetUser(ctx, &connect.Request[v1.GetUserRequest]{
 			Msg: &v1.GetUserRequest{Id: user.ID.String()},
@@ -292,7 +293,7 @@ func (s *userSuite) TestGetUser_EmailAddressVisibility() {
 func (s *userSuite) TestGetUserAutofillSetsDefaultsOff() {
 	user := s.factory.NewUser()
 	ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
-	ctx = xcontext.WithUserID(ctx, user.ID.String())
+	ctx = xcontext.WithUserID(ctx, user.ID)
 
 	res, err := s.handler.GetUser(ctx, &connect.Request[v1.GetUserRequest]{
 		Msg: &v1.GetUserRequest{Id: user.ID.String()},
@@ -309,7 +310,7 @@ func (s *userSuite) TestUpdateUserUnitPreferences_PreserveHistoricalSetUnits() {
 		factory.UserWeightUnit(weightunit.Kilograms),
 		factory.UserDistanceUnit(distanceunit.Kilometers),
 	)
-	ctx = xcontext.WithUserID(ctx, user.ID.String())
+	ctx = xcontext.WithUserID(ctx, user.ID)
 
 	set := s.factory.NewSet(
 		factory.SetUserID(user.ID.String()),
@@ -331,7 +332,7 @@ func (s *userSuite) TestUpdateUserUnitPreferences_PreserveHistoricalSetUnits() {
 	})
 	s.Require().NoError(err)
 
-	persisted, err := s.repo.ListSets(ctx, repo.ListSetsWithID(set.ID.String()))
+	persisted, err := s.repo.ListSets(ctx, repo.ListSetsWithID(set.ID))
 	s.Require().NoError(err)
 	s.Require().Len(persisted, 1)
 	s.Require().Equal(string(weightunit.Pounds), persisted[0].WeightUnit)
@@ -363,7 +364,7 @@ func (s *userSuite) TestUpdateUserDistanceUnit() {
 		s.Run(t.name, func() {
 			user := s.factory.NewUser(factory.UserDistanceUnit(t.current))
 			ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
-			ctx = xcontext.WithUserID(ctx, user.ID.String())
+			ctx = xcontext.WithUserID(ctx, user.ID)
 
 			res, err := s.handler.UpdateUserDistanceUnit(ctx, &connect.Request[v1.UpdateUserDistanceUnitRequest]{
 				Msg: &v1.UpdateUserDistanceUnitRequest{
@@ -374,7 +375,7 @@ func (s *userSuite) TestUpdateUserDistanceUnit() {
 			s.Require().NotNil(res)
 			s.Require().Equal(t.expected, res.Msg.GetUser().GetDistanceUnit())
 
-			persisted, err := s.repo.GetUser(ctx, repo.GetUserWithID(user.ID.String()))
+			persisted, err := s.repo.GetUser(ctx, repo.GetUserWithID(user.ID))
 			s.Require().NoError(err)
 			s.Require().Equal(t.expected, parser.DistanceUnitToProto(persisted.DistanceUnit))
 		})
@@ -390,12 +391,12 @@ func (s *userSuite) followGraph() (context.Context, *models.User, *models.User, 
 	followee := s.factory.NewUser()
 
 	s.Require().NoError(s.repo.Follow(ctx, repo.FollowParams{
-		FollowerID: follower.ID.String(),
-		FolloweeID: user.ID.String(),
+		FollowerID: follower.ID,
+		FolloweeID: user.ID,
 	}))
 	s.Require().NoError(s.repo.Follow(ctx, repo.FollowParams{
-		FollowerID: user.ID.String(),
-		FolloweeID: followee.ID.String(),
+		FollowerID: user.ID,
+		FolloweeID: followee.ID,
 	}))
 
 	return ctx, follower, user, followee
@@ -518,14 +519,14 @@ func (s *userSuite) TestFollowUser() {
 		follower := s.factory.NewUser()
 		followee := s.factory.NewUser()
 		ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
-		ctx = xcontext.WithUserID(ctx, follower.ID.String())
+		ctx = xcontext.WithUserID(ctx, follower.ID)
 
 		_, err := s.handler.FollowUser(ctx, &connect.Request[v1.FollowUserRequest]{
 			Msg: &v1.FollowUserRequest{FollowId: followee.ID.String()},
 		})
 		s.Require().NoError(err)
 
-		followed, err := s.repo.IsUserFollowedByUserID(ctx, followee, follower.ID.String())
+		followed, err := s.repo.IsUserFollowedByUserID(ctx, followee, follower.ID)
 		s.Require().NoError(err)
 		s.Require().True(followed)
 
@@ -541,7 +542,7 @@ func (s *userSuite) TestFollowUser() {
 		follower := s.factory.NewUser()
 		followee := s.factory.NewUser()
 		ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
-		ctx = xcontext.WithUserID(ctx, follower.ID.String())
+		ctx = xcontext.WithUserID(ctx, follower.ID)
 
 		req := &connect.Request[v1.FollowUserRequest]{
 			Msg: &v1.FollowUserRequest{FollowId: followee.ID.String()},
@@ -557,7 +558,7 @@ func (s *userSuite) TestFollowUser() {
 	s.Run("err_following_somebody_who_does_not_exist", func() {
 		follower := s.factory.NewUser()
 		ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
-		ctx = xcontext.WithUserID(ctx, follower.ID.String())
+		ctx = xcontext.WithUserID(ctx, follower.ID)
 
 		res, err := s.handler.FollowUser(ctx, &connect.Request[v1.FollowUserRequest]{
 			Msg: &v1.FollowUserRequest{FollowId: uuid.NewString()},
@@ -572,10 +573,10 @@ func (s *userSuite) TestUnfollowUser() {
 		follower := s.factory.NewUser()
 		followee := s.factory.NewUser()
 		ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
-		ctx = xcontext.WithUserID(ctx, follower.ID.String())
+		ctx = xcontext.WithUserID(ctx, follower.ID)
 		s.Require().NoError(s.repo.Follow(ctx, repo.FollowParams{
-			FollowerID: follower.ID.String(),
-			FolloweeID: followee.ID.String(),
+			FollowerID: follower.ID,
+			FolloweeID: followee.ID,
 		}))
 
 		_, err := s.handler.UnfollowUser(ctx, &connect.Request[v1.UnfollowUserRequest]{
@@ -583,7 +584,7 @@ func (s *userSuite) TestUnfollowUser() {
 		})
 		s.Require().NoError(err)
 
-		followed, err := s.repo.IsUserFollowedByUserID(ctx, followee, follower.ID.String())
+		followed, err := s.repo.IsUserFollowedByUserID(ctx, followee, follower.ID)
 		s.Require().NoError(err)
 		s.Require().False(followed)
 	})
@@ -593,7 +594,7 @@ func (s *userSuite) TestUnfollowUser() {
 	s.Run("ok_unfollowing_somebody_never_followed", func() {
 		follower := s.factory.NewUser()
 		ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
-		ctx = xcontext.WithUserID(ctx, follower.ID.String())
+		ctx = xcontext.WithUserID(ctx, follower.ID)
 
 		_, err := s.handler.UnfollowUser(ctx, &connect.Request[v1.UnfollowUserRequest]{
 			Msg: &v1.UnfollowUserRequest{UnfollowId: uuid.NewString()},
@@ -608,12 +609,12 @@ func (s *userSuite) TestGetUserReportsWhetherTheViewerFollows() {
 	ctx, follower, user, _ := s.followGraph()
 	stranger := s.factory.NewUser()
 
-	res, err := s.handler.GetUser(xcontext.WithUserID(ctx, follower.ID.String()),
+	res, err := s.handler.GetUser(xcontext.WithUserID(ctx, follower.ID),
 		&connect.Request[v1.GetUserRequest]{Msg: &v1.GetUserRequest{Id: user.ID.String()}})
 	s.Require().NoError(err)
 	s.Require().True(res.Msg.GetUser().GetFollowed())
 
-	res, err = s.handler.GetUser(xcontext.WithUserID(ctx, stranger.ID.String()),
+	res, err = s.handler.GetUser(xcontext.WithUserID(ctx, stranger.ID),
 		&connect.Request[v1.GetUserRequest]{Msg: &v1.GetUserRequest{Id: user.ID.String()}})
 	s.Require().NoError(err)
 	s.Require().False(res.Msg.GetUser().GetFollowed())
@@ -621,7 +622,7 @@ func (s *userSuite) TestGetUserReportsWhetherTheViewerFollows() {
 
 func (s *userSuite) TestGetUserNotFound() {
 	ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
-	ctx = xcontext.WithUserID(ctx, uuid.NewString())
+	ctx = xcontext.WithUserID(ctx, gofrsuuid.Must(gofrsuuid.NewV4()))
 
 	res, err := s.handler.GetUser(ctx, &connect.Request[v1.GetUserRequest]{
 		Msg: &v1.GetUserRequest{Id: uuid.NewString()},

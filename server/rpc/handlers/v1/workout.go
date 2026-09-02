@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
-	"github.com/google/uuid"
+	"github.com/gofrs/uuid/v5"
 	"go.uber.org/zap"
 
 	"github.com/crlssn/getstronger/server/gen/models"
@@ -43,14 +43,24 @@ func (h *workoutHandler) CreateWorkout(ctx context.Context, req *connect.Request
 		return nil, connect.NewError(connect.CodeInvalidArgument, err)
 	}
 
-	workoutName, err := h.resolveWorkoutName(ctx, req.Msg, userID)
+	ids, err := workoutRequestIDsFrom(req.Msg, userID)
 	if err != nil {
 		return nil, err
 	}
 
-	workout, planAdvanceSkipped, err := h.createWorkout(ctx, req.Msg, userID, workoutName, period)
+	workoutName, err := h.resolveWorkoutName(ctx, req.Msg, ids)
+	if err != nil {
+		return nil, err
+	}
+
+	session, err := workoutSessionFrom(req.Msg)
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInvalidArgument, nil)
+	}
+
+	workout, planAdvanceSkipped, err := h.createWorkout(ctx, req.Msg, ids, workoutName, period, session)
 	if errors.Is(err, training.ErrWorkoutAlreadySaved) {
-		return h.savedWorkout(ctx, req.Msg.GetIdempotencyKey(), userID)
+		return h.savedWorkout(ctx, ids.idempotencyKey, ids.user)
 	}
 	if err != nil {
 		log.Error("Create workout", zap.Error(err))
@@ -59,8 +69,8 @@ func (h *workoutHandler) CreateWorkout(ctx context.Context, req *connect.Request
 	if planAdvanceSkipped != nil {
 		log.Warn(
 			"Workout saved without advancing plan",
-			zap.String("plan_id", req.Msg.GetPlanId()),
-			zap.String("routine_id", req.Msg.GetRoutineId()),
+			zap.Stringer("plan_id", ids.plan),
+			zap.Stringer("routine_id", ids.routine),
 			zap.Error(planAdvanceSkipped),
 		)
 	}
@@ -76,7 +86,7 @@ func (h *workoutHandler) CreateWorkout(ctx context.Context, req *connect.Request
 // savedWorkout answers a repeated save — one the offline queue replayed, or a
 // finish pressed again after its reply was lost — with the workout the first
 // attempt stored, so a session is never saved twice.
-func (h *workoutHandler) savedWorkout(ctx context.Context, key, userID string) (*connect.Response[apiv1.CreateWorkoutResponse], error) {
+func (h *workoutHandler) savedWorkout(ctx context.Context, key, userID uuid.UUID) (*connect.Response[apiv1.CreateWorkoutResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
 	workout, err := h.repo.GetWorkout(
 		ctx,
@@ -96,10 +106,10 @@ func (h *workoutHandler) savedWorkout(ctx context.Context, key, userID string) (
 	}, nil
 }
 
-func (h *workoutHandler) resolveWorkoutName(ctx context.Context, request *apiv1.CreateWorkoutRequest, userID string) (string, error) {
+func (h *workoutHandler) resolveWorkoutName(ctx context.Context, request *apiv1.CreateWorkoutRequest, ids workoutRequestIDs) (string, error) {
 	log := xcontext.MustExtractLogger(ctx)
-	if request.GetRoutineId() == "" {
-		if request.GetPlanId() != "" {
+	if ids.routine.IsNil() {
+		if !ids.plan.IsNil() {
 			log.Warn("Plan workout is missing a routine")
 			return "", connect.NewError(connect.CodeInvalidArgument, nil)
 		}
@@ -109,8 +119,8 @@ func (h *workoutHandler) resolveWorkoutName(ctx context.Context, request *apiv1.
 
 	routine, err := h.repo.GetRoutine(
 		ctx,
-		repo.GetRoutineWithID(request.GetRoutineId()),
-		repo.GetRoutineWithUserID(userID),
+		repo.GetRoutineWithID(ids.routine),
+		repo.GetRoutineWithUserID(ids.user),
 	)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -128,36 +138,36 @@ func (h *workoutHandler) resolveWorkoutName(ctx context.Context, request *apiv1.
 func (h *workoutHandler) createWorkout(
 	ctx context.Context,
 	request *apiv1.CreateWorkoutRequest,
-	userID string,
+	ids workoutRequestIDs,
 	workoutName string,
 	period training.Period,
+	session workoutSession,
 ) (*models.Workout, error, error) {
 	var workout *models.Workout
 	var planAdvanceSkipped error
 	err := h.repo.NewTx(ctx, func(tx *repo.Repo) error {
-		exerciseSets := parser.ExerciseSetsFromPB(request.GetExerciseSets())
 		createdWorkout, createErr := tx.CreateWorkout(ctx, repo.CreateWorkoutParams{
 			Name:         workoutName,
 			Note:         request.GetNote(),
-			UserID:       userID,
-			RoutineID:    request.GetRoutineId(),
+			UserID:       ids.user,
+			RoutineID:    ids.routine,
 			StartedAt:    period.StartedAt,
 			FinishedAt:   period.FinishedAt,
-			ExerciseSets: exerciseSets,
-			Groups:       workoutGroups(request.GetGroups(), exerciseSets),
+			ExerciseSets: session.exerciseSets,
+			Groups:       session.groups,
 
-			IdempotencyKey: request.GetIdempotencyKey(),
+			IdempotencyKey: ids.idempotencyKey,
 		})
 		if createErr != nil {
 			return fmt.Errorf("create workout: %w", createErr)
 		}
 		workout = createdWorkout
 
-		if request.GetPlanId() == "" {
+		if ids.plan.IsNil() {
 			return nil
 		}
 
-		_, advanceErr := tx.AdvancePlan(ctx, request.GetPlanId(), userID, request.GetRoutineId())
+		_, advanceErr := tx.AdvancePlan(ctx, ids.plan, ids.user, ids.routine)
 		if advanceErr == nil {
 			return nil
 		}
@@ -174,8 +184,8 @@ func (h *workoutHandler) createWorkout(
 
 // workoutGroups states a request's blocks in the training vocabulary, resolved
 // against the sets the request logged.
-func workoutGroups(groups []*apiv1.WorkoutGroup, exerciseSets []repo.ExerciseSet) []training.WorkoutGroup {
-	setCounts := make(map[string]int, len(exerciseSets))
+func workoutGroups(groups []*apiv1.WorkoutGroup, exerciseSets []repo.ExerciseSet) ([]training.WorkoutGroup, error) {
+	setCounts := make(map[uuid.UUID]int, len(exerciseSets))
 	for _, exerciseSet := range exerciseSets {
 		setCounts[exerciseSet.ExerciseID] = len(exerciseSet.Sets)
 	}
@@ -184,8 +194,13 @@ func workoutGroups(groups []*apiv1.WorkoutGroup, exerciseSets []repo.ExerciseSet
 	for _, group := range groups {
 		exercises := make([]training.WorkoutGroupExerciseDraft, 0, len(group.GetExercises()))
 		for _, entry := range group.GetExercises() {
+			exerciseID, err := parser.UUID(entry.GetExercise().GetId())
+			if err != nil {
+				return nil, connect.NewError(connect.CodeInvalidArgument, nil)
+			}
+
 			exercises = append(exercises, training.WorkoutGroupExerciseDraft{
-				ExerciseID: entry.GetExercise().GetId(),
+				ExerciseID: exerciseID,
 				SetCount:   int(entry.GetSetCount()),
 			})
 		}
@@ -199,7 +214,7 @@ func workoutGroups(groups []*apiv1.WorkoutGroup, exerciseSets []repo.ExerciseSet
 		})
 	}
 
-	return training.NormalizeWorkoutGroups(drafts, setCounts)
+	return training.NormalizeWorkoutGroups(drafts, setCounts), nil
 }
 
 // A workout is worth keeping even when the plan refuses to rotate: the athlete
@@ -214,9 +229,14 @@ func (h *workoutHandler) GetWorkout(ctx context.Context, req *connect.Request[ap
 	log := xcontext.MustExtractLogger(ctx)
 
 	// TODO: Analyse query performance.
+	workoutID, err := parser.UUID(req.Msg.GetId())
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInvalidArgument, nil)
+	}
+
 	workout, err := h.repo.GetWorkout(
 		ctx,
-		repo.GetWorkoutWithID(req.Msg.GetId()),
+		repo.GetWorkoutWithID(workoutID),
 		repo.GetWorkoutLoadSets(),
 		repo.GetWorkoutLoadUser(),
 		repo.GetWorkoutLoadComments(),
@@ -233,7 +253,7 @@ func (h *workoutHandler) GetWorkout(ctx context.Context, req *connect.Request[ap
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	personalBests, err := h.repo.GetPersonalBests(ctx, workout.UserID.String())
+	personalBests, err := h.repo.GetPersonalBests(ctx, workout.UserID)
 	if err != nil {
 		log.Error("Get personal bests for workout", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
@@ -241,7 +261,7 @@ func (h *workoutHandler) GetWorkout(ctx context.Context, req *connect.Request[ap
 
 	// Only the full workout is read in its blocks: the feed and the history
 	// list show a session's totals, not how it was worked through.
-	groups, err := h.repo.ListWorkoutGroups(ctx, workout.ID.String())
+	groups, err := h.repo.ListWorkoutGroups(ctx, workout.ID)
 	if err != nil {
 		log.Error("List workout groups for workout", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
@@ -254,7 +274,7 @@ func (h *workoutHandler) GetWorkout(ctx context.Context, req *connect.Request[ap
 				workout,
 				parser.WorkoutIntensity(workout.R.Sets),
 				parser.WorkoutExerciseSets(workout.R.Sets, personalBests),
-				parser.WorkoutBlocks(groups[workout.ID.String()], workout.R.Sets, personalBests),
+				parser.WorkoutBlocks(groups[workout.ID], workout.R.Sets, personalBests),
 			),
 		},
 	}, nil
@@ -263,6 +283,11 @@ func (h *workoutHandler) GetWorkout(ctx context.Context, req *connect.Request[ap
 func (h *workoutHandler) ListWorkouts(ctx context.Context, req *connect.Request[apiv1.ListWorkoutsRequest]) (*connect.Response[apiv1.ListWorkoutsResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
 
+	userIDs, err := parser.UUIDs(req.Msg.GetUserIds())
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInvalidArgument, nil)
+	}
+
 	limit := int(req.Msg.GetPagination().GetPageLimit())
 	workouts, err := h.repo.ListWorkouts(
 		ctx,
@@ -270,7 +295,7 @@ func (h *workoutHandler) ListWorkouts(ctx context.Context, req *connect.Request[
 		repo.ListWorkoutsLoadUser(),
 		repo.ListWorkoutsLoadExercises(),
 		repo.ListWorkoutsWithLimit(limit+1),
-		repo.ListWorkoutsWithUserIDs(req.Msg.GetUserIds()...),
+		repo.ListWorkoutsWithUserIDs(userIDs...),
 		repo.ListWorkoutsWithPageToken(req.Msg.GetPagination().GetPageToken()),
 	)
 	if err != nil {
@@ -278,15 +303,15 @@ func (h *workoutHandler) ListWorkouts(ctx context.Context, req *connect.Request[
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	pagination, err := repo.PaginateSlice(workouts, limit, func(workout *models.Workout) (time.Time, string) {
-		return workout.CreatedAt, workout.ID.String()
+	pagination, err := repo.PaginateSlice(workouts, limit, func(workout *models.Workout) (time.Time, uuid.UUID) {
+		return workout.CreatedAt, workout.ID
 	})
 	if err != nil {
 		log.Error("Paginate workouts", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	personalBests, err := h.repo.GetPersonalBests(ctx, req.Msg.GetUserIds()...)
+	personalBests, err := h.repo.GetPersonalBests(ctx, userIDs...)
 	if err != nil {
 		log.Error("Get personal bests for workout list", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
@@ -309,9 +334,14 @@ func (h *workoutHandler) DeleteWorkout(ctx context.Context, req *connect.Request
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
 
-	if err := h.repo.DeleteWorkout(
+	workoutID, err := parser.UUID(req.Msg.GetId())
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInvalidArgument, nil)
+	}
+
+	if err = h.repo.DeleteWorkout(
 		ctx,
-		repo.DeleteWorkoutWithID(req.Msg.GetId()),
+		repo.DeleteWorkoutWithID(workoutID),
 		repo.DeleteWorkoutWithUserID(userID),
 	); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -331,9 +361,14 @@ func (h *workoutHandler) PostComment(ctx context.Context, req *connect.Request[a
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
 
+	workoutID, err := parser.UUID(req.Msg.GetWorkoutId())
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInvalidArgument, nil)
+	}
+
 	comment, err := h.repo.CreateWorkoutComment(ctx, repo.CreateWorkoutCommentParams{
 		UserID:    userID,
-		WorkoutID: req.Msg.GetWorkoutId(),
+		WorkoutID: workoutID,
 		Comment:   req.Msg.GetComment(),
 	}, h.repo.PostCreateWorkoutCommentLoadUser(ctx))
 	if err != nil {
@@ -342,8 +377,8 @@ func (h *workoutHandler) PostComment(ctx context.Context, req *connect.Request[a
 	}
 
 	h.pubSub.Publish(ctx, events.TopicWorkoutCommentPosted, events.WorkoutCommentPosted{
-		CommentID: comment.ID.String(),
-		EventID:   uuid.NewString(),
+		CommentID: comment.ID,
+		EventID:   uuid.Must(uuid.NewV4()),
 	})
 
 	log.Info("Workout comment posted")
@@ -364,7 +399,12 @@ func (h *workoutHandler) UpdateWorkout(ctx context.Context, req *connect.Request
 		return nil, connect.NewError(connect.CodeInvalidArgument, err)
 	}
 
-	workout, err := h.repo.GetWorkout(ctx, repo.GetWorkoutWithID(req.Msg.GetWorkout().GetId()))
+	workoutID, err := parser.UUID(req.Msg.GetWorkout().GetId())
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInvalidArgument, nil)
+	}
+
+	workout, err := h.repo.GetWorkout(ctx, repo.GetWorkoutWithID(workoutID))
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			log.Warn("Workout not found", zap.Error(err))
@@ -375,14 +415,19 @@ func (h *workoutHandler) UpdateWorkout(ctx context.Context, req *connect.Request
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	if workout.UserID.String() != userID {
+	if workout.UserID != userID {
 		log.Error("Workout does not belong to user")
 		return nil, connect.NewError(connect.CodePermissionDenied, nil)
 	}
 
+	exerciseSets, err := parser.ExerciseSetsFromPB(req.Msg.GetWorkout().GetExerciseSets())
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInvalidArgument, nil)
+	}
+
 	if err = h.repo.NewTx(ctx, func(tx *repo.Repo) error {
 		if err = tx.UpdateWorkout(
-			ctx, workout.ID.String(),
+			ctx, workout.ID,
 			repo.UpdateWorkoutName(req.Msg.GetWorkout().GetName()),
 			repo.UpdateWorkoutNote(req.Msg.GetWorkout().GetNote()),
 			repo.UpdateWorkoutStartedAt(period.StartedAt),
@@ -391,9 +436,8 @@ func (h *workoutHandler) UpdateWorkout(ctx context.Context, req *connect.Request
 			return fmt.Errorf("update workout: %w", err)
 		}
 
-		exerciseSets := parser.ExerciseSetsFromPB(req.Msg.GetWorkout().GetExerciseSets())
 		if err = tx.UpdateWorkoutSets(ctx, repo.UpdateWorkoutSetsParams{
-			WorkoutID:    workout.ID.String(),
+			WorkoutID:    workout.ID,
 			ExerciseSets: exerciseSets,
 		}); err != nil {
 			return fmt.Errorf("update workout sets: %w", err)
@@ -407,4 +451,61 @@ func (h *workoutHandler) UpdateWorkout(ctx context.Context, req *connect.Request
 
 	log.Info("Workout updated")
 	return &connect.Response[apiv1.UpdateWorkoutResponse]{}, nil
+}
+
+// workoutRequestIDs are the rows a save names: the athlete who trained, the
+// routine and plan it was trained against, and the key naming the attempt.
+// Everything but the athlete is optional and reads as the nil UUID when the
+// request says nothing.
+type workoutRequestIDs struct {
+	user           uuid.UUID
+	routine        uuid.UUID
+	plan           uuid.UUID
+	idempotencyKey uuid.UUID
+}
+
+func workoutRequestIDsFrom(request *apiv1.CreateWorkoutRequest, userID uuid.UUID) (workoutRequestIDs, error) {
+	routineID, err := parser.OptionalUUID(request.GetRoutineId())
+	if err != nil {
+		return workoutRequestIDs{}, connect.NewError(connect.CodeInvalidArgument, nil)
+	}
+
+	planID, err := parser.OptionalUUID(request.GetPlanId())
+	if err != nil {
+		return workoutRequestIDs{}, connect.NewError(connect.CodeInvalidArgument, nil)
+	}
+
+	idempotencyKey, err := parser.OptionalUUID(request.GetIdempotencyKey())
+	if err != nil {
+		return workoutRequestIDs{}, connect.NewError(connect.CodeInvalidArgument, nil)
+	}
+
+	return workoutRequestIDs{
+		user:           userID,
+		routine:        routineID,
+		plan:           planID,
+		idempotencyKey: idempotencyKey,
+	}, nil
+}
+
+// workoutSession is the work a save logged, read off the request before the
+// transaction opens: nothing here needs the database, and a request naming a
+// row with something that is not an id is answered rather than rolled back.
+type workoutSession struct {
+	exerciseSets []repo.ExerciseSet
+	groups       []training.WorkoutGroup
+}
+
+func workoutSessionFrom(request *apiv1.CreateWorkoutRequest) (workoutSession, error) {
+	exerciseSets, err := parser.ExerciseSetsFromPB(request.GetExerciseSets())
+	if err != nil {
+		return workoutSession{}, fmt.Errorf("workout exercise sets: %w", err)
+	}
+
+	groups, err := workoutGroups(request.GetGroups(), exerciseSets)
+	if err != nil {
+		return workoutSession{}, fmt.Errorf("workout groups: %w", err)
+	}
+
+	return workoutSession{exerciseSets: exerciseSets, groups: groups}, nil
 }

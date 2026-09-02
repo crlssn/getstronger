@@ -374,17 +374,17 @@ func randomIntBetween(minimum, maximum int) int {
 }
 
 // UUID generates a UUID populated exclusively by the given digit which can be useful during debugging.
-func UUID(digit int) string {
+func UUID(digit int) uuid.UUID {
 	if digit < 0 || digit > 9 {
 		panic("digit must be between 0 and 9")
 	}
 
 	digitStr := fmt.Sprintf("%d", digit)
-	return strings.Join([]string{
+	return uuid.FromStringOrNil(strings.Join([]string{
 		strings.Repeat(digitStr, 8),
 		strings.Repeat(digitStr, 4),
 		strings.Repeat(digitStr, 4),
 		strings.Repeat(digitStr, 4),
 		strings.Repeat(digitStr, 12),
-	}, "-")
+	}, "-"))
 }

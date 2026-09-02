@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gofrs/uuid/v5"
 	jwtlib "github.com/golang-jwt/jwt/v5"
 	"github.com/stretchr/testify/require"
 
@@ -12,7 +13,7 @@ import (
 
 func TestGenerateTokens(t *testing.T) {
 	t.Parallel()
-	userID := "123"
+	userID := uuid.Must(uuid.NewV4())
 	now := time.Now().UTC()
 
 	m := jwt.NewIssuer([]byte("access_key"), []byte("refresh_key"))
@@ -82,7 +83,7 @@ func TestMustCreateTokenPanicsOnAnUnknownType(t *testing.T) {
 	issuer := jwt.NewIssuer([]byte("access_key"), []byte("refresh_key"))
 
 	require.Panics(t, func() {
-		issuer.MustCreateToken("123", jwt.TokenType("session_token"))
+		issuer.MustCreateToken(uuid.Must(uuid.NewV4()), jwt.TokenType("session_token"))
 	})
 }
 
@@ -91,7 +92,7 @@ func TestValidateClaimsRejectsAnExpiredToken(t *testing.T) {
 	issuer := jwt.NewIssuer([]byte("access_key"), []byte("refresh_key"))
 
 	expired := &jwt.Claims{
-		UserID: "123",
+		UserID: uuid.Must(uuid.NewV4()),
 		RegisteredClaims: jwtlib.RegisteredClaims{
 			ExpiresAt: jwtlib.NewNumericDate(time.Now().UTC().Add(-jwt.ExpiryTimeAccess)),
 			IssuedAt:  jwtlib.NewNumericDate(time.Now().UTC().Add(-2 * jwt.ExpiryTimeAccess)),
@@ -101,7 +102,7 @@ func TestValidateClaimsRejectsAnExpiredToken(t *testing.T) {
 	require.Error(t, issuer.ValidateClaims(expired))
 
 	live := &jwt.Claims{
-		UserID: "123",
+		UserID: uuid.Must(uuid.NewV4()),
 		RegisteredClaims: jwtlib.RegisteredClaims{
 			ExpiresAt: jwtlib.NewNumericDate(time.Now().UTC().Add(jwt.ExpiryTimeAccess)),
 			IssuedAt:  jwtlib.NewNumericDate(time.Now().UTC()),
@@ -118,7 +119,7 @@ func TestClaimsFromTokenRejectsAnUnexpectedSigningMethod(t *testing.T) {
 	issuer := jwt.NewIssuer([]byte("access_key"), []byte("refresh_key"))
 
 	unsigned, err := jwtlib.NewWithClaims(jwtlib.SigningMethodNone, &jwt.Claims{
-		UserID: "123",
+		UserID: uuid.Must(uuid.NewV4()),
 		RegisteredClaims: jwtlib.RegisteredClaims{
 			ExpiresAt: jwtlib.NewNumericDate(time.Now().UTC().Add(jwt.ExpiryTimeAccess)),
 			Subject:   jwt.TokenTypeAccess.String(),
@@ -143,4 +144,40 @@ func TestClaimsFromTokenRejectsATokenWithoutASubject(t *testing.T) {
 
 	_, err = issuer.ClaimsFromToken(subjectless, jwt.TokenTypeAccess)
 	require.Error(t, err)
+}
+
+// The identity a token carries is a row's primary key, so a claim that is not
+// one names no account. Letting it through hands every layer below a string it
+// cannot use, and the store would read it as the zero UUID.
+func TestClaimsFromTokenRejectsANonUUIDUserID(t *testing.T) {
+	t.Parallel()
+	issuer := jwt.NewIssuer([]byte("access_key"), []byte("refresh_key"))
+
+	for _, claim := range []any{"123", ""} {
+		token, err := jwtlib.NewWithClaims(jwtlib.SigningMethodHS256, jwtlib.MapClaims{
+			"userId": claim,
+			"sub":    jwt.TokenTypeAccess.String(),
+			"exp":    time.Now().UTC().Add(jwt.ExpiryTimeAccess).Unix(),
+		}).SignedString([]byte("access_key"))
+		require.NoError(t, err)
+
+		_, err = issuer.ClaimsFromToken(token, jwt.TokenTypeAccess)
+		require.Error(t, err)
+	}
+}
+
+// A token with no identity at all reads as the zero UUID rather than as an
+// absent one, so the absence has to be rejected by name.
+func TestClaimsFromTokenRejectsAMissingUserID(t *testing.T) {
+	t.Parallel()
+	issuer := jwt.NewIssuer([]byte("access_key"), []byte("refresh_key"))
+
+	token, err := jwtlib.NewWithClaims(jwtlib.SigningMethodHS256, jwtlib.MapClaims{
+		"sub": jwt.TokenTypeAccess.String(),
+		"exp": time.Now().UTC().Add(jwt.ExpiryTimeAccess).Unix(),
+	}).SignedString([]byte("access_key"))
+	require.NoError(t, err)
+
+	_, err = issuer.ClaimsFromToken(token, jwt.TokenTypeAccess)
+	require.ErrorIs(t, err, jwt.ErrMissingUserID)
 }

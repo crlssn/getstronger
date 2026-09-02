@@ -81,7 +81,7 @@ func (s *exerciseSuite) TestCreateExercise() {
 			init: func(_ test) context.Context {
 				user := s.factory.NewUser()
 				ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
-				return xcontext.WithUserID(ctx, user.ID.String())
+				return xcontext.WithUserID(ctx, user.ID)
 			},
 			expected: expected{
 				err:     nil,
@@ -100,7 +100,7 @@ func (s *exerciseSuite) TestCreateExercise() {
 			init: func(_ test) context.Context {
 				user := s.factory.NewUser()
 				ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
-				return xcontext.WithUserID(ctx, user.ID.String())
+				return xcontext.WithUserID(ctx, user.ID)
 			},
 			expected: expected{
 				metrics: []string{"weight", "distance", "time"},
@@ -117,7 +117,7 @@ func (s *exerciseSuite) TestCreateExercise() {
 			init: func(_ test) context.Context {
 				user := s.factory.NewUser()
 				ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
-				return xcontext.WithUserID(ctx, user.ID.String())
+				return xcontext.WithUserID(ctx, user.ID)
 			},
 			expected: expected{
 				err: connect.NewError(connect.CodeInvalidArgument, training.ErrInvalidExerciseTags),
@@ -134,7 +134,7 @@ func (s *exerciseSuite) TestCreateExercise() {
 			init: func(_ test) context.Context {
 				user := s.factory.NewUser()
 				ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
-				return xcontext.WithUserID(ctx, user.ID.String())
+				return xcontext.WithUserID(ctx, user.ID)
 			},
 			expected: expected{
 				err: connect.NewError(connect.CodeInvalidArgument, training.ErrInvalidExerciseTags),
@@ -198,7 +198,7 @@ func (s *exerciseSuite) TestGetExercise() {
 
 				s.Require().NotNil(exercise)
 				ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
-				return xcontext.WithUserID(ctx, user.ID.String())
+				return xcontext.WithUserID(ctx, user.ID)
 			},
 			expected: expected{
 				err: nil,
@@ -214,7 +214,7 @@ func (s *exerciseSuite) TestGetExercise() {
 			init: func(_ test) context.Context {
 				user := s.factory.NewUser()
 				ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
-				return xcontext.WithUserID(ctx, user.ID.String())
+				return xcontext.WithUserID(ctx, user.ID)
 			},
 			expected: expected{
 				err: connect.NewError(connect.CodeNotFound, nil),
@@ -280,7 +280,7 @@ func (s *exerciseSuite) TestUpdateExercise() {
 				)
 
 				ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
-				return xcontext.WithUserID(ctx, user.ID.String())
+				return xcontext.WithUserID(ctx, user.ID)
 			},
 			expected: expected{
 				err: nil,
@@ -310,7 +310,7 @@ func (s *exerciseSuite) TestUpdateExercise() {
 				)
 
 				ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
-				return xcontext.WithUserID(ctx, user.ID.String())
+				return xcontext.WithUserID(ctx, user.ID)
 			},
 			expected: expected{
 				err: nil,
@@ -340,7 +340,7 @@ func (s *exerciseSuite) TestUpdateExercise() {
 				)
 
 				ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
-				return xcontext.WithUserID(ctx, user.ID.String())
+				return xcontext.WithUserID(ctx, user.ID)
 			},
 			expected: expected{
 				err: nil,
@@ -361,7 +361,7 @@ func (s *exerciseSuite) TestUpdateExercise() {
 			init: func(_ test) context.Context {
 				user := s.factory.NewUser()
 				ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
-				return xcontext.WithUserID(ctx, user.ID.String())
+				return xcontext.WithUserID(ctx, user.ID)
 			},
 			expected: expected{
 				err: connect.NewError(connect.CodeFailedPrecondition, nil),
@@ -387,7 +387,7 @@ func (s *exerciseSuite) TestUpdateExercise() {
 				)
 
 				ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
-				return xcontext.WithUserID(ctx, user.ID.String())
+				return xcontext.WithUserID(ctx, user.ID)
 			},
 			expected: expected{
 				err: connect.NewError(connect.CodeInvalidArgument, handlers.ErrInvalidUpdateMaskPath),
@@ -461,7 +461,7 @@ func (s *exerciseSuite) TestUpdateExerciseMetrics() {
 		)
 		s.factory.NewSet(factory.SetUserID(user.ID), factory.SetExerciseID(exercise.ID))
 
-		ctx := xcontext.WithUserID(xcontext.WithLogger(context.Background(), zap.NewExample()), user.ID.String())
+		ctx := xcontext.WithUserID(xcontext.WithLogger(context.Background(), zap.NewExample()), user.ID)
 		res, err := s.handler.UpdateExercise(ctx, request(
 			exercise.ID.String(),
 			v1.ExerciseMetric_EXERCISE_METRIC_DISTANCE,
@@ -486,7 +486,7 @@ func (s *exerciseSuite) TestUpdateExerciseMetrics() {
 		)
 		s.factory.NewSet(factory.SetUserID(user.ID), factory.SetExerciseID(exercise.ID))
 
-		ctx := xcontext.WithUserID(xcontext.WithLogger(context.Background(), zap.NewExample()), user.ID.String())
+		ctx := xcontext.WithUserID(xcontext.WithLogger(context.Background(), zap.NewExample()), user.ID)
 		// Reordered rather than identical: the web client sends the whole
 		// message back, and the order a form listed them in is not a change.
 		res, err := s.handler.UpdateExercise(ctx, request(
@@ -510,7 +510,7 @@ func (s *exerciseSuite) TestUpdateExerciseMetrics() {
 			factory.ExerciseMetrics(training.MetricStrings(training.DefaultMetrics())...),
 		)
 
-		ctx := xcontext.WithUserID(xcontext.WithLogger(context.Background(), zap.NewExample()), user.ID.String())
+		ctx := xcontext.WithUserID(xcontext.WithLogger(context.Background(), zap.NewExample()), user.ID)
 		res, err := s.handler.UpdateExercise(ctx, request(
 			exercise.ID.String(),
 			v1.ExerciseMetric_EXERCISE_METRIC_DISTANCE,
@@ -535,7 +535,7 @@ func (s *exerciseSuite) TestUpdateExerciseMetrics() {
 			factory.ExerciseMetrics(training.MetricStrings(training.DefaultMetrics())...),
 		)
 
-		ctx := xcontext.WithUserID(xcontext.WithLogger(context.Background(), zap.NewExample()), user.ID.String())
+		ctx := xcontext.WithUserID(xcontext.WithLogger(context.Background(), zap.NewExample()), user.ID)
 		res, err := s.handler.UpdateExercise(ctx, request(
 			exercise.ID.String(),
 			v1.ExerciseMetric_EXERCISE_METRIC_UNSPECIFIED,
@@ -559,7 +559,7 @@ func (s *exerciseSuite) TestUpdateExerciseMetrics() {
 		)
 		s.factory.NewSet(factory.SetUserID(user.ID), factory.SetExerciseID(exercise.ID))
 
-		ctx := xcontext.WithUserID(xcontext.WithLogger(context.Background(), zap.NewExample()), user.ID.String())
+		ctx := xcontext.WithUserID(xcontext.WithLogger(context.Background(), zap.NewExample()), user.ID)
 		res, err := s.handler.UpdateExercise(ctx, &connect.Request[v1.UpdateExerciseRequest]{
 			Msg: &v1.UpdateExerciseRequest{
 				Exercise: &v1.Exercise{
@@ -586,7 +586,7 @@ func (s *exerciseSuite) TestUpdateExerciseMetrics() {
 		user := s.factory.NewUser()
 		exercise := s.factory.NewExercise(factory.ExerciseUserID(user.ID))
 
-		ctx := xcontext.WithUserID(xcontext.WithLogger(context.Background(), zap.NewExample()), user.ID.String())
+		ctx := xcontext.WithUserID(xcontext.WithLogger(context.Background(), zap.NewExample()), user.ID)
 		res, err := s.handler.UpdateExercise(ctx, &connect.Request[v1.UpdateExerciseRequest]{
 			Msg: &v1.UpdateExerciseRequest{
 				Exercise:   &v1.Exercise{Id: exercise.ID.String()},
@@ -629,7 +629,7 @@ func (s *exerciseSuite) TestDeleteExercise() {
 				)
 
 				ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
-				return xcontext.WithUserID(ctx, user.ID.String())
+				return xcontext.WithUserID(ctx, user.ID)
 			},
 			expected: expected{
 				err: nil,
@@ -645,7 +645,7 @@ func (s *exerciseSuite) TestDeleteExercise() {
 			init: func(_ test) context.Context {
 				user := s.factory.NewUser()
 				ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
-				return xcontext.WithUserID(ctx, user.ID.String())
+				return xcontext.WithUserID(ctx, user.ID)
 			},
 			expected: expected{
 				err: connect.NewError(connect.CodeFailedPrecondition, nil),
@@ -734,13 +734,13 @@ func (s *exerciseSuite) TestListExercises() { //nolint:maintidx
 				// ID order puts second.
 				pageEnd := t.expected.res.GetExercises()[len(t.expected.res.GetExercises())-1]
 				token := repo.PageTokenCreatedAt(exercises[0].CreatedAt)
-				token.ID = pageEnd.GetId()
+				token.ID = nativeUUID(pageEnd.GetId())
 				nextPageToken, err := json.Marshal(token)
 				s.Require().NoError(err)
 				t.expected.res.Pagination.NextPageToken = nextPageToken
 
 				ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
-				return xcontext.WithUserID(ctx, user.ID.String())
+				return xcontext.WithUserID(ctx, user.ID)
 			},
 			expected: expected{
 				err: nil,
@@ -748,13 +748,13 @@ func (s *exerciseSuite) TestListExercises() { //nolint:maintidx
 					Exercises: []*v1.Exercise{
 						{
 							Id:     uuid.NewString(),
-							UserId: factory.UUID(0),
+							UserId: factory.UUID(0).String(),
 							Name:   gofakeit.Name(),
 							Tags:   []string{gofakeit.Word()},
 						},
 						{
 							Id:     uuid.NewString(),
-							UserId: factory.UUID(0),
+							UserId: factory.UUID(0).String(),
 							Name:   gofakeit.Name(),
 							Tags:   []string{gofakeit.Word()},
 						},
@@ -786,7 +786,7 @@ func (s *exerciseSuite) TestListExercises() { //nolint:maintidx
 				}
 
 				ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
-				return xcontext.WithUserID(ctx, user.ID.String())
+				return xcontext.WithUserID(ctx, user.ID)
 			},
 			expected: expected{
 				err: nil,
@@ -794,7 +794,7 @@ func (s *exerciseSuite) TestListExercises() { //nolint:maintidx
 					Exercises: []*v1.Exercise{
 						{
 							Id:     uuid.NewString(),
-							UserId: factory.UUID(1),
+							UserId: factory.UUID(1).String(),
 							Name:   "Exercise Name",
 							Tags:   []string{gofakeit.Word()},
 						},
@@ -807,7 +807,7 @@ func (s *exerciseSuite) TestListExercises() { //nolint:maintidx
 			name: "ok_list_exercises_filtered_by_ids",
 			req: &connect.Request[v1.ListExercisesRequest]{
 				Msg: &v1.ListExercisesRequest{
-					ExerciseIds: []string{factory.UUID(9)},
+					ExerciseIds: []string{factory.UUID(9).String()},
 					Pagination: &v1.PaginationRequest{
 						PageLimit: 2,
 					},
@@ -826,15 +826,15 @@ func (s *exerciseSuite) TestListExercises() { //nolint:maintidx
 				}
 
 				ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
-				return xcontext.WithUserID(ctx, user.ID.String())
+				return xcontext.WithUserID(ctx, user.ID)
 			},
 			expected: expected{
 				err: nil,
 				res: &v1.ListExercisesResponse{
 					Exercises: []*v1.Exercise{
 						{
-							Id:     factory.UUID(9),
-							UserId: factory.UUID(2),
+							Id:     factory.UUID(9).String(),
+							UserId: factory.UUID(2).String(),
 							Name:   gofakeit.Name(),
 							Tags:   []string{gofakeit.Word()},
 						},
@@ -848,7 +848,7 @@ func (s *exerciseSuite) TestListExercises() { //nolint:maintidx
 			req: &connect.Request[v1.ListExercisesRequest]{
 				Msg: &v1.ListExercisesRequest{
 					Name:        "Target",
-					ExerciseIds: []string{factory.UUID(0)},
+					ExerciseIds: []string{factory.UUID(0).String()},
 					Pagination: &v1.PaginationRequest{
 						PageLimit: 2,
 					},
@@ -879,15 +879,15 @@ func (s *exerciseSuite) TestListExercises() { //nolint:maintidx
 				)
 
 				ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
-				return xcontext.WithUserID(ctx, user.ID.String())
+				return xcontext.WithUserID(ctx, user.ID)
 			},
 			expected: expected{
 				err: nil,
 				res: &v1.ListExercisesResponse{
 					Exercises: []*v1.Exercise{
 						{
-							Id:     factory.UUID(0),
-							UserId: factory.UUID(4),
+							Id:     factory.UUID(0).String(),
+							UserId: factory.UUID(4).String(),
 							Name:   "Target",
 							Tags:   []string{"Label"},
 						},
@@ -905,7 +905,7 @@ func (s *exerciseSuite) TestListExercises() { //nolint:maintidx
 				user := s.factory.NewUser(factory.UserID(factory.UUID(3)))
 
 				ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
-				return xcontext.WithUserID(ctx, user.ID.String())
+				return xcontext.WithUserID(ctx, user.ID)
 			},
 			expected: expected{
 				err: nil,
@@ -962,7 +962,7 @@ func (s *exerciseSuite) TestGetPreviousWorkoutSets() {
 			name: "ok_previous_workout_sets_found",
 			req: &connect.Request[v1.GetPreviousWorkoutSetsRequest]{
 				Msg: &v1.GetPreviousWorkoutSetsRequest{
-					ExerciseIds: []string{factory.UUID(0), factory.UUID(1)},
+					ExerciseIds: []string{factory.UUID(0).String(), factory.UUID(1).String()},
 				},
 			},
 			init: func(t test) {
@@ -1007,7 +1007,7 @@ func (s *exerciseSuite) TestGetPreviousWorkoutSets() {
 					ExerciseSets: []*v1.ExerciseSets{
 						{
 							Exercise: &v1.Exercise{
-								Id:     factory.UUID(0),
+								Id:     factory.UUID(0).String(),
 								UserId: uuid.NewString(),
 								Name:   gofakeit.Name(),
 								Tags:   []string{gofakeit.Word()},
@@ -1018,7 +1018,7 @@ func (s *exerciseSuite) TestGetPreviousWorkoutSets() {
 									Weight: 1,
 									Reps:   2,
 									Metadata: &v1.MetadataSet{
-										WorkoutId: factory.UUID(9),
+										WorkoutId: factory.UUID(9).String(),
 										CreatedAt: timestamppb.New(s.factory.Now()),
 									},
 								},
@@ -1027,7 +1027,7 @@ func (s *exerciseSuite) TestGetPreviousWorkoutSets() {
 									Weight: 2,
 									Reps:   3,
 									Metadata: &v1.MetadataSet{
-										WorkoutId: factory.UUID(9),
+										WorkoutId: factory.UUID(9).String(),
 										CreatedAt: timestamppb.New(s.factory.Now().Add(time.Second)),
 									},
 								},
@@ -1035,7 +1035,7 @@ func (s *exerciseSuite) TestGetPreviousWorkoutSets() {
 						},
 						{
 							Exercise: &v1.Exercise{
-								Id:     factory.UUID(1),
+								Id:     factory.UUID(1).String(),
 								UserId: uuid.NewString(),
 								Name:   gofakeit.Name(),
 								Tags:   []string{gofakeit.Word()},
@@ -1046,7 +1046,7 @@ func (s *exerciseSuite) TestGetPreviousWorkoutSets() {
 									Weight: 1,
 									Reps:   2,
 									Metadata: &v1.MetadataSet{
-										WorkoutId: factory.UUID(8),
+										WorkoutId: factory.UUID(8).String(),
 										CreatedAt: timestamppb.New(s.factory.Now().Add(time.Minute)),
 									},
 								},
@@ -1055,7 +1055,7 @@ func (s *exerciseSuite) TestGetPreviousWorkoutSets() {
 									Weight: 2,
 									Reps:   3,
 									Metadata: &v1.MetadataSet{
-										WorkoutId: factory.UUID(8),
+										WorkoutId: factory.UUID(8).String(),
 										CreatedAt: timestamppb.New(s.factory.Now().Add(time.Hour)),
 									},
 								},
@@ -1134,7 +1134,7 @@ func (s *exerciseSuite) TestGetPersonalBests() {
 			name: "ok_personal_bests_found",
 			req: &connect.Request[v1.GetPersonalBestsRequest]{
 				Msg: &v1.GetPersonalBestsRequest{
-					UserId: factory.UUID(0),
+					UserId: factory.UUID(0).String(),
 				},
 			},
 			init: func(t test) {
@@ -1182,7 +1182,7 @@ func (s *exerciseSuite) TestGetPersonalBests() {
 						{
 							Exercise: &v1.Exercise{
 								Id:     uuid.NewString(),
-								UserId: factory.UUID(0),
+								UserId: factory.UUID(0).String(),
 								Name:   gofakeit.Name(),
 							},
 							Set: &v1.Set{
@@ -1198,7 +1198,7 @@ func (s *exerciseSuite) TestGetPersonalBests() {
 						{
 							Exercise: &v1.Exercise{
 								Id:     uuid.NewString(),
-								UserId: factory.UUID(0),
+								UserId: factory.UUID(0).String(),
 								Name:   gofakeit.Name(),
 							},
 							Set: &v1.Set{
@@ -1307,7 +1307,7 @@ func (s *exerciseSuite) TestListSets() {
 
 				// The cursor names the page's last row: the older of the two sets.
 				token := repo.PageTokenCreatedAt(sets[0].CreatedAt)
-				token.ID = sets[0].ID.String()
+				token.ID = sets[0].ID
 				nextPageToken, err := json.Marshal(token)
 				s.Require().NoError(err)
 				t.expected.res.Pagination.NextPageToken = nextPageToken
@@ -1348,8 +1348,8 @@ func (s *exerciseSuite) TestListSets() {
 			name: "ok_list_sets_filtered_by_user_ids_and_exercise_ids",
 			req: &connect.Request[v1.ListSetsRequest]{
 				Msg: &v1.ListSetsRequest{
-					UserIds:     []string{factory.UUID(0)},
-					ExerciseIds: []string{factory.UUID(1)},
+					UserIds:     []string{factory.UUID(0).String()},
+					ExerciseIds: []string{factory.UUID(1).String()},
 					Pagination: &v1.PaginationRequest{
 						PageLimit: 2,
 					},
@@ -1392,7 +1392,7 @@ func (s *exerciseSuite) TestListSets() {
 							Weight: 1,
 							Reps:   2,
 							Metadata: &v1.MetadataSet{
-								WorkoutId: factory.UUID(9),
+								WorkoutId: factory.UUID(9).String(),
 								CreatedAt: timestamppb.New(s.factory.Now()),
 							},
 						},

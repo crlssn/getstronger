@@ -53,7 +53,7 @@ func TestPlanAdvance(t *testing.T) {
 
 	t.Run("advances to the next routine", func(t *testing.T) {
 		t.Parallel()
-		position, err := newPlan().Advance(first.String())
+		position, err := newPlan().Advance(first)
 		require.NoError(t, err)
 		require.Equal(t, 1, position)
 	})
@@ -62,21 +62,21 @@ func TestPlanAdvance(t *testing.T) {
 		t.Parallel()
 		plan := newPlan()
 		plan.CurrentPosition = 1
-		position, err := plan.Advance(second.String())
+		position, err := plan.Advance(second)
 		require.NoError(t, err)
 		require.Equal(t, 0, position)
 	})
 
 	t.Run("skips the current routine when none is named", func(t *testing.T) {
 		t.Parallel()
-		position, err := newPlan().Advance("")
+		position, err := newPlan().Advance(uuid.Nil)
 		require.NoError(t, err)
 		require.Equal(t, 1, position)
 	})
 
 	t.Run("rejects a routine that is not next", func(t *testing.T) {
 		t.Parallel()
-		_, err := newPlan().Advance(second.String())
+		_, err := newPlan().Advance(second)
 		require.ErrorIs(t, err, training.ErrPlanUnexpectedRoutine)
 	})
 
@@ -84,13 +84,13 @@ func TestPlanAdvance(t *testing.T) {
 		t.Parallel()
 		plan := newPlan()
 		plan.Active = false
-		_, err := plan.Advance(first.String())
+		_, err := plan.Advance(first)
 		require.ErrorIs(t, err, training.ErrPlanNotActive)
 	})
 
 	t.Run("rejects a plan without routines", func(t *testing.T) {
 		t.Parallel()
-		_, err := (&training.Plan{Active: true}).Advance("")
+		_, err := (&training.Plan{Active: true}).Advance(uuid.Nil)
 		require.ErrorIs(t, err, training.ErrPlanUnexpectedRoutine)
 	})
 
@@ -98,7 +98,7 @@ func TestPlanAdvance(t *testing.T) {
 		t.Parallel()
 		plan := newPlan()
 		plan.CurrentPosition = 2
-		_, err := plan.Advance("")
+		_, err := plan.Advance(uuid.Nil)
 		require.ErrorIs(t, err, training.ErrPlanUnexpectedRoutine)
 	})
 }
@@ -114,17 +114,17 @@ func TestPlanPositionAfterReplacing(t *testing.T) {
 
 	t.Run("follows the current routine to its new position", func(t *testing.T) {
 		t.Parallel()
-		require.Equal(t, 2, plan.PositionAfterReplacing([]string{third.String(), first.String(), second.String()}))
+		require.Equal(t, 2, plan.PositionAfterReplacing([]uuid.UUID{third, first, second}))
 	})
 
 	t.Run("restarts when the current routine is dropped", func(t *testing.T) {
 		t.Parallel()
-		require.Equal(t, 0, plan.PositionAfterReplacing([]string{first.String(), third.String()}))
+		require.Equal(t, 0, plan.PositionAfterReplacing([]uuid.UUID{first, third}))
 	})
 
 	t.Run("restarts when the plan is on no routine", func(t *testing.T) {
 		t.Parallel()
-		require.Equal(t, 0, (&training.Plan{}).PositionAfterReplacing([]string{first.String()}))
+		require.Equal(t, 0, (&training.Plan{}).PositionAfterReplacing([]uuid.UUID{first}))
 	})
 }
 
@@ -142,10 +142,11 @@ func TestRejectsRotation(t *testing.T) {
 func TestValidatePlanRotation(t *testing.T) {
 	t.Parallel()
 
-	require.NoError(t, training.ValidatePlanRotation([]string{"a", "b"}))
+	require.NoError(t, training.ValidatePlanRotation([]uuid.UUID{uuid.Must(uuid.NewV4()), uuid.Must(uuid.NewV4())}))
 	require.ErrorIs(t, training.ValidatePlanRotation(nil), training.ErrPlanRequiresRoutine)
-	require.ErrorIs(t, training.ValidatePlanRotation([]string{}), training.ErrPlanRequiresRoutine)
-	require.ErrorIs(t, training.ValidatePlanRotation([]string{"a", "a"}), training.ErrPlanRoutineDuplicate)
+
+	duplicate := uuid.Must(uuid.NewV4())
+	require.ErrorIs(t, training.ValidatePlanRotation([]uuid.UUID{duplicate, duplicate}), training.ErrPlanRoutineDuplicate)
 }
 
 // A rotation may only hold routines its athlete still has, so the two ways that
@@ -156,16 +157,16 @@ func TestValidatePlanRoutine(t *testing.T) {
 	userID := uuid.Must(uuid.NewV4())
 
 	require.NoError(t, training.ValidatePlanRoutine(
-		&models.Routine{UserID: userID}, userID.String(),
+		&models.Routine{UserID: userID}, userID,
 	))
 
 	require.ErrorIs(t,
-		training.ValidatePlanRoutine(&models.Routine{UserID: uuid.Must(uuid.NewV4())}, userID.String()),
+		training.ValidatePlanRoutine(&models.Routine{UserID: uuid.Must(uuid.NewV4())}, userID),
 		training.ErrPlanRoutineBelongsToAnotherUser)
 
 	deleted := &models.Routine{UserID: userID, DeletedAt: null.From(time.Now().UTC())}
 	require.ErrorIs(t,
-		training.ValidatePlanRoutine(deleted, userID.String()),
+		training.ValidatePlanRoutine(deleted, userID),
 		training.ErrPlanRoutineDeleted)
 }
 
@@ -183,24 +184,24 @@ func TestPlanRotationWithout(t *testing.T) {
 
 	t.Run("keeps the plan on the routine it was training", func(t *testing.T) {
 		t.Parallel()
-		rotation := newPlan().RotationWithout(first.String())
-		require.Equal(t, []string{second.String(), third.String()}, rotation.RoutineIDs)
+		rotation := newPlan().RotationWithout(first)
+		require.Equal(t, []uuid.UUID{second, third}, rotation.RoutineIDs)
 		require.Equal(t, 0, rotation.CurrentPosition)
 		require.True(t, rotation.Active)
 	})
 
 	t.Run("leaves a rotation the routine was not in alone", func(t *testing.T) {
 		t.Parallel()
-		rotation := newPlan().RotationWithout(uuid.Must(uuid.NewV4()).String())
-		require.Equal(t, []string{first.String(), second.String(), third.String()}, rotation.RoutineIDs)
+		rotation := newPlan().RotationWithout(uuid.Must(uuid.NewV4()))
+		require.Equal(t, []uuid.UUID{first, second, third}, rotation.RoutineIDs)
 		require.Equal(t, 1, rotation.CurrentPosition)
 		require.True(t, rotation.Active)
 	})
 
 	t.Run("restarts when the routine it was training is the one removed", func(t *testing.T) {
 		t.Parallel()
-		rotation := newPlan().RotationWithout(second.String())
-		require.Equal(t, []string{first.String(), third.String()}, rotation.RoutineIDs)
+		rotation := newPlan().RotationWithout(second)
+		require.Equal(t, []uuid.UUID{first, third}, rotation.RoutineIDs)
 		require.Equal(t, 0, rotation.CurrentPosition)
 		require.True(t, rotation.Active)
 	})
@@ -211,7 +212,7 @@ func TestPlanRotationWithout(t *testing.T) {
 			Active:   true,
 			Routines: models.RoutineSlice{routine(first)},
 		}
-		rotation := plan.RotationWithout(first.String())
+		rotation := plan.RotationWithout(first)
 		require.Empty(t, rotation.RoutineIDs)
 		require.Equal(t, 0, rotation.CurrentPosition)
 		require.False(t, rotation.Active)
@@ -221,7 +222,7 @@ func TestPlanRotationWithout(t *testing.T) {
 		t.Parallel()
 		plan := newPlan()
 		plan.Active = false
-		require.False(t, plan.RotationWithout(third.String()).Active)
+		require.False(t, plan.RotationWithout(third).Active)
 	})
 }
 

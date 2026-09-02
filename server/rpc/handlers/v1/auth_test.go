@@ -9,6 +9,7 @@ import (
 
 	"connectrpc.com/connect"
 	"github.com/brianvoe/gofakeit/v7"
+	gofrsuuid "github.com/gofrs/uuid/v5"
 	"github.com/google/uuid"
 	"github.com/stephenafamo/bob"
 	"github.com/stretchr/testify/suite"
@@ -422,7 +423,7 @@ func (s *authSuite) TestRefreshToken() {
 	tests := []test{
 		{
 			name:  "ok_token_refreshed",
-			token: s.jwt.MustCreateToken(uuid.NewString(), jwt.TokenTypeRefresh),
+			token: s.jwt.MustCreateToken(gofrsuuid.Must(gofrsuuid.NewV4()), jwt.TokenTypeRefresh),
 			init: func(t test) context.Context {
 				s.factory.NewAuth(factory.AuthRefreshToken(t.token))
 				ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
@@ -434,7 +435,7 @@ func (s *authSuite) TestRefreshToken() {
 		},
 		{
 			name:  "err_token_not_found",
-			token: s.jwt.MustCreateToken(uuid.NewString(), jwt.TokenTypeRefresh),
+			token: s.jwt.MustCreateToken(gofrsuuid.Must(gofrsuuid.NewV4()), jwt.TokenTypeRefresh),
 			init: func(t test) context.Context {
 				ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
 				return xcontext.WithRefreshToken(ctx, t.token)
@@ -445,7 +446,7 @@ func (s *authSuite) TestRefreshToken() {
 		},
 		{
 			name:  "err_access_token_provided",
-			token: s.jwt.MustCreateToken(uuid.NewString(), jwt.TokenTypeAccess),
+			token: s.jwt.MustCreateToken(gofrsuuid.Must(gofrsuuid.NewV4()), jwt.TokenTypeAccess),
 			init: func(t test) context.Context {
 				s.factory.NewAuth(factory.AuthRefreshToken(t.token))
 				ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
@@ -493,7 +494,7 @@ func (s *authSuite) TestLogout() {
 	tests := []test{
 		{
 			name:  "ok_logged_out",
-			token: s.jwt.MustCreateToken(uuid.NewString(), jwt.TokenTypeRefresh),
+			token: s.jwt.MustCreateToken(gofrsuuid.Must(gofrsuuid.NewV4()), jwt.TokenTypeRefresh),
 			init: func(t test) context.Context {
 				auth := s.factory.NewAuth(factory.AuthRefreshToken(t.token))
 				ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
@@ -518,7 +519,7 @@ func (s *authSuite) TestLogout() {
 			// holding that cookie is a session already ended. Logout says so
 			// and expires the cookie rather than refusing.
 			name:  "ok_refresh_token_already_deleted",
-			token: s.jwt.MustCreateToken(uuid.NewString(), jwt.TokenTypeRefresh),
+			token: s.jwt.MustCreateToken(gofrsuuid.Must(gofrsuuid.NewV4()), jwt.TokenTypeRefresh),
 			init: func(t test) context.Context {
 				ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
 				return xcontext.WithRefreshToken(ctx, t.token)
@@ -589,7 +590,7 @@ func (s *authSuite) TestExpectedAuthFailuresLogAtWarn() {
 			name:    "refresh_with_unparseable_token",
 			message: "Parse refresh token",
 			call: func(logger *zap.Logger) {
-				token := s.jwt.MustCreateToken(uuid.NewString(), jwt.TokenTypeAccess)
+				token := s.jwt.MustCreateToken(gofrsuuid.Must(gofrsuuid.NewV4()), jwt.TokenTypeAccess)
 				s.factory.NewAuth(factory.AuthRefreshToken(token))
 				ctx := xcontext.WithRefreshToken(xcontext.WithLogger(context.Background(), logger), token)
 				_, err := s.handler.RefreshToken(ctx, &connect.Request[v1.RefreshTokenRequest]{
@@ -637,7 +638,7 @@ func (s *authSuite) TestDeleteAccount() {
 			init: func(_ test) (context.Context, *models.User) {
 				user := newAccount()
 				ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
-				return xcontext.WithUserID(ctx, user.ID.String()), user
+				return xcontext.WithUserID(ctx, user.ID), user
 			},
 			expected: expected{
 				err: nil,
@@ -649,7 +650,7 @@ func (s *authSuite) TestDeleteAccount() {
 			init: func(_ test) (context.Context, *models.User) {
 				user := newAccount()
 				ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
-				return xcontext.WithUserID(ctx, user.ID.String()), user
+				return xcontext.WithUserID(ctx, user.ID), user
 			},
 			expected: expected{
 				err: connect.NewError(connect.CodeInvalidArgument, handlers.ErrInvalidCredentials),
@@ -660,7 +661,7 @@ func (s *authSuite) TestDeleteAccount() {
 			password: password,
 			init: func(_ test) (context.Context, *models.User) {
 				ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
-				return xcontext.WithUserID(ctx, uuid.NewString()), nil
+				return xcontext.WithUserID(ctx, gofrsuuid.Must(gofrsuuid.NewV4())), nil
 			},
 			expected: expected{
 				err: connect.NewError(connect.CodeNotFound, nil),

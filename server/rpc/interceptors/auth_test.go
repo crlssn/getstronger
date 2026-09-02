@@ -10,7 +10,7 @@ import (
 
 	"connectrpc.com/connect"
 
-	"github.com/google/uuid"
+	"github.com/gofrs/uuid/v5"
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/reflect/protoreflect"
@@ -55,7 +55,7 @@ func (s *authSuite) TestClaimsFromHeader() {
 		header   http.Header
 	}
 
-	userID := uuid.NewString()
+	userID := uuid.Must(uuid.NewV4())
 	accessToken, accessTokenErr := s.jwt.CreateToken(userID, jwt.TokenTypeAccess)
 	s.Require().NoError(accessTokenErr)
 
@@ -212,7 +212,7 @@ func (s *authSuite) TestSchemaDecidesAuthentication() {
 		call     func(ctx context.Context, client apiv1connect.AuthServiceClient, header http.Header) connect.Code
 	}
 
-	accessToken, accessTokenErr := s.jwt.CreateToken(uuid.NewString(), jwt.TokenTypeAccess)
+	accessToken, accessTokenErr := s.jwt.CreateToken(uuid.Must(uuid.NewV4()), jwt.TokenTypeAccess)
 	s.Require().NoError(accessTokenErr)
 
 	login := func(ctx context.Context, client apiv1connect.AuthServiceClient, header http.Header) connect.Code {
@@ -290,7 +290,7 @@ func (s *authSuite) TestStreamingHandler() {
 	type expected struct {
 		code    connect.Code
 		reached bool
-		userID  string
+		userID  uuid.UUID
 	}
 
 	type test struct {
@@ -300,7 +300,7 @@ func (s *authSuite) TestStreamingHandler() {
 		expected expected
 	}
 
-	userID := uuid.NewString()
+	userID := uuid.Must(uuid.NewV4())
 	accessToken, accessTokenErr := s.jwt.CreateToken(userID, jwt.TokenTypeAccess)
 	s.Require().NoError(accessTokenErr)
 
@@ -359,7 +359,7 @@ func (s *authSuite) TestStreamingHandler() {
 			}
 
 			var reached bool
-			var handlerUserID string
+			var handlerUserID uuid.UUID
 			err := s.interceptor.WrapStreamingHandler(func(ctx context.Context, _ connect.StreamingHandlerConn) error {
 				reached = true
 				handlerUserID, _ = xcontext.ExtractUserID(ctx)

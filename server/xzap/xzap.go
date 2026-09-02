@@ -1,19 +1,22 @@
 package xzap
 
-import "go.uber.org/zap"
+import (
+	"github.com/gofrs/uuid/v5"
+	"go.uber.org/zap"
+)
 
 func FieldRPC(rpc string) zap.Field {
 	return zap.String("rpc", rpc)
 }
 
-func FieldUserID(userID string) zap.Field {
-	return zap.String("user_id", userID)
+func FieldUserID(userID uuid.UUID) zap.Field {
+	return zap.String("user_id", userID.String())
 }
 
-func FiledRoutineID(id string) zap.Field {
-	return zap.String("routine_id", id)
+func FiledRoutineID(id uuid.UUID) zap.Field {
+	return zap.String("routine_id", id.String())
 }
 
-func FieldExerciseID(exerciseID string) zap.Field {
-	return zap.String("exercise_id", exerciseID)
+func FieldExerciseID(exerciseID uuid.UUID) zap.Field {
+	return zap.String("exercise_id", exerciseID.String())
 }

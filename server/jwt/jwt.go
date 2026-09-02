@@ -6,13 +6,14 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/gofrs/uuid/v5"
 	"github.com/golang-jwt/jwt/v5"
 )
 
 type Claims struct {
 	jwt.RegisteredClaims
 
-	UserID string `json:"userId"`
+	UserID uuid.UUID `json:"userId"`
 }
 
 type Secrets struct {
@@ -131,7 +132,7 @@ const (
 
 var errUnexpectedTokenType = errors.New("unexpected token type")
 
-func (i *Issuer) CreateToken(userID string, tokenType TokenType) (string, error) {
+func (i *Issuer) CreateToken(userID uuid.UUID, tokenType TokenType) (string, error) {
 	if !tokenType.Validate() {
 		return "", fmt.Errorf("%w: %v", errUnexpectedTokenType, tokenType)
 	}
@@ -155,7 +156,7 @@ func (i *Issuer) CreateToken(userID string, tokenType TokenType) (string, error)
 	return tokenString, nil
 }
 
-func (i *Issuer) MustCreateToken(userID string, tokenType TokenType) string {
+func (i *Issuer) MustCreateToken(userID uuid.UUID, tokenType TokenType) string {
 	token, err := i.CreateToken(userID, tokenType)
 	if err != nil {
 		panic(err)
@@ -169,6 +170,10 @@ var (
 	ErrUnexpectedSubject       = errors.New("unexpected subject")
 	ErrUnexpectedSigningMethod = errors.New("unexpected signing method")
 	ErrUnexpectedTokenType     = errors.New("unexpected token type")
+	// ErrMissingUserID reports a token that names no account. A malformed
+	// identity fails to decode, but an absent one decodes to the zero UUID,
+	// which every table would happily be queried for.
+	ErrMissingUserID = errors.New("missing user id")
 )
 
 func (i *Issuer) ClaimsFromToken(token string, tokenType TokenType) (*Claims, error) {
@@ -199,6 +204,10 @@ func (i *Issuer) ClaimsFromToken(token string, tokenType TokenType) (*Claims, er
 
 	if !t.Valid {
 		return nil, ErrInvalidToken
+	}
+
+	if claims.UserID.IsNil() {
+		return nil, ErrMissingUserID
 	}
 
 	return claims, nil

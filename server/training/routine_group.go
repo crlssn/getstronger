@@ -3,6 +3,8 @@ package training
 import (
 	"slices"
 
+	"github.com/gofrs/uuid/v5"
+
 	"github.com/crlssn/getstronger/server/gen/models"
 	"github.com/crlssn/getstronger/server/gen/models/enums"
 )
@@ -26,7 +28,7 @@ const (
 // RoutineGroup is one block of a routine: the exercises it holds, in training
 // order, and how they are worked through.
 type RoutineGroup struct {
-	ID                          string
+	ID                          uuid.UUID
 	Mode                        RoutineGroupMode
 	RestBetweenExercisesSeconds int32
 	RestBetweenRoundsSeconds    int32
@@ -62,7 +64,7 @@ type RoutineGroupDraft struct {
 // asks that occurrence to take. Nil is a save that does not say — one that
 // named no groups at all — and leaves NewOccurrenceRestSeconds to answer.
 type RoutineExerciseDraft struct {
-	ExerciseID  string
+	ExerciseID  uuid.UUID
 	RestSeconds *int32
 }
 
@@ -85,8 +87,8 @@ func NewOccurrenceRestSeconds(metrics []Metric) int32 {
 // press in the warm-up and a bench press in the circuit are two different
 // pieces of work — but only once inside any one of them. A save that names no
 // groups at all becomes one straight-sets group holding everything it named.
-func NormalizeRoutineGroups(groups []RoutineGroupDraft, ownedExerciseIDs []string) []RoutineGroupDraft {
-	owned := make(map[string]struct{}, len(ownedExerciseIDs))
+func NormalizeRoutineGroups(groups []RoutineGroupDraft, ownedExerciseIDs []uuid.UUID) []RoutineGroupDraft {
+	owned := make(map[uuid.UUID]struct{}, len(ownedExerciseIDs))
 	for _, id := range ownedExerciseIDs {
 		owned[id] = struct{}{}
 	}
@@ -123,9 +125,9 @@ func NormalizeRoutineGroups(groups []RoutineGroupDraft, ownedExerciseIDs []strin
 // distinctOwned drops the exercises the routine's owner does not have, and the
 // ones this group already holds. A repeat is only meaningful between groups, so
 // a second copy inside one is dropped rather than trained.
-func distinctOwned(exercises []RoutineExerciseDraft, owned map[string]struct{}) []RoutineExerciseDraft {
+func distinctOwned(exercises []RoutineExerciseDraft, owned map[uuid.UUID]struct{}) []RoutineExerciseDraft {
 	kept := make([]RoutineExerciseDraft, 0, len(exercises))
-	seen := make(map[string]struct{}, len(exercises))
+	seen := make(map[uuid.UUID]struct{}, len(exercises))
 
 	for _, exercise := range exercises {
 		if _, ok := owned[exercise.ExerciseID]; !ok {

@@ -10,6 +10,12 @@ const (
 )
 
 func Int32FromInt(value int) int32 {
+	return Int32FromInt64(int64(value))
+}
+
+// Int32FromInt64 fits a count into the 32-bit field reporting it, clamped to
+// what that field holds rather than wrapping into a negative one.
+func Int32FromInt64(value int64) int32 {
 	if value > maxInt32 {
 		return maxInt32
 	}

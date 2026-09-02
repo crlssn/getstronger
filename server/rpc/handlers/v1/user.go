@@ -7,7 +7,7 @@ import (
 	"fmt"
 
 	"connectrpc.com/connect"
-	"github.com/google/uuid"
+	"github.com/gofrs/uuid/v5"
 	"go.uber.org/zap"
 
 	"github.com/crlssn/getstronger/server/account"
@@ -38,8 +38,13 @@ func (h *userHandler) GetUser(ctx context.Context, req *connect.Request[apiv1.Ge
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
 
-	opts := []repo.GetUserOpt{repo.GetUserWithID(req.Msg.GetId())}
-	if req.Msg.GetId() == userID {
+	requestedID, err := parser.UUID(req.Msg.GetId())
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInvalidArgument, nil)
+	}
+
+	opts := []repo.GetUserOpt{repo.GetUserWithID(requestedID)}
+	if requestedID == userID {
 		// Only the account holder gets the email address: the auth relation is
 		// what puts it on the response, so it is left unloaded for everyone else.
 		opts = append(opts, repo.GetUserLoadAuth())
@@ -86,7 +91,7 @@ func (h *userHandler) SearchUsers(ctx context.Context, req *connect.Request[apiv
 	}
 
 	pagination, err := repo.PaginateSliceWithToken(users, limit, func(user *models.User) any {
-		return repo.UserSearchPageToken{ID: user.ID.String()}
+		return repo.UserSearchPageToken{ID: user.ID}
 	})
 	if err != nil {
 		log.Error("Paginate user search results", zap.Error(err))
@@ -108,9 +113,14 @@ func (h *userHandler) FollowUser(ctx context.Context, req *connect.Request[apiv1
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
 
-	if err := h.repo.Follow(ctx, repo.FollowParams{
+	followID, err := parser.UUID(req.Msg.GetFollowId())
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInvalidArgument, nil)
+	}
+
+	if err = h.repo.Follow(ctx, repo.FollowParams{
 		FollowerID: userID,
-		FolloweeID: req.Msg.GetFollowId(),
+		FolloweeID: followID,
 	}); err != nil {
 		log.Error("Follow user", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
@@ -118,8 +128,8 @@ func (h *userHandler) FollowUser(ctx context.Context, req *connect.Request[apiv1
 
 	h.pubSub.Publish(ctx, events.TopicFollowedUser, events.UserFollowed{
 		FollowerID: userID,
-		FolloweeID: req.Msg.GetFollowId(),
-		EventID:    uuid.NewString(),
+		FolloweeID: followID,
+		EventID:    uuid.Must(uuid.NewV4()),
 	})
 
 	return &connect.Response[apiv1.FollowUserResponse]{
@@ -131,9 +141,14 @@ func (h *userHandler) UnfollowUser(ctx context.Context, req *connect.Request[api
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)
 
-	if err := h.repo.Unfollow(ctx, repo.UnfollowParams{
+	unfollowID, err := parser.UUID(req.Msg.GetUnfollowId())
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInvalidArgument, nil)
+	}
+
+	if err = h.repo.Unfollow(ctx, repo.UnfollowParams{
 		FollowerID: userID,
-		FolloweeID: req.Msg.GetUnfollowId(),
+		FolloweeID: unfollowID,
 	}); err != nil {
 		log.Error("Unfollow user", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
@@ -147,7 +162,12 @@ func (h *userHandler) UnfollowUser(ctx context.Context, req *connect.Request[api
 func (h *userHandler) ListFollowers(ctx context.Context, req *connect.Request[apiv1.ListFollowersRequest]) (*connect.Response[apiv1.ListFollowersResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
 
-	followers, err := h.repo.ListFollowers(ctx, req.Msg.GetUserId())
+	userID, err := parser.UUID(req.Msg.GetUserId())
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInvalidArgument, nil)
+	}
+
+	followers, err := h.repo.ListFollowers(ctx, userID)
 	if err != nil {
 		log.Error("List followers", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
@@ -271,7 +291,12 @@ func (h *userHandler) updateUserPreference(ctx context.Context, preference strin
 func (h *userHandler) ListFollowees(ctx context.Context, req *connect.Request[apiv1.ListFolloweesRequest]) (*connect.Response[apiv1.ListFolloweesResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
 
-	followees, err := h.repo.ListFollowees(ctx, req.Msg.GetUserId())
+	userID, err := parser.UUID(req.Msg.GetUserId())
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInvalidArgument, nil)
+	}
+
+	followees, err := h.repo.ListFollowees(ctx, userID)
 	if err != nil {
 		log.Error("List followees", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)

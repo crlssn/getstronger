@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
-	"github.com/google/uuid"
+	gofrsuuid "github.com/gofrs/uuid/v5"
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/zap"
 
@@ -53,12 +53,12 @@ func (s *feedSuite) TestListFeedItemsMarksPersonalBestsOfWorkoutOwners() {
 	viewer := s.factory.NewUser()
 	owner := s.factory.NewUser()
 
-	ctx := xcontext.WithUserID(context.Background(), viewer.ID.String())
+	ctx := xcontext.WithUserID(context.Background(), viewer.ID)
 	ctx = xcontext.WithLogger(ctx, zap.NewExample())
 
 	s.Require().NoError(s.repo.Follow(ctx, repo.FollowParams{
-		FollowerID: viewer.ID.String(),
-		FolloweeID: owner.ID.String(),
+		FollowerID: viewer.ID,
+		FolloweeID: owner.ID,
 	}))
 
 	exercise := s.factory.NewExercise(
@@ -112,7 +112,7 @@ func (s *feedSuite) TestListFeedItemsPaginates() {
 		)
 	}
 
-	ctx := xcontext.WithUserID(context.Background(), viewer.ID.String())
+	ctx := xcontext.WithUserID(context.Background(), viewer.ID)
 	ctx = xcontext.WithLogger(ctx, zap.NewExample())
 
 	first, err := s.handler.ListFeedItems(ctx, &connect.Request[apiv1.ListFeedItemsRequest]{
@@ -140,7 +140,7 @@ func (s *feedSuite) TestListFeedItemsPaginates() {
 }
 
 func (s *feedSuite) TestListFeedItemsRejectsAMalformedPageToken() {
-	ctx := xcontext.WithUserID(context.Background(), uuid.NewString())
+	ctx := xcontext.WithUserID(context.Background(), gofrsuuid.Must(gofrsuuid.NewV4()))
 	ctx = xcontext.WithLogger(ctx, zap.NewExample())
 
 	res, err := s.handler.ListFeedItems(ctx, &connect.Request[apiv1.ListFeedItemsRequest]{
