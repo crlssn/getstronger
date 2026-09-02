@@ -703,8 +703,8 @@ func (s *repoSuite) TestCreateUser() {
 			s.Require().Equal(t.params.AuthID, user.AuthID)
 			s.Require().Equal(t.expected.user.Name, user.Name)
 			s.Require().Equal(t.expected.user.Username, user.Username)
-			s.Require().Equal(string(weightunit.Kilograms), user.WeightUnit)
-			s.Require().Equal(string(distanceunit.Kilometers), user.DistanceUnit)
+			s.Require().Equal(weightunit.Kilograms, user.WeightUnit)
+			s.Require().Equal(distanceunit.Kilometers, user.DistanceUnit)
 		})
 	}
 }

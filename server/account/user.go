@@ -4,6 +4,9 @@ import (
 	"time"
 
 	"github.com/gofrs/uuid/v5"
+
+	"github.com/crlssn/getstronger/server/distanceunit"
+	"github.com/crlssn/getstronger/server/weightunit"
 )
 
 // Auth is how an athlete proves who they are: the address they sign in with,
@@ -34,8 +37,8 @@ type User struct {
 	AuthID       uuid.UUID
 	Name         string
 	Username     string
-	WeightUnit   string
-	DistanceUnit string
+	WeightUnit   weightunit.Unit
+	DistanceUnit distanceunit.Unit
 	AutofillSets bool
 	CreatedAt    time.Time
 

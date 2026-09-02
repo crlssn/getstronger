@@ -597,10 +597,10 @@ func SetSlice(sets, personalBests []*training.Set) []*apiv1.Set {
 func Set(set *training.Set, mapPersonalBests map[string]struct{}) *apiv1.Set {
 	return &apiv1.Set{
 		Id:              set.ID.String(),
-		Weight:          weightunit.FromKilograms(set.Weight, set.WeightUnit),
+		Weight:          weightunit.FromKilograms(set.Weight, string(set.WeightUnit)),
 		WeightUnit:      WeightUnitToProto(set.WeightUnit),
 		Reps:            set.Reps,
-		Distance:        distanceunit.FromKilometers(set.Distance, set.DistanceUnit),
+		Distance:        distanceunit.FromKilometers(set.Distance, string(set.DistanceUnit)),
 		DistanceUnit:    DistanceUnitToProto(set.DistanceUnit),
 		DurationSeconds: set.DurationSeconds,
 		Metadata: &apiv1.MetadataSet{
@@ -622,8 +622,8 @@ func WeightUnitFromProto(unit apiv1.WeightUnit) string {
 	return string(weightunit.Kilograms)
 }
 
-func WeightUnitToProto(unit string) apiv1.WeightUnit {
-	if weightunit.Normalize(unit) == weightunit.Pounds {
+func WeightUnitToProto(unit weightunit.Unit) apiv1.WeightUnit {
+	if unit == weightunit.Pounds {
 		return apiv1.WeightUnit_WEIGHT_UNIT_POUNDS
 	}
 
@@ -638,8 +638,8 @@ func DistanceUnitFromProto(unit apiv1.DistanceUnit) string {
 	return string(distanceunit.Kilometers)
 }
 
-func DistanceUnitToProto(unit string) apiv1.DistanceUnit {
-	if distanceunit.Normalize(unit) == distanceunit.Miles {
+func DistanceUnitToProto(unit distanceunit.Unit) apiv1.DistanceUnit {
+	if unit == distanceunit.Miles {
 		return apiv1.DistanceUnit_DISTANCE_UNIT_MILES
 	}
 

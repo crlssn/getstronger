@@ -335,8 +335,8 @@ func (s *userSuite) TestUpdateUserUnitPreferences_PreserveHistoricalSetUnits() {
 	persisted, err := s.repo.ListSets(ctx, repo.ListSetsWithID(set.ID))
 	s.Require().NoError(err)
 	s.Require().Len(persisted, 1)
-	s.Require().Equal(string(weightunit.Pounds), persisted[0].WeightUnit)
-	s.Require().Equal(string(distanceunit.Miles), persisted[0].DistanceUnit)
+	s.Require().Equal(weightunit.Pounds, persisted[0].WeightUnit)
+	s.Require().Equal(distanceunit.Miles, persisted[0].DistanceUnit)
 }
 
 func (s *userSuite) TestUpdateUserDistanceUnit() {

@@ -5,9 +5,11 @@ import (
 	"fmt"
 
 	"github.com/crlssn/getstronger/server/account"
+	"github.com/crlssn/getstronger/server/distanceunit"
 	"github.com/crlssn/getstronger/server/gen/models"
 	"github.com/crlssn/getstronger/server/notification"
 	"github.com/crlssn/getstronger/server/training"
+	"github.com/crlssn/getstronger/server/weightunit"
 )
 
 // The generated row types stay inside this package. What leaves it is the
@@ -40,8 +42,8 @@ func userFromRow(row *models.User) *account.User {
 		AuthID:       row.AuthID,
 		Name:         row.Name,
 		Username:     row.Username,
-		WeightUnit:   row.WeightUnit,
-		DistanceUnit: row.DistanceUnit,
+		WeightUnit:   weightunit.Normalize(row.WeightUnit),
+		DistanceUnit: distanceunit.Normalize(row.DistanceUnit),
 		AutofillSets: row.AutofillSets,
 		CreatedAt:    row.CreatedAt,
 	}
@@ -131,8 +133,8 @@ func setFromRow(row *models.Set) *training.Set {
 		Reps:            row.Reps,
 		Distance:        row.Distance,
 		DurationSeconds: row.DurationSeconds,
-		WeightUnit:      row.WeightUnit,
-		DistanceUnit:    row.DistanceUnit,
+		WeightUnit:      weightunit.Normalize(row.WeightUnit),
+		DistanceUnit:    distanceunit.Normalize(row.DistanceUnit),
 		Position:        row.Position,
 		OccurrenceID:    row.WorkoutGroupExerciseID.GetOrZero(),
 		CreatedAt:       row.CreatedAt,

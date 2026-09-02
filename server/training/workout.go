@@ -7,6 +7,8 @@ import (
 	"github.com/gofrs/uuid/v5"
 
 	"github.com/crlssn/getstronger/server/account"
+	"github.com/crlssn/getstronger/server/distanceunit"
+	"github.com/crlssn/getstronger/server/weightunit"
 )
 
 // QuickWorkoutName names a workout logged without following a routine.
@@ -101,8 +103,8 @@ type Set struct {
 	Reps            int32
 	Distance        float64
 	DurationSeconds int32
-	WeightUnit      string
-	DistanceUnit    string
+	WeightUnit      weightunit.Unit
+	DistanceUnit    distanceunit.Unit
 	// Position is where the set came in the order the session logged them,
 	// which is what a circuit's rounds are read off.
 	Position int32

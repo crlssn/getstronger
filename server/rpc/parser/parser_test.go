@@ -34,8 +34,8 @@ func newUser() *account.User {
 		ID:           id,
 		Name:         "User " + id.String(),
 		Username:     id.String(),
-		WeightUnit:   string(weightunit.Kilograms),
-		DistanceUnit: string(distanceunit.Kilometers),
+		WeightUnit:   weightunit.Kilograms,
+		DistanceUnit: distanceunit.Kilometers,
 	}
 }
 
@@ -56,8 +56,8 @@ func newSet(exercise *training.Exercise, weight float64, reps int32) *training.S
 		ExerciseID:   exercise.ID,
 		Weight:       weight,
 		Reps:         reps,
-		WeightUnit:   string(weightunit.Kilograms),
-		DistanceUnit: string(distanceunit.Kilometers),
+		WeightUnit:   weightunit.Kilograms,
+		DistanceUnit: distanceunit.Kilometers,
 		CreatedAt:    startedAt(),
 		Exercise:     exercise,
 	}
@@ -472,7 +472,7 @@ func TestExerciseSetsFromPB(t *testing.T) {
 	t.Parallel()
 
 	pounds := newSet(newExercise(), 100, 5)
-	pounds.WeightUnit = string(weightunit.Pounds)
+	pounds.WeightUnit = weightunit.Pounds
 	sets := parser.ExerciseSetsSlice([]*training.Set{
 		newSet(newExercise(), 60, 5),
 		pounds,
@@ -688,7 +688,7 @@ func TestSetRestoresEnteredPounds(t *testing.T) {
 	t.Parallel()
 
 	set := newSet(newExercise(), 45.36, 5)
-	set.WeightUnit = string(weightunit.Pounds)
+	set.WeightUnit = weightunit.Pounds
 	parsed := parser.Set(set, nil)
 
 	require.Equal(t, v1.WeightUnit_WEIGHT_UNIT_POUNDS, parsed.GetWeightUnit())
