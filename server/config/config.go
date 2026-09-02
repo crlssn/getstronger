@@ -35,6 +35,9 @@ func New() *Config {
 			CookieDomain:   os.Getenv("COOKIE_DOMAIN"),
 			AllowedOrigins: strings.Split(os.Getenv("CORS_ALLOWED_ORIGIN"), ","),
 		},
+		Pprof: Pprof{
+			Token: os.Getenv("PPROF_TOKEN"),
+		},
 		Environment: Environment(os.Getenv("ENV")),
 	}
 }
@@ -44,6 +47,7 @@ type Config struct {
 	JWT         JWT
 	Email       Email
 	Server      Server
+	Pprof       Pprof
 	Environment Environment
 }
 
@@ -92,6 +96,26 @@ type Server struct {
 
 func (s Server) HasCertificate() bool {
 	return s.KeyPath != "" && s.CertPath != ""
+}
+
+// Pprof configures the runtime profiling endpoints. The token is both the
+// switch and the credential: there is no way to serve the profiles without
+// also setting the secret that guards them.
+type Pprof struct {
+	Token string
+}
+
+// PprofTokenMinLength is 128 bits written as hex — what `openssl rand -hex 16`
+// produces. The profiles behind the token carry the server's stack traces, and
+// reading one is expensive enough to be a denial of service on its own, so a
+// token short enough to guess is worse than none.
+const PprofTokenMinLength = 32
+
+// Enabled reports whether the profiling endpoints may be served. Only a token
+// long enough to be worth having counts, so an environment that sets nothing —
+// every one of them until somebody deliberately does — serves no profiles.
+func (p Pprof) Enabled() bool {
+	return len(p.Token) >= PprofTokenMinLength
 }
 
 type Email struct {

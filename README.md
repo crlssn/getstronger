@@ -424,6 +424,27 @@ curl --fail https://beta.api.getstronger.studio/healthz
 
 Seed an account on the beta database and smoke-test the deployed stack with the live end-to-end suite described below.
 
+### 9. Profiling a deployed API
+
+The API can serve Go's runtime profiles at `/debug/pprof/`, and serves nothing there until `PPROF_TOKEN` is set on the container. The token is both the switch and the credential: there is no way to publish the profiles without also setting the secret that guards them, and a request without it gets the same 404 as any path the server does not have, so nothing on the wire says the endpoints exist.
+
+Turn them on only while diagnosing something, and turn them off afterwards:
+
+1. Generate a token — `openssl rand -hex 16`. Anything shorter than 32 characters is ignored and logged as such; the profiles carry the process's stack traces, so a guessable token is worse than none.
+2. Add it to the container's **Secrets** as `PPROF_TOKEN` and redeploy. `Profiling endpoints mounted` in the container's logs confirms it.
+3. Fetch a profile and read it locally. `go tool pprof` cannot send a header, so curl the profile to a file first:
+
+   ```bash
+   curl --fail --header "Authorization: Bearer $PPROF_TOKEN" \
+     https://api.getstronger.studio/debug/pprof/heap -o heap.out
+   go tool pprof -http=: heap.out
+   ```
+
+   `goroutine`, `heap`, `allocs` and `profile?seconds=30` answer most questions. `goroutineleak` lists the goroutines parked forever on a channel or mutex nothing can still reach — the production counterpart of the guard in `server/testing/leak`, which only sees what the test suite provokes.
+4. Remove the secret and redeploy.
+
+Nothing rate-limits these endpoints, because holding the token is the control. They are not free to hit: the CPU and trace profiles hold a request open for their whole duration, and `goroutineleak` runs a leak-detection garbage collection cycle to answer. A container sized for `250 mVCPU` feels all three.
+
 ## End-to-end tests
 
 The browser suite covers release-critical authentication, navigation, training, workout, exercise, progress, and social flows. It uses the local seeded Sam Taylor and Alex Morgan personas, with Jane Doe and other seeded profiles providing social activity, and resets the database before every local suite run. The complete suite runs in mobile Chromium, with responsive coverage in desktop Chromium and smoke coverage in Firefox and WebKit.

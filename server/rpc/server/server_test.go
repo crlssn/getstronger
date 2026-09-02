@@ -29,7 +29,7 @@ func TestHealth(t *testing.T) {
 
 	recorder := httptest.NewRecorder()
 	request := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/healthz", nil)
-	NewMultiplexer(nil, nil, nil).ServeHTTP(recorder, request)
+	NewMultiplexer(MultiplexerParams{Log: zap.NewNop(), Config: &config.Config{}}).ServeHTTP(recorder, request)
 
 	assert.Equal(t, http.StatusNoContent, recorder.Code)
 	assert.Equal(t, "no-store", recorder.Header().Get("Cache-Control"))
@@ -42,7 +42,7 @@ func TestServesUnencryptedHTTP2(t *testing.T) {
 
 	server := NewServer(Params{
 		Log:    zap.NewNop(),
-		Mux:    NewMultiplexer(nil, nil, nil),
+		Mux:    NewMultiplexer(MultiplexerParams{Log: zap.NewNop(), Config: &config.Config{}}),
 		Config: &config.Config{},
 	}).server
 
@@ -125,7 +125,7 @@ func newTestServer(t *testing.T, cfg config.Server) *Server {
 
 	server := NewServer(Params{
 		Log:    zap.NewNop(),
-		Mux:    NewMultiplexer(nil, nil, nil),
+		Mux:    NewMultiplexer(MultiplexerParams{Log: zap.NewNop(), Config: &config.Config{}}),
 		Config: &config.Config{Server: cfg},
 	})
 	t.Cleanup(func() { _ = server.server.Close() })
