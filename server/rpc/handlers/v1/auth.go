@@ -174,8 +174,16 @@ func (h *authHandler) Login(ctx context.Context, req *connect.Request[apiv1.Logi
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
+	// The stored token is reused so the account's devices share a session, but
+	// not once it no longer refreshes — thirty days old, or signed with a retired
+	// key: the client's logout leaves the row as it is, so handing the token back
+	// would end every later login fifteen minutes in.
 	refreshToken := auth.RefreshToken
-	if refreshToken == "" {
+	if _, err = h.jwt.ClaimsFromToken(refreshToken, jwt.TokenTypeRefresh); err != nil {
+		if refreshToken != "" {
+			log.Warn("Stored refresh token unusable: issuing a new one", zap.Error(err))
+		}
+
 		refreshToken, err = h.jwt.CreateToken(auth.User.ID, jwt.TokenTypeRefresh)
 		if err != nil {
 			log.Error("Generate refresh token for login", zap.Error(err))
