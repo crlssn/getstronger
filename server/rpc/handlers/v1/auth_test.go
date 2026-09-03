@@ -3,6 +3,7 @@ package v1_test
 import (
 	"context"
 	"log"
+	"net/http"
 	"strings"
 	"testing"
 	"time"
@@ -10,6 +11,7 @@ import (
 	"connectrpc.com/connect"
 	"github.com/brianvoe/gofakeit/v7"
 	"github.com/gofrs/uuid/v5"
+	jwtlib "github.com/golang-jwt/jwt/v5"
 	"github.com/stephenafamo/bob"
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/mock/gomock"
@@ -403,6 +405,87 @@ func (s *authSuite) TestLogin() {
 			auth, err := models.Auths.Query(models.SelectWhere.Auths.Email.EQ(account.NormalizeEmailAddress(t.req.Msg.GetEmail()))).One(ctx, bob.NewDB(s.container.DB))
 			s.Require().NoError(err)
 			s.Require().False(auth.RefreshToken.IsNull())
+		})
+	}
+}
+
+// TestLoginHandsBackARefreshTokenTheSessionCanUse pins what the login cookie
+// carries: the stored token while it still refreshes, a new one once it does
+// not. Handing back one that has expired would end every later session fifteen
+// minutes in, because the client's logout leaves the row untouched.
+func (s *authSuite) TestLoginHandsBackARefreshTokenTheSessionCanUse() {
+	expired := func(userID uuid.UUID) string {
+		token, err := jwtlib.NewWithClaims(jwtlib.SigningMethodHS256, &jwt.Claims{
+			UserID:    userID,
+			ExpiresAt: jwtlib.NewNumericDate(time.Now().UTC().Add(-time.Hour)),
+			IssuedAt:  jwtlib.NewNumericDate(time.Now().UTC().Add(-jwt.ExpiryTimeRefresh - time.Hour)),
+			Subject:   jwt.TokenTypeRefresh.String(),
+		}).SignedString(s.jwt.Secrets.RefreshKey)
+		s.Require().NoError(err)
+		return token
+	}
+	retired := jwt.NewIssuer([]byte("retired-access-key"), []byte("retired-refresh-key"))
+
+	tests := []struct {
+		name   string
+		stored func(userID uuid.UUID) string
+		reused bool
+	}{
+		{
+			name: "a_live_token_is_reused",
+			stored: func(userID uuid.UUID) string {
+				return s.jwt.MustCreateToken(userID, jwt.TokenTypeRefresh)
+			},
+			reused: true,
+		},
+		{
+			name:   "an_expired_token_is_replaced",
+			stored: expired,
+			reused: false,
+		},
+		{
+			name: "a_token_signed_with_a_retired_key_is_replaced",
+			stored: func(userID uuid.UUID) string {
+				return retired.MustCreateToken(userID, jwt.TokenTypeRefresh)
+			},
+			reused: false,
+		},
+	}
+
+	for _, t := range tests {
+		s.Run(t.name, func() {
+			userID := uuid.Must(uuid.NewV4())
+			stored := t.stored(userID)
+			auth := s.factory.NewAuth(
+				factory.AuthPassword("password"),
+				factory.AuthEmailVerified(),
+				factory.AuthRefreshToken(stored),
+			)
+			s.factory.NewUser(factory.UserID(userID), factory.UserAuthID(auth.ID))
+
+			ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
+			res, err := s.handler.Login(ctx, &connect.Request[v1.LoginRequest]{
+				Msg: &v1.LoginRequest{Email: auth.Email, Password: "password"},
+			})
+			s.Require().NoError(err)
+
+			cookie, err := http.ParseSetCookie(res.Header().Get("Set-Cookie"))
+			s.Require().NoError(err)
+			s.Require().Equal(cookies.CookieNameRefreshToken, cookie.Name)
+			if t.reused {
+				s.Require().Equal(stored, cookie.Value)
+			} else {
+				s.Require().NotEqual(stored, cookie.Value)
+			}
+
+			// Whatever the cookie carries, the first refresh must accept it, and
+			// the row must hold the same token so that refresh finds it.
+			_, err = s.jwt.ClaimsFromToken(cookie.Value, jwt.TokenTypeRefresh)
+			s.Require().NoError(err)
+
+			row, err := models.FindAuth(ctx, bob.NewDB(s.container.DB), auth.ID)
+			s.Require().NoError(err)
+			s.Require().Equal(cookie.Value, row.RefreshToken.GetOrZero())
 		})
 	}
 }
