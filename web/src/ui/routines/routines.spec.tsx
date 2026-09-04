@@ -137,16 +137,22 @@ describe('ListRoutines', () => {
     expect(pushCard).toHaveTextContent('Chest')
   })
 
+  const openMenu = async (name: string) => {
+    const card = (await screen.findByRole('heading', { name, level: 3 })).closest('article')!
+    await userEvent.click(within(card).getByRole('button', { name: 'Routine actions' }))
+    return card
+  }
+
   test('marks the routine that is up next', async () => {
     useDashboardStore.setState({ preferredRoutineId: 'push' })
     render()
 
-    const card = (await screen.findByRole('heading', { name: 'Push day', level: 3 })).closest(
-      'article',
-    )!
+    const card = await openMenu('Push day')
+
     expect(within(card).getByText('Up next')).toBeInTheDocument()
     // Already up next, so the menu has nothing to offer but editing.
-    expect(within(card).queryByRole('button', { name: 'Set as up next' })).not.toBeInTheDocument()
+    expect(screen.getByRole('menuitem', { name: 'Edit routine' })).toBeInTheDocument()
+    expect(screen.queryByRole('menuitem', { name: 'Set as up next' })).not.toBeInTheDocument()
   })
 
   test('makes a routine up next from its menu', async () => {
@@ -155,12 +161,38 @@ describe('ListRoutines', () => {
       .mockResolvedValue(undefined)
     render()
 
-    const card = (await screen.findByRole('heading', { name: 'Push day', level: 3 })).closest(
-      'article',
-    )!
-    await userEvent.click(within(card).getByRole('button', { name: 'Set as up next' }))
+    await openMenu('Push day')
+    await userEvent.click(screen.getByRole('menuitem', { name: 'Set as up next' }))
 
     expect(selectRoutine).toHaveBeenCalledWith('push')
+  })
+
+  // The hand-rolled <details> it replaced had neither, so a menu opened by a
+  // mis-tap could only be closed by tapping the same three dots again.
+  test('closes its menu on Escape', async () => {
+    render()
+
+    await openMenu('Push day')
+    expect(screen.getByRole('menuitem', { name: 'Edit routine' })).toBeInTheDocument()
+
+    await userEvent.keyboard('{Escape}')
+
+    await waitFor(() =>
+      expect(screen.queryByRole('menuitem', { name: 'Edit routine' })).not.toBeInTheDocument(),
+    )
+  })
+
+  // The rest of the page is aria-hidden while the menu is open, so the tap that
+  // dismisses it is aimed at the document rather than at a row.
+  test('closes its menu when something else is tapped', async () => {
+    render()
+
+    await openMenu('Push day')
+    await userEvent.click(document.body)
+
+    await waitFor(() =>
+      expect(screen.queryByRole('menuitem', { name: 'Edit routine' })).not.toBeInTheDocument(),
+    )
   })
 
   // A routine unused for a month joins the untried ones: both are things to

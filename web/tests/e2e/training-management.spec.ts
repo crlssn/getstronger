@@ -390,6 +390,43 @@ test.describe('routine lifecycle', () => {
     await expect(page.getByRole('status')).toContainText('Routine deleted')
   })
 
+  // The list's overflow menu used to be a hand-rolled <details>: it stayed open
+  // until the same three dots were tapped again, and its panel opened upward
+  // inside a card that clipped it.
+  test("opens, dismisses and acts from a routine row's menu", async ({ page }) => {
+    await page.goto('/routines')
+
+    const card = page.getByRole('article').first()
+    const name = await card.getByRole('heading', { level: 3 }).innerText()
+    await card.getByRole('button', { name: 'Routine actions' }).click()
+
+    const menu = page.getByRole('menu')
+    await expect(menu).toBeVisible()
+    await expect(menu).toHaveCSS('opacity', '1')
+
+    // Opened upward inside a card that clipped, the panel's top was cut off.
+    const panel = await menu.boundingBox()
+    const viewport = page.viewportSize()
+    expect(panel).not.toBeNull()
+    expect(panel!.y).toBeGreaterThanOrEqual(0)
+    expect(panel!.y + panel!.height).toBeLessThanOrEqual(viewport!.height)
+
+    await page.keyboard.press('Escape')
+    await expect(menu).toBeHidden()
+
+    await card.getByRole('button', { name: 'Routine actions' }).click()
+    await page.getByRole('menuitem', { name: 'Set as up next' }).click()
+
+    // The dashboard is asked again with the new preference, and the badge that
+    // comes back survives a reload.
+    const chosen = page.getByRole('article').filter({ hasText: name }).first()
+    await expect(chosen.getByText('Up next')).toBeVisible()
+    await page.reload()
+    await expect(page.getByRole('article').filter({ hasText: name }).first()).toContainText(
+      'Up next',
+    )
+  })
+
   // Reordering is a drag: the row carries a handle, and where it is dropped is
   // the order the routine is saved and read back in.
   test('drags an exercise into a new place and saves the order @mutation', async ({ page }) => {

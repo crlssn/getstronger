@@ -1,11 +1,7 @@
 import type { Routine } from '@/proto/api/v1/routine_service_pb'
+import type { DropdownItem } from '@/types/dropdown'
 
-import {
-  ChevronRightIcon,
-  EllipsisHorizontalIcon,
-  PlayIcon,
-  PlusIcon,
-} from '@heroicons/react/24/outline'
+import { ChevronRightIcon, PlayIcon, PlusIcon } from '@heroicons/react/24/outline'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
@@ -20,6 +16,7 @@ import { AppLoadMore } from '@/ui/components/AppLoadMore'
 import { AppPageHeader } from '@/ui/components/AppPageHeader'
 import { AppSearchField } from '@/ui/components/AppSearchField'
 import { AppSkeleton } from '@/ui/components/AppSkeleton'
+import { DropdownButton } from '@/ui/components/DropdownButton'
 import { ExerciseTags } from '@/ui/exercises/ExerciseTags'
 import { TrainingTabs } from '@/ui/features/TrainingTabs'
 import { groupByRoutineActivity } from '@/utils/activityGroups'
@@ -88,6 +85,18 @@ export const ListRoutines = () => {
 
   const routineTags = (routine: Routine) => [
     ...new Set(routine.exercises.flatMap((exercise) => exercise.tags)),
+  ]
+
+  const routineActions = (routine: Routine): DropdownItem[] => [
+    { title: t('routine.list.edit'), href: `/routines/${routine.id}/edit` },
+    ...(routine.id === preferredRoutineId
+      ? []
+      : [
+          {
+            title: t('routine.makeUpNext'),
+            func: () => useDashboardStore.getState().selectRoutine(routine.id),
+          },
+        ]),
   ]
 
   const exerciseSummary = (routine: Routine) => {
@@ -179,26 +188,12 @@ export const ListRoutines = () => {
                       >
                         {t('routine.list.view')}
                       </AppButton>
-                      <details className={styles.routineMenu}>
-                        <summary aria-label={t('routine.list.actionsAria')}>
-                          <EllipsisHorizontalIcon aria-hidden="true" />
-                        </summary>
-                        <div>
-                          <Link to={`/routines/${routine.id}/edit`}>{t('routine.list.edit')}</Link>
-                          {routine.id !== preferredRoutineId && (
-                            <AppButton
-                              type="button"
-                              colour="ghost"
-                              size="sm"
-                              onClick={() =>
-                                void useDashboardStore.getState().selectRoutine(routine.id)
-                              }
-                            >
-                              {t('routine.makeUpNext')}
-                            </AppButton>
-                          )}
-                        </div>
-                      </details>
+                      <div className={styles.routineMenu}>
+                        <DropdownButton
+                          items={routineActions(routine)}
+                          label={t('routine.list.actionsAria')}
+                        />
+                      </div>
                     </div>
                   </article>
                 )

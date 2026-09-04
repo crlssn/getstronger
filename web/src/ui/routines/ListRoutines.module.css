@@ -13,9 +13,11 @@
 }
 
 /* One card with divided rows, not a stack of posters: the same shell as the
-   Exercises list, with an action footer per row. */
+   Exercises list, with an action footer per row. It does not clip: a row's
+   overflow menu opens over the rows under it, and the rows carry no
+   background of their own to spill past the card's corners. */
 .routineGrid {
-  @apply card divide-y divide-border overflow-hidden;
+  @apply card divide-y divide-border;
 }
 
 .routineCard {
@@ -55,30 +57,10 @@
 }
 
 .routineActions {
-  @apply relative mt-auto flex flex-wrap items-center gap-2;
+  @apply mt-auto flex flex-wrap items-center gap-2;
 }
 
+/* Positioning only: the menu's own shape is the design system's. */
 .routineMenu {
-  @apply relative ml-auto;
-}
-
-.routineMenu summary {
-  @apply grid size-11 cursor-pointer list-none place-items-center rounded-control text-text-subtle hover:bg-ink-tint;
-}
-
-.routineMenu summary::-webkit-details-marker {
-  @apply hidden;
-}
-
-.routineMenu summary svg {
-  @apply size-5;
-}
-
-.routineMenu > div {
-  @apply absolute bottom-12 right-0 z-10 w-40 overflow-hidden rounded-control border border-border bg-surface p-1 shadow-raised;
-}
-
-.routineMenu > div a,
-.routineMenu > div button {
-  @apply flex min-h-(--size-control-sm) w-full items-center justify-start rounded-control px-3 text-left text-sm font-medium text-text-muted hover:bg-ink-surface;
+  @apply ml-auto;
 }
