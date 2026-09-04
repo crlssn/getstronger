@@ -7,9 +7,10 @@ import { quickWorkoutRoutineID, useWorkoutStore } from '@/stores/workout'
 const hasEnteredValue = (value: unknown) =>
   value !== undefined && value !== null && (typeof value !== 'string' || value.trim().length > 0)
 
-// Opening a routine stamps startedAt before anything is logged, so a workout
-// only counts as resumable once it holds real progress.
-const hasProgress = (workout: Workout) =>
+// A workout starts at its first logged value, so that is also what makes one
+// resumable: a routine opened, an exercise picked or a note typed is
+// preparation, and the tab bar has no session to offer back yet.
+const hasLoggedSet = (workout: Workout) =>
   Object.values(workout.exerciseSets ?? {}).some((sets) =>
     sets.some(
       (set) =>
@@ -18,16 +19,14 @@ const hasProgress = (workout: Workout) =>
         hasEnteredValue(set.distance) ||
         hasEnteredValue(set.durationSeconds),
     ),
-  ) ||
-  Boolean(workout.note?.trim()) ||
-  Boolean(workout.addedExercises?.length)
+  )
 
 type SavedWorkout = [routineId: string, workout: Workout] | undefined
 
-/** The most recently started workout that holds real progress. */
+/** The most recently started workout that has something logged in it. */
 const selectSavedWorkout = (workouts: Record<string, Workout>): SavedWorkout =>
   Object.entries(workouts)
-    .filter(([, workout]) => workout.startedAt && hasProgress(workout))
+    .filter(([, workout]) => workout.startedAt && hasLoggedSet(workout))
     .sort(([, a], [, b]) => Date.parse(b.startedAt ?? '') - Date.parse(a.startedAt ?? ''))[0]
 
 /**

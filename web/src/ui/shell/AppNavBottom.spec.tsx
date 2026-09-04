@@ -1,9 +1,11 @@
 // @vitest-environment jsdom
 
+import { create } from '@bufbuild/protobuf'
 import { screen } from '@testing-library/react'
 import { beforeEach, describe, expect, test } from 'vitest'
 
 import type { Workout } from '@/types/workout'
+import { ExerciseSchema } from '@/proto/api/v1/shared_pb'
 import { useNotificationStore } from '@/stores/notifications'
 import { quickWorkoutRoutineID, useWorkoutStore } from '@/stores/workout'
 import { renderWithProviders } from '@/ui/testing'
@@ -121,11 +123,19 @@ describe('AppNavBottom', () => {
       expect(tab('Workout')).toHaveAttribute('href', '/workouts/routine/routine-1?plan_id=plan-1')
     })
 
-    // Opening a routine stamps startedAt before anything is logged, so an
-    // untouched draft is not something to resume.
-    test('ignores a draft with nothing logged in it', () => {
+    // A draft is a workout once a set holds a value. Everything short of that
+    // — a routine opened, an exercise picked, a note typed — is preparation,
+    // and a tab bar that resumes it is claiming a session nobody started.
+    // The stamp is carried too, because a draft left by an earlier release has
+    // one from the moment its screen opened.
+    test.each([
+      ['nothing logged in it', {}],
+      ['only a note', { note: 'felt strong' }],
+      ['only exercises added', { addedExercises: [create(ExerciseSchema, { id: 'squat' })] }],
+      ['only empty sets', { exerciseSets: { squat: [{}, {}] } }],
+    ] satisfies Array<[string, Workout]>)('ignores a draft with %s', (_, workout) => {
       useWorkoutStore.setState({
-        workouts: { 'routine-1': { startedAt: '2026-08-14T11:50:00Z', exerciseSets: {} } },
+        workouts: { 'routine-1': { startedAt: '2026-08-14T11:50:00Z', ...workout } },
       })
       renderWithProviders(<AppNavBottom />, { route: '/home' })
 

@@ -29,6 +29,14 @@ const metricFields: Partial<Record<ExerciseMetric, keyof WorkoutSet>> = {
   [ExerciseMetric.TIME]: 'durationSeconds',
 }
 
+// What somebody logged, as opposed to the unit the row was stamped with.
+const measurementFields = new Set<string>(Object.values(metricFields))
+
+const logsAMeasurement = (changes: Partial<WorkoutSet>) =>
+  Object.entries(changes).some(
+    ([field, value]) => value !== undefined && measurementFields.has(field),
+  )
+
 interface WorkoutState {
   workouts: RoutineWorkout
   initialiseWorkout: (routineID: RoutineID, planId?: string) => void
@@ -104,11 +112,13 @@ export const useWorkoutStore = create<WorkoutState>()(
     immer((set, get) => ({
       workouts: {},
 
+      // A draft is where the session is written down, not the session itself,
+      // so it starts without a clock: `updateSet` stamps one at the first
+      // value logged into it.
       initialiseWorkout: (routineID, planId = '') =>
         set((state) => {
           const workout = (state.workouts[routineID] ??= {})
           workout.exerciseSets ??= {}
-          workout.startedAt ??= new Date().toISOString()
           // Kept with the draft rather than the screen, so a save pressed
           // again after a reload still names the same session.
           workout.idempotencyKey ??= crypto.randomUUID()
@@ -207,11 +217,16 @@ export const useWorkoutStore = create<WorkoutState>()(
        * instead — which is also the only way a change notifies subscribers.
        * An `undefined` clears the field, so a cleared input is not stored as a
        * stale number.
+       *
+       * It is also where a workout starts: the session clock is stamped by the
+       * first measurement logged into it, so the minutes spent picking a
+       * routine and walking to the rack are not counted as training.
        */
       updateSet: (routineID, exerciseID, index, changes) =>
         set((state) => {
-          const entry = state.workouts[routineID]?.exerciseSets?.[exerciseID]?.[index]
-          if (!entry) return
+          const workout = state.workouts[routineID]
+          const entry = workout?.exerciseSets?.[exerciseID]?.[index]
+          if (!workout || !entry) return
 
           for (const [field, value] of Object.entries(changes) as Array<
             [keyof WorkoutSet, WorkoutSet[keyof WorkoutSet]]
@@ -219,6 +234,8 @@ export const useWorkoutStore = create<WorkoutState>()(
             if (value === undefined) delete entry[field]
             else Object.assign(entry, { [field]: value })
           }
+
+          if (logsAMeasurement(changes)) workout.startedAt ??= new Date().toISOString()
         }),
 
       // The weight unit is a profile preference rather than a per-set choice,
