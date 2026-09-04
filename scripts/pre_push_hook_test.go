@@ -1,6 +1,7 @@
 package scripts_test
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -76,6 +77,29 @@ func TestHookRunsOnlyTheChangedAreasChecks(t *testing.T) {
 			require.Equal(t, tc.tasks, result.tasks)
 		})
 	}
+}
+
+// A push's file list is not always small, and 'grep -qE' stops at the first
+// match: a match near the top of a list too long to fit in a pipe leaves the
+// writer with a broken pipe, which 'set -o pipefail' reads as "this area was not
+// touched". The checks for it are then skipped on the way to a green push.
+func TestHookChecksEveryAreaOfAPushTooLongForAPipe(t *testing.T) {
+	repo := newRepo(t)
+	files := make([]string, 0, 1001)
+	files = append(files, "server/rpc/handler.go")
+	for i := range 1000 {
+		files = append(files, fmt.Sprintf("web/src/%s/component-%04d.ts", strings.Repeat("nested/", 10), i))
+	}
+	head := commit(t, repo, files...)
+
+	result := runHook(t, repo, pushLine(head, zeroSHA), nil)
+
+	require.Equal(t, 0, result.exitCode, result.output)
+	require.Equal(t, []string{
+		"format:web", "format:backend",
+		"lint:web", "lint:backend",
+		"test:web", "test:backend",
+	}, result.tasks)
 }
 
 func TestHookComparesAgainstTheRemoteBranchWhenItExists(t *testing.T) {

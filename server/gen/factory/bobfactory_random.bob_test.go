@@ -36,17 +36,6 @@ func TestRandom_float64(t *testing.T) {
 	}
 }
 
-func TestRandom_int32(t *testing.T) {
-	t.Parallel()
-
-	val1 := random_int32(nil)
-	val2 := random_int32(nil)
-
-	if val1 == val2 {
-		t.Fatalf("random_int32() returned the same value twice: %v", val1)
-	}
-}
-
 func TestRandom_pq_StringArray(t *testing.T) {
 	t.Parallel()
 

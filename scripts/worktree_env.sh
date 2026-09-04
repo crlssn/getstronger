@@ -217,8 +217,11 @@ directory's permissions and run this again."
   } | awk 'NF' | sort -un)"
 }
 
+# Not a pipe: 'grep -q' stops at the first match, and the writer left holding a
+# broken pipe fails the pipeline under 'set -o pipefail' — a claimed slot
+# reported free, which is the double-booking the claims exist to prevent.
 is_claimed() {
-  printf '%s\n' "$claimed" | grep -qx "$1"
+  grep -qxF "$1" <<<"$claimed"
 }
 
 set_env() {

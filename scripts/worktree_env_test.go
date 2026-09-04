@@ -305,6 +305,32 @@ func TestAShortReadDoesNotHandOutAClaimedSlot(t *testing.T) {
 	require.NoFileExists(t, filepath.Join(tree, "mise.local.toml"))
 }
 
+// The claim lookup reads a list, and a list is not always small. Piping it into
+// 'grep -q', which stops at the first match, leaves the writer with a broken
+// pipe, and under 'set -o pipefail' that broken pipe is what the lookup returns:
+// a slot another checkout holds, reported free. On CI the pipe breaks when the
+// scheduler happens to run the reader first; a list too long to fit in one makes
+// it happen every time.
+func TestASlotStaysClaimedWhenTheClaimListIsLongerThanAPipe(t *testing.T) {
+	main := newCheckout(t)
+	tree := addWorktree(t, main, "feature-a")
+	claim := filepath.Join(main, ".claude/worktrees", "claimed-many")
+	require.NoError(t, os.MkdirAll(claim, 0o755))
+
+	var claims strings.Builder
+	claims.WriteString("[env]\n")
+	for slot := 1; slot <= 20000; slot++ {
+		fmt.Fprintf(&claims, "WORKTREE_SLOT = \"%d\"\n", slot)
+	}
+	write(t, claim, "mise.local.toml", claims.String())
+
+	result := runEnv(t, tree, nil)
+
+	require.Equal(t, 1, result.exitCode, result.output)
+	require.Contains(t, result.output, "worktree:prune")
+	require.NoFileExists(t, filepath.Join(tree, "mise.local.toml"))
+}
+
 // A claim discovery that cannot read the directory this checkout sits in knows
 // nothing about the slots the worktrees beside it hold, and a slot handed out
 // on that footing is one another checkout may already have.
