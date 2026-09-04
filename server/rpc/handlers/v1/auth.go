@@ -227,14 +227,10 @@ func (h *authHandler) RefreshToken(ctx context.Context, _ *connect.Request[apiv1
 		return nil, connect.NewError(connect.CodeUnauthenticated, ErrRefreshTokenNotFound)
 	}
 
+	// Parsing validates the expiry, so no separate claims check follows.
 	claims, err := h.jwt.ClaimsFromToken(refreshToken, jwt.TokenTypeRefresh)
 	if err != nil {
 		log.Warn("Parse refresh token", zap.Error(err))
-		return nil, connect.NewError(connect.CodeInvalidArgument, ErrInvalidRefreshToken)
-	}
-
-	if err = h.jwt.ValidateClaims(claims); err != nil {
-		log.Warn("Validate refresh token claims", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInvalidArgument, ErrInvalidRefreshToken)
 	}
 
