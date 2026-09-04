@@ -77,6 +77,21 @@ describe('ViewRoutine', () => {
     await waitFor(() => expect(usePageTitleStore.getState().pageTitle).toBe('Push day'))
   })
 
+  // A routine that did not load used to render nothing at all: no title, no
+  // rows, no way back but the nav bar, and no way to ask again.
+  test('offers a retry rather than a blank page when the routine does not load', async () => {
+    mocked.getRoutine.mockResolvedValueOnce(undefined)
+    render()
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Something went wrong')
+    expect(screen.queryByRole('link', { name: /Start workout/ })).not.toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole('button', { name: 'Try again' }))
+
+    expect(await screen.findByRole('link', { name: /Start workout/ })).toBeInTheDocument()
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+  })
+
   test('numbers the exercises in the order they are trained', async () => {
     render()
 

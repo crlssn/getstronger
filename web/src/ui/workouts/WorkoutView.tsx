@@ -14,6 +14,7 @@ import { usePlanStore } from '@/stores/plans'
 import { AppButton } from '@/ui/components/AppButton'
 import { AppChip } from '@/ui/components/AppChip'
 import { AppEmptyInline } from '@/ui/components/AppEmptyInline'
+import { AppErrorState } from '@/ui/components/AppErrorState'
 import { AppList } from '@/ui/components/AppList'
 import { AppListRow } from '@/ui/components/AppListRow'
 import { AppPageHeader } from '@/ui/components/AppPageHeader'
@@ -34,6 +35,9 @@ export const WorkoutView = () => {
   const { t } = useTranslation()
 
   const userId = useAuthStore((state) => state.userId)
+  const dashboard = useDashboardStore((state) => state.dashboard)
+  const dashboardLoading = useDashboardStore((state) => state.loading)
+  const dashboardFailed = useDashboardStore((state) => state.failed)
   const activePlan = useDashboardStore(selectActivePlan)
   const nextRoutine = useDashboardStore(selectNextRoutine)
 
@@ -134,7 +138,9 @@ export const WorkoutView = () => {
     <div className={styles.workoutPage}>
       <AppPageHeader lead={t('workout.subtitle')} title={t('workout.heading')} />
 
-      {nextRoutine ? (
+      {dashboardLoading && !dashboard ? (
+        <AppSkeleton />
+      ) : nextRoutine ? (
         <section className={styles.nextCard}>
           <header>
             <p className={styles.eyebrow}>
@@ -170,6 +176,11 @@ export const WorkoutView = () => {
           )}
           {actionError && <AppInlineError>{actionError}</AppInlineError>}
         </section>
+      ) : dashboardFailed ? (
+        // "No workout selected" is a claim about the account, and a dashboard
+        // that did not arrive cannot back it: someone with a routine queued
+        // was told, offline, to go and choose one.
+        <AppErrorState onRetry={() => void useDashboardStore.getState().load()} />
       ) : (
         <section className={styles.emptyCard}>
           <h2>{t('workout.noSelection')}</h2>

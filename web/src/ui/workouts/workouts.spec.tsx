@@ -88,7 +88,7 @@ beforeEach(() => {
   vi.spyOn(useDashboardStore.getState(), 'load').mockResolvedValue(undefined)
   vi.spyOn(usePlanStore.getState(), 'load').mockResolvedValue(undefined)
   useAuthStore.setState({ userId: me })
-  useDashboardStore.setState({ dashboard: undefined })
+  useDashboardStore.setState({ dashboard: undefined, loading: false, failed: false })
   useToastStore.getState().dismiss()
   useConfirmationStore.setState({ confirmation: null, resolver: null })
 })
@@ -365,6 +365,33 @@ describe('WorkoutView', () => {
     render()
 
     expect(await screen.findByText('No workout selected')).toBeInTheDocument()
+  })
+
+  // "No workout selected" is a claim about the account, and a dashboard that
+  // has not arrived yet cannot back it: the home tab waits, so this one does.
+  test('waits for the dashboard before saying nothing is queued', async () => {
+    useDashboardStore.setState({ dashboard: undefined, loading: true })
+    render()
+
+    await screen.findByRole('link', { name: /Quick workout/ })
+    expect(screen.queryByText('No workout selected')).not.toBeInTheDocument()
+  })
+
+  // Someone with a routine queued opened this tab offline and was told to go
+  // and choose one.
+  test('says the dashboard failed rather than that nothing is queued', async () => {
+    const load = vi.spyOn(useDashboardStore.getState(), 'load').mockResolvedValue(undefined)
+    useDashboardStore.setState({ dashboard: undefined, failed: true })
+    render()
+
+    const alert = await screen.findByRole('alert')
+    expect(alert).toHaveTextContent('Something went wrong')
+    expect(screen.queryByText('No workout selected')).not.toBeInTheDocument()
+
+    load.mockClear()
+    await userEvent.click(within(alert).getByRole('button', { name: 'Try again' }))
+
+    expect(load).toHaveBeenCalled()
   })
 
   test('lists previous workouts with their headline stats', async () => {
