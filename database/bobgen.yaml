@@ -7,9 +7,16 @@ psql:
   except:
     schema_migrations:
 
+# The int32 range keeps the factory inside 'rest_seconds BETWEEN 0 AND 3600'
+# and the two 'rest_between_*_seconds' checks, so every generated row inserts.
+# That leaves 3,601 values, and the randomization test bobgen writes for a type
+# fails when two draws match — about one server run in 3,601, on whatever branch
+# happened to draw it. The flag is bobgen's own answer for a low-cardinality
+# type, and is what it sets for bool and for enums.
 types:
   int32:
     random_expr: "return f.Int32Between(0, 3600)"
+    no_randomization_test: true
 
 # Since exercises_routines gained its position column it is no longer a bare
 # join table, so bobgen stops inferring the routines ↔ exercises many-to-many
