@@ -119,6 +119,22 @@ describe('UserView', () => {
     await waitFor(() => expect(usePageTitleStore.getState().pageTitle).toBe('Your public profile'))
   })
 
+  // A profile that did not load used to leave the tab placeholder pulsing for
+  // good: nothing said the fetch had failed, and nothing offered to try again.
+  test('offers a retry rather than an endless skeleton when the profile does not load', async () => {
+    mocked.getUser.mockResolvedValueOnce(undefined)
+    render()
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Something went wrong')
+    expect(screen.queryByRole('navigation', { name: 'Profile sections' })).not.toBeInTheDocument()
+    expect(document.querySelector('.loading-card')).not.toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole('button', { name: 'Try again' }))
+
+    expect(await screen.findByRole('navigation', { name: 'Profile sections' })).toBeInTheDocument()
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+  })
+
   test('links each tab to its section', async () => {
     render()
 

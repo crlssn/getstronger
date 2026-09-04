@@ -19,6 +19,7 @@ import { usePageTitleStore } from '@/stores/pageTitle'
 import { AppButton } from '@/ui/components/AppButton'
 import { AppInlineError } from '@/ui/components/AppInlineError'
 import { AppCard } from '@/ui/components/AppCard'
+import { AppErrorState } from '@/ui/components/AppErrorState'
 import { AppSegmentedNav } from '@/ui/components/AppSegmented'
 import { AppSkeleton } from '@/ui/components/AppSkeleton'
 import { DropdownButton } from '@/ui/components/DropdownButton'
@@ -38,6 +39,7 @@ export const UserView = () => {
   const signedInUserId = useAuthStore((state) => state.userId)
 
   const [user, setUser] = useState<User>()
+  const [failed, setFailed] = useState(false)
   const [workouts, setWorkouts] = useState<Workout[]>([])
 
   const fetchUser = useCallback(async () => {
@@ -46,30 +48,39 @@ export const UserView = () => {
     return res?.user
   }, [id])
 
-  useEffect(() => {
-    const load = async () => {
-      // Cleared first so the previous profile's chart is never shown under the
-      // next profile's name while its fetch is in flight.
-      setWorkouts([])
-      setUser(undefined)
+  const load = useCallback(async () => {
+    // Cleared first so the previous profile's chart is never shown under the
+    // next profile's name while its fetch is in flight.
+    setWorkouts([])
+    setUser(undefined)
+    setFailed(false)
 
-      const loaded = await fetchUser()
-      if (!loaded) return
-
-      // Not "Me": that is the tab, and this is the page other people see. Two
-      // screens with one name left no way to tell from the header which of
-      // them you were looking at.
-      usePageTitleStore
-        .getState()
-        .setPageTitle(loaded.id === signedInUserId ? t('profile.publicProfileTitle') : loaded.name)
-
-      // Only the most recent workouts, which is all the chart plots.
-      const res = await listWorkouts([loaded.id], new Uint8Array(0))
-      if (res) setWorkouts(res.workouts)
+    const loaded = await fetchUser()
+    // A profile that did not load is a failed fetch, not one still loading:
+    // the placeholder used to pulse for good with nothing offering to ask again.
+    if (!loaded) {
+      setFailed(true)
+      return
     }
 
-    void load()
+    // Not "Me": that is the tab, and this is the page other people see. Two
+    // screens with one name left no way to tell from the header which of
+    // them you were looking at.
+    usePageTitleStore
+      .getState()
+      .setPageTitle(loaded.id === signedInUserId ? t('profile.publicProfileTitle') : loaded.name)
+
+    // Only the most recent workouts, which is all the chart plots.
+    const res = await listWorkouts([loaded.id], new Uint8Array(0))
+    if (res) setWorkouts(res.workouts)
   }, [fetchUser, signedInUserId, t])
+
+  useEffect(() => {
+    const initialLoad = async () => {
+      await load()
+    }
+    void initialLoad()
+  }, [load])
 
   const [actionError, setActionError] = useState<string>()
 
@@ -109,6 +120,10 @@ export const UserView = () => {
     { href: `/users/${id}/follows`, name: t('profile.follows') },
     { href: `/users/${id}/followers`, name: t('profile.followers') },
   ]
+
+  // Nothing below is about anyone until the profile is: the tabs, the trend and
+  // the section they open all take their name and their data from it.
+  if (failed) return <AppErrorState onRetry={() => void load()} />
 
   return (
     <>

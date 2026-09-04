@@ -11,7 +11,7 @@ import {
   StarIcon,
   TrashIcon,
 } from '@heroicons/react/24/outline'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useParams } from 'react-router-dom'
 
@@ -27,6 +27,7 @@ import { useDashboardStore } from '@/stores/dashboard'
 import { usePageTitleStore } from '@/stores/pageTitle'
 import { useToastStore } from '@/stores/toasts'
 import { AppButton } from '@/ui/components/AppButton'
+import { AppErrorState } from '@/ui/components/AppErrorState'
 import { AppInlineError } from '@/ui/components/AppInlineError'
 import { AppIconButton } from '@/ui/components/AppIconButton'
 import { AppSkeleton } from '@/ui/components/AppSkeleton'
@@ -53,22 +54,26 @@ export const ViewRoutine = () => {
   const [loading, setLoading] = useState(true)
   const [deleteError, setDeleteError] = useState<string>()
 
-  useEffect(() => {
-    const load = async () => {
-      const response = await getRoutine(id)
-      setRoutine(response?.routine)
-      usePageTitleStore.getState().setPageTitle(response?.routine?.name ?? t('common.routine'))
-      setLoading(false)
+  const load = useCallback(async () => {
+    const response = await getRoutine(id)
+    setRoutine(response?.routine)
+    usePageTitleStore.getState().setPageTitle(response?.routine?.name ?? t('common.routine'))
+    setLoading(false)
 
-      if (!response?.routine) return
+    if (!response?.routine) return
 
-      const previous = await getPreviousWorkoutSets(
-        response.routine.exercises.map((exercise) => exercise.id),
-      )
-      if (previous) setPreviousSets(previous.exerciseSets)
-    }
-    void load()
+    const previous = await getPreviousWorkoutSets(
+      response.routine.exercises.map((exercise) => exercise.id),
+    )
+    if (previous) setPreviousSets(previous.exerciseSets)
   }, [id, t])
+
+  useEffect(() => {
+    const initialLoad = async () => {
+      await load()
+    }
+    void initialLoad()
+  }, [load])
 
   // A routine that is more than one plain block is rearranged on the edit
   // screen: dragging a row here knows nothing about which group it lands in.
@@ -149,7 +154,10 @@ export const ViewRoutine = () => {
   }
 
   if (loading) return <AppSkeleton />
-  if (!routine) return null
+
+  // A routine that did not load is a failed fetch, not a blank routine: the
+  // page used to render nothing under the title, with no way to ask again.
+  if (!routine) return <AppErrorState onRetry={() => void load()} />
 
   const exerciseRow = (exercise: Exercise, index: number, draggable: boolean, key = '') => {
     const summary = lastSession(exercise.id)
