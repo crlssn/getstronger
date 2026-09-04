@@ -92,20 +92,34 @@ jobs:
           echo "Deploying to ${ENVIRONMENT}"
           echo "environment=${ENVIRONMENT}" >> "$GITHUB_OUTPUT"
 
-  database:
+  # Every stage lives in one job because a protected environment is approved per
+  # job: as four jobs, one production deploy asked for four approvals of the
+  # same decision. The stages were nearly serial anyway — only the beta reseed
+  # ran beside anything — so the cost is re-running the whole deploy rather than
+  # the stage that failed. Migrating is a no-op when nothing is pending and
+  # redeploying a commit already deployed changes nothing, so a re-run is safe.
+  deploy:
     needs: init
     runs-on: ubuntu-latest
-    timeout-minutes: 10
-    if: needs.init.outputs.database == 'true' || (github.event_name == 'workflow_dispatch' && inputs.migrate)
+    timeout-minutes: 60
+    if: >-
+      needs.init.outputs.database == 'true' ||
+      needs.init.outputs.server == 'true' ||
+      needs.init.outputs.web == 'true' ||
+      (github.event_name == 'workflow_dispatch' &&
+        (inputs.migrate || inputs.seed || inputs.deploy_server || inputs.deploy_web))
     environment: ${{ needs.init.outputs.environment }}
+
     env:
       DEPLOY_ENVIRONMENT: ${{ vars.DEPLOY_ENVIRONMENT }}
       EXPECTED_ENVIRONMENT: ${{ needs.init.outputs.environment }}
-      DB_HOST: ${{ vars.DB_HOST }}
-      DB_PORT: ${{ vars.DB_PORT }}
-      DB_NAME: ${{ vars.DB_NAME }}
-      DB_MIGRATION_USER: ${{ vars.DB_MIGRATION_USER }}
-      DB_MIGRATION_PASSWORD: ${{ secrets.DB_MIGRATION_PASSWORD }}
+      IMAGE: rg.fr-par.scw.cloud/getstronger/server
+      # What this run deploys, resolved once so each stage below reads as a
+      # name rather than as the expression that selected it.
+      RUN_MIGRATE: ${{ (needs.init.outputs.database == 'true' || (github.event_name == 'workflow_dispatch' && inputs.migrate)) && 'true' || '' }}
+      RUN_SEED: ${{ (needs.init.outputs.environment == 'beta' && (github.event_name != 'workflow_dispatch' || inputs.seed)) && 'true' || '' }}
+      RUN_SERVER: ${{ (needs.init.outputs.server == 'true' || (github.event_name == 'workflow_dispatch' && inputs.deploy_server)) && 'true' || '' }}
+      RUN_WEB: ${{ (needs.init.outputs.web == 'true' || (github.event_name == 'workflow_dispatch' && inputs.deploy_web)) && 'true' || '' }}
 
     steps:
       # An environment without variables of its own falls back to repository
@@ -124,51 +138,31 @@ jobs:
           ref: ${{ env.DEPLOY_REF }}
 
       - name: Install golang-migrate
+        if: env.RUN_MIGRATE == 'true'
         run: |
           wget https://github.com/golang-migrate/migrate/releases/download/v4.19.1/migrate.linux-amd64.deb
           sudo dpkg -i migrate.linux-amd64.deb
 
       - name: Run migration
+        if: env.RUN_MIGRATE == 'true'
+        env:
+          DB_HOST: ${{ vars.DB_HOST }}
+          DB_PORT: ${{ vars.DB_PORT }}
+          DB_NAME: ${{ vars.DB_NAME }}
+          DB_MIGRATION_USER: ${{ vars.DB_MIGRATION_USER }}
+          DB_MIGRATION_PASSWORD: ${{ secrets.DB_MIGRATION_PASSWORD }}
         run: |
           migrate -path database/migrations/ \
             -database "postgresql://${DB_MIGRATION_USER}:${DB_MIGRATION_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=require" \
             -verbose up
 
-  # Beta is a demo environment, so every beta deploy reseeds it: it shows the
-  # personas that revision describes rather than whatever the last person
-  # testing it left behind. Reseeding is destructive, so the condition and the
-  # environment check confine the truncate to beta, the seed refuses any ENV it
-  # may not wipe, and a manual run can decline it outright.
-  seed:
-    needs: [init, database]
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    if: >-
-      always() &&
-      needs.init.result == 'success' &&
-      (needs.database.result == 'success' || needs.database.result == 'skipped') &&
-      needs.init.outputs.environment == 'beta' &&
-      (github.event_name != 'workflow_dispatch' || inputs.seed)
-    environment: ${{ needs.init.outputs.environment }}
-
-    env:
-      DEPLOY_ENVIRONMENT: ${{ vars.DEPLOY_ENVIRONMENT }}
-      EXPECTED_ENVIRONMENT: ${{ needs.init.outputs.environment }}
-
-    steps:
-      - name: Verify the environment is configured
-        run: |
-          if [ "$DEPLOY_ENVIRONMENT" != "$EXPECTED_ENVIRONMENT" ]; then
-            echo "::error::Expected the ${EXPECTED_ENVIRONMENT} environment, but DEPLOY_ENVIRONMENT is '${DEPLOY_ENVIRONMENT:-unset}'. Configure the ${EXPECTED_ENVIRONMENT} GitHub Environment before deploying."
-            exit 1
-          fi
-
-      - name: Checkout code
-        uses: actions/checkout@v7
-        with:
-          ref: ${{ env.DEPLOY_REF }}
-
+      # Beta is a demo environment, so every beta deploy reseeds it: it shows the
+      # personas that revision describes rather than whatever the last person
+      # testing it left behind. Reseeding is destructive, so RUN_SEED and the
+      # environment check confine the truncate to beta, the seed refuses any ENV
+      # it may not wipe, and a manual run can decline it outright.
       - name: Set up Go
+        if: env.RUN_SEED == 'true'
         uses: actions/setup-go@v7
         with:
           go-version-file: go.mod
@@ -177,6 +171,7 @@ jobs:
       # ENV carries the resolved environment, so the seed's own guard checks
       # the same fact that selected the credentials.
       - name: Seed the database
+        if: env.RUN_SEED == 'true'
         env:
           ENV: ${{ needs.init.outputs.environment }}
           DB_HOST: ${{ vars.DB_HOST }}
@@ -194,35 +189,8 @@ jobs:
           fi
           go run ./server/testing/factory/seed -password="$SEED_PASSWORD"
 
-  server:
-    needs: [init, database]
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    if: >-
-      always() &&
-      (needs.database.result == 'success' || needs.database.result == 'skipped') &&
-      (needs.init.outputs.server == 'true' || (github.event_name == 'workflow_dispatch' && inputs.deploy_server))
-    environment: ${{ needs.init.outputs.environment }}
-
-    env:
-      DEPLOY_ENVIRONMENT: ${{ vars.DEPLOY_ENVIRONMENT }}
-      EXPECTED_ENVIRONMENT: ${{ needs.init.outputs.environment }}
-      IMAGE: rg.fr-par.scw.cloud/getstronger/server
-
-    steps:
-      - name: Verify the environment is configured
-        run: |
-          if [ "$DEPLOY_ENVIRONMENT" != "$EXPECTED_ENVIRONMENT" ]; then
-            echo "::error::Expected the ${EXPECTED_ENVIRONMENT} environment, but DEPLOY_ENVIRONMENT is '${DEPLOY_ENVIRONMENT:-unset}'. Configure the ${EXPECTED_ENVIRONMENT} GitHub Environment before deploying."
-            exit 1
-          fi
-
-      - name: Checkout code
-        uses: actions/checkout@v7
-        with:
-          ref: ${{ env.DEPLOY_REF }}
-
       - name: Log in to Scaleway Container Registry
+        if: env.RUN_SERVER == 'true'
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
         with:
           registry: rg.fr-par.scw.cloud
@@ -232,12 +200,15 @@ jobs:
       # Only the commit tag is published. No environment shares a moving tag
       # with another, so nothing can roll out to the wrong one.
       - name: Build API image
+        if: env.RUN_SERVER == 'true'
         run: docker build --platform linux/amd64 --tag "$IMAGE:$DEPLOY_REF" .
 
       - name: Push API image to Scaleway Container Registry
+        if: env.RUN_SERVER == 'true'
         run: docker push "$IMAGE:$DEPLOY_REF"
 
       - name: Deploy the Serverless Container
+        if: env.RUN_SERVER == 'true'
         env:
           SCW_SECRET_KEY: ${{ secrets.SCW_SECRET_KEY }}
           SCW_CONTAINER_ID: ${{ vars.SCW_CONTAINER_ID }}
@@ -300,50 +271,26 @@ jobs:
             exit 1
           fi
 
-  web:
-    needs: [init, database, server]
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    if: >-
-      always() &&
-      (needs.database.result == 'success' || needs.database.result == 'skipped') &&
-      (needs.server.result == 'success' || needs.server.result == 'skipped') &&
-      (needs.init.outputs.web == 'true' || (github.event_name == 'workflow_dispatch' && inputs.deploy_web))
-    environment: ${{ needs.init.outputs.environment }}
-
-    env:
-      DEPLOY_ENVIRONMENT: ${{ vars.DEPLOY_ENVIRONMENT }}
-      EXPECTED_ENVIRONMENT: ${{ needs.init.outputs.environment }}
-
-    steps:
-      - name: Verify the environment is configured
-        run: |
-          if [ "$DEPLOY_ENVIRONMENT" != "$EXPECTED_ENVIRONMENT" ]; then
-            echo "::error::Expected the ${EXPECTED_ENVIRONMENT} environment, but DEPLOY_ENVIRONMENT is '${DEPLOY_ENVIRONMENT:-unset}'. Configure the ${EXPECTED_ENVIRONMENT} GitHub Environment before deploying."
-            exit 1
-          fi
-
-      - name: Checkout code
-        uses: actions/checkout@v7
-        with:
-          ref: ${{ env.DEPLOY_REF }}
-
       - name: Set up Node.js
+        if: env.RUN_WEB == 'true'
         uses: actions/setup-node@v7
         with:
           node-version: '24.19.0'
 
       # Bun installs the dependencies; the scripts themselves still run on Node.
       - name: Set up Bun
+        if: env.RUN_WEB == 'true'
         uses: oven-sh/setup-bun@v2
         with:
           bun-version: '1.4.0'
 
       - name: Install dependencies
+        if: env.RUN_WEB == 'true'
         working-directory: ./web
         run: bun install --frozen-lockfile
 
       - name: Build the app
+        if: env.RUN_WEB == 'true'
         working-directory: ./web
         run: npm run build
         env:
@@ -352,6 +299,7 @@ jobs:
           VITE_POSTHOG_HOST: ${{ vars.VITE_POSTHOG_HOST }}
 
       - name: Deploy to Scaleway Object Storage
+        if: env.RUN_WEB == 'true'
         working-directory: ./web
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.SCW_ACCESS_KEY_ID }}
@@ -374,7 +322,7 @@ jobs:
             --cache-control "no-cache"
 
   cleanup:
-    needs: [init, database, seed, server, web]
+    needs: [init, deploy]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     if: always() && github.event_name == 'pull_request' && github.event.label.name == 'deploy:beta'
