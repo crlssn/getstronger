@@ -215,6 +215,29 @@ describe('StartWorkout', () => {
       expect(screen.getByLabelText('Elapsed')).toHaveTextContent(/^\d+:\d{2}$/)
     })
 
+    // The clock is the workout's, not the screen's. Reading the routine,
+    // queueing for a rack and warming up are not time under the bar, so it
+    // waits for the first number to be logged before it runs.
+    test('holds the clock at zero until the first set is logged', async () => {
+      const user = userEvent.setup()
+      await renderWorkout()
+
+      act(() => {
+        vi.advanceTimersByTime(65_000)
+      })
+      expect(screen.getByLabelText('Elapsed')).toHaveTextContent('0:00')
+      expect(useWorkoutStore.getState().workouts[routineID]?.startedAt).toBeUndefined()
+
+      await logFirstSet(user)
+      // Past the rest the logged set starts, which hides the elapsed pill
+      // while it counts down.
+      act(() => {
+        vi.advanceTimersByTime(125_000)
+      })
+
+      expect(screen.getByLabelText('Elapsed')).toHaveTextContent(/^2:0\d$/)
+    })
+
     test('offers the way out through the leave sheet', async () => {
       const user = userEvent.setup()
       await renderWorkout()

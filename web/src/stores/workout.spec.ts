@@ -38,10 +38,12 @@ describe('workout store', () => {
   })
 
   describe('drafts', () => {
-    it('starts a draft with a clock and an empty set map', () => {
+    // The clock is the workout's, not the screen's: opening a routine to read
+    // it is not training, so the draft starts without one.
+    it('starts a draft with an empty set map and an unstarted clock', () => {
       store().initialiseWorkout('routine-id')
 
-      expect(selectStartedAt(store(), 'routine-id')).toBeTruthy()
+      expect(selectStartedAt(store(), 'routine-id')).toBeUndefined()
       expect(selectAllSets(store(), 'routine-id')).toEqual({})
       expect(selectPlanId(store(), 'routine-id')).toBe('')
     })
@@ -73,7 +75,9 @@ describe('workout store', () => {
     it('leaves an existing draft alone when initialised again', () => {
       store().initialiseWorkout('routine-id')
       store().addEmptySet('routine-id', 'squat')
+      store().updateSet('routine-id', 'squat', 0, { weight: 100 })
       const startedAt = selectStartedAt(store(), 'routine-id')
+      expect(startedAt).toBeTruthy()
 
       store().initialiseWorkout('routine-id')
 
@@ -231,6 +235,46 @@ describe('workout store', () => {
       ])
     })
 
+    // The clock starts when the workout does. Everything before the first
+    // number — reading the routine, walking to the rack — is not the session.
+    it('starts the clock at the first logged value', () => {
+      store().initialiseWorkout('routine-id')
+      store().addEmptySet('routine-id', 'squat')
+      expect(selectStartedAt(store(), 'routine-id')).toBeUndefined()
+
+      store().updateSet('routine-id', 'squat', 0, { weight: 100 })
+
+      expect(selectStartedAt(store(), 'routine-id')).toBeTruthy()
+    })
+
+    it("keeps the first value's time when later sets are logged", () => {
+      seed({ 'routine-id': { exerciseSets: { squat: [{}, {}] } } })
+      store().updateSet('routine-id', 'squat', 0, { weight: 100 })
+      const startedAt = selectStartedAt(store(), 'routine-id')
+
+      store().updateSet('routine-id', 'squat', 1, { weight: 110 })
+
+      expect(selectStartedAt(store(), 'routine-id')).toBe(startedAt)
+    })
+
+    it('leaves the clock unstarted when a field is only cleared', () => {
+      seed({ 'routine-id': { exerciseSets: { squat: [{}] } } })
+
+      store().updateSet('routine-id', 'squat', 0, { weight: undefined })
+
+      expect(selectStartedAt(store(), 'routine-id')).toBeUndefined()
+    })
+
+    // A unit is a preference the row was stamped with, not something anybody
+    // logged, so it must not start the session.
+    it('leaves the clock unstarted for a unit-only write', () => {
+      seed({ 'routine-id': { exerciseSets: { squat: [{}] } } })
+
+      store().updateSet('routine-id', 'squat', 0, { weightUnit: WeightUnit.POUNDS })
+
+      expect(selectStartedAt(store(), 'routine-id')).toBeUndefined()
+    })
+
     it('ignores a write to a set that does not exist', () => {
       expect(() => store().updateSet('missing', 'squat', 0, { weight: 1 })).not.toThrow()
 
@@ -293,7 +337,8 @@ describe('workout store', () => {
       expect(selectAddedExercises(store(), quick)).toEqual([running])
       expect(sets(quick, 'running')).toEqual([{}])
       expect(sets(quick, 'old-exercise')).toEqual([])
-      expect(selectStartedAt(store(), quick)).toBeTruthy()
+      // Picked, not started: the clock waits for the first logged value.
+      expect(selectStartedAt(store(), quick)).toBeUndefined()
     })
   })
 

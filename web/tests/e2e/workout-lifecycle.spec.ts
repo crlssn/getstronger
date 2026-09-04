@@ -57,6 +57,17 @@ const finishAndSave = async (page: Parameters<typeof logIn>[0]) => {
   await page.getByRole('dialog').getByRole('button', { name: 'Finish and save' }).click()
 }
 
+// Stepping out of the session without discarding it, which is what hands the
+// global navigation back.
+const leaveInBackground = async (page: E2EPage) => {
+  await page.getByRole('button', { name: 'Leave workout?' }).click()
+  await page
+    .getByRole('dialog', { name: 'Leave workout?' })
+    .getByRole('button', { name: 'Continue in the background' })
+    .click()
+  await expect(page).toHaveURL(/\/home$/)
+}
+
 const logFirstSet = async (
   page: Parameters<typeof logIn>[0],
   exerciseName: string,
@@ -236,6 +247,51 @@ test.describe('quick workout lifecycle', () => {
       page.getByRole('listitem', { name: /^This week: \d+ workouts? logged$/ }),
     ).toBeVisible()
     await expect(page.getByText('Secured this week')).toBeVisible()
+  })
+
+  // A workout starts when the training does. Choosing a routine, picking an
+  // exercise and queueing for a rack are not time under the bar, so the clock
+  // waits for the first number — and until it runs there is no session for the
+  // tab bar to offer back.
+  test('starts the clock and the tab timer at the first logged value @mutation', async ({
+    page,
+  }) => {
+    await page.goto('/workouts/quick')
+    const exercise = await addFirstExercise(page)
+
+    const elapsed = page.getByLabel('Elapsed')
+    await expect(elapsed).toHaveText('0:00')
+    // Long enough that a clock started on the screen would have moved on.
+    await page.waitForTimeout(1500)
+    await expect(elapsed).toHaveText('0:00')
+
+    const workoutTab = page
+      .getByRole('navigation', { name: 'Primary navigation' })
+      .getByRole('link', { name: 'Workout' })
+    const timerBadge = workoutTab.locator('span[aria-hidden="true"]')
+
+    await leaveInBackground(page)
+    // Nothing logged, so the tab leads to the picker and carries no clock.
+    await expect(workoutTab).toHaveAttribute('href', '/workout')
+    await expect(timerBadge).toHaveCount(0)
+
+    await page.goto('/workouts/quick')
+    await expect(elapsed).toHaveText('0:00')
+    // One field is enough: the set is being filled, so the session is running.
+    await page.getByRole('textbox', { name: `${exercise} set 1 weight`, exact: true }).fill('25')
+    await expect(elapsed).not.toHaveText('0:00')
+
+    await leaveInBackground(page)
+    await expect(workoutTab).toHaveAttribute('href', '/workouts/quick')
+    await expect(timerBadge).toHaveText(/^\d+m \d{2}s$/)
+
+    // And it saves from there like any other session.
+    await workoutTab.click()
+    await page.getByRole('textbox', { name: `${exercise} set 1 reps`, exact: true }).fill('8')
+    await page.getByRole('button', { name: 'Complete exercise' }).click()
+    await finishAndSave(page)
+    await expect(page).toHaveURL(/\/workouts\/[0-9a-f-]+$/)
+    await expect(page.getByText(/25\s*kg/)).toBeVisible()
   })
 
   test('promotes previous-session values into the set rows @mutation', async ({ page }) => {
