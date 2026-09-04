@@ -25,8 +25,9 @@ func (w Week) Start() time.Time {
 	return w.start
 }
 
-// Summarise counts the workouts finished within the week and the tonnage they
-// added up to, ignoring any workout that finished before the week began.
+// Summarise counts the workouts finished within the week and the tonnage and
+// ground they added up to, ignoring any workout that finished before the week
+// began.
 func (w Week) Summarise(workouts []*Workout) WeekSummary {
 	var summary WeekSummary
 	for _, workout := range workouts {
@@ -36,6 +37,7 @@ func (w Week) Summarise(workouts []*Workout) WeekSummary {
 
 		summary.Workouts++
 		summary.Volume += TotalVolume(workout.Sets)
+		summary.Distance += TotalDistance(workout.Sets)
 	}
 
 	return summary
@@ -45,4 +47,5 @@ func (w Week) Summarise(workouts []*Workout) WeekSummary {
 type WeekSummary struct {
 	Workouts int32
 	Volume   Volume
+	Distance Distance
 }

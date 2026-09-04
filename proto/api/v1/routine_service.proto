@@ -98,6 +98,9 @@ message GetDashboardResponse {
   // Every workout the athlete has ever logged, counted in the database rather
   // than measured off recent_workouts.
   int32 workout_count = 8;
+  // Kilometres covered this week: the unit every set is stored in, whatever
+  // unit it was entered in.
+  double distance_this_week = 9;
 }
 
 message Routine {

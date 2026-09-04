@@ -47,6 +47,18 @@ func TestTotalVolume(t *testing.T) {
 	require.Zero(t, training.TotalVolume(nil))
 }
 
+func TestTotalDistance(t *testing.T) {
+	t.Parallel()
+
+	sets := []*training.Set{
+		{Distance: 5},
+		{Distance: 2.5},
+	}
+
+	require.InDelta(t, 7.5, training.TotalDistance(sets).Float64(), 0.001)
+	require.Zero(t, training.TotalDistance(nil))
+}
+
 func TestWeekOfStartsOnMonday(t *testing.T) {
 	t.Parallel()
 
@@ -63,14 +75,15 @@ func TestWeekSummarise(t *testing.T) {
 	week := training.WeekOf(time.Date(2026, time.August, 19, 12, 0, 0, 0, time.UTC))
 	thisWeek := &training.Workout{
 		FinishedAt: week.Start().Add(time.Hour),
-		Sets:       []*training.Set{{Weight: 100, Reps: 5}},
+		Sets:       []*training.Set{{Weight: 100, Reps: 5, Distance: 5}},
 	}
 	lastWeek := &training.Workout{
 		FinishedAt: week.Start().Add(-time.Hour),
-		Sets:       []*training.Set{{Weight: 100, Reps: 5}},
+		Sets:       []*training.Set{{Weight: 100, Reps: 5, Distance: 5}},
 	}
 
 	summary := week.Summarise([]*training.Workout{thisWeek, lastWeek})
 	require.Equal(t, int32(1), summary.Workouts)
 	require.InDelta(t, 500.0, summary.Volume.Float64(), 0.001)
+	require.InDelta(t, 5.0, summary.Distance.Float64(), 0.001)
 }

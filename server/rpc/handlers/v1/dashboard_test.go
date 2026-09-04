@@ -126,6 +126,7 @@ func (s *dashboardSuite) TestThisWeekCountsOnlyWorkoutsFinishedSinceMonday() {
 		factory.SetExerciseID(exercise.ID),
 		factory.SetWeight(100),
 		factory.SetReps(5),
+		factory.SetDistance(3),
 	)
 
 	lastWeek := s.factory.NewWorkout(
@@ -139,11 +140,13 @@ func (s *dashboardSuite) TestThisWeekCountsOnlyWorkoutsFinishedSinceMonday() {
 		factory.SetExerciseID(exercise.ID),
 		factory.SetWeight(200),
 		factory.SetReps(5),
+		factory.SetDistance(9),
 	)
 
 	msg := s.dashboard(ctx, "")
 	s.Require().Equal(int32(1), msg.GetWorkoutsThisWeek())
 	s.Require().InDelta(500.0, msg.GetVolumeThisWeek(), 0.001)
+	s.Require().InDelta(3.0, msg.GetDistanceThisWeek(), 0.001)
 	s.Require().Len(msg.GetRecentWorkouts(), 2, "recent workouts are not limited to the current week")
 }
 
