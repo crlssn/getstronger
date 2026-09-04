@@ -491,6 +491,17 @@ func (s *authSuite) TestLoginHandsBackARefreshTokenTheSessionCanUse() {
 }
 
 func (s *authSuite) TestRefreshToken() {
+	expiredRefreshToken := func() string {
+		token, err := jwtlib.NewWithClaims(jwtlib.SigningMethodHS256, &jwt.Claims{
+			UserID:    uuid.Must(uuid.NewV4()),
+			ExpiresAt: jwtlib.NewNumericDate(time.Now().UTC().Add(-time.Hour)),
+			IssuedAt:  jwtlib.NewNumericDate(time.Now().UTC().Add(-jwt.ExpiryTimeRefresh - time.Hour)),
+			Subject:   jwt.TokenTypeRefresh.String(),
+		}).SignedString(s.jwt.Secrets.RefreshKey)
+		s.Require().NoError(err)
+		return token
+	}
+
 	type expected struct {
 		err error
 	}
@@ -529,6 +540,20 @@ func (s *authSuite) TestRefreshToken() {
 		{
 			name:  "err_access_token_provided",
 			token: s.jwt.MustCreateToken(uuid.Must(uuid.NewV4()), jwt.TokenTypeAccess),
+			init: func(t test) context.Context {
+				s.factory.NewAuth(factory.AuthRefreshToken(t.token))
+				ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
+				return xcontext.WithRefreshToken(ctx, t.token)
+			},
+			expected: expected{
+				err: connect.NewError(connect.CodeInvalidArgument, handlers.ErrInvalidRefreshToken),
+			},
+		},
+		{
+			// Parsing checks the expiry itself, so a stored token whose window
+			// has closed is refused at that step.
+			name:  "err_expired_token",
+			token: expiredRefreshToken(),
 			init: func(t test) context.Context {
 				s.factory.NewAuth(factory.AuthRefreshToken(t.token))
 				ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
@@ -676,6 +701,27 @@ func (s *authSuite) TestExpectedAuthFailuresLogAtWarn() {
 				s.factory.NewAuth(factory.AuthRefreshToken(token))
 				ctx := xcontext.WithRefreshToken(xcontext.WithLogger(context.Background(), logger), token)
 				_, err := s.handler.RefreshToken(ctx, &connect.Request[v1.RefreshTokenRequest]{
+					Msg: &v1.RefreshTokenRequest{},
+				})
+				s.Require().Error(err)
+			},
+		},
+		{
+			// Parsing is where an expired token is refused: it checks the
+			// expiry itself, under the same leeway a separate validation would.
+			name:    "refresh_with_expired_token",
+			message: "Parse refresh token",
+			call: func(logger *zap.Logger) {
+				token, err := jwtlib.NewWithClaims(jwtlib.SigningMethodHS256, &jwt.Claims{
+					UserID:    uuid.Must(uuid.NewV4()),
+					ExpiresAt: jwtlib.NewNumericDate(time.Now().UTC().Add(-time.Hour)),
+					IssuedAt:  jwtlib.NewNumericDate(time.Now().UTC().Add(-jwt.ExpiryTimeRefresh - time.Hour)),
+					Subject:   jwt.TokenTypeRefresh.String(),
+				}).SignedString(s.jwt.Secrets.RefreshKey)
+				s.Require().NoError(err)
+				s.factory.NewAuth(factory.AuthRefreshToken(token))
+				ctx := xcontext.WithRefreshToken(xcontext.WithLogger(context.Background(), logger), token)
+				_, err = s.handler.RefreshToken(ctx, &connect.Request[v1.RefreshTokenRequest]{
 					Msg: &v1.RefreshTokenRequest{},
 				})
 				s.Require().Error(err)
