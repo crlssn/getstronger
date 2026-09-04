@@ -78,8 +78,11 @@ changed_files() {
   ((refs)) || files_pushed "" HEAD
 }
 
+# Not a pipe: 'grep -q' stops at the first match, and the writer left holding a
+# broken pipe fails the pipeline under 'set -o pipefail' — an area that was
+# changed reported untouched, and its checks skipped.
 touches() {
-  printf '%s\n' "$CHANGED" | grep -qE "$1"
+  grep -qE "$1" <<<"$CHANGED"
 }
 
 abort() {
