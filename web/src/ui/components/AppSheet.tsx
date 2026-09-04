@@ -75,9 +75,8 @@ export const AppSheet = ({
     const el = backdrop.current
     return () => {
       if (!el || el.isConnected) return
-      // jsdom leaves animations out entirely; a reader who asked for less
-      // movement gets none (the stylesheet also stills the keyframes).
-      if (!('getAnimations' in el)) return
+      // A reader who asked for less movement gets none; the stylesheet also
+      // stills the keyframes.
       if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return
 
       el.classList.add(styles.closing)
@@ -86,6 +85,16 @@ export const AppSheet = ({
       document.body.append(el)
 
       const remove = () => el.remove()
+      // Asked, not sniffed: an element animates only once it is back in the
+      // document, and nothing plays under jsdom or a stylesheet that failed to
+      // load. Sniffing for the method instead left the copy waiting on the
+      // fallback timer as soon as anything in the bundle polyfilled it —
+      // @headlessui/react does, so importing a dropdown put a dismissed sheet
+      // back on screen for 400ms.
+      if (!el.getAnimations?.().length) {
+        remove()
+        return
+      }
       // Nothing here outlives the exit: the listener and timer hold the only
       // references to an element no longer React's, and `remove()` ends both.
       // eslint-disable-next-line @eslint-react/web-api-no-leaked-event-listener
