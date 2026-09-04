@@ -1,6 +1,6 @@
 import { DistanceUnit, ExerciseMetric, type Exercise, type Set } from '@/proto/api/v1/shared_pb'
 import { weightUnitLabel } from '@/utils/weightUnits'
-import { distanceUnitLabel, normalizeDistanceUnit } from '@/utils/distanceUnits'
+import { convertDistance, distanceUnitLabel, normalizeDistanceUnit } from '@/utils/distanceUnits'
 import { formatNumber } from '@/utils/numbers'
 import { i18n } from '@/i18n'
 
@@ -86,6 +86,23 @@ export const isDistanceTimeExercise = (exercise?: Pick<Exercise, 'metrics'>) => 
 // "0.74 km" makes the reader do the conversion.
 export const formatDistanceDisplay = (kilometers: number) =>
   kilometers < 1 ? `${formatNumber(kilometers * 1000)} m` : `${formatNumber(kilometers, 2)} km`
+
+/**
+ * A stored kilometre total in the unit the athlete reads in. Distances are
+ * stored and sent in kilometres whatever unit the set was entered in, so every
+ * total shown outside a set's own row goes through here.
+ */
+export const formatDistanceIn = (kilometers: number, unit?: DistanceUnit) => {
+  const preferred = normalizeDistanceUnit(unit)
+  // Metres are a sub-unit of ground covered, not of none: a week with nothing
+  // in it reads "0 km", where "0 m" reads as a distance somebody measured.
+  if (preferred === DistanceUnit.KILOMETERS && kilometers > 0) {
+    return formatDistanceDisplay(kilometers)
+  }
+
+  const distance = convertDistance(kilometers, DistanceUnit.KILOMETERS, preferred)
+  return `${formatNumber(distance, 2)} ${distanceUnitLabel(preferred)}`
+}
 
 /** Pace the way runners say it: "5:24 min/km", from seconds per kilometre. */
 export const formatPaceDisplay = (secondsPerKilometer: number) => {

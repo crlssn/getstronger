@@ -21,6 +21,7 @@ import { AppPreferenceRow } from '@/ui/components/AppPreferenceRow'
 import { AppSkeleton } from '@/ui/components/AppSkeleton'
 import { AppSwitch } from '@/ui/components/AppSwitch'
 import { distanceUnitLabel } from '@/utils/distanceUnits'
+import { formatDistanceIn } from '@/utils/exerciseMeasurements'
 import { handle, initials } from '@/utils/names'
 import { formatNumber } from '@/utils/numbers'
 import { weightUnitLabel } from '@/utils/weightUnits'
@@ -152,11 +153,20 @@ export const ProfileView = () => {
             <strong>{formatNumber(dashboard?.personalBests.length ?? 0)}</strong>
             <small>{t('profile.records')}</small>
           </article>
+          {/* Two figures scoped to the same week stand side by side, so each
+              names itself rather than both reading "this week". */}
           <article>
             <strong>
               {formatNumber(dashboard?.volumeThisWeek ?? 0)} {t('common.kg')}
             </strong>
-            <small>{t('profile.thisWeek')}</small>
+            <small>{t('profile.volumeThisWeek')}</small>
+          </article>
+          <article>
+            {/* The dashboard reports kilometres whatever the sets were entered
+                in; this is one of the places the athlete's own unit is read
+                back. */}
+            <strong>{formatDistanceIn(dashboard?.distanceThisWeek ?? 0, distanceUnit)}</strong>
+            <small>{t('profile.distanceThisWeek')}</small>
           </article>
         </section>
       </section>

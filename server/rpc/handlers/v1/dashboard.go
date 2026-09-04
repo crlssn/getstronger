@@ -109,6 +109,7 @@ func (d *dashboard) GetDashboard(ctx context.Context, req *connect.Request[apiv1
 		RecentWorkouts:   parser.WorkoutSlice(recentOf(workouts), personalBests),
 		ActivePlan:       parser.Plan(activePlan),
 		WorkoutCount:     safe.Int32FromInt64(workoutCount),
+		DistanceThisWeek: thisWeek.Distance.Float64(),
 	}), nil
 }
 

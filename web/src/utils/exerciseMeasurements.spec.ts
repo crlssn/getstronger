@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { DistanceUnit, ExerciseMetric } from '@/proto/api/v1/shared_pb'
 import {
   formatDistanceDisplay,
+  formatDistanceIn,
   formatDurationDisplay,
   formatExerciseSet,
   formatMeasurementDuration,
@@ -39,6 +40,29 @@ describe('formatDistanceDisplay', () => {
   it('keeps kilometres from one up', () => {
     expect(formatDistanceDisplay(1)).toBe('1 km')
     expect(formatDistanceDisplay(5.25)).toBe('5.25 km')
+  })
+})
+
+describe('formatDistanceIn', () => {
+  it('shows kilometres the way a kilometre reader wants them', () => {
+    expect(formatDistanceIn(0.744, DistanceUnit.KILOMETERS)).toBe('744 m')
+    expect(formatDistanceIn(5.25, DistanceUnit.KILOMETERS)).toBe('5.25 km')
+  })
+
+  // Metres are a sub-unit of ground covered, not of nothing: a week with no
+  // distance in it reads "0 km", where "0 m" reads as a measured distance.
+  it('leaves nothing covered in the whole unit', () => {
+    expect(formatDistanceIn(0, DistanceUnit.KILOMETERS)).toBe('0 km')
+    expect(formatDistanceIn(0, DistanceUnit.MILES)).toBe('0 mi')
+  })
+
+  it('converts to the unit the athlete reads in', () => {
+    expect(formatDistanceIn(1.61, DistanceUnit.MILES)).toBe('1 mi')
+    expect(formatDistanceIn(0.744, DistanceUnit.MILES)).toBe('0.46 mi')
+  })
+
+  it('falls back to kilometres when no unit was chosen', () => {
+    expect(formatDistanceIn(5.25)).toBe('5.25 km')
   })
 })
 

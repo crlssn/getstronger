@@ -51,6 +51,25 @@ const addFirstExercise = async (page: Parameters<typeof logIn>[0]) => {
   return name
 }
 
+// The seeded cardio exercise, whose set inputs are distance and time rather
+// than the weight and reps addFirstExercise deliberately avoids.
+const addCardioExercise = async (page: E2EPage) => {
+  await page.getByRole('button', { name: 'Choose exercise' }).click()
+  const picker = page.getByRole('dialog', { name: 'Add exercise' })
+  const option = pickerOptions(page, picker).filter({ hasText: 'Cardio' }).first()
+  const name = (await option.locator('strong').innerText()).trim()
+  await option.click()
+  return name
+}
+
+// The stat is shown the way a runner reads it, so a total under a kilometre
+// comes back in metres.
+const kilometresIn = async (stat: ReturnType<E2EPage['locator']>) => {
+  const text = (await stat.innerText()).trim()
+  const value = Number(text.replace(/[^\d.]/g, ''))
+  return text.endsWith('km') ? value : value / 1000
+}
+
 // Finishing always pauses on the confirmation sheet that carries the note.
 const finishAndSave = async (page: Parameters<typeof logIn>[0]) => {
   await page.getByRole('button', { name: 'Finish workout' }).click()
@@ -308,6 +327,41 @@ test.describe('quick workout lifecycle', () => {
     await page.goto('/profile')
     // Rendered through formatNumber(), so the expectation carries separators too.
     await expect(workoutsStat).toHaveText((before + 1).toLocaleString('en-US'))
+  })
+
+  // Distance is stored in kilometres whatever unit the set was entered in, so
+  // a run has to reach the week's total on the Me tab and the row on the home
+  // feed, through the dashboard and the feed alike.
+  test('counts a run’s distance on the profile and the feed row @mutation', async ({ page }) => {
+    const distanceStat = page
+      .getByRole('region', { name: 'Training summary' })
+      .locator('article')
+      .filter({ hasText: 'distance this week' })
+      .locator('strong')
+
+    await page.goto('/profile')
+    await expect(distanceStat).toBeVisible()
+    const before = await kilometresIn(distanceStat)
+
+    await page.goto('/workouts/quick')
+    const exercise = await addCardioExercise(page)
+    await page.getByRole('textbox', { name: `${exercise} set 1 distance`, exact: true }).fill('4')
+    const time = page.getByRole('textbox', { name: `${exercise} set 1 time`, exact: true })
+    await time.fill('2000')
+    await time.blur()
+    await page.getByRole('button', { name: 'Complete exercise' }).click()
+    await finishAndSave(page)
+    await expect(page).toHaveURL(/\/workouts\/[0-9a-f-]+$/)
+
+    await page.goto('/profile')
+    await expect.poll(async () => kilometresIn(distanceStat)).toBeCloseTo(before + 4, 1)
+
+    // The newest row on the feed says how far the session went, and says
+    // nothing about the kilograms a run never lifted.
+    await page.goto('/home')
+    const row = page.getByRole('listitem').filter({ hasText: 'Quick Workout' }).first()
+    await expect(row).toContainText('4 km')
+    await expect(row).not.toContainText('kg')
   })
 
   test('discards local progress without creating a workout @mutation', async ({ page }) => {

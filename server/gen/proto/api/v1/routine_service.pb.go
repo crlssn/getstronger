@@ -723,9 +723,12 @@ type GetDashboardResponse struct {
 	ActivePlan     *Plan      `protobuf:"bytes,7,opt,name=active_plan,json=activePlan,proto3" json:"active_plan,omitempty"`
 	// Every workout the athlete has ever logged, counted in the database rather
 	// than measured off recent_workouts.
-	WorkoutCount  int32 `protobuf:"varint,8,opt,name=workout_count,json=workoutCount,proto3" json:"workout_count,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	WorkoutCount int32 `protobuf:"varint,8,opt,name=workout_count,json=workoutCount,proto3" json:"workout_count,omitempty"`
+	// Kilometres covered this week: the unit every set is stored in, whatever
+	// unit it was entered in.
+	DistanceThisWeek float64 `protobuf:"fixed64,9,opt,name=distance_this_week,json=distanceThisWeek,proto3" json:"distance_this_week,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
 }
 
 func (x *GetDashboardResponse) Reset() {
@@ -810,6 +813,13 @@ func (x *GetDashboardResponse) GetActivePlan() *Plan {
 func (x *GetDashboardResponse) GetWorkoutCount() int32 {
 	if x != nil {
 		return x.WorkoutCount
+	}
+	return 0
+}
+
+func (x *GetDashboardResponse) GetDistanceThisWeek() float64 {
+	if x != nil {
+		return x.DistanceThisWeek
 	}
 	return 0
 }
@@ -1849,7 +1859,7 @@ const file_api_v1_routine_service_proto_rawDesc = "" +
 	"\fexercise_ids\x18\x02 \x03(\tB\x0f\xbaH\f\x92\x01\t\b\x01\"\x05r\x03\xb0\x01\x01R\vexerciseIds\"\x1d\n" +
 	"\x1bUpdateExerciseOrderResponse\"T\n" +
 	"\x13GetDashboardRequest\x12=\n" +
-	"\x14preferred_routine_id\x18\x01 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\xb0\x01\x01R\x12preferredRoutineId\"\x99\x03\n" +
+	"\x14preferred_routine_id\x18\x01 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\xb0\x01\x01R\x12preferredRoutineId\"\xc7\x03\n" +
 	"\x14GetDashboardResponse\x122\n" +
 	"\fnext_routine\x18\x01 \x01(\v2\x0f.api.v1.RoutineR\vnextRoutine\x12+\n" +
 	"\broutines\x18\x02 \x03(\v2\x0f.api.v1.RoutineR\broutines\x12,\n" +
@@ -1859,7 +1869,8 @@ const file_api_v1_routine_service_proto_rawDesc = "" +
 	"\x0frecent_workouts\x18\x06 \x03(\v2\x0f.api.v1.WorkoutR\x0erecentWorkouts\x12-\n" +
 	"\vactive_plan\x18\a \x01(\v2\f.api.v1.PlanR\n" +
 	"activePlan\x12#\n" +
-	"\rworkout_count\x18\b \x01(\x05R\fworkoutCount\"\xa8\x01\n" +
+	"\rworkout_count\x18\b \x01(\x05R\fworkoutCount\x12,\n" +
+	"\x12distance_this_week\x18\t \x01(\x01R\x10distanceThisWeek\"\xa8\x01\n" +
 	"\aRoutine\x12\x18\n" +
 	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x02id\x12\x1b\n" +
 	"\x04name\x18\x02 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x04name\x128\n" +

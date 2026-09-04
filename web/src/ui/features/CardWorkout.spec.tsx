@@ -71,6 +71,29 @@ const withSets = () =>
     ],
   })
 
+// A session with ground covered and nothing lifted, which is what the row's
+// zero-hiding is for.
+const ran = () =>
+  create(WorkoutSchema, {
+    id: 'workout-2',
+    name: 'Intervals',
+    intensity: 0,
+    user: { id: ownerId, name: 'Alice Lifter', username: 'alice' },
+    exerciseSets: [
+      {
+        exercise: {
+          id: 'exercise-run',
+          name: 'Run',
+          metrics: [ExerciseMetric.DISTANCE, ExerciseMetric.TIME],
+        },
+        sets: [
+          { id: 'set-1', distance: 2.6, durationSeconds: 600 },
+          { id: 'set-2', distance: 2.6, durationSeconds: 600 },
+        ],
+      },
+    ],
+  })
+
 const lift = (id: string, name: string) => ({
   id,
   name,
@@ -169,6 +192,23 @@ describe('CardWorkout', () => {
       render(<CardWorkout compact workout={withSets()} />)
 
       expect(screen.getByText(/4,200 kg/)).toHaveTextContent(/2 sets/)
+    })
+
+    test('counts the ground a session covered', () => {
+      render(<CardWorkout compact workout={ran()} />)
+
+      expect(screen.getByText(/5.2 km/)).toHaveTextContent(/2 sets/)
+    })
+
+    // A row said "0 kg" for every run and would now say "0 km" for every
+    // lift: a unit the session never trained in is a unit it has nothing to
+    // report in.
+    test('leaves out a unit the session logged nothing in', () => {
+      render(<CardWorkout compact workout={ran()} />)
+      expect(screen.getByText(/5.2 km/)).not.toHaveTextContent('kg')
+
+      render(<CardWorkout compact workout={withSets()} />)
+      expect(screen.getByText(/4,200 kg/)).not.toHaveTextContent('km')
     })
 
     // PRS repeated the badge beside the title, and DURATION was 60 min on

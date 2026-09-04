@@ -148,6 +148,7 @@ describe('ProfileView', () => {
         recentWorkouts: [{ id: 'w1' }, { id: 'w2' }, { id: 'w3' }],
         personalBests: [{ set: { id: 's1' } }],
         volumeThisWeek: 4200,
+        distanceThisWeek: 8.4,
       }),
     })
     render()
@@ -157,6 +158,24 @@ describe('ProfileView', () => {
     expect(stats.queryByText('3')).not.toBeInTheDocument()
     expect(stats.getByText('1')).toBeInTheDocument()
     expect(stats.getByText('4,200 kg')).toBeInTheDocument()
+    expect(stats.getByText('8.4 km')).toBeInTheDocument()
+    // Two figures scoped to the week stand side by side, so each says which
+    // of the two it is rather than both reading "this week".
+    expect(stats.getByText('volume this week')).toBeInTheDocument()
+    expect(stats.getByText('distance this week')).toBeInTheDocument()
+  })
+
+  // The dashboard reports kilometres whatever the set was entered in; the
+  // card is one of the places the athlete's own unit is read back.
+  test('shows the week’s distance in the unit the athlete reads in', async () => {
+    mocked.getCurrentUser.mockResolvedValue(profile({ distanceUnit: DistanceUnit.MILES }))
+    useDashboardStore.setState({
+      dashboard: create(GetDashboardResponseSchema, { distanceThisWeek: 8.4 }),
+    })
+    render()
+
+    const stats = within(await screen.findByRole('region', { name: 'Training summary' }))
+    expect(stats.getByText('5.22 mi')).toBeInTheDocument()
   })
 
   describe('the notification badge', () => {

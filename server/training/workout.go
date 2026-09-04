@@ -71,6 +71,25 @@ func TotalVolume(sets []*Set) Volume {
 	return total
 }
 
+// Distance is ground covered, in kilometres — the unit every set is stored in,
+// whatever unit it was entered in.
+type Distance float64
+
+// Float64 renders the distance for callers that report it numerically.
+func (d Distance) Float64() float64 {
+	return float64(d)
+}
+
+// TotalDistance is the ground a collection of sets covered.
+func TotalDistance(sets []*Set) Distance {
+	var total Distance
+	for _, set := range sets {
+		total += Distance(set.Distance)
+	}
+
+	return total
+}
+
 // Workout is a session an athlete has logged. The relations are filled in
 // only when the read asked for them, so a nil slice means "not loaded" rather
 // than "none".

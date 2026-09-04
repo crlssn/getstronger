@@ -7,7 +7,7 @@ import { useTranslation } from 'react-i18next'
 import { Link, useNavigate } from 'react-router-dom'
 
 import { consumeRequestError, deleteWorkout, postWorkoutComment } from '@/http/requests'
-import { DistanceUnit, RoutineGroupMode } from '@/proto/api/v1/shared_pb'
+import { RoutineGroupMode } from '@/proto/api/v1/shared_pb'
 import { useToastStore } from '@/stores/toasts'
 import { useAuthStore } from '@/stores/auth'
 import { useConfirmationStore } from '@/stores/confirmation'
@@ -24,8 +24,7 @@ import { CardWorkoutExercise } from '@/ui/features/CardWorkoutExercise'
 import { AppInlineError } from '@/ui/components/AppInlineError'
 import { DropdownButton } from '@/ui/components/DropdownButton'
 import { handle, initials } from '@/utils/names'
-import { convertDistance, distanceUnitLabel, normalizeDistanceUnit } from '@/utils/distanceUnits'
-import { formatDistanceDisplay, formatDurationDisplay } from '@/utils/exerciseMeasurements'
+import { formatDistanceIn, formatDurationDisplay } from '@/utils/exerciseMeasurements'
 import { formatNumber } from '@/utils/numbers'
 import { usePreferencesStore } from '@/stores/preferences'
 import { groupLetter } from '@/utils/routineGroups'
@@ -170,13 +169,7 @@ export const CardWorkout = ({ workout, compact, unseen = false }: Props) => {
         metric(t('workout.totalVolume'), `${formatNumber(workout.intensity)} ${t('common.kg')}`)}
       {totalReps > 0 && metric(t('common.reps'), formatNumber(totalReps))}
       {totalDistanceKm > 0 &&
-        metric(
-          t('common.distance'),
-          // Kilometres switch to metres below one; miles have no such sub-unit.
-          normalizeDistanceUnit(preferredDistanceUnit) === DistanceUnit.KILOMETERS
-            ? formatDistanceDisplay(totalDistanceKm)
-            : `${formatNumber(convertDistance(totalDistanceKm, DistanceUnit.KILOMETERS, preferredDistanceUnit), 2)} ${distanceUnitLabel(preferredDistanceUnit)}`,
-        )}
+        metric(t('common.distance'), formatDistanceIn(totalDistanceKm, preferredDistanceUnit))}
       {totalSetSeconds > 0 && metric(t('common.time'), formatDurationDisplay(totalSetSeconds))}
       {metric(t('common.duration'), `${durationMinutes} ${t('common.min')}`)}
       {metric(t('workout.setsLogged'), `${setCount}`)}
@@ -227,11 +220,15 @@ export const CardWorkout = ({ workout, compact, unseen = false }: Props) => {
               <Link to={`/users/${workout.user?.id}`}>{handle(workout.user?.username)}</Link>
             </div>
 
-            {/* Volume and sets before the date: the line truncates from the
-                end, and the date is the part worth losing first. */}
+            {/* What the session moved and how far, then sets, then the date:
+                the line truncates from the end, and the date is the part
+                worth losing first. A unit the session logged nothing in is
+                left out — every run read "0 kg", and every lift would now
+                read "0 km". */}
             <p className={styles.feedMeta}>
               {[
-                `${formatNumber(workout.intensity)} ${t('common.kg')}`,
+                workout.intensity > 0 && `${formatNumber(workout.intensity)} ${t('common.kg')}`,
+                totalDistanceKm > 0 && formatDistanceIn(totalDistanceKm, preferredDistanceUnit),
                 t('workout.setsCompact', { count: setCount }),
                 finishedDate,
               ]
