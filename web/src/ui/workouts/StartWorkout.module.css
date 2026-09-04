@@ -122,6 +122,14 @@
   @apply block truncate text-sm font-semibold text-text;
 }
 
+/* Done and folded: the row keeps its anatomy and steps back, so the stack
+   reads down to the one still being worked. Quiet rather than tinted — a
+   colour here would be the status light the tiles below already refused. */
+.exerciseItem.completed:not(.open) .exerciseName,
+.exerciseItem.completed:not(.open) .exerciseIndex {
+  @apply text-text-subtle;
+}
+
 .exerciseItem.open .exerciseName {
   @apply text-title;
 }
