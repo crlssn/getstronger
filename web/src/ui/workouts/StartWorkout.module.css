@@ -1,7 +1,10 @@
 @reference '../../assets/base.css';
 
+/* The focused shell zeroes its own padding, so the session is the only thing
+   between the finish button and the home indicator. */
 .workoutShell {
-  @apply mx-auto max-w-3xl space-y-4 pb-8;
+  padding-bottom: calc(2rem + env(safe-area-inset-bottom));
+  @apply mx-auto max-w-3xl space-y-4;
 }
 
 /* The chrome spans the viewport while its contents stay aligned with the app,
