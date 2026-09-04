@@ -1,5 +1,6 @@
 import type { Notification } from '@/proto/api/v1/notification_service_pb'
 
+import { ChevronRightIcon } from '@heroicons/react/24/outline'
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -148,6 +149,7 @@ export const ListNotifications = () => {
               )}
 
               {!notification.read && <AppUnreadDot />}
+              <ChevronRightIcon aria-hidden="true" />
             </AppListItem>
           ))}
         </AppList>

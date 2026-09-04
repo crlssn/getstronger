@@ -140,6 +140,19 @@ describe('HomePageActions', () => {
     )
   })
 
+  // A row that navigates says so, here as everywhere else — an avatar tile and
+  // a chevron for each result.
+  test('gives every result a chevron', async () => {
+    withResults()
+    renderOpen()
+
+    await userEvent.type(field(), 'push')
+    await settle()
+
+    const row = await screen.findByRole('link', { name: /Push day/ })
+    expect(row.querySelectorAll('svg')).toHaveLength(2)
+  })
+
   // The plans endpoint takes no query, so a plan that does not match must be
   // filtered out here rather than shown as a result.
   test('keeps only the plans whose name matches', async () => {

@@ -1,4 +1,4 @@
-import { CheckIcon, PlusIcon } from '@heroicons/react/24/outline'
+import { CheckIcon, ChevronRightIcon, PlusIcon } from '@heroicons/react/24/outline'
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
@@ -248,6 +248,7 @@ export const PlansView = () => {
                       {t('training.makeActive')}
                     </AppButton>
                   )}
+                  <ChevronRightIcon className={styles.chevron} aria-hidden="true" />
                 </article>
               ))}
             </section>
