@@ -66,22 +66,19 @@ export const UserLogin = () => {
           onChange={(event) => setEmail(event.target.value)}
         />
 
-        <div>
-          <div className="flex items-center justify-between gap-4">
-            <span className="text-sm font-semibold text-text">{t('auth.password')}</span>
+        <AppPasswordInput
+          id="password"
+          name="password"
+          label={t('auth.password')}
+          labelAction={
             <AppButton type="link" colour="ghost" size="sm" width="auto" to="/forgot-password">
               {t('auth.forgotPassword')}
             </AppButton>
-          </div>
-          <AppPasswordInput
-            id="password"
-            name="password"
-            aria-label={t('auth.password')}
-            required
-            value={password}
-            onValueChange={setPassword}
-          />
-        </div>
+          }
+          required
+          value={password}
+          onValueChange={setPassword}
+        />
 
         {error && <AppInlineError>{error}</AppInlineError>}
 

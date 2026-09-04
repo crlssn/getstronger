@@ -8,6 +8,8 @@ import styles from './AppInput.module.css'
 interface Props extends Omit<ComponentProps<'input'>, 'className'> {
   /** The field's visible label. Without one, pass `aria-label` instead. */
   label?: string
+  /** A control on the label's own line, like a password field's "Forgot it?". */
+  labelAction?: ReactNode
   /** A line under the label explaining what the field wants. */
   hint?: string
   invalid?: boolean
@@ -31,6 +33,7 @@ interface Props extends Omit<ComponentProps<'input'>, 'className'> {
  */
 export const AppInput = ({
   label,
+  labelAction,
   hint,
   invalid,
   trailing,
@@ -45,9 +48,12 @@ export const AppInput = ({
   return (
     <div className={cn(styles.field, variant === 'hero' && styles.hero, className)}>
       {label && (
-        <label htmlFor={inputId} className={styles.label}>
-          {label}
-        </label>
+        <div className={styles.labelRow}>
+          <label htmlFor={inputId} className={styles.label}>
+            {label}
+          </label>
+          {labelAction}
+        </div>
       )}
       {hint && <p className={styles.hint}>{hint}</p>}
       <div className={styles.control}>

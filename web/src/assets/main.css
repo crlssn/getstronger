@@ -96,8 +96,12 @@ select {
   @apply space-y-5;
 }
 
+/* The only route between logging in and signing up, so it carries a thumb's
+   worth of room on both axes — "Log in" is 40px of text. The negative margin
+   spends the height on the hit area rather than on the line, which keeps the
+   sentence it sits in the height it was. */
 .auth-link {
-  @apply font-semibold text-ink underline decoration-ink-border underline-offset-4 transition hover:text-ink-strong hover:decoration-ink-muted;
+  @apply -my-3 inline-flex min-h-(--size-control-sm) min-w-(--size-control-sm) items-center justify-center py-3 font-semibold text-ink underline decoration-ink-border underline-offset-4 transition hover:text-ink-strong hover:decoration-ink-muted;
 }
 
 .auth-footer {

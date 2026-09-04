@@ -28,6 +28,15 @@ describe('AppInput', () => {
     expect(screen.getByText('Letters and numbers only.')).toBeInTheDocument()
   })
 
+  // "Forgot your password?" belongs beside the label it answers, not above
+  // it in markup the screen assembles for itself.
+  test('puts an action on the label line', () => {
+    render(<AppInput label="Password" labelAction={<a href="/forgot">Forgot it?</a>} />)
+
+    const label = screen.getByText('Password')
+    expect(label.parentElement).toContainElement(screen.getByRole('link', { name: 'Forgot it?' }))
+  })
+
   // A field inside a sheet or a toolbar carries its name in an aria-label
   // instead, and must still be reachable by it.
   test('renders without a visible label', () => {
