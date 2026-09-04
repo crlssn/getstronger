@@ -1,9 +1,10 @@
 @reference '../../assets/base.css';
 
-/* Floats above the bottom navigation, mirroring the update banner, where it
-   covers no header actions. */
+/* Floats above whatever the screen pins to its bottom edge — the tab bar, a
+   form's action bar, neither on the workout session — mirroring the update
+   banner and the toaster, where it covers no header actions. */
 .offlineBanner {
-  bottom: calc(5.75rem + env(safe-area-inset-bottom));
+  bottom: calc(var(--bottom-chrome, 0px) + env(safe-area-inset-bottom) + 1.25rem);
   @apply fixed inset-x-0 z-40 mx-auto flex w-max max-w-[calc(100%-1.5rem)] items-center gap-2 rounded-pill bg-surface-inverse px-4 py-2 text-text-inverse shadow-overlay;
 }
 

@@ -1,10 +1,12 @@
 import { ArrowPathIcon, XMarkIcon } from '@heroicons/react/24/outline'
+import type { CSSProperties } from 'react'
 import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { AppButton } from '@/ui/components/AppButton'
 import { AppIconButton } from '@/ui/components/AppIconButton'
 import { useAppVersionStore } from '@/stores/appVersion'
+import { selectBottomChrome, useBottomChrome } from '@/stores/bottomChrome'
 import styles from './AppUpdateBanner.module.css'
 
 // Prompts rather than reloading on its own: a reload mid-set would interrupt a
@@ -12,6 +14,7 @@ import styles from './AppUpdateBanner.module.css'
 export const AppUpdateBanner = () => {
   const { t } = useTranslation()
   const updateAvailable = useAppVersionStore((state) => state.updateAvailable)
+  const bottomChrome = useBottomChrome(selectBottomChrome)
 
   useEffect(() => {
     const version = useAppVersionStore.getState()
@@ -22,7 +25,12 @@ export const AppUpdateBanner = () => {
   if (!updateAvailable) return null
 
   return (
-    <div className={styles.updateBanner} role="status">
+    <div
+      className={styles.updateBanner}
+      // Above whatever is pinned down there, like the toaster.
+      style={{ '--bottom-chrome': `${bottomChrome}px` } as CSSProperties}
+      role="status"
+    >
       <ArrowPathIcon aria-hidden="true" />
       <p>{t('update.available')}</p>
       <AppButton

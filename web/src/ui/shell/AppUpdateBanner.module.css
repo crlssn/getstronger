@@ -1,8 +1,10 @@
 @reference '../../assets/base.css';
 
-/* Sits above the bottom navigation and the workout dock. */
+/* Sits above whatever the screen pins to its bottom edge, measured rather
+   than assumed: the tab-bar height it used to hard-code is not there on a
+   form or in the workout session. */
 .updateBanner {
-  bottom: calc(5.75rem + env(safe-area-inset-bottom));
+  bottom: calc(var(--bottom-chrome, 0px) + env(safe-area-inset-bottom) + 1.25rem);
   @apply fixed inset-x-0 z-50 mx-auto flex max-w-lg items-center gap-3 rounded-card bg-surface-inverse px-4 py-3 text-text-inverse shadow-overlay;
   margin-inline: 0.75rem;
 }
