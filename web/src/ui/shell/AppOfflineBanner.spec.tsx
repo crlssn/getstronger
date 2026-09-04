@@ -12,6 +12,7 @@ vi.mock('@/http/offlineCache', async (importOriginal) => ({
 
 import { clearOfflineCache } from '@/http/offlineCache'
 import { useAuthStore } from '@/stores/auth'
+import { useBottomChrome } from '@/stores/bottomChrome'
 import { useConnectionStore } from '@/stores/connection'
 import { useMutationQueueStore } from '@/stores/mutationQueue'
 import { renderWithProviders } from '@/ui/testing'
@@ -32,6 +33,27 @@ describe('AppOfflineBanner', () => {
     useConnectionStore.setState({ online: true, reconnectCallbacks: [] })
     useMutationQueueStore.setState({ pending: [] })
     useAuthStore.setState({ userId: 'user-1', accessToken: 'token' })
+    useBottomChrome.setState({ pinned: {} })
+  })
+
+  // It used to clear a hard-coded tab-bar height, so on a screen with no tab
+  // bar — a form, the workout session — it floated 92px up over the content,
+  // and on a form it could land on the pinned footer.
+  test('floats above whatever is pinned to the bottom', () => {
+    useBottomChrome.setState({ pinned: { 'form-footer': 107 } })
+    useConnectionStore.setState({ online: false })
+
+    renderWithProviders(<AppOfflineBanner />)
+
+    expect(screen.getByRole('status').style.getPropertyValue('--bottom-chrome')).toBe('107px')
+  })
+
+  test('sits on the edge when nothing is pinned there', () => {
+    useConnectionStore.setState({ online: false })
+
+    renderWithProviders(<AppOfflineBanner />)
+
+    expect(screen.getByRole('status').style.getPropertyValue('--bottom-chrome')).toBe('0px')
   })
 
   afterEach(() => {

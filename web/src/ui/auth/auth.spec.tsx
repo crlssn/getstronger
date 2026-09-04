@@ -105,6 +105,17 @@ describe('UserLogin', () => {
     expect(await screen.findByRole('button', { name: 'Log in' })).toBeEnabled()
   })
 
+  // The visible "Password" used to be a <span>, so the one thing that binds a
+  // label to a field — tapping it puts the cursor in the field, and a screen
+  // reader reads them as one — was missing on the screen everyone starts on.
+  test('binds the password label to the field it names', () => {
+    renderScreen(<UserLogin />)
+
+    const label = screen.getByText('Password')
+    expect(label.tagName).toBe('LABEL')
+    expect(label).toHaveAttribute('for', field('Password').id)
+  })
+
   test('offers a way to recover a password and to sign up', () => {
     renderScreen(<UserLogin />)
 

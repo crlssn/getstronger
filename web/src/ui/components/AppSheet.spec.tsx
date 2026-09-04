@@ -193,12 +193,12 @@ describe('AppSheet', () => {
 // Callers close a sheet by unmounting it, so the slide-down has to be staged
 // outside React: the sheet puts its detached backdrop back into the body —
 // inert, hidden from assistive tech — and removes it when the animation ends.
-// jsdom cannot run animations, so these specs grant the capability explicitly.
+// jsdom cannot run animations, so these specs stage one explicitly.
 describe('AppSheet exit', () => {
-  const grantAnimations = () => {
+  const grantAnimations = (playing = [{} as Animation]) => {
     Object.defineProperty(HTMLElement.prototype, 'getAnimations', {
       configurable: true,
-      value: () => [],
+      value: () => playing,
     })
   }
 
@@ -252,6 +252,20 @@ describe('AppSheet exit', () => {
   })
 
   test('goes at once where animations cannot run', () => {
+    const { unmount } = renderWithProviders(<AppSheet title="Leave workout?" onClose={vi.fn()} />)
+    const backdrop = dialog().parentElement as HTMLElement
+
+    unmount()
+
+    expect(document.body.contains(backdrop)).toBe(false)
+  })
+
+  // The method existing is not the animation playing: jsdom gains it the
+  // moment anything in the bundle polyfills it, and a copy staged against an
+  // animation that never starts sits on the page for the fallback timer's
+  // 400ms — long enough for the next assertion to find the dismissed sheet.
+  test('goes at once when nothing is actually playing', () => {
+    grantAnimations([])
     const { unmount } = renderWithProviders(<AppSheet title="Leave workout?" onClose={vi.fn()} />)
     const backdrop = dialog().parentElement as HTMLElement
 

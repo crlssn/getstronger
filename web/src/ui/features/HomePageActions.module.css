@@ -21,7 +21,13 @@
 }
 
 .searchResults a {
-  @apply grid w-full grid-cols-[auto_1fr] items-center gap-3 border-b border-border p-4 transition last:border-b-0 hover:bg-ink-surface;
+  @apply grid w-full grid-cols-[auto_1fr_auto] items-center gap-3 border-b border-border p-4 transition last:border-b-0 hover:bg-ink-surface;
+}
+
+/* The same chevron <AppListRow> ends with: a row that goes somewhere says so
+   the same way wherever it is. */
+.chevron {
+  @apply size-5 shrink-0 text-text-subtle;
 }
 
 .searchResults strong,

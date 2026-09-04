@@ -121,11 +121,18 @@
 }
 
 .otherPlans article {
-  @apply flex min-h-16 items-center justify-between gap-3 border-t border-border;
+  @apply flex min-h-16 items-center gap-3 border-t border-border;
 }
 
+/* The name takes the room the row's trailing action and chevron leave. */
 .otherPlans article a {
-  @apply min-w-0;
+  @apply min-w-0 flex-1;
+}
+
+/* The same chevron <AppListRow> ends with: a row that goes somewhere says so
+   the same way wherever it is. */
+.chevron {
+  @apply size-5 shrink-0 text-text-subtle;
 }
 
 .otherPlans article strong,

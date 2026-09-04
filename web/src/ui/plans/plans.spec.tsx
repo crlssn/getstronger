@@ -139,6 +139,19 @@ describe('PlansView', () => {
     await waitFor(() => expect(pause).toHaveBeenCalled())
   })
 
+  // A row that navigates says so, here as everywhere else.
+  test('gives every other plan a chevron to its own page', async () => {
+    withPlans([plan({ active: true }), plan({ id: 'plan-2', name: 'Full body' })])
+    render()
+
+    const other = (await screen.findByText('Full body')).closest('article')!
+    expect(within(other).getByRole('link', { name: /Full body/ })).toHaveAttribute(
+      'href',
+      '/plans/plan-2',
+    )
+    expect(other.querySelectorAll('svg')).toHaveLength(1)
+  })
+
   // Only one plan runs at a time, so activating another one ends the first.
   test('asks before swapping the running plan for another', async () => {
     const activate = vi.spyOn(usePlanStore.getState(), 'activate').mockResolvedValue(undefined)

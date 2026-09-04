@@ -5,6 +5,7 @@ import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 import { useAppVersionStore } from '@/stores/appVersion'
+import { useBottomChrome } from '@/stores/bottomChrome'
 import { renderWithProviders } from '@/ui/testing'
 import { AppUpdateBanner } from './AppUpdateBanner'
 
@@ -15,6 +16,18 @@ describe('AppUpdateBanner', () => {
       updateAvailable: false,
       dismissedVersion: '',
     })
+    useBottomChrome.setState({ pinned: {} })
+  })
+
+  // The same hard-coded tab-bar height the offline banner cleared: on the
+  // workout session there is no tab bar under it to clear.
+  test('floats above whatever is pinned to the bottom', () => {
+    useBottomChrome.setState({ pinned: { 'tab-bar': 92 } })
+    useAppVersionStore.setState({ updateAvailable: true })
+
+    renderWithProviders(<AppUpdateBanner />)
+
+    expect(screen.getByRole('status').style.getPropertyValue('--bottom-chrome')).toBe('92px')
   })
 
   test('says nothing while the running build is current', () => {

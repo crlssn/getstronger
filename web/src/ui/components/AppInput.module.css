@@ -4,6 +4,12 @@
   @apply block;
 }
 
+/* A label alone is the whole row; one with an action beside it shares the
+   line, which is where "Forgot your password?" belongs. */
+.labelRow {
+  @apply flex items-center justify-between gap-4;
+}
+
 .label {
   @apply block text-sm font-semibold text-text;
 }
@@ -18,7 +24,7 @@
   @apply relative;
 }
 
-.label + .control,
+.labelRow + .control,
 .hint + .control {
   @apply mt-2;
 }

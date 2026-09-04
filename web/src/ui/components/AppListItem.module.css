@@ -12,8 +12,10 @@
   @apply block text-sm font-semibold text-text-muted;
 }
 
+/* The row's trailing icon is the chevron that says it goes somewhere, in the
+   same size and tone <AppListRow> ends with. */
 .item > svg {
-  @apply size-5 shrink-0;
+  @apply size-5 shrink-0 text-text-subtle;
 }
 
 .link {
@@ -21,5 +23,5 @@
 }
 
 .link > svg {
-  @apply size-5 shrink-0;
+  @apply size-5 shrink-0 text-text-subtle;
 }

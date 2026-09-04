@@ -131,6 +131,16 @@ describe('ListNotifications', () => {
     expect(row).toHaveAttribute('href', '/workouts/w1')
   })
 
+  // A row that navigates says so, here as everywhere else.
+  test('ends each row with a chevron', async () => {
+    mocked.listNotifications.mockResolvedValue(page([follow('n1')]))
+    render()
+
+    const row = (await screen.findByRole('link')).closest('li')!
+    // The row's own icon, then the chevron the list item ends with.
+    expect(row.querySelectorAll(':scope > svg')).toHaveLength(1)
+  })
+
   test('calls out an unread row for a screen reader', async () => {
     mocked.listNotifications.mockResolvedValue(page([follow('n1'), follow('n2', true)]))
     render()

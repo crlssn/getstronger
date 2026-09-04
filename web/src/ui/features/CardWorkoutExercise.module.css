@@ -42,6 +42,17 @@
   @apply px-4 pb-4 sm:px-5;
 }
 
+/* Five metrics at their column minimum outgrow a 390px card, so the table
+   scrolls inside it rather than widening it. The gutters are where a record
+   row's tint bleeds to, and the scroller would otherwise cut it off. */
+.setTableScroll {
+  @apply -mx-2 overflow-x-auto px-2;
+}
+
+.setTable {
+  @apply min-w-max;
+}
+
 .setRow {
   grid-template-columns: 2.25rem repeat(var(--metric-count), minmax(4.5rem, 1fr)) 1.25rem;
   @apply grid min-h-11 items-center gap-2 border-t border-border text-body;

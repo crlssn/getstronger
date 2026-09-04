@@ -1,5 +1,6 @@
 import type { User } from '@/proto/api/v1/shared_pb'
 
+import { ChevronRightIcon } from '@heroicons/react/24/outline'
 import { useCallback, useEffect, useState } from 'react'
 
 import { AppErrorState } from '@/ui/components/AppErrorState'
@@ -49,6 +50,7 @@ export const UserList = ({ fetchUsers, empty }: Props) => {
             <strong className="block font-medium">{handle(user.username)}</strong>
             <small className="mt-0.5 block text-sm font-normal text-text-subtle">{user.name}</small>
           </span>
+          <ChevronRightIcon aria-hidden="true" />
         </AppListItemLink>
       ))}
     </AppList>

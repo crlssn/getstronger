@@ -19,12 +19,27 @@ import { collectFiles, readSource } from '../tests/sourceScan'
  * It also catches the rule that was never live: `.routineOptions >
  * button.selected` never matched, because the button wore AppOptionRow's
  * `.selected` and hashed names from two modules never collide.
+ *
+ * The other direction is the same drift read backwards, and costs nothing to
+ * check once the two sides are collected: a name a component applies that no
+ * module defines compiles to `undefined`, so the element silently wears no
+ * class at all. That is how a finished workout's set table lost its wrapper
+ * and its horizontal scroller.
  */
 const src = dirname(fileURLToPath(import.meta.url))
 
 /** Blanked rather than cut, so the line a class is reported on still holds. */
+const blank = (span: string) => span.replace(/[^\n]/g, ' ')
+
+/**
+ * Comments gone, and the at-statements with them.
+ *
+ * `@reference '...';` opens every module and ends in a semicolon rather than a
+ * block, so the selector run that follows it starts with an `@` and the first
+ * class in the file was read as part of an at-rule prelude and skipped.
+ */
 const withoutComments = (css: string) =>
-  css.replace(/\/\*[\s\S]*?\*\//g, (span) => span.replace(/[^\n]/g, ' '))
+  css.replace(/\/\*[\s\S]*?\*\//g, blank).replace(/@[\w-]+[^;{}]*;/g, blank)
 
 /**
  * Every class a module defines, with the line it first appears on.
@@ -63,6 +78,10 @@ const defined = (css: string): Map<string, number> => {
  * instead — which is where the union that feeds the index is written.
  */
 const applied = (source: string): { names: Set<string>; dynamic: boolean } => {
+  // Prose, not code: the module this file documents is imaginary, and every
+  // doc comment that says `styles.x` would otherwise name a class.
+  source = source.replace(/\/\*[\s\S]*?\*\//g, blank)
+
   const names = new Set<string>()
   for (const use of source.matchAll(/\bstyles\.(\w+)/g)) names.add(use[1] ?? '')
   for (const use of source.matchAll(/\bstyles\[\s*'([^']+)'\s*\]/g)) names.add(use[1] ?? '')
@@ -95,6 +114,12 @@ for (const module of modules) {
   }
 }
 
+/** Which module each script imports, so a name can be looked up in all of them. */
+const imported = new Map<string, string[]>()
+for (const [module, scripts] of importers) {
+  for (const script of scripts) imported.set(script, [...(imported.get(script) ?? []), module])
+}
+
 const unapplied = modules.flatMap((module) => {
   const names = new Set(borrowed.get(module) ?? [])
   for (const script of importers.get(module) ?? []) {
@@ -106,8 +131,30 @@ const unapplied = modules.flatMap((module) => {
     .map(([name, line]) => `${relative(src, module)}:${line} .${name}`)
 })
 
+const undeclared = [...imported].flatMap(([script, used]) => {
+  const names = new Set(used.flatMap((module) => [...defined(readSource(module)).keys()]))
+  const source = readSource(script).replace(/\/\*[\s\S]*?\*\//g, blank)
+
+  // Only the names read straight off the import. A file that indexes
+  // dynamically donates every string literal it holds to the other direction,
+  // and a literal is not a claim that a class exists.
+  return [
+    ...source.matchAll(/\bstyles\.(\w+)/g),
+    ...source.matchAll(/\bstyles\[\s*'([^']+)'\s*\]/g),
+  ]
+    .filter((use) => !names.has(use[1] ?? ''))
+    .map((use) => {
+      const line = source.slice(0, use.index ?? 0).split('\n').length
+      return `${relative(src, script)}:${line} .${use[1]}`
+    })
+})
+
 describe('CSS modules', () => {
   it('defines no class a component never applies', () => {
     expect(unapplied.sort(), 'delete the rule, or apply it').toEqual([])
+  })
+
+  it('applies no class a module never defines', () => {
+    expect(undeclared.sort(), 'write the rule, or stop applying it').toEqual([])
   })
 })

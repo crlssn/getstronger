@@ -1,9 +1,11 @@
 import { SignalSlashIcon } from '@heroicons/react/24/outline'
+import type { CSSProperties } from 'react'
 import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { clearOfflineCache } from '@/http/offlineCache'
 import { useAuthStore } from '@/stores/auth'
+import { selectBottomChrome, useBottomChrome } from '@/stores/bottomChrome'
 import { useConnectionStore } from '@/stores/connection'
 import { startMutationQueue, useMutationQueueStore } from '@/stores/mutationQueue'
 import styles from './AppOfflineBanner.module.css'
@@ -15,6 +17,7 @@ export const AppOfflineBanner = () => {
   const { t } = useTranslation()
   const online = useConnectionStore((state) => state.online)
   const queued = useMutationQueueStore((state) => state.pending.length)
+  const bottomChrome = useBottomChrome(selectBottomChrome)
 
   useEffect(() => {
     const connection = useConnectionStore.getState()
@@ -42,7 +45,14 @@ export const AppOfflineBanner = () => {
   if (online) return null
 
   return (
-    <div className={styles.offlineBanner} role="status">
+    <div
+      className={styles.offlineBanner}
+      // Above whatever is pinned down there, like the toaster. A hard-coded
+      // tab-bar height left it hanging over the content of every screen that
+      // has no tab bar.
+      style={{ '--bottom-chrome': `${bottomChrome}px` } as CSSProperties}
+      role="status"
+    >
       <SignalSlashIcon aria-hidden="true" />
       <p>
         {t('offline.banner')}

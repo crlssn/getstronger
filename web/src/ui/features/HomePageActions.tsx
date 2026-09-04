@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 
 import {
   BookOpenIcon,
+  ChevronRightIcon,
   FireIcon,
   MagnifyingGlassIcon,
   RectangleStackIcon,
@@ -210,6 +211,7 @@ export const HomePageActions = ({ open, onOpenChange }: Props) => {
                         <strong>{result.title}</strong>
                         <small>{result.subtitle}</small>
                       </span>
+                      <ChevronRightIcon className={styles.chevron} aria-hidden="true" />
                     </Link>
                   ))}
                 </Fragment>

@@ -273,7 +273,7 @@ export const CardWorkout = ({ workout, compact, unseen = false }: Props) => {
         {finishedMoment}
       </p>
 
-      <section className={cn(styles.summaryCard, styles.detailSummaryCard)}>
+      <section className={styles.summaryCard}>
         <div className={cn(styles.completedBand, personalBestCount > 0 && styles.record)}>
           <p className={styles.completedLabel}>
             <span className={styles.completedMark}>

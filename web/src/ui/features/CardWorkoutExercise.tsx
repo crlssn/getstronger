@@ -100,79 +100,83 @@ export const CardWorkoutExercise = ({
 
       {open && (
         <div id={panelId} className={styles.panel}>
-          <div
-            className={styles.setTable}
-            role="table"
-            aria-label={t('workout.setsTableAria', { name })}
-            style={{ '--metric-count': measurements.length + (showPace ? 1 : 0) } as CSSProperties}
-          >
-            <div className={cn(styles.setRow, styles.tableHead)} role="row">
-              <span role="columnheader">{t('common.set')}</span>
-              {measurements.map((measurement) => (
-                <span key={measurement.field} role="columnheader">
-                  {columnLabel(measurement.metric)}
-                </span>
-              ))}
-              {showPace && <span role="columnheader">{t('common.pace')}</span>}
-            </div>
-
-            {sets.map((set, index) => {
-              const personalBest = Boolean(set.metadata?.personalBest)
-
-              return (
-                <div
-                  // A logged set has an id; the fallback is for the optimistic
-                  // copy shown before the server has answered.
-                  // eslint-disable-next-line @eslint-react/no-array-index-key
-                  key={set.id || index}
-                  className={cn(styles.setRow, personalBest && styles.personalBestRow)}
-                  role="row"
-                >
-                  {/* The number stays on a record set: it was the one row where
-                      a reader could not tell which set they were looking at. */}
-                  <span
-                    className={cn(styles.setNumber, personalBest && styles.personalBest)}
-                    role="cell"
-                    aria-label={
-                      personalBest
-                        ? t('workout.setPersonalBestAria', { number: index + 1 })
-                        : t('workout.setNumberAria', { number: index + 1 })
-                    }
-                  >
-                    {index + 1}
+          <div className={styles.setTableScroll}>
+            <div
+              className={styles.setTable}
+              role="table"
+              aria-label={t('workout.setsTableAria', { name })}
+              style={
+                { '--metric-count': measurements.length + (showPace ? 1 : 0) } as CSSProperties
+              }
+            >
+              <div className={cn(styles.setRow, styles.tableHead)} role="row">
+                <span role="columnheader">{t('common.set')}</span>
+                {measurements.map((measurement) => (
+                  <span key={measurement.field} role="columnheader">
+                    {columnLabel(measurement.metric)}
                   </span>
+                ))}
+                {showPace && <span role="columnheader">{t('common.pace')}</span>}
+              </div>
 
-                  {measurements.map((measurement) => (
-                    <span key={measurement.field} role="cell">
-                      <strong>{formatValue(set, measurement.field)}</strong>
-                      {measurement.field === 'weight' && (
-                        <small>{weightUnitLabel(set.weightUnit)}</small>
-                      )}
-                      {measurement.field === 'distance' && (
-                        <small>{distanceUnitLabel(set.distanceUnit)}</small>
-                      )}
-                    </span>
-                  ))}
-                  {showPace && (
-                    <span className={styles.setPace} role="cell">
-                      {formatSetPace(set) ?? '—'}
-                    </span>
-                  )}
+              {sets.map((set, index) => {
+                const personalBest = Boolean(set.metadata?.personalBest)
 
-                  {/* A tint is not a label: the trophy is what says record to a
-                      reader who cannot tell this row's colour from the next. */}
-                  {personalBest && (
+                return (
+                  <div
+                    // A logged set has an id; the fallback is for the optimistic
+                    // copy shown before the server has answered.
+                    // eslint-disable-next-line @eslint-react/no-array-index-key
+                    key={set.id || index}
+                    className={cn(styles.setRow, personalBest && styles.personalBestRow)}
+                    role="row"
+                  >
+                    {/* The number stays on a record set: it was the one row
+                        where a reader could not tell which set it was. */}
                     <span
-                      className={styles.personalBestMark}
+                      className={cn(styles.setNumber, personalBest && styles.personalBest)}
                       role="cell"
-                      aria-label={t('workout.personalBest')}
+                      aria-label={
+                        personalBest
+                          ? t('workout.setPersonalBestAria', { number: index + 1 })
+                          : t('workout.setNumberAria', { number: index + 1 })
+                      }
                     >
-                      <TrophyIcon aria-hidden="true" />
+                      {index + 1}
                     </span>
-                  )}
-                </div>
-              )
-            })}
+
+                    {measurements.map((measurement) => (
+                      <span key={measurement.field} role="cell">
+                        <strong>{formatValue(set, measurement.field)}</strong>
+                        {measurement.field === 'weight' && (
+                          <small>{weightUnitLabel(set.weightUnit)}</small>
+                        )}
+                        {measurement.field === 'distance' && (
+                          <small>{distanceUnitLabel(set.distanceUnit)}</small>
+                        )}
+                      </span>
+                    ))}
+                    {showPace && (
+                      <span className={styles.setPace} role="cell">
+                        {formatSetPace(set) ?? '—'}
+                      </span>
+                    )}
+
+                    {/* A tint is not a label: the trophy is what says record to
+                        a reader who cannot tell this row's colour from the next. */}
+                    {personalBest && (
+                      <span
+                        className={styles.personalBestMark}
+                        role="cell"
+                        aria-label={t('workout.personalBest')}
+                      >
+                        <TrophyIcon aria-hidden="true" />
+                      </span>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
           </div>
 
           <AppButton

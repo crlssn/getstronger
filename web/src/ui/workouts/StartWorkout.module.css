@@ -1,7 +1,10 @@
 @reference '../../assets/base.css';
 
+/* The focused shell zeroes its own padding, so the session is the only thing
+   between the finish button and the home indicator. */
 .workoutShell {
-  @apply mx-auto max-w-3xl space-y-4 pb-8;
+  padding-bottom: calc(2rem + env(safe-area-inset-bottom));
+  @apply mx-auto max-w-3xl space-y-4;
 }
 
 /* The chrome spans the viewport while its contents stay aligned with the app,
@@ -120,6 +123,14 @@
 
 .exerciseName {
   @apply block truncate text-sm font-semibold text-text;
+}
+
+/* Done and folded: the row keeps its anatomy and steps back, so the stack
+   reads down to the one still being worked. Quiet rather than tinted — a
+   colour here would be the status light the tiles below already refused. */
+.exerciseItem.completed:not(.open) .exerciseName,
+.exerciseItem.completed:not(.open) .exerciseIndex {
+  @apply text-text-subtle;
 }
 
 .exerciseItem.open .exerciseName {

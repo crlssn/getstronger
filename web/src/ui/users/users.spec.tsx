@@ -318,6 +318,8 @@ describe.each([
     const row = await screen.findByRole('link', { name: /sam/ })
     expect(row).toHaveAttribute('href', '/users/user-1')
     expect(row).toHaveTextContent('Sam Doe')
+    // A row that navigates says so, here as everywhere else.
+    expect(row.querySelectorAll('svg')).toHaveLength(1)
   })
 
   const emptyTitle = path === 'followers' ? 'No followers yet' : 'Not following anyone yet'
