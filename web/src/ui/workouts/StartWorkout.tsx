@@ -586,6 +586,9 @@ export const StartWorkout = () => {
     if (set && isExerciseSetComplete(set, station.exercise)) {
       if (!completedSets.current.has(key)) {
         completedSets.current.add(key)
+        // A set filled entirely from the autofill is still a set the athlete
+        // took: nothing typed into it started the workout, so this does.
+        useWorkoutStore.getState().startWorkout(routineID)
         const block = blockOf.get(station.key)
         if (block?.mode !== 'circuit') startSetRest(station)
         // In a circuit, a set logged inside a round is the walk to the next
@@ -620,13 +623,18 @@ export const StartWorkout = () => {
     })
   }
 
-  const onSetChange = (station: SessionStation, index: number, changes: WorkoutSet) => {
+  const onSetChange = (
+    station: SessionStation,
+    index: number,
+    changes: WorkoutSet,
+    options?: { suggested?: boolean },
+  ) => {
     const store = useWorkoutStore.getState()
     const block = blockOf.get(station.key)
 
     setFinishError('')
     if (block?.mode === 'circuit') ensureRoundRows(block, index + 1)
-    store.updateSet(routineID, station.key, index, changes)
+    store.updateSet(routineID, station.key, index, changes, options)
     // A circuit's rows are its rounds, and a round is laid out when it is
     // reached rather than the moment the row above it fills.
     if (block?.mode !== 'circuit') {
@@ -684,7 +692,7 @@ export const StartWorkout = () => {
     // tick lands after the caret has been placed, so the first character typed
     // is appended to the copied number instead of replacing it.
     // eslint-disable-next-line @eslint-react/dom-no-flush-sync -- see above: the caret placement depends on this render
-    flushSync(() => onSetChange(station, index, changes))
+    flushSync(() => onSetChange(station, index, changes, { suggested: true }))
     target.select()
   }
 

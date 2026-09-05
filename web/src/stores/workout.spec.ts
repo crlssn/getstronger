@@ -71,6 +71,26 @@ describe('workout store', () => {
       expect(store().workouts.legacy?.idempotencyKey).not.toBe(key)
     })
 
+    // Drafts saved before the clock moved to the first logged set carry a
+    // stamp from the moment their screen opened, which can be days old.
+    it('drops the stamp on an older draft that logged nothing', () => {
+      seed({ legacy: { startedAt: '2024-01-01T00:00:00Z', exerciseSets: { squat: [{}] } } })
+
+      store().initialiseWorkout('legacy')
+
+      expect(selectStartedAt(store(), 'legacy')).toBeUndefined()
+    })
+
+    it('keeps the stamp on an older draft that holds a logged set', () => {
+      seed({
+        legacy: { startedAt: '2024-01-01T00:00:00Z', exerciseSets: { squat: [{ reps: 5 }] } },
+      })
+
+      store().initialiseWorkout('legacy')
+
+      expect(selectStartedAt(store(), 'legacy')).toBe('2024-01-01T00:00:00Z')
+    })
+
     // Reopening a workout must not restart its clock or discard its sets.
     it('leaves an existing draft alone when initialised again', () => {
       store().initialiseWorkout('routine-id')
@@ -275,6 +295,49 @@ describe('workout store', () => {
       expect(selectStartedAt(store(), 'routine-id')).toBeUndefined()
     })
 
+    // The autofill copies the last session's number into a field the athlete
+    // has only landed on. Reading what you lifted last week is not training.
+    it('leaves the clock unstarted for a suggested value', () => {
+      seed({ 'routine-id': { exerciseSets: { squat: [{}] } } })
+
+      store().updateSet('routine-id', 'squat', 0, { weight: 100 }, { suggested: true })
+
+      expect(sets('routine-id', 'squat')[0]).toEqual({ weight: 100 })
+      expect(selectStartedAt(store(), 'routine-id')).toBeUndefined()
+    })
+
+    it('starts the clock when a suggested value is typed over', () => {
+      seed({ 'routine-id': { exerciseSets: { squat: [{}] } } })
+      store().updateSet('routine-id', 'squat', 0, { weight: 100 }, { suggested: true })
+
+      store().updateSet('routine-id', 'squat', 0, { weight: 105 })
+
+      expect(selectStartedAt(store(), 'routine-id')).toBeTruthy()
+    })
+
+    // Clearing the last number undoes the start too, or a value typed by
+    // mistake and deleted would go on counting as time under the bar.
+    it('unstarts the clock when the last logged value is cleared', () => {
+      seed({ 'routine-id': { exerciseSets: { squat: [{}] } } })
+      store().updateSet('routine-id', 'squat', 0, { weight: 100 })
+      expect(selectStartedAt(store(), 'routine-id')).toBeTruthy()
+
+      store().updateSet('routine-id', 'squat', 0, { weight: undefined })
+
+      expect(selectStartedAt(store(), 'routine-id')).toBeUndefined()
+    })
+
+    it('keeps the clock while another set still holds a value', () => {
+      seed({ 'routine-id': { exerciseSets: { squat: [{}, {}] } } })
+      store().updateSet('routine-id', 'squat', 0, { weight: 100 })
+      store().updateSet('routine-id', 'squat', 1, { weight: 110 })
+      const startedAt = selectStartedAt(store(), 'routine-id')
+
+      store().updateSet('routine-id', 'squat', 0, { weight: undefined })
+
+      expect(selectStartedAt(store(), 'routine-id')).toBe(startedAt)
+    })
+
     it('ignores a write to a set that does not exist', () => {
       expect(() => store().updateSet('missing', 'squat', 0, { weight: 1 })).not.toThrow()
 
@@ -291,11 +354,45 @@ describe('workout store', () => {
       expect(sets('routine-id', 'squat')).toEqual([{ weight: 2 }])
     })
 
+    it('unstarts the clock when the last logged set is deleted', () => {
+      seed({ 'routine-id': { exerciseSets: { squat: [{}] } } })
+      store().updateSet('routine-id', 'squat', 0, { weight: 100 })
+
+      store().deleteSet('routine-id', 'squat', 0)
+
+      expect(selectStartedAt(store(), 'routine-id')).toBeUndefined()
+    })
+
     it('ignores a delete for a draft or exercise that does not exist', () => {
       expect(() => store().deleteSet('missing', 'squat', 0)).not.toThrow()
 
       store().initialiseWorkout('routine-id')
       expect(() => store().deleteSet('routine-id', 'squat', 0)).not.toThrow()
+    })
+
+    // A suggestion the athlete accepts by completing the set is a logged set
+    // like any other, so the screen starts the clock on the crossing.
+    it('starts the clock on a completed set', () => {
+      seed({ 'routine-id': { exerciseSets: { squat: [{}] } } })
+      store().updateSet('routine-id', 'squat', 0, { weight: 100 }, { suggested: true })
+
+      store().startWorkout('routine-id')
+
+      expect(selectStartedAt(store(), 'routine-id')).toBeTruthy()
+    })
+
+    it('keeps the original time when the clock is started again', () => {
+      seed({ 'routine-id': { exerciseSets: { squat: [{}] } } })
+      store().updateSet('routine-id', 'squat', 0, { weight: 100 })
+      const startedAt = selectStartedAt(store(), 'routine-id')
+
+      store().startWorkout('routine-id')
+
+      expect(selectStartedAt(store(), 'routine-id')).toBe(startedAt)
+    })
+
+    it('ignores starting a draft that does not exist', () => {
+      expect(() => store().startWorkout('missing')).not.toThrow()
     })
   })
 

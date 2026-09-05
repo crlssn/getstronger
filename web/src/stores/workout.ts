@@ -1,5 +1,11 @@
 import type { Exercise } from '@/proto/api/v1/shared_pb'
-import type { ExerciseID, RoutineID, RoutineWorkout, Set as WorkoutSet } from '@/types/workout'
+import type {
+  ExerciseID,
+  RoutineID,
+  RoutineWorkout,
+  Set as WorkoutSet,
+  Workout,
+} from '@/types/workout'
 
 import { create } from 'zustand'
 import { immer } from 'zustand/middleware/immer'
@@ -30,12 +36,36 @@ const metricFields: Partial<Record<ExerciseMetric, keyof WorkoutSet>> = {
 }
 
 // What somebody logged, as opposed to the unit the row was stamped with.
-const measurementFields = new Set<string>(Object.values(metricFields))
+const measurementFields = Object.values(metricFields)
+const isMeasurement = new Set<string>(measurementFields)
+
+// Persisted drafts predate the numeric type, so a blank string can still
+// reach this from storage and must not read as a logged value.
+const isLogged = (value: unknown) =>
+  value !== undefined && value !== null && (typeof value !== 'string' || value.trim().length > 0)
 
 const logsAMeasurement = (changes: Partial<WorkoutSet>) =>
-  Object.entries(changes).some(
-    ([field, value]) => value !== undefined && measurementFields.has(field),
+  Object.entries(changes).some(([field, value]) => isMeasurement.has(field) && isLogged(value))
+
+/**
+ * Whether the draft holds a number anybody logged.
+ *
+ * This is what it means for a workout to be under way: the clock is stamped
+ * while it is true, and the tab bar offers the draft back on the same test.
+ */
+export const hasLoggedSet = (workout: Workout) =>
+  Object.values(workout.exerciseSets ?? {}).some((sets) =>
+    sets.some((entry) => measurementFields.some((field) => isLogged(entry[field]))),
   )
+
+interface UpdateSetOptions {
+  /**
+   * A value the app proposed rather than one the athlete logged, so it leaves
+   * the clock alone. Accepting it — typing over it, or completing the set —
+   * starts the workout in the ordinary way.
+   */
+  suggested?: boolean
+}
 
 interface WorkoutState {
   workouts: RoutineWorkout
@@ -62,7 +92,9 @@ interface WorkoutState {
     exerciseID: ExerciseID,
     index: number,
     changes: Partial<WorkoutSet>,
+    options?: UpdateSetOptions,
   ) => void
+  startWorkout: (routineID: RoutineID) => void
   syncWeightUnits: (routineID: RoutineID, weightUnit: WeightUnit) => void
   syncDistanceUnits: (routineID: RoutineID, distanceUnit: DistanceUnit) => void
   deleteSet: (routineID: RoutineID, exerciseID: ExerciseID, index: number) => void
@@ -119,6 +151,10 @@ export const useWorkoutStore = create<WorkoutState>()(
         set((state) => {
           const workout = (state.workouts[routineID] ??= {})
           workout.exerciseSets ??= {}
+          // A draft saved before the clock moved to the first logged set
+          // carries one from the moment its screen opened, so an empty one
+          // would resume counting from days ago.
+          if (!hasLoggedSet(workout)) delete workout.startedAt
           // Kept with the draft rather than the screen, so a save pressed
           // again after a reload still names the same session.
           workout.idempotencyKey ??= crypto.randomUUID()
@@ -218,11 +254,12 @@ export const useWorkoutStore = create<WorkoutState>()(
        * An `undefined` clears the field, so a cleared input is not stored as a
        * stale number.
        *
-       * It is also where a workout starts: the session clock is stamped by the
-       * first measurement logged into it, so the minutes spent picking a
-       * routine and walking to the rack are not counted as training.
+       * It is also where a workout starts and stops being under way: the clock
+       * is stamped by the first measurement logged into it, so the minutes
+       * spent picking a routine and walking to the rack are not counted as
+       * training, and clearing the last one takes the stamp away again.
        */
-      updateSet: (routineID, exerciseID, index, changes) =>
+      updateSet: (routineID, exerciseID, index, changes, options) =>
         set((state) => {
           const workout = state.workouts[routineID]
           const entry = workout?.exerciseSets?.[exerciseID]?.[index]
@@ -235,7 +272,18 @@ export const useWorkoutStore = create<WorkoutState>()(
             else Object.assign(entry, { [field]: value })
           }
 
-          if (logsAMeasurement(changes)) workout.startedAt ??= new Date().toISOString()
+          if (!options?.suggested && logsAMeasurement(changes)) {
+            workout.startedAt ??= new Date().toISOString()
+          }
+          if (!hasLoggedSet(workout)) delete workout.startedAt
+        }),
+
+      // The screen calls this when a set is completed, which is how a
+      // suggestion the athlete accepted without typing still starts the clock.
+      startWorkout: (routineID) =>
+        set((state) => {
+          const workout = state.workouts[routineID]
+          if (workout) workout.startedAt ??= new Date().toISOString()
         }),
 
       // The weight unit is a profile preference rather than a per-set choice,
@@ -297,7 +345,11 @@ export const useWorkoutStore = create<WorkoutState>()(
 
       deleteSet: (routineID, exerciseID, index) =>
         set((state) => {
-          state.workouts[routineID]?.exerciseSets?.[exerciseID]?.splice(index, 1)
+          const workout = state.workouts[routineID]
+          if (!workout) return
+
+          workout.exerciseSets?.[exerciseID]?.splice(index, 1)
+          if (!hasLoggedSet(workout)) delete workout.startedAt
         }),
 
       removeWorkout: (routineID) =>

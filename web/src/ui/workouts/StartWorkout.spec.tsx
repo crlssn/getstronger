@@ -1003,6 +1003,40 @@ describe('StartWorkout', () => {
       expect(weight).toHaveValue('80')
     })
 
+    // The copy is the app's suggestion, not a set anybody logged. Landing on a
+    // field to read last week's number is not training, so the clock waits.
+    test('holds the clock at zero while a field is only prefilled', async () => {
+      mocked.getCurrentUser.mockResolvedValue(
+        currentUser(WeightUnit.KILOGRAMS, { autofillSets: true }),
+      )
+      const user = userEvent.setup()
+      await renderWorkout()
+
+      await user.click(setField('Bench Press set 1 weight'))
+      act(() => {
+        vi.advanceTimersByTime(65_000)
+      })
+
+      expect(setField('Bench Press set 1 weight')).toHaveValue('42.5')
+      expect(screen.getByLabelText('Elapsed')).toHaveTextContent('0:00')
+      expect(useWorkoutStore.getState().workouts[routineID]?.startedAt).toBeUndefined()
+    })
+
+    // Accepting the suggestion for every field of the set is logging it, so
+    // the workout has to start — otherwise it saves with no time on it.
+    test('starts the clock once the prefill completes the set', async () => {
+      mocked.getCurrentUser.mockResolvedValue(
+        currentUser(WeightUnit.KILOGRAMS, { autofillSets: true }),
+      )
+      const user = userEvent.setup()
+      await renderWorkout()
+
+      await user.click(setField('Bench Press set 1 weight'))
+      await user.click(setField('Bench Press set 1 reps'))
+
+      expect(useWorkoutStore.getState().workouts[routineID]?.startedAt).toBeTruthy()
+    })
+
     // The copy has to land inside the focus event. Deferred to a later tick it
     // arrives after the caret has been placed, and the first character typed
     // on a fast tap-and-type is appended to the copied number rather than
