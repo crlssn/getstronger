@@ -112,6 +112,27 @@ and the enclosing `##` heading becomes its group (actions / input / surfaces /
 lists-and-states). Regenerate after editing the catalogue, or the groups and
 prompts drift from it.
 
+## Running it again
+
+- `mise run design:build` — the library build only (`ds-dist/`).
+- `mise run design:bundle` — build, convert and validate (`ds-bundle/`).
+- `mise run design:review` — serve the preview cards to look at them.
+
+Those cover the local half. **Fetching the project's `_ds_sync.json` anchor and
+uploading both need the `DesignSync` tool, so the full re-sync is `/design-sync`
+in Claude Code**, which also re-stages the converter into the gitignored
+`web/.ds-sync/`. A fresh clone has to run the skill once before the
+`design:bundle` task will work.
+
+The skill's own one-command re-sync, once the converter is staged and the
+anchor has been fetched to `.design-sync/.cache/remote-sync.json`:
+
+```sh
+node .ds-sync/resync.mjs --config .design-sync/config.json \
+  --node-modules ./node_modules --entry ./ds-dist/index.js \
+  --out ./ds-bundle --remote .design-sync/.cache/remote-sync.json
+```
+
 ## Re-sync risks
 
 - `ds-dist/` is gitignored — a fresh clone must run `cfg.buildCmd` before the
