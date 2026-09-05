@@ -2,7 +2,7 @@
   "applinks": {
     "details": [
       {
-        "appIDs": ["APPLE_TEAM_ID.com.getstronger.app"],
+        "appIDs": ["SABQ6FPUMG.studio.getstronger.app"],
         "components": [{ "/": "/*" }]
       }
     ]
