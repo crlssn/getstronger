@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Android 11 and older read this instead of res/xml/data_extraction_rules.xml,
+     which the platform only honours from Android 12. Same exclusion, same
+     reason; keep the two in step. -->
+<full-backup-content>
+    <exclude domain="root" path="app_webview" />
+</full-backup-content>
