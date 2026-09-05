@@ -46,16 +46,23 @@ export const PlanForm = ({ planId }: Props) => {
   const editing = Boolean(planId)
 
   useEffect(() => {
+    // Effects run twice under StrictMode, so a second load is already under way
+    // by the time the first answers. Without this the slower answer lands after
+    // the field is on screen and overwrites what has been typed into it.
+    let replaced = false
+
     const load = async () => {
       // The picker says when each routine was last trained, which is what tells
       // three routines with the same name and exercise count apart.
       void useActivityStore.getState().load()
 
       const routinesResponse = await listRoutines(new Uint8Array(0))
+      if (replaced) return
       setRoutines(routinesResponse?.routines ?? [])
 
       if (planId) {
         const response = await getPlan(planId)
+        if (replaced) return
         if (!response?.plan) {
           await navigate('/plans', { replace: true })
           return
@@ -65,7 +72,11 @@ export const PlanForm = ({ planId }: Props) => {
       }
       setLoading(false)
     }
+
     void load()
+    return () => {
+      replaced = true
+    }
   }, [planId, navigate])
 
   // A routine appears once in a plan, so the picker only offers what is left.
