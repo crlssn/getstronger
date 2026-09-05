@@ -49,9 +49,11 @@
         position: fixed;
         inset: 0;
         display: grid;
+        /* Bounded, not auto: an auto column takes the lockup's own 320px even
+           on a narrower phone, and the max-width below would then measure
+           itself against that rather than against the screen. */
+        grid-template-columns: minmax(0, 1fr);
         place-items: center;
-        align-content: center;
-        gap: 2.25rem;
         padding: 2rem;
         box-sizing: border-box;
         background: #f2f1ed;
@@ -65,75 +67,113 @@
           opacity: 1;
         }
       }
-      #boot-splash .boot-brand {
-        display: grid;
-        justify-items: center;
-        gap: 0.875rem;
-        text-align: center;
+
+      /* The lockup is one drawing on a 320-unit grid: the wordmark rides
+         between the collars and the slogan sits under the shaft, and neither
+         lands anywhere else. --boot-px is that unit as a share of whatever
+         width the phone leaves, so a narrow screen shrinks the whole thing
+         rather than sliding the words off the bar. */
+      #boot-splash .boot-lockup {
+        --boot-px: 0.3125cqw;
+        position: relative;
+        width: 20rem;
+        max-width: 100%;
+        container-type: inline-size;
         color: #1a1917;
         font-family: 'Plus Jakarta Sans Variable', system-ui, sans-serif;
       }
-      #boot-splash .boot-mark {
-        display: grid;
-        place-items: center;
-        width: 3rem;
-        height: 3rem;
-        border-radius: 0.875rem;
-        background: #1a1917;
-        box-shadow:
-          0 1px 2px #dedcd4,
-          0 8px 20px -14px #dedcd4;
+      #boot-splash .boot-lockup svg {
+        display: block;
+        width: 100%;
+        height: auto;
       }
-      #boot-splash .boot-mark img {
-        width: 1.875rem;
-        height: 1.875rem;
-        filter: brightness(0) invert(1);
-      }
-      #boot-splash .boot-copy {
-        display: grid;
-        gap: 0.375rem;
-      }
-      #boot-splash .boot-copy strong {
-        font-size: 1.375rem;
+      #boot-splash .boot-wordmark {
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: calc(3 * var(--boot-px));
+        text-align: center;
+        font-size: calc(30 * var(--boot-px));
         line-height: 1;
         font-weight: 700;
-        letter-spacing: -0.03em;
+        letter-spacing: -0.045em;
       }
       /* Get semibold, Stronger bold — the same split the guest header makes. */
-      #boot-splash .boot-copy strong span {
+      #boot-splash .boot-wordmark span {
         font-weight: 600;
       }
-      #boot-splash .boot-copy > span {
-        font-size: 0.75rem;
-        line-height: 1;
-        font-weight: 700;
-        letter-spacing: 0.1em;
+      #boot-splash .boot-slogan {
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: calc(47 * var(--boot-px));
+        display: grid;
+        justify-items: center;
+        font-size: calc(13 * var(--boot-px));
+        font-weight: 900;
+        letter-spacing: 0.16em;
         text-transform: uppercase;
-        color: #6e6b65;
+      }
+      /* All three words in the one cell, so the line never reads as two. */
+      #boot-splash .boot-slogan span {
+        grid-area: 1 / 1;
+        opacity: 0;
+        animation: 6.4s ease-out infinite both;
+      }
+      #boot-splash .boot-slogan .w1 {
+        animation-name: word-1;
+      }
+      #boot-splash .boot-slogan .w2 {
+        animation-name: word-2;
+      }
+      #boot-splash .boot-slogan .w3 {
+        animation-name: word-3;
+      }
+
+      /* Chrome for the bar, rubber for the plates. theme.css has no gradients
+         and has not loaded anyway, so the splash mixes its own: a stack of
+         stops read top edge to bottom, which the dark palette re-values
+         rather than redraws. */
+      #boot-splash {
+        --boot-steel-crown: #6e6b65;
+        --boot-steel-sheen: #ffffff;
+        --boot-steel-face: #c4c1b9;
+        --boot-steel-core: #4a4740;
+        --boot-steel-belly: #7d7a73;
+        --boot-steel-foot: #2c2a26;
+        --boot-rubber-crown: #3a3835;
+        --boot-rubber-sheen: #5a5852;
+        --boot-rubber-face: #34322e;
+        --boot-rubber-core: #22211e;
+        --boot-rubber-belly: #2c2a27;
+        --boot-rubber-foot: #171614;
+        --boot-plate-side-lit: #2a2825;
+        --boot-plate-side-deep: #121110;
+      }
+      #boot-splash .boot-steel {
+        fill: url(#boot-steel);
+      }
+      #boot-splash .boot-rubber {
+        fill: url(#boot-rubber);
+      }
+      #boot-splash .boot-plate-side-l {
+        fill: url(#boot-plate-side-l);
+      }
+      #boot-splash .boot-plate-side-r {
+        fill: url(#boot-plate-side-r);
+      }
+      /* The moulded edge every piece carries, drawn over its own fill. One
+         value for both palettes: a cast shadow is dark on light paper and on
+         dark. */
+      #boot-splash .boot-edge {
+        stroke: #000;
+        stroke-opacity: 0.35;
+        stroke-width: 0.6;
       }
 
       /* Loading, literally: plates slide onto the bar in pairs, each landing
          with a dip of the bar. Hold under full load, strip, load again. The
          wait has no known length, so reps, not progress. */
-      #boot-splash .boot-barbell {
-        width: 17.5rem;
-        max-width: 100%;
-      }
-      #boot-splash .boot-barbell svg {
-        display: block;
-        width: 100%;
-        height: auto;
-      }
-      /* Plates included: the whole rig is one ink, one piece. */
-      #boot-splash .boot-steel,
-      #boot-splash .p1,
-      #boot-splash .p2,
-      #boot-splash .p3 {
-        fill: #1a1917;
-      }
-      #boot-splash .boot-ground {
-        fill: #dedcd4;
-      }
       #boot-splash .boot-rig {
         animation: bar-dip 6.4s linear infinite;
       }
@@ -310,6 +350,59 @@
           transform: translateY(0);
         }
       }
+      /* A word rises as its pair lands and is gone before the next arrives.
+         None of them come back on the way down; the bar strips in silence. */
+      @keyframes word-1 {
+        0%,
+        15.9% {
+          opacity: 0;
+          transform: translateY(0.35em);
+        }
+        19%,
+        34.9% {
+          opacity: 1;
+          transform: translateY(0);
+        }
+        37%,
+        100% {
+          opacity: 0;
+          transform: translateY(0);
+        }
+      }
+      @keyframes word-2 {
+        0%,
+        34.9% {
+          opacity: 0;
+          transform: translateY(0.35em);
+        }
+        38%,
+        53.9% {
+          opacity: 1;
+          transform: translateY(0);
+        }
+        56%,
+        100% {
+          opacity: 0;
+          transform: translateY(0);
+        }
+      }
+      @keyframes word-3 {
+        0%,
+        53.9% {
+          opacity: 0;
+          transform: translateY(0.35em);
+        }
+        57%,
+        74% {
+          opacity: 1;
+          transform: translateY(0);
+        }
+        82%,
+        100% {
+          opacity: 0;
+          transform: translateY(0);
+        }
+      }
 
       /* The splash in the dark palette, mirroring theme.css the same way the
          light colours above do. The script above has set data-theme before
@@ -317,32 +410,40 @@
       [data-theme='dark'] #boot-splash {
         background: #161512;
       }
-      [data-theme='dark'] #boot-splash .boot-brand {
+      [data-theme='dark'] #boot-splash .boot-lockup {
         color: #ece9e2;
       }
-      [data-theme='dark'] #boot-splash .boot-mark {
-        background: #e8e6e0;
-        box-shadow:
-          0 1px 2px #3b382f,
-          0 8px 20px -14px #3b382f;
+      /* Light letterforms on dark paper carry more weight than they do the
+         other way round, so both drop a step to read the same. */
+      [data-theme='dark'] #boot-splash .boot-wordmark {
+        font-weight: 600;
       }
-      [data-theme='dark'] #boot-splash .boot-mark img {
-        filter: brightness(0);
+      [data-theme='dark'] #boot-splash .boot-wordmark span {
+        font-weight: 500;
       }
-      [data-theme='dark'] #boot-splash .boot-copy > span {
-        color: #a8a397;
+      [data-theme='dark'] #boot-splash .boot-slogan {
+        font-weight: 800;
       }
-      [data-theme='dark'] #boot-splash .boot-steel,
-      [data-theme='dark'] #boot-splash .p1,
-      [data-theme='dark'] #boot-splash .p2,
-      [data-theme='dark'] #boot-splash .p3 {
-        fill: #e8e6e0;
-      }
-      [data-theme='dark'] #boot-splash .boot-ground {
-        fill: #3b382f;
+      /* Chrome brightens and the rubber turns pale: the bar is lit from the
+         same side, by a room that is now dark. */
+      [data-theme='dark'] #boot-splash {
+        --boot-steel-crown: #8d8a84;
+        --boot-steel-sheen: #ffffff;
+        --boot-steel-face: #d4d1ca;
+        --boot-steel-core: #5a574f;
+        --boot-steel-belly: #8a8780;
+        --boot-steel-foot: #3a3731;
+        --boot-rubber-crown: #cfccc4;
+        --boot-rubber-sheen: #ffffff;
+        --boot-rubber-face: #e3e1da;
+        --boot-rubber-core: #bdbab2;
+        --boot-rubber-belly: #cbc8c0;
+        --boot-rubber-foot: #9c998f;
+        --boot-plate-side-lit: #b6b3ab;
+        --boot-plate-side-deep: #8f8b83;
       }
 
-      /* With the motion gone, the bar parks fully loaded. */
+      /* With the motion gone, the bar parks fully loaded on the last word. */
       @media (prefers-reduced-motion: reduce) {
         #boot-splash {
           animation-duration: 0.01ms;
@@ -350,41 +451,143 @@
         }
         #boot-splash .boot-rig,
         #boot-splash .boot-plate-l,
-        #boot-splash .boot-plate-r {
+        #boot-splash .boot-plate-r,
+        #boot-splash .boot-slogan span {
           animation: none;
+        }
+        #boot-splash .boot-slogan .w3 {
+          opacity: 1;
         }
       }
     </style>
   </head>
   <body id="app">
     <div id="boot-splash" aria-hidden="true">
-      <div class="boot-brand">
-        <span class="boot-mark"><img src="/favicon.png" alt="" /></span>
-        <span class="boot-copy">
-          <strong><span>Get</span>Stronger</strong>
-          <span>Lift it. Log it. Beat it.</span>
-        </span>
-      </div>
-      <div class="boot-barbell">
-        <svg viewBox="0 0 240 96">
+      <div class="boot-lockup">
+        <svg viewBox="0 10 320 76">
+          <defs>
+            <linearGradient id="boot-steel" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="var(--boot-steel-crown)" />
+              <stop offset="0.18" stop-color="var(--boot-steel-sheen)" />
+              <stop offset="0.42" stop-color="var(--boot-steel-face)" />
+              <stop offset="0.62" stop-color="var(--boot-steel-core)" />
+              <stop offset="0.85" stop-color="var(--boot-steel-belly)" />
+              <stop offset="1" stop-color="var(--boot-steel-foot)" />
+            </linearGradient>
+            <linearGradient id="boot-rubber" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="var(--boot-rubber-crown)" />
+              <stop offset="0.18" stop-color="var(--boot-rubber-sheen)" />
+              <stop offset="0.42" stop-color="var(--boot-rubber-face)" />
+              <stop offset="0.62" stop-color="var(--boot-rubber-core)" />
+              <stop offset="0.85" stop-color="var(--boot-rubber-belly)" />
+              <stop offset="1" stop-color="var(--boot-rubber-foot)" />
+            </linearGradient>
+            <!-- The outer face of a plate, turned just far enough to catch the
+                 light. It falls away towards the bar, so the two ends mirror. -->
+            <linearGradient id="boot-plate-side-r" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0" stop-color="var(--boot-plate-side-lit)" stop-opacity="0" />
+              <stop offset="1" stop-color="var(--boot-plate-side-deep)" />
+            </linearGradient>
+            <linearGradient id="boot-plate-side-l" x1="1" y1="0" x2="0" y2="0">
+              <stop offset="0" stop-color="var(--boot-plate-side-lit)" stop-opacity="0" />
+              <stop offset="1" stop-color="var(--boot-plate-side-deep)" />
+            </linearGradient>
+          </defs>
           <g class="boot-rig">
-            <!-- shaft, sleeves and collars -->
-            <rect class="boot-steel" x="70" y="45.5" width="100" height="5" rx="2.5" />
-            <rect class="boot-steel" x="31" y="44" width="41" height="8" rx="4" />
-            <rect class="boot-steel" x="168" y="44" width="41" height="8" rx="4" />
-            <rect class="boot-steel" x="66" y="38" width="6" height="20" rx="3" />
-            <rect class="boot-steel" x="168" y="38" width="6" height="20" rx="3" />
-            <!-- plates, drawn where they seat, two units of daylight apart;
-                 they slide in from off the bar -->
-            <rect class="boot-plate-l p1" x="57" y="22" width="9" height="52" rx="4" />
-            <rect class="boot-plate-l p2" x="46" y="27" width="9" height="42" rx="4" />
-            <rect class="boot-plate-l p3" x="35" y="32" width="9" height="32" rx="4" />
-            <rect class="boot-plate-r p1" x="174" y="22" width="9" height="52" rx="4" />
-            <rect class="boot-plate-r p2" x="185" y="27" width="9" height="42" rx="4" />
-            <rect class="boot-plate-r p3" x="196" y="32" width="9" height="32" rx="4" />
+            <!-- shaft, then the sleeves and collars the plates seat against -->
+            <rect class="boot-steel" x="60" y="46" width="200" height="4" rx="2" />
+            <rect class="boot-steel boot-edge" x="5" y="44.5" width="57" height="7" rx="3.5" />
+            <rect class="boot-steel boot-edge" x="258" y="44.5" width="57" height="7" rx="3.5" />
+            <rect class="boot-steel boot-edge" x="55" y="39" width="7" height="18" rx="2" />
+            <rect class="boot-steel boot-edge" x="258" y="39" width="7" height="18" rx="2" />
+            <!-- plates, drawn where they seat and stacked flush; they slide in
+                 from off the bar -->
+            <g class="boot-plate-l p1">
+              <rect class="boot-rubber" x="40" y="16" width="16" height="64" rx="5" />
+              <rect
+                class="boot-edge"
+                fill="none"
+                x="40.3"
+                y="16.3"
+                width="15.4"
+                height="63.4"
+                rx="4.7"
+              />
+              <rect class="boot-plate-side-l" x="40" y="20" width="5" height="56" rx="2" />
+            </g>
+            <g class="boot-plate-l p2">
+              <rect class="boot-rubber" x="25" y="16" width="16" height="64" rx="5" />
+              <rect
+                class="boot-edge"
+                fill="none"
+                x="25.3"
+                y="16.3"
+                width="15.4"
+                height="63.4"
+                rx="4.7"
+              />
+              <rect class="boot-plate-side-l" x="25" y="20" width="5" height="56" rx="2" />
+            </g>
+            <g class="boot-plate-l p3">
+              <rect class="boot-rubber" x="10" y="16" width="16" height="64" rx="5" />
+              <rect
+                class="boot-edge"
+                fill="none"
+                x="10.3"
+                y="16.3"
+                width="15.4"
+                height="63.4"
+                rx="4.7"
+              />
+              <rect class="boot-plate-side-l" x="10" y="20" width="5" height="56" rx="2" />
+            </g>
+            <g class="boot-plate-r p1">
+              <rect class="boot-rubber" x="264" y="16" width="16" height="64" rx="5" />
+              <rect
+                class="boot-edge"
+                fill="none"
+                x="264.3"
+                y="16.3"
+                width="15.4"
+                height="63.4"
+                rx="4.7"
+              />
+              <rect class="boot-plate-side-r" x="275" y="20" width="5" height="56" rx="2" />
+            </g>
+            <g class="boot-plate-r p2">
+              <rect class="boot-rubber" x="279" y="16" width="16" height="64" rx="5" />
+              <rect
+                class="boot-edge"
+                fill="none"
+                x="279.3"
+                y="16.3"
+                width="15.4"
+                height="63.4"
+                rx="4.7"
+              />
+              <rect class="boot-plate-side-r" x="290" y="20" width="5" height="56" rx="2" />
+            </g>
+            <g class="boot-plate-r p3">
+              <rect class="boot-rubber" x="294" y="16" width="16" height="64" rx="5" />
+              <rect
+                class="boot-edge"
+                fill="none"
+                x="294.3"
+                y="16.3"
+                width="15.4"
+                height="63.4"
+                rx="4.7"
+              />
+              <rect class="boot-plate-side-r" x="305" y="20" width="5" height="56" rx="2" />
+            </g>
           </g>
-          <rect class="boot-ground" x="30" y="80" width="180" height="2" rx="1" />
         </svg>
+        <strong class="boot-wordmark"><span>Get</span>Stronger</strong>
+        <div class="boot-slogan">
+          <span class="w1">Lift it</span>
+          <span class="w2">Log it</span>
+          <span class="w3">Beat it</span>
+        </div>
       </div>
     </div>
     <div id="root"></div>

@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 
-import { brandNameParts, brandSlogan } from '../src/brand'
+import { brandName, brandNameParts, brandSlogan } from '../src/brand'
 
 // The boot splash lives in index.html so that it paints before any JavaScript
 // runs, which puts it out of reach of every component test. This is its cover.
@@ -23,16 +23,20 @@ const reducedMotionBlock =
 const withoutComments = (source: string) => source.replace(/\/\*[\s\S]*?\*\//g, '')
 const fullMotion = withoutComments(css.replace(reducedMotionBlock, ''))
 
-const declarationsFor = (selector: string, source = fullMotion) => {
-  const rule = [...withoutComments(source).matchAll(/([^{}]+)\{([^{}]*)\}/g)].find(
-    ([, selectors]) =>
-      selectors
-        .split(',')
-        .map((one) => flat(one))
-        .includes(selector),
+// Every rule the selector is written in, joined: the splash states a lockup's
+// layout and its materials separately, and both are the same element.
+const declarationsFor = (selector: string, source = fullMotion) =>
+  flat(
+    [...withoutComments(source).matchAll(/([^{}]+)\{([^{}]*)\}/g)]
+      .filter(([, selectors]) =>
+        selectors
+          .split(',')
+          .map((one) => flat(one))
+          .includes(selector),
+      )
+      .map(([, , declarations]) => flat(declarations))
+      .join(' '),
   )
-  return flat(rule?.[2] ?? '')
-}
 
 const keyframes = (name: string) =>
   flat(new RegExp(`@keyframes ${name} \\{([\\s\\S]*?)\\n {6}\\}`).exec(css)?.[1] ?? '')
@@ -40,9 +44,13 @@ const keyframes = (name: string) =>
 // theme.css has not loaded yet when the splash paints, so the splash restates
 // the handful of values it needs. This reads them back out of the token layer,
 // which is the only thing that keeps the two from drifting apart.
-const token = (name: string) => {
-  const value = new RegExp(`--${name}:\\s*([^;]+);`).exec(theme)?.[1]
-  if (!value) throw new Error(`theme.css declares no --${name}`)
+const palettes = {
+  dark: theme.slice(theme.indexOf(":root[data-theme='dark']")),
+  light: theme.slice(0, theme.indexOf(":root[data-theme='dark']")),
+}
+const token = (name: string, palette: keyof typeof palettes = 'light') => {
+  const value = new RegExp(`--${name}:\\s*([^;]+);`).exec(palettes[palette])?.[1]
+  if (!value) throw new Error(`theme.css declares no --${name} in the ${palette} palette`)
   return flat(value)
 }
 
@@ -72,11 +80,38 @@ const strippedAt = (name: string) => {
   return track.slice(landing).find((stop) => !seated(stop.offset))?.at
 }
 
+// The window a slogan word holds the cell for: fully in, then fully out again.
+const shows = (name: string) => {
+  const track = [...keyframes(name).matchAll(/([\d.%, ]+)\{\s*opacity: ([\d.]+)/g)].flatMap(
+    ([, percentages, opacity]) =>
+      percentages
+        .split(',')
+        .filter((percentage) => percentage.trim())
+        .map((percentage) => ({ at: parseFloat(percentage), opacity: parseFloat(opacity) })),
+  )
+  const entrance = track.findIndex((stop) => stop.opacity === 1)
+  return {
+    from: track[entrance]?.at,
+    until: track.slice(entrance).find((stop) => stop.opacity === 0)?.at,
+  }
+}
+
 describe('boot splash', () => {
   const document = new DOMParser().parseFromString(html, 'text/html')
 
-  it('loads a bar under the brand', () => {
-    expect(document.querySelector('#boot-splash .boot-barbell svg')).not.toBeNull()
+  // Each plate is a group — a moulded body, its hairline and the lit face —
+  // and the body is the piece that says where the plate seats.
+  const plateBodies = (side: 'l' | 'r') =>
+    [...document.querySelectorAll(`#boot-splash .boot-plate-${side} .boot-rubber`)].map((rect) => {
+      const from = parseFloat(rect.getAttribute('x') ?? '')
+      return { from, to: from + parseFloat(rect.getAttribute('width') ?? '') }
+    })
+
+  it('frames the wordmark in the bar', () => {
+    const lockup = document.querySelector('#boot-splash .boot-lockup')
+    expect(lockup?.querySelector('svg')).not.toBeNull()
+    expect(lockup?.querySelector('.boot-wordmark')).not.toBeNull()
+    expect(lockup?.querySelector('.boot-slogan')).not.toBeNull()
   })
 
   it('hangs three plates on each end', () => {
@@ -84,19 +119,14 @@ describe('boot splash', () => {
     expect(document.querySelectorAll('#boot-splash .boot-plate-r')).toHaveLength(plates.length)
   })
 
-  // Touching plates read as one slab with notches where the corners round
-  // off, so each pair is parted by the same sliver of daylight instead.
-  it('leaves the same gap between neighbouring plates', () => {
+  // Rubber plates are stacked flush on a real bar, so each overlaps the one
+  // before it rather than floating a sliver of daylight away from it.
+  it('stacks every plate flush against its neighbour', () => {
     for (const side of ['l', 'r'] as const) {
-      const spans = [...document.querySelectorAll(`#boot-splash .boot-plate-${side}`)]
-        .map((rect) => {
-          const from = parseFloat(rect.getAttribute('x') ?? '')
-          return { from, to: from + parseFloat(rect.getAttribute('width') ?? '') }
-        })
-        .sort((a, b) => a.from - b.from)
-      const gaps = spans.slice(1).map((span, at) => span.from - spans[at].to)
-      expect(gaps[0]).toBeGreaterThan(0)
-      for (const gap of gaps) expect(gap).toBe(gaps[0])
+      const bodies = plateBodies(side).sort((a, b) => a.from - b.from)
+      const overlaps = bodies.slice(1).map((body, at) => bodies[at].to - body.from)
+      expect(overlaps[0]).toBeGreaterThan(0)
+      for (const overlap of overlaps) expect(overlap).toBe(overlaps[0])
     }
   })
 
@@ -139,52 +169,94 @@ describe('boot splash', () => {
     for (const [, , drop] of dips) expect(parseFloat(drop)).toBeGreaterThan(0)
   })
 
-  it('runs the bar and its plates off one clock', () => {
+  it('runs the bar, its plates and the slogan off one clock', () => {
     const duration = /(\d+(?:\.\d+)?s)/.exec(declarationsFor('#boot-splash .boot-rig'))?.[1]
     expect(duration).toBeDefined()
-    expect(declarationsFor('#boot-splash .boot-plate-l')).toContain(duration)
-    expect(declarationsFor('#boot-splash .boot-plate-r')).toContain(duration)
+    for (const selector of [
+      '#boot-splash .boot-plate-l',
+      '#boot-splash .boot-plate-r',
+      '#boot-splash .boot-slogan span',
+    ])
+      expect(declarationsFor(selector)).toContain(duration)
+  })
+
+  // One word per pair of plates: it arrives as they land, and hands the cell
+  // over before the next one arrives, so the line never reads as two words.
+  it('brings in a word as each pair lands', () => {
+    const words = ['word-1', 'word-2', 'word-3'].map((word) => shows(word))
+    for (const [at, word] of words.entries()) {
+      expect(word.from).toBeGreaterThanOrEqual(loadedAt(`load-l${at + 1}`) ?? 0)
+      expect(word.until).toBeGreaterThan(word.from ?? 0)
+    }
+    // Each word has handed the cell back before the next one takes it.
+    for (const [at, word] of words.slice(1).entries())
+      expect(word.from).toBeGreaterThanOrEqual(words[at].until ?? 0)
+    // The last word is gone before the bar is bare, not after it.
+    expect(words[2].until).toBeLessThanOrEqual(strippedAt('load-l1') ?? 0)
   })
 
   it('restates the theme it cannot wait for', () => {
     expect(declarationsFor('#boot-splash')).toContain(`background: ${token('color-canvas')}`)
-    expect(declarationsFor('#boot-splash .boot-mark')).toContain(
-      `background: ${token('color-ink')}`,
+    expect(declarationsFor('#boot-splash .boot-lockup')).toContain(`color: ${token('color-text')}`)
+    expect(declarationsFor("[data-theme='dark'] #boot-splash")).toContain(
+      `background: ${token('color-canvas', 'dark')}`,
     )
-    expect(declarationsFor('#boot-splash .boot-mark')).toContain(token('color-ink-border'))
-    expect(declarationsFor('#boot-splash .boot-copy > span')).toContain(
-      `color: ${token('color-text-subtle')}`,
-    )
-    expect(declarationsFor('#boot-splash .boot-ground')).toContain(
-      `fill: ${token('color-ink-border')}`,
+    expect(declarationsFor("[data-theme='dark'] #boot-splash .boot-lockup")).toContain(
+      `color: ${token('color-text', 'dark')}`,
     )
   })
 
-  // The plates wear the bar's own ink, so the rig reads as one piece.
-  it('draws every plate in the same ink as the bar', () => {
-    expect(declarationsFor('#boot-splash .boot-steel')).toContain(`fill: ${token('color-ink')}`)
-    for (const plate of plates)
-      expect(declarationsFor(`#boot-splash .${plate}`)).toContain(`fill: ${token('color-ink')}`)
+  // Chrome on the bar, rubber on the plates: two stacks of stops that the dark
+  // palette re-values rather than redraws.
+  it('turns the bar in chrome and moulds the plates in rubber', () => {
+    expect(declarationsFor('#boot-splash .boot-steel')).toContain('fill: url(#boot-steel)')
+    expect(declarationsFor('#boot-splash .boot-rubber')).toContain('fill: url(#boot-rubber)')
+    for (const material of ['steel', 'rubber']) {
+      const stack = [
+        ...declarationsFor('#boot-splash').matchAll(new RegExp(`--boot-${material}-\\w+:`, 'g')),
+      ].map(([stop]) => stop)
+      expect(stack).toHaveLength(6)
+      for (const stop of stack)
+        expect(declarationsFor("[data-theme='dark'] #boot-splash")).toContain(stop)
+    }
   })
 
   // The splash cannot import from src, so it restates the lockup by hand.
   // These two keep the copy from drifting away from the guest header's.
   it('reads exactly as the guest header does', () => {
-    const copy = document.querySelector('#boot-splash .boot-brand')?.textContent
-    expect(copy?.replace(/\s+/g, ' ').trim()).toBe(`${brandNameParts.join('')} ${brandSlogan}`)
+    expect(document.querySelector('#boot-splash .boot-wordmark')?.textContent).toBe(brandName)
+    const words = [...document.querySelectorAll('#boot-splash .boot-slogan span')].map(
+      (word) => word.textContent?.trim() ?? '',
+    )
+    expect(`${words.join('. ')}.`).toBe(brandSlogan)
   })
 
   it('splits the name across the two weights the guest header uses', () => {
-    expect(declarationsFor('#boot-splash .boot-copy strong')).toMatch(/font-weight:\s*700/)
-    expect(declarationsFor('#boot-splash .boot-copy strong span')).toMatch(/font-weight:\s*600/)
+    expect(document.querySelector('#boot-splash .boot-wordmark span')?.textContent).toBe(
+      brandNameParts[0],
+    )
+    expect(declarationsFor('#boot-splash .boot-wordmark')).toMatch(/font-weight: 700/)
+    expect(declarationsFor('#boot-splash .boot-wordmark span')).toMatch(/font-weight: 600/)
   })
 
-  it('leaves the brand itself still', () => {
-    for (const selector of [
-      '#boot-splash .boot-brand',
-      '#boot-splash .boot-mark',
-      '#boot-splash .boot-copy',
-    ])
+  // The wordmark only sits between the collars, and the slogan only under the
+  // shaft, at the width the lockup was drawn at. Every offset is a share of
+  // that width rather than a fixed pixel, so a narrow phone shrinks the whole
+  // lockup instead of sliding the words off the bar.
+  it('scales the lockup as one piece', () => {
+    const lockup = declarationsFor('#boot-splash .boot-lockup')
+    expect(lockup).toContain('container-type: inline-size')
+    const unit = /--boot-px:\s*([\d.]+)cqw/.exec(lockup)?.[1]
+    expect(parseFloat(unit ?? '0') * 320).toBe(100)
+    for (const selector of ['#boot-splash .boot-wordmark', '#boot-splash .boot-slogan']) {
+      const rule = declarationsFor(selector)
+      expect(rule).toMatch(/top: calc\([\d.]+ \* var\(--boot-px\)\)/)
+      expect(rule).toMatch(/font-size: calc\([\d.]+ \* var\(--boot-px\)\)/)
+    }
+  })
+
+  it('leaves the wordmark still', () => {
+    for (const selector of ['#boot-splash .boot-lockup', '#boot-splash .boot-wordmark'])
       expect(declarationsFor(selector)).not.toMatch(/animation/)
   })
 
@@ -197,13 +269,17 @@ describe('boot splash', () => {
     expect(keyframes('boot-reveal')).toContain('opacity: 1')
   })
 
-  it('parks the bar loaded for a reader who asked for less motion', () => {
+  it('parks the bar loaded on the last word for a reader who asked for less motion', () => {
     for (const selector of [
       '#boot-splash .boot-rig',
       '#boot-splash .boot-plate-l',
       '#boot-splash .boot-plate-r',
+      '#boot-splash .boot-slogan span',
     ])
       expect(declarationsFor(selector, reducedMotionBlock)).toMatch(/animation: none/)
+    expect(declarationsFor('#boot-splash .boot-slogan .w3', reducedMotionBlock)).toMatch(
+      /opacity: 1/,
+    )
     // Still revealed, or the splash would be a blank page.
     expect(declarationsFor('#boot-splash', reducedMotionBlock)).toMatch(/animation-duration/)
   })
