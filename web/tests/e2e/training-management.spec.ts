@@ -398,7 +398,8 @@ test.describe('routine lifecycle', () => {
 
     const card = page.getByRole('article').first()
     const name = await card.getByRole('heading', { level: 3 }).innerText()
-    await card.getByRole('button', { name: 'Routine actions' }).click()
+    const actions = card.getByRole('button', { name: 'Routine actions' })
+    await actions.click()
 
     const menu = page.getByRole('menu')
     await expect(menu).toBeVisible()
@@ -413,8 +414,14 @@ test.describe('routine lifecycle', () => {
 
     await page.keyboard.press('Escape')
     await expect(menu).toBeHidden()
+    // The panel leaves on a transition, and the button only says it is closed
+    // once that has run. Reopening before then toggles nothing, and the item
+    // below is waited for until the test times out.
+    await expect(actions).toHaveAttribute('aria-expanded', 'false')
 
-    await card.getByRole('button', { name: 'Routine actions' }).click()
+    await actions.click()
+    await expect(menu).toBeVisible()
+    await expect(menu).toHaveCSS('opacity', '1')
     await page.getByRole('menuitem', { name: 'Set as up next' }).click()
 
     // The dashboard is asked again with the new preference, and the badge that
