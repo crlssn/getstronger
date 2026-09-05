@@ -396,8 +396,14 @@ test.describe('routine lifecycle', () => {
   test("opens, dismisses and acts from a routine row's menu", async ({ page }) => {
     await page.goto('/routines')
 
-    const card = page.getByRole('article').first()
-    const name = await card.getByRole('heading', { level: 3 }).innerText()
+    // The seed already marks a routine up next, and that card's menu has
+    // nothing left to offer but editing, so the row acted on here is one that
+    // is not it. Its id identifies it afterwards: seeded names repeat, and the
+    // card stops matching "not up next" the moment the menu item is taken.
+    const card = page.getByRole('article').filter({ hasNotText: 'Up next' }).first()
+    const href = await card.getByRole('link').first().getAttribute('href')
+    const chosen = page.getByRole('article').filter({ has: page.locator(`a[href="${href}"]`) })
+
     const actions = card.getByRole('button', { name: 'Routine actions' })
     await actions.click()
 
@@ -426,12 +432,9 @@ test.describe('routine lifecycle', () => {
 
     // The dashboard is asked again with the new preference, and the badge that
     // comes back survives a reload.
-    const chosen = page.getByRole('article').filter({ hasText: name }).first()
     await expect(chosen.getByText('Up next')).toBeVisible()
     await page.reload()
-    await expect(page.getByRole('article').filter({ hasText: name }).first()).toContainText(
-      'Up next',
-    )
+    await expect(chosen).toContainText('Up next')
   })
 
   // Reordering is a drag: the row carries a handle, and where it is dropped is
