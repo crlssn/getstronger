@@ -101,7 +101,10 @@ func (s *workoutSuite) TestCreateWorkout() {
 			},
 			init: func(t test, userID string) {
 				for _, es := range t.req.Msg.GetExerciseSets() {
-					s.factory.NewExercise(factory.ExerciseID(es.GetExercise().GetId()))
+					s.factory.NewExercise(
+						factory.ExerciseID(es.GetExercise().GetId()),
+						factory.ExerciseUserID(userID),
+					)
 				}
 
 				s.factory.NewRoutine(
@@ -806,4 +809,62 @@ func (s *workoutSuite) TestCreateWorkoutRejectsAPlanWithoutARoutine() {
 	}))
 	s.Require().Nil(res)
 	s.Require().Equal(connect.CodeInvalidArgument, connect.CodeOf(err))
+}
+
+// An exercise id is public — every workout in the feed names the exercises it
+// trained — so a save that is trusted to name any of them lets one athlete write
+// sets into another's exercise, where they read back as that athlete's own work.
+func (s *workoutSuite) TestCreateWorkoutRejectsAnotherAthletesExercise() {
+	intruder := s.factory.NewUser()
+	owner := s.factory.NewUser()
+	exercise := s.factory.NewExercise(factory.ExerciseUserID(owner.ID))
+
+	ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
+	ctx = xcontext.WithUserID(ctx, intruder.ID)
+
+	res, err := s.handler.CreateWorkout(ctx, connect.NewRequest(&apiv1.CreateWorkoutRequest{
+		ExerciseSets: []*apiv1.ExerciseSets{{
+			Exercise: &apiv1.Exercise{Id: exercise.ID.String()},
+			Sets:     []*apiv1.Set{{Reps: 1, Weight: 500}},
+		}},
+		StartedAt:  timestamppb.Now(),
+		FinishedAt: timestamppb.New(time.Now().Add(time.Hour)),
+	}))
+	s.Require().Nil(res)
+	s.Require().Equal(connect.NewError(connect.CodePermissionDenied, nil).Error(), err.Error())
+
+	sets, err := s.repo.ListSets(context.Background(), repo.ListSetsWithExerciseID(exercise.ID))
+	s.Require().NoError(err)
+	s.Require().Empty(sets)
+}
+
+// The same boundary on the update path: a workout the athlete owns still may not
+// log its sets against somebody else's exercise.
+func (s *workoutSuite) TestUpdateWorkoutRejectsAnotherAthletesExercise() {
+	intruder := s.factory.NewUser()
+	owner := s.factory.NewUser()
+	exercise := s.factory.NewExercise(factory.ExerciseUserID(owner.ID))
+	workout := s.factory.NewWorkout(factory.WorkoutUserID(intruder.ID))
+
+	startedAt := time.Now().UTC().Truncate(time.Second)
+	ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
+	ctx = xcontext.WithUserID(ctx, intruder.ID)
+
+	res, err := s.handler.UpdateWorkout(ctx, connect.NewRequest(&apiv1.UpdateWorkoutRequest{
+		Workout: &apiv1.Workout{
+			Id:         workout.ID.String(),
+			StartedAt:  timestamppb.New(startedAt),
+			FinishedAt: timestamppb.New(startedAt.Add(time.Hour)),
+			ExerciseSets: []*apiv1.ExerciseSets{{
+				Exercise: &apiv1.Exercise{Id: exercise.ID.String()},
+				Sets:     []*apiv1.Set{{Reps: 1, Weight: 500}},
+			}},
+		},
+	}))
+	s.Require().Nil(res)
+	s.Require().Equal(connect.NewError(connect.CodePermissionDenied, nil).Error(), err.Error())
+
+	sets, err := s.repo.ListSets(context.Background(), repo.ListSetsWithExerciseID(exercise.ID))
+	s.Require().NoError(err)
+	s.Require().Empty(sets)
 }

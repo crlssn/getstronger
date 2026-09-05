@@ -21,6 +21,31 @@ var ErrWorkoutStartsAfterFinish = errors.New("workout must start before it finis
 // idempotency key was sent again, as a replayed or retried request is.
 var ErrWorkoutAlreadySaved = errors.New("workout is already saved")
 
+// ErrWorkoutExerciseUnknown reports an exercise a workout cannot log sets
+// against, because it does not exist or belongs to another athlete.
+var ErrWorkoutExerciseUnknown = errors.New("workout exercise is unknown")
+
+// ValidateWorkoutExercises checks that a save logs its sets only against
+// exercises the athlete owns. owned is the athlete's own exercises among those
+// requested, so a requested id missing from it is somebody else's.
+//
+// Unlike a routine's exercises, the same one may be requested twice: a workout
+// trains an exercise in as many blocks as it likes.
+func ValidateWorkoutExercises(owned []*Exercise, requestedIDs []uuid.UUID) error {
+	ownedIDs := make(map[uuid.UUID]struct{}, len(owned))
+	for _, exercise := range owned {
+		ownedIDs[exercise.ID] = struct{}{}
+	}
+
+	for _, requestedID := range requestedIDs {
+		if _, ok := ownedIDs[requestedID]; !ok {
+			return ErrWorkoutExerciseUnknown
+		}
+	}
+
+	return nil
+}
+
 // Period is the stretch of time a workout occupied.
 type Period struct {
 	StartedAt  time.Time
