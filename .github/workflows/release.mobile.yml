@@ -70,7 +70,10 @@ jobs:
   ios:
     if: inputs.ios
     needs: web
-    runs-on: macos-15
+    # App Store Connect rejects an upload built with anything below the iOS 26
+    # SDK, which means Xcode 26 and so the macOS 26 image. Pinned rather than
+    # macos-latest so a runner rollover cannot change the SDK under us.
+    runs-on: macos-26
     timeout-minutes: 60
 
     steps:
