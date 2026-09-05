@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gofrs/uuid/v5"
 	"github.com/stretchr/testify/require"
 
 	"github.com/crlssn/getstronger/server/training"
@@ -86,4 +87,32 @@ func TestWeekSummarise(t *testing.T) {
 	require.Equal(t, int32(1), summary.Workouts)
 	require.InDelta(t, 500.0, summary.Volume.Float64(), 0.001)
 	require.InDelta(t, 5.0, summary.Distance.Float64(), 0.001)
+}
+
+func TestValidateWorkoutExercises(t *testing.T) {
+	t.Parallel()
+
+	first, second, foreign := uuid.Must(uuid.NewV4()), uuid.Must(uuid.NewV4()), uuid.Must(uuid.NewV4())
+	owned := []*training.Exercise{exercise(first), exercise(second)}
+
+	t.Run("accepts the athlete's own exercises", func(t *testing.T) {
+		t.Parallel()
+		require.NoError(t, training.ValidateWorkoutExercises(owned, []uuid.UUID{second, first}))
+	})
+
+	t.Run("accepts an exercise trained more than once", func(t *testing.T) {
+		t.Parallel()
+		require.NoError(t, training.ValidateWorkoutExercises(owned, []uuid.UUID{first, first}))
+	})
+
+	t.Run("accepts a workout that logged nothing", func(t *testing.T) {
+		t.Parallel()
+		require.NoError(t, training.ValidateWorkoutExercises(nil, nil))
+	})
+
+	t.Run("rejects another athlete's exercise", func(t *testing.T) {
+		t.Parallel()
+		err := training.ValidateWorkoutExercises(owned, []uuid.UUID{first, foreign})
+		require.ErrorIs(t, err, training.ErrWorkoutExerciseUnknown)
+	})
 }

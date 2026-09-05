@@ -57,6 +57,10 @@ func (h *workoutHandler) CreateWorkout(ctx context.Context, req *connect.Request
 		return nil, connect.NewError(connect.CodeInvalidArgument, nil)
 	}
 
+	if err = h.verifyExercisesOwned(ctx, ids.user, session.exerciseSets); err != nil {
+		return nil, err
+	}
+
 	workout, planAdvanceSkipped, err := h.createWorkout(ctx, req.Msg, ids, workoutName, period, session)
 	if errors.Is(err, training.ErrWorkoutAlreadySaved) {
 		return h.savedWorkout(ctx, ids.idempotencyKey, ids.user)
@@ -403,25 +407,18 @@ func (h *workoutHandler) UpdateWorkout(ctx context.Context, req *connect.Request
 		return nil, connect.NewError(connect.CodeInvalidArgument, nil)
 	}
 
-	workout, err := h.repo.GetWorkout(ctx, repo.GetWorkoutWithID(workoutID))
+	workout, err := h.workoutToUpdate(ctx, workoutID, userID)
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			log.Warn("Workout not found", zap.Error(err))
-			return nil, connect.NewError(connect.CodeFailedPrecondition, nil)
-		}
-
-		log.Error("Get workout for update", zap.Error(err))
-		return nil, connect.NewError(connect.CodeInternal, nil)
-	}
-
-	if workout.UserID != userID {
-		log.Error("Workout does not belong to user")
-		return nil, connect.NewError(connect.CodePermissionDenied, nil)
+		return nil, err
 	}
 
 	exerciseSets, err := parser.ExerciseSetsFromPB(req.Msg.GetWorkout().GetExerciseSets())
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInvalidArgument, nil)
+	}
+
+	if err = h.verifyExercisesOwned(ctx, userID, exerciseSets); err != nil {
+		return nil, err
 	}
 
 	if err = h.repo.NewTx(ctx, func(tx *repo.Repo) error {
@@ -450,6 +447,65 @@ func (h *workoutHandler) UpdateWorkout(ctx context.Context, req *connect.Request
 
 	log.Info("Workout updated")
 	return &connect.Response[apiv1.UpdateWorkoutResponse]{}, nil
+}
+
+// workoutToUpdate is the athlete's own workout the request names.
+func (h *workoutHandler) workoutToUpdate(ctx context.Context, workoutID, userID uuid.UUID) (*training.Workout, error) {
+	log := xcontext.MustExtractLogger(ctx)
+
+	workout, err := h.repo.GetWorkout(ctx, repo.GetWorkoutWithID(workoutID))
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			log.Warn("Workout not found", zap.Error(err))
+			return nil, connect.NewError(connect.CodeFailedPrecondition, nil)
+		}
+
+		log.Error("Get workout for update", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
+
+	if workout.UserID != userID {
+		log.Error("Workout does not belong to user")
+		return nil, connect.NewError(connect.CodePermissionDenied, nil)
+	}
+
+	return workout, nil
+}
+
+// verifyExercisesOwned rejects a save that logs sets against an exercise the
+// athlete does not own. A set carries its exercise straight from the request,
+// and an exercise id is public — every workout in the feed names the ones it
+// trained — so an unchecked save is one athlete writing into another's history.
+//
+// Only the sets are checked: a block naming an exercise the sets do not is
+// dropped by NormalizeWorkoutGroups before anything is stored.
+func (h *workoutHandler) verifyExercisesOwned(ctx context.Context, userID uuid.UUID, exerciseSets []repo.ExerciseSet) error {
+	if len(exerciseSets) == 0 {
+		return nil
+	}
+
+	log := xcontext.MustExtractLogger(ctx)
+	exerciseIDs := make([]uuid.UUID, 0, len(exerciseSets))
+	for _, exerciseSet := range exerciseSets {
+		exerciseIDs = append(exerciseIDs, exerciseSet.ExerciseID)
+	}
+
+	owned, err := h.repo.ListExercises(
+		ctx,
+		repo.ListExercisesWithIDs(exerciseIDs),
+		repo.ListExercisesWithUserID(userID),
+	)
+	if err != nil {
+		log.Error("List exercises for workout save", zap.Error(err))
+		return connect.NewError(connect.CodeInternal, nil)
+	}
+
+	if err = training.ValidateWorkoutExercises(owned, exerciseIDs); err != nil {
+		log.Warn("Workout logs an exercise the athlete does not own", zap.Stringers("exercise_ids", exerciseIDs))
+		return connect.NewError(connect.CodePermissionDenied, nil)
+	}
+
+	return nil
 }
 
 // workoutRequestIDs are the rows a save names: the athlete who trained, the
