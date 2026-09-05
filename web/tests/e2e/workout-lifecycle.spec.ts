@@ -5,9 +5,11 @@ import {
   expect,
   logIn,
   logInAs,
+  newUserEmail,
   openExerciseActions,
   resetSeedData,
   scrollToListEnd,
+  seedPassword,
   test,
   uniqueName,
 } from './fixtures'
@@ -833,5 +835,48 @@ test.describe('planned workouts and history', () => {
 
     await firstExercise.click()
     await expect(page.getByRole('table').first()).toBeVisible()
+  })
+})
+
+// A draft outlives the session that logged it, so the same athlete finds it on
+// their way back in. A phone lent to a training partner must not.
+test.describe('a draft and the device it is on', () => {
+  const workoutTab = (page: E2EPage) =>
+    page
+      .getByRole('navigation', { name: 'Primary navigation' })
+      .getByRole('link', { name: 'Workout' })
+
+  const signOut = async (page: E2EPage) => {
+    await page.goto('/profile')
+    await page.getByRole('link', { name: 'Log out' }).click()
+    await expect(page).toHaveURL(/\/login$/)
+  }
+
+  test('follows the athlete who logged it, not the phone @mutation', async ({ page }) => {
+    await logIn(page)
+    await page.goto('/workouts/quick')
+    const exercise = await addFirstExercise(page)
+    await logFirstSet(page, exercise)
+    await leaveInBackground(page)
+    await expect(workoutTab(page)).toHaveAttribute('href', '/workouts/quick')
+
+    await signOut(page)
+    await logIn(page)
+
+    // Same athlete, same session: still ticking, still theirs to finish. The
+    // badge carries whichever clock the session is on — the rest countdown
+    // while it runs, the elapsed time once it has.
+    await expect(workoutTab(page)).toHaveAttribute('href', '/workouts/quick')
+    await expect(workoutTab(page).locator('span[aria-hidden="true"]')).toHaveText(
+      /^(\d+:\d{2}|\d+m \d{2}s)$/,
+    )
+
+    await signOut(page)
+    await logInAs(page, newUserEmail, seedPassword)
+
+    await expect(workoutTab(page)).toHaveAttribute('href', '/workout')
+    await expect(workoutTab(page).locator('span[aria-hidden="true"]')).toHaveCount(0)
+    await page.goto('/workouts/quick')
+    await expect(page.getByRole('heading', { name: 'Add your first exercise' })).toBeVisible()
   })
 })

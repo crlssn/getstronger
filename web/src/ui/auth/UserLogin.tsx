@@ -5,7 +5,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { brandName } from '@/brand'
 import { consumeRequestError, login } from '@/http/requests'
 import posthog from '@/posthog'
-import { useAuthStore } from '@/stores/auth'
+import { startAccountSession } from '@/stores/accountState'
 import { useNotificationStore } from '@/stores/notifications'
 import { AppButton } from '@/ui/components/AppButton'
 import { AppInlineError } from '@/ui/components/AppInlineError'
@@ -39,7 +39,7 @@ export const UserLogin = () => {
       return
     }
 
-    useAuthStore.getState().setAccessToken(res.accessToken)
+    startAccountSession(res.accessToken)
     posthog.capture('user_logged_in')
     useNotificationStore.getState().pollUnreadNotifications()
     void navigate('/home')

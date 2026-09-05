@@ -56,7 +56,7 @@ const fakeToken = (userId: string) =>
 
 beforeEach(() => {
   Object.values(mocked).forEach((mock) => mock.mockReset())
-  useAuthStore.setState({ userId: '', accessToken: '' })
+  useAuthStore.setState({ userId: '', accessToken: '', lastUserId: '' })
   useToastStore.getState().dismiss()
   useEmailVerificationStore.getState().clear()
 })
@@ -340,13 +340,16 @@ describe('VerifyEmail', () => {
 
 describe('UserLogout', () => {
   test('ends the session everywhere it is held', async () => {
-    useAuthStore.setState({ userId: 'user-1', accessToken: 'token' })
+    useAuthStore.setState({ userId: 'user-1', accessToken: 'token', lastUserId: 'user-1' })
     usePreferencesStore.getState().setAutofillSets(true)
     mocked.logout.mockResolvedValue({} as never)
     renderScreen(<UserLogout />)
 
     await waitFor(() => expect(useAuthStore.getState().accessToken).toBe(''))
     expect(usePreferencesStore.getState().autofillSets).toBe(false)
+    // The drafts stay for the way back in, so the device has to remember whose
+    // they are.
+    expect(useAuthStore.getState().lastUserId).toBe('user-1')
   })
 
   // Signing out twice would revoke a token the backend has already revoked.
