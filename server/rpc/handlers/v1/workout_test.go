@@ -868,3 +868,22 @@ func (s *workoutSuite) TestUpdateWorkoutRejectsAnotherAthletesExercise() {
 	s.Require().NoError(err)
 	s.Require().Empty(sets)
 }
+
+// A session finished without logging anything is still a workout, and it names
+// no exercise for the ownership check to resolve.
+func (s *workoutSuite) TestCreateWorkoutWithoutSets() {
+	user := s.factory.NewUser()
+	ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
+	ctx = xcontext.WithUserID(ctx, user.ID)
+
+	res, err := s.handler.CreateWorkout(ctx, connect.NewRequest(&apiv1.CreateWorkoutRequest{
+		StartedAt:  timestamppb.Now(),
+		FinishedAt: timestamppb.New(time.Now().Add(time.Hour)),
+	}))
+	s.Require().NoError(err)
+	s.Require().NotEmpty(res.Msg.GetWorkoutId())
+
+	workout, err := s.repo.GetWorkout(context.Background(), repo.GetWorkoutWithID(nativeUUID(res.Msg.GetWorkoutId())))
+	s.Require().NoError(err)
+	s.Require().Equal(training.QuickWorkoutName, workout.Name)
+}
