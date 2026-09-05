@@ -36,3 +36,11 @@ playwright-report/
 /screenshots/
 /.screenshots-baseline/
 /.screenshots-clock
+
+# design-sync: staged converter scripts, build output and machine state.
+/.ds-sync/
+/ds-bundle/
+/ds-dist/
+/.design-sync/.cache/
+/.design-sync/learnings/
+/.design-sync/node_modules
