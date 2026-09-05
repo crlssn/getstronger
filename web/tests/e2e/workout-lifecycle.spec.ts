@@ -345,9 +345,16 @@ test.describe('quick workout lifecycle', () => {
     await weight.focus()
     await expect(weight).toHaveValue('25')
 
+    // Reading what you lifted last time is not training: the number came from
+    // the app, so the session clock waits for one that comes from the athlete.
+    const elapsed = page.getByLabel('Elapsed')
+    await page.waitForTimeout(1500)
+    await expect(elapsed).toHaveText('0:00')
+
     // The copy arrives inside the focus itself, already selected, so typing
     // straight over it replaces the number rather than landing behind it.
     await weight.fill('30')
+    await expect(elapsed).not.toHaveText('0:00')
     await expect(weight).toHaveValue('30')
     await weight.fill('25')
     await expect(weight).toHaveValue('25')
