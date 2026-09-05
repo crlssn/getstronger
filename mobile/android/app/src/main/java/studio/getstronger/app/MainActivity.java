@@ -1,4 +1,4 @@
-package com.getstronger.app;
+package studio.getstronger.app;
 
 import com.getcapacitor.BridgeActivity;
 
