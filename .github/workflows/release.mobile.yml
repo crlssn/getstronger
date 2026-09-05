@@ -107,7 +107,7 @@ jobs:
           ASC_PRIVATE_KEY: ${{ secrets.ASC_PRIVATE_KEY }}
         run: |
           mkdir -p ~/private_keys
-          printf '%s' "$ASC_PRIVATE_KEY" > ~/private_keys/AuthKey_${{ secrets.ASC_KEY_ID }}.p8
+          printf '%s' "$ASC_PRIVATE_KEY" > ~/private_keys/AuthKey_${{ vars.ASC_KEY_ID }}.p8
 
       - name: Archive
         working-directory: mobile/ios/App
@@ -116,10 +116,10 @@ jobs:
             -destination 'generic/platform=iOS' \
             -archivePath "$RUNNER_TEMP/App.xcarchive" archive \
             -allowProvisioningUpdates \
-            -authenticationKeyPath ~/private_keys/AuthKey_${{ secrets.ASC_KEY_ID }}.p8 \
-            -authenticationKeyID '${{ secrets.ASC_KEY_ID }}' \
-            -authenticationKeyIssuerID '${{ secrets.ASC_ISSUER_ID }}' \
-            DEVELOPMENT_TEAM='${{ secrets.APPLE_TEAM_ID }}' \
+            -authenticationKeyPath ~/private_keys/AuthKey_${{ vars.ASC_KEY_ID }}.p8 \
+            -authenticationKeyID '${{ vars.ASC_KEY_ID }}' \
+            -authenticationKeyIssuerID '${{ vars.ASC_ISSUER_ID }}' \
+            DEVELOPMENT_TEAM='${{ vars.APPLE_TEAM_ID }}' \
             CURRENT_PROJECT_VERSION=${{ github.run_number }}
 
       - name: Upload to TestFlight
@@ -141,9 +141,9 @@ jobs:
             -archivePath "$RUNNER_TEMP/App.xcarchive" \
             -exportOptionsPlist "$RUNNER_TEMP/export.plist" \
             -allowProvisioningUpdates \
-            -authenticationKeyPath ~/private_keys/AuthKey_${{ secrets.ASC_KEY_ID }}.p8 \
-            -authenticationKeyID '${{ secrets.ASC_KEY_ID }}' \
-            -authenticationKeyIssuerID '${{ secrets.ASC_ISSUER_ID }}'
+            -authenticationKeyPath ~/private_keys/AuthKey_${{ vars.ASC_KEY_ID }}.p8 \
+            -authenticationKeyID '${{ vars.ASC_KEY_ID }}' \
+            -authenticationKeyIssuerID '${{ vars.ASC_ISSUER_ID }}'
 
   android:
     if: inputs.android
