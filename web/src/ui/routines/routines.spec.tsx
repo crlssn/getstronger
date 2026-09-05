@@ -1,9 +1,10 @@
 // @vitest-environment jsdom
 
 import type { MessageInitShape } from '@bufbuild/protobuf'
+import type { GetRoutineResponse } from '@/proto/api/v1/routine_service_pb'
 
 import { create } from '@bufbuild/protobuf'
-import { screen, waitFor, within } from '@testing-library/react'
+import { act, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { DateTime } from 'luxon'
 import { Route, Routes } from 'react-router-dom'
@@ -740,5 +741,39 @@ describe('EditRoutine', () => {
       'true',
     )
     expect(screen.getByRole('group', { name: 'How group B runs' })).toBeInTheDocument()
+  })
+
+  // Effects run twice under StrictMode, so two loads are in flight at once and
+  // the first one started is the one already superseded.
+  test('ignores a superseded load answering over the form', async () => {
+    const answers: ((response: GetRoutineResponse | undefined) => void)[] = []
+    mocked.getRoutine.mockImplementation(() => new Promise((resolve) => answers.push(resolve)))
+
+    renderWithProviders(
+      <Routes>
+        <Route path="/routines/:id/edit" element={<EditRoutine />} />
+      </Routes>,
+      { route: '/routines/push/edit', reactStrictMode: true },
+    )
+
+    await waitFor(() => expect(answers).toHaveLength(2))
+
+    // The second load is the live one: the first was cut loose by the cleanup.
+    await act(async () => {
+      answers[1](create(GetRoutineResponseSchema, { routine: push }))
+    })
+
+    const field = await screen.findByDisplayValue('Push day')
+    await userEvent.clear(field)
+    await userEvent.type(field, 'Upper body')
+
+    // The superseded load answers late, and empty. Acting on it swapped the
+    // filled-in form for the error state, losing what had been typed.
+    await act(async () => {
+      answers[0](undefined)
+    })
+
+    expect(screen.getByDisplayValue('Upper body')).toBeInTheDocument()
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
   })
 })

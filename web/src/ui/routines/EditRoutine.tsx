@@ -25,22 +25,38 @@ export const EditRoutine = () => {
   const [failed, setFailed] = useState(false)
   const [saving, setSaving] = useState(false)
 
-  const load = useCallback(async () => {
-    const response = await getRoutine(id)
-    if (response?.routine) {
-      setName(response.routine.name)
-      setExercises(response.routine.exercises)
-      setGroups(response.routine.groups)
-    }
-    setFailed(!response?.routine)
-  }, [id])
+  // `superseded` reports that a newer load has taken this one's place, so a
+  // stale answer is dropped rather than put on screen.
+  const load = useCallback(
+    async (superseded: () => boolean = () => false) => {
+      const response = await getRoutine(id)
+      if (superseded()) return
+      if (response?.routine) {
+        setName(response.routine.name)
+        setExercises(response.routine.exercises)
+        setGroups(response.routine.groups)
+      }
+      setFailed(!response?.routine)
+    },
+    [id],
+  )
 
   useEffect(() => {
+    // Effects run twice under StrictMode, so a second load is already under way
+    // by the time the first answers. Without this the abandoned load's answer
+    // still lands, and a failed one replaces the form being edited.
+    let replaced = false
+
     const initialLoad = async () => {
-      await load()
+      await load(() => replaced)
+      if (replaced) return
       setLoading(false)
     }
+
     void initialLoad()
+    return () => {
+      replaced = true
+    }
   }, [load])
 
   const onSave = async (
