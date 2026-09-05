@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- app_webview holds the WebView's Local Storage and cookie jar, and that is
+     where the whole session lives: the access token, the thirty-day refresh
+     cookie, the workout drafts and every cached response. A backup would carry
+     a live session onto whichever device the account is next set up on, so it
+     leaves both the cloud backup and the device-to-device transfer. Nothing
+     else in the data directory is worth restoring either — the app fetches it
+     all again after a login. Applies from Android 12; res/xml/backup_rules.xml
+     is the same exclusion for the older half of minSdkVersion 24. -->
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude domain="root" path="app_webview" />
+    </cloud-backup>
+    <device-transfer>
+        <exclude domain="root" path="app_webview" />
+    </device-transfer>
+</data-extraction-rules>
