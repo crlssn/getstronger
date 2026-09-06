@@ -432,6 +432,28 @@ curl --fail https://beta.api.getstronger.studio/healthz
 
 Seed an account on the beta database and smoke-test the deployed stack with the live end-to-end suite described below.
 
+### Authentication rate limits
+
+Every schema-declared guest RPC consumes a source-address budget before validation or password hashing. Login also consumes a budget for the normalized email address, whether registered or unknown. Password updates consume a separate budget for the account identified by the reset token; rotating that token does not reset the account's budget. Unknown reset tokens have their own budget. Authenticated procedures, health checks, and profiling are outside these limits. Existing verification and password-reset email cooldowns still apply.
+
+| Environment variable | Default | Purpose |
+| --- | --- | --- |
+| `AUTH_RATE_SOURCE_ATTEMPTS` | `120` | Total guest requests per source window, across procedures |
+| `AUTH_RATE_SOURCE_WINDOW` | `1m` | Source window duration |
+| `AUTH_RATE_ACCOUNT_ATTEMPTS` | `10` | Attempts per login email or password-update account |
+| `AUTH_RATE_ACCOUNT_WINDOW` | `15m` | Account window duration |
+| `AUTH_RATE_TRUSTED_PROXIES` | empty | Comma-separated CIDRs allowed to supply forwarded addresses |
+
+Set the same values on every container replica. Attempts must be positive and windows at least one second; malformed settings prevent startup. The higher source allowance lets other people behind a shared address sign in after one account exhausts its smaller allowance. Sustained abuse can still exhaust the shared source allowance. An account under a distributed attack can be temporarily locked out; password recovery has its own budget so login abuse does not consume it.
+
+Counters live in PostgreSQL, so restarts and horizontal scaling do not multiply allowances. An atomic upsert reserves each attempt before calling the handler, including successful attempts. Counting only failures after the handler would allow a concurrent burst to bypass the limit. Each window starts with the first attempt and expires using the database clock; blocked retries do not extend it. A caller can make two bursts around a window boundary, so these are fixed-window limits, not a rolling average. Refusals return the same `ResourceExhausted` message for known and unknown accounts, without account details or remaining counts. A database failure returns `Unavailable` and does not run authentication without protection.
+
+Each source reservation costs one database statement; login costs a second, and password updates additionally resolve the reset account. Counters store domain-separated HMAC-SHA256 keys using `JWT_ACCESS_TOKEN_KEY`, never raw emails, addresses, or reset tokens. All replicas must already share that key; rotating it starts fresh budgets. Each reservation removes up to 16 expired counters through the expiry index, skipping locked rows. No cleanup worker needs to stay alive in a serverless container; idle expired rows are removed when traffic resumes.
+
+**Configure proxy trust before deploying.** By default only the socket peer is used and forwarded headers are ignored. Behind an ingress this safely groups requests under the ingress address, which can throttle unrelated users. Set `AUTH_RATE_TRUSTED_PROXIES` to the verified networks of the actual proxies that can connect to the API. The limiter walks `X-Forwarded-For` from right to left, stopping at the first untrusted address; a forged leftmost address cannot override it. IPv4-mapped addresses are normalized, and IPv6 clients share a /64 budget to prevent privacy-address rotation from evading it.
+
+Scaleway documents the [headers it forwards](https://www.scaleway.com/en/docs/serverless-containers/reference-content/request-headers/), but this does not establish trusted socket ranges for your deployment. Verify the peer and appended header chain on beta, including a request carrying a forged header, before setting the CIDRs. Do not use `0.0.0.0/0` or `::/0`, or trust arbitrary client-supplied headers. Apply migration 057 before rolling out the API. These application limits bound authentication work; an ingress-level traffic limit is still needed to protect the database itself from request floods.
+
 ### 9. Profiling a deployed API
 
 The API can serve Go's runtime profiles at `/debug/pprof/`, and serves nothing there until `PPROF_TOKEN` is set on the container. The token is both the switch and the credential: there is no way to publish the profiles without also setting the secret that guards them, and a request without it gets the same 404 as any path the server does not have, so nothing on the wire says the endpoints exist.

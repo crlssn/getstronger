@@ -21,6 +21,9 @@ var testDB bob.Transactor[bob.Tx]
 // Make sure the type Auth runs hooks after queries
 var _ bob.HookableType = &Auth{}
 
+// Make sure the type AuthRateLimit runs hooks after queries
+var _ bob.HookableType = &AuthRateLimit{}
+
 // Make sure the type Event runs hooks after queries
 var _ bob.HookableType = &Event{}
 

@@ -104,6 +104,14 @@ func random_int32(f *faker.Faker, limits ...string) int32 {
 	return f.Int32Between(0, 3600)
 }
 
+func random_int64(f *faker.Faker, limits ...string) int64 {
+	if f == nil {
+		f = &defaultFaker
+	}
+
+	return f.Int64Between(1, math.MaxInt64)
+}
+
 func random_pq_StringArray(f *faker.Faker, limits ...string) pq.StringArray {
 	if f == nil {
 		f = &defaultFaker

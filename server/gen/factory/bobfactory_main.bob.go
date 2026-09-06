@@ -19,6 +19,7 @@ import (
 
 type Factory struct {
 	baseAuthMods                 AuthModSlice
+	baseAuthRateLimitMods        AuthRateLimitModSlice
 	baseEventMods                EventModSlice
 	baseExerciseMods             ExerciseModSlice
 	baseExercisesRoutineMods     ExercisesRoutineModSlice
@@ -87,6 +88,36 @@ func (f *Factory) fromExistingAuth(ctx context.Context, m *models.Auth) *AuthTem
 	if m.R.User != nil {
 		AuthMods.WithExistingUser(m.R.User).Apply(ctx, o)
 	}
+
+	return o
+}
+
+func (f *Factory) NewAuthRateLimit(mods ...AuthRateLimitMod) *AuthRateLimitTemplate {
+	return f.NewAuthRateLimitWithContext(context.Background(), mods...)
+}
+
+func (f *Factory) NewAuthRateLimitWithContext(ctx context.Context, mods ...AuthRateLimitMod) *AuthRateLimitTemplate {
+	o := &AuthRateLimitTemplate{f: f}
+
+	if f != nil {
+		f.baseAuthRateLimitMods.Apply(ctx, o)
+	}
+
+	AuthRateLimitModSlice(mods).Apply(ctx, o)
+
+	return o
+}
+
+func (f *Factory) FromExistingAuthRateLimit(ctx context.Context, m *models.AuthRateLimit) *AuthRateLimitTemplate {
+	return f.fromExistingAuthRateLimit(ctx, m)
+}
+
+func (f *Factory) fromExistingAuthRateLimit(ctx context.Context, m *models.AuthRateLimit) *AuthRateLimitTemplate {
+	o := &AuthRateLimitTemplate{f: f, alreadyPersisted: true}
+
+	o.Key = func() string { return m.Key }
+	o.Attempts = func() int64 { return m.Attempts }
+	o.ExpiresAt = func() time.Time { return m.ExpiresAt }
 
 	return o
 }
@@ -917,6 +948,14 @@ func (f *Factory) ClearBaseAuthMods() {
 
 func (f *Factory) AddBaseAuthMod(mods ...AuthMod) {
 	f.baseAuthMods = append(f.baseAuthMods, mods...)
+}
+
+func (f *Factory) ClearBaseAuthRateLimitMods() {
+	f.baseAuthRateLimitMods = nil
+}
+
+func (f *Factory) AddBaseAuthRateLimitMod(mods ...AuthRateLimitMod) {
+	f.baseAuthRateLimitMods = append(f.baseAuthRateLimitMods, mods...)
 }
 
 func (f *Factory) ClearBaseEventMods() {

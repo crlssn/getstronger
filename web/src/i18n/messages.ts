@@ -70,6 +70,7 @@ export const en = {
     loadFailed: 'Something went wrong',
     loadFailedBody: 'That did not load. Check your connection and try again.',
     somethingWentWrong: 'Something went wrong. Please try again.',
+    tooManyAttempts: 'Too many attempts. Please try again later.',
   },
   nav: {
     primary: 'Primary navigation',
@@ -884,6 +885,7 @@ export const sv = {
     loadFailed: 'Något gick fel',
     loadFailedBody: 'Det gick inte att ladda. Kontrollera din anslutning och försök igen.',
     somethingWentWrong: 'Något gick fel. Försök igen.',
+    tooManyAttempts: 'För många försök. Försök igen senare.',
   },
   nav: {
     primary: 'Primär navigering',
