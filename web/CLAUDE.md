@@ -21,11 +21,13 @@ and tap-target measurements, visual diffs — follow
 
 Any change that alters what a page looks like ends with the page itself, before
 and after, shared in the reply rather than only written to disk, so the change
-is judged by looking at it. Photograph the pages before changing them — a set
-captured afterwards has nothing to compare with — then run
-`mise run screenshots:diff <pattern>` once the change is in place: it leaves the
-earlier image in `web/.screenshots-baseline/`, the new one in `web/screenshots/`,
-and a highlighted difference in `web/screenshots/changes/`. Attach all three.
+is judged by looking at it. A set is keyed by the ref it was photographed on, so
+the before is another ref's: photograph `main` once — `git switch main`,
+`mise run screenshots`, `git switch -` — and it survives every run on this
+branch. Then run `mise run screenshots:diff <pattern>` once the change is in
+place: it leaves the new image in `web/screenshots/<ref>/`, a highlighted
+difference in `web/screenshots/<ref>/changes/`, and names both sets it compared.
+Attach all three images.
 
 A change that becomes a pull request puts the same evidence in its body with
 `mise run pr:screenshots <number> --append`, which publishes the images and

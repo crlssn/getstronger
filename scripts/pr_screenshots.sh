@@ -16,6 +16,10 @@
 
 set -uo pipefail
 
+# ref_directory and current_ref: a set is keyed by the ref it was photographed
+# on, so the default path has to name the same directory the capture wrote to.
+. "$(dirname "$0")/screenshots_ref.sh"
+
 # Opens the block, so publishing again replaces the images a reviewer has
 # rather than leaving them two sets.
 readonly MARKER="<!-- pr:screenshots -->"
@@ -53,7 +57,7 @@ esac
 root="$(git rev-parse --show-toplevel 2>/dev/null)"
 [ -n "$root" ] || fail "no working tree here, so there are no screenshots to publish"
 
-[ -n "$path" ] || path="$root/web/screenshots/changes"
+[ -n "$path" ] || path="$root/web/screenshots/$(ref_directory "$(current_ref)")/changes"
 
 # Both sides are resolved with 'cd' rather than compared as text, so a symlink
 # out of web/screenshots is caught as well as a path that names somewhere else.
@@ -67,16 +71,31 @@ case "$directory" in
   *) fail "$path is outside web/screenshots/, and only what was photographed from the seeded database may go to a public bucket" ;;
 esac
 
-# 'screenshots:diff' leaves the previous set in web/.screenshots-baseline/ and
-# the highlighted differences in web/screenshots/changes/, so a default run can
-# show a redesign as the two states side by side. The baseline is the same
-# seeded photographs one run older, which is why publishing it is safe although
-# a --path may never name it.
-baseline="$(cd "$root/web/.screenshots-baseline" 2>/dev/null && pwd -P)"
+# 'screenshots:diff' writes the ref it compared against beside the differences
+# it drew, so a directory of differences carries both sets a report is of: the
+# one it sits in, and the one named there. Reading that rather than matching the
+# path is what lets --path name any run's differences and still show a redesign
+# as the two states side by side.
+#
+# The name comes out of a file, so it is resolved and checked against the same
+# guard as --path: only what was photographed from the seeded database may go to
+# a public bucket.
+before_root=""
+after_root=""
 comparing=""
-if [ "$directory" = "$publishable/changes" ] && [ -n "$baseline" ]; then
-  comparing=1
+if [ -f "$directory/against" ]; then
+  against="$(head -n 1 "$directory/against")"
+  before_root="$(cd "$root/web/screenshots/$against" 2>/dev/null && pwd -P)"
+  after_root="$(cd "$directory/.." 2>/dev/null && pwd -P)"
 fi
+
+case "$before_root" in
+  "$publishable"/*)
+    case "$after_root" in
+      "$publishable"/*) comparing=1 ;;
+    esac
+    ;;
+esac
 
 # The pages to publish come from the index 'screenshots:diff' writes rather than
 # from the difference images beside it: a page that gained or lost a fold has an
@@ -162,8 +181,8 @@ if [ -n "$comparing" ]; then
   done
 
   publish "$directory" "$PREFIX/difference" --include "*.png"
-  publish "$publishable" "$PREFIX/after" "${includes[@]}"
-  publish "$baseline" "$PREFIX/before" "${includes[@]}"
+  publish "$after_root" "$PREFIX/after" "${includes[@]}"
+  publish "$before_root" "$PREFIX/before" "${includes[@]}"
 
   block+="| Page | Before | After | Difference |
 | --- | --- | --- | --- |
@@ -174,9 +193,9 @@ if [ -n "$comparing" ]; then
     # A third of the 780 px the phone-sized viewport renders at, so the three
     # states sit side by side in a pull request's column.
     before="_not in the baseline_"
-    [ -f "$baseline/$image" ] && before="$(image_tag "before/$image" 260 "$page before")"
+    [ -f "$before_root/$image" ] && before="$(image_tag "before/$image" 260 "$page before")"
     after="_removed_"
-    [ -f "$publishable/$image" ] && after="$(image_tag "after/$image" 260 "$page after")"
+    [ -f "$after_root/$image" ] && after="$(image_tag "after/$image" 260 "$page after")"
     # A page with only one state has nothing to overlay, and a word says so
     # better than a link to an object that was never uploaded.
     difference="_${kinds[$position]}, nothing to compare_"
@@ -199,8 +218,15 @@ else
   done
 fi
 
-block+="
+# Which two sets the table is of, so a report built against the wrong baseline
+# is visible to a reviewer rather than silent.
+if [ -n "$comparing" ]; then
+  block+="
+<sub>\`$(basename "$after_root")\` at $sha, compared against \`$(basename "$before_root")\`.</sub>"
+else
+  block+="
 <sub>Captured at $sha.</sub>"
+fi
 
 printf '%s\n' "$block"
 

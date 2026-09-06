@@ -12,11 +12,13 @@ import {
 import { flowRecords } from './flows'
 import { changesSince } from './diff'
 import {
+  baselineRef,
   changesRoot,
   contactSheetPath,
   manifestPath,
   outputRoot,
   recordsPath,
+  ref,
   viewport,
   type Change,
   type Findings,
@@ -151,10 +153,12 @@ export default async () => {
     `${JSON.stringify(
       {
         changes,
+        comparedAgainst: changes === undefined ? undefined : baselineRef,
         foldHeight: viewport.height,
         generatedAt,
         pages: records,
         personas: audiences.map(({ description, email, name }) => ({ description, email, name })),
+        ref,
         viewport,
       },
       null,
@@ -177,7 +181,7 @@ export default async () => {
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>GetStronger mobile screenshots</title>
+    <title>GetStronger mobile screenshots — ${escapeHtml(ref)}</title>
     <style>
       :root { color-scheme: light dark; }
       body { font-family: system-ui, sans-serif; margin: 0 auto; max-width: 1600px; padding: 2rem; }
@@ -199,9 +203,9 @@ export default async () => {
     </style>
   </head>
   <body>
-    <h1>Mobile screenshots</h1>
+    <h1>Mobile screenshots — ${escapeHtml(ref)}</h1>
     <p class="generated">
-      ${viewport.width} × ${viewport.height} at 2× density, one image per screenful, generated ${new Date(generatedAt).toLocaleString()}.
+      ${viewport.width} × ${viewport.height} at 2× density, one image per screenful, photographed on <code>${escapeHtml(ref)}</code>${changes === undefined ? '' : ` and compared against <code>${escapeHtml(baselineRef)}</code>`}, generated ${new Date(generatedAt).toLocaleString()}.
       Machine-readable index: <a href="manifest.json">manifest.json</a>.
     </p>
 ${sections.join('\n')}
@@ -212,14 +216,17 @@ ${sections.join('\n')}
 
   const images = records.reduce((total, record) => total + record.images.length, 0)
   const moved = records.filter((record) => record.changes !== undefined)
+  // Both sets by name, so a comparison against the wrong baseline is visible
+  // rather than silent — the whole set now depends on which ref was named.
   const comparison =
     changes === undefined
       ? ''
-      : moved.length === 0 && changes.length === 0
-        ? '\n    Nothing moved since the previous run.'
-        : `\n    Changed since the previous run: ${
-            moved.map((record) => `${record.persona}/${record.name}`).join(', ') || 'none'
-          }` + `\n    Highlighted differences: ${relative(process.cwd(), changesRoot)}`
+      : `\n    Compared '${ref}' against '${baselineRef}'.` +
+        (moved.length === 0 && changes.length === 0
+          ? ' Nothing moved.'
+          : `\n    Changed: ${
+              moved.map((record) => `${record.persona}/${record.name}`).join(', ') || 'none'
+            }` + `\n    Highlighted differences: ${relative(process.cwd(), changesRoot)}`)
 
   console.log(
     `\n📸  ${images} images of ${records.length} pages written to ${relative(process.cwd(), outputRoot)}` +
