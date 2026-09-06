@@ -24,6 +24,11 @@ const config: CapacitorConfig = {
     // layout anchored and lifts the fixed session dock above the keyboard.
     Keyboard: {
       resize: 'native',
+      // Resizing hands the strip under the WebView back to the window, which
+      // is black without this. Reading the page's own body background on every
+      // show keeps the strip on data-theme; a colour here would freeze one
+      // palette. SceneDelegate.swift covers the shows this read misses.
+      autoBackdropColor: 'dom',
     },
   },
 }
