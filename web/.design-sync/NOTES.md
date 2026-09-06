@@ -87,6 +87,25 @@ rather than sitting in a grid cell. **Changing `cfg.overrides` requires a full
 `package-build.mjs`** — a scoped `preview-rebuild` + `package-capture` fails
 with `[CONFIG_STALE]` because the grade keys are stamped by the full build.
 
+## The token list is in tokens.css, not the bundle
+
+`ds.css` is the compiled stylesheet, so anything scanning it for custom
+properties finds Tailwind's internals rather than the design's tokens: 109
+`--tw-*` declared under utility selectors like
+`:where(.space-y-* > :not(:last-child))`, plus `--animate-spin`,
+`--animate-pulse`, `--default-transition-*` and the `--container-*` sizes. None
+of those is a value anybody designs with.
+
+`build-ds.mjs` therefore also emits **`ds-dist/tokens.css`** — the `@theme`
+block and the `:root[data-theme='dark']` overrides from `src/assets/theme.css`,
+as plain CSS with their comments intact and nothing else. 107 declarations, no
+`--tw-*`, no filtering needed. The build fails if either block goes missing.
+
+**Point the sync's token scan at it** rather than at `cssEntry`; the exclusion
+of `--tw-*` is the converter's own fix, and this is the input that makes it
+unnecessary. `cssEntry` stays `ds.css`: that is the stylesheet the previews
+render against, and tokens alone would leave every component unstyled.
+
 ## Prop docs are cut at ~120 characters
 
 The converter collapses a JSDoc block to one line and truncates it, so a

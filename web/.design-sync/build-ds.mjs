@@ -4,7 +4,7 @@
 // PostCSS/Tailwind pipeline, so the class hashes in the JS match the emitted
 // stylesheet. tsc produces the .d.ts the converter reads as the API contract.
 // This script stitches the result into a package the converter can resolve:
-// ds-dist/{package.json,index.js,index.d.ts,ds.css}.
+// ds-dist/{package.json,index.js,index.d.ts,ds.css,tokens.css}.
 import { spawnSync } from 'node:child_process'
 import { existsSync, readFileSync, readdirSync, writeFileSync } from 'node:fs'
 import { dirname, join, relative, resolve } from 'node:path'
@@ -168,6 +168,40 @@ body:has(#g, .ds-single) *::after {
 
 writeFileSync(join(dist, 'ds.css'), `${globalCss}\n${moduleCss}\n${previewBackdrop}`)
 
+// ── 2b. The tokens on their own. ds.css is the compiled bundle, so a scanner
+// reading it for custom properties finds Tailwind's internals — 109 `--tw-*`
+// declared under utility selectors, plus `--animate-*`, `--default-transition-*`
+// and the `--container-*` sizes — and none of those is a token anybody designs
+// with. The real ones are the two blocks in theme.css, emitted here as plain
+// CSS so the list needs no filtering.
+const themeCss = readFileSync(join(web, 'src/assets/theme.css'), 'utf8')
+const block = (header) => {
+  const at = themeCss.indexOf(header)
+  if (at === -1) {
+    console.error(`\u2717 no ${header} block in theme.css`)
+    process.exit(1)
+  }
+  const open = themeCss.indexOf('{', at)
+  return themeCss.slice(open + 1, themeCss.indexOf('\n}', open)).replace(/\s+$/, '')
+}
+
+writeFileSync(
+  join(dist, 'tokens.css'),
+  [
+    "/* The design system's tokens, and nothing else: the light palette and the",
+    ' * values the dark one replaces. Generated from src/assets/theme.css by',
+    ' * .design-sync/build-ds.mjs — edit the theme, not this file. */',
+    ':root {',
+    block('@theme static'),
+    '}',
+    '',
+    ":root[data-theme='dark'] {",
+    block("root[data-theme='dark']"),
+    '}',
+    '',
+  ].join('\n'),
+)
+
 // ── 3. Types. The emitted declarations still carry the app's `@/…` alias,
 // which the converter's ts-morph project has no paths config for — rewriting
 // them to relative specifiers is what makes prop extraction resolve.
@@ -220,5 +254,5 @@ writeFileSync(
 
 const kb = (p) => (existsSync(p) ? `${(readFileSync(p).length / 1024).toFixed(0)} KB` : 'MISSING')
 console.error(
-  `\u2713 ds-dist: index.js ${kb(join(dist, 'index.js'))}, ds.css ${kb(join(dist, 'ds.css'))}, ${rewritten} d.ts alias-rewritten`,
+  `\u2713 ds-dist: index.js ${kb(join(dist, 'index.js'))}, ds.css ${kb(join(dist, 'ds.css'))}, tokens.css ${kb(join(dist, 'tokens.css'))}, ${rewritten} d.ts alias-rewritten`,
 )
