@@ -1,37 +1,116 @@
 @reference '../../assets/base.css';
+
 .route {
-  @apply rounded-card border border-border bg-surface p-5;
+  @apply card pb-2;
 }
-.route svg,
-.map {
-  @apply my-4 w-full rounded-control bg-surface-sunken;
-  max-height: 360px;
+
+.heading {
+  @apply flex items-center justify-between gap-3 px-4 pb-3 pt-4 sm:px-5;
 }
-/* The map has no intrinsic size the way the SVG has its viewBox. */
-.map {
-  @apply overflow-hidden;
+
+.heading h2 {
+  @apply text-title font-extrabold text-text;
+}
+
+/* Square, so the loop a session ran is read as a shape rather than as a strip.
+   Inset from the card's edge: the map is a picture inside the panel, not the
+   panel's own surface. */
+.mapFrame {
+  @apply relative mx-3 overflow-hidden rounded-card bg-surface-sunken;
   aspect-ratio: 1;
 }
-/* The tile licence's credit, in the meta register, pulled up under the map
- * it belongs to. */
-.route p.credit {
-  @apply -mt-2 text-meta text-text-subtle;
+
+.route svg,
+.map {
+  @apply size-full;
 }
-.route h2 {
-  @apply text-lg font-semibold;
+
+.map {
+  @apply overflow-hidden;
 }
-.route p {
-  @apply my-3 text-sm;
+
+.empty {
+  @apply px-4 text-body text-text-muted sm:px-5;
 }
-.route ol {
-  @apply space-y-2 text-sm;
-}
+
+/* The legend rides on the map: the colours name the lines, and a reader
+   looking at one should not have to look away to find out which is which. */
 .legend {
-  @apply flex flex-wrap gap-4 text-sm;
+  @apply absolute bottom-3 left-3 flex flex-wrap gap-1.5;
 }
+
 .legend li {
-  @apply flex items-center gap-2;
+  @apply inline-flex items-center gap-1.5 rounded-pill bg-surface px-2.5 py-1.5 text-meta font-semibold text-text shadow-raised;
 }
-.legend span {
-  @apply inline-block size-3 rounded-full;
+
+.legend li span {
+  @apply inline-block size-2.5 shrink-0 rounded-full;
+}
+
+/* The tile licence's credit, in the meta register, under the map it belongs to. */
+.credit {
+  @apply px-4 pt-2 text-eyebrow tracking-normal text-text-subtle sm:px-5;
+}
+
+.totals {
+  @apply grid grid-cols-2 gap-2 px-4 pb-1 pt-3.5 sm:px-5;
+}
+
+.tile {
+  @apply rounded-control bg-surface-sunken px-3.5 py-3;
+}
+
+.incomplete {
+  @apply px-4 pt-3 text-meta text-text-muted sm:px-5;
+}
+
+.roundsHeading {
+  @apply flex items-baseline justify-between gap-3 px-4 pb-1 pt-3 sm:px-5;
+}
+
+.roundsHeading span {
+  @apply text-eyebrow font-bold uppercase text-text-subtle;
+}
+
+/* What the circuit asked for, quieter than the rounds that answer it. */
+.roundsHeading small {
+  @apply truncate text-meta text-text-subtle;
+}
+
+.rounds li {
+  @apply grid grid-cols-[2.25rem_1fr] items-center gap-3 border-t border-border px-4 py-3 sm:px-5;
+}
+
+.roundNumber {
+  @apply grid size-9 place-items-center rounded-pill bg-surface-sunken text-body font-semibold tabular-nums text-text-muted;
+}
+
+.roundBody {
+  @apply flex min-w-0 flex-col gap-2;
+}
+
+/* The lap at a glance: how the round was divided, in the colours the map is
+   drawn in. The gap lets the track show through between two intervals. */
+.bar {
+  @apply flex h-2 gap-0.5 overflow-hidden rounded-pill bg-surface-track;
+}
+
+.intervals {
+  @apply flex flex-wrap justify-between gap-x-3 gap-y-1 text-meta;
+}
+
+.intervals > span {
+  @apply inline-flex items-center gap-1.5 text-text-muted;
+}
+
+.intervals strong {
+  @apply font-semibold tabular-nums text-text;
+}
+
+.intervals small {
+  @apply text-meta tabular-nums text-text-muted;
+}
+
+.dot {
+  @apply inline-block size-2 shrink-0 rounded-full;
 }

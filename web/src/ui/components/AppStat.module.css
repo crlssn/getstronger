@@ -1,0 +1,45 @@
+@reference '../../assets/base.css';
+
+/* A stat is read inside whatever frame its caller gives it — a grid cell, a
+   sunken tile — so it claims no width of its own. */
+.stat {
+  @apply min-w-0;
+}
+
+/* The overline register every label in the app is set in. It wraps rather than
+   truncates: "Recorded dist…" is a figure whose name has been taken away. */
+.label {
+  @apply block text-eyebrow font-bold uppercase text-text-subtle;
+}
+
+/* A tile is half a column wide, and the overline's tracking is what stops a
+   two-word label fitting on its line. It gives up the tracking, not the words. */
+.md .label {
+  @apply tracking-normal;
+}
+
+.value {
+  @apply mt-1 font-bold tabular-nums text-text;
+}
+
+.lg .value {
+  @apply text-stat;
+}
+
+.md .value {
+  @apply text-title;
+}
+
+/* Quieter than the number and set on its baseline: a unit is read with the
+   figure, not counted as a second one. */
+.unit {
+  @apply ml-1 text-body font-semibold text-text-muted;
+}
+
+.md .unit {
+  @apply text-meta;
+}
+
+.value.record {
+  @apply text-record-strong;
+}

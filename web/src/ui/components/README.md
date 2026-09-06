@@ -35,6 +35,7 @@ aspirational.
 | A form's pinned submit         | `<AppFormFooter>`                                  |
 | A value a row can unfold       | `<AppValueChip>`                                   |
 | A status pill beside a title   | `<AppChip>`                                        |
+| A number with a name and unit  | `<AppStat>`                                        |
 | A row not yet seen             | `<AppUnreadDot>`                                   |
 | A panel around content         | `<AppCard>`, or the `card` utility inside a module |
 | Panels swiped one at a time    | `<AppCarousel>`                                    |
@@ -353,6 +354,17 @@ A small pill of fact beside a title. `tone="record"` is the PR chip — the only
 gold in the product, worn wherever a personal record was set. The default
 neutral tone is a count ("5 exercises"). It states, never toggles: anything
 tappable is a button or a segment.
+
+### `<AppStat>`
+
+One measured figure: an overline naming it, the number, and the unit set
+quieter beside it. `unit` is its own prop rather than part of the value because
+a caller that concatenates the two cannot set them differently — which is what
+every screen that wrote this out by hand ended up doing. `size` picks the
+figure's step (`lg` for a card's headline number, `md` for one tile in a grid
+of them) and `tone="record"` paints it gold, which as everywhere else means a
+personal record. The container is the caller's: a hairline-divided grid cell
+and a sunken tile are the same stat in two frames.
 
 ### `<AppUnreadDot>`
 

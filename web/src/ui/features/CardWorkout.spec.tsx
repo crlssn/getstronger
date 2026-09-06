@@ -72,9 +72,11 @@ const withSets = () =>
   })
 
 // A session with ground covered and nothing lifted, which is what the row's
-// zero-hiding is for.
-const ran = () =>
+// zero-hiding is for. The clock is optional: only the summary's own reading of
+// duration against set time needs one.
+const ran = (clock: Pick<WorkoutInit, 'startedAt' | 'finishedAt'> = {}) =>
   create(WorkoutSchema, {
+    ...clock,
     id: 'workout-2',
     name: 'Intervals',
     intensity: 0,
@@ -271,6 +273,42 @@ describe('CardWorkout', () => {
   })
 
   describe('as the full workout', () => {
+    // "Distance" and "Time" also head the columns of a set table, so the
+    // summary's own figures are the ones inside its list.
+    const summaryMetric = (label: string) =>
+      screen
+        .queryAllByText(label)
+        .map((node) => node.closest('li'))
+        .find(Boolean)
+
+    // The unit is its own element so it can be set quieter than the figure it
+    // follows, which is the whole reason the summary reads as numbers now.
+    test('sets each figure beside the unit it was measured in', () => {
+      render(<CardWorkout compact={false} workout={ran()} />)
+
+      const distance = summaryMetric('Distance')
+      expect(within(distance!).getByText('5.2')).toBeVisible()
+      expect(within(distance!).getByText('km')).toBeVisible()
+    })
+
+    // Both read "20 min" on a session logged straight through, and a reader
+    // asked to tell two identical numbers apart concludes one of them is wrong.
+    test('drops the set time when it only repeats the session’s duration', () => {
+      const clocked = ran({ startedAt: { seconds: 1000n }, finishedAt: { seconds: 2200n } })
+      render(<CardWorkout compact={false} workout={clocked} />)
+
+      expect(summaryMetric('Duration')).toBeVisible()
+      expect(summaryMetric('Time')).toBeUndefined()
+    })
+
+    test('keeps the set time when it measures something else', () => {
+      const rested = ran({ startedAt: { seconds: 1000n }, finishedAt: { seconds: 4600n } })
+      render(<CardWorkout compact={false} workout={rested} />)
+
+      expect(within(summaryMetric('Time')!).getByText('20 min')).toBeVisible()
+      expect(summaryMetric('Duration')).toBeVisible()
+    })
+
     test('totals a sub-kilometre distance in metres', () => {
       const short = workout({
         exerciseSets: [
@@ -289,7 +327,9 @@ describe('CardWorkout', () => {
       })
       render(<CardWorkout compact={false} workout={short} />)
 
-      expect(screen.getByText('850 m')).toBeInTheDocument()
+      const distance = summaryMetric('Distance')
+      expect(within(distance!).getByText('850')).toBeVisible()
+      expect(within(distance!).getByText('m')).toBeVisible()
     })
 
     test('lists every exercise with its sets', () => {

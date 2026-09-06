@@ -1256,9 +1256,12 @@ describe('StartWorkout', () => {
       mountWorkout()
 
       // The phone's recording is the session: its intervals become the sets
-      // and the form gives way to the route.
+      // and the form gives way to the route, read round by round.
       expect(await screen.findByRole('heading', { name: 'Workout route' })).toBeInTheDocument()
-      expect(screen.getByText(/Squat · Round 2 · 1:00/)).toBeInTheDocument()
+      const secondRound = screen
+        .getAllByRole('listitem')
+        .find((item) => within(item).queryByText('Round 2') !== null)
+      expect(within(secondRound!).getByText('Squat')).toHaveTextContent('1:00')
 
       await user.click(screen.getByRole('button', { name: 'Save' }))
       await waitFor(() => expect(mocked.createWorkout).toHaveBeenCalledOnce())

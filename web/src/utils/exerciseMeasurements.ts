@@ -87,21 +87,36 @@ export const isDistanceTimeExercise = (exercise?: Pick<Exercise, 'metrics'>) => 
 export const formatDistanceDisplay = (kilometers: number) =>
   kilometers < 1 ? `${formatNumber(kilometers * 1000)} m` : `${formatNumber(kilometers, 2)} km`
 
+/** A figure and what it was measured in, for a caller that sets them apart. */
+export interface Measured {
+  value: string
+  unit: string
+}
+
 /**
- * A stored kilometre total in the unit the athlete reads in. Distances are
- * stored and sent in kilometres whatever unit the set was entered in, so every
- * total shown outside a set's own row goes through here.
+ * A stored kilometre total in the unit the athlete reads in, kept in two parts.
+ *
+ * Distances are stored and sent in kilometres whatever unit the set was entered
+ * in, so every total shown outside a set's own row goes through here.
  */
-export const formatDistanceIn = (kilometers: number, unit?: DistanceUnit) => {
+export const distanceIn = (kilometers: number, unit?: DistanceUnit): Measured => {
   const preferred = normalizeDistanceUnit(unit)
   // Metres are a sub-unit of ground covered, not of none: a week with nothing
   // in it reads "0 km", where "0 m" reads as a distance somebody measured.
+  if (preferred === DistanceUnit.KILOMETERS && kilometers > 0 && kilometers < 1) {
+    return { value: formatNumber(kilometers * 1000), unit: 'm' }
+  }
   if (preferred === DistanceUnit.KILOMETERS && kilometers > 0) {
-    return formatDistanceDisplay(kilometers)
+    return { value: formatNumber(kilometers, 2), unit: 'km' }
   }
 
   const distance = convertDistance(kilometers, DistanceUnit.KILOMETERS, preferred)
-  return `${formatNumber(distance, 2)} ${distanceUnitLabel(preferred)}`
+  return { value: formatNumber(distance, 2), unit: distanceUnitLabel(preferred) }
+}
+
+export const formatDistanceIn = (kilometers: number, unit?: DistanceUnit) => {
+  const { value, unit: label } = distanceIn(kilometers, unit)
+  return `${value} ${label}`
 }
 
 /** Pace the way runners say it: "5:24 min/km", from seconds per kilometre. */

@@ -18,14 +18,6 @@
   @apply min-w-0 flex-1 truncate text-body-lg font-bold text-text;
 }
 
-.personalBestBadge {
-  @apply inline-flex shrink-0 items-center gap-1 rounded-pill bg-record-surface px-2 py-1 text-eyebrow font-bold uppercase tracking-normal text-record-strong;
-}
-
-.personalBestBadge svg {
-  @apply size-3.5;
-}
-
 .setCount {
   @apply shrink-0 text-meta font-semibold tabular-nums text-text-subtle;
 }
@@ -54,7 +46,7 @@
 }
 
 .setRow {
-  grid-template-columns: 2.25rem repeat(var(--metric-count), minmax(4.5rem, 1fr)) 1.25rem;
+  grid-template-columns: 2.75rem repeat(var(--metric-count), minmax(4.5rem, 1fr)) 1.75rem;
   @apply grid min-h-11 items-center gap-2 border-t border-border text-body;
 }
 
@@ -63,7 +55,7 @@
 }
 
 .setNumber {
-  @apply grid size-7 place-items-center rounded-control bg-ink-surface text-xs font-bold tabular-nums text-text-muted;
+  @apply grid size-8 place-items-center rounded-pill bg-ink-surface text-meta font-bold tabular-nums text-text-muted;
 }
 
 /* Gold is for records, nowhere else — and it tints the row rather than the
@@ -102,7 +94,7 @@
 
 @media (max-width: 520px) {
   .setRow {
-    grid-template-columns: 2rem repeat(var(--metric-count), minmax(3.75rem, 1fr)) 1.25rem;
+    grid-template-columns: 2.5rem repeat(var(--metric-count), minmax(3.75rem, 1fr)) 1.75rem;
     @apply gap-1.5;
   }
 

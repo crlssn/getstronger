@@ -143,16 +143,9 @@ export const RouteMap = ({ lines, onUnavailable }: Props) => {
   }, [lines, theme, onUnavailable, t])
 
   // A region rather than an image: the map inside is something to operate,
-  // and an image may hold nothing interactive.
+  // and an image may hold nothing interactive. The tile licence's credit is
+  // the caller's to place: it belongs under the frame the map fills, not in it.
   return (
-    <>
-      <div
-        ref={container}
-        className={styles.map}
-        role="region"
-        aria-label={t('timedCircuit.map')}
-      />
-      <p className={styles.credit}>{t('timedCircuit.mapCredit')}</p>
-    </>
+    <div ref={container} className={styles.map} role="region" aria-label={t('timedCircuit.map')} />
   )
 }

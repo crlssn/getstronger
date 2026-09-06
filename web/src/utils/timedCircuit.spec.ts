@@ -2,7 +2,13 @@ import { describe, expect, it } from 'vitest'
 import { create } from '@bufbuild/protobuf'
 import { RoutineGroupSchema } from '@/proto/api/v1/routine_service_pb'
 import { RoutineGroupMode } from '@/proto/api/v1/shared_pb'
-import { buildTimeline, circuitPhases, measureRoute, type Recording } from './timedCircuit'
+import {
+  buildTimeline,
+  circuitPhases,
+  measureRoute,
+  parseRecording,
+  type Recording,
+} from './timedCircuit'
 
 const recording = (): Recording => ({
   version: 1,
@@ -97,5 +103,19 @@ describe('recorded timeline', () => {
       { timestamp: 50000, latitude: 0, longitude: 1.0001, accuracy: 3 },
     ]
     expect(measureRoute(data, buildTimeline(data, 361000))[0].distanceMeters).toBe(0)
+  })
+})
+
+describe('parseRecording', () => {
+  it('reads a saved recording back', () => {
+    expect(parseRecording(JSON.stringify(recording()))?.phases).toHaveLength(2)
+  })
+
+  // An older client wrote whatever it wrote; the workout around the recording
+  // is still worth reading, so a broken document is simply no route.
+  it('treats an absent or unreadable document as no recording', () => {
+    expect(parseRecording(undefined)).toBeUndefined()
+    expect(parseRecording('')).toBeUndefined()
+    expect(parseRecording('{ not json')).toBeUndefined()
   })
 })

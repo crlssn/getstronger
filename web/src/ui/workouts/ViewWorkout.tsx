@@ -9,8 +9,6 @@ import { usePageTitleStore } from '@/stores/pageTitle'
 import { AppButton } from '@/ui/components/AppButton'
 import { AppSkeleton } from '@/ui/components/AppSkeleton'
 import { CardWorkout } from '@/ui/features/CardWorkout'
-import { WorkoutRoute } from '@/ui/features/WorkoutRoute'
-import type { Recording } from '@/utils/timedCircuit'
 import styles from './ViewWorkout.module.css'
 
 /** One finished workout, in full. */
@@ -45,16 +43,5 @@ export const ViewWorkout = () => {
     )
   }
 
-  let recording: Recording | undefined
-  try {
-    if (workout.recordingJson) recording = JSON.parse(workout.recordingJson) as Recording
-  } catch {
-    /* Older clients can still display the workout without its recording. */
-  }
-  return (
-    <>
-      <CardWorkout workout={workout} compact={false} />
-      {recording && <WorkoutRoute recording={recording} />}
-    </>
-  )
+  return <CardWorkout workout={workout} compact={false} />
 }
