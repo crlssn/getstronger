@@ -108,6 +108,14 @@ export default tseslint.config(
           selector: 'JSXOpeningElement[name.name="textarea"]',
           message: 'Use <AppTextarea> from @/ui/components.',
         },
+        // Navigation is a component too. A hand-drawn anchor is how a screen
+        // ends up with a link that does not look tappable — which is the same
+        // mistake as a fifth button style, one element down.
+        {
+          selector: 'JSXOpeningElement[name.name="a"]',
+          message:
+            'Use <AppButton type="link"> for a button that goes somewhere, or <AppListRow to> for a row that does. A link leaving the app disables this line with the reason.',
+        },
         {
           selector: 'JSXOpeningElement[name.name="select"]',
           message:

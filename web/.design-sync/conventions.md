@@ -24,15 +24,43 @@ you have no router of your own.
 ### Compose, never re-draw
 
 Every control already exists. **Never render a bare `<button>`, `<input>`,
-`<textarea>` or `<select>`** — that rule is lint-enforced in the app, and a
-hand-drawn control is the one thing that will not match. Reach for `AppButton`
+`<textarea>`, `<select>` or `<a>`** — that rule is lint-enforced in the app, and
+a hand-drawn control is the one thing that will not match. Reach for `AppButton`
 (or `AppIconButton` for icon-only), `AppInput` / `AppTextarea` /
 `AppNumberField`, `AppSwitch`, `AppSegmented`, `AppSheet` + `SheetAction`,
 `AppList` + `AppListRow`, `AppCard`, `AppPageHeader`, `AppEmptyState`,
 `AppErrorState`, `AppSkeleton`.
 
+Navigation is covered twice over, so an anchor is never needed: `AppButton
+type="link"` is a button that goes somewhere, and `AppListRow to=` is a row that
+does — and the row draws the chevron saying so.
+
 `className` **positions** a component from outside — margins, grid placement. It
 never restyles one: the component owns its own colour, height and radius.
+
+### Which input for which data
+
+| The data                          | Use                              |
+| --------------------------------- | -------------------------------- |
+| Text, on one line or many         | `AppInput` / `AppTextarea`       |
+| A weight or a count, typed        | `AppNumberField`                 |
+| A count, nudged rather than typed | `AppStepper`                     |
+| A rest typed as "1:30" or "130"   | `AppDurationInput`               |
+| A rest nudged in half-minutes     | `AppDurationStepper`             |
+| A date and a time                 | `AppDatetimeField`               |
+| What the user is searching for    | `AppSearchField`                 |
+| On or off                         | `AppSwitch`                      |
+| Two or three named options        | `AppSegmented density="compact"` |
+
+The two duration controls differ in whether the value is typed or read off a
+clock and adjusted; the switch and the compact segmented differ in whether the
+choice is a boolean or two named things.
+
+### Emoji
+
+Allowed, sparingly: a leading tile on a row, never inside a sentence. A tile is
+decoration, so it is `aria-hidden` and its meaning is carried in the row's `meta`
+text — the way the `AppListRow` story writes a personal best.
 
 ### The class vocabulary
 

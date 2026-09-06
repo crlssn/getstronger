@@ -84,10 +84,12 @@ did not find what it wanted.
 
 Three rules enforce it, so none depends on remembering:
 
-- **A screen may not render a bare `<button>`, `<input>`, `<textarea>` or
-  `<select>`.** ESLint rejects them outside `ui/components`. A genuinely local
-  exception disables the rule on that line with the reason written above it,
-  where a reviewer reads it — there are four in the app, and each says why.
+- **A screen may not render a bare `<button>`, `<input>`, `<textarea>`,
+  `<select>` or `<a>`.** ESLint rejects them outside `ui/components` —
+  navigation included, since `<AppButton type="link">` and `<AppListRow to>`
+  are the two shapes a link takes. A genuinely local exception disables the
+  rule on that line with the reason written above it, where a reviewer reads
+  it — there are four in the app, and each says why.
 - **The arrows point one way.** `ui/components` may not import `ui/features`,
   `ui/shell`, a store, the HTTP layer or a generated type: the design system
   takes props and gives back events. `ui/features` may not import `ui/shell`.
