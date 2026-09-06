@@ -155,7 +155,22 @@ func TestHookAbortsWhenFormattingChangesFiles(t *testing.T) {
 
 	require.Equal(t, 1, result.exitCode, result.output)
 	require.Equal(t, []string{"format:web"}, result.tasks)
-	require.Contains(t, result.output, "Uncommitted changes")
+	require.Contains(t, result.output, "Formatting changed files")
+}
+
+// The clean-tree check runs immediately after the formatters, so what it is
+// looking for is a tracked file one of them rewrote. An untracked file is never
+// that, and `git diff` — which the abort tells the reader to run — does not show
+// one, so aborting on it reports a failure it cannot explain.
+func TestHookIgnoresUntrackedFiles(t *testing.T) {
+	repo := newRepo(t)
+	head := commit(t, repo, "web/src/main.ts")
+	require.NoError(t, os.WriteFile(filepath.Join(repo, "scratch.png"), []byte("scratch"), 0o644))
+
+	result := runHook(t, repo, pushLine(head, zeroSHA), nil)
+
+	require.Equal(t, 0, result.exitCode, result.output)
+	require.Equal(t, []string{"format:web", "lint:web", "test:web"}, result.tasks)
 }
 
 func TestHookTestsTheCodeBeingPushedRatherThanACachedResult(t *testing.T) {

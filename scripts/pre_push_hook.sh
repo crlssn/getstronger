@@ -118,8 +118,10 @@ fi
 $web && check "Formatting web code" format:web
 $backend && check "Formatting backend code" format:backend
 
-if [[ $(git status --porcelain) ]]; then
-  abort "Uncommitted changes found. Aborting push." "Run 'git diff' to see uncommitted changes."
+# Tracked files only: this is here to catch what the formatters above rewrote,
+# and an untracked scratch file is never that.
+if [[ $(git status --porcelain --untracked-files=no) ]]; then
+  abort "Formatting changed files. Aborting push." "Run 'git diff' to see the changes, then commit them."
 fi
 
 $web && check "Linting web code" lint:web
