@@ -60,4 +60,10 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
   },
+  optimizeDeps: {
+    // MapLibre starts its worker from a file beside its own module. The dev
+    // pre-bundle copies the module and not the file, so the worker 404s and
+    // the map never draws; served from node_modules the two stay together.
+    exclude: ['maplibre-gl'],
+  },
 })

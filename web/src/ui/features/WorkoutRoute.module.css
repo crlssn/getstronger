@@ -2,9 +2,20 @@
 .route {
   @apply rounded-card border border-border bg-surface p-5;
 }
-.route svg {
+.route svg,
+.map {
   @apply my-4 w-full rounded-control bg-surface-sunken;
   max-height: 360px;
+}
+/* The map has no intrinsic size the way the SVG has its viewBox. */
+.map {
+  @apply overflow-hidden;
+  aspect-ratio: 1;
+}
+/* The tile licence's credit, in the meta register, pulled up under the map
+ * it belongs to. */
+.route p.credit {
+  @apply -mt-2 text-meta text-text-subtle;
 }
 .route h2 {
   @apply text-lg font-semibold;

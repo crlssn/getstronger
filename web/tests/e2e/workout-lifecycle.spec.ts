@@ -809,6 +809,11 @@ test.describe('planned workouts and history', () => {
   // interval's time and distance, one colour per exercise across all the
   // rounds, and the totals in whichever unit the athlete prefers.
   test('shows a recorded circuit as a route in the preferred unit @mutation', async ({ page }) => {
+    // The map's tiles come from the internet, which a test must not depend
+    // on. Withholding them is also the offline case, and what the route falls
+    // back to then — its bare shape — is what the assertions below read.
+    test.info().annotations.push(allowRuntimeErrors)
+    await page.route('https://tiles.openfreemap.org/**', (route) => route.abort())
     await page.goto('/workout')
     const history = sectionWithHeading(page, 'Previous workouts')
     await history.getByRole('link').filter({ hasText: 'Walk/Run Intervals' }).first().click()

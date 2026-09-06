@@ -1,15 +1,17 @@
-import { useMemo } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { usePreferencesStore } from '@/stores/preferences'
 import { DistanceUnit } from '@/proto/api/v1/shared_pb'
 import { distanceUnitLabel } from '@/utils/distanceUnits'
 import { buildTimeline, measureRoute, type Recording } from '@/utils/timedCircuit'
 import { elapsedLabel } from '@/utils/workoutSession'
+import { mapSupported } from '@/utils/mapSupport'
+import { RouteMap, type RouteLine } from './RouteMap'
 import styles from './WorkoutRoute.module.css'
 
 // The theme owns the hues, in both palettes; this only cycles through them.
 const routeColors = 6
-const routeColor = (index: number) => `var(--color-route-${(index % routeColors) + 1})`
+const routeToken = (index: number) => `--color-route-${(index % routeColors) + 1}`
 
 export const WorkoutRoute = ({ recording }: { recording: Recording }) => {
   const { t } = useTranslation()
@@ -22,11 +24,30 @@ export const WorkoutRoute = ({ recording }: { recording: Recording }) => {
       ).filter((route) => route.phase.exerciseId && route.durationSeconds > 0),
     [recording],
   )
-  const exercises = [
-    ...new Map(routes.map(({ phase }) => [phase.exerciseId, phase.name])).entries(),
-  ]
-  const color = (id: string) => routeColor(exercises.findIndex(([exerciseId]) => exerciseId === id))
+  const exercises = useMemo(
+    () => [...new Map(routes.map(({ phase }) => [phase.exerciseId, phase.name])).entries()],
+    [routes],
+  )
+  const token = useCallback(
+    (id: string) => routeToken(exercises.findIndex(([exerciseId]) => exerciseId === id)),
+    [exercises],
+  )
+  const color = (id: string) => `var(${token(id)})`
   const points = routes.flatMap((route) => route.segments.flat())
+
+  // The map when the browser and the tiles allow it; the bare shape of the
+  // route otherwise, which is also what an offline reopening gets.
+  const [mapUnavailable, setMapUnavailable] = useState(() => !mapSupported())
+  const onMapUnavailable = useCallback(() => setMapUnavailable(true), [])
+  const lines = useMemo<RouteLine[]>(
+    () =>
+      routes.map((route) => ({
+        key: `${route.phase.stationKey}-${route.phase.round}`,
+        colorToken: token(route.phase.exerciseId),
+        segments: route.segments,
+      })),
+    [routes, token],
+  )
   const origin = points[0]?.longitude ?? 0
   const project = (latitude: number, longitude: number) => ({
     x: ((longitude - origin + 540) % 360) - 180,
@@ -58,7 +79,9 @@ export const WorkoutRoute = ({ recording }: { recording: Recording }) => {
   return (
     <section className={styles.route}>
       <h2>{t('timedCircuit.route')}</h2>
-      {points.length > 0 ? (
+      {points.length > 0 && !mapUnavailable ? (
+        <RouteMap lines={lines} onUnavailable={onMapUnavailable} />
+      ) : points.length > 0 ? (
         <svg viewBox="0 0 300 300" role="img" aria-label={t('timedCircuit.route')}>
           <title>{t('timedCircuit.route')}</title>
           {routes.map((route) => (
