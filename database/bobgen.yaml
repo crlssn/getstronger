@@ -18,6 +18,13 @@ types:
     random_expr: "return f.Int32Between(0, 3600)"
     no_randomization_test: true
 
+  # int64's only column is auth_rate_limits.attempts, and its
+  # 'CHECK (attempts > 0)' rejects the negative half of f.Int64()'s range, so
+  # half the factory's rows failed to insert. Starting at 1 leaves the range far
+  # too wide for two draws to collide, so the randomization test stays.
+  int64:
+    random_expr: "return f.Int64Between(1, math.MaxInt64)"
+
 # Since exercises_routines gained its position column it is no longer a bare
 # join table, so bobgen stops inferring the routines ↔ exercises many-to-many
 # relationship on its own. Declaring it here keeps Routine.R.Exercises (and its

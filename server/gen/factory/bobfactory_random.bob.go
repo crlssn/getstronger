@@ -109,7 +109,7 @@ func random_int64(f *faker.Faker, limits ...string) int64 {
 		f = &defaultFaker
 	}
 
-	return f.Int64()
+	return f.Int64Between(1, math.MaxInt64)
 }
 
 func random_pq_StringArray(f *faker.Faker, limits ...string) pq.StringArray {
