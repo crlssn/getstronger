@@ -82,6 +82,11 @@ test.describe('settings', () => {
 
     // Applied without a reload: the attribute every token reads is already on
     // the root element, and the canvas behind the page is the dark one.
+    //
+    // The body's own colour is load-bearing beyond the page: inside the native
+    // app the keyboard plugin reads it to paint the strip the WebView gives up
+    // when the keyboard rises (autoBackdropColor in mobile/capacitor.config.ts).
+    // Move the canvas off body and that strip goes black again, in silence.
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark')
     await expect(page.locator('body')).toHaveCSS('background-color', 'rgb(22, 21, 18)')
 
@@ -96,6 +101,7 @@ test.describe('settings', () => {
     await page.goto('/settings/appearance')
     await page.getByRole('button', { name: /Device appearance/ }).click()
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'light')
+    await expect(page.locator('body')).toHaveCSS('background-color', 'rgb(242, 241, 237)')
   })
 
   // System is live: while the app is open, the device changing its palette
