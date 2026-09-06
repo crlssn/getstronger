@@ -1,11 +1,22 @@
 // @vitest-environment jsdom
 
 import { render, screen } from '@testing-library/react'
-import { describe, expect, test } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
+
+const router = vi.hoisted(() => ({ navigationType: 'PUSH' }))
+
+vi.mock('react-router-dom', () => ({
+  NavigationType: { Pop: 'POP', Push: 'PUSH', Replace: 'REPLACE' },
+  useNavigationType: () => router.navigationType,
+}))
 
 import { AppScreenTransition } from './AppScreenTransition'
 
 describe('AppScreenTransition', () => {
+  beforeEach(() => {
+    router.navigationType = 'PUSH'
+  })
+
   test('renders the screen it wraps', () => {
     render(
       <AppScreenTransition transitionKey="/home">
@@ -52,5 +63,30 @@ describe('AppScreenTransition', () => {
     )
 
     expect(screen.getByText('The screen')).toBe(before)
+  })
+
+  // Arriving somewhere new is the only arrival worth animating.
+  test('fades a screen in on the way forward', () => {
+    render(
+      <AppScreenTransition transitionKey="/home">
+        <p>The screen</p>
+      </AppScreenTransition>,
+    )
+
+    expect(screen.getByText('The screen').parentElement?.className).not.toBe('')
+  })
+
+  // Going back returns to a screen already seen, and on iOS the swipe has just
+  // dragged it into view — fading it in would flash it as the peel lands.
+  test('leaves a screen alone on the way back', () => {
+    router.navigationType = 'POP'
+
+    render(
+      <AppScreenTransition transitionKey="/home">
+        <p>The screen</p>
+      </AppScreenTransition>,
+    )
+
+    expect(screen.getByText('The screen').parentElement?.className).toBe('')
   })
 })

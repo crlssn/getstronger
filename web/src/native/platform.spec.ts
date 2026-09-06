@@ -4,15 +4,18 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 const bridge = vi.hoisted(() => ({
   native: false,
+  platform: 'ios',
   addListener: vi.fn(),
   minimizeApp: vi.fn(),
   hideSplash: vi.fn(),
   keepAwake: vi.fn(),
   allowSleep: vi.fn(),
+  setSwipeBack: vi.fn(),
 }))
 
 vi.mock('@capacitor/core', () => ({
-  Capacitor: { isNativePlatform: () => bridge.native },
+  Capacitor: { isNativePlatform: () => bridge.native, getPlatform: () => bridge.platform },
+  registerPlugin: () => ({ setEnabled: bridge.setSwipeBack }),
 }))
 
 vi.mock('@capacitor/app', () => ({
@@ -76,11 +79,14 @@ describe('deepLinkPath', () => {
 describe('initNativePlatform', () => {
   beforeEach(() => {
     bridge.native = true
+    bridge.platform = 'ios'
+    window.history.replaceState({ idx: 1 }, '')
     bridge.addListener.mockReset().mockResolvedValue({ remove: vi.fn() })
     bridge.minimizeApp.mockReset().mockResolvedValue(undefined)
     bridge.hideSplash.mockReset().mockResolvedValue(undefined)
     bridge.keepAwake.mockReset().mockResolvedValue(undefined)
     bridge.allowSleep.mockReset().mockResolvedValue(undefined)
+    bridge.setSwipeBack.mockReset().mockResolvedValue(undefined)
   })
 
   // In a browser there is no native shell to wire up, and the Capacitor plugin
@@ -143,6 +149,48 @@ describe('initNativePlatform', () => {
 
     onBack?.({ canGoBack: false } as never)
     expect(bridge.minimizeApp).toHaveBeenCalled()
+  })
+
+  // WKWebView's gesture is one flag for the whole WebView, so the app switches
+  // it on and off as navigation moves between screens that have a way back and
+  // screens that do not.
+  test('turns the iOS back gesture on for a pushed screen', async () => {
+    const { router, go } = routerAt('/workouts/abc')
+
+    await initNativePlatform(router)
+    expect(bridge.setSwipeBack).toHaveBeenLastCalledWith({ enabled: true })
+
+    go('/home')
+    expect(bridge.setSwipeBack).toHaveBeenLastCalledWith({ enabled: false })
+  })
+
+  test('switches the gesture only when the answer changes', async () => {
+    const { router, go } = routerAt('/home')
+
+    await initNativePlatform(router)
+    expect(bridge.setSwipeBack).toHaveBeenCalledTimes(1)
+
+    go('/profile')
+
+    expect(bridge.setSwipeBack).toHaveBeenCalledTimes(1)
+  })
+
+  test('survives a shell with no gesture to switch', async () => {
+    bridge.setSwipeBack.mockRejectedValue(new Error('unimplemented'))
+    vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const { router } = routerAt('/workouts/abc')
+
+    await expect(initNativePlatform(router)).resolves.toBeUndefined()
+  })
+
+  // Android has its own system back gesture, answered by the listener above.
+  test('leaves the back gesture alone on Android', async () => {
+    bridge.platform = 'android'
+    const { router } = routerAt('/workouts/abc')
+
+    await initNativePlatform(router)
+
+    expect(bridge.setSwipeBack).not.toHaveBeenCalled()
   })
 
   test('opens a deep link on the screen it names', async () => {
