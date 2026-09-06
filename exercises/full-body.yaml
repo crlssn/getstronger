@@ -1,0 +1,220 @@
+# Full body — what no single group owns.
+#
+# Carries, the olympic lifts and the conditioning work: movements trained for
+# what the whole body does rather than for a muscle.
+
+- key: dumbbell-farmers-walk
+  names:
+    en: Dumbbell farmers walk
+    sv: Farmers walk med hantlar
+  metrics: [weight, distance]
+  equipment: [dumbbell]
+  tags: [full-body, carry, forearms, traps, compound]
+
+- key: kettlebell-farmers-walk
+  names:
+    en: Kettlebell farmers walk
+    sv: Farmers walk med kettlebells
+  metrics: [weight, distance]
+  equipment: [kettlebell]
+  tags: [full-body, carry, forearms, traps, compound]
+
+- key: trap-bar-farmers-walk
+  names:
+    en: Trap bar farmers walk
+    sv: Farmers walk med trap bar
+  metrics: [weight, distance]
+  equipment: [trap-bar]
+  tags: [full-body, carry, forearms, traps, compound]
+
+- key: kettlebell-suitcase-carry
+  names:
+    en: Kettlebell suitcase carry
+    sv: Resväskebärning med kettlebell
+  metrics: [weight, distance]
+  equipment: [kettlebell]
+  tags: [full-body, carry, obliques, anti-lateral-flexion, unilateral]
+
+- key: kettlebell-waiters-walk
+  names:
+    en: Kettlebell waiters walk
+    sv: Servitörsbärning med kettlebell
+  metrics: [weight, distance]
+  equipment: [kettlebell]
+  tags: [full-body, carry, front-delts, unilateral]
+
+- key: barbell-overhead-carry
+  names:
+    en: Barbell overhead carry
+    sv: Bärning med skivstång över huvudet
+  metrics: [weight, distance]
+  equipment: [barbell]
+  tags: [full-body, carry, front-delts, abs]
+
+- key: barbell-zercher-carry
+  names:
+    en: Barbell Zercher carry
+    sv: Zercherbärning med skivstång
+  metrics: [weight, distance]
+  equipment: [barbell]
+  tags: [full-body, carry, abs, traps]
+
+- key: sandbag-carry
+  names:
+    en: Sandbag carry
+    sv: Bärning med sandsäck
+  metrics: [weight, distance]
+  equipment: [sandbag]
+  tags: [full-body, carry, abs, traps]
+
+- key: barbell-power-clean
+  names:
+    en: Barbell power clean
+    sv: Frivändning med skivstång
+  metrics: [weight, reps]
+  equipment: [barbell]
+  tags: [full-body, olympic, hinge, traps, quadriceps, compound]
+
+- key: barbell-hang-clean
+  names:
+    en: Barbell hang clean
+    sv: Frivändning från häng
+  metrics: [weight, reps]
+  equipment: [barbell]
+  tags: [full-body, olympic, hinge, traps, compound]
+
+- key: barbell-clean-and-jerk
+  names:
+    en: Barbell clean and jerk
+    sv: Frivändning och stöt
+  metrics: [weight, reps]
+  equipment: [barbell]
+  tags: [full-body, olympic, vertical-push, quadriceps, compound]
+
+- key: barbell-snatch
+  names:
+    en: Barbell snatch
+    sv: Ryck med skivstång
+  metrics: [weight, reps]
+  equipment: [barbell]
+  tags: [full-body, olympic, hinge, traps, compound]
+
+- key: barbell-push-jerk
+  names:
+    en: Barbell push jerk
+    sv: Stöt med skivstång
+  metrics: [weight, reps]
+  equipment: [barbell]
+  tags: [full-body, olympic, vertical-push, triceps, compound]
+
+- key: barbell-thruster
+  names:
+    en: Barbell thruster
+    sv: Thruster med skivstång
+  metrics: [weight, reps]
+  equipment: [barbell]
+  tags: [full-body, squat, vertical-push, quadriceps, compound]
+
+- key: dumbbell-thruster
+  names:
+    en: Dumbbell thruster
+    sv: Thruster med hantlar
+  metrics: [weight, reps]
+  equipment: [dumbbell]
+  tags: [full-body, squat, vertical-push, quadriceps, compound]
+
+- key: kettlebell-clean-and-press
+  names:
+    en: Kettlebell clean and press
+    sv: Frivändning och press med kettlebell
+  metrics: [weight, reps]
+  equipment: [kettlebell]
+  tags: [full-body, hinge, vertical-push, compound]
+
+- key: kettlebell-snatch
+  names:
+    en: Kettlebell snatch
+    sv: Ryck med kettlebell
+  metrics: [weight, reps]
+  equipment: [kettlebell]
+  tags: [full-body, hinge, vertical-push, conditioning, compound]
+
+- key: kettlebell-turkish-get-up
+  names:
+    en: Turkish get-up
+    sv: Turkish get-up med kettlebell
+  metrics: [weight, reps]
+  equipment: [kettlebell]
+  tags: [full-body, abs, front-delts, unilateral, compound]
+
+- key: burpee
+  names:
+    en: Burpee
+    sv: Burpees
+  metrics: [reps]
+  equipment: [bodyweight]
+  tags: [full-body, conditioning, plyometric, bodyweight]
+
+- key: bear-crawl
+  names:
+    en: Bear crawl
+    sv: Björnkrypning
+  metrics: [time]
+  equipment: [bodyweight]
+  tags: [full-body, conditioning, abs, bodyweight]
+
+- key: box-jump
+  names:
+    en: Box jump
+    sv: Boxhopp
+  metrics: [reps]
+  equipment: [box, bodyweight]
+  tags: [full-body, plyometric, quadriceps, bodyweight]
+
+- key: broad-jump
+  names:
+    en: Broad jump
+    sv: Stående längdhopp
+  metrics: [reps]
+  equipment: [bodyweight]
+  tags: [full-body, plyometric, quadriceps, bodyweight]
+
+- key: battle-rope-wave
+  names:
+    en: Battle rope wave
+    sv: Battle ropes
+  metrics: [time]
+  equipment: [battle-ropes]
+  tags: [full-body, conditioning, front-delts]
+
+- key: sled-push
+  names:
+    en: Sled push
+    sv: Slädpush
+  metrics: [weight, distance]
+  equipment: [sled]
+  tags: [full-body, conditioning, quadriceps, glutes]
+
+- key: sled-pull
+  names:
+    en: Sled pull
+    sv: Släddrag
+  metrics: [weight, distance]
+  equipment: [sled]
+  tags: [full-body, conditioning, hamstrings, lats]
+
+- key: medicine-ball-slam
+  names:
+    en: Medicine ball slam
+    sv: Medicinbollsslam
+  metrics: [reps]
+  equipment: [medicine-ball]
+  tags: [full-body, conditioning, abs, lats]
+
+- key: wall-ball
+  names:
+    en: Wall ball
+    sv: Wall balls
+  metrics: [reps]
+  equipment: [medicine-ball]
+  tags: [full-body, squat, vertical-push, conditioning]

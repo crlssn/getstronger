@@ -1,0 +1,19 @@
+# Third-party notices
+
+Work in this repository that builds on someone else's is credited here.
+
+## The exercise library
+
+`exercises/` is a hand-written library of movements. Its English naming and its
+equipment and body-part vocabulary follow the ExerciseDB v1 metadata that
+[hasaneyldrm/exercises-dataset](https://github.com/hasaneyldrm/exercises-dataset)
+redistributes under the MIT licence, whose full text is in that repository.
+
+Only the metadata informed this library. None of that dataset's images or
+animations are committed here or shipped with the app: their ownership is
+disputed, and the library needs none of them. The entries themselves — which
+movements are kept, which near-duplicates are merged, the metrics, the tags and
+every Swedish name — are written for this repository.
+
+Swedish names are original translations. They have not been reviewed by a
+native speaker, and nothing here describes them as though they had.

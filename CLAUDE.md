@@ -16,6 +16,7 @@ that part is opened. Read the file for the area you are about to change.
 | `database/`              | [`database/CLAUDE.md`](database/CLAUDE.md) | Migrations, seeding, generated models   |
 | `proto/`                 | [`proto/CLAUDE.md`](proto/CLAUDE.md)       | Schema changes and code generation      |
 | `mobile/`                | [`mobile/CLAUDE.md`](mobile/CLAUDE.md)     | Capacitor wrappers and native builds    |
+| `exercises/`             | [`exercises/README.md`](exercises/README.md) | The movement library: schema, tags, translations |
 
 Three recurring jobs are written up as skills rather than rules, because they
 matter only when you are doing them: `.claude/skills/pull-request/SKILL.md` for

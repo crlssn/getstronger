@@ -1,0 +1,260 @@
+# Shoulders — the deltoids, pressed and raised.
+#
+# The three heads are three jobs, so a press and a lateral raise are not
+# interchangeable: the tags say which head an entry is programmed for.
+
+- key: barbell-overhead-press
+  names:
+    en: Barbell overhead press
+    sv: Militärpress med skivstång
+  metrics: [weight, reps]
+  equipment: [barbell]
+  tags: [shoulders, vertical-push, front-delts, triceps, compound]
+
+- key: barbell-push-press
+  names:
+    en: Barbell push press
+    sv: Push press med skivstång
+  metrics: [weight, reps]
+  equipment: [barbell]
+  tags: [shoulders, vertical-push, front-delts, triceps, compound]
+
+- key: barbell-behind-the-neck-press
+  names:
+    en: Behind-the-neck press
+    sv: Nackpress med skivstång
+  metrics: [weight, reps]
+  equipment: [barbell]
+  tags: [shoulders, vertical-push, side-delts, triceps, compound]
+
+- key: barbell-upright-row
+  names:
+    en: Barbell upright row
+    sv: Upprätt rodd med skivstång
+  metrics: [weight, reps]
+  equipment: [barbell]
+  tags: [shoulders, side-delts, traps, compound]
+
+- key: smith-machine-shoulder-press
+  names:
+    en: Smith machine shoulder press
+    sv: Axelpress i smithmaskin
+  metrics: [weight, reps]
+  equipment: [smith-machine]
+  tags: [shoulders, vertical-push, front-delts, triceps, compound]
+
+- key: landmine-press
+  names:
+    en: Landmine press
+    sv: Landminepress
+  metrics: [weight, reps]
+  equipment: [landmine, barbell]
+  tags: [shoulders, vertical-push, front-delts, triceps, unilateral, compound]
+
+- key: dumbbell-shoulder-press
+  names:
+    en: Dumbbell shoulder press
+    sv: Axelpress med hantlar
+  metrics: [weight, reps]
+  equipment: [dumbbell]
+  tags: [shoulders, vertical-push, front-delts, triceps, compound]
+
+- key: arnold-press
+  names:
+    en: Arnold press
+    sv: Arnoldpress
+  metrics: [weight, reps]
+  equipment: [dumbbell]
+  tags: [shoulders, vertical-push, front-delts, side-delts, compound]
+
+- key: dumbbell-lateral-raise
+  names:
+    en: Dumbbell lateral raise
+    sv: Sidolyft med hantlar
+  metrics: [weight, reps]
+  equipment: [dumbbell]
+  tags: [shoulders, side-delts, isolation]
+
+- key: dumbbell-front-raise
+  names:
+    en: Dumbbell front raise
+    sv: Framåtlyft med hantlar
+  metrics: [weight, reps]
+  equipment: [dumbbell]
+  tags: [shoulders, front-delts, isolation]
+
+- key: dumbbell-rear-delt-fly
+  names:
+    en: Dumbbell rear delt fly
+    sv: Omvänd hantelflyes
+  metrics: [weight, reps]
+  equipment: [dumbbell]
+  tags: [shoulders, rear-delts, isolation]
+
+- key: dumbbell-upright-row
+  names:
+    en: Dumbbell upright row
+    sv: Upprätt rodd med hantlar
+  metrics: [weight, reps]
+  equipment: [dumbbell]
+  tags: [shoulders, side-delts, traps]
+
+- key: cuban-press
+  names:
+    en: Cuban press
+    sv: Cubanpress
+  metrics: [weight, reps]
+  equipment: [dumbbell]
+  tags: [shoulders, rear-delts, side-delts, isolation]
+
+- key: plate-front-raise
+  names:
+    en: Plate front raise
+    sv: Framåtlyft med viktskiva
+  metrics: [weight, reps]
+  equipment: [plate]
+  tags: [shoulders, front-delts, isolation]
+
+- key: kettlebell-overhead-press
+  names:
+    en: Kettlebell overhead press
+    sv: Axelpress med kettlebell
+  metrics: [weight, reps]
+  equipment: [kettlebell]
+  tags: [shoulders, vertical-push, front-delts, triceps, unilateral, compound]
+
+- key: kettlebell-push-press
+  names:
+    en: Kettlebell push press
+    sv: Push press med kettlebell
+  metrics: [weight, reps]
+  equipment: [kettlebell]
+  tags: [shoulders, vertical-push, front-delts, triceps, compound]
+
+- key: kettlebell-bottoms-up-press
+  names:
+    en: Kettlebell bottoms-up press
+    sv: Bottoms-up-press med kettlebell
+  metrics: [weight, reps]
+  equipment: [kettlebell]
+  tags: [shoulders, vertical-push, front-delts, forearms, unilateral]
+
+- key: cable-overhead-press
+  names:
+    en: Cable overhead press
+    sv: Axelpress i kabel
+  metrics: [weight, reps]
+  equipment: [cable]
+  tags: [shoulders, vertical-push, front-delts, triceps, compound]
+
+- key: cable-lateral-raise
+  names:
+    en: Cable lateral raise
+    sv: Sidolyft i kabel
+  metrics: [weight, reps]
+  equipment: [cable]
+  tags: [shoulders, side-delts, isolation]
+
+- key: cable-front-raise
+  names:
+    en: Cable front raise
+    sv: Framåtlyft i kabel
+  metrics: [weight, reps]
+  equipment: [cable]
+  tags: [shoulders, front-delts, isolation]
+
+- key: cable-rear-delt-fly
+  names:
+    en: Cable rear delt fly
+    sv: Omvänd flyes i kabel
+  metrics: [weight, reps]
+  equipment: [cable]
+  tags: [shoulders, rear-delts, isolation]
+
+- key: cable-face-pull
+  names:
+    en: Cable face pull
+    sv: Face pull i kabel
+  metrics: [weight, reps]
+  equipment: [cable]
+  tags: [shoulders, rear-delts, rhomboids, traps]
+
+- key: cable-upright-row
+  names:
+    en: Cable upright row
+    sv: Upprätt rodd i kabel
+  metrics: [weight, reps]
+  equipment: [cable]
+  tags: [shoulders, side-delts, traps]
+
+- key: machine-shoulder-press
+  names:
+    en: Machine shoulder press
+    sv: Axelpress i maskin
+  metrics: [weight, reps]
+  equipment: [machine]
+  tags: [shoulders, vertical-push, front-delts, triceps, compound]
+
+- key: machine-lateral-raise
+  names:
+    en: Machine lateral raise
+    sv: Sidolyft i maskin
+  metrics: [weight, reps]
+  equipment: [machine]
+  tags: [shoulders, side-delts, isolation]
+
+- key: machine-reverse-fly
+  names:
+    en: Machine reverse fly
+    sv: Omvänd flyes i maskin
+  metrics: [weight, reps]
+  equipment: [machine]
+  tags: [shoulders, rear-delts, rhomboids, isolation]
+
+- key: band-overhead-press
+  names:
+    en: Band overhead press
+    sv: Axelpress med gummiband
+  metrics: [weight, reps]
+  equipment: [band]
+  tags: [shoulders, vertical-push, front-delts, triceps]
+
+- key: band-lateral-raise
+  names:
+    en: Band lateral raise
+    sv: Sidolyft med gummiband
+  metrics: [weight, reps]
+  equipment: [band]
+  tags: [shoulders, side-delts, isolation]
+
+- key: band-pull-apart
+  names:
+    en: Band pull-apart
+    sv: Isärdragning med gummiband
+  metrics: [reps]
+  equipment: [band]
+  tags: [shoulders, rear-delts, rhomboids]
+
+- key: band-face-pull
+  names:
+    en: Band face pull
+    sv: Face pull med gummiband
+  metrics: [weight, reps]
+  equipment: [band]
+  tags: [shoulders, rear-delts, traps]
+
+- key: pike-push-up
+  names:
+    en: Pike push-up
+    sv: Armhävning i pikeposition
+  metrics: [reps]
+  equipment: [bodyweight]
+  tags: [shoulders, vertical-push, front-delts, triceps, bodyweight]
+
+- key: handstand-push-up
+  names:
+    en: Handstand push-up
+    sv: Armhävning i handstående
+  metrics: [reps]
+  equipment: [bodyweight]
+  tags: [shoulders, vertical-push, front-delts, triceps, bodyweight, compound]

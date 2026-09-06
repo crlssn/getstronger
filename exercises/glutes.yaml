@@ -1,0 +1,204 @@
+# Glutes — hip extension trained for itself.
+#
+# The hinge lives here when the hips are the point of it. A conventional
+# deadlift is trained as a whole-leg lift and is in legs.yaml.
+
+- key: barbell-hip-thrust
+  names:
+    en: Barbell hip thrust
+    sv: Höftlyft med skivstång
+  metrics: [weight, reps]
+  equipment: [barbell, bench]
+  tags: [glutes, hinge, hamstrings, compound]
+
+- key: barbell-glute-bridge
+  names:
+    en: Barbell glute bridge
+    sv: Bäckenlyft med skivstång
+  metrics: [weight, reps]
+  equipment: [barbell]
+  tags: [glutes, hinge, hamstrings, compound]
+
+- key: barbell-romanian-deadlift
+  names:
+    en: Barbell Romanian deadlift
+    sv: Rumänskt marklyft med skivstång
+  metrics: [weight, reps]
+  equipment: [barbell]
+  tags: [glutes, hinge, hamstrings, lower-back, compound]
+
+- key: barbell-stiff-leg-deadlift
+  names:
+    en: Barbell stiff-leg deadlift
+    sv: Marklyft med raka ben
+  metrics: [weight, reps]
+  equipment: [barbell]
+  tags: [glutes, hinge, hamstrings, compound]
+
+- key: barbell-good-morning
+  names:
+    en: Barbell good morning
+    sv: Good morning med skivstång
+  metrics: [weight, reps]
+  equipment: [barbell]
+  tags: [glutes, hinge, hamstrings, lower-back, compound]
+
+- key: dumbbell-romanian-deadlift
+  names:
+    en: Dumbbell Romanian deadlift
+    sv: Rumänskt marklyft med hantlar
+  metrics: [weight, reps]
+  equipment: [dumbbell]
+  tags: [glutes, hinge, hamstrings, compound]
+
+- key: dumbbell-single-leg-romanian-deadlift
+  names:
+    en: Single-leg Romanian deadlift
+    sv: Enbens rumänskt marklyft med hantel
+  metrics: [weight, reps]
+  equipment: [dumbbell]
+  tags: [glutes, hinge, hamstrings, unilateral]
+
+- key: dumbbell-hip-thrust
+  names:
+    en: Dumbbell hip thrust
+    sv: Höftlyft med hantel
+  metrics: [weight, reps]
+  equipment: [dumbbell, bench]
+  tags: [glutes, hinge, hamstrings]
+
+- key: kettlebell-swing
+  names:
+    en: Kettlebell swing
+    sv: Kettlebellsving
+  metrics: [weight, reps]
+  equipment: [kettlebell]
+  tags: [glutes, hinge, hamstrings, conditioning, compound]
+
+- key: kettlebell-deadlift
+  names:
+    en: Kettlebell deadlift
+    sv: Marklyft med kettlebell
+  metrics: [weight, reps]
+  equipment: [kettlebell]
+  tags: [glutes, hinge, hamstrings, compound]
+
+- key: kettlebell-single-leg-deadlift
+  names:
+    en: Kettlebell single-leg deadlift
+    sv: Enbens marklyft med kettlebell
+  metrics: [weight, reps]
+  equipment: [kettlebell]
+  tags: [glutes, hinge, hamstrings, unilateral]
+
+- key: cable-pull-through
+  names:
+    en: Cable pull-through
+    sv: Pull-through i kabel
+  metrics: [weight, reps]
+  equipment: [cable]
+  tags: [glutes, hinge, hamstrings]
+
+- key: cable-glute-kickback
+  names:
+    en: Cable glute kickback
+    sv: Bakåtspark i kabel
+  metrics: [weight, reps]
+  equipment: [cable]
+  tags: [glutes, isolation, unilateral]
+
+- key: cable-hip-abduction
+  names:
+    en: Cable hip abduction
+    sv: Abduktion i kabel
+  metrics: [weight, reps]
+  equipment: [cable]
+  tags: [glutes, abductors, isolation]
+
+- key: machine-back-extension
+  names:
+    en: Machine back extension
+    sv: Ryggresning i maskin
+  metrics: [weight, reps]
+  equipment: [machine]
+  tags: [glutes, hinge, lower-back, hamstrings]
+
+- key: hyperextension
+  names:
+    en: Hyperextension
+    sv: Ryggresning i ryggbänk
+  metrics: [weight, reps]
+  equipment: [hyperextension-bench, bodyweight]
+  tags: [glutes, hinge, lower-back, hamstrings, bodyweight]
+
+- key: machine-hip-thrust
+  names:
+    en: Machine hip thrust
+    sv: Höftlyft i maskin
+  metrics: [weight, reps]
+  equipment: [machine]
+  tags: [glutes, hinge, hamstrings]
+
+- key: machine-hip-abduction
+  names:
+    en: Hip abduction
+    sv: Abduktion i maskin
+  metrics: [weight, reps]
+  equipment: [machine]
+  tags: [glutes, abductors, isolation]
+
+- key: band-good-morning
+  names:
+    en: Band good morning
+    sv: Good morning med gummiband
+  metrics: [weight, reps]
+  equipment: [band]
+  tags: [glutes, hinge, hamstrings]
+
+- key: band-hip-thrust
+  names:
+    en: Band hip thrust
+    sv: Höftlyft med gummiband
+  metrics: [weight, reps]
+  equipment: [band]
+  tags: [glutes, hinge, hamstrings]
+
+- key: band-lateral-walk
+  names:
+    en: Band lateral walk
+    sv: Sidosteg med gummiband
+  metrics: [reps]
+  equipment: [band]
+  tags: [glutes, abductors, isolation]
+
+- key: band-glute-kickback
+  names:
+    en: Band glute kickback
+    sv: Bakåtspark med gummiband
+  metrics: [reps]
+  equipment: [band]
+  tags: [glutes, isolation, unilateral]
+
+- key: glute-bridge
+  names:
+    en: Glute bridge
+    sv: Bäckenlyft
+  metrics: [reps]
+  equipment: [bodyweight]
+  tags: [glutes, hinge, hamstrings, bodyweight]
+
+- key: single-leg-glute-bridge
+  names:
+    en: Single-leg glute bridge
+    sv: Enbens bäckenlyft
+  metrics: [reps]
+  equipment: [bodyweight]
+  tags: [glutes, hinge, hamstrings, unilateral, bodyweight]
+
+- key: glute-ham-raise
+  names:
+    en: Glute ham raise
+    sv: Glute ham raise
+  metrics: [weight, reps]
+  equipment: [glute-ham-bench, bodyweight]
+  tags: [glutes, hinge, hamstrings, bodyweight, compound]

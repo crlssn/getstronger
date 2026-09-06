@@ -1,0 +1,149 @@
+# Cardio — trained for the engine rather than for a muscle.
+#
+# Almost everything here measures distance and time rather than weight and
+# reps, which is the whole reason the create form asks what an exercise
+# measures instead of assuming.
+
+- key: run
+  names:
+    en: Run
+    sv: Löpning
+  metrics: [distance, time]
+  equipment: [bodyweight]
+  tags: [cardio, conditioning, quadriceps, calves, bodyweight]
+
+- key: sprint
+  names:
+    en: Sprint
+    sv: Sprint
+  metrics: [distance, time]
+  equipment: [bodyweight]
+  tags: [cardio, conditioning, quadriceps, hamstrings, bodyweight]
+
+- key: hill-sprint
+  names:
+    en: Hill sprint
+    sv: Backsprint
+  metrics: [distance, time]
+  equipment: [bodyweight]
+  tags: [cardio, conditioning, quadriceps, calves, bodyweight]
+
+- key: walk
+  names:
+    en: Walk
+    sv: Promenad
+  metrics: [distance, time]
+  equipment: [bodyweight]
+  tags: [cardio, conditioning, calves, bodyweight]
+
+- key: ruck-walk
+  names:
+    en: Ruck walk
+    sv: Gång med viktväst
+  metrics: [distance, time]
+  equipment: [weight-vest, bodyweight]
+  tags: [cardio, conditioning, calves, traps]
+
+- key: treadmill-run
+  names:
+    en: Treadmill run
+    sv: Löpning på löpband
+  metrics: [distance, time]
+  equipment: [treadmill]
+  tags: [cardio, conditioning, quadriceps, calves]
+
+- key: treadmill-walk
+  names:
+    en: Treadmill walk
+    sv: Gång på löpband
+  metrics: [distance, time]
+  equipment: [treadmill]
+  tags: [cardio, conditioning, calves]
+
+- key: incline-treadmill-walk
+  names:
+    en: Incline treadmill walk
+    sv: Lutande gång på löpband
+  metrics: [distance, time]
+  equipment: [treadmill]
+  tags: [cardio, conditioning, hamstrings, calves]
+
+- key: rowing-machine
+  names:
+    en: Rowing machine
+    sv: Rodd i roddmaskin
+  metrics: [distance, time]
+  equipment: [rower]
+  tags: [cardio, conditioning, lats, quadriceps]
+
+- key: ski-erg
+  names:
+    en: Ski erg
+    sv: Skiergometer
+  metrics: [distance, time]
+  equipment: [ski-erg]
+  tags: [cardio, conditioning, lats, triceps]
+
+- key: stationary-bike
+  names:
+    en: Stationary bike
+    sv: Motionscykel
+  metrics: [distance, time]
+  equipment: [stationary-bike]
+  tags: [cardio, conditioning, quadriceps]
+
+- key: air-bike
+  names:
+    en: Air bike
+    sv: Air bike
+  metrics: [distance, time]
+  equipment: [air-bike]
+  tags: [cardio, conditioning, quadriceps, lats]
+
+- key: elliptical-trainer
+  names:
+    en: Elliptical trainer
+    sv: Crosstrainer
+  metrics: [distance, time]
+  equipment: [elliptical]
+  tags: [cardio, conditioning, quadriceps]
+
+- key: stair-climber
+  names:
+    en: Stair climber
+    sv: Trappmaskin
+  metrics: [distance, time]
+  equipment: [stair-climber]
+  tags: [cardio, conditioning, quadriceps, calves]
+
+- key: jump-rope
+  names:
+    en: Jump rope
+    sv: Hopprep
+  metrics: [time]
+  equipment: [jump-rope]
+  tags: [cardio, conditioning, calves]
+
+- key: double-under
+  names:
+    en: Double under
+    sv: Dubbelhopp med hopprep
+  metrics: [reps]
+  equipment: [jump-rope]
+  tags: [cardio, conditioning, calves]
+
+- key: high-knees
+  names:
+    en: High knees
+    sv: Höga knän
+  metrics: [time]
+  equipment: [bodyweight]
+  tags: [cardio, conditioning, hip-flexors, bodyweight]
+
+- key: jumping-jack
+  names:
+    en: Jumping jack
+    sv: Jumping jacks
+  metrics: [reps]
+  equipment: [bodyweight]
+  tags: [cardio, conditioning, calves, bodyweight]

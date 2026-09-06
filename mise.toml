@@ -180,7 +180,18 @@ set -euo pipefail
 
 [tasks.gen]
 description = "Generate all code and local certificates"
-run = [{ task = "gen:go" }, { task = "gen:certs" }, { task = "gen:protos" }]
+run = [
+    { task = "gen:go" },
+    { task = "gen:certs" },
+    { task = "gen:protos" },
+    { task = "gen:exercises" },
+]
+
+[tasks."gen:exercises"]
+alias = "gen_exercises"
+description = "Compile exercises/*.yaml into the web app's exercise catalogue"
+dir = "web"
+run = "node scripts/generate-exercises.mjs"
 
 [tasks."gen:go"]
 alias = "gen_go"
