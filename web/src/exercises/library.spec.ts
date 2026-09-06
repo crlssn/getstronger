@@ -60,13 +60,15 @@ describe('searchLibrary', () => {
     expect(searchLibrary(entries, 'sled', 'sv')).toEqual([untranslated])
   })
 
-  it('says nothing until there is enough typed to say anything', () => {
-    expect(searchLibrary(entries, 'b', 'en')).toEqual([])
-    expect(searchLibrary(entries, '  ', 'en')).toEqual([])
-  })
-
-  it('offers no more than it is asked for', () => {
-    expect(searchLibrary(entries, 'ba', 'en', 1)).toEqual([squat])
+  // The sheet opens on an empty field, and a library with nothing in it is the
+  // one thing this is not.
+  it('lists the whole library, by name, when nothing is typed', () => {
+    expect(searchLibrary(entries, '  ', 'en').map((entry) => entry.names.en)).toEqual([
+      'Barbell back squat',
+      'Barbell bench press',
+      'Bench dip',
+      'Sled push',
+    ])
   })
 })
 

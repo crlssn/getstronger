@@ -146,8 +146,19 @@ describe('CreateExercise', () => {
   test('fills the form from a library entry and leaves every field editable', async () => {
     render(<CreateExercise />)
 
-    await userEvent.type(nameField(), 'romanian dead')
+    await userEvent.click(screen.getByRole('button', { name: 'Choose from the library' }))
+    await userEvent.type(
+      await screen.findByRole('searchbox', { name: 'Search the library' }),
+      'romanian dead',
+    )
     await userEvent.click(await screen.findByRole('button', { name: /Barbell Romanian deadlift/ }))
+
+    // Picking closes the sheet: the form underneath is what was being filled.
+    await waitFor(() =>
+      expect(
+        screen.queryByRole('searchbox', { name: 'Search the library' }),
+      ).not.toBeInTheDocument(),
+    )
 
     expect(nameField()).toHaveValue('Barbell Romanian deadlift')
     expect(screen.getByRole('button', { name: 'Remove hamstrings' })).toBeInTheDocument()
@@ -171,8 +182,6 @@ describe('CreateExercise', () => {
     render(<CreateExercise />)
 
     await userEvent.type(nameField(), 'Tuesday finisher')
-    expect(screen.queryByRole('heading', { name: 'From the library' })).not.toBeInTheDocument()
-
     await userEvent.click(submit('Create exercise'))
     await waitFor(() => expect(mocked.createExercise).toHaveBeenCalled())
     expect(mocked.createExercise.mock.calls[0]?.[0]).toMatchObject({ name: 'Tuesday finisher' })
@@ -201,14 +210,14 @@ describe('UpdateExercise', () => {
   })
 
   // Renaming an exercise that already has history is not the same act as
-  // creating one, and a suggestion under the field invites replacing it.
-  test('does not offer library entries', async () => {
+  // creating one, and a library button beside the field invites replacing it.
+  test('does not offer the library', async () => {
     render(<UpdateExercise />, '/exercises/exercise-1/edit')
 
-    const field = await screen.findByDisplayValue('Bench press')
-    await userEvent.clear(field)
-    await userEvent.type(field, 'romanian dead')
-    expect(screen.queryByRole('heading', { name: 'From the library' })).not.toBeInTheDocument()
+    await screen.findByDisplayValue('Bench press')
+    expect(
+      screen.queryByRole('button', { name: 'Choose from the library' }),
+    ).not.toBeInTheDocument()
   })
 
   test('saves the edit and goes back to the exercise', async () => {

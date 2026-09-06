@@ -45,7 +45,7 @@ export const CreateExercise = () => {
       onChange={setValues}
       onSubmit={() => void onSubmit()}
       submitLabel={t('exercise.create')}
-      suggestFromLibrary
+      offerLibrary
       error={error}
     />
   )

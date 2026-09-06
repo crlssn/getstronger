@@ -10,7 +10,8 @@ const password = process.env.E2E_USER_PASSWORD ?? process.env.USER_PASSWORD ?? '
 /** The labels one locale renders the create-and-train journey with. */
 interface Labels {
   name: string
-  library: string
+  openLibrary: string
+  searchLibrary: string
   create: string
   chooseExercise: string
   addExercise: string
@@ -23,7 +24,8 @@ interface Labels {
 
 const english: Labels = {
   name: 'Name',
-  library: 'From the library',
+  openLibrary: 'Choose from the library',
+  searchLibrary: 'Search the library',
   create: 'Create exercise',
   chooseExercise: 'Choose exercise',
   addExercise: 'Add exercise',
@@ -36,7 +38,8 @@ const english: Labels = {
 
 const swedish: Labels = {
   name: 'Namn',
-  library: 'Ur övningsbiblioteket',
+  openLibrary: 'Välj ur biblioteket',
+  searchLibrary: 'Sök i biblioteket',
   create: 'Skapa övning',
   chooseExercise: 'Välj övning',
   addExercise: 'Lägg till övning',
@@ -68,10 +71,11 @@ const createFromLibraryAndTrain = async (
   entryName: string,
 ) => {
   await page.goto('/exercises/create')
-  await page.getByRole('textbox', { name: labels.name, exact: true }).fill(query)
+  await page.getByRole('button', { name: labels.openLibrary }).click()
 
-  await expect(page.getByRole('heading', { name: labels.library })).toBeVisible()
-  await page.getByRole('button').filter({ hasText: entryName }).first().click()
+  const library = page.getByRole('dialog')
+  await library.getByRole('searchbox', { name: labels.searchLibrary }).fill(query)
+  await library.getByRole('button').filter({ hasText: entryName }).first().click()
 
   // Filled in, not settled: the name, the measurements and the tags are all
   // still editable, and the tags the entry brought are on show.

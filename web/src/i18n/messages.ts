@@ -548,8 +548,11 @@ export const en = {
       addTags: 'Add tags',
     },
     library: {
-      heading: 'From the library',
-      help: 'Tap one to fill in its measurements and tags.',
+      open: 'Choose from the library',
+      title: 'Exercise library',
+      search: 'Search the library',
+      close: 'Close the library',
+      help: 'Pick one to fill in its name, measurements and tags.',
     },
     tagInput: {
       listAria: 'Exercise tags',
@@ -1325,8 +1328,11 @@ export const sv = {
       addTags: 'Lägg till taggar',
     },
     library: {
-      heading: 'Ur övningsbiblioteket',
-      help: 'Tryck på en för att fylla i mått och taggar.',
+      open: 'Välj ur biblioteket',
+      title: 'Övningsbibliotek',
+      search: 'Sök i biblioteket',
+      close: 'Stäng biblioteket',
+      help: 'Välj en för att fylla i namn, mått och taggar.',
     },
     tagInput: {
       listAria: 'Övningstaggar',

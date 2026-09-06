@@ -20,5 +20,9 @@
 }
 
 .name {
+  @apply mb-3;
+}
+
+.library {
   @apply mb-5;
 }

@@ -31,27 +31,25 @@ const rank = (name: string, query: string): number | undefined => {
   return /[^a-z0-9]/.test(fold(name)[index - 1]) ? 1 : 2
 }
 
-/** Below this a query matches most of the library, which is no help at all. */
-const minimumQuery = 2
-
-/** Whether a query is long enough to be worth fetching the catalogue for. */
-export const worthSearching = (query: string): boolean => query.trim().length >= minimumQuery
-
 /**
- * The entries a typed name matches, best first.
+ * The entries a query matches, best first, and the whole library when nothing
+ * is typed.
  *
  * Both the reader's locale and English are searched, so someone reading
  * Swedish can still type "bench" — and an entry that matches in both is still
- * one suggestion, named the way its reader reads it.
+ * one row, named the way its reader reads it.
  */
 export const searchLibrary = (
   entries: readonly LibraryExercise[],
   query: string,
   locale: AppLocale,
-  limit = 6,
 ): LibraryExercise[] => {
   const wanted = fold(query.trim())
-  if (wanted.length < minimumQuery) return []
+  const byName = (a: LibraryExercise, b: LibraryExercise) =>
+    libraryName(a, locale).localeCompare(libraryName(b, locale), locale)
+
+  // An empty field is the sheet's opening state, not a query nothing matches.
+  if (!wanted) return [...entries].sort(byName)
 
   return entries
     .flatMap((entry) => {
@@ -59,11 +57,6 @@ export const searchLibrary = (
       const best = Math.min(...ranks.map((value) => value ?? Number.POSITIVE_INFINITY))
       return Number.isFinite(best) ? [{ entry, best }] : []
     })
-    .sort(
-      (a, b) =>
-        a.best - b.best ||
-        libraryName(a.entry, locale).localeCompare(libraryName(b.entry, locale), locale),
-    )
-    .slice(0, limit)
+    .sort((a, b) => a.best - b.best || byName(a.entry, b.entry))
     .map(({ entry }) => entry)
 }

@@ -10,7 +10,7 @@ import { AppButton } from '@/ui/components/AppButton'
 import { AppFormFooter } from '@/ui/components/AppFormFooter'
 import { AppInput } from '@/ui/components/AppInput'
 import { AppOptionalAction } from '@/ui/components/AppOptionalAction'
-import { ExerciseLibrarySuggestions } from '@/ui/exercises/ExerciseLibrarySuggestions'
+import { ExerciseLibrarySheet } from '@/ui/exercises/ExerciseLibrarySheet'
 import { ExerciseMeasurementSettings } from '@/ui/exercises/ExerciseMeasurementSettings'
 import { ExerciseTagsInput } from '@/ui/exercises/ExerciseTagsInput'
 import styles from './ExerciseForm.module.css'
@@ -29,10 +29,10 @@ interface Props {
   /** Whether what the exercise measures is settled by sets already logged. */
   metricsLocked?: boolean
   /**
-   * Whether the name field offers matching library entries. Creating an
-   * exercise does; renaming one that already has logged sets does not.
+   * Whether the form offers the exercise library to pick from. Creating an
+   * exercise does; renaming one that already has history does not.
    */
-  suggestFromLibrary?: boolean
+  offerLibrary?: boolean
   /** Why the last save failed, rendered inline beside the submit. */
   error?: string
 }
@@ -49,15 +49,13 @@ export const ExerciseForm = ({
   onSubmit,
   submitLabel,
   metricsLocked = false,
-  suggestFromLibrary = false,
+  offerLibrary = false,
   error,
 }: Props) => {
   const { t, i18n } = useTranslation()
   const [suggestions, setSuggestions] = useState<string[]>([])
   const [tagsOpen, setTagsOpen] = useState(values.tags.length > 0)
-  // What was last taken from the library, so the row that filled the field
-  // stops offering itself back.
-  const [picked, setPicked] = useState<string>()
+  const [libraryOpen, setLibraryOpen] = useState(false)
 
   useEffect(() => {
     const load = async () => setSuggestions(await listExerciseTags())
@@ -85,16 +83,32 @@ export const ExerciseForm = ({
         onChange={(event) => update({ name: event.target.value })}
       />
 
-      {suggestFromLibrary && values.name !== picked && (
-        <ExerciseLibrarySuggestions
-          query={values.name}
+      {/* The library is a shortcut past the whole form, so it sits under the
+          field it fills rather than competing with the pinned submit. */}
+      {offerLibrary && (
+        <AppButton
+          className={styles.library}
+          type="button"
+          colour="secondary"
+          onClick={() => setLibraryOpen(true)}
+        >
+          {t('exercise.library.open')}
+        </AppButton>
+      )}
+
+      {libraryOpen && (
+        <ExerciseLibrarySheet
+          onClose={() => setLibraryOpen(false)}
           onPick={(entry) => {
-            const name = libraryName(entry, resolveLocale([i18n.language]))
-            setPicked(name)
             // Filled in, not settled: every field the entry touched is still
             // the reader's to change before they save.
             if (entry.tags.length) setTagsOpen(true)
-            update({ name, metrics: [...entry.metrics], tags: [...entry.tags] })
+            update({
+              name: libraryName(entry, resolveLocale([i18n.language])),
+              metrics: [...entry.metrics],
+              tags: [...entry.tags],
+            })
+            setLibraryOpen(false)
           }}
         />
       )}

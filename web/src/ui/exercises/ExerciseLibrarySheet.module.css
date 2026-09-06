@@ -1,0 +1,13 @@
+@reference '../../assets/base.css';
+
+.search {
+  @apply mb-4;
+}
+
+.options {
+  @apply space-y-2;
+}
+
+.empty {
+  @apply rounded-control bg-ink-surface p-6 text-center text-sm text-text-subtle;
+}
