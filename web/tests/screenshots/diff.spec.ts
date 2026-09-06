@@ -41,6 +41,7 @@ const set = async () => {
 
   return {
     after: (image: string, contents: Buffer) => write(roots.output, image, contents),
+    against: () => readFile(join(roots.changes, 'against'), 'utf8'),
     before: (image: string, contents: Buffer) => write(roots.baseline, image, contents),
     index: () => readFile(roots.index, 'utf8'),
     roots,
@@ -129,5 +130,17 @@ describe('changesSince', () => {
     await changesSince(['active/01-home.png', 'active/02-plans.png'], roots)
 
     expect(await index()).toBe('changed\tactive/01-home.png\nadded\tactive/02-plans.png\n')
+  })
+
+  // Which set the before column came from, so 'pr:screenshots' can publish it
+  // and say so rather than leaving a reviewer to guess.
+  it('names the set it compared against beside the index', async () => {
+    const { after, against, before, roots } = await set()
+    await before('active/01-home.png', png(4, 4, 10))
+    await after('active/01-home.png', png(4, 4, 250))
+
+    await changesSince(['active/01-home.png'], roots)
+
+    expect(await against()).toBe('baseline\n')
   })
 })

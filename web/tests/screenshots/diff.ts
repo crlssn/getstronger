@@ -1,5 +1,5 @@
 import { mkdir, readFile, readdir, writeFile } from 'node:fs/promises'
-import { dirname, join, relative } from 'node:path'
+import { basename, dirname, join, relative } from 'node:path'
 import pixelmatch from 'pixelmatch'
 import { PNG } from 'pngjs'
 import { baselineRoot, changesIndexPath, changesRoot, outputRoot, type Change } from './paths'
@@ -12,6 +12,8 @@ const perPixelTolerance = 0.15
 // live. A parameter rather than a constant so the comparator can be exercised
 // against a throwaway set instead of the one in web/screenshots.
 export type Roots = {
+  // Another ref's set, so its directory name is the ref the before column
+  // comes from.
   baseline: string
   changes: string
   index: string
@@ -101,11 +103,15 @@ const writeIndex = async (changes: Change[], roots: Roots) => {
     roots.index,
     changes.map((change) => `${change.kind}\t${change.image}\n`).join(''),
   )
+  // Which set the before column came from. 'pr:screenshots' reads it to find
+  // those images and to name the comparison in the block it publishes, so a
+  // report against the wrong baseline is visible rather than silent.
+  await writeFile(join(roots.changes, 'against'), `${basename(roots.baseline)}\n`)
 }
 
-// Compares this run against the copy taken before it started. Images the run
-// did not re-photograph compare equal to themselves, so a filtered run reports
-// only what it touched.
+// Compares this run against another ref's set. Images the run did not
+// re-photograph compare equal to themselves, so a filtered run reports only
+// what it touched.
 export const changesSince = async (images: string[], roots = defaultRoots): Promise<Change[]> => {
   const captured = new Set(images)
   const removed = (await pngsUnder(roots.baseline)).filter((image) => !captured.has(image))

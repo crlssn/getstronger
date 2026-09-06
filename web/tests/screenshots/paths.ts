@@ -1,7 +1,18 @@
 import { fileURLToPath } from 'node:url'
 import { join } from 'node:path'
+import { currentRef, refDirectory } from './ref'
 
-export const outputRoot = fileURLToPath(new URL('../../screenshots/', import.meta.url))
+// Every set lives under the ref it was photographed on, so two branches hold a
+// set at once and a run can only ever remove its own. Addressing a set by when
+// it was taken — "the previous run" — meant one directory held whichever branch
+// photographed it last, and every run was a chance to destroy the other's work.
+export const screenshotsRoot = fileURLToPath(new URL('../../screenshots/', import.meta.url))
+
+export const setRoot = (ref: string) => join(screenshotsRoot, refDirectory(ref))
+
+export const ref = currentRef()
+
+export const outputRoot = setRoot(ref)
 
 export const viewport = { height: 844, width: 390 }
 
@@ -13,10 +24,12 @@ export const manifestPath = join(outputRoot, 'manifest.json')
 
 export const contactSheetPath = join(outputRoot, 'index.html')
 
-// The set as it was before this run, kept only long enough to compare against.
-// It sits outside the published folder: a copy of a directory cannot be written
-// inside the directory being copied.
-export const baselineRoot = fileURLToPath(new URL('../../.screenshots-baseline/', import.meta.url))
+// The set a comparison reads its before column from: another ref's, named by
+// 'screenshots:diff --against'. It is nobody's copy-aside, so no ordering
+// between the two runs can lose it.
+export const baselineRef = process.env.SCREENSHOT_AGAINST ?? 'main'
+
+export const baselineRoot = setRoot(baselineRef)
 
 // The moment the snapshot of the seeded data was taken. Every run renders
 // relative times against it rather than against the wall clock, so a page does
@@ -32,8 +45,8 @@ export const changesRoot = join(outputRoot, 'changes')
 export const changesIndexPath = join(changesRoot, 'pages.tsv')
 
 export type Change = {
-  // What the comparison found: an image only the previous run had, one only
-  // this run has, one whose page grew or shrank, or one whose pixels moved.
+  // What the comparison found: an image only the set compared against had, one
+  // only this run has, one whose page grew or shrank, or one whose pixels moved.
   kind: 'added' | 'changed' | 'removed' | 'resized'
   detail?: string
   diff?: string

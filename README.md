@@ -494,15 +494,17 @@ Playwright starts isolated HTTP instances of the backend and web app on ports `1
 mise run screenshots
 ```
 
-The images land in `web/screenshots/`, which Git ignores, one folder per audience:
+The images land in `web/screenshots/<ref>/`, which Git ignores, one folder per audience:
 
 - `guest/` — the pages a signed-out visitor sees.
 - `active/` — Alex Morgan, the established account with a year of training.
 - `new/` — Sam Taylor, the freshly signed-up account with no data of its own.
 
+`<ref>` is the branch the set was photographed on, with `/` folded to `-`, or the short SHA when HEAD is detached — which is what a baseline captured on `origin/main` is. A set is addressed by what it is of rather than by when it was taken, so a run removes only its own `<ref>` directory: a set photographed on `main` survives any number of runs on a branch, and two branches hold a set at once.
+
 Each page is photographed one screenful at a time — `01-home-1.png`, `01-home-2.png`, and so on — up to four screens, so an endless feed never becomes a single unreadable strip and each image shows the sticky header and bottom navigation where a reader sees them. Set `SCREENSHOT_MAX_FOLDS` to capture more or fewer.
 
-A run rewrites the folder from scratch and finishes by publishing what it saw twice over. `manifest.json` maps every image to its route, the component that renders it, and the measurements taken on the page; `index.html` is a contact sheet of the same set:
+A run rewrites its own folder from scratch and finishes by publishing what it saw twice over. `manifest.json` maps every image to its route, the component that renders it, and the measurements taken on the page, and names the ref the set is of; `index.html` is a contact sheet of the same set:
 
 ```bash
 mise run screenshots:open
@@ -531,15 +533,26 @@ After changing a component, re-photograph only the pages it affects. This form m
 mise run screenshots:page routine
 ```
 
-To find out what a change actually moved, compare a run against the one before it. The set is copied aside first, and every page is re-photographed and compared pixel by pixel:
+To find out what a change actually moved, compare this ref's set against another ref's. Photograph the before once — on `main`, say — and it stays there while the branch is re-photographed as often as it takes:
 
 ```bash
+git switch main && mise run screenshots && git switch -
 mise run screenshots:diff
+mise run screenshots:diff --against 4c4c604e
 ```
 
-The run reports the pages that moved, records them in the manifest, and writes a highlighted image of each difference to `web/screenshots/changes/`, alongside a `pages.tsv` naming every page it found and how it moved — added, removed, resized, or changed. A one-line change to `.auth-eyebrow`, for example, reports login, signup, forgot password, reset password, and the verification notice — including the pages nobody thought to check. Pass a pattern to compare a subset, as `screenshots:page` does.
+Every page is re-photographed under this ref and compared with `--against`'s set pixel by pixel — `main` unless another ref is named. A comparison against a set nobody photographed is refused in the second before the run starts, rather than reporting every page as added six minutes later.
+
+The run names both sets it compared, reports the pages that moved, records them in the manifest, and writes a highlighted image of each difference to `web/screenshots/<ref>/changes/`, alongside a `pages.tsv` naming every page it found and how it moved — added, removed, resized, or changed — and an `against` file naming the set the before column came from. A one-line change to `.auth-eyebrow`, for example, reports login, signup, forgot password, reset password, and the verification notice — including the pages nobody thought to check. Pass a pattern to compare a subset, as `screenshots:page` does.
 
 The seed is never run again — it randomises names, so reseeding would move nearly every page and bury the change being looked at. Instead the run puts back the snapshot `mise run screenshots` took, so the comparison photographs the data the baseline photographed. Without it the flows' own exercises, routines and workouts carry from one run into the next, and pages nobody touched report a difference — twenty of them, for a change to one. Both runs also render relative times against the moment the snapshot was taken rather than against the wall clock, so a page does not move because "just now" became "three minutes ago". Two runs over an unchanged working tree therefore report nothing, which is what makes a run that reports something worth reading.
+
+A set is 32 MB and one accumulates per branch, so the sets outlive the branches they were photographed on. This lists the ones whose ref is gone, and `-- --force` removes them; the set for whatever HEAD is now is never listed, detached or not:
+
+```bash
+mise run screenshots:prune
+mise run screenshots:prune -- --force
+```
 
 Like the end-to-end suite, the run starts its own backend and web server — on ports `18280` and `15273` by default — so it neither depends on nor disturbs the local development services.
 
@@ -556,9 +569,9 @@ The first prints the block to paste; the second also appends it to the pull requ
 
 The number only exists once the pull request is open, so `mise run pr:create` closes the loop from the other end: a branch that touched a component or stylesheet under `web/src/` gets the command printed back with its number filled in.
 
-For every page in that run's `pages.tsv` it publishes three images: the page as it was, from the baseline that run kept in `web/.screenshots-baseline/`; the page as it is now; and the highlighted difference. A page that gained or lost a fold has an image on one side only and no difference to draw — one image becoming two — and the row says so rather than linking an object that was never uploaded; reading the folder of differences alone used to leave that page out of the report meant to show it. The block is a row per page, so a redesign is read as before, after and what moved. Without a baseline to compare against, it publishes the differences alone, and `--path web/screenshots/active` publishes a folder of the set as it is. Objects land under `pr/<number>/<short-sha>/`, so re-photographing a branch adds a set rather than replacing the one a reviewer is reading.
+For every page in that run's `pages.tsv` it publishes three images: the page as it was, from the set named in the `against` file beside it; the page as it is now; and the highlighted difference. The block says which two sets it is of, so a report built against the wrong baseline is visible rather than silent. A page that gained or lost a fold has an image on one side only and no difference to draw — one image becoming two — and the row says so rather than linking an object that was never uploaded; reading the folder of differences alone used to leave that page out of the report meant to show it. The block is a row per page, so a redesign is read as before, after and what moved. Reading the two refs out of the directory rather than out of its path is what lets `--path` name any run's differences and still get the three-column table. Without an `against` file, it publishes the differences alone, and `--path web/screenshots/<ref>/active` publishes a folder of the set as it is. Objects land under `pr/<number>/<short-sha>/`, so re-photographing a branch adds a set rather than replacing the one a reviewer is reading.
 
-Anything outside `web/screenshots/` is refused, symlinks included; the baseline is the one exception, and only because the task reaches for it itself — it holds the same seeded photographs, one run older. Each object is uploaded world-readable so GitHub's image proxy can fetch it, and that directory is photographed from the seeded database by construction — the guard is what keeps real data out of a public bucket.
+Anything outside `web/screenshots/` is refused, symlinks included, and the ref named in an `against` file is resolved and checked the same way. Each object is uploaded world-readable so GitHub's image proxy can fetch it, and that directory is photographed from the seeded database by construction — the guard is what keeps real data out of a public bucket.
 
 The bucket is not the one the web app is deployed to: `deploy.yml` syncs that one with `--delete`, so a `pr/` prefix in it would disappear on the next deploy. Create it once, and give it a lifecycle rule so old images clean themselves up:
 

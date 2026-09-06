@@ -19,8 +19,8 @@ the first question is whether to open a canvas at all.
 | A screen with no component to photograph             | **Canvas**                        |
 
 Refining what already exists does not need a mock — the app can be
-photographed. Follow `.claude/skills/design-review/SKILL.md`: capture with
-`mise run screenshots:page <name>`, change the component, then
+photographed. Follow `.claude/skills/design-review/SKILL.md`: photograph the ref
+you want as the before with `mise run screenshots`, change the component, then
 `mise run screenshots:diff` to see what moved. Page names are the `name:`
 fields in `web/tests/screenshots/catalogue.ts` — `home`, `workout`,
 `view-routine`, `quick-workout` and the rest. That loop costs a fraction of a

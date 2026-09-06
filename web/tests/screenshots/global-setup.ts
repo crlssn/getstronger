@@ -1,6 +1,6 @@
-import { cp, rm, writeFile } from 'node:fs/promises'
+import { rm, stat, writeFile } from 'node:fs/promises'
 import { captureSnapshot, restoreSnapshot } from '../snapshot'
-import { baselineRoot, changesRoot, clockPath, outputRoot } from './paths'
+import { baselineRef, baselineRoot, changesRoot, clockPath, outputRoot } from './paths'
 
 // The flows photograph themselves creating an exercise, a routine, a plan and a
 // workout, so a run leaves the database further along than it found it. A
@@ -37,27 +37,47 @@ const alignData = async () => {
   }
 }
 
+// Photographing takes six minutes and reports every page as added when there is
+// nothing to compare against, so a baseline that cannot be one is refused in
+// the second before the run starts rather than discovered at the end of it.
+export const requireBaseline = async (baseline: string, name: string, output: string) => {
+  if (baseline === output) {
+    throw new Error(
+      `'${name}' is the set this run is photographing, so it cannot also be the one it` +
+        ` compares against. Photograph the before on another ref, then name it with` +
+        ` 'mise run screenshots:diff --against <ref>'.`,
+    )
+  }
+
+  const there = await stat(baseline)
+    .then((entry) => entry.isDirectory())
+    .catch(() => false)
+  if (there) return
+
+  throw new Error(
+    `No set photographed on '${name}', so there is nothing to compare against.` +
+      ` Check that ref out and run 'mise run screenshots', or name a set that exists` +
+      ` with 'mise run screenshots:diff --against <ref>'.`,
+  )
+}
+
 // A full run always publishes a complete set, so images from a page that no
-// longer exists must not survive into the next one. A filtered re-capture sets
-// SCREENSHOT_KEEP to leave the rest of the set in place; the command-line
-// filter itself never reaches this hook, so it cannot be inferred here.
+// longer exists must not survive into the next one. Only this ref's set is the
+// run's to remove: the sets beside it are other branches' six-minute artefacts,
+// and one of them is very likely the baseline this run compares against.
 //
-// A diff run keeps the set too, and first copies it aside: the comparison at
-// the end of the run needs the images as they were before it started.
+// A filtered re-capture keeps the set, to leave the pages it does not touch in
+// place; the command-line filter itself never reaches this hook, so it cannot
+// be inferred here.
+export const clearSet = async (roots: { changes: string; output: string }, keep: boolean) => {
+  await rm(roots.changes, { force: true, recursive: true })
+  if (!keep) await rm(roots.output, { force: true, recursive: true })
+}
+
 export default async () => {
   await alignData()
 
-  await rm(baselineRoot, { force: true, recursive: true })
-  await rm(changesRoot, { force: true, recursive: true })
+  if (process.env.SCREENSHOT_DIFF) await requireBaseline(baselineRoot, baselineRef, outputRoot)
 
-  if (!process.env.SCREENSHOT_DIFF) {
-    if (!process.env.SCREENSHOT_KEEP) await rm(outputRoot, { force: true, recursive: true })
-    return
-  }
-
-  await cp(outputRoot, baselineRoot, {
-    filter: (source) => !source.startsWith(changesRoot) && !source.endsWith('.json'),
-    force: true,
-    recursive: true,
-  })
+  await clearSet({ changes: changesRoot, output: outputRoot }, Boolean(process.env.SCREENSHOT_KEEP))
 }

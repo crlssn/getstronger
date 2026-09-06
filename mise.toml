@@ -321,6 +321,9 @@ run = [
 
 # Screenshot tasks
 
+# Every set lands in web/screenshots/<ref>/, named after the ref it was
+# photographed on, so a run only ever removes its own. Two branches can hold a
+# set at once, and 'screenshots:diff' compares one against the other.
 [tasks.screenshots]
 description = "Capture mobile screenshots of every page for the seeded personas"
 # The snapshot is taken after the seed and before the flows mutate it, so a
@@ -342,19 +345,27 @@ env = { SCREENSHOT_KEEP = "1" }
 run = 'cd web && npm run screenshots -- --grep "$usage_pattern"'
 
 [tasks."screenshots:diff"]
-description = "Re-capture and report which pages a change moved, compared with the previous run"
-usage = 'arg "<pattern>" help="Pages to re-capture, defaulting to all of them" default="."'
+description = "Re-capture and report which pages a change moved, compared with another ref's set"
+usage = """
+arg "<pattern>" help="Pages to re-capture, defaulting to all of them" default="."
+flag "--against <ref>" help="Ref whose set is the before, defaulting to main"
+"""
 # The seed is never run again: it randomises names, so reseeding would move
 # every page and drown out the change being looked at. The snapshot 'screenshots'
 # took is put back instead, which is the same data under the same names — and
 # without it the flows' own exercises, routines and workouts leak from one run
 # into the next, and pages nobody touched report a difference.
 env = { SCREENSHOT_DIFF = "1", SCREENSHOT_KEEP = "1", SCREENSHOT_SNAPSHOT = "restore" }
-run = 'cd web && npm run screenshots -- --grep "$usage_pattern"'
+run = 'cd web && SCREENSHOT_AGAINST="${usage_against:-main}" npm run screenshots -- --grep "$usage_pattern"'
 
 [tasks."screenshots:open"]
-description = "Open the latest mobile screenshot contact sheet"
-run = "open web/screenshots/index.html"
+description = "Open this ref's mobile screenshot contact sheet"
+run = 'open "web/screenshots/$(./scripts/screenshots_ref.sh)/index.html"'
+
+[tasks."screenshots:prune"]
+description = "List the screenshot sets left behind by branches that are gone, or remove them"
+usage = 'flag "--force" help="Remove the sets instead of listing them"'
+run = "./scripts/screenshots_prune.sh"
 
 # Application tasks
 
@@ -612,7 +623,7 @@ run = './scripts/pr_create.sh "$usage_title" "$usage_body_file" ${usage_base+--b
 description = "Publish a pull request's screenshots and print the markdown that shows them"
 usage = '''
 arg "<number>" help="Pull request the screenshots belong to"
-flag "--path <path>" help="Directory to publish, defaulting to web/screenshots/changes; anything outside web/screenshots is refused"
+flag "--path <path>" help="Directory to publish, defaulting to this ref's changes; anything outside web/screenshots is refused"
 flag "--append" help="Append the markdown to the pull request body, replacing an earlier block"
 '''
 # The bucket name is deliberately absent from here: it is a GitHub repository
