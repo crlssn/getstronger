@@ -561,6 +561,42 @@ run = [
     '''echo "✅  Installed pre-push hook"''',
 ]
 
+# Design system tasks
+#
+# The design system is mirrored to Claude Design (claude.ai/design) so that its
+# design agent builds with the app's real components. Everything below is the
+# local half; the upload itself needs the DesignSync tool, so it runs from the
+# '/design-sync' skill in Claude Code. See web/.design-sync/NOTES.md.
+
+[tasks."design:build"]
+alias = "design_build"
+description = "Build the design system as a library into web/ds-dist"
+dir = "web"
+# The app is not a published library, so the converter has no entry to read and
+# no types. This makes both with the app's own Vite and PostCSS config, which is
+# also what expands the CSS Modules' @apply rules.
+run = "node .design-sync/build-ds.mjs"
+
+[tasks."design:bundle"]
+alias = "design_bundle"
+description = "Rebuild the Claude Design bundle in web/ds-bundle and validate it"
+dir = "web"
+# Needs the converter staged in web/.ds-sync, which the '/design-sync' skill
+# puts there. It is gitignored, so a fresh clone runs the skill once first.
+run = [
+    { task = "design:build" },
+    'test -d .ds-sync || { echo "✗ web/.ds-sync is missing — run /design-sync in Claude Code once to stage the converter." >&2; exit 1; }',
+    "node .ds-sync/package-build.mjs --config .design-sync/config.json --node-modules ./node_modules --entry ./ds-dist/index.js --out ./ds-bundle",
+    "node .ds-sync/package-validate.mjs ./ds-bundle",
+    'echo "Look at the cards with: mise run design:review"',
+]
+
+[tasks."design:review"]
+alias = "design_review"
+description = "Serve the design system's preview cards for a look"
+dir = "web"
+run = "node .ds-sync/storybook/http-serve.mjs ./ds-bundle"
+
 # Pull request tasks
 
 [tasks."pr:create"]

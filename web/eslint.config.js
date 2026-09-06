@@ -14,7 +14,21 @@ import tseslint from 'typescript-eslint'
 // catches real bugs.
 export default tseslint.config(
   {
-    ignores: ['**/dist/**', '**/dist-ssr/**', '**/coverage/**', 'src/proto/**'],
+    // design-sync scaffolding: the library build it generates (ds-dist), the
+    // bundle it uploads (ds-bundle), the converter it stages (.ds-sync) and the
+    // inputs it keeps (.design-sync). None of it ships with the app, and the
+    // generated declarations are outside every tsconfig the type-aware rules
+    // know about — see web/.design-sync/NOTES.md.
+    ignores: [
+      '**/dist/**',
+      '**/dist-ssr/**',
+      '**/coverage/**',
+      'src/proto/**',
+      'ds-dist/**',
+      'ds-bundle/**',
+      '.ds-sync/**',
+      '.design-sync/**',
+    ],
     name: 'app/files-to-ignore',
   },
 

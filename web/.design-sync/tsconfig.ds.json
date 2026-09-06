@@ -1,0 +1,21 @@
+{
+  // Declaration-only build of the design system, for design-sync. tsc follows
+  // the barrel's imports, so this emits types for exactly what the library
+  // entry reaches and nothing else.
+  "include": ["../env.d.ts", "./entry.ts", "./DesignSyncProvider.tsx"],
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "jsx": "react-jsx",
+    "strict": true,
+    "skipLibCheck": true,
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "noEmit": false,
+    "rootDir": "..",
+    "outDir": "../ds-dist/types",
+    "paths": { "@/*": ["../src/*"] }
+  }
+}

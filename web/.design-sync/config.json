@@ -1,0 +1,43 @@
+{
+  "shape": "package",
+  "pkg": "getstronger-ds",
+  "globalName": "GetStrongerDS",
+  "buildCmd": "mise exec -- node .design-sync/build-ds.mjs",
+  "entry": "./ds-dist/index.js",
+  "srcDir": "../src/ui/components",
+  "cssEntry": "ds.css",
+  "extraFonts": ["../node_modules/@fontsource-variable/plus-jakarta-sans/index.css"],
+  "provider": {
+    "component": "DesignSyncProvider"
+  },
+  "componentSrcMap": {
+    "DesignSyncProvider": null
+  },
+  "docsDir": "../.design-sync/docs",
+  "overrides": {
+    "AppSheet": {
+      "cardMode": "single",
+      "primaryStory": "ADecision",
+      "viewport": "420x820"
+    },
+    "SheetAction": {
+      "cardMode": "single",
+      "primaryStory": "Tones",
+      "viewport": "420x820"
+    },
+    "AppFormFooter": {
+      "cardMode": "single",
+      "primaryStory": "WithHintAndSecondary",
+      "viewport": "420x820"
+    },
+    "AppCarousel": {
+      "cardMode": "column"
+    }
+  },
+  "dtsPropsFor": {
+    "AppButton": "  /** `link` renders a router link with a button's shape; `button` and `submit` render a <button>. */\n  type: \"button\" | \"submit\" | \"link\";\n  /** Four roles, not six colours. `destructive` is danger text, never a red fill. */\n  colour: \"primary\" | \"secondary\" | \"ghost\" | \"destructive\";\n  /** Where the button goes. Required when `type=\"link\"`, unused otherwise. */\n  to?: string;\n  /** The control scale: `md` (48px) is the default, `sm` the 44px tap floor, `lg` a form's submit, `inline` a quiet action inside a line of copy. */\n  size?: \"inline\" | \"sm\" | \"md\" | \"lg\";\n  /** Most buttons fill their column; `auto` shrinks one to its content. */\n  width?: \"full\" | \"auto\";\n  disabled?: boolean;\n  onClick?: (event: React.MouseEvent<HTMLButtonElement>) => void;\n  children?: React.ReactNode;\n  /** Positions the button. Its own styling is never replaced. */\n  className?: string;",
+    "AppNumberField": "  /** The committed number, or `undefined` while the field is empty. */\n  value: number | undefined;\n  onChange: (value: number | undefined) => void;\n  /** A unit drawn inside the field's border, as a label on it rather than a control in it. */\n  unit?: string;\n  /** `decimal` for a weight, `numeric` for a count \u2014 never `type=\"number\"`. */\n  inputMode?: \"decimal\" | \"numeric\";\n  placeholder?: string;\n  className?: string;"
+  },
+  "readmeHeader": ".design-sync/conventions.md",
+  "projectId": "43fec0b7-1312-490d-b4be-67cd974c672d"
+}
