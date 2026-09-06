@@ -547,6 +547,10 @@ export const en = {
       tags: 'Tags',
       addTags: 'Add tags',
     },
+    library: {
+      heading: 'From the library',
+      help: 'Tap one to fill in its measurements and tags.',
+    },
     tagInput: {
       listAria: 'Exercise tags',
       remove: 'Remove {name}',
@@ -1319,6 +1323,10 @@ export const sv = {
       updated: 'Övningen har uppdaterats',
       tags: 'Taggar',
       addTags: 'Lägg till taggar',
+    },
+    library: {
+      heading: 'Ur övningsbiblioteket',
+      help: 'Tryck på en för att fylla i mått och taggar.',
     },
     tagInput: {
       listAria: 'Övningstaggar',

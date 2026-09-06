@@ -125,6 +125,16 @@ export const flows: Flow[] = [
     name: 'exercise',
     personas: everybody,
     steps: [
+      // The library under the name field, which is what a first session sees
+      // instead of an empty form.
+      {
+        act: async (page) => {
+          await page.goto('/exercises/create')
+          await page.locator('form input[type="text"]').first().fill('bench')
+          await expect(page.getByRole('heading', { name: 'From the library' })).toBeVisible()
+        },
+        name: 'library',
+      },
       {
         act: async (page) => {
           await page.goto('/exercises/create')

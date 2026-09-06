@@ -1,0 +1,17 @@
+@reference '../../assets/base.css';
+
+.suggestions {
+  @apply mb-5;
+}
+
+.heading {
+  @apply px-1 text-body-lg font-semibold text-text;
+}
+
+.help {
+  @apply mb-2 px-1 text-sm text-text-subtle;
+}
+
+.options {
+  @apply space-y-2;
+}

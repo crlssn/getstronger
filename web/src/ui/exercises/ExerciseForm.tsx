@@ -3,11 +3,14 @@ import type { ExerciseMetric } from '@/proto/api/v1/shared_pb'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { libraryName } from '@/exercises/library'
 import { listExerciseTags } from '@/http/requests'
+import { resolveLocale } from '@/i18n'
 import { AppButton } from '@/ui/components/AppButton'
 import { AppFormFooter } from '@/ui/components/AppFormFooter'
 import { AppInput } from '@/ui/components/AppInput'
 import { AppOptionalAction } from '@/ui/components/AppOptionalAction'
+import { ExerciseLibrarySuggestions } from '@/ui/exercises/ExerciseLibrarySuggestions'
 import { ExerciseMeasurementSettings } from '@/ui/exercises/ExerciseMeasurementSettings'
 import { ExerciseTagsInput } from '@/ui/exercises/ExerciseTagsInput'
 import styles from './ExerciseForm.module.css'
@@ -25,6 +28,11 @@ interface Props {
   submitLabel: string
   /** Whether what the exercise measures is settled by sets already logged. */
   metricsLocked?: boolean
+  /**
+   * Whether the name field offers matching library entries. Creating an
+   * exercise does; renaming one that already has logged sets does not.
+   */
+  suggestFromLibrary?: boolean
   /** Why the last save failed, rendered inline beside the submit. */
   error?: string
 }
@@ -41,11 +49,15 @@ export const ExerciseForm = ({
   onSubmit,
   submitLabel,
   metricsLocked = false,
+  suggestFromLibrary = false,
   error,
 }: Props) => {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const [suggestions, setSuggestions] = useState<string[]>([])
   const [tagsOpen, setTagsOpen] = useState(values.tags.length > 0)
+  // What was last taken from the library, so the row that filled the field
+  // stops offering itself back.
+  const [picked, setPicked] = useState<string>()
 
   useEffect(() => {
     const load = async () => setSuggestions(await listExerciseTags())
@@ -72,6 +84,20 @@ export const ExerciseForm = ({
         required
         onChange={(event) => update({ name: event.target.value })}
       />
+
+      {suggestFromLibrary && values.name !== picked && (
+        <ExerciseLibrarySuggestions
+          query={values.name}
+          onPick={(entry) => {
+            const name = libraryName(entry, resolveLocale([i18n.language]))
+            setPicked(name)
+            // Filled in, not settled: every field the entry touched is still
+            // the reader's to change before they save.
+            if (entry.tags.length) setTagsOpen(true)
+            update({ name, metrics: [...entry.metrics], tags: [...entry.tags] })
+          }}
+        />
+      )}
 
       <ExerciseMeasurementSettings
         metrics={values.metrics}
