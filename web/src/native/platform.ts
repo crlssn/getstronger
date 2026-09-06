@@ -1,5 +1,6 @@
 import { Capacitor } from '@capacitor/core'
 
+import { canSwipeBack, SwipeBack } from '@/native/swipeBack'
 import { isFocusedShellPath } from '@/router/routes'
 
 /** Just enough of the data router for this module, so it can be handed a stub. */
@@ -60,8 +61,32 @@ export const initNativePlatform = async (router: NativeRouter): Promise<void> =>
     console.debug(`keep-awake ${wanted ? 'engaged' : 'released'}`)
   }
 
-  applyKeepAwake(router.state.location.pathname)
-  router.subscribe((state) => applyKeepAwake(state.location.pathname))
+  // WKWebView's interactive back gesture is off by default and is a single
+  // flag for the whole WebView, so the app switches it on only where the nav
+  // bar shows a way back. Android answers its own system gesture below.
+  const swipeBackSupported = Capacitor.getPlatform() === 'ios'
+  let swiping: boolean | undefined
+  const applySwipeBack = (pathname: string) => {
+    if (!swipeBackSupported) return
+
+    // React Router numbers the entries it pushed; history.state is otherwise any.
+    const { idx } = (window.history.state ?? {}) as { idx?: number }
+    const wanted = canSwipeBack(pathname, idx ?? 0)
+    if (wanted === swiping) return
+
+    swiping = wanted
+    SwipeBack.setEnabled({ enabled: wanted }).catch((error: unknown) =>
+      console.warn('swipe-back unavailable', error),
+    )
+  }
+
+  const applyToScreen = (pathname: string) => {
+    applyKeepAwake(pathname)
+    applySwipeBack(pathname)
+  }
+
+  applyToScreen(router.state.location.pathname)
+  router.subscribe((state) => applyToScreen(state.location.pathname))
 
   // The Android hardware back button has no default behaviour once a listener
   // exists, so mirror the browser: walk back through the WebView's history and

@@ -7,7 +7,7 @@ import {
   scrollToListEnd,
   test,
 } from './fixtures'
-import type { Locator, Page } from '@playwright/test'
+import type { CDPSession, Locator, Page } from '@playwright/test'
 
 test.beforeAll(resetSeedData)
 
@@ -175,4 +175,71 @@ test('renders the not-found state accessibly', async ({ page }) => {
   await page.goto('/this-route-does-not-exist')
   await expect(page.getByRole('heading', { name: /not found/i })).toBeVisible()
   await expectAccessible(page)
+})
+
+// The strip a phone reserves for its status bar and Dynamic Island, which
+// viewport-fit=cover lets the page run under. A desktop browser reports zero,
+// so it has to be emulated, and only Chromium's CDP can — which is why these
+// stay out of the @smoke set the other engines run.
+const statusBarInset = 59
+
+const emulateStatusBarInset = async (session: CDPSession, top: number) =>
+  session.send('Emulation.setSafeAreaInsetsOverride', { insets: { top, topMax: top } })
+
+const verticalOverflow = (page: Page) =>
+  page.evaluate(() => {
+    const scroller = document.scrollingElement ?? document.documentElement
+    return scroller.scrollHeight - scroller.clientHeight
+  })
+
+// main.css spends the inset as padding on the body, so a shell measuring itself
+// against the whole screen asks for more height than it was left. Reading the
+// padding back is what tells the emulation apart from a test that silently
+// stopped emulating anything.
+const insetSpent = (page: Page) =>
+  page.evaluate(() => Number.parseFloat(getComputedStyle(document.body).paddingTop))
+
+// Each with a screen tall enough to hold it, because a scroll is only the
+// shell's own doing when the page itself has nothing below the fold. Signup's
+// five fields need more room than a phone has.
+const guestPages = [
+  { height: 844, path: '/login', ready: 'Log in to GetStronger' },
+  { height: 1100, path: '/signup', ready: 'Create your account' },
+  { height: 844, path: '/forgot-password', ready: 'Reset your password' },
+  { height: 844, path: '/reset-password', ready: 'Choose a new password' },
+] as const
+
+test('fits the guest shell on a screen that reserves a status bar', async ({ page }) => {
+  const session = await page.context().newCDPSession(page)
+
+  for (const guest of guestPages) {
+    await page.setViewportSize({ height: guest.height, width: 390 })
+
+    // The web, where the inset is zero and this has never gone wrong.
+    await emulateStatusBarInset(session, 0)
+    await page.goto(guest.path)
+    await expect(page.getByRole('heading', { name: guest.ready })).toBeVisible()
+    expect(await verticalOverflow(page), `${guest.path} scrolls at a zero inset`).toBe(0)
+
+    // And the phone, where reserving the strip moves the page down the screen
+    // rather than lengthening the document.
+    await emulateStatusBarInset(session, statusBarInset)
+    await expect.poll(() => insetSpent(page)).toBe(statusBarInset)
+    expect(await verticalOverflow(page), `${guest.path} scrolls by the inset`).toBe(0)
+  }
+})
+
+test('still scrolls a guest screen taller than the screen it is on', async ({ page }) => {
+  const session = await page.context().newCDPSession(page)
+  await emulateStatusBarInset(session, statusBarInset)
+  await page.setViewportSize({ height: 420, width: 390 })
+
+  await page.goto('/signup')
+  await expect(page.getByRole('heading', { name: 'Create your account' })).toBeVisible()
+  await expect.poll(() => insetSpent(page)).toBe(statusBarInset)
+  expect(await verticalOverflow(page)).toBeGreaterThan(0)
+
+  const last = page.getByRole('link', { name: 'Log in', exact: true })
+  await last.scrollIntoViewIfNeeded()
+  await expect(last).toBeInViewport()
 })
