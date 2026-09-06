@@ -4,6 +4,11 @@ import { useTranslation } from 'react-i18next'
 import { selectTheme, useLocaleStore } from '@/stores/locale'
 import type { AppTheme } from '@/theme'
 import type { RoutePoint } from '@/utils/timedCircuit'
+// The worker built by Vite as its own bundle, with the module it imports
+// folded in. Left to MapLibre, the worker is a URL relative to its own module,
+// which the build rewrote into the assets folder without writing the file, and
+// copying the file alone leaves its import behind to 404 the same way.
+import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url'
 import styles from './WorkoutRoute.module.css'
 
 /** One coloured run of a route: an interval, as the fix-to-fix edges inside it. */
@@ -67,6 +72,7 @@ export const RouteMap = ({ lines, onUnavailable }: Props) => {
         import('maplibre-gl/dist/maplibre-gl.css'),
       ])
       if (disposed) return
+      maplibregl.setWorkerUrl(workerUrl)
 
       const features: Feature<LineString, { color: string }>[] = lines.flatMap((line) =>
         line.segments.map(([a, b]) => ({

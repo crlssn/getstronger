@@ -35,7 +35,9 @@ const maplibre = vi.hoisted(() => {
   }
 })
 
+const setWorkerUrl = vi.hoisted(() => vi.fn())
 vi.mock('maplibre-gl', () => ({
+  setWorkerUrl,
   Map: class {
     constructor(options: Record<string, unknown>) {
       maplibre.options.push(options)
@@ -49,6 +51,9 @@ vi.mock('maplibre-gl', () => ({
   },
 }))
 vi.mock('maplibre-gl/dist/maplibre-gl.css', () => ({}))
+vi.mock('maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url', () => ({
+  default: '/assets/worker.mjs',
+}))
 
 const point = (longitude: number) => ({ timestamp: 0, latitude: 51, longitude, accuracy: 3 })
 
@@ -79,6 +84,8 @@ describe('RouteMap', () => {
 
     expect(screen.getByRole('region', { name: 'Route map' })).toBeInTheDocument()
     await waitFor(() => expect(maplibre.options).toHaveLength(1))
+    // The worker is this build's own asset, not a path MapLibre guesses.
+    expect(setWorkerUrl).toHaveBeenCalledWith('/assets/worker.mjs')
     expect(maplibre.options[0].style).toBe('https://tiles.openfreemap.org/styles/positron')
     expect(maplibre.options[0].cooperativeGestures).toBe(true)
     // The card credits the tiles beside the map, so the map's own control is
