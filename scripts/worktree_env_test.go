@@ -88,6 +88,42 @@ func TestWorktreeGetsItsOwnPortsAndContainers(t *testing.T) {
 	require.Contains(t, readFile(t, filepath.Join(tree, ".claude/launch.json")), fmt.Sprintf(`"port": %d`, base+3))
 }
 
+// node_modules is seeded from the main checkout as a warm cache for the install
+// that follows, not as an answer: what that checkout last installed is not what
+// this branch's lockfiles name.
+func TestItSeedsNodeModulesFromTheMainCheckout(t *testing.T) {
+	main := newCheckout(t)
+	write(t, main, "web/node_modules/left-pad/index.js", "")
+	tree := addWorktree(t, main, "feature-a")
+
+	result := runEnv(t, tree, nil)
+
+	require.Equal(t, 0, result.exitCode, result.output)
+	require.FileExists(t, filepath.Join(tree, "web/node_modules/left-pad/index.js"))
+}
+
+func TestItInstallsWhatTheWorktreesLockfilesName(t *testing.T) {
+	main := newCheckout(t)
+	write(t, main, "web/node_modules/left-pad/index.js", "")
+	tree := addWorktree(t, main, "feature-a")
+
+	result := runEnv(t, tree, nil)
+
+	require.Equal(t, 0, result.exitCode, result.output)
+	require.Equal(t, []string{"install:js"}, result.tasks, "the seed is reconciled against this worktree's lockfiles")
+}
+
+func TestItReportsAnInstallThatFailed(t *testing.T) {
+	main := newCheckout(t)
+	tree := addWorktree(t, main, "feature-a")
+
+	result := runEnv(t, tree, []string{"MISE_FAIL_TASK=install:js"})
+
+	require.Equal(t, 1, result.exitCode, result.output)
+	require.Contains(t, result.output, "Configured worktree", "the ports it did assign are still reported")
+	require.Contains(t, result.output, "mise run install:js")
+}
+
 // The failure this issue is about: the first worktree's containers are stopped
 // and its servers are not running, so nothing is listening on its ports.
 func TestStoppedWorktreeKeepsItsSlot(t *testing.T) {
@@ -433,6 +469,7 @@ type scriptResult struct {
 	exitCode int
 	output   string
 	removed  []string
+	tasks    []string
 }
 
 // newCheckout returns a main checkout holding the files worktree_env.sh renders
@@ -518,9 +555,11 @@ func runScript(t *testing.T, script, dir string, env []string) scriptResult {
 
 	bin := t.TempDir()
 	removed := filepath.Join(bin, "removed.log")
+	tasks := filepath.Join(bin, "tasks.log")
 	require.NoError(t, os.WriteFile(filepath.Join(bin, "nc"), []byte(stubNC), 0o755))
 	require.NoError(t, os.WriteFile(filepath.Join(bin, "docker"), []byte(stubDocker), 0o755))
 	require.NoError(t, os.WriteFile(filepath.Join(bin, "find"), []byte(stubFind), 0o755))
+	require.NoError(t, os.WriteFile(filepath.Join(bin, "mise"), []byte(stubMise), 0o755))
 
 	path, err := filepath.Abs(script)
 	require.NoError(t, err)
@@ -528,6 +567,7 @@ func runScript(t *testing.T, script, dir string, env []string) scriptResult {
 	cmd := exec.CommandContext(t.Context(), path)
 	cmd.Dir = dir
 	cmd.Env = append(isolatedEnv(bin), "DOCKER_RM_LOG="+removed, "FIND_CALL_LOG="+filepath.Join(bin, "find.log"))
+	cmd.Env = append(cmd.Env, "MISE_TASK_LOG="+tasks)
 	cmd.Env = append(cmd.Env, env...)
 	out, err := cmd.CombinedOutput()
 
@@ -538,7 +578,12 @@ func runScript(t *testing.T, script, dir string, env []string) scriptResult {
 		exitCode = exit.ExitCode()
 	}
 
-	return scriptResult{exitCode: exitCode, output: string(out), removed: readLines(t, removed)}
+	return scriptResult{
+		exitCode: exitCode,
+		output:   string(out),
+		removed:  readLines(t, removed),
+		tasks:    readLines(t, tasks),
+	}
 }
 
 // The guard is what stands between an unconfigured worktree and the main

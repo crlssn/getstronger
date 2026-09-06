@@ -364,9 +364,9 @@ set_env "$root/web/.env" VITE_API_URL "http://localhost:$server_port"
 
 write_launch_json "$web_port"
 
-# Seed node_modules from the main checkout so the first lint, test, or pre-push
-# run works without a full 'bun install'. cp -c clones via APFS copy-on-write,
-# so the copy is nearly instant; other filesystems fall back to a plain copy.
+# Seed node_modules from the main checkout so the install below has almost
+# nothing left to do. cp -c clones via APFS copy-on-write, so the copy is nearly
+# instant; other filesystems fall back to a plain copy.
 for dir in . web mobile; do
   src="$main_root/$dir/node_modules"
   dst="$root/$dir/node_modules"
@@ -378,6 +378,14 @@ for dir in . web mobile; do
     fi
   fi
 done
+
+# The seed carries whatever the main checkout last installed, which is not what
+# this worktree's lockfiles ask for: a worktree branched from an up-to-date main
+# starts without a package that arrived in the very commit it branched from.
+# Only the install can tell, and over a seeded tree it costs milliseconds.
+echo "Installing this worktree's JavaScript dependencies..."
+installed=true
+(cd "$root" && mise run install:js) || installed=false
 
 # A renumbered worktree, or one configured before the slot was part of the
 # container names, leaves its old containers behind holding another slot.
@@ -437,4 +445,14 @@ They keep the ports they were created with, so either hand the database above
 the data it already holds with 'docker rename <old> $db_container', or throw it
 away with 'docker rm -f <old>' and run 'mise run db:init'.
 STALE
+fi
+
+if [[ "$installed" == false ]]; then
+  cat <<INSTALL
+
+⚠️  The JavaScript dependencies were not installed, so this worktree holds
+whatever the main checkout last installed rather than what its lockfiles name.
+Run 'mise run install:js' before the first lint, test, or push.
+INSTALL
+  exit 1
 fi
