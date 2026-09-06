@@ -746,9 +746,13 @@ test.describe('planned workouts and history', () => {
     await page.goto('/plans/create')
     await page.getByLabel('Plan name').fill(planName)
 
+    // The seeded walk/run circuit is trained a round at a time and its rows
+    // hold distance and time, so a plan built for logging a weight below it
+    // takes any other routine.
     for (let index = 0; index < 2; index += 1) {
       await page.getByRole('button', { name: 'Add routine' }).click()
       await pickerOptions(page, page.getByRole('dialog', { name: 'Choose a routine' }))
+        .filter({ hasNotText: 'Walk/Run Intervals' })
         .first()
         .click()
     }
