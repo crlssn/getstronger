@@ -15,15 +15,18 @@ interface Props {
   /** A value at the end of the row, read after the title rather than instead of it. */
   trailing?: ReactNode
   /**
-   * Where the row goes. A row that navigates always shows the chevron, which
-   * is the whole reason this is a prop rather than something the caller draws:
-   * the same personal best was a link with one on Progress and a link without
-   * one on the profile, and only one of them looked tappable.
+   * Where the row goes. A row that navigates always shows the chevron.
+   *
+   * That is the whole reason this is a prop rather than something the caller
+   * draws: the same personal best was a link with a chevron on Progress and a
+   * link without one on the profile, and only one of them looked tappable.
    */
   to?: string
   /**
-   * `danger` for a row that destroys something. Danger is danger text, never a
-   * red fill — the same rule `<AppButton colour="destructive">` follows.
+   * `danger` for a row that destroys something.
+   *
+   * Danger is danger text, never a red fill — the rule
+   * `<AppButton colour="destructive">` already follows.
    */
   tone?: 'default' | 'danger'
   className?: string

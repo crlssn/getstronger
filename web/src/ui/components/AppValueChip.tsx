@@ -9,11 +9,11 @@ interface Props {
   /** What the chip reads — a duration, a count, a unit. */
   value: ReactNode
   /**
-   * A word before the value, for a row that carries more than one of these or
-   * sits under a control measuring something else. Two rests on the routine
-   * builder both read "1:30" and only their accessible names said which was
-   * which — one is the rest between an exercise's sets, the other the rest
-   * after the whole exercise.
+   * A word before the value, for a row carrying more than one of these.
+   *
+   * Two rests on the routine builder both read "1:30" and only their
+   * accessible names said which was which — one is the rest between an
+   * exercise's sets, the other the rest after the whole exercise.
    */
   caption?: string
   /** Whether the control this chip opens is showing. */

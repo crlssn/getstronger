@@ -16,15 +16,13 @@ interface Props {
   /**
    * What is still missing, for a form whose submit is disabled.
    *
-   * Required in the editorial sense rather than the type sense: a blocked
-   * submit without one is a control that refuses and will not say why.
+   * A blocked submit without one refuses and will not say why.
    */
   hint?: string
   /**
    * Why the last submit failed, said where the submit lives.
    *
-   * Errors render here rather than toasting: the message stays with the
-   * button until the retry that clears it.
+   * It stays with the button until the retry that clears it.
    */
   error?: string
 }

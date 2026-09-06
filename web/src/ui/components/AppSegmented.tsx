@@ -30,8 +30,9 @@ interface Props<T> {
   value: T
   onChange: (value: T) => void
   /**
-   * Short labels only — 7D, 4W, 1Y, or a two-word switch sharing a row with a
-   * title. Nothing long enough to need the room it gives up.
+   * Short labels only — 7D, 4W, 1Y, or a switch sharing a row with a title.
+   *
+   * Nothing long enough to need the room it gives up.
    */
   density?: 'default' | 'compact'
   /** Locks the control while the choice is being saved. */

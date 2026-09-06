@@ -17,7 +17,7 @@ interface Props {
 }
 
 /**
- * A moment, shown as "Fri 28 Aug · 20:42" with an Edit affordance.
+ * A moment in the app's own date form, with an Edit affordance.
  *
  * The browser's own datetime-local row set a raw "2026-08-28T20:42" in a
  * different costume per platform. The native input is still here — stretched

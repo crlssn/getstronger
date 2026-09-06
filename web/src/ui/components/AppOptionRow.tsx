@@ -10,9 +10,11 @@ interface Props extends Omit<ComponentProps<'button'>, 'className' | 'type'> {
   /** A chevron or a plus after it. */
   trailing?: ReactNode
   /**
-   * Whether the row is chosen. Omit it for a row that picks and closes: only a
-   * row that toggles has a state to report, and `aria-pressed="false"` on a
-   * row that never stays pressed says the wrong thing.
+   * Whether the row is chosen.
+   *
+   * Omit it for a row that picks and closes: only a row that toggles has a
+   * state to report, and `aria-pressed="false"` on a row that never stays
+   * pressed says the wrong thing.
    */
   selected?: boolean
   /** Drops the border for a row inside an already-divided list. */
