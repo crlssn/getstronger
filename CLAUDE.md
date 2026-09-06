@@ -37,10 +37,11 @@ worktree. The local stack is not shared, so set it up before running anything.
   and Playwright report ports, and records them in `.env`, `web/.env`,
   `mise.local.toml`, and `.claude/launch.json` (rendered from the tracked
   `.claude/launch.json.example`, so the browser preview starts on this
-  worktree's web port). These files are not tracked by Git. It also seeds
-  `node_modules` from the main checkout, so a fresh worktree needs no
-  `bun install` before linting, testing, or pushing — only rerun
-  `mise run install:js` if a `bun.lock` has changed since branching.
+  worktree's web port). These files are not tracked by Git. It ends by
+  installing the JavaScript dependencies this worktree's lockfiles name —
+  seeding `node_modules` from the main checkout first, so the install has
+  almost nothing to do — leaving a fresh worktree ready to lint, test, or push
+  without an `install:js` of your own.
 - The slot it hands out is the lowest one no other worktree and no container
   has claimed, so it is safe to run in a worktree that already has one: a
   worktree sharing another's slot is renumbered, and one that has its own keeps
