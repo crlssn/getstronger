@@ -96,6 +96,15 @@ var Workouts = Table[
 			Generated: false,
 			AutoIncr:  false,
 		},
+		RecordingJSON: column{
+			Name:      "recording_json",
+			DBType:    "text",
+			Default:   "''::text",
+			Comment:   "",
+			Nullable:  false,
+			Generated: false,
+			AutoIncr:  false,
+		},
 	},
 	Indexes: workoutIndexes{
 		WorkoutsPkey: index{
@@ -238,11 +247,12 @@ type workoutColumns struct {
 	Note           column
 	RoutineID      column
 	IdempotencyKey column
+	RecordingJSON  column
 }
 
 func (c workoutColumns) AsSlice() []column {
 	return []column{
-		c.ID, c.UserID, c.FinishedAt, c.CreatedAt, c.Name, c.StartedAt, c.Note, c.RoutineID, c.IdempotencyKey,
+		c.ID, c.UserID, c.FinishedAt, c.CreatedAt, c.Name, c.StartedAt, c.Note, c.RoutineID, c.IdempotencyKey, c.RecordingJSON,
 	}
 }
 

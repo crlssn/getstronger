@@ -1,4 +1,29 @@
 export const en = {
+  timedCircuit: {
+    title: 'Guided circuit',
+    start: 'Start guided circuit',
+    instruction: '{name} for {seconds} seconds',
+    rest: 'Rest',
+    round: 'Round {round} of {total}',
+    permission:
+      'Allow location access to record your route and interval distances while your phone is locked. You can also log this workout manually.',
+    failed:
+      'Recording could not continue. Check location permission and available device storage. Ordinary workout logging is still available.',
+    paused: 'Paused — movement is not recorded',
+    gpsGood: 'GPS tracking',
+    gpsPoor: 'Waiting for accurate GPS — distance may be incomplete',
+    pause: 'Pause',
+    resume: 'Resume',
+    finish: 'End early and review',
+    cancel: 'Discard recording',
+    manual: 'Log manually',
+    route: 'Workout route',
+    noRoute: 'No reliable route was recorded.',
+    incomplete:
+      'Tracking is incomplete. Distances include only accepted GPS sections; gaps and paused movement are excluded.',
+    total: 'Active time {duration} · Recorded distance {distance}',
+    interval: '{name} · Round {round} · {duration} · {distance}',
+  },
   common: {
     cancel: 'Cancel',
     close: 'Close',
@@ -458,6 +483,11 @@ export const en = {
         restSetAria: 'Rest between sets of {name}',
         restSetChip: 'Rest between sets of {name}: {value}',
         restSetCaption: 'Sets',
+        target: 'Held for',
+        targetAria: 'Target duration for {name}',
+        targetChip: 'Target duration for {name}: {value}',
+        targetCaption: 'Timed',
+        targetOff: 'Off',
         addGroup: 'New group',
         removeGroup: 'Remove group {letter}',
         reorder: 'Reorder {name}',
@@ -778,6 +808,31 @@ export const en = {
 }
 
 export const sv = {
+  timedCircuit: {
+    title: 'Guidat cirkelpass',
+    start: 'Starta guidat cirkelpass',
+    instruction: '{name} i {seconds} sekunder',
+    rest: 'Vila',
+    round: 'Varv {round} av {total}',
+    permission:
+      'Tillåt platsåtkomst för att registrera din rutt och intervallernas distans även när telefonen är låst. Du kan också logga passet manuellt.',
+    failed:
+      'Registreringen kunde inte fortsätta. Kontrollera platsbehörigheten och ledigt lagringsutrymme. Du kan fortfarande logga passet manuellt.',
+    paused: 'Pausat — rörelse registreras inte',
+    gpsGood: 'GPS-spårning',
+    gpsPoor: 'Väntar på tillförlitlig GPS — distansen kan vara ofullständig',
+    pause: 'Pausa',
+    resume: 'Fortsätt',
+    finish: 'Avsluta i förtid och granska',
+    cancel: 'Kasta registreringen',
+    manual: 'Logga manuellt',
+    route: 'Passets rutt',
+    noRoute: 'Ingen tillförlitlig rutt registrerades.',
+    incomplete:
+      'Spårningen är ofullständig. Distansen omfattar bara godkända GPS-sträckor; luckor och rörelse under pauser ingår inte.',
+    total: 'Aktiv tid {duration} · Registrerad distans {distance}',
+    interval: '{name} · Varv {round} · {duration} · {distance}',
+  },
   common: {
     cancel: 'Avbryt',
     close: 'Stäng',
@@ -1238,6 +1293,11 @@ export const sv = {
         restSetAria: 'Vila mellan set i {name}',
         restSetChip: 'Vila mellan set i {name}: {value}',
         restSetCaption: 'Set',
+        target: 'Hålls i',
+        targetAria: 'Måltid för {name}',
+        targetChip: 'Måltid för {name}: {value}',
+        targetCaption: 'Tidsatt',
+        targetOff: 'Av',
         addGroup: 'Ny grupp',
         removeGroup: 'Ta bort grupp {letter}',
         reorder: 'Ändra ordning på {name}',

@@ -274,8 +274,9 @@ func routineGroupDrafts(groups []*apiv1.RoutineGroup) ([]training.RoutineGroupDr
 			// occurrence is stated rather than left to a default.
 			rest := entry.GetRestSeconds()
 			exercises = append(exercises, training.RoutineExerciseDraft{
-				ExerciseID:  exerciseID,
-				RestSeconds: &rest,
+				ExerciseID:            exerciseID,
+				RestSeconds:           &rest,
+				TargetDurationSeconds: entry.GetTargetDurationSeconds(),
 			})
 		}
 

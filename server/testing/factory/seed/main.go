@@ -286,6 +286,8 @@ func seedActiveRuns(f *factory.Factory, active *models.User) {
 		}
 		f.NewSetBatch(setBatch...)
 	}
+
+	seedActiveGuidedCircuit(f, active, run)
 }
 
 func seedJaneDoe(exec bob.Executor, f *factory.Factory, active *models.User) *models.User {

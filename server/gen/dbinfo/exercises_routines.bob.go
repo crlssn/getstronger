@@ -69,6 +69,15 @@ var ExercisesRoutines = Table[
 			Generated: false,
 			AutoIncr:  false,
 		},
+		TargetDurationSeconds: column{
+			Name:      "target_duration_seconds",
+			DBType:    "integer",
+			Default:   "0",
+			Comment:   "",
+			Nullable:  false,
+			Generated: false,
+			AutoIncr:  false,
+		},
 	},
 	Indexes: exercisesRoutineIndexes{
 		ExercisesRoutinesPkey: index{
@@ -189,22 +198,31 @@ var ExercisesRoutines = Table[
 			},
 			Expression: "((rest_seconds >= 0) AND (rest_seconds <= 3600))",
 		},
+		ExercisesRoutinesTargetDurationSecondsCheck: check{
+			constraint: constraint{
+				Name:    "exercises_routines_target_duration_seconds_check",
+				Columns: []string{"target_duration_seconds"},
+				Comment: "",
+			},
+			Expression: "((target_duration_seconds >= 0) AND (target_duration_seconds <= 86400))",
+		},
 	},
 	Comment: "",
 }
 
 type exercisesRoutineColumns struct {
-	RoutineID   column
-	ExerciseID  column
-	Position    column
-	GroupID     column
-	ID          column
-	RestSeconds column
+	RoutineID             column
+	ExerciseID            column
+	Position              column
+	GroupID               column
+	ID                    column
+	RestSeconds           column
+	TargetDurationSeconds column
 }
 
 func (c exercisesRoutineColumns) AsSlice() []column {
 	return []column{
-		c.RoutineID, c.ExerciseID, c.Position, c.GroupID, c.ID, c.RestSeconds,
+		c.RoutineID, c.ExerciseID, c.Position, c.GroupID, c.ID, c.RestSeconds, c.TargetDurationSeconds,
 	}
 }
 
@@ -240,11 +258,12 @@ func (u exercisesRoutineUniques) AsSlice() []constraint {
 }
 
 type exercisesRoutineChecks struct {
-	ExercisesRoutinesRestSecondsValid check
+	ExercisesRoutinesRestSecondsValid           check
+	ExercisesRoutinesTargetDurationSecondsCheck check
 }
 
 func (c exercisesRoutineChecks) AsSlice() []check {
 	return []check{
-		c.ExercisesRoutinesRestSecondsValid,
+		c.ExercisesRoutinesRestSecondsValid, c.ExercisesRoutinesTargetDurationSecondsCheck,
 	}
 }

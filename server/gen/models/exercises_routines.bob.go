@@ -25,12 +25,13 @@ import (
 
 // ExercisesRoutine is an object representing the database table.
 type ExercisesRoutine struct {
-	RoutineID   uuid.UUID `db:"routine_id" `
-	ExerciseID  uuid.UUID `db:"exercise_id" `
-	Position    int32     `db:"position" `
-	GroupID     uuid.UUID `db:"group_id" `
-	ID          uuid.UUID `db:"id,pk" `
-	RestSeconds int32     `db:"rest_seconds" `
+	RoutineID             uuid.UUID `db:"routine_id" `
+	ExerciseID            uuid.UUID `db:"exercise_id" `
+	Position              int32     `db:"position" `
+	GroupID               uuid.UUID `db:"group_id" `
+	ID                    uuid.UUID `db:"id,pk" `
+	RestSeconds           int32     `db:"rest_seconds" `
+	TargetDurationSeconds int32     `db:"target_duration_seconds" `
 
 	R exercisesRoutineR `db:"-" `
 }
@@ -65,7 +66,7 @@ type exercisesRoutineRLoaded struct {
 
 func buildExercisesRoutineColumns(tableName string) exercisesRoutineColumns {
 	columnsExpr := expr.NewColumnsExpr(
-		"routine_id", "exercise_id", "position", "group_id", "id", "rest_seconds",
+		"routine_id", "exercise_id", "position", "group_id", "id", "rest_seconds", "target_duration_seconds",
 	)
 
 	if tableName != "" {
@@ -73,26 +74,28 @@ func buildExercisesRoutineColumns(tableName string) exercisesRoutineColumns {
 	}
 
 	return exercisesRoutineColumns{
-		ColumnsExpr: columnsExpr,
-		tableAlias:  tableName,
-		RoutineID:   buildExercisesRoutineColumn(tableName, "routine_id"),
-		ExerciseID:  buildExercisesRoutineColumn(tableName, "exercise_id"),
-		Position:    buildExercisesRoutineColumn(tableName, "position"),
-		GroupID:     buildExercisesRoutineColumn(tableName, "group_id"),
-		ID:          buildExercisesRoutineColumn(tableName, "id"),
-		RestSeconds: buildExercisesRoutineColumn(tableName, "rest_seconds"),
+		ColumnsExpr:           columnsExpr,
+		tableAlias:            tableName,
+		RoutineID:             buildExercisesRoutineColumn(tableName, "routine_id"),
+		ExerciseID:            buildExercisesRoutineColumn(tableName, "exercise_id"),
+		Position:              buildExercisesRoutineColumn(tableName, "position"),
+		GroupID:               buildExercisesRoutineColumn(tableName, "group_id"),
+		ID:                    buildExercisesRoutineColumn(tableName, "id"),
+		RestSeconds:           buildExercisesRoutineColumn(tableName, "rest_seconds"),
+		TargetDurationSeconds: buildExercisesRoutineColumn(tableName, "target_duration_seconds"),
 	}
 }
 
 type exercisesRoutineColumns struct {
 	expr.ColumnsExpr
-	tableAlias  string
-	RoutineID   exercisesRoutineColumn
-	ExerciseID  exercisesRoutineColumn
-	Position    exercisesRoutineColumn
-	GroupID     exercisesRoutineColumn
-	ID          exercisesRoutineColumn
-	RestSeconds exercisesRoutineColumn
+	tableAlias            string
+	RoutineID             exercisesRoutineColumn
+	ExerciseID            exercisesRoutineColumn
+	Position              exercisesRoutineColumn
+	GroupID               exercisesRoutineColumn
+	ID                    exercisesRoutineColumn
+	RestSeconds           exercisesRoutineColumn
+	TargetDurationSeconds exercisesRoutineColumn
 }
 
 // Alias returns the current table alias for the columns set.
@@ -138,16 +141,17 @@ func (c exercisesRoutineColumn) ShouldOmitParens() bool {
 // All values are optional, and do not have to be set
 // Generated columns are not included
 type ExercisesRoutineSetter struct {
-	RoutineID   omit.Val[uuid.UUID] `db:"routine_id" `
-	ExerciseID  omit.Val[uuid.UUID] `db:"exercise_id" `
-	Position    omit.Val[int32]     `db:"position" `
-	GroupID     omit.Val[uuid.UUID] `db:"group_id" `
-	ID          omit.Val[uuid.UUID] `db:"id,pk" `
-	RestSeconds omit.Val[int32]     `db:"rest_seconds" `
+	RoutineID             omit.Val[uuid.UUID] `db:"routine_id" `
+	ExerciseID            omit.Val[uuid.UUID] `db:"exercise_id" `
+	Position              omit.Val[int32]     `db:"position" `
+	GroupID               omit.Val[uuid.UUID] `db:"group_id" `
+	ID                    omit.Val[uuid.UUID] `db:"id,pk" `
+	RestSeconds           omit.Val[int32]     `db:"rest_seconds" `
+	TargetDurationSeconds omit.Val[int32]     `db:"target_duration_seconds" `
 }
 
 func (s ExercisesRoutineSetter) SetColumns() []string {
-	vals := make([]string, 0, 6)
+	vals := make([]string, 0, 7)
 	if s.RoutineID.IsValue() {
 		vals = append(vals, "routine_id")
 	}
@@ -165,6 +169,9 @@ func (s ExercisesRoutineSetter) SetColumns() []string {
 	}
 	if s.RestSeconds.IsValue() {
 		vals = append(vals, "rest_seconds")
+	}
+	if s.TargetDurationSeconds.IsValue() {
+		vals = append(vals, "target_duration_seconds")
 	}
 	return vals
 }
@@ -187,6 +194,9 @@ func (s ExercisesRoutineSetter) Overwrite(t *ExercisesRoutine) {
 	}
 	if s.RestSeconds.IsValue() {
 		t.RestSeconds = s.RestSeconds.MustGet()
+	}
+	if s.TargetDurationSeconds.IsValue() {
+		t.TargetDurationSeconds = s.TargetDurationSeconds.MustGet()
 	}
 }
 
@@ -226,6 +236,11 @@ func (s *ExercisesRoutineSetter) Apply(q *dialect.InsertQuery) {
 				return psql.Raw("DEFAULT").WriteSQL(ctx, w, d, start)
 			}
 			return psql.Arg(s.RestSeconds.MustGet()).WriteSQL(ctx, w, d, start)
+		}), bob.ExpressionFunc(func(ctx context.Context, w io.StringWriter, d bob.Dialect, start int) ([]any, error) {
+			if s.TargetDurationSeconds.IsUnset() {
+				return psql.Raw("DEFAULT").WriteSQL(ctx, w, d, start)
+			}
+			return psql.Arg(s.TargetDurationSeconds.MustGet()).WriteSQL(ctx, w, d, start)
 		}))
 }
 
@@ -234,7 +249,7 @@ func (s ExercisesRoutineSetter) UpdateMod() bob.Mod[*dialect.UpdateQuery] {
 }
 
 func (s ExercisesRoutineSetter) Expressions(prefix ...string) []bob.Expression {
-	exprs := make([]bob.Expression, 0, 6)
+	exprs := make([]bob.Expression, 0, 7)
 
 	if s.RoutineID.IsValue() {
 		exprs = append(exprs, expr.Join{Sep: " = ", Exprs: []bob.Expression{
@@ -278,6 +293,13 @@ func (s ExercisesRoutineSetter) Expressions(prefix ...string) []bob.Expression {
 		}})
 	}
 
+	if s.TargetDurationSeconds.IsValue() {
+		exprs = append(exprs, expr.Join{Sep: " = ", Exprs: []bob.Expression{
+			psql.Quote(append(prefix, "target_duration_seconds")...),
+			psql.Arg(s.TargetDurationSeconds),
+		}})
+	}
+
 	return exprs
 }
 
@@ -288,7 +310,7 @@ func exercisesRoutineScanMapper(ctx context.Context, cols []string) (scan.Before
 		idx int
 		dst func(o *ExercisesRoutine) any
 	}
-	targets := make([]target, 0, 6)
+	targets := make([]target, 0, 7)
 	for i, col := range cols {
 		switch col {
 		case "routine_id":
@@ -303,6 +325,8 @@ func exercisesRoutineScanMapper(ctx context.Context, cols []string) (scan.Before
 			targets = append(targets, target{i, func(o *ExercisesRoutine) any { return &o.ID }})
 		case "rest_seconds":
 			targets = append(targets, target{i, func(o *ExercisesRoutine) any { return &o.RestSeconds }})
+		case "target_duration_seconds":
+			targets = append(targets, target{i, func(o *ExercisesRoutine) any { return &o.TargetDurationSeconds }})
 		}
 	}
 
@@ -819,14 +843,15 @@ func (exercisesRoutine0 *ExercisesRoutine) AttachRoutine(ctx context.Context, ex
 }
 
 type exercisesRoutineWhere[Q psql.Filterable] struct {
-	cols        exercisesRoutineColumns
-	RoutineID   psql.WhereMod[Q, uuid.UUID]
-	ExerciseID  psql.WhereMod[Q, uuid.UUID]
-	Position    psql.WhereMod[Q, int32]
-	GroupID     psql.WhereMod[Q, uuid.UUID]
-	ID          psql.WhereMod[Q, uuid.UUID]
-	RestSeconds psql.WhereMod[Q, int32]
-	R           exercisesRoutineWhereR[Q]
+	cols                  exercisesRoutineColumns
+	RoutineID             psql.WhereMod[Q, uuid.UUID]
+	ExerciseID            psql.WhereMod[Q, uuid.UUID]
+	Position              psql.WhereMod[Q, int32]
+	GroupID               psql.WhereMod[Q, uuid.UUID]
+	ID                    psql.WhereMod[Q, uuid.UUID]
+	RestSeconds           psql.WhereMod[Q, int32]
+	TargetDurationSeconds psql.WhereMod[Q, int32]
+	R                     exercisesRoutineWhereR[Q]
 }
 
 func (exercisesRoutineWhere[Q]) AliasedAs(alias string) exercisesRoutineWhere[Q] {
@@ -835,14 +860,15 @@ func (exercisesRoutineWhere[Q]) AliasedAs(alias string) exercisesRoutineWhere[Q]
 
 func buildExercisesRoutineWhere[Q psql.Filterable](cols exercisesRoutineColumns) exercisesRoutineWhere[Q] {
 	return exercisesRoutineWhere[Q]{
-		cols:        cols,
-		RoutineID:   psql.Where[Q, uuid.UUID](cols.RoutineID.Expression),
-		ExerciseID:  psql.Where[Q, uuid.UUID](cols.ExerciseID.Expression),
-		Position:    psql.Where[Q, int32](cols.Position.Expression),
-		GroupID:     psql.Where[Q, uuid.UUID](cols.GroupID.Expression),
-		ID:          psql.Where[Q, uuid.UUID](cols.ID.Expression),
-		RestSeconds: psql.Where[Q, int32](cols.RestSeconds.Expression),
-		R:           exercisesRoutineWhereR[Q]{cols: cols},
+		cols:                  cols,
+		RoutineID:             psql.Where[Q, uuid.UUID](cols.RoutineID.Expression),
+		ExerciseID:            psql.Where[Q, uuid.UUID](cols.ExerciseID.Expression),
+		Position:              psql.Where[Q, int32](cols.Position.Expression),
+		GroupID:               psql.Where[Q, uuid.UUID](cols.GroupID.Expression),
+		ID:                    psql.Where[Q, uuid.UUID](cols.ID.Expression),
+		RestSeconds:           psql.Where[Q, int32](cols.RestSeconds.Expression),
+		TargetDurationSeconds: psql.Where[Q, int32](cols.TargetDurationSeconds.Expression),
+		R:                     exercisesRoutineWhereR[Q]{cols: cols},
 	}
 }
 

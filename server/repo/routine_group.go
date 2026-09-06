@@ -71,8 +71,9 @@ func (r *Repo) ListRoutineGroups(ctx context.Context, routineID uuid.UUID) ([]*t
 		}
 
 		group.Exercises = append(group.Exercises, training.RoutineExercise{
-			Exercise:    exercise,
-			RestSeconds: link.RestSeconds,
+			Exercise:              exercise,
+			RestSeconds:           link.RestSeconds,
+			TargetDurationSeconds: link.TargetDurationSeconds,
 		})
 	}
 
@@ -184,11 +185,12 @@ func setRoutineGroups(
 		links := make([]*models.ExercisesRoutineSetter, 0, len(group.Exercises))
 		for _, exercise := range group.Exercises {
 			links = append(links, &models.ExercisesRoutineSetter{
-				RoutineID:   omit.From(routineID),
-				ExerciseID:  omit.From(exercise.ExerciseID),
-				GroupID:     omit.From(inserted.ID),
-				Position:    omit.From(safe.Int32FromInt(position)),
-				RestSeconds: omit.From(occurrenceRest(exercise, newRests)),
+				RoutineID:             omit.From(routineID),
+				ExerciseID:            omit.From(exercise.ExerciseID),
+				GroupID:               omit.From(inserted.ID),
+				Position:              omit.From(safe.Int32FromInt(position)),
+				RestSeconds:           omit.From(occurrenceRest(exercise, newRests)),
+				TargetDurationSeconds: omit.From(exercise.TargetDurationSeconds),
 			})
 			position++
 		}

@@ -100,6 +100,16 @@ const GroupEntries = ({ groups, group, restBetweenSets, nameOf, onChange }: Entr
         const name = nameOf(entry.exerciseId)
         const rest = formatMeasurementDuration(entry.restSeconds)
         const open = restBetweenSets && openEntry === entry.key
+        // A circuit's row carries a target instead of a rest: how long each
+        // round holds the exercise when the session is guided. Off logs it by
+        // hand, the way every other block does.
+        const timed = group.mode === 'circuit'
+        const targetSeconds = entry.targetDurationSeconds ?? 0
+        const target =
+          targetSeconds > 0
+            ? formatMeasurementDuration(targetSeconds)
+            : t('routine.form.groups.targetOff')
+        const targetOpen = timed && openEntry === entry.key
 
         return (
           <li key={entry.key}>
@@ -122,6 +132,15 @@ const GroupEntries = ({ groups, group, restBetweenSets, nameOf, onChange }: Entr
                   onClick={() => setOpenEntry(open ? '' : entry.key)}
                 />
               )}
+              {timed && (
+                <AppValueChip
+                  caption={t('routine.form.groups.targetCaption')}
+                  label={t('routine.form.groups.targetChip', { name, value: target })}
+                  value={target}
+                  expanded={targetOpen}
+                  onClick={() => setOpenEntry(targetOpen ? '' : entry.key)}
+                />
+              )}
 
               {/* A circled minus, which is what taking one row out of a list
                   looks like everywhere in the app. Quiet, too: removing an
@@ -139,6 +158,26 @@ const GroupEntries = ({ groups, group, restBetweenSets, nameOf, onChange }: Entr
               />
             </div>
 
+            {targetOpen && (
+              <div className={styles.entryRest}>
+                <span className={styles.entryRestLabel}>{t('routine.form.groups.target')}</span>
+                <AppDurationStepper
+                  label={t('routine.form.groups.targetAria', { name })}
+                  value={targetSeconds}
+                  onChange={(targetDurationSeconds) =>
+                    onChange(
+                      withGroup(groups, group.id, {
+                        entries: group.entries.map((candidate) =>
+                          candidate.key === entry.key
+                            ? { ...candidate, targetDurationSeconds }
+                            : candidate,
+                        ),
+                      }),
+                    )
+                  }
+                />
+              </div>
+            )}
             {/* Zero is an answer here: it turns the timer off for this
                 occurrence alone. */}
             {open && (

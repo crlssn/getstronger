@@ -17,10 +17,19 @@ var ExercisesRoutineErrors = &exercisesRoutineErrors{
 		columns: []string{"rest_seconds"},
 		s:       "exercises_routines_rest_seconds_valid",
 	},
+
+	ErrCheckExercisesRoutinesTargetDurationSecondsCheck: &CheckConstraintError{
+		schema:  "",
+		table:   "exercises_routines",
+		columns: []string{"target_duration_seconds"},
+		s:       "exercises_routines_target_duration_seconds_check",
+	},
 }
 
 type exercisesRoutineErrors struct {
 	ErrUniqueExercisesRoutinesPkey *UniqueConstraintError
 
 	ErrCheckExercisesRoutinesRestSecondsValid *CheckConstraintError
+
+	ErrCheckExercisesRoutinesTargetDurationSecondsCheck *CheckConstraintError
 }

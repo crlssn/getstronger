@@ -17,6 +17,7 @@ import { DistanceUnit, ExerciseMetric, WeightUnit } from '@/proto/api/v1/shared_
 import { convertDistance, normalizeDistanceUnit } from '@/utils/distanceUnits'
 import { exerciseMetrics } from '@/utils/exerciseMeasurements'
 import { isNumber } from '@/utils/numbers'
+import { buildTimeline, measureRoute, type Recording } from '@/utils/timedCircuit'
 import { convertWeight, normalizeWeightUnit } from '@/utils/weightUnits'
 
 export const quickWorkoutRoutineID: RoutineID = 'quick-workout'
@@ -68,6 +69,7 @@ interface UpdateSetOptions {
 }
 
 interface WorkoutState {
+  setRecording: (routineID: RoutineID, recording: Recording) => void
   workouts: RoutineWorkout
   initialiseWorkout: (routineID: RoutineID, planId?: string) => void
   addWorkoutExercise: (routineID: RoutineID, exercise: Exercise) => void
@@ -143,6 +145,25 @@ export const useWorkoutStore = create<WorkoutState>()(
   persist(
     immer((set, get) => ({
       workouts: {},
+      setRecording: (routineID, recording) =>
+        set((state) => {
+          const workout = state.workouts[routineID]
+          if (!workout || !recording.endedAt) return
+          workout.recording = recording
+          workout.startedAt = new Date(recording.startedAt).toISOString()
+          workout.exerciseSets = {}
+          const results = measureRoute(recording, buildTimeline(recording, recording.endedAt))
+          results.forEach(({ phase, durationSeconds, distanceMeters }) => {
+            if (!phase.exerciseId || durationSeconds <= 0) return
+            const sets = (workout.exerciseSets![phase.stationKey] ??= [])
+            sets.push({
+              durationSeconds: Math.max(1, Math.round(durationSeconds)),
+              distance: distanceMeters / 1000,
+              distanceUnit: DistanceUnit.KILOMETERS,
+            })
+          })
+          workout.completedExerciseIds = Object.keys(workout.exerciseSets)
+        }),
 
       // A draft is where the session is written down, not the session itself,
       // so it starts without a clock: `updateSet` stamps one at the first

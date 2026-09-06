@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it } from 'vitest'
 
 import { DistanceUnit, ExerciseMetric, ExerciseSchema, WeightUnit } from '@/proto/api/v1/shared_pb'
 import type { RoutineWorkout } from '@/types/workout'
+import type { Recording } from '@/utils/timedCircuit'
 import {
   quickWorkoutRoutineID as quick,
   selectAddedExercises,
@@ -534,6 +535,77 @@ describe('workout store', () => {
 
     it('does nothing for a draft with no sets', () => {
       expect(() => store().syncDistanceUnits('missing', DistanceUnit.MILES)).not.toThrow()
+    })
+  })
+
+  describe('recording', () => {
+    // A walk, a rest, and the walk again: the rest is on the clock but is not
+    // an exercise, so it earns no set.
+    const recording = (endedAt?: number): Recording => ({
+      version: 1,
+      startedAt: 1000,
+      endedAt,
+      phases: [
+        {
+          exerciseId: 'walk',
+          stationKey: 'walk',
+          name: 'Walk',
+          round: 1,
+          durationSeconds: 60,
+          instruction: 'Walk',
+        },
+        {
+          exerciseId: '',
+          stationKey: 'walk',
+          name: 'Rest',
+          round: 1,
+          durationSeconds: 10,
+          instruction: 'Rest',
+        },
+        {
+          exerciseId: 'walk',
+          stationKey: 'walk',
+          name: 'Walk',
+          round: 2,
+          durationSeconds: 60,
+          instruction: 'Walk',
+        },
+      ],
+      pauses: [],
+      points: [
+        { timestamp: 1000, latitude: 0, longitude: 0, accuracy: 3 },
+        { timestamp: 11000, latitude: 0, longitude: 0.0001, accuracy: 3 },
+      ],
+      interrupted: false,
+    })
+
+    it('turns a finished recording into one timed set per exercised interval', () => {
+      seed({ 'routine-id': { exerciseSets: { walk: [{ weight: 1 }] } } })
+
+      // Ended a hundred seconds in: the first walk whole, the rest whole, and
+      // thirty seconds of the second walk.
+      store().setRecording('routine-id', recording(101000))
+
+      expect(selectStartedAt(store(), 'routine-id')).toBe(new Date(1000).toISOString())
+      const logged = sets('routine-id', 'walk')
+      expect(logged.map((set) => set.durationSeconds)).toEqual([60, 30])
+      expect(logged.map((set) => set.distanceUnit)).toEqual([
+        DistanceUnit.KILOMETERS,
+        DistanceUnit.KILOMETERS,
+      ])
+      // Eleven metres of route, all of it inside the first walk.
+      expect(logged[0].distance).toBeCloseTo(0.0111, 3)
+      expect(logged[1].distance).toBe(0)
+      expect(selectCompletedExerciseIds(store(), 'routine-id')).toEqual(['walk'])
+    })
+
+    it('leaves the draft alone for a recording still running or a draft that does not exist', () => {
+      seed({ 'routine-id': { exerciseSets: { walk: [{ weight: 1 }] } } })
+
+      store().setRecording('routine-id', recording())
+      expect(sets('routine-id', 'walk')).toEqual([{ weight: 1 }])
+
+      expect(() => store().setRecording('missing', recording(2000))).not.toThrow()
     })
   })
 })

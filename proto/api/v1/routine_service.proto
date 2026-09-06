@@ -141,6 +141,8 @@ message RoutineExercise {
   // alone. Ignored in a circuit, which rests between exercises and between
   // rounds instead.
   int32 rest_seconds = 2 [(buf.validate.field).int32 = {gte: 0, lte: 3600}];
+  // Active time prescribed for each circuit round; zero means manual logging.
+  int32 target_duration_seconds = 3 [(buf.validate.field).int32 = {gte: 0, lte: 86400}];
 }
 
 message CreatePlanRequest {

@@ -1043,6 +1043,7 @@ type CreateWorkoutParams struct {
 	// under is rejected with training.ErrWorkoutAlreadySaved; a nil one is
 	// stored as none and never a repeat.
 	IdempotencyKey uuid.UUID
+	RecordingJSON  string
 }
 
 type ExerciseSet struct {
@@ -1073,6 +1074,7 @@ func (r *Repo) CreateWorkout(ctx context.Context, p CreateWorkoutParams) (*train
 			FinishedAt: omit.From(p.FinishedAt.Truncate(time.Minute).UTC()),
 
 			IdempotencyKey: nullUUID(p.IdempotencyKey),
+			RecordingJSON:  omit.From(p.RecordingJSON),
 		}).One(ctx, tx.bobExec())
 		if err != nil {
 			return fmt.Errorf("workout insert: %w", translateWorkoutError(err))

@@ -1,0 +1,26 @@
+@reference '../../assets/base.css';
+.route {
+  @apply rounded-card border border-border bg-surface p-5;
+}
+.route svg {
+  @apply my-4 w-full rounded-control bg-surface-sunken;
+  max-height: 360px;
+}
+.route h2 {
+  @apply text-lg font-semibold;
+}
+.route p {
+  @apply my-3 text-sm;
+}
+.route ol {
+  @apply space-y-2 text-sm;
+}
+.legend {
+  @apply flex flex-wrap gap-4 text-sm;
+}
+.legend li {
+  @apply flex items-center gap-2;
+}
+.legend span {
+  @apply inline-block size-3 rounded-full;
+}

@@ -30,6 +30,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 class AppBridgeViewController: CAPBridgeViewController {
     override func capacitorDidLoad() {
         bridge?.registerPluginInstance(SwipeBackPlugin())
+        bridge?.registerPluginInstance(TimedCircuitPlugin())
     }
 }
 
