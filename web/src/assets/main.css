@@ -26,6 +26,9 @@ body {
   padding-top: env(safe-area-inset-top);
 }
 
+/* A whole screen is the right height here and only here: this is the body
+   itself, and Preflight's border-box puts the padding above inside the 100vh
+   rather than after it. A shell nested inside gets less than a screen. */
 #app {
   @apply min-h-screen;
 }

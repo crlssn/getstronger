@@ -3,7 +3,12 @@
 /* The same paper the auth pages sit on: the sunken tint read as its own
    surface behind them. */
 .guestShell {
-  @apply min-h-screen bg-canvas;
+  /* Not min-h-screen. main.css has already spent the status-bar inset as
+     padding on the body, so a whole screen of height here makes the document
+     taller than the screen by exactly that inset — a scroll with nothing below
+     the fold to reach. What the body has left is what this may ask for. */
+  min-height: calc(100vh - env(safe-area-inset-top));
+  @apply bg-canvas;
 }
 
 .guestHeader {
