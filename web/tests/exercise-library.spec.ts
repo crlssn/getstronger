@@ -12,11 +12,11 @@ import {
   exerciseGroups,
   exerciseMetricNames,
   exerciseTags,
-  maxLibraryTags,
   muscleTags,
   patternTags,
   qualityTags,
 } from '@/exercises/vocabulary'
+import { maxTags } from '@/utils/exerciseTags'
 
 const libraryDir = join(dirname(fileURLToPath(import.meta.url)), '..', '..', 'exercises')
 
@@ -28,8 +28,10 @@ interface RawEntry {
   tags?: unknown[]
 }
 
+// vocabulary.yaml sits beside the movements and holds the terms they are
+// written against, so it is not one of them.
 const files = readdirSync(libraryDir)
-  .filter((name) => name.endsWith('.yaml'))
+  .filter((name) => name.endsWith('.yaml') && name !== 'vocabulary.yaml')
   .sort()
 
 const entriesByFile = new Map<string, RawEntry[]>(
@@ -40,25 +42,7 @@ const allEntries = [...entriesByFile].flatMap(([file, entries]) =>
   entries.map((entry) => ({ file, entry })),
 )
 
-/** Every `token` opening a list item under a heading of the README. */
-const readmeVocabulary = (heading: string): string[] => {
-  const readme = readFileSync(join(libraryDir, 'README.md'), 'utf8')
-  const section = readme.split(`### ${heading}\n`)[1]?.split('\n## ')[0].split('\n### ')[0]
-  expect(section, `README.md has no '### ${heading}' section`).toBeDefined()
-  return [...(section ?? '').matchAll(/^- `([a-z0-9-]+)`/gm)].map((match) => match[1])
-}
-
-describe('the library is written against the documented vocabulary', () => {
-  it.each([
-    ['Group tags', exerciseGroups],
-    ['Muscle tags', muscleTags],
-    ['Pattern tags', patternTags],
-    ['Quality tags', qualityTags],
-    ['Equipment', exerciseEquipment],
-  ])('README.md lists the same %s as vocabulary.ts', (heading, expected) => {
-    expect(readmeVocabulary(heading)).toEqual([...expected])
-  })
-
+describe('the library', () => {
   it('names one file per group, and no group without a file', () => {
     expect(files).toEqual(exerciseGroups.map((group) => `${group}.yaml`))
   })
@@ -163,9 +147,7 @@ describe('every entry', () => {
   it('carries the group tag of its file and no more than the API allows', () => {
     for (const { file, entry } of allEntries) {
       const tags = (entry.tags ?? []) as string[]
-      expect(tags.length, `${String(entry.key)} carries too many tags`).toBeLessThanOrEqual(
-        maxLibraryTags,
-      )
+      expect(tags.length, `${String(entry.key)} carries too many tags`).toBeLessThanOrEqual(maxTags)
       expect(tags.length, `${String(entry.key)} says nothing but its group`).toBeGreaterThan(1)
       expect(new Set(tags).size, `${String(entry.key)} repeats a tag`).toBe(tags.length)
       for (const tag of tags) {
@@ -278,7 +260,25 @@ describe('coverage', () => {
   })
 })
 
-describe('the compiled catalogue', () => {
+describe('the compiled modules', () => {
+  // The generated pair is committed, so nothing here parses YAML at runtime.
+  // These two are what stop the copy in src/ from becoming a second source.
+  it('carry the vocabulary the YAML declares', () => {
+    const vocabulary = parse(readFileSync(join(libraryDir, 'vocabulary.yaml'), 'utf8')) as {
+      groups: Record<string, string>
+      muscles: string[]
+      patterns: string[]
+      qualities: string[]
+      equipment: string[]
+    }
+
+    expect([...exerciseGroups]).toEqual(Object.keys(vocabulary.groups))
+    expect([...muscleTags]).toEqual(vocabulary.muscles)
+    expect([...patternTags]).toEqual(vocabulary.patterns)
+    expect([...qualityTags]).toEqual(vocabulary.qualities)
+    expect([...exerciseEquipment]).toEqual(vocabulary.equipment)
+  })
+
   const metricValues: Record<string, ExerciseMetric> = {
     weight: ExerciseMetric.WEIGHT,
     reps: ExerciseMetric.REPS,
@@ -286,7 +286,7 @@ describe('the compiled catalogue', () => {
     time: ExerciseMetric.TIME,
   }
 
-  it('is what the YAML says, in the order the files sort', () => {
+  it('carry what the YAML says, in the order the files sort', () => {
     expect(catalogue).toEqual(
       allEntries.map(({ entry }) => ({
         key: entry.key,

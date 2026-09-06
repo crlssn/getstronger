@@ -31,6 +31,12 @@ func TestSeedExercisesResolveToTheLibrary(t *testing.T) {
 
 	names := make(map[string]struct{})
 	for _, file := range files {
+		// vocabulary.yaml sits beside the movements and holds the terms they
+		// are written against, so it is not a list of exercises.
+		if filepath.Base(file) == "vocabulary.yaml" {
+			continue
+		}
+
 		contents, readErr := os.ReadFile(file)
 		require.NoError(t, readErr)
 

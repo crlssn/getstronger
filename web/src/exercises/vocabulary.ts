@@ -1,13 +1,6 @@
-/**
- * The controlled vocabularies the exercise library is written against.
- *
- * The prose that explains them is `exercises/README.md`; this file is the
- * machine-readable half, and `web/tests/exercise-library.spec.ts` fails when
- * the two disagree. A tag or a piece of equipment that is not listed here is a
- * typo until someone adds it in both places.
- */
+// Generated from exercises/vocabulary.yaml by `mise run gen:exercises`. Do not edit.
 
-/** The muscle group an entry belongs to: one per entry, and it names the file. */
+/** The muscle group an entry belongs to: one per file, and every entry leads with it. */
 export const exerciseGroups = [
   'arms',
   'back',
@@ -128,8 +121,5 @@ export const exerciseEquipment = [
 
 export type ExerciseEquipment = (typeof exerciseEquipment)[number]
 
-/** The metric names YAML uses, in the order the generated module emits them. */
+/** The metric names YAML writes, each of which compiles to an ExerciseMetric. */
 export const exerciseMetricNames = ['weight', 'reps', 'distance', 'time'] as const
-
-/** The most tags the API accepts on one exercise. */
-export const maxLibraryTags = 10

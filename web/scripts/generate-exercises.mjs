@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 /**
- * Compiles `exercises/*.yaml` into `web/src/exercises/catalogue.ts`.
+ * Compiles `exercises/` into the web app's typed exercise library.
  *
  * The app never parses YAML: the library is hand-edited and reviewed as YAML,
- * and shipped as one typed module the create-exercise screen imports on
- * demand. Run it with `mise run gen:exercises`.
+ * and shipped as two generated modules the create-exercise screen imports.
+ * Run it with `mise run gen:exercises`.
  */
 import { readdir, readFile, writeFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
@@ -14,8 +14,13 @@ import { parse } from 'yaml'
 
 const webRoot = dirname(dirname(fileURLToPath(import.meta.url)))
 const libraryDir = join(webRoot, '..', 'exercises')
-const outputPath = join(webRoot, 'src', 'exercises', 'catalogue.ts')
+const outputDir = join(webRoot, 'src', 'exercises')
 
+/** The one file in the library that holds vocabulary rather than movements. */
+const vocabularyFile = 'vocabulary.yaml'
+
+// The names YAML writes a metric with, and the enum member each compiles to.
+// This map is the only place the two vocabularies meet.
 const metricEnumNames = {
   weight: 'WEIGHT',
   reps: 'REPS',
@@ -28,18 +33,17 @@ const fail = (message) => {
   process.exit(1)
 }
 
-/** Every YAML file in the library, in the order their names sort. */
-const libraryFiles = async (dir = libraryDir) =>
-  (await readdir(dir)).filter((name) => name.endsWith('.yaml')).sort()
+const readYaml = async (file) => parse(await readFile(join(libraryDir, file), 'utf8'))
 
-/** The entries of one file, with the file named in any failure. */
-const readLibraryFile = async (file, dir = libraryDir) => {
-  const entries = parse(await readFile(join(dir, file), 'utf8'))
-  if (!Array.isArray(entries)) fail(`${file} is not a list of exercises`)
-  return entries
-}
+/** Every file of movements, in the order their names sort. */
+const movementFiles = async () =>
+  (await readdir(libraryDir))
+    .filter((name) => name.endsWith('.yaml') && name !== vocabularyFile)
+    .sort()
 
 const quote = (value) => `'${value.replace(/\\/g, '\\\\').replace(/'/g, "\\'")}'`
+
+const renderList = (values) => `[${(values ?? []).map(quote).join(', ')}]`
 
 const renderEntry = (entry, file) => {
   const where = `${file}: ${entry?.key ?? 'an entry with no key'}`
@@ -57,45 +61,115 @@ const renderEntry = (entry, file) => {
     return `ExerciseMetric.${name}`
   })
 
-  const list = (values) => `[${(values ?? []).map(quote).join(', ')}]`
-
   return [
     '{',
     `key: ${quote(entry.key)},`,
     `names: { ${names} },`,
     `metrics: [${metrics.join(', ')}],`,
-    `equipment: ${list(entry.equipment)},`,
-    `tags: ${list(entry.tags)},`,
+    `equipment: ${renderList(entry.equipment)},`,
+    `tags: ${renderList(entry.tags)},`,
     '},',
   ].join('\n')
 }
 
-const generate = async () => {
-  const files = await libraryFiles()
-  const entries = []
-  for (const file of files) {
-    for (const entry of await readLibraryFile(file)) entries.push(renderEntry(entry, file))
-  }
+const header = (source) =>
+  `// Generated from exercises/${source} by \`mise run gen:exercises\`. Do not edit.`
 
-  const source = [
-    '// Generated from exercises/*.yaml by `mise run gen:exercises`. Do not edit.',
-    '',
-    "import type { LibraryExercise } from '@/exercises/types'",
-    '',
-    "import { ExerciseMetric } from '@/proto/api/v1/shared_pb'",
-    '',
-    'export const catalogue: readonly LibraryExercise[] = [',
-    entries.join('\n'),
-    ']',
-    '',
-  ].join('\n')
-
+const write = async (name, source) => {
+  const path = join(outputDir, name)
   const formatted = await prettier.format(source, {
-    ...(await prettier.resolveConfig(outputPath)),
-    filepath: outputPath,
+    ...(await prettier.resolveConfig(path)),
+    filepath: path,
   })
-  await writeFile(outputPath, formatted)
-  console.log(`generate-exercises: ${entries.length} exercises from ${files.length} files`)
+  await writeFile(path, formatted)
 }
 
-await generate()
+const generateVocabulary = async () => {
+  const vocabulary = await readYaml(vocabularyFile)
+  const missing = ['groups', 'muscles', 'patterns', 'qualities', 'equipment'].filter(
+    (key) => !vocabulary?.[key],
+  )
+  if (missing.length) fail(`${vocabularyFile} declares no ${missing.join(', ')}`)
+
+  const constant = (name, doc, values) =>
+    `\n/** ${doc} */\nexport const ${name} = ${renderList(values)} as const\n`
+
+  await write(
+    'vocabulary.ts',
+    [
+      header(vocabularyFile),
+      '',
+      constant(
+        'exerciseGroups',
+        'The muscle group an entry belongs to: one per file, and every entry leads with it.',
+        Object.keys(vocabulary.groups),
+      ),
+      constant('muscleTags', 'What the movement trains, finer than the group.', vocabulary.muscles),
+      constant(
+        'patternTags',
+        "The movement pattern, which is how the library's coverage is measured.",
+        vocabulary.patterns,
+      ),
+      constant(
+        'qualityTags',
+        'How the movement is trained, where that changes what it is for.',
+        vocabulary.qualities,
+      ),
+      '',
+      '/** Every tag an entry may carry. */',
+      'export const exerciseTags = [',
+      '...exerciseGroups,',
+      '...muscleTags,',
+      '...patternTags,',
+      '...qualityTags,',
+      '] as const',
+      '',
+      'export type ExerciseTag = (typeof exerciseTags)[number]',
+      constant(
+        'exerciseEquipment',
+        'What the movement is performed with. Read by nothing outside the library yet.',
+        vocabulary.equipment,
+      ),
+      'export type ExerciseEquipment = (typeof exerciseEquipment)[number]',
+      constant(
+        'exerciseMetricNames',
+        'The metric names YAML writes, each of which compiles to an ExerciseMetric.',
+        Object.keys(metricEnumNames),
+      ),
+    ].join('\n'),
+  )
+
+  return Object.keys(vocabulary.groups).length
+}
+
+const generateCatalogue = async () => {
+  const files = await movementFiles()
+  const entries = []
+  for (const file of files) {
+    const movements = await readYaml(file)
+    if (!Array.isArray(movements)) fail(`${file} is not a list of exercises`)
+    for (const entry of movements) entries.push(renderEntry(entry, file))
+  }
+
+  await write(
+    'catalogue.ts',
+    [
+      header('*.yaml'),
+      '',
+      "import type { LibraryExercise } from '@/exercises/types'",
+      '',
+      "import { ExerciseMetric } from '@/proto/api/v1/shared_pb'",
+      '',
+      'export const catalogue: readonly LibraryExercise[] = [',
+      entries.join('\n'),
+      ']',
+      '',
+    ].join('\n'),
+  )
+
+  return { entries: entries.length, files: files.length }
+}
+
+const groups = await generateVocabulary()
+const { entries, files } = await generateCatalogue()
+console.log(`generate-exercises: ${entries} exercises from ${files} files, ${groups} groups`)

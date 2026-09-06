@@ -22,6 +22,9 @@ carries:
 `arms.yaml`, `back.yaml`, `cardio.yaml`, `chest.yaml`, `core.yaml`,
 `full-body.yaml`, `glutes.yaml`, `legs.yaml`, `shoulders.yaml`.
 
+`vocabulary.yaml` is the exception: it holds the tags and equipment those
+entries are written against rather than movements of its own.
+
 An exercise trains more than one thing; it is filed under the one it is trained
 _for_. A barbell row is `back.yaml` even though the biceps work, and carries
 its `biceps` tag there.
@@ -85,7 +88,7 @@ and not a data migration.
 
 ### `tags`
 
-From the vocabulary below, at most ten — the API's limit — and the **first** of
+From `vocabulary.yaml`, at most ten — the API's limit — and the **first** of
 them is the group tag the entry's file is named after. A movement that
 genuinely trains a second region carries that group tag too, which is why a
 back squat says `glutes`; the file's tag simply leads. They are saved on the
@@ -94,116 +97,20 @@ lowercase.
 
 ## Vocabulary
 
-A tag or an implement not listed here is a typo. `web/src/exercises/vocabulary.ts`
-is the machine-readable copy of these lists, and the schema test fails when it
-and this file disagree — so a new term is added in both, in the same commit.
+`vocabulary.yaml` holds it: the groups and what each one covers, then the muscle,
+pattern and quality tags, then the equipment. It is the source, not a copy —
+`mise run gen:exercises` compiles it into `web/src/exercises/vocabulary.ts`
+beside the catalogue, so a new term is added once, there, and the schema test
+rejects an entry that uses anything else.
 
-### Group tags
+Tags fall into four kinds, and an entry usually carries one of each:
 
-- `arms` — elbow flexion and extension trained for themselves
-- `back` — the pulling musculature
-- `cardio` — trained for the engine rather than the muscle
-- `chest` — the pectorals
-- `core` — the trunk, braced or flexed
-- `full-body` — no one group owns it: olympic lifts, carries, conditioning
-- `glutes` — hip extension trained for itself
-- `legs` — knee-dominant lower body
-- `shoulders` — the deltoids
-
-### Muscle tags
-
-- `abductors`
-- `abs`
-- `adductors`
-- `biceps`
-- `calves`
-- `forearms`
-- `front-delts`
-- `hamstrings`
-- `hip-flexors`
-- `lats`
-- `lower-back`
-- `lower-chest`
-- `obliques`
-- `quadriceps`
-- `rear-delts`
-- `rhomboids`
-- `serratus`
-- `side-delts`
-- `traps`
-- `triceps`
-- `upper-chest`
-
-### Pattern tags
-
-The library's coverage is measured across these, so an entry that is one of
-them says so.
-
-- `anti-extension`
-- `anti-lateral-flexion`
-- `anti-rotation`
-- `carry`
-- `hinge`
-- `horizontal-pull`
-- `horizontal-push`
-- `lunge`
-- `rotation`
-- `squat`
-- `vertical-pull`
-- `vertical-push`
-
-### Quality tags
-
-- `bodyweight`
-- `compound`
-- `conditioning`
-- `isolation`
-- `isometric`
-- `olympic`
-- `plyometric`
-- `unilateral`
-
-### Equipment
-
-- `ab-wheel`
-- `air-bike`
-- `band`
-- `barbell`
-- `battle-ropes`
-- `bench`
-- `bodyweight`
-- `box`
-- `cable`
-- `decline-bench`
-- `dip-bars`
-- `dumbbell`
-- `elliptical`
-- `ez-bar`
-- `glute-ham-bench`
-- `hyperextension-bench`
-- `incline-bench`
-- `jump-rope`
-- `kettlebell`
-- `landmine`
-- `machine`
-- `medicine-ball`
-- `plate`
-- `preacher-bench`
-- `pull-up-bar`
-- `rings`
-- `rower`
-- `sandbag`
-- `ski-erg`
-- `sled`
-- `smith-machine`
-- `squat-rack`
-- `stability-ball`
-- `stair-climber`
-- `stationary-bike`
-- `suspension-trainer`
-- `trap-bar`
-- `treadmill`
-- `weight-vest`
+- **Group** — the file it is in, and the tag it leads with.
+- **Muscle** — what it trains, finer than the group.
+- **Pattern** — squat, hinge, lunge, push, pull, carry. Coverage is measured
+  across these, so an entry that is one of them says so.
+- **Quality** — how it is trained, where that changes what it is for:
+  `compound`, `unilateral`, `isometric`, `plyometric`, `olympic`.
 
 ## Adding to it
 
