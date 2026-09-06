@@ -18,6 +18,11 @@ export const en = {
     cancel: 'Discard recording',
     manual: 'Log manually',
     route: 'Workout route',
+    map: 'Route map',
+    mapCredit: 'Map: OpenFreeMap · © OpenMapTiles · Data from OpenStreetMap',
+    mapTwoFingers: 'Use two fingers to move the map',
+    mapScrollMac: 'Use ⌘ + scroll to zoom the map',
+    mapScrollWindows: 'Use Ctrl + scroll to zoom the map',
     noRoute: 'No reliable route was recorded.',
     incomplete:
       'Tracking is incomplete. Distances include only accepted GPS sections; gaps and paused movement are excluded.',
@@ -739,14 +744,14 @@ export const en = {
   },
   privacy: {
     heading: 'Privacy policy',
-    updated: 'Last updated 22 August 2026.',
+    updated: 'Last updated 6 September 2026.',
     intro:
       '{brand} is a training log. This explains what it stores about you, why, and how to get rid of it.',
     collectTitle: 'What we store',
     collectAccount:
       'Your account: email address, name, username and password (hashed, never readable).',
     collectTraining:
-      'Your training: workouts, sets, routines, plans, exercises, notes, comments and who you follow.',
+      'Your training: workouts, sets, routines, plans, exercises, notes, comments, who you follow and, for a circuit recorded on your phone, the GPS route it followed.',
     collectUsage:
       'How the app is used: pages opened and errors hit, tied to your account id so a fault can be traced back to a real session.',
     useTitle: 'Why we store it',
@@ -756,7 +761,7 @@ export const en = {
     shareFollowers:
       'Other members see what your public profile shows: your name, username, workouts and personal bests.',
     shareProcessors:
-      'Two suppliers process data on our behalf: Scaleway hosts the servers and the database in France, and PostHog receives the usage and error events in the EU.',
+      'Three suppliers process data on our behalf: Scaleway hosts the servers and the database in France, PostHog receives the usage and error events in the EU, and OpenFreeMap serves the map behind a recorded route, which tells it roughly where you trained.',
     retentionTitle: 'How long we keep it',
     retentionBody:
       'Until you delete your account. Deleting it erases your account and everything it owns from the database immediately; backups age out within 30 days.',
@@ -827,6 +832,11 @@ export const sv = {
     cancel: 'Kasta registreringen',
     manual: 'Logga manuellt',
     route: 'Passets rutt',
+    map: 'Ruttkarta',
+    mapCredit: 'Karta: OpenFreeMap · © OpenMapTiles · Data från OpenStreetMap',
+    mapTwoFingers: 'Använd två fingrar för att flytta kartan',
+    mapScrollMac: 'Använd ⌘ + skrolla för att zooma kartan',
+    mapScrollWindows: 'Använd Ctrl + skrolla för att zooma kartan',
     noRoute: 'Ingen tillförlitlig rutt registrerades.',
     incomplete:
       'Spårningen är ofullständig. Distansen omfattar bara godkända GPS-sträckor; luckor och rörelse under pauser ingår inte.',
@@ -1548,14 +1558,14 @@ export const sv = {
   },
   privacy: {
     heading: 'Integritetspolicy',
-    updated: 'Senast uppdaterad 22 augusti 2026.',
+    updated: 'Senast uppdaterad 6 september 2026.',
     intro:
       '{brand} är en träningsdagbok. Här står vad som lagras om dig, varför, och hur du blir av med det.',
     collectTitle: 'Vad vi lagrar',
     collectAccount:
       'Ditt konto: e-postadress, namn, användarnamn och lösenord (hashat, aldrig läsbart).',
     collectTraining:
-      'Din träning: träningspass, set, pass, planer, övningar, anteckningar, kommentarer och vilka du följer.',
+      'Din träning: träningspass, set, pass, planer, övningar, anteckningar, kommentarer, vilka du följer och, för ett cirkelpass som spelats in på din telefon, GPS-rutten det följde.',
     collectUsage:
       'Hur appen används: öppnade sidor och fel som uppstår, kopplat till ditt konto-id så att ett fel går att spåra till en verklig session.',
     useTitle: 'Varför vi lagrar det',
@@ -1565,7 +1575,7 @@ export const sv = {
     shareFollowers:
       'Andra medlemmar ser det din offentliga profil visar: ditt namn, användarnamn, träningspass och personliga rekord.',
     shareProcessors:
-      'Två leverantörer behandlar uppgifter åt oss: Scaleway driver servrarna och databasen i Frankrike, och PostHog tar emot användnings- och felhändelser inom EU.',
+      'Tre leverantörer behandlar uppgifter åt oss: Scaleway driver servrarna och databasen i Frankrike, PostHog tar emot användnings- och felhändelser inom EU, och OpenFreeMap levererar kartan bakom en inspelad rutt, vilket avslöjar ungefär var du tränade.',
     retentionTitle: 'Hur länge vi sparar det',
     retentionBody:
       'Tills du tar bort ditt konto. Då raderas kontot och allt det äger ur databasen direkt; säkerhetskopior faller bort inom 30 dagar.',

@@ -746,9 +746,13 @@ test.describe('planned workouts and history', () => {
     await page.goto('/plans/create')
     await page.getByLabel('Plan name').fill(planName)
 
+    // The seeded walk/run circuit is trained a round at a time and its rows
+    // hold distance and time, so a plan built for logging a weight below it
+    // takes any other routine.
     for (let index = 0; index < 2; index += 1) {
       await page.getByRole('button', { name: 'Add routine' }).click()
       await pickerOptions(page, page.getByRole('dialog', { name: 'Choose a routine' }))
+        .filter({ hasNotText: 'Walk/Run Intervals' })
         .first()
         .click()
     }
@@ -809,6 +813,11 @@ test.describe('planned workouts and history', () => {
   // interval's time and distance, one colour per exercise across all the
   // rounds, and the totals in whichever unit the athlete prefers.
   test('shows a recorded circuit as a route in the preferred unit @mutation', async ({ page }) => {
+    // The map's tiles come from the internet, which a test must not depend
+    // on. Withholding them is also the offline case, and what the route falls
+    // back to then — its bare shape — is what the assertions below read.
+    test.info().annotations.push(allowRuntimeErrors)
+    await page.route('https://tiles.openfreemap.org/**', (route) => route.abort())
     await page.goto('/workout')
     const history = sectionWithHeading(page, 'Previous workouts')
     await history.getByRole('link').filter({ hasText: 'Walk/Run Intervals' }).first().click()
