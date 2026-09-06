@@ -108,10 +108,31 @@ export default tseslint.config(
           selector: 'JSXOpeningElement[name.name="textarea"]',
           message: 'Use <AppTextarea> from @/ui/components.',
         },
+        // Navigation is a component too. A hand-drawn anchor is how a screen
+        // ends up with a link that does not look tappable — which is the same
+        // mistake as a fifth button style, one element down.
+        {
+          selector: 'JSXOpeningElement[name.name="a"]',
+          message:
+            'Use <AppButton type="link"> for a button that goes somewhere, or <AppListRow to> for a row that does. A link leaving the app disables this line with the reason.',
+        },
         {
           selector: 'JSXOpeningElement[name.name="select"]',
           message:
             'The app has no select. Use <AppSegmented> for a few options, or add one to the design system.',
+        },
+        // Deprecated, and removed after one release. Both of these describe
+        // themselves as a row, and <AppListRow> is the one with fixed slots
+        // and a chevron on every row that navigates.
+        {
+          selector: 'JSXOpeningElement[name.name="AppListItem"]',
+          message:
+            'Use <AppListRow> from @/ui/components. is="danger" is tone="danger" there, is="header" is <AppList heading>, and content that is none of leading, title, meta or trailing is not a list row — see src/ui/components/README.md.',
+        },
+        {
+          selector: 'JSXOpeningElement[name.name="AppListItemLink"]',
+          message:
+            'Use <AppListRow to> from @/ui/components, which draws the chevron that says the row goes somewhere.',
         },
       ],
     },

@@ -16,9 +16,10 @@ interface Props extends Omit<ComponentProps<'input'>, 'className'> {
   /** A control at the trailing edge, inside the field's border. */
   trailing?: ReactNode
   /**
-   * `hero` is for the one field a screen is built around: the label rises to
-   * the caps overline register on the page background, and the input stands
-   * on the canvas rather than inside a panel.
+   * `hero` is for the one field a screen is built around.
+   *
+   * The label rises to the caps overline register on the page background, and
+   * the input stands on the canvas rather than inside a panel.
    */
   variant?: 'default' | 'hero'
   /** Positions the field. The input's own styling is never replaced. */

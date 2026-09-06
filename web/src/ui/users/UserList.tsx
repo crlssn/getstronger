@@ -1,12 +1,11 @@
 import type { User } from '@/proto/api/v1/shared_pb'
 
-import { ChevronRightIcon } from '@heroicons/react/24/outline'
 import { useCallback, useEffect, useState } from 'react'
 
 import { AppErrorState } from '@/ui/components/AppErrorState'
 import { AppEmptyState } from '@/ui/components/AppEmptyState'
 import { AppList } from '@/ui/components/AppList'
-import { AppListItemLink } from '@/ui/components/AppListItem'
+import { AppListRow } from '@/ui/components/AppListRow'
 import { AppSkeleton } from '@/ui/components/AppSkeleton'
 import { handle } from '@/utils/names'
 
@@ -45,13 +44,12 @@ export const UserList = ({ fetchUsers, empty }: Props) => {
   return (
     <AppList>
       {users.map((user) => (
-        <AppListItemLink key={user.id} to={`/users/${user.id}`}>
-          <span>
-            <strong className="block font-medium">{handle(user.username)}</strong>
-            <small className="mt-0.5 block text-sm font-normal text-text-subtle">{user.name}</small>
-          </span>
-          <ChevronRightIcon aria-hidden="true" />
-        </AppListItemLink>
+        <AppListRow
+          key={user.id}
+          meta={user.name}
+          title={handle(user.username)}
+          to={`/users/${user.id}`}
+        />
       ))}
     </AppList>
   )

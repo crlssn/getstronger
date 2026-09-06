@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
 import { renderWithProviders } from '@/ui/testing'
 import { AppList } from './AppList'
-import { AppListItem } from './AppListItem'
+import { AppListRow } from './AppListRow'
 
 let reach: () => void
 
@@ -32,8 +32,8 @@ afterEach(() => {
 
 const rows = (
   <>
-    <AppListItem>{'Bench press'}</AppListItem>
-    <AppListItem>{'Squat'}</AppListItem>
+    <AppListRow title="Bench press" />
+    <AppListRow title="Squat" />
   </>
 )
 
@@ -85,5 +85,26 @@ describe('AppList', () => {
     renderWithProviders(<AppList className="mt-8">{rows}</AppList>)
 
     expect(screen.getByRole('list')).toHaveClass('mt-8')
+  })
+
+  test('labels a section with its heading', () => {
+    renderWithProviders(<AppList heading="Danger zone">{rows}</AppList>)
+
+    expect(screen.getByRole('list', { name: 'Danger zone' })).toBeInTheDocument()
+    expect(screen.getByText('Danger zone')).toBeInTheDocument()
+  })
+
+  // The heading names the list, so a screen reader that also read it as the
+  // first row would announce the section twice.
+  test('hides the heading row from the rows it labels', () => {
+    renderWithProviders(<AppList heading="Danger zone">{rows}</AppList>)
+
+    expect(screen.getAllByRole('listitem')).toHaveLength(2)
+  })
+
+  test('draws no heading row without one', () => {
+    renderWithProviders(<AppList>{rows}</AppList>)
+
+    expect(screen.getByRole('list')).not.toHaveAccessibleName()
   })
 })

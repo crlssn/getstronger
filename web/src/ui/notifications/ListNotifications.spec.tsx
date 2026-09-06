@@ -136,9 +136,9 @@ describe('ListNotifications', () => {
     mocked.listNotifications.mockResolvedValue(page([follow('n1')]))
     render()
 
-    const row = (await screen.findByRole('link')).closest('li')!
-    // The row's own icon, then the chevron the list item ends with.
-    expect(row.querySelectorAll(':scope > svg')).toHaveLength(1)
+    const row = await screen.findByRole('link')
+    // The tile saying what happened, then the chevron the row ends with.
+    expect(row.querySelectorAll('svg')).toHaveLength(2)
   })
 
   test('calls out an unread row for a screen reader', async () => {

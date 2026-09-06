@@ -15,6 +15,12 @@ a warning. A rule that is wrong for one line is disabled on that line with the
 reason; a rule that is wrong for this app is turned off in `eslint.config.js`
 with the reason. Both are read more often than they are written.
 
+Knip cannot see design-sync, which re-exports `ui/components` as a package, so
+a type exported for that surface alone reads as dead to it. Tag such an export
+`@public` in its doc comment, saying what it is exported for — `knip.json`
+excludes those, and nothing else silences the check that finds a component
+nobody renders.
+
 To see the app rather than reason about its markup — screenshots, accessibility
 and tap-target measurements, visual diffs — follow
 `.claude/skills/design-review/SKILL.md`.
@@ -78,10 +84,12 @@ did not find what it wanted.
 
 Three rules enforce it, so none depends on remembering:
 
-- **A screen may not render a bare `<button>`, `<input>`, `<textarea>` or
-  `<select>`.** ESLint rejects them outside `ui/components`. A genuinely local
-  exception disables the rule on that line with the reason written above it,
-  where a reviewer reads it — there are four in the app, and each says why.
+- **A screen may not render a bare `<button>`, `<input>`, `<textarea>`,
+  `<select>` or `<a>`.** ESLint rejects them outside `ui/components` —
+  navigation included, since `<AppButton type="link">` and `<AppListRow to>`
+  are the two shapes a link takes. A genuinely local exception disables the
+  rule on that line with the reason written above it, where a reviewer reads
+  it — there are four in the app, and each says why.
 - **The arrows point one way.** `ui/components` may not import `ui/features`,
   `ui/shell`, a store, the HTTP layer or a generated type: the design system
   takes props and gives back events. `ui/features` may not import `ui/shell`.

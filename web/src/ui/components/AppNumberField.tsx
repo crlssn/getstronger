@@ -22,8 +22,7 @@ interface Props extends Omit<ComponentProps<'input'>, 'value' | 'onChange' | 'ty
 }
 
 /**
- * A number field that keeps the text being typed rather than the number read
- * from it.
+ * A field that keeps the text being typed, not the number read from it.
  *
  * Rendering `value` straight into the input would swallow the keystroke halfway
  * through "3.5", because "3." parses to 3 and would be written back as "3". An

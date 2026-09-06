@@ -41,6 +41,7 @@ const roles = {
     'components/AppInput.module.css',
     'components/AppInlineError.module.css',
     'components/AppListItem.module.css',
+    'components/AppListRow.module.css',
     'components/AppSheet.module.css',
     'components/DropdownButton.module.css',
     'exercises/ExerciseTagsInput.module.css',

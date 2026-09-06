@@ -42,6 +42,31 @@ describe('the component catalogue', () => {
     expect(stale, 'these are catalogued but nothing exports them').toEqual([])
   })
 
+  // design-sync collapses a doc comment and cuts it — a component's summary at
+  // its first line, a prop's at about 120 characters — so a sentence that runs
+  // past either arrives on the design side mid-word. `AppListRow.to` reached it
+  // as "…which is the whole reason this is a prop rather than ". Reasoning
+  // belongs in a second paragraph, where the cut costs nothing.
+  it('opens every doc comment with a sentence that survives the sync', () => {
+    const cut = files.flatMap((file) => {
+      const source = readFileSync(join(componentsDir, file), 'utf8')
+      return [...source.matchAll(/\/\*\*(.*?)\*\//gs)].flatMap(([, body]) => {
+        const lines = body.split('\n').map((line) => line.replace(/^\s*\*? ?/, '').trimEnd())
+        const opening = lines.slice(lines.findIndex((line) => line.trim() !== ''))
+        const blank = opening.findIndex((line) => line.trim() === '')
+        const paragraph = blank === -1 ? opening : opening.slice(0, blank)
+        if (paragraph.length === 0) return []
+
+        const [first] = paragraph
+        const joined = paragraph.join(' ')
+        const whole = /[.:?!]$/.test(first.trim()) && joined.length <= 120
+        return whole ? [] : [`${file}: ${joined}`]
+      })
+    })
+
+    expect(cut, 'end the first line on a sentence, and keep it under 120 characters').toEqual([])
+  })
+
   it('gives every component a spec', () => {
     const specs = readdirSync(componentsDir).filter((file) => file.endsWith('.spec.tsx'))
     const untested = exported.filter((name) => !specs.includes(`${name}.spec.tsx`))

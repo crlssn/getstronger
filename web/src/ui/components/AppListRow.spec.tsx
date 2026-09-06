@@ -40,4 +40,18 @@ describe('AppListRow', () => {
     expect(screen.queryByRole('link')).not.toBeInTheDocument()
     expect(container.querySelectorAll('svg')).toHaveLength(0)
   })
+
+  // Danger has to reach the element or the design system has a tone that does
+  // nothing — the row that deletes a routine looked like the one above it.
+  test('carries the danger tone', () => {
+    render(<AppListRow title="Delete this routine" tone="danger" />)
+
+    expect(screen.getByRole('listitem').className).toContain('danger')
+  })
+
+  test('is an ordinary row without one', () => {
+    render(<AppListRow title="Bench press" />)
+
+    expect(screen.getByRole('listitem').className).not.toContain('danger')
+  })
 })

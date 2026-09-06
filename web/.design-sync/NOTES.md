@@ -87,6 +87,42 @@ rather than sitting in a grid cell. **Changing `cfg.overrides` requires a full
 `package-build.mjs`** — a scoped `preview-rebuild` + `package-capture` fails
 with `[CONFIG_STALE]` because the grade keys are stamped by the full build.
 
+## The token list is in tokens.css, not the bundle
+
+`ds.css` is the compiled stylesheet, so anything scanning it for custom
+properties finds Tailwind's internals rather than the design's tokens: 109
+`--tw-*` declared under utility selectors like
+`:where(.space-y-* > :not(:last-child))`, plus `--animate-spin`,
+`--animate-pulse`, `--default-transition-*` and the `--container-*` sizes. None
+of those is a value anybody designs with.
+
+`build-ds.mjs` therefore also emits **`ds-dist/tokens.css`** — the `@theme`
+block and the `:root[data-theme='dark']` overrides from `src/assets/theme.css`,
+as plain CSS with their comments intact and nothing else. 107 declarations, no
+`--tw-*`, no filtering needed. The build fails if either block goes missing.
+
+**Point the sync's token scan at it** rather than at `cssEntry`; the exclusion
+of `--tw-*` is the converter's own fix, and this is the input that makes it
+unnecessary. `cssEntry` stays `ds.css`: that is the stylesheet the previews
+render against, and tokens alone would leave every component unstyled.
+
+## Prop docs are cut at ~120 characters
+
+The converter collapses a JSDoc block to one line and truncates it, so a
+comment whose first sentence runs past ~120 characters reaches the design side
+mid-word — `AppListRow.to` arrived as "…which is the whole reason this is a
+prop rather than ". A component's summary is cut at its first line instead, so
+a summary whose opening sentence wraps loses the rest of it.
+
+The rule that avoids both: **the first line of every JSDoc is a complete
+sentence, and the first paragraph fits in 120 characters.** Reasoning goes in
+a second paragraph, where the cut costs nothing that was not already said.
+`catalogue.spec.ts` fails the suite otherwise, so this does not depend on
+anyone remembering it.
+
+Tell the `/design-sync` agent about the cut as well — the limit is the
+converter's, and raising it is the other half of the fix.
+
 ## Known render warns
 
 Triaged as legitimate — a warn NOT in this list is new and worth looking at.

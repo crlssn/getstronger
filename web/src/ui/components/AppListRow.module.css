@@ -51,6 +51,13 @@
   @apply shrink-0 text-right text-sm font-semibold text-text;
 }
 
+/* Danger is the title's colour, not the row's fill: a red panel shouts before
+ * it is read, and the row under it is still an ordinary one. The meta line
+ * stays subtle so a warning under the label reads as a warning. */
+.danger .copy > strong {
+  @apply text-danger;
+}
+
 .chevron {
   @apply size-5 shrink-0 text-text-subtle;
 }

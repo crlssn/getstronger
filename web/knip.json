@@ -3,5 +3,6 @@
   "entry": ["src/**/*.spec.{ts,tsx}", "tests/**/*.ts"],
   "project": ["src/**/*.{ts,tsx,css}", "tests/**/*.ts"],
   "ignore": ["src/proto/**"],
-  "ignoreBinaries": ["go"]
+  "ignoreBinaries": ["go"],
+  "tags": ["-@public"]
 }

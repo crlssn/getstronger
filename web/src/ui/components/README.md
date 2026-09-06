@@ -20,36 +20,42 @@ aspirational.
 
 ## Choosing
 
-| You need                        | Use                                                 |
-| ------------------------------- | --------------------------------------------------- |
-| Anything a user taps            | `<AppButton>` — or `<AppIconButton>` for icon-only  |
-| A text field                    | `<AppInput>` / `<AppTextarea>`                      |
-| A number or a duration          | `<AppNumberField>` / `<AppDurationInput>`           |
-| A date and time                 | `<AppDatetimeField>`                                |
-| A duration nudged in steps      | `<AppDurationStepper>`                              |
-| A count nudged in steps         | `<AppStepper>`                                      |
-| On or off                       | `<AppSwitch>`                                       |
-| A field the user searches with  | `<AppSearchField>`                                  |
-| The next page of a list         | `<AppLoadMore>`                                     |
-| A screen's title block          | `<AppPageHeader>`                                   |
-| A form's pinned submit          | `<AppFormFooter>`                                   |
-| A value a row can unfold        | `<AppValueChip>`                                    |
-| A status pill beside a title    | `<AppChip>`                                         |
-| A row not yet seen              | `<AppUnreadDot>`                                    |
-| A panel around content          | `<AppCard>`, or the `card` utility inside a module  |
-| Panels swiped one at a time     | `<AppCarousel>`                                     |
-| Rows of things                  | `<AppList>` + `<AppListItem>` / `<AppListItemLink>` |
-| A row with a value and a way on | `<AppListRow>`                                      |
-| A row that is one tap           | `<AppOptionRow>`                                    |
-| A setting changed where it is   | `<AppPreferenceRow>`                                |
-| Nothing to show yet             | `<AppEmptyState>`                                   |
-| One section of it empty         | `<AppEmptyInline>`                                  |
-| A fetch that failed             | `<AppErrorState>`                                   |
-| An action that failed           | `<AppInlineError>`                                  |
-| Waiting for the API             | `<AppSkeleton>`                                     |
-| A modal decision or a picker    | `<AppSheet>` + `<SheetAction>`                      |
-| One of a few choices            | `<AppSegmented>` / `<AppSegmentedNav>`              |
-| A menu behind a ⋯               | `<DropdownButton>`                                  |
+| You need                       | Use                                                |
+| ------------------------------ | -------------------------------------------------- |
+| Anything a user taps           | `<AppButton>` — or `<AppIconButton>` for icon-only |
+| A text field                   | `<AppInput>` / `<AppTextarea>`                     |
+| A number or a duration         | `<AppNumberField>` / `<AppDurationInput>`          |
+| A date and time                | `<AppDatetimeField>`                               |
+| A duration nudged in steps     | `<AppDurationStepper>`                             |
+| A count nudged in steps        | `<AppStepper>`                                     |
+| On or off                      | `<AppSwitch>`                                      |
+| A field the user searches with | `<AppSearchField>`                                 |
+| The next page of a list        | `<AppLoadMore>`                                    |
+| A screen's title block         | `<AppPageHeader>`                                  |
+| A form's pinned submit         | `<AppFormFooter>`                                  |
+| A value a row can unfold       | `<AppValueChip>`                                   |
+| A status pill beside a title   | `<AppChip>`                                        |
+| A row not yet seen             | `<AppUnreadDot>`                                   |
+| A panel around content         | `<AppCard>`, or the `card` utility inside a module |
+| Panels swiped one at a time    | `<AppCarousel>`                                    |
+| Rows of things                 | `<AppList>` + `<AppListRow>`                       |
+| A row that is one tap          | `<AppOptionRow>`                                   |
+| A setting changed where it is  | `<AppPreferenceRow>`                               |
+| Nothing to show yet            | `<AppEmptyState>`                                  |
+| One section of it empty        | `<AppEmptyInline>`                                 |
+| A fetch that failed            | `<AppErrorState>`                                  |
+| An action that failed          | `<AppInlineError>`                                 |
+| Waiting for the API            | `<AppSkeleton>`                                    |
+| A modal decision or a picker   | `<AppSheet>` + `<SheetAction>`                     |
+| One of a few choices           | `<AppSegmented>` / `<AppSegmentedNav>`             |
+| A menu behind a ⋯              | `<DropdownButton>`                                 |
+
+Two things this catalogue is also the rule for. **Navigation is a component,
+not an anchor**: `<AppButton type="link">` is a button that goes somewhere and
+`<AppListRow to>` is a row that does, so a screen never writes a bare `<a>` any
+more than it writes a bare `<button>`. And **emoji are allowed, sparingly** — a
+leading tile on a row, never inside a sentence, always `aria-hidden` with the
+meaning carried in the row's `meta` text.
 
 ## Actions
 
@@ -113,6 +119,26 @@ screen with no nav bar above it, which is what lets a screen offer an action
 without knowing which shell it was opened in.
 
 ## Input
+
+Nine controls, and the answer is which data is being entered rather than which
+one looks right:
+
+| The data                          | Use                                |
+| --------------------------------- | ---------------------------------- |
+| Text, on one line or many         | `<AppInput>` / `<AppTextarea>`     |
+| A weight or a count, typed        | `<AppNumberField>`                 |
+| A count, nudged rather than typed | `<AppStepper>`                     |
+| A rest typed as "1:30" or "130"   | `<AppDurationInput>`               |
+| A rest nudged in half-minutes     | `<AppDurationStepper>`             |
+| A date and a time                 | `<AppDatetimeField>`               |
+| What the user is searching for    | `<AppSearchField>`                 |
+| On or off                         | `<AppSwitch>`                      |
+| Two or three named options        | `<AppSegmented density="compact">` |
+
+The two pairs are the ones worth reading twice. `<AppDurationInput>` is typed
+and `<AppDurationStepper>` is read off a clock and nudged; `<AppSwitch>` is a
+boolean and a compact `<AppSegmented>` is two or three named things, which is
+not the same question even when the screen only has two states.
 
 ### `<AppInput>`
 
@@ -193,9 +219,12 @@ knob have no accessible name of their own.
 
 ### `<AppCard>`
 
-The panel: rounded, bordered, on `--color-surface`, with the card shadow. A
-component that styles its own container applies the `card` utility in its CSS
-module instead — same shape, one definition.
+The panel: rounded, on `--color-surface`, lifted by the card shadow. **No
+border** — elevation and a hairline never combine, so a top-level card takes
+the shadow and a container nested inside one closes its edge instead. That is
+what the `card` utility draws too, and a component that styles its own
+container applies it in the CSS module rather than nesting an `<AppCard>`:
+same shape, one definition.
 
 ### `<AppPageHeader>`
 
@@ -253,13 +282,28 @@ styled as destructive, because every one of them today is a delete.
 
 ### `<AppList>`
 
-An unordered list that fetches its next page when the bottom scrolls into view.
-`canFetch` controls whether the sentinel row exists at all.
+The card that holds rows. `canFetch` decides whether it also fetches its next
+page as the bottom scrolls into view, so the same component is the plain
+container and the infinite one — a list that has everything it will ever have
+simply leaves the sentinel out.
+
+`heading` is a section label above the first row, drawn as the app's eyebrow.
+It is also the list's accessible name, so the row itself is `aria-hidden` and
+the section is announced once rather than twice. One card, one heading: a list
+that wants two of them is two cards.
 
 ### `<AppListItem>` and `<AppListItemLink>`
 
-A row, and a row that is a link. `is="danger"` for a destructive row,
-`is="header"` for a section label.
+**Deprecated, and removed after one release.** Both describe themselves as a
+row, and `<AppListRow>` is the better one: fixed slots, a chevron on every row
+that navigates, and a trailing value that knows what to do at 390px. ESLint
+rejects either of them outside this directory.
+
+`is="danger"` is `tone="danger"` on the row; `is="header"` is `<AppList
+heading>`. The third thing only these could do was free-form children, and
+content that is none of leading, title, meta or trailing was never a list row:
+it belongs in `<AppOptionRow>`, `<AppPreferenceRow>`, or a widget of its own in
+`ui/features`.
 
 ### `<AppListRow>`
 
@@ -273,6 +317,10 @@ something the reader finds out.
 Below 520px the `trailing` value drops under the title instead of competing
 with it: on a 390px screen a long exercise name and its heaviest set cannot
 both have the room they need on one line.
+
+`tone="danger"` is the row that destroys something. Danger is the title's
+colour, never a red fill — the same rule `<AppButton colour="destructive">`
+follows, because a red panel shouts before it is read.
 
 ### `<AppOptionRow>`
 
@@ -310,7 +358,8 @@ tappable is a button or a segment.
 
 The ink dot at the right edge of a row not yet seen, before the chevron. It is
 `aria-hidden` — the row says "unread" in words to a screen reader, because a
-dot says nothing.
+dot says nothing. It goes in an `<AppListRow>`'s `trailing`, which is what puts
+it before the chevron rather than after.
 
 ### `<AppEmptyState>`
 

@@ -1,5 +1,7 @@
 import { AppList, AppListItem } from 'getstronger-ds'
 
+// Deprecated: new work uses AppList + AppListRow. Kept until the removal release.
+
 export const Kinds = () => (
   <AppList>
     <AppListItem is="header">Danger zone</AppListItem>
