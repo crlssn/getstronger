@@ -1,0 +1,254 @@
+# Chest — what the pectorals are trained for.
+#
+# A press works triceps and front delts too; it is filed here because the chest
+# is the reason it is in the session. The tags say the rest.
+
+- key: barbell-bench-press
+  names:
+    en: Barbell bench press
+    sv: Bänkpress med skivstång
+  metrics: [weight, reps]
+  equipment: [barbell, bench]
+  tags: [chest, horizontal-push, triceps, front-delts, compound]
+
+- key: barbell-incline-bench-press
+  names:
+    en: Barbell incline bench press
+    sv: Lutande bänkpress med skivstång
+  metrics: [weight, reps]
+  equipment: [barbell, incline-bench]
+  tags: [chest, horizontal-push, upper-chest, triceps, front-delts, compound]
+
+- key: barbell-decline-bench-press
+  names:
+    en: Barbell decline bench press
+    sv: Nedåtlutande bänkpress med skivstång
+  metrics: [weight, reps]
+  equipment: [barbell, decline-bench]
+  tags: [chest, horizontal-push, lower-chest, triceps, compound]
+
+- key: barbell-floor-press
+  names:
+    en: Barbell floor press
+    sv: Golvpress med skivstång
+  metrics: [weight, reps]
+  equipment: [barbell]
+  tags: [chest, horizontal-push, triceps, compound]
+
+- key: smith-machine-bench-press
+  names:
+    en: Smith machine bench press
+    sv: Bänkpress i smithmaskin
+  metrics: [weight, reps]
+  equipment: [smith-machine, bench]
+  tags: [chest, horizontal-push, triceps, front-delts, compound]
+
+- key: dumbbell-bench-press
+  names:
+    en: Dumbbell bench press
+    sv: Bänkpress med hantlar
+  metrics: [weight, reps]
+  equipment: [dumbbell, bench]
+  tags: [chest, horizontal-push, triceps, front-delts, compound]
+
+- key: dumbbell-incline-bench-press
+  names:
+    en: Dumbbell incline bench press
+    sv: Lutande bänkpress med hantlar
+  metrics: [weight, reps]
+  equipment: [dumbbell, incline-bench]
+  tags: [chest, horizontal-push, upper-chest, triceps, compound]
+
+- key: dumbbell-decline-bench-press
+  names:
+    en: Dumbbell decline bench press
+    sv: Nedåtlutande bänkpress med hantlar
+  metrics: [weight, reps]
+  equipment: [dumbbell, decline-bench]
+  tags: [chest, horizontal-push, lower-chest, triceps, compound]
+
+- key: dumbbell-floor-press
+  names:
+    en: Dumbbell floor press
+    sv: Golvpress med hantlar
+  metrics: [weight, reps]
+  equipment: [dumbbell]
+  tags: [chest, horizontal-push, triceps, compound]
+
+- key: dumbbell-fly
+  names:
+    en: Dumbbell fly
+    sv: Hantelflyes
+  metrics: [weight, reps]
+  equipment: [dumbbell, bench]
+  tags: [chest, isolation]
+
+- key: dumbbell-incline-fly
+  names:
+    en: Dumbbell incline fly
+    sv: Lutande hantelflyes
+  metrics: [weight, reps]
+  equipment: [dumbbell, incline-bench]
+  tags: [chest, upper-chest, isolation]
+
+- key: dumbbell-pullover
+  names:
+    en: Dumbbell pullover
+    sv: Pullover med hantel
+  metrics: [weight, reps]
+  equipment: [dumbbell, bench]
+  tags: [chest, lats, serratus, isolation]
+
+- key: kettlebell-floor-press
+  names:
+    en: Kettlebell floor press
+    sv: Golvpress med kettlebell
+  metrics: [weight, reps]
+  equipment: [kettlebell]
+  tags: [chest, horizontal-push, triceps, compound]
+
+# A plate pressed together rather than lifted: the load is the squeeze, which
+# is why it is here and not in the pressing block.
+- key: svend-press
+  names:
+    en: Svend press
+    sv: Svendpress
+  metrics: [weight, reps]
+  equipment: [plate]
+  tags: [chest, horizontal-push, isolation]
+
+- key: cable-chest-press
+  names:
+    en: Cable chest press
+    sv: Bröstpress i kabel
+  metrics: [weight, reps]
+  equipment: [cable]
+  tags: [chest, horizontal-push, triceps, compound]
+
+- key: cable-crossover
+  names:
+    en: Cable crossover
+    sv: Kabelcrossover
+  metrics: [weight, reps]
+  equipment: [cable]
+  tags: [chest, isolation]
+
+- key: cable-low-to-high-fly
+  names:
+    en: Cable low-to-high fly
+    sv: Kabelflyes nedifrån och upp
+  metrics: [weight, reps]
+  equipment: [cable]
+  tags: [chest, upper-chest, isolation]
+
+- key: cable-high-to-low-fly
+  names:
+    en: Cable high-to-low fly
+    sv: Kabelflyes uppifrån och ner
+  metrics: [weight, reps]
+  equipment: [cable]
+  tags: [chest, lower-chest, isolation]
+
+- key: machine-chest-press
+  names:
+    en: Machine chest press
+    sv: Bröstpress i maskin
+  metrics: [weight, reps]
+  equipment: [machine]
+  tags: [chest, horizontal-push, triceps, compound]
+
+- key: machine-incline-chest-press
+  names:
+    en: Machine incline chest press
+    sv: Lutande bröstpress i maskin
+  metrics: [weight, reps]
+  equipment: [machine]
+  tags: [chest, horizontal-push, upper-chest, triceps, compound]
+
+- key: machine-chest-fly
+  names:
+    en: Machine chest fly
+    sv: Bröstflyes i maskin
+  metrics: [weight, reps]
+  equipment: [machine]
+  tags: [chest, isolation]
+
+- key: band-chest-press
+  names:
+    en: Band chest press
+    sv: Bröstpress med gummiband
+  metrics: [weight, reps]
+  equipment: [band]
+  tags: [chest, horizontal-push, triceps, compound]
+
+- key: band-chest-fly
+  names:
+    en: Band chest fly
+    sv: Bröstflyes med gummiband
+  metrics: [weight, reps]
+  equipment: [band]
+  tags: [chest, isolation]
+
+- key: push-up
+  names:
+    en: Push-up
+    sv: Armhävning
+  metrics: [weight, reps]
+  equipment: [bodyweight]
+  tags: [chest, horizontal-push, triceps, front-delts, bodyweight, compound]
+
+- key: weighted-push-up
+  names:
+    en: Weighted push-up
+    sv: Armhävning med vikt
+  metrics: [weight, reps]
+  equipment: [bodyweight, weight-vest]
+  tags: [chest, horizontal-push, triceps, bodyweight, compound]
+
+- key: incline-push-up
+  names:
+    en: Incline push-up
+    sv: Armhävning med händerna högt
+  metrics: [reps]
+  equipment: [bodyweight, box]
+  tags: [chest, horizontal-push, triceps, bodyweight]
+
+- key: decline-push-up
+  names:
+    en: Decline push-up
+    sv: Armhävning med fötterna högt
+  metrics: [reps]
+  equipment: [bodyweight, box]
+  tags: [chest, horizontal-push, upper-chest, triceps, bodyweight]
+
+- key: plyometric-push-up
+  names:
+    en: Plyometric push-up
+    sv: Explosiv armhävning
+  metrics: [reps]
+  equipment: [bodyweight]
+  tags: [chest, horizontal-push, plyometric, triceps, bodyweight]
+
+- key: ring-push-up
+  names:
+    en: Ring push-up
+    sv: Armhävning i ringar
+  metrics: [reps]
+  equipment: [bodyweight, rings]
+  tags: [chest, horizontal-push, triceps, bodyweight]
+
+- key: suspension-chest-press
+  names:
+    en: Suspension trainer chest press
+    sv: Bröstpress i slingtränare
+  metrics: [reps]
+  equipment: [suspension-trainer, bodyweight]
+  tags: [chest, horizontal-push, triceps, bodyweight]
+
+- key: chest-dip
+  names:
+    en: Chest dip
+    sv: Dips för bröst
+  metrics: [weight, reps]
+  equipment: [bodyweight, dip-bars]
+  tags: [chest, lower-chest, vertical-push, triceps, bodyweight, compound]

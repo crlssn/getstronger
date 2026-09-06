@@ -52,6 +52,14 @@ Sign up with your email address to explore all features.
 
 ---
 
+## Licences and attributions
+
+Third-party work this repository builds on is credited in [`NOTICE`](NOTICE).
+The exercise library that draws on it is documented in
+[`exercises/README.md`](exercises/README.md).
+
+---
+
 ## Tech Stack
 
 - **Web**: TypeScript (React, Tailwind CSS)

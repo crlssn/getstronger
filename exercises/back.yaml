@@ -1,0 +1,287 @@
+# Back — the pulling musculature.
+#
+# Rows and pulldowns work the biceps hard enough to feel it the next day; they
+# are still filed here, because the back is what they are programmed for. The
+# hinges that are trained for the hips live in glutes.yaml.
+
+- key: barbell-row
+  names:
+    en: Barbell row
+    sv: Skivstångsrodd
+  metrics: [weight, reps]
+  equipment: [barbell]
+  tags: [back, horizontal-pull, lats, rhomboids, biceps, compound]
+
+- key: pendlay-row
+  names:
+    en: Pendlay row
+    sv: Pendlayrodd
+  metrics: [weight, reps]
+  equipment: [barbell]
+  tags: [back, horizontal-pull, lats, rhomboids, compound]
+
+- key: underhand-barbell-row
+  names:
+    en: Underhand barbell row
+    sv: Skivstångsrodd med underhandsgrepp
+  metrics: [weight, reps]
+  equipment: [barbell]
+  tags: [back, horizontal-pull, lats, biceps, compound]
+
+- key: seal-row
+  names:
+    en: Seal row
+    sv: Sälrodd
+  metrics: [weight, reps]
+  equipment: [barbell, bench]
+  tags: [back, horizontal-pull, lats, rhomboids, compound]
+
+- key: landmine-row
+  names:
+    en: Landmine row
+    sv: Landminerodd
+  metrics: [weight, reps]
+  equipment: [landmine, barbell]
+  tags: [back, horizontal-pull, lats, rhomboids, compound]
+
+- key: barbell-rack-pull
+  names:
+    en: Rack pull
+    sv: Rack pull
+  metrics: [weight, reps]
+  equipment: [barbell, squat-rack]
+  tags: [back, hinge, traps, lats, lower-back, compound]
+
+- key: dumbbell-row
+  names:
+    en: Dumbbell row
+    sv: Hantelrodd
+  metrics: [weight, reps]
+  equipment: [dumbbell, bench]
+  tags: [back, horizontal-pull, lats, rhomboids, biceps, unilateral, compound]
+
+- key: dumbbell-chest-supported-row
+  names:
+    en: Dumbbell chest-supported row
+    sv: Bröststödd hantelrodd
+  metrics: [weight, reps]
+  equipment: [dumbbell, incline-bench]
+  tags: [back, horizontal-pull, lats, rhomboids, compound]
+
+- key: kettlebell-row
+  names:
+    en: Kettlebell row
+    sv: Kettlebellrodd
+  metrics: [weight, reps]
+  equipment: [kettlebell]
+  tags: [back, horizontal-pull, lats, biceps, unilateral, compound]
+
+- key: kettlebell-renegade-row
+  names:
+    en: Kettlebell renegade row
+    sv: Renegadrodd med kettlebell
+  metrics: [weight, reps]
+  equipment: [kettlebell]
+  tags: [back, horizontal-pull, lats, abs, compound]
+
+- key: seated-cable-row
+  names:
+    en: Seated cable row
+    sv: Sittande kabelrodd
+  metrics: [weight, reps]
+  equipment: [cable]
+  tags: [back, horizontal-pull, lats, rhomboids, biceps, compound]
+
+- key: cable-single-arm-row
+  names:
+    en: Single-arm cable row
+    sv: Enarmsrodd i kabel
+  metrics: [weight, reps]
+  equipment: [cable]
+  tags: [back, horizontal-pull, lats, unilateral, compound]
+
+- key: cable-straight-arm-pulldown
+  names:
+    en: Straight-arm pulldown
+    sv: Rakarmsdrag i kabel
+  metrics: [weight, reps]
+  equipment: [cable]
+  tags: [back, lats, serratus, isolation]
+
+- key: machine-chest-supported-row
+  names:
+    en: Machine chest-supported row
+    sv: Bröststödd rodd i maskin
+  metrics: [weight, reps]
+  equipment: [machine]
+  tags: [back, horizontal-pull, lats, rhomboids, compound]
+
+- key: t-bar-row
+  names:
+    en: T-bar row
+    sv: T-bar-rodd
+  metrics: [weight, reps]
+  equipment: [machine]
+  tags: [back, horizontal-pull, lats, rhomboids, compound]
+
+- key: band-seated-row
+  names:
+    en: Band seated row
+    sv: Sittande rodd med gummiband
+  metrics: [weight, reps]
+  equipment: [band]
+  tags: [back, horizontal-pull, lats, rhomboids]
+
+- key: band-bent-over-row
+  names:
+    en: Band bent-over row
+    sv: Framåtlutad rodd med gummiband
+  metrics: [weight, reps]
+  equipment: [band]
+  tags: [back, horizontal-pull, lats, biceps]
+
+- key: inverted-row
+  names:
+    en: Inverted row
+    sv: Omvänd rodd
+  metrics: [weight, reps]
+  equipment: [bodyweight, barbell, squat-rack]
+  tags: [back, horizontal-pull, lats, rhomboids, bodyweight, compound]
+
+- key: ring-row
+  names:
+    en: Ring row
+    sv: Rodd i ringar
+  metrics: [reps]
+  equipment: [rings, bodyweight]
+  tags: [back, horizontal-pull, lats, bodyweight]
+
+- key: suspension-row
+  names:
+    en: Suspension trainer row
+    sv: Rodd i slingtränare
+  metrics: [reps]
+  equipment: [suspension-trainer, bodyweight]
+  tags: [back, horizontal-pull, lats, bodyweight]
+
+- key: pull-up
+  names:
+    en: Pull-up
+    sv: Chins med överhandsgrepp
+  metrics: [weight, reps]
+  equipment: [bodyweight, pull-up-bar]
+  tags: [back, vertical-pull, lats, biceps, bodyweight, compound]
+
+- key: chin-up
+  names:
+    en: Chin-up
+    sv: Chins med underhandsgrepp
+  metrics: [weight, reps]
+  equipment: [bodyweight, pull-up-bar]
+  tags: [back, vertical-pull, lats, biceps, bodyweight, compound]
+
+- key: wide-grip-pull-up
+  names:
+    en: Wide-grip pull-up
+    sv: Chins med brett grepp
+  metrics: [weight, reps]
+  equipment: [bodyweight, pull-up-bar]
+  tags: [back, vertical-pull, lats, bodyweight, compound]
+
+- key: neutral-grip-pull-up
+  names:
+    en: Neutral-grip pull-up
+    sv: Chins med neutralt grepp
+  metrics: [weight, reps]
+  equipment: [bodyweight, pull-up-bar]
+  tags: [back, vertical-pull, lats, biceps, bodyweight, compound]
+
+- key: weighted-pull-up
+  names:
+    en: Weighted pull-up
+    sv: Chins med vikt
+  metrics: [weight, reps]
+  equipment: [bodyweight, pull-up-bar, weight-vest]
+  tags: [back, vertical-pull, lats, biceps, compound]
+
+- key: machine-assisted-pull-up
+  names:
+    en: Machine assisted pull-up
+    sv: Chins i assisterad maskin
+  metrics: [weight, reps]
+  equipment: [machine]
+  tags: [back, vertical-pull, lats, biceps, compound]
+
+- key: band-assisted-pull-up
+  names:
+    en: Band assisted pull-up
+    sv: Chins med gummiband
+  metrics: [reps]
+  equipment: [band, pull-up-bar, bodyweight]
+  tags: [back, vertical-pull, lats, biceps]
+
+- key: lat-pulldown
+  names:
+    en: Lat pulldown
+    sv: Latsdrag
+  metrics: [weight, reps]
+  equipment: [cable]
+  tags: [back, vertical-pull, lats, biceps, compound]
+
+# Two grips, two entries: the narrow one lets the elbows travel past the ribs
+# and the lats finish the rep, which the wide one never asks for.
+- key: close-grip-lat-pulldown
+  names:
+    en: Close-grip lat pulldown
+    sv: Latsdrag med smalt grepp
+  metrics: [weight, reps]
+  equipment: [cable]
+  tags: [back, vertical-pull, lats, biceps, compound]
+
+- key: wide-grip-lat-pulldown
+  names:
+    en: Wide-grip lat pulldown
+    sv: Latsdrag med brett grepp
+  metrics: [weight, reps]
+  equipment: [cable]
+  tags: [back, vertical-pull, lats, compound]
+
+- key: machine-lat-pulldown
+  names:
+    en: Machine lat pulldown
+    sv: Latsdrag i maskin
+  metrics: [weight, reps]
+  equipment: [machine]
+  tags: [back, vertical-pull, lats, compound]
+
+- key: band-lat-pulldown
+  names:
+    en: Band lat pulldown
+    sv: Latsdrag med gummiband
+  metrics: [weight, reps]
+  equipment: [band]
+  tags: [back, vertical-pull, lats]
+
+- key: barbell-shrug
+  names:
+    en: Barbell shrug
+    sv: Axelryck med skivstång
+  metrics: [weight, reps]
+  equipment: [barbell]
+  tags: [back, traps, isolation]
+
+- key: dumbbell-shrug
+  names:
+    en: Dumbbell shrug
+    sv: Axelryck med hantlar
+  metrics: [weight, reps]
+  equipment: [dumbbell]
+  tags: [back, traps, isolation]
+
+- key: machine-shrug
+  names:
+    en: Machine shrug
+    sv: Axelryck i maskin
+  metrics: [weight, reps]
+  equipment: [machine]
+  tags: [back, traps, isolation]

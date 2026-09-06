@@ -125,6 +125,19 @@ export const flows: Flow[] = [
     name: 'exercise',
     personas: everybody,
     steps: [
+      // The library sheet, which is what a first session picks from instead of
+      // typing an exercise out.
+      {
+        act: async (page) => {
+          await page.goto('/exercises/create')
+          await page.getByRole('button', { name: 'Choose from the library' }).click()
+          await page
+            .getByRole('dialog')
+            .getByRole('searchbox', { name: 'Search the library' })
+            .fill('bench')
+        },
+        name: 'library',
+      },
       {
         act: async (page) => {
           await page.goto('/exercises/create')

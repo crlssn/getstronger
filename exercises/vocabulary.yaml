@@ -1,0 +1,113 @@
+# The controlled vocabularies every entry in this directory is written against.
+#
+# A tag or an implement not listed here is a typo, and the schema test says so.
+# This file is the source: `mise run gen:exercises` compiles it into
+# web/src/exercises/vocabulary.ts alongside the catalogue, so a term is added
+# once, here.
+
+# The muscle group an entry belongs to. One file per group, and every entry in
+# that file leads with its group tag.
+groups:
+  arms: elbow flexion and extension trained for themselves
+  back: the pulling musculature
+  cardio: trained for the engine rather than the muscle
+  chest: the pectorals
+  core: the trunk, braced or flexed
+  full-body: "no one group owns it — olympic lifts, carries, conditioning"
+  glutes: hip extension trained for itself
+  legs: knee-dominant lower body
+  shoulders: the deltoids
+
+# What the movement trains, finer than the group.
+muscles:
+  - abductors
+  - abs
+  - adductors
+  - biceps
+  - calves
+  - forearms
+  - front-delts
+  - hamstrings
+  - hip-flexors
+  - lats
+  - lower-back
+  - lower-chest
+  - obliques
+  - quadriceps
+  - rear-delts
+  - rhomboids
+  - serratus
+  - side-delts
+  - traps
+  - triceps
+  - upper-chest
+
+# The movement pattern. The library's coverage is measured across these, so an
+# entry that is one of them says so.
+patterns:
+  - anti-extension
+  - anti-lateral-flexion
+  - anti-rotation
+  - carry
+  - hinge
+  - horizontal-pull
+  - horizontal-push
+  - lunge
+  - rotation
+  - squat
+  - vertical-pull
+  - vertical-push
+
+# How the movement is trained, where that changes what it is for.
+qualities:
+  - bodyweight
+  - compound
+  - conditioning
+  - isolation
+  - isometric
+  - olympic
+  - plyometric
+  - unilateral
+
+# What the movement is performed with. Read by nothing outside this directory
+# yet, so filtering by what a gym has is a later change and not a migration.
+equipment:
+  - ab-wheel
+  - air-bike
+  - band
+  - barbell
+  - battle-ropes
+  - bench
+  - bodyweight
+  - box
+  - cable
+  - decline-bench
+  - dip-bars
+  - dumbbell
+  - elliptical
+  - ez-bar
+  - glute-ham-bench
+  - hyperextension-bench
+  - incline-bench
+  - jump-rope
+  - kettlebell
+  - landmine
+  - machine
+  - medicine-ball
+  - plate
+  - preacher-bench
+  - pull-up-bar
+  - rings
+  - rower
+  - sandbag
+  - ski-erg
+  - sled
+  - smith-machine
+  - squat-rack
+  - stability-ball
+  - stair-climber
+  - stationary-bike
+  - suspension-trainer
+  - trap-bar
+  - treadmill
+  - weight-vest

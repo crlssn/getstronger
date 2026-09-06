@@ -1,0 +1,277 @@
+# Arms — elbow flexion and extension trained for themselves.
+#
+# A row builds biceps and a press builds triceps; those live with the muscle
+# they are programmed for. What is here is the work done because the arm is the
+# point of it.
+
+- key: barbell-curl
+  names:
+    en: Barbell curl
+    sv: Bicepscurl med skivstång
+  metrics: [weight, reps]
+  equipment: [barbell]
+  tags: [arms, biceps, isolation]
+
+- key: ez-bar-curl
+  names:
+    en: EZ-bar curl
+    sv: Bicepscurl med EZ-stång
+  metrics: [weight, reps]
+  equipment: [ez-bar]
+  tags: [arms, biceps, isolation]
+
+- key: barbell-reverse-curl
+  names:
+    en: Reverse curl
+    sv: Omvänd curl med skivstång
+  metrics: [weight, reps]
+  equipment: [barbell]
+  tags: [arms, forearms, biceps, isolation]
+
+- key: dumbbell-curl
+  names:
+    en: Dumbbell curl
+    sv: Bicepscurl med hantlar
+  metrics: [weight, reps]
+  equipment: [dumbbell]
+  tags: [arms, biceps, isolation]
+
+- key: dumbbell-hammer-curl
+  names:
+    en: Dumbbell hammer curl
+    sv: Hammarcurl med hantlar
+  metrics: [weight, reps]
+  equipment: [dumbbell]
+  tags: [arms, biceps, forearms, isolation]
+
+- key: dumbbell-incline-curl
+  names:
+    en: Dumbbell incline curl
+    sv: Lutande bicepscurl med hantlar
+  metrics: [weight, reps]
+  equipment: [dumbbell, incline-bench]
+  tags: [arms, biceps, isolation]
+
+- key: dumbbell-concentration-curl
+  names:
+    en: Concentration curl
+    sv: Koncentrationscurl med hantel
+  metrics: [weight, reps]
+  equipment: [dumbbell]
+  tags: [arms, biceps, unilateral, isolation]
+
+- key: dumbbell-spider-curl
+  names:
+    en: Spider curl
+    sv: Spidercurl med hantlar
+  metrics: [weight, reps]
+  equipment: [dumbbell, incline-bench]
+  tags: [arms, biceps, isolation]
+
+- key: zottman-curl
+  names:
+    en: Zottman curl
+    sv: Zottmancurl
+  metrics: [weight, reps]
+  equipment: [dumbbell]
+  tags: [arms, biceps, forearms, isolation]
+
+- key: preacher-curl
+  names:
+    en: Preacher curl
+    sv: Scottcurl
+  metrics: [weight, reps]
+  equipment: [ez-bar, preacher-bench]
+  tags: [arms, biceps, isolation]
+
+- key: machine-preacher-curl
+  names:
+    en: Machine preacher curl
+    sv: Scottcurl i maskin
+  metrics: [weight, reps]
+  equipment: [machine]
+  tags: [arms, biceps, isolation]
+
+- key: kettlebell-curl
+  names:
+    en: Kettlebell curl
+    sv: Bicepscurl med kettlebell
+  metrics: [weight, reps]
+  equipment: [kettlebell]
+  tags: [arms, biceps, isolation]
+
+- key: cable-curl
+  names:
+    en: Cable curl
+    sv: Bicepscurl i kabel
+  metrics: [weight, reps]
+  equipment: [cable]
+  tags: [arms, biceps, isolation]
+
+- key: cable-hammer-curl
+  names:
+    en: Cable hammer curl
+    sv: Hammarcurl i kabel
+  metrics: [weight, reps]
+  equipment: [cable]
+  tags: [arms, biceps, forearms, isolation]
+
+- key: band-curl
+  names:
+    en: Band curl
+    sv: Bicepscurl med gummiband
+  metrics: [weight, reps]
+  equipment: [band]
+  tags: [arms, biceps, isolation]
+
+- key: barbell-close-grip-bench-press
+  names:
+    en: Close-grip bench press
+    sv: Bänkpress med smalt grepp
+  metrics: [weight, reps]
+  equipment: [barbell, bench]
+  tags: [arms, triceps, horizontal-push, front-delts, compound]
+
+- key: ez-bar-skull-crusher
+  names:
+    en: EZ-bar skull crusher
+    sv: Fransk press med EZ-stång
+  metrics: [weight, reps]
+  equipment: [ez-bar, bench]
+  tags: [arms, triceps, isolation]
+
+- key: dumbbell-lying-triceps-extension
+  names:
+    en: Dumbbell lying triceps extension
+    sv: Liggande tricepspress med hantlar
+  metrics: [weight, reps]
+  equipment: [dumbbell, bench]
+  tags: [arms, triceps, isolation]
+
+- key: dumbbell-overhead-triceps-extension
+  names:
+    en: Dumbbell overhead triceps extension
+    sv: Tricepspress över huvudet med hantel
+  metrics: [weight, reps]
+  equipment: [dumbbell]
+  tags: [arms, triceps, isolation]
+
+- key: dumbbell-triceps-kickback
+  names:
+    en: Dumbbell triceps kickback
+    sv: Tricepskickback med hantlar
+  metrics: [weight, reps]
+  equipment: [dumbbell]
+  tags: [arms, triceps, isolation]
+
+- key: kettlebell-overhead-triceps-extension
+  names:
+    en: Kettlebell overhead triceps extension
+    sv: Tricepspress över huvudet med kettlebell
+  metrics: [weight, reps]
+  equipment: [kettlebell]
+  tags: [arms, triceps, isolation]
+
+- key: cable-triceps-pushdown
+  names:
+    en: Cable triceps pushdown
+    sv: Tricepspress i kabel
+  metrics: [weight, reps]
+  equipment: [cable]
+  tags: [arms, triceps, isolation]
+
+- key: cable-overhead-triceps-extension
+  names:
+    en: Cable overhead triceps extension
+    sv: Tricepspress över huvudet i kabel
+  metrics: [weight, reps]
+  equipment: [cable]
+  tags: [arms, triceps, isolation]
+
+- key: cable-single-arm-pushdown
+  names:
+    en: Single-arm cable pushdown
+    sv: Enarms tricepspress i kabel
+  metrics: [weight, reps]
+  equipment: [cable]
+  tags: [arms, triceps, unilateral, isolation]
+
+- key: machine-triceps-extension
+  names:
+    en: Machine triceps extension
+    sv: Tricepspress i maskin
+  metrics: [weight, reps]
+  equipment: [machine]
+  tags: [arms, triceps, isolation]
+
+- key: machine-assisted-dip
+  names:
+    en: Machine assisted dip
+    sv: Dips i assisterad maskin
+  metrics: [weight, reps]
+  equipment: [machine]
+  tags: [arms, triceps, vertical-push, compound]
+
+- key: band-triceps-pushdown
+  names:
+    en: Band triceps pushdown
+    sv: Tricepspress med gummiband
+  metrics: [weight, reps]
+  equipment: [band]
+  tags: [arms, triceps, isolation]
+
+- key: triceps-dip
+  names:
+    en: Triceps dip
+    sv: Dips för triceps
+  metrics: [weight, reps]
+  equipment: [bodyweight, dip-bars]
+  tags: [arms, triceps, vertical-push, bodyweight, compound]
+
+- key: bench-dip
+  names:
+    en: Bench dip
+    sv: Bänkdips
+  metrics: [reps]
+  equipment: [bodyweight, bench]
+  tags: [arms, triceps, bodyweight]
+
+- key: ring-dip
+  names:
+    en: Ring dip
+    sv: Dips i ringar
+  metrics: [weight, reps]
+  equipment: [rings, bodyweight]
+  tags: [arms, triceps, vertical-push, bodyweight]
+
+- key: diamond-push-up
+  names:
+    en: Diamond push-up
+    sv: Diamantarmhävning
+  metrics: [reps]
+  equipment: [bodyweight]
+  tags: [arms, triceps, horizontal-push, bodyweight]
+
+- key: barbell-wrist-curl
+  names:
+    en: Barbell wrist curl
+    sv: Handledscurl med skivstång
+  metrics: [weight, reps]
+  equipment: [barbell, bench]
+  tags: [arms, forearms, isolation]
+
+- key: dumbbell-reverse-wrist-curl
+  names:
+    en: Dumbbell reverse wrist curl
+    sv: Omvänd handledscurl med hantlar
+  metrics: [weight, reps]
+  equipment: [dumbbell, bench]
+  tags: [arms, forearms, isolation]
+
+- key: plate-pinch-hold
+  names:
+    en: Plate pinch hold
+    sv: Greppstyrka med viktskiva
+  metrics: [weight, time]
+  equipment: [plate]
+  tags: [arms, forearms, isometric]

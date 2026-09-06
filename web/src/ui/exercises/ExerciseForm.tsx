@@ -3,11 +3,14 @@ import type { ExerciseMetric } from '@/proto/api/v1/shared_pb'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { libraryName } from '@/exercises/library'
 import { listExerciseTags } from '@/http/requests'
+import { resolveLocale } from '@/i18n'
 import { AppButton } from '@/ui/components/AppButton'
 import { AppFormFooter } from '@/ui/components/AppFormFooter'
 import { AppInput } from '@/ui/components/AppInput'
 import { AppOptionalAction } from '@/ui/components/AppOptionalAction'
+import { ExerciseLibrarySheet } from '@/ui/exercises/ExerciseLibrarySheet'
 import { ExerciseMeasurementSettings } from '@/ui/exercises/ExerciseMeasurementSettings'
 import { ExerciseTagsInput } from '@/ui/exercises/ExerciseTagsInput'
 import styles from './ExerciseForm.module.css'
@@ -25,6 +28,11 @@ interface Props {
   submitLabel: string
   /** Whether what the exercise measures is settled by sets already logged. */
   metricsLocked?: boolean
+  /**
+   * Whether the form offers the exercise library to pick from. Creating an
+   * exercise does; renaming one that already has history does not.
+   */
+  offerLibrary?: boolean
   /** Why the last save failed, rendered inline beside the submit. */
   error?: string
 }
@@ -41,11 +49,13 @@ export const ExerciseForm = ({
   onSubmit,
   submitLabel,
   metricsLocked = false,
+  offerLibrary = false,
   error,
 }: Props) => {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const [suggestions, setSuggestions] = useState<string[]>([])
   const [tagsOpen, setTagsOpen] = useState(values.tags.length > 0)
+  const [libraryOpen, setLibraryOpen] = useState(false)
 
   useEffect(() => {
     const load = async () => setSuggestions(await listExerciseTags())
@@ -72,6 +82,36 @@ export const ExerciseForm = ({
         required
         onChange={(event) => update({ name: event.target.value })}
       />
+
+      {/* The library is a shortcut past the whole form, so it sits under the
+          field it fills rather than competing with the pinned submit. */}
+      {offerLibrary && (
+        <AppButton
+          className={styles.library}
+          type="button"
+          colour="secondary"
+          onClick={() => setLibraryOpen(true)}
+        >
+          {t('exercise.library.open')}
+        </AppButton>
+      )}
+
+      {libraryOpen && (
+        <ExerciseLibrarySheet
+          onClose={() => setLibraryOpen(false)}
+          onPick={(entry) => {
+            // Filled in, not settled: every field the entry touched is still
+            // the reader's to change before they save.
+            if (entry.tags.length) setTagsOpen(true)
+            update({
+              name: libraryName(entry, resolveLocale([i18n.language])),
+              metrics: [...entry.metrics],
+              tags: [...entry.tags],
+            })
+            setLibraryOpen(false)
+          }}
+        />
+      )}
 
       <ExerciseMeasurementSettings
         metrics={values.metrics}

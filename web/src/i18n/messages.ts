@@ -547,6 +547,13 @@ export const en = {
       tags: 'Tags',
       addTags: 'Add tags',
     },
+    library: {
+      open: 'Choose from the library',
+      title: 'Exercise library',
+      search: 'Search the library',
+      close: 'Close the library',
+      help: 'Pick one to fill in its name, measurements and tags.',
+    },
     tagInput: {
       listAria: 'Exercise tags',
       remove: 'Remove {name}',
@@ -1319,6 +1326,13 @@ export const sv = {
       updated: 'Övningen har uppdaterats',
       tags: 'Taggar',
       addTags: 'Lägg till taggar',
+    },
+    library: {
+      open: 'Välj ur biblioteket',
+      title: 'Övningsbibliotek',
+      search: 'Sök i biblioteket',
+      close: 'Stäng biblioteket',
+      help: 'Välj en för att fylla i namn, mått och taggar.',
     },
     tagInput: {
       listAria: 'Övningstaggar',

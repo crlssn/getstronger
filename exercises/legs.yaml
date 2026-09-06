@@ -1,0 +1,335 @@
+# Legs — knee-dominant lower body, plus the deadlifts that are trained as a
+# whole-leg lift rather than as hip work.
+#
+# The hinges programmed for the hips — Romanian deadlifts, hip thrusts, good
+# mornings — are in glutes.yaml.
+
+- key: barbell-back-squat
+  names:
+    en: Barbell back squat
+    sv: Knäböj med skivstång
+  metrics: [weight, reps]
+  equipment: [barbell, squat-rack]
+  tags: [legs, squat, quadriceps, glutes, compound]
+
+- key: barbell-front-squat
+  names:
+    en: Barbell front squat
+    sv: Frontböj med skivstång
+  metrics: [weight, reps]
+  equipment: [barbell, squat-rack]
+  tags: [legs, squat, quadriceps, glutes, compound]
+
+- key: barbell-box-squat
+  names:
+    en: Barbell box squat
+    sv: Boxknäböj med skivstång
+  metrics: [weight, reps]
+  equipment: [barbell, squat-rack, box]
+  tags: [legs, squat, quadriceps, glutes, compound]
+
+- key: barbell-pause-squat
+  names:
+    en: Barbell pause squat
+    sv: Knäböj med paus
+  metrics: [weight, reps]
+  equipment: [barbell, squat-rack]
+  tags: [legs, squat, quadriceps, compound]
+
+- key: zercher-squat
+  names:
+    en: Zercher squat
+    sv: Zercherböj
+  metrics: [weight, reps]
+  equipment: [barbell]
+  tags: [legs, squat, quadriceps, abs, compound]
+
+- key: smith-machine-squat
+  names:
+    en: Smith machine squat
+    sv: Knäböj i smithmaskin
+  metrics: [weight, reps]
+  equipment: [smith-machine]
+  tags: [legs, squat, quadriceps, glutes, compound]
+
+- key: dumbbell-squat
+  names:
+    en: Dumbbell squat
+    sv: Knäböj med hantlar
+  metrics: [weight, reps]
+  equipment: [dumbbell]
+  tags: [legs, squat, quadriceps, glutes, compound]
+
+- key: dumbbell-goblet-squat
+  names:
+    en: Dumbbell goblet squat
+    sv: Goblet squat med hantel
+  metrics: [weight, reps]
+  equipment: [dumbbell]
+  tags: [legs, squat, quadriceps, glutes, compound]
+
+- key: kettlebell-goblet-squat
+  names:
+    en: Kettlebell goblet squat
+    sv: Goblet squat med kettlebell
+  metrics: [weight, reps]
+  equipment: [kettlebell]
+  tags: [legs, squat, quadriceps, glutes, compound]
+
+- key: kettlebell-front-squat
+  names:
+    en: Kettlebell front squat
+    sv: Frontböj med kettlebell
+  metrics: [weight, reps]
+  equipment: [kettlebell]
+  tags: [legs, squat, quadriceps, compound]
+
+- key: bodyweight-squat
+  names:
+    en: Bodyweight squat
+    sv: Knäböj med kroppsvikt
+  metrics: [reps]
+  equipment: [bodyweight]
+  tags: [legs, squat, quadriceps, glutes, bodyweight]
+
+- key: jump-squat
+  names:
+    en: Jump squat
+    sv: Hoppknäböj
+  metrics: [reps]
+  equipment: [bodyweight]
+  tags: [legs, squat, quadriceps, plyometric, bodyweight]
+
+- key: pistol-squat
+  names:
+    en: Pistol squat
+    sv: Enbensknäböj
+  metrics: [weight, reps]
+  equipment: [bodyweight]
+  tags: [legs, squat, quadriceps, unilateral, bodyweight]
+
+- key: wall-sit
+  names:
+    en: Wall sit
+    sv: Väggsits
+  metrics: [time]
+  equipment: [bodyweight]
+  tags: [legs, quadriceps, isometric, bodyweight]
+
+- key: machine-hack-squat
+  names:
+    en: Machine hack squat
+    sv: Hack squat i maskin
+  metrics: [weight, reps]
+  equipment: [machine]
+  tags: [legs, squat, quadriceps, glutes, compound]
+
+- key: leg-press
+  names:
+    en: Leg press
+    sv: Benpress
+  metrics: [weight, reps]
+  equipment: [machine]
+  tags: [legs, squat, quadriceps, glutes, compound]
+
+- key: single-leg-press
+  names:
+    en: Single-leg press
+    sv: Enbens benpress
+  metrics: [weight, reps]
+  equipment: [machine]
+  tags: [legs, squat, quadriceps, unilateral, compound]
+
+- key: machine-belt-squat
+  names:
+    en: Machine belt squat
+    sv: Bältesböj i maskin
+  metrics: [weight, reps]
+  equipment: [machine]
+  tags: [legs, squat, quadriceps, glutes, compound]
+
+- key: barbell-deadlift
+  names:
+    en: Barbell deadlift
+    sv: Marklyft med skivstång
+  metrics: [weight, reps]
+  equipment: [barbell]
+  tags: [legs, hinge, hamstrings, glutes, lower-back, traps, compound]
+
+- key: barbell-sumo-deadlift
+  names:
+    en: Barbell sumo deadlift
+    sv: Sumomarklyft med skivstång
+  metrics: [weight, reps]
+  equipment: [barbell]
+  tags: [legs, hinge, glutes, adductors, hamstrings, compound]
+
+- key: barbell-deficit-deadlift
+  names:
+    en: Barbell deficit deadlift
+    sv: Marklyft från förhöjning
+  metrics: [weight, reps]
+  equipment: [barbell]
+  tags: [legs, hinge, hamstrings, glutes, lower-back, compound]
+
+- key: trap-bar-deadlift
+  names:
+    en: Trap bar deadlift
+    sv: Marklyft med trap bar
+  metrics: [weight, reps]
+  equipment: [trap-bar]
+  tags: [legs, hinge, quadriceps, glutes, hamstrings, compound]
+
+- key: nordic-hamstring-curl
+  names:
+    en: Nordic hamstring curl
+    sv: Nordisk hamstringcurl
+  metrics: [reps]
+  equipment: [bodyweight, glute-ham-bench]
+  tags: [legs, hinge, hamstrings, bodyweight, compound]
+
+- key: barbell-lunge
+  names:
+    en: Barbell lunge
+    sv: Utfallssteg med skivstång
+  metrics: [weight, reps]
+  equipment: [barbell]
+  tags: [legs, lunge, quadriceps, glutes, unilateral, compound]
+
+- key: barbell-split-squat
+  names:
+    en: Barbell split squat
+    sv: Split squat med skivstång
+  metrics: [weight, reps]
+  equipment: [barbell]
+  tags: [legs, lunge, quadriceps, glutes, unilateral, compound]
+
+- key: dumbbell-walking-lunge
+  names:
+    en: Dumbbell walking lunge
+    sv: Gående utfall med hantlar
+  metrics: [weight, reps]
+  equipment: [dumbbell]
+  tags: [legs, lunge, quadriceps, glutes, unilateral, compound]
+
+- key: dumbbell-reverse-lunge
+  names:
+    en: Dumbbell reverse lunge
+    sv: Utfall bakåt med hantlar
+  metrics: [weight, reps]
+  equipment: [dumbbell]
+  tags: [legs, lunge, quadriceps, glutes, unilateral]
+
+- key: dumbbell-bulgarian-split-squat
+  names:
+    en: Dumbbell Bulgarian split squat
+    sv: Bulgarisk utfallsböj med hantlar
+  metrics: [weight, reps]
+  equipment: [dumbbell, bench]
+  tags: [legs, lunge, quadriceps, glutes, unilateral, compound]
+
+- key: dumbbell-lateral-lunge
+  names:
+    en: Dumbbell lateral lunge
+    sv: Sidoutfall med hantlar
+  metrics: [weight, reps]
+  equipment: [dumbbell]
+  tags: [legs, lunge, adductors, quadriceps, unilateral]
+
+- key: dumbbell-step-up
+  names:
+    en: Dumbbell step-up
+    sv: Uppsteg med hantlar
+  metrics: [weight, reps]
+  equipment: [dumbbell, box]
+  tags: [legs, lunge, quadriceps, glutes, unilateral]
+
+- key: kettlebell-reverse-lunge
+  names:
+    en: Kettlebell reverse lunge
+    sv: Utfall bakåt med kettlebell
+  metrics: [weight, reps]
+  equipment: [kettlebell]
+  tags: [legs, lunge, quadriceps, glutes, unilateral]
+
+- key: bodyweight-lunge
+  names:
+    en: Bodyweight lunge
+    sv: Utfallssteg med kroppsvikt
+  metrics: [reps]
+  equipment: [bodyweight]
+  tags: [legs, lunge, quadriceps, glutes, unilateral, bodyweight]
+
+- key: machine-leg-extension
+  names:
+    en: Leg extension
+    sv: Benspark i maskin
+  metrics: [weight, reps]
+  equipment: [machine]
+  tags: [legs, quadriceps, isolation]
+
+- key: machine-lying-leg-curl
+  names:
+    en: Lying leg curl
+    sv: Liggande lårcurl i maskin
+  metrics: [weight, reps]
+  equipment: [machine]
+  tags: [legs, hamstrings, isolation]
+
+# Seated and lying are two entries: the hip angle changes which end of the
+# hamstring does the work, and the loads do not transfer.
+- key: machine-seated-leg-curl
+  names:
+    en: Seated leg curl
+    sv: Sittande lårcurl i maskin
+  metrics: [weight, reps]
+  equipment: [machine]
+  tags: [legs, hamstrings, isolation]
+
+- key: band-leg-curl
+  names:
+    en: Band leg curl
+    sv: Lårcurl med gummiband
+  metrics: [weight, reps]
+  equipment: [band]
+  tags: [legs, hamstrings, isolation]
+
+- key: standing-calf-raise
+  names:
+    en: Standing calf raise
+    sv: Stående tåhävning
+  metrics: [weight, reps]
+  equipment: [machine]
+  tags: [legs, calves, isolation]
+
+- key: seated-calf-raise
+  names:
+    en: Seated calf raise
+    sv: Sittande tåhävning
+  metrics: [weight, reps]
+  equipment: [machine]
+  tags: [legs, calves, isolation]
+
+- key: dumbbell-calf-raise
+  names:
+    en: Dumbbell calf raise
+    sv: Tåhävning med hantlar
+  metrics: [weight, reps]
+  equipment: [dumbbell]
+  tags: [legs, calves, isolation]
+
+- key: barbell-calf-raise
+  names:
+    en: Barbell calf raise
+    sv: Tåhävning med skivstång
+  metrics: [weight, reps]
+  equipment: [barbell]
+  tags: [legs, calves, isolation]
+
+- key: machine-hip-adduction
+  names:
+    en: Hip adduction
+    sv: Adduktion i maskin
+  metrics: [weight, reps]
+  equipment: [machine]
+  tags: [legs, adductors, isolation]

@@ -25,13 +25,39 @@ func (f *Factory) NewExerciseSlice(count int, opts ...ExerciseOpt) models.Exerci
 
 type ExerciseOpt func(exercise *models.ExerciseSetter)
 
+// The exercise titles the seed uses, spelled the way the library in exercises/
+// spells them. A persona training "RDL" while the library calls the movement a
+// Romanian deadlift is the drift the library exists to stop, so the two are
+// kept in step and exercise_library_test.go fails when they part.
+const (
+	TitleBenchPress       = "Barbell bench press"
+	TitleBackSquat        = "Barbell back squat"
+	TitleDeadlift         = "Barbell deadlift"
+	TitleBarbellRow       = "Barbell row"
+	TitleOverheadPress    = "Barbell overhead press"
+	TitlePullUp           = "Pull-up"
+	TitlePushUp           = "Push-up"
+	TitleWalkingLunge     = "Dumbbell walking lunge"
+	TitleLatPulldown      = "Lat pulldown"
+	TitleDumbbellCurl     = "Dumbbell curl"
+	TitleRomanianDeadlift = "Barbell Romanian deadlift"
+	TitleRun              = "Run"
+)
+
 // The titles a seeded exercise is drawn from. Fixtures that need a particular
-// one ask for it with ExerciseTitle.
+// one ask for it with ExerciseTitle. All of them measure weight and reps,
+// which is what a seeded set is logged in.
 func exerciseTitles() []string {
 	return []string{
-		"Bench Press", "Deadlifts", "Squats", "Pull-Ups", "Push-Ups",
-		"Shoulder Press", "Rows", "Plank", "Burpees", "Lunges",
+		TitleBenchPress, TitleBackSquat, TitleDeadlift, TitleBarbellRow, TitleOverheadPress,
+		TitlePullUp, TitlePushUp, TitleWalkingLunge, TitleLatPulldown, TitleDumbbellCurl,
 	}
+}
+
+// SeedExerciseTitles is every exercise title a seeded persona trains, the ones
+// drawn at random and the ones named outright.
+func SeedExerciseTitles() []string {
+	return append(exerciseTitles(), TitleRomanianDeadlift, TitleRun)
 }
 
 func (f *Factory) NewExercise(opts ...ExerciseOpt) *models.Exercise {

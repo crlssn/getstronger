@@ -1,0 +1,260 @@
+# Core — the trunk, braced or flexed.
+#
+# Most of it is measured in seconds rather than reps, which is why so many
+# entries here declare `time`: a plank logged as "3 sets of 1" says nothing.
+
+- key: plank
+  names:
+    en: Plank
+    sv: Planka
+  metrics: [time]
+  equipment: [bodyweight]
+  tags: [core, abs, anti-extension, isometric, bodyweight]
+
+- key: weighted-plank
+  names:
+    en: Weighted plank
+    sv: Planka med vikt
+  metrics: [weight, time]
+  equipment: [bodyweight, plate]
+  tags: [core, abs, anti-extension, isometric]
+
+- key: side-plank
+  names:
+    en: Side plank
+    sv: Sidoplanka
+  metrics: [time]
+  equipment: [bodyweight]
+  tags: [core, obliques, anti-lateral-flexion, isometric, bodyweight]
+
+- key: copenhagen-plank
+  names:
+    en: Copenhagen plank
+    sv: Copenhagenplanka
+  metrics: [time]
+  equipment: [bodyweight, bench]
+  tags: [core, adductors, anti-lateral-flexion, isometric, bodyweight]
+
+- key: hollow-body-hold
+  names:
+    en: Hollow body hold
+    sv: Hollow hold
+  metrics: [time]
+  equipment: [bodyweight]
+  tags: [core, abs, anti-extension, isometric, bodyweight]
+
+- key: l-sit
+  names:
+    en: L-sit
+    sv: L-sit
+  metrics: [time]
+  equipment: [bodyweight, dip-bars]
+  tags: [core, abs, hip-flexors, isometric, bodyweight]
+
+- key: dead-bug
+  names:
+    en: Dead bug
+    sv: Dead bug
+  metrics: [reps]
+  equipment: [bodyweight]
+  tags: [core, abs, anti-extension, bodyweight]
+
+- key: bird-dog
+  names:
+    en: Bird dog
+    sv: Bird dog
+  metrics: [reps]
+  equipment: [bodyweight]
+  tags: [core, abs, anti-rotation, bodyweight]
+
+- key: crunch
+  names:
+    en: Crunch
+    sv: Crunch
+  metrics: [reps]
+  equipment: [bodyweight]
+  tags: [core, abs, bodyweight]
+
+- key: sit-up
+  names:
+    en: Sit-up
+    sv: Situps
+  metrics: [reps]
+  equipment: [bodyweight]
+  tags: [core, abs, hip-flexors, bodyweight]
+
+- key: bicycle-crunch
+  names:
+    en: Bicycle crunch
+    sv: Cykelcrunch
+  metrics: [reps]
+  equipment: [bodyweight]
+  tags: [core, abs, obliques, bodyweight]
+
+- key: reverse-crunch
+  names:
+    en: Reverse crunch
+    sv: Omvänd crunch
+  metrics: [reps]
+  equipment: [bodyweight]
+  tags: [core, abs, hip-flexors, bodyweight]
+
+- key: v-up
+  names:
+    en: V-up
+    sv: V-ups
+  metrics: [reps]
+  equipment: [bodyweight]
+  tags: [core, abs, hip-flexors, bodyweight]
+
+- key: flutter-kick
+  names:
+    en: Flutter kick
+    sv: Saxsparkar
+  metrics: [time]
+  equipment: [bodyweight]
+  tags: [core, abs, hip-flexors, bodyweight]
+
+- key: mountain-climber
+  names:
+    en: Mountain climber
+    sv: Mountain climbers
+  metrics: [time]
+  equipment: [bodyweight]
+  tags: [core, abs, conditioning, bodyweight]
+
+- key: hanging-knee-raise
+  names:
+    en: Hanging knee raise
+    sv: Hängande knälyft
+  metrics: [reps]
+  equipment: [bodyweight, pull-up-bar]
+  tags: [core, abs, hip-flexors, bodyweight]
+
+- key: hanging-leg-raise
+  names:
+    en: Hanging leg raise
+    sv: Hängande benlyft
+  metrics: [weight, reps]
+  equipment: [bodyweight, pull-up-bar]
+  tags: [core, abs, hip-flexors, bodyweight]
+
+- key: toes-to-bar
+  names:
+    en: Toes to bar
+    sv: Tår till stång
+  metrics: [reps]
+  equipment: [bodyweight, pull-up-bar]
+  tags: [core, abs, hip-flexors, bodyweight]
+
+- key: ab-wheel-rollout
+  names:
+    en: Ab wheel rollout
+    sv: Utrullning med rullhjul
+  metrics: [reps]
+  equipment: [ab-wheel]
+  tags: [core, abs, anti-extension]
+
+- key: barbell-rollout
+  names:
+    en: Barbell rollout
+    sv: Utrullning med skivstång
+  metrics: [reps]
+  equipment: [barbell]
+  tags: [core, abs, anti-extension]
+
+- key: stability-ball-rollout
+  names:
+    en: Stability ball rollout
+    sv: Utrullning med gymboll
+  metrics: [reps]
+  equipment: [stability-ball]
+  tags: [core, abs, anti-extension]
+
+- key: stability-ball-crunch
+  names:
+    en: Stability ball crunch
+    sv: Crunch på gymboll
+  metrics: [reps]
+  equipment: [stability-ball]
+  tags: [core, abs]
+
+- key: cable-crunch
+  names:
+    en: Cable crunch
+    sv: Crunch i kabel
+  metrics: [weight, reps]
+  equipment: [cable]
+  tags: [core, abs, isolation]
+
+- key: cable-woodchop
+  names:
+    en: Cable woodchop
+    sv: Vedhuggning i kabel
+  metrics: [weight, reps]
+  equipment: [cable]
+  tags: [core, obliques, rotation]
+
+- key: cable-pallof-press
+  names:
+    en: Cable Pallof press
+    sv: Pallofpress i kabel
+  metrics: [weight, reps]
+  equipment: [cable]
+  tags: [core, abs, anti-rotation]
+
+- key: band-pallof-press
+  names:
+    en: Band Pallof press
+    sv: Pallofpress med gummiband
+  metrics: [weight, reps]
+  equipment: [band]
+  tags: [core, abs, anti-rotation]
+
+- key: band-woodchop
+  names:
+    en: Band woodchop
+    sv: Vedhuggning med gummiband
+  metrics: [weight, reps]
+  equipment: [band]
+  tags: [core, obliques, rotation]
+
+- key: machine-crunch
+  names:
+    en: Machine crunch
+    sv: Magböj i maskin
+  metrics: [weight, reps]
+  equipment: [machine]
+  tags: [core, abs, isolation]
+
+- key: machine-torso-rotation
+  names:
+    en: Machine torso rotation
+    sv: Bålrotation i maskin
+  metrics: [weight, reps]
+  equipment: [machine]
+  tags: [core, obliques, rotation, isolation]
+
+- key: dumbbell-side-bend
+  names:
+    en: Dumbbell side bend
+    sv: Sidoböj med hantel
+  metrics: [weight, reps]
+  equipment: [dumbbell]
+  tags: [core, obliques, anti-lateral-flexion, isolation]
+
+- key: dumbbell-russian-twist
+  names:
+    en: Dumbbell Russian twist
+    sv: Rysk twist med hantel
+  metrics: [weight, reps]
+  equipment: [dumbbell]
+  tags: [core, obliques, rotation]
+
+- key: medicine-ball-russian-twist
+  names:
+    en: Medicine ball Russian twist
+    sv: Rysk twist med medicinboll
+  metrics: [reps]
+  equipment: [medicine-ball]
+  tags: [core, obliques, rotation]

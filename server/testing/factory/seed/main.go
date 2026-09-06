@@ -221,7 +221,7 @@ END $$;`
 func seedActiveRuns(f *factory.Factory, active *models.User) {
 	run := f.NewExercise(
 		factory.ExerciseUserID(active.ID),
-		factory.ExerciseTitle("Run"),
+		factory.ExerciseTitle(factory.TitleRun),
 		factory.ExerciseTags("Cardio"),
 		factory.ExerciseMetrics("distance", "time"),
 	)
@@ -298,22 +298,22 @@ func seedJaneDoe(exec bob.Executor, f *factory.Factory, active *models.User) *mo
 
 	squat := f.NewExercise(
 		factory.ExerciseUserID(jane.ID),
-		factory.ExerciseTitle("Back Squat"),
+		factory.ExerciseTitle(factory.TitleBackSquat),
 		factory.ExerciseTags("Lower body", "Compound"),
 	)
 	bench := f.NewExercise(
 		factory.ExerciseUserID(jane.ID),
-		factory.ExerciseTitle("Bench Press"),
+		factory.ExerciseTitle(factory.TitleBenchPress),
 		factory.ExerciseTags("Upper body", "Push"),
 	)
 	rdl := f.NewExercise(
 		factory.ExerciseUserID(jane.ID),
-		factory.ExerciseTitle("Romanian Deadlift"),
+		factory.ExerciseTitle(factory.TitleRomanianDeadlift),
 		factory.ExerciseTags("Lower body", "Hinge"),
 	)
 	pulldown := f.NewExercise(
 		factory.ExerciseUserID(jane.ID),
-		factory.ExerciseTitle("Lat Pulldown"),
+		factory.ExerciseTitle(factory.TitleLatPulldown),
 		factory.ExerciseTags("Upper body", "Pull"),
 	)
 
