@@ -1,14 +1,16 @@
-import type { ComponentProps, ReactNode } from 'react'
+import type { ReactNode } from 'react'
 
 import { Link } from 'react-router-dom'
 
 import { cn } from '@/ui/cn'
 import styles from './AppListItem.module.css'
 
-interface Props extends ComponentProps<'li'> {
+interface Props {
   /** `danger` for a destructive row, `header` for a section label. */
   is?: 'danger' | 'header'
   children: ReactNode
+  /** Positions the row. Its own styling is never replaced. */
+  className?: string
 }
 
 /**
@@ -20,10 +22,8 @@ interface Props extends ComponentProps<'li'> {
  * title, meta or trailing is not a list row: it belongs in `<AppOptionRow>`,
  * `<AppPreferenceRow>`, or a widget of its own in ui/features.
  */
-export const AppListItem = ({ is, children, className, ...rest }: Props) => (
-  <li className={cn(styles.item, is && styles[is], className)} {...rest}>
-    {children}
-  </li>
+export const AppListItem = ({ is, children, className }: Props) => (
+  <li className={cn(styles.item, is && styles[is], className)}>{children}</li>
 )
 
 interface LinkItemProps {
