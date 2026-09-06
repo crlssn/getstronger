@@ -33,9 +33,12 @@ const (
 	guidedLoopNorthMetre = 700.0
 
 	guidedStationsPerRound = 2
+	guidedArcStepMetres    = 0.1
 
-	metresPerDegree    = 111_320.0
-	earthRadius        = 6_371_000.0
+	earthRadius = 6_371_000.0
+	// Derived from the same sphere the haversine measures on, so a metre laid
+	// down here reads as a metre when the route is measured back.
+	metresPerDegree    = earthRadius * math.Pi / degreesPerHalfTurn
 	metresPerKm        = 1000.0
 	degreesPerHalfTurn = 180.0
 )
@@ -162,11 +165,17 @@ func recordGuidedCircuit(walk, run *models.Exercise, finishedAt time.Time) recor
 			Accuracy:  guidedFixAccuracy,
 		})
 
-		// Advance along the ellipse by what the pace covers in one interval,
-		// dividing by the arc length one radian spans at this angle.
-		metres := recording.paceAt(elapsed) * guidedFixInterval.Seconds()
-		arc := math.Hypot(guidedLoopEastMetres*math.Sin(angle), guidedLoopNorthMetre*math.Cos(angle))
-		angle += metres / arc
+		// Advance along the ellipse by what the pace covers in one interval, in
+		// small steps so the arc length is read where each step is taken: one
+		// step per fix drifted the intervals a few metres either side of the
+		// prescription.
+		remaining := recording.paceAt(elapsed) * guidedFixInterval.Seconds()
+		for remaining > 0 {
+			step := math.Min(remaining, guidedArcStepMetres)
+			arc := math.Hypot(guidedLoopEastMetres*math.Sin(angle), guidedLoopNorthMetre*math.Cos(angle))
+			angle += step / arc
+			remaining -= step
+		}
 	}
 
 	return recording
