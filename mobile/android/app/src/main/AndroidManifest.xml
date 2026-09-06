@@ -42,6 +42,7 @@
             </intent-filter>
         </activity>
 
+        <service android:name=".TimedCircuitService" android:exported="false" android:foregroundServiceType="location" />
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"
@@ -54,4 +55,10 @@
     <!-- Permissions -->
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <queries><intent><action android:name="android.intent.action.TTS_SERVICE" /></intent></queries>
 </manifest>

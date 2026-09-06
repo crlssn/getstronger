@@ -45,6 +45,19 @@ const twoGroups = (first: string[], second: string[]) => {
 }
 
 describe('singleStraightGroup', () => {
+  it('retains prescribed durations when circuit rests are disabled', () => {
+    const groups = draftGroupsFromRoutine(
+      [
+        create(RoutineGroupSchema, {
+          mode: RoutineGroupMode.CIRCUIT,
+          rounds: 6,
+          exercises: [{ exercise: exercise('walk'), targetDurationSeconds: 120 }],
+        }),
+      ],
+      ['walk'],
+    )
+    expect(saveableGroups(groups)[0].entries[0].targetDurationSeconds).toBe(120)
+  })
   it('holds every exercise in one straight-sets group', () => {
     const groups = singleStraightGroup(['a', 'b'])
 

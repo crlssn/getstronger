@@ -38,6 +38,7 @@ type Workout struct {
 	Note           null.Val[string]    `db:"note" `
 	RoutineID      null.Val[uuid.UUID] `db:"routine_id" `
 	IdempotencyKey null.Val[uuid.UUID] `db:"idempotency_key" `
+	RecordingJSON  string              `db:"recording_json" `
 
 	R workoutR `db:"-" `
 
@@ -78,7 +79,7 @@ type workoutRLoaded struct {
 
 func buildWorkoutColumns(tableName string) workoutColumns {
 	columnsExpr := expr.NewColumnsExpr(
-		"id", "user_id", "finished_at", "created_at", "name", "started_at", "note", "routine_id", "idempotency_key",
+		"id", "user_id", "finished_at", "created_at", "name", "started_at", "note", "routine_id", "idempotency_key", "recording_json",
 	)
 
 	if tableName != "" {
@@ -97,6 +98,7 @@ func buildWorkoutColumns(tableName string) workoutColumns {
 		Note:           buildWorkoutColumn(tableName, "note"),
 		RoutineID:      buildWorkoutColumn(tableName, "routine_id"),
 		IdempotencyKey: buildWorkoutColumn(tableName, "idempotency_key"),
+		RecordingJSON:  buildWorkoutColumn(tableName, "recording_json"),
 	}
 }
 
@@ -112,6 +114,7 @@ type workoutColumns struct {
 	Note           workoutColumn
 	RoutineID      workoutColumn
 	IdempotencyKey workoutColumn
+	RecordingJSON  workoutColumn
 }
 
 // Alias returns the current table alias for the columns set.
@@ -166,10 +169,11 @@ type WorkoutSetter struct {
 	Note           omitnull.Val[string]    `db:"note" `
 	RoutineID      omitnull.Val[uuid.UUID] `db:"routine_id" `
 	IdempotencyKey omitnull.Val[uuid.UUID] `db:"idempotency_key" `
+	RecordingJSON  omit.Val[string]        `db:"recording_json" `
 }
 
 func (s WorkoutSetter) SetColumns() []string {
-	vals := make([]string, 0, 9)
+	vals := make([]string, 0, 10)
 	if s.ID.IsValue() {
 		vals = append(vals, "id")
 	}
@@ -196,6 +200,9 @@ func (s WorkoutSetter) SetColumns() []string {
 	}
 	if s.IdempotencyKey.IsValue() || s.IdempotencyKey.IsNull() {
 		vals = append(vals, "idempotency_key")
+	}
+	if s.RecordingJSON.IsValue() {
+		vals = append(vals, "recording_json")
 	}
 	return vals
 }
@@ -227,6 +234,9 @@ func (s WorkoutSetter) Overwrite(t *Workout) {
 	}
 	if s.IdempotencyKey.IsValue() || s.IdempotencyKey.IsNull() {
 		t.IdempotencyKey = s.IdempotencyKey.MustGetNull()
+	}
+	if s.RecordingJSON.IsValue() {
+		t.RecordingJSON = s.RecordingJSON.MustGet()
 	}
 }
 
@@ -281,6 +291,11 @@ func (s *WorkoutSetter) Apply(q *dialect.InsertQuery) {
 				return psql.Raw("DEFAULT").WriteSQL(ctx, w, d, start)
 			}
 			return psql.Arg(s.IdempotencyKey.MustGetNull()).WriteSQL(ctx, w, d, start)
+		}), bob.ExpressionFunc(func(ctx context.Context, w io.StringWriter, d bob.Dialect, start int) ([]any, error) {
+			if s.RecordingJSON.IsUnset() {
+				return psql.Raw("DEFAULT").WriteSQL(ctx, w, d, start)
+			}
+			return psql.Arg(s.RecordingJSON.MustGet()).WriteSQL(ctx, w, d, start)
 		}))
 }
 
@@ -289,7 +304,7 @@ func (s WorkoutSetter) UpdateMod() bob.Mod[*dialect.UpdateQuery] {
 }
 
 func (s WorkoutSetter) Expressions(prefix ...string) []bob.Expression {
-	exprs := make([]bob.Expression, 0, 9)
+	exprs := make([]bob.Expression, 0, 10)
 
 	if s.ID.IsValue() {
 		exprs = append(exprs, expr.Join{Sep: " = ", Exprs: []bob.Expression{
@@ -354,6 +369,13 @@ func (s WorkoutSetter) Expressions(prefix ...string) []bob.Expression {
 		}})
 	}
 
+	if s.RecordingJSON.IsValue() {
+		exprs = append(exprs, expr.Join{Sep: " = ", Exprs: []bob.Expression{
+			psql.Quote(append(prefix, "recording_json")...),
+			psql.Arg(s.RecordingJSON),
+		}})
+	}
+
 	return exprs
 }
 
@@ -364,7 +386,7 @@ func workoutScanMapper(ctx context.Context, cols []string) (scan.BeforeFunc, fun
 		idx int
 		dst func(o *Workout) any
 	}
-	targets := make([]target, 0, 9)
+	targets := make([]target, 0, 10)
 	for i, col := range cols {
 		switch col {
 		case "id":
@@ -385,6 +407,8 @@ func workoutScanMapper(ctx context.Context, cols []string) (scan.BeforeFunc, fun
 			targets = append(targets, target{i, func(o *Workout) any { return &o.RoutineID }})
 		case "idempotency_key":
 			targets = append(targets, target{i, func(o *Workout) any { return &o.IdempotencyKey }})
+		case "recording_json":
+			targets = append(targets, target{i, func(o *Workout) any { return &o.RecordingJSON }})
 		}
 	}
 
@@ -1110,6 +1134,7 @@ type workoutWhere[Q psql.Filterable] struct {
 	Note           psql.WhereNullMod[Q, string]
 	RoutineID      psql.WhereNullMod[Q, uuid.UUID]
 	IdempotencyKey psql.WhereNullMod[Q, uuid.UUID]
+	RecordingJSON  psql.WhereMod[Q, string]
 	R              workoutWhereR[Q]
 }
 
@@ -1129,6 +1154,7 @@ func buildWorkoutWhere[Q psql.Filterable](cols workoutColumns) workoutWhere[Q] {
 		Note:           psql.WhereNull[Q, string](cols.Note.Expression),
 		RoutineID:      psql.WhereNull[Q, uuid.UUID](cols.RoutineID.Expression),
 		IdempotencyKey: psql.WhereNull[Q, uuid.UUID](cols.IdempotencyKey.Expression),
+		RecordingJSON:  psql.Where[Q, string](cols.RecordingJSON.Expression),
 		R:              workoutWhereR[Q]{cols: cols},
 	}
 }
@@ -1223,6 +1249,7 @@ type workoutPreloadBuf struct {
 	Note           null.Val[string]
 	RoutineID      null.Val[uuid.UUID]
 	IdempotencyKey null.Val[uuid.UUID]
+	RecordingJSON  null.Val[string]
 }
 
 // workoutScanMapperNullable maps the preloaded workout
@@ -1237,7 +1264,7 @@ func workoutScanMapperNullable(prefix string) scan.Mapper[*Workout] {
 			idx int
 			dst func(b *workoutPreloadBuf) any
 		}
-		targets := make([]target, 0, 9)
+		targets := make([]target, 0, 10)
 		for i, col := range cols {
 			name, ok := strings.CutPrefix(col, prefix)
 			if !ok {
@@ -1262,6 +1289,8 @@ func workoutScanMapperNullable(prefix string) scan.Mapper[*Workout] {
 				targets = append(targets, target{i, func(b *workoutPreloadBuf) any { return &b.RoutineID }})
 			case "idempotency_key":
 				targets = append(targets, target{i, func(b *workoutPreloadBuf) any { return &b.IdempotencyKey }})
+			case "recording_json":
+				targets = append(targets, target{i, func(b *workoutPreloadBuf) any { return &b.RecordingJSON }})
 			}
 		}
 
@@ -1292,7 +1321,8 @@ func workoutScanMapperNullable(prefix string) scan.Mapper[*Workout] {
 					!(buf.StartedAt.IsValue()) &&
 					!(buf.Note.IsValue()) &&
 					!(buf.RoutineID.IsValue()) &&
-					!(buf.IdempotencyKey.IsValue()) {
+					!(buf.IdempotencyKey.IsValue()) &&
+					!(buf.RecordingJSON.IsValue()) {
 					return nil, nil
 				}
 
@@ -1318,6 +1348,9 @@ func workoutScanMapperNullable(prefix string) scan.Mapper[*Workout] {
 				o.Note = buf.Note
 				o.RoutineID = buf.RoutineID
 				o.IdempotencyKey = buf.IdempotencyKey
+				if buf.RecordingJSON.IsValue() {
+					o.RecordingJSON = buf.RecordingJSON.MustGet()
+				}
 				return o, nil
 			}
 	}

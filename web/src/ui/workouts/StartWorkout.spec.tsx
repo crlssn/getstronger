@@ -19,7 +19,28 @@ vi.mock('@/http/requests', async (importOriginal) => ({
   listExercises: vi.fn(),
 }))
 
+// Whether the app believes it is inside the native shell; flipped per test.
+const native = vi.hoisted(() => ({ enabled: false }))
+vi.mock('@capacitor/core', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@capacitor/core')>()
+  return {
+    ...actual,
+    Capacitor: { ...actual.Capacitor, isNativePlatform: () => native.enabled },
+  }
+})
+vi.mock('@/native/timedCircuit', () => ({
+  timedCircuit: {
+    start: vi.fn(),
+    read: vi.fn(),
+    pause: vi.fn(),
+    resume: vi.fn(),
+    finish: vi.fn(),
+    clear: vi.fn(),
+  },
+}))
+
 import * as requests from '@/http/requests'
+import { timedCircuit } from '@/native/timedCircuit'
 import { GetRoutineResponseSchema, RoutineSchema } from '@/proto/api/v1/routine_service_pb'
 import {
   DistanceUnit,
@@ -87,8 +108,8 @@ const currentUser = (
   }> = {},
 ) => create(GetUserResponseSchema, { user: { weightUnit, ...extra } })
 
-const renderWorkout = async (route = `/workouts/routine/${routineID}`, name = 'Push Day') => {
-  const result = renderWithProviders(
+const mountWorkout = (route = `/workouts/routine/${routineID}`) =>
+  renderWithProviders(
     <Routes>
       <Route path="/workouts/routine/:routine_id" element={<StartWorkout />} />
       <Route path="/workouts/quick" element={<StartWorkout />} />
@@ -99,6 +120,9 @@ const renderWorkout = async (route = `/workouts/routine/${routineID}`, name = 'P
     </Routes>,
     { route },
   )
+
+const renderWorkout = async (route = `/workouts/routine/${routineID}`, name = 'Push Day') => {
+  const result = mountWorkout(route)
 
   await screen.findByRole('heading', { level: 1, name })
   return result
@@ -1157,6 +1181,96 @@ describe('StartWorkout', () => {
       expect(set?.distance).toBe(3.5)
       expect(set?.durationSeconds).toBe(750)
       expect(set?.distanceUnit).toBe(DistanceUnit.MILES)
+    })
+  })
+
+  describe('a circuit guided on a phone', () => {
+    // The circuit with every station held for a minute, which is what makes
+    // it one a phone can guide.
+    const timedRoutine = () => {
+      const response = prescribedCircuitRoutine(2)
+      response.routine?.groups[0]?.exercises.forEach((entry) => {
+        entry.targetDurationSeconds = 60
+      })
+      return response
+    }
+
+    // A session the phone finished on its own: both stations, both rounds.
+    const finishedRecording = () => ({
+      version: 1 as const,
+      startedAt: now.getTime() - 240_000,
+      endedAt: now.getTime(),
+      phases: [1, 2].flatMap((round) =>
+        [benchPress, squat].map((exercise) => ({
+          exerciseId: exercise.id,
+          stationKey: exercise.id,
+          name: exercise.name,
+          round,
+          durationSeconds: 60,
+          instruction: `${exercise.name} for 60 seconds`,
+        })),
+      ),
+      pauses: [],
+      points: [],
+      interrupted: false,
+    })
+
+    beforeEach(() => {
+      native.enabled = true
+      vi.mocked(timedCircuit.read).mockReset().mockResolvedValue({})
+      vi.mocked(timedCircuit.clear).mockReset().mockResolvedValue(undefined)
+      mocked.getRoutine.mockResolvedValue(timedRoutine())
+    })
+
+    afterEach(() => {
+      native.enabled = false
+    })
+
+    test('is offered for a circuit held against the clock, and stands aside for manual logging', async () => {
+      const user = userEvent.setup()
+      await renderWorkout()
+
+      await user.click(screen.getByRole('button', { name: 'Start guided circuit' }))
+      // Nothing native has been asked for yet: the screen explains what
+      // location is for and leaves the ordinary form one tap away.
+      expect(screen.getByText(/Allow location access/)).toBeInTheDocument()
+      expect(timedCircuit.start).not.toHaveBeenCalled()
+
+      await user.click(screen.getByRole('button', { name: 'Log manually' }))
+      expect(
+        await screen.findByRole('button', { name: 'Start guided circuit' }),
+      ).toBeInTheDocument()
+      expect(setField('Bench Press set 1 weight')).toBeVisible()
+    })
+
+    test('is not offered off the phone', async () => {
+      native.enabled = false
+      await renderWorkout()
+
+      expect(screen.queryByRole('button', { name: 'Start guided circuit' })).not.toBeInTheDocument()
+    })
+
+    test('picks up a finished recording, saves it with the workout, and clears it', async () => {
+      const user = userEvent.setup()
+      vi.mocked(timedCircuit.read).mockResolvedValue({ recording: finishedRecording() })
+      mountWorkout()
+
+      // The phone's recording is the session: its intervals become the sets
+      // and the form gives way to the route.
+      expect(await screen.findByRole('heading', { name: 'Workout route' })).toBeInTheDocument()
+      expect(screen.getByText(/Squat · Round 2 · 1:00/)).toBeInTheDocument()
+
+      await user.click(screen.getByRole('button', { name: 'Save' }))
+      await waitFor(() => expect(mocked.createWorkout).toHaveBeenCalledOnce())
+      const request = mocked.createWorkout.mock.calls[0][0]
+      expect(JSON.parse(request.recordingJson)).toMatchObject({
+        version: 1,
+        phases: expect.any(Array),
+      })
+      expect(request.exerciseSets).toHaveLength(2)
+      expect(request.exerciseSets[0].sets).toHaveLength(2)
+      await waitFor(() => expect(timedCircuit.clear).toHaveBeenCalledOnce())
+      expect(await screen.findByText('saved workout')).toBeInTheDocument()
     })
   })
 

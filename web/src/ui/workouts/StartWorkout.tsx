@@ -11,6 +11,10 @@ import type {
 import type { RefObject } from 'react'
 
 import { create } from '@bufbuild/protobuf'
+import { Capacitor } from '@capacitor/core'
+import { timedCircuit } from '@/native/timedCircuit'
+import { circuitPhases, type Recording } from '@/utils/timedCircuit'
+import { TimedCircuitRecorder } from '@/ui/workouts/TimedCircuitRecorder'
 import { timestampFromDate } from '@bufbuild/protobuf/wkt'
 import { Code, ConnectError } from '@connectrpc/connect'
 import {
@@ -21,7 +25,7 @@ import {
   TrashIcon,
   XMarkIcon,
 } from '@heroicons/react/24/outline'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { flushSync } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
@@ -59,6 +63,7 @@ import { useProgressStore } from '@/stores/progress'
 import { useStreakStore } from '@/stores/streak'
 import {
   quickWorkoutRoutineID,
+  hasLoggedSet,
   selectAddedExercises,
   selectAllSets,
   selectCompletedExerciseIds,
@@ -273,6 +278,7 @@ export const StartWorkout = () => {
   const [openRounds, setOpenRounds] = useState<Record<string, number>>({})
   const [now, setNow] = useState(() => Date.now())
   const [submitting, setSubmitting] = useState(false)
+  const [guided, setGuided] = useState(false)
   const [finishError, setFinishError] = useState('')
   const [blockedMessage, setBlockedMessage] = useState('')
   const [finishDialogOpen, setFinishDialogOpen] = useState(false)
@@ -289,6 +295,35 @@ export const StartWorkout = () => {
   const retiredRest = useRef<number | undefined>(undefined)
 
   const exercises = useMemo(() => session?.exercises ?? [], [session])
+  const recordingKey = `${useAuthStore.getState().userId}:${routineID}`
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return
+    let disposed = false
+    void timedCircuit
+      .read({ key: recordingKey })
+      .then((result) => {
+        if (!disposed && result.recording) setGuided(true)
+      })
+      .catch(() => {
+        /* The recording flow displays native availability errors. */
+      })
+    return () => {
+      disposed = true
+    }
+  }, [recordingKey])
+  const phases = circuitPhases(
+    session?.groups ?? [],
+    (name, seconds) => t('timedCircuit.instruction', { name, seconds }),
+    t('timedCircuit.rest'),
+  )
+  const recordingComplete = useCallback(
+    (recording: Recording) => {
+      if (!useWorkoutStore.getState().workouts[routineID]?.recording) {
+        useWorkoutStore.getState().setRecording(routineID, recording)
+      }
+    },
+    [routineID],
+  )
   const completedIds = workout?.completedExerciseIds
   const completed = useMemo(
     () => Object.fromEntries((completedIds ?? []).map((id) => [id, true])),
@@ -467,7 +502,9 @@ export const StartWorkout = () => {
     Math.min(openRounds[block.id] ?? roundOf(block), roundCountOf(block))
   const activeRound = activeBlock ? openRoundOf(activeBlock) : 1
 
-  const blocker = finishBlocker(session ? entries : undefined, quickWorkout)
+  const blocker = workout?.recording?.endedAt
+    ? undefined
+    : finishBlocker(session ? entries : undefined, quickWorkout)
   const finishStatus = !blocker
     ? ''
     : blocker.reason === 'loading'
@@ -837,7 +874,12 @@ export const StartWorkout = () => {
     const byExercise = new Map<string, WorkoutSet[]>()
     const setCounts: Record<string, number> = {}
     stations.forEach(({ key, exercise }) => {
-      const sets = stored[key]?.filter((set) => isExerciseSetComplete(set, exercise)) ?? []
+      const sets =
+        stored[key]?.filter((set) =>
+          workout?.recording
+            ? (set.durationSeconds ?? 0) > 0
+            : isExerciseSetComplete(set, exercise),
+        ) ?? []
       setCounts[key] = sets.length
       if (!sets.length) return
 
@@ -862,6 +904,8 @@ export const StartWorkout = () => {
   }
 
   const openSavedWorkout = async (workoutId: string) => {
+    if (workout?.recording && Capacitor.isNativePlatform())
+      await timedCircuit.clear({ key: recordingKey })
     try {
       await navigate(`/workouts/${workoutId}`, { replace: true })
     } catch {
@@ -880,6 +924,8 @@ export const StartWorkout = () => {
   // delivery on reconnect and the workout is treated as saved on this device.
   const finishWorkoutOffline = async (request: CreateWorkoutRequest) => {
     useMutationQueueStore.getState().enqueue(WorkoutService.method.createWorkout, request)
+    if (workout?.recording && Capacitor.isNativePlatform())
+      await timedCircuit.clear({ key: recordingKey })
     useConnectionStore.getState().setOnline(false)
     useWorkoutStore.getState().removeWorkout(routineID)
     // Saved on the device rather than the server; the offline banner carries
@@ -914,6 +960,7 @@ export const StartWorkout = () => {
       // The same key on every attempt, queued replay included: the server
       // answers a repeat with the workout it already saved.
       idempotencyKey: workout?.idempotencyKey,
+      recordingJson: workout?.recording ? JSON.stringify(workout.recording) : '',
     })
 
     try {
@@ -1119,6 +1166,39 @@ export const StartWorkout = () => {
     </div>
   )
 
+  if (Capacitor.isNativePlatform() && (guided || workout?.recording)) {
+    return (
+      <div className="space-y-5">
+        <TimedCircuitRecorder
+          recordingKey={recordingKey}
+          phases={phases}
+          saved={workout?.recording}
+          onComplete={recordingComplete}
+          onCancel={() => {
+            if (workout?.recording) {
+              const store = useWorkoutStore.getState()
+              store.removeWorkout(routineID)
+              store.initialiseWorkout(routineID, requestedPlanID)
+              fillEmptySets(routineID, blocks, previousSets)
+            }
+            setGuided(false)
+          }}
+        />
+        {workout?.recording && (
+          <AppButton
+            type="button"
+            colour="primary"
+            disabled={submitting}
+            onClick={() => void onFinishWorkout()}
+          >
+            {t('common.save')}
+          </AppButton>
+        )}
+        {finishError && <p role="alert">{finishError}</p>}
+      </div>
+    )
+  }
+
   return (
     <form
       className={styles.workoutShell}
@@ -1134,6 +1214,13 @@ export const StartWorkout = () => {
       {/* Header and rest bar are one piece of chrome, pinned together: the
           bar used to stick at the same offset with a higher z-index, so it
           rode up over the session title on scroll. */}
+      {Capacitor.isNativePlatform() &&
+        phases.length > 0 &&
+        (!workout || !hasLoggedSet(workout)) && (
+          <AppButton type="button" colour="primary" onClick={() => setGuided(true)}>
+            {t('timedCircuit.start')}
+          </AppButton>
+        )}
       <div className={styles.sessionChrome}>
         <header className={styles.workoutHeader}>
           <div className={styles.workoutHeaderInner}>

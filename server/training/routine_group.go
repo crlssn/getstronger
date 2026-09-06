@@ -22,6 +22,10 @@ const (
 
 	// A hundred rounds is a different sport.
 	routineGroupMaxRounds = 99
+
+	// A guided interval is held for at most a day, which is the recording's
+	// own ceiling.
+	routineGroupMaxTargetDurationSeconds = 86400
 )
 
 // RoutineGroup is one block of a routine: the exercises it holds, in training
@@ -46,6 +50,9 @@ type RoutineExercise struct {
 	// RestSeconds is how long this occurrence rests between sets; zero turns
 	// the timer off here alone.
 	RestSeconds int32
+	// TargetDurationSeconds is how long a circuit round holds this occurrence
+	// when the session is guided against the clock; zero logs it by hand.
+	TargetDurationSeconds int32
 }
 
 // RoutineGroupDraft is a group as a save describes it. Exercises are named by
@@ -63,8 +70,9 @@ type RoutineGroupDraft struct {
 // asks that occurrence to take. Nil is a save that does not say — one that
 // named no groups at all — and leaves NewOccurrenceRestSeconds to answer.
 type RoutineExerciseDraft struct {
-	ExerciseID  uuid.UUID
-	RestSeconds *int32
+	ExerciseID            uuid.UUID
+	RestSeconds           *int32
+	TargetDurationSeconds int32
 }
 
 // NewOccurrenceRestSeconds is how long an exercise rests between sets where a
@@ -152,6 +160,7 @@ func normalizeRoutineGroup(group RoutineGroupDraft, exercises []RoutineExerciseD
 	}
 
 	for index, exercise := range normalized.Exercises {
+		normalized.Exercises[index].TargetDurationSeconds = clampInt32(exercise.TargetDurationSeconds, routineGroupMaxTargetDurationSeconds)
 		if exercise.RestSeconds == nil {
 			continue
 		}

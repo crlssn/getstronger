@@ -44,6 +44,8 @@ message CreateWorkoutRequest {
   // recognised when it is sent again and answered with the workout it already
   // has rather than saved twice. Unique per user.
   optional string idempotency_key = 9 [(buf.validate.field).string.uuid = true];
+  // Versioned native recording: prescription, pauses and timestamped GPS fixes.
+  string recording_json = 10 [(buf.validate.field).string.max_bytes = 5000000];
 }
 message CreateWorkoutResponse {
   string workout_id = 1;
@@ -102,6 +104,8 @@ message Workout {
   // a client that does not care how the session was blocked keeps reading only
   // that. Empty for every workout logged before blocks were recorded.
   repeated WorkoutGroup groups = 11;
+  // Immutable recording snapshot, independent of later manual set corrections.
+  string recording_json = 12;
 }
 
 // One block of a finished workout, as it was actually trained.

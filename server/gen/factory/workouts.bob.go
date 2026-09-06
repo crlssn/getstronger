@@ -47,6 +47,7 @@ type WorkoutTemplate struct {
 	Note           func() null.Val[string]
 	RoutineID      func() null.Val[uuid.UUID]
 	IdempotencyKey func() null.Val[uuid.UUID]
+	RecordingJSON  func() string
 
 	r workoutR
 	f *Factory
@@ -194,6 +195,10 @@ func (o WorkoutTemplate) BuildSetter() *models.WorkoutSetter {
 		val := o.IdempotencyKey()
 		m.IdempotencyKey = omitnull.FromNull(val)
 	}
+	if o.RecordingJSON != nil {
+		val := o.RecordingJSON()
+		m.RecordingJSON = omit.From(val)
+	}
 
 	return m
 }
@@ -242,6 +247,9 @@ func (o WorkoutTemplate) Build() *models.Workout {
 	}
 	if o.IdempotencyKey != nil {
 		m.IdempotencyKey = o.IdempotencyKey()
+	}
+	if o.RecordingJSON != nil {
+		m.RecordingJSON = o.RecordingJSON()
 	}
 
 	o.setModelRels(m)
@@ -517,6 +525,7 @@ func (m workoutMods) RandomizeAllColumns(f *faker.Faker) WorkoutMod {
 		WorkoutMods.RandomNote(f),
 		WorkoutMods.RandomRoutineID(f),
 		WorkoutMods.RandomIdempotencyKey(f),
+		WorkoutMods.RandomRecordingJSON(f),
 	}
 }
 
@@ -861,6 +870,37 @@ func (m workoutMods) RandomIdempotencyKeyNotNull(f *faker.Faker) WorkoutMod {
 
 			val := random_uuid_UUID(f)
 			return null.From(val)
+		}
+	})
+}
+
+// Set the model columns to this value
+func (m workoutMods) RecordingJSON(val string) WorkoutMod {
+	return WorkoutModFunc(func(_ context.Context, o *WorkoutTemplate) {
+		o.RecordingJSON = func() string { return val }
+	})
+}
+
+// Set the Column from the function
+func (m workoutMods) RecordingJSONFunc(f func() string) WorkoutMod {
+	return WorkoutModFunc(func(_ context.Context, o *WorkoutTemplate) {
+		o.RecordingJSON = f
+	})
+}
+
+// Clear any values for the column
+func (m workoutMods) UnsetRecordingJSON() WorkoutMod {
+	return WorkoutModFunc(func(_ context.Context, o *WorkoutTemplate) {
+		o.RecordingJSON = nil
+	})
+}
+
+// Generates a random value for the column using the given faker
+// if faker is nil, a default faker is used
+func (m workoutMods) RandomRecordingJSON(f *faker.Faker) WorkoutMod {
+	return WorkoutModFunc(func(_ context.Context, o *WorkoutTemplate) {
+		o.RecordingJSON = func() string {
+			return random_string(f)
 		}
 	})
 }

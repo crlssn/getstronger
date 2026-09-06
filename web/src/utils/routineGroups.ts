@@ -42,6 +42,7 @@ export const newOccurrenceRestSeconds = (exercise: Exercise): number =>
  * a thing: a group is a block of distinct work.
  */
 export interface DraftEntry {
+  targetDurationSeconds?: number
   key: string
   exerciseId: string
   /**
@@ -193,6 +194,7 @@ export const draftGroupsFromRoutine = (
       entries: group.exercises.map((entry) => ({
         key: newLocalId('entry'),
         exerciseId: entry.exercise?.id ?? '',
+        targetDurationSeconds: entry.targetDurationSeconds,
         restSeconds: restTimers
           ? entry.restSeconds
           : ((entry.exercise && newOccurrenceRestSeconds(entry.exercise)) ?? defaultRestSeconds),

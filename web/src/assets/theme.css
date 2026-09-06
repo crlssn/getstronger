@@ -80,6 +80,15 @@
    * current period is full ink, everything else steps back to these. */
   --color-chart-bar: #dbd8ce;
   --color-chart-fill: rgb(26 25 23 / 0.06);
+  /* The one place data wears a hue: a recorded route, where each exercise
+   * keeps a colour of its own across every round so the legend can name it.
+   * Six, cycled; a circuit with more stations shares. */
+  --color-route-1: #2f6fed;
+  --color-route-2: #d9542b;
+  --color-route-3: #6d3fc4;
+  --color-route-4: #1f8f5f;
+  --color-route-5: #c4287a;
+  --color-route-6: #0e8aa6;
 
   /* Gold is for personal records, nowhere else. Champagne surface, its border,
    * and a darker text step that clears contrast on that surface. */
@@ -191,6 +200,12 @@
   --color-info-surface: #26241f;
   --color-chart-bar: #38352e;
   --color-chart-fill: rgb(232 230 224 / 0.08);
+  --color-route-1: #7ea6ff;
+  --color-route-2: #ff9a6e;
+  --color-route-3: #b598ff;
+  --color-route-4: #6fd3a2;
+  --color-route-5: #ff8ac4;
+  --color-route-6: #66cde3;
 
   --color-record: #d0ac52;
   --color-record-surface: #332b17;

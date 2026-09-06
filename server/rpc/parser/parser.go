@@ -165,8 +165,9 @@ func RoutineExerciseSlice(exercises []training.RoutineExercise) []*apiv1.Routine
 	parsed := make([]*apiv1.RoutineExercise, 0, len(exercises))
 	for _, exercise := range exercises {
 		parsed = append(parsed, &apiv1.RoutineExercise{
-			Exercise:    Exercise(exercise.Exercise),
-			RestSeconds: exercise.RestSeconds,
+			Exercise:              Exercise(exercise.Exercise),
+			RestSeconds:           exercise.RestSeconds,
+			TargetDurationSeconds: exercise.TargetDurationSeconds,
 		})
 	}
 
@@ -237,17 +238,18 @@ func WorkoutIntensity(sets []*training.Set) WorkoutOpt {
 
 func Workout(workout *training.Workout, opts ...WorkoutOpt) *apiv1.Workout {
 	w := &apiv1.Workout{
-		Id:           workout.ID.String(),
-		Name:         workout.Name,
-		StartedAt:    timestamppb.New(workout.StartedAt),
-		FinishedAt:   timestamppb.New(workout.FinishedAt),
-		User:         nil,
-		Comments:     nil,
-		ExerciseSets: nil,
-		Groups:       nil,
-		Intensity:    0,
-		Note:         workout.Note,
-		RoutineId:    optionalID(workout.RoutineID),
+		RecordingJson: workout.RecordingJSON,
+		Id:            workout.ID.String(),
+		Name:          workout.Name,
+		StartedAt:     timestamppb.New(workout.StartedAt),
+		FinishedAt:    timestamppb.New(workout.FinishedAt),
+		User:          nil,
+		Comments:      nil,
+		ExerciseSets:  nil,
+		Groups:        nil,
+		Intensity:     0,
+		Note:          workout.Note,
+		RoutineId:     optionalID(workout.RoutineID),
 	}
 
 	if workout.User != nil {

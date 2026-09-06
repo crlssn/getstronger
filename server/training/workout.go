@@ -123,12 +123,13 @@ type Workout struct {
 	UserID uuid.UUID
 	// RoutineID names the routine the session followed, or is nil for a
 	// session logged without one.
-	RoutineID  uuid.UUID
-	Name       string
-	Note       string
-	StartedAt  time.Time
-	FinishedAt time.Time
-	CreatedAt  time.Time
+	RoutineID     uuid.UUID
+	Name          string
+	Note          string
+	StartedAt     time.Time
+	FinishedAt    time.Time
+	CreatedAt     time.Time
+	RecordingJSON string
 
 	User     *account.User
 	Comments []*WorkoutComment

@@ -17,6 +17,7 @@ export interface Set {
 }
 
 export interface Workout {
+  recording?: import('@/utils/timedCircuit').Recording
   addedExercises?: Exercise[]
   completedExerciseIds?: ExerciseID[]
   exerciseSets?: ExerciseSets

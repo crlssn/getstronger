@@ -96,14 +96,15 @@ func routinesFromRows(rows models.RoutineSlice) []*training.Routine {
 
 func workoutFromRow(row *models.Workout) *training.Workout {
 	workout := &training.Workout{
-		ID:         row.ID,
-		UserID:     row.UserID,
-		RoutineID:  row.RoutineID.GetOrZero(),
-		Name:       row.Name,
-		Note:       row.Note.GetOrZero(),
-		StartedAt:  row.StartedAt,
-		FinishedAt: row.FinishedAt,
-		CreatedAt:  row.CreatedAt,
+		ID:            row.ID,
+		UserID:        row.UserID,
+		RoutineID:     row.RoutineID.GetOrZero(),
+		RecordingJSON: row.RecordingJSON,
+		Name:          row.Name,
+		Note:          row.Note.GetOrZero(),
+		StartedAt:     row.StartedAt,
+		FinishedAt:    row.FinishedAt,
+		CreatedAt:     row.CreatedAt,
 	}
 	if row.R.User != nil {
 		workout.User = userFromRow(row.R.User)

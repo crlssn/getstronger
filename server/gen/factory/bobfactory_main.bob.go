@@ -212,6 +212,7 @@ func (f *Factory) fromExistingExercisesRoutine(ctx context.Context, m *models.Ex
 	o.GroupID = func() uuid.UUID { return m.GroupID }
 	o.ID = func() uuid.UUID { return m.ID }
 	o.RestSeconds = func() int32 { return m.RestSeconds }
+	o.TargetDurationSeconds = func() int32 { return m.TargetDurationSeconds }
 
 	if visited, ok := factoryVisitedCtx.Value(ctx); ok {
 		ptr := uintptr(unsafe.Pointer(m))
@@ -882,6 +883,7 @@ func (f *Factory) fromExistingWorkout(ctx context.Context, m *models.Workout) *W
 	o.Note = func() null.Val[string] { return m.Note }
 	o.RoutineID = func() null.Val[uuid.UUID] { return m.RoutineID }
 	o.IdempotencyKey = func() null.Val[uuid.UUID] { return m.IdempotencyKey }
+	o.RecordingJSON = func() string { return m.RecordingJSON }
 
 	if visited, ok := factoryVisitedCtx.Value(ctx); ok {
 		ptr := uintptr(unsafe.Pointer(m))

@@ -35,12 +35,13 @@ func (mods ExercisesRoutineModSlice) Apply(ctx context.Context, n *ExercisesRout
 // ExercisesRoutineTemplate is an object representing the database table.
 // all columns are optional and should be set by mods
 type ExercisesRoutineTemplate struct {
-	RoutineID   func() uuid.UUID
-	ExerciseID  func() uuid.UUID
-	Position    func() int32
-	GroupID     func() uuid.UUID
-	ID          func() uuid.UUID
-	RestSeconds func() int32
+	RoutineID             func() uuid.UUID
+	ExerciseID            func() uuid.UUID
+	Position              func() int32
+	GroupID               func() uuid.UUID
+	ID                    func() uuid.UUID
+	RestSeconds           func() int32
+	TargetDurationSeconds func() int32
 
 	r exercisesRoutineR
 	f *Factory
@@ -128,6 +129,10 @@ func (o ExercisesRoutineTemplate) BuildSetter() *models.ExercisesRoutineSetter {
 		val := o.RestSeconds()
 		m.RestSeconds = omit.From(val)
 	}
+	if o.TargetDurationSeconds != nil {
+		val := o.TargetDurationSeconds()
+		m.TargetDurationSeconds = omit.From(val)
+	}
 
 	return m
 }
@@ -167,6 +172,9 @@ func (o ExercisesRoutineTemplate) Build() *models.ExercisesRoutine {
 	}
 	if o.RestSeconds != nil {
 		m.RestSeconds = o.RestSeconds()
+	}
+	if o.TargetDurationSeconds != nil {
+		m.TargetDurationSeconds = o.TargetDurationSeconds()
 	}
 
 	o.setModelRels(m)
@@ -414,6 +422,7 @@ func (m exercisesRoutineMods) RandomizeAllColumns(f *faker.Faker) ExercisesRouti
 		ExercisesRoutineMods.RandomGroupID(f),
 		ExercisesRoutineMods.RandomID(f),
 		ExercisesRoutineMods.RandomRestSeconds(f),
+		ExercisesRoutineMods.RandomTargetDurationSeconds(f),
 	}
 }
 
@@ -598,6 +607,37 @@ func (m exercisesRoutineMods) UnsetRestSeconds() ExercisesRoutineMod {
 func (m exercisesRoutineMods) RandomRestSeconds(f *faker.Faker) ExercisesRoutineMod {
 	return ExercisesRoutineModFunc(func(_ context.Context, o *ExercisesRoutineTemplate) {
 		o.RestSeconds = func() int32 {
+			return random_int32(f)
+		}
+	})
+}
+
+// Set the model columns to this value
+func (m exercisesRoutineMods) TargetDurationSeconds(val int32) ExercisesRoutineMod {
+	return ExercisesRoutineModFunc(func(_ context.Context, o *ExercisesRoutineTemplate) {
+		o.TargetDurationSeconds = func() int32 { return val }
+	})
+}
+
+// Set the Column from the function
+func (m exercisesRoutineMods) TargetDurationSecondsFunc(f func() int32) ExercisesRoutineMod {
+	return ExercisesRoutineModFunc(func(_ context.Context, o *ExercisesRoutineTemplate) {
+		o.TargetDurationSeconds = f
+	})
+}
+
+// Clear any values for the column
+func (m exercisesRoutineMods) UnsetTargetDurationSeconds() ExercisesRoutineMod {
+	return ExercisesRoutineModFunc(func(_ context.Context, o *ExercisesRoutineTemplate) {
+		o.TargetDurationSeconds = nil
+	})
+}
+
+// Generates a random value for the column using the given faker
+// if faker is nil, a default faker is used
+func (m exercisesRoutineMods) RandomTargetDurationSeconds(f *faker.Faker) ExercisesRoutineMod {
+	return ExercisesRoutineModFunc(func(_ context.Context, o *ExercisesRoutineTemplate) {
+		o.TargetDurationSeconds = func() int32 {
 			return random_int32(f)
 		}
 	})

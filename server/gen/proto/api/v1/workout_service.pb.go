@@ -46,8 +46,10 @@ type CreateWorkoutRequest struct {
 	// recognised when it is sent again and answered with the workout it already
 	// has rather than saved twice. Unique per user.
 	IdempotencyKey *string `protobuf:"bytes,9,opt,name=idempotency_key,json=idempotencyKey,proto3,oneof" json:"idempotency_key,omitempty"`
-	unknownFields  protoimpl.UnknownFields
-	sizeCache      protoimpl.SizeCache
+	// Versioned native recording: prescription, pauses and timestamped GPS fixes.
+	RecordingJson string `protobuf:"bytes,10,opt,name=recording_json,json=recordingJson,proto3" json:"recording_json,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *CreateWorkoutRequest) Reset() {
@@ -139,6 +141,13 @@ func (x *CreateWorkoutRequest) GetGroups() []*WorkoutGroup {
 func (x *CreateWorkoutRequest) GetIdempotencyKey() string {
 	if x != nil && x.IdempotencyKey != nil {
 		return *x.IdempotencyKey
+	}
+	return ""
+}
+
+func (x *CreateWorkoutRequest) GetRecordingJson() string {
+	if x != nil {
+		return x.RecordingJson
 	}
 	return ""
 }
@@ -654,7 +663,9 @@ type Workout struct {
 	// rewrite what happened. Groups partition the same sets exercise_sets holds;
 	// a client that does not care how the session was blocked keeps reading only
 	// that. Empty for every workout logged before blocks were recorded.
-	Groups        []*WorkoutGroup `protobuf:"bytes,11,rep,name=groups,proto3" json:"groups,omitempty"`
+	Groups []*WorkoutGroup `protobuf:"bytes,11,rep,name=groups,proto3" json:"groups,omitempty"`
+	// Immutable recording snapshot, independent of later manual set corrections.
+	RecordingJson string `protobuf:"bytes,12,opt,name=recording_json,json=recordingJson,proto3" json:"recording_json,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -764,6 +775,13 @@ func (x *Workout) GetGroups() []*WorkoutGroup {
 		return x.Groups
 	}
 	return nil
+}
+
+func (x *Workout) GetRecordingJson() string {
+	if x != nil {
+		return x.RecordingJson
+	}
+	return ""
 }
 
 // One block of a finished workout, as it was actually trained.
@@ -993,7 +1011,7 @@ var File_api_v1_workout_service_proto protoreflect.FileDescriptor
 
 const file_api_v1_workout_service_proto_rawDesc = "" +
 	"\n" +
-	"\x1capi/v1/workout_service.proto\x12\x06api.v1\x1a\x13api/v1/shared.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1bbuf/validate/validate.proto\"\xe6\x03\n" +
+	"\x1capi/v1/workout_service.proto\x12\x06api.v1\x1a\x13api/v1/shared.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1bbuf/validate/validate.proto\"\x99\x04\n" +
 	"\x14CreateWorkoutRequest\x12*\n" +
 	"\n" +
 	"routine_id\x18\x01 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\xb0\x01\x01R\troutineId\x12C\n" +
@@ -1006,7 +1024,10 @@ const file_api_v1_workout_service_proto_rawDesc = "" +
 	"\aplan_id\x18\x06 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\xb0\x01\x01R\x06planId\x12!\n" +
 	"\fworkout_name\x18\a \x01(\tR\vworkoutName\x12,\n" +
 	"\x06groups\x18\b \x03(\v2\x14.api.v1.WorkoutGroupR\x06groups\x126\n" +
-	"\x0fidempotency_key\x18\t \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01H\x00R\x0eidempotencyKey\x88\x01\x01B\x12\n" +
+	"\x0fidempotency_key\x18\t \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01H\x00R\x0eidempotencyKey\x88\x01\x01\x121\n" +
+	"\x0erecording_json\x18\n" +
+	" \x01(\tB\n" +
+	"\xbaH\ar\x05(\xc0\x96\xb1\x02R\rrecordingJsonB\x12\n" +
 	"\x10_idempotency_key\"6\n" +
 	"\x15CreateWorkoutResponse\x12\x1d\n" +
 	"\n" +
@@ -1036,7 +1057,7 @@ const file_api_v1_workout_service_proto_rawDesc = "" +
 	"\acomment\x18\x01 \x01(\v2\x16.api.v1.WorkoutCommentR\acomment\"I\n" +
 	"\x14UpdateWorkoutRequest\x121\n" +
 	"\aworkout\x18\x01 \x01(\v2\x0f.api.v1.WorkoutB\x06\xbaH\x03\xc8\x01\x01R\aworkout\"\x17\n" +
-	"\x15UpdateWorkoutResponse\"\xe2\x03\n" +
+	"\x15UpdateWorkoutResponse\"\x89\x04\n" +
 	"\aWorkout\x12\x18\n" +
 	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x02id\x12\x1b\n" +
 	"\x04name\x18\x02 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x04name\x12(\n" +
@@ -1052,7 +1073,8 @@ const file_api_v1_workout_service_proto_rawDesc = "" +
 	"\n" +
 	"routine_id\x18\n" +
 	" \x01(\tR\troutineId\x12,\n" +
-	"\x06groups\x18\v \x03(\v2\x14.api.v1.WorkoutGroupR\x06groups\"\xc7\x02\n" +
+	"\x06groups\x18\v \x03(\v2\x14.api.v1.WorkoutGroupR\x06groups\x12%\n" +
+	"\x0erecording_json\x18\f \x01(\tR\rrecordingJson\"\xc7\x02\n" +
 	"\fWorkoutGroup\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12,\n" +
 	"\x04mode\x18\x02 \x01(\x0e2\x18.api.v1.RoutineGroupModeR\x04mode\x12O\n" +

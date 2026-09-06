@@ -417,6 +417,38 @@ func (s *routineSuite) TestCreateRoutineWithAPerExerciseRest() {
 	s.Require().Equal(int32(0), group.GetExercises()[2].GetRestSeconds())
 }
 
+// A circuit's target durations are part of the prescription: saved with the
+// routine, read back with it, and changed by an update like any other field.
+func (s *routineSuite) TestCircuitTargetDurationsSurviveSaveAndReload() {
+	user := s.factory.NewUser()
+	ctx := s.context(user)
+	exercises := s.factory.NewExerciseSlice(2, factory.ExerciseUserID(user.ID))
+	ids := s.exerciseIDs(exercises)
+	created, err := s.handler.CreateRoutine(ctx, connect.NewRequest(&apiv1.CreateRoutineRequest{
+		Name: "Timed circuit", ExerciseIds: ids,
+		Groups: []*apiv1.RoutineGroup{{
+			Mode: apiv1.RoutineGroupMode_ROUTINE_GROUP_MODE_CIRCUIT, Rounds: 6,
+			Exercises: []*apiv1.RoutineExercise{
+				{Exercise: &apiv1.Exercise{Id: ids[0]}, TargetDurationSeconds: 120},
+				{Exercise: &apiv1.Exercise{Id: ids[1]}, TargetDurationSeconds: 240},
+			},
+		}},
+	}))
+	s.Require().NoError(err)
+
+	routine := s.getRoutine(ctx, created.Msg.GetId())
+	entries := routine.GetGroups()[0].GetExercises()
+	s.Require().Equal(int32(120), entries[0].GetTargetDurationSeconds())
+	s.Require().Equal(int32(240), entries[1].GetTargetDurationSeconds())
+
+	entries[0].TargetDurationSeconds = 90
+	_, err = s.handler.UpdateRoutine(ctx, connect.NewRequest(&apiv1.UpdateRoutineRequest{Routine: routine}))
+	s.Require().NoError(err)
+
+	reloaded := s.getRoutine(ctx, routine.GetId()).GetGroups()[0].GetExercises()
+	s.Require().Equal(int32(90), reloaded[0].GetTargetDurationSeconds())
+}
+
 // Nothing says how long an occurrence rests, so the rest a new one of that
 // exercise starts at does — and an exercise held against the clock starts with
 // no timer at all.

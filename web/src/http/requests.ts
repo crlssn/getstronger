@@ -376,6 +376,7 @@ const routineGroupMessages = (groups: readonly DraftGroup[] | undefined): Routin
             ({
               exercise: { id: entry.exerciseId } as Exercise,
               restSeconds: entry.restSeconds,
+              targetDurationSeconds: entry.targetDurationSeconds ?? 0,
             }) as RoutineExercise,
         ),
       }) as RoutineGroup,

@@ -60,6 +60,9 @@ func (h *workoutHandler) CreateWorkout(ctx context.Context, req *connect.Request
 	if err = h.verifyExercisesOwned(ctx, ids.user, session.exerciseSets); err != nil {
 		return nil, err
 	}
+	if err = training.ValidateRecording(req.Msg.GetRecordingJson(), period); err != nil {
+		return nil, connect.NewError(connect.CodeInvalidArgument, err)
+	}
 
 	workout, planAdvanceSkipped, err := h.createWorkout(ctx, req.Msg, ids, workoutName, period, session)
 	if errors.Is(err, training.ErrWorkoutAlreadySaved) {
@@ -160,6 +163,7 @@ func (h *workoutHandler) createWorkout(
 			Groups:       session.groups,
 
 			IdempotencyKey: ids.idempotencyKey,
+			RecordingJSON:  request.GetRecordingJson(),
 		})
 		if createErr != nil {
 			return fmt.Errorf("create workout: %w", createErr)

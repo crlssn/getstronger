@@ -994,9 +994,11 @@ type RoutineExercise struct {
 	// How long this occurrence rests between sets; 0 turns the timer off here
 	// alone. Ignored in a circuit, which rests between exercises and between
 	// rounds instead.
-	RestSeconds   int32 `protobuf:"varint,2,opt,name=rest_seconds,json=restSeconds,proto3" json:"rest_seconds,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	RestSeconds int32 `protobuf:"varint,2,opt,name=rest_seconds,json=restSeconds,proto3" json:"rest_seconds,omitempty"`
+	// Active time prescribed for each circuit round; zero means manual logging.
+	TargetDurationSeconds int32 `protobuf:"varint,3,opt,name=target_duration_seconds,json=targetDurationSeconds,proto3" json:"target_duration_seconds,omitempty"`
+	unknownFields         protoimpl.UnknownFields
+	sizeCache             protoimpl.SizeCache
 }
 
 func (x *RoutineExercise) Reset() {
@@ -1039,6 +1041,13 @@ func (x *RoutineExercise) GetExercise() *Exercise {
 func (x *RoutineExercise) GetRestSeconds() int32 {
 	if x != nil {
 		return x.RestSeconds
+	}
+	return 0
+}
+
+func (x *RoutineExercise) GetTargetDurationSeconds() int32 {
+	if x != nil {
+		return x.TargetDurationSeconds
 	}
 	return 0
 }
@@ -1884,11 +1893,12 @@ const file_api_v1_routine_service_proto_rawDesc = "" +
 	"\x1brest_between_rounds_seconds\x18\x05 \x01(\x05B\n" +
 	"\xbaH\a\x1a\x05\x18\x90\x1c(\x00R\x18restBetweenRoundsSeconds\x125\n" +
 	"\texercises\x18\a \x03(\v2\x17.api.v1.RoutineExerciseR\texercises\x12!\n" +
-	"\x06rounds\x18\b \x01(\x05B\t\xbaH\x06\x1a\x04\x18c(\x00R\x06roundsJ\x04\b\x03\x10\x04J\x04\b\x06\x10\a\"n\n" +
+	"\x06rounds\x18\b \x01(\x05B\t\xbaH\x06\x1a\x04\x18c(\x00R\x06roundsJ\x04\b\x03\x10\x04J\x04\b\x06\x10\a\"\xb3\x01\n" +
 	"\x0fRoutineExercise\x12,\n" +
 	"\bexercise\x18\x01 \x01(\v2\x10.api.v1.ExerciseR\bexercise\x12-\n" +
 	"\frest_seconds\x18\x02 \x01(\x05B\n" +
-	"\xbaH\a\x1a\x05\x18\x90\x1c(\x00R\vrestSeconds\"d\n" +
+	"\xbaH\a\x1a\x05\x18\x90\x1c(\x00R\vrestSeconds\x12C\n" +
+	"\x17target_duration_seconds\x18\x03 \x01(\x05B\v\xbaH\b\x1a\x06\x18\x80\xa3\x05(\x00R\x15targetDurationSeconds\"d\n" +
 	"\x11CreatePlanRequest\x12\x1b\n" +
 	"\x04name\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x04name\x122\n" +
 	"\vroutine_ids\x18\x02 \x03(\tB\x11\xbaH\x0e\x92\x01\v\b\x01\x18\x01\"\x05r\x03\xb0\x01\x01R\n" +
