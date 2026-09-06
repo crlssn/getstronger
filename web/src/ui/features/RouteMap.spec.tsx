@@ -55,7 +55,13 @@ vi.mock('maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url', () => ({
   default: '/assets/worker.mjs',
 }))
 
-const point = (longitude: number) => ({ timestamp: 0, latitude: 51, longitude, accuracy: 3 })
+// A fix a second per thousandth of a degree, so timestamps tell fixes apart.
+const point = (longitude: number) => ({
+  timestamp: Math.round(longitude * 1_000_000),
+  latitude: 51,
+  longitude,
+  accuracy: 3,
+})
 
 const lines: RouteLine[] = [
   { key: 'walk-1', colorToken: '--color-route-1', segments: [[point(0), point(0.001)]] },
@@ -98,16 +104,48 @@ describe('RouteMap', () => {
       string,
       { data: FeatureCollection<LineString, { color: string }> },
     ]
+    // One line per interval, its edges chained: two-point lines a few metres
+    // long simplify away at a phone's zoom.
     expect(source.data.features.map((feature) => feature.properties.color)).toEqual([
       '#2f6fed',
-      '#d9542b',
       '#d9542b',
     ])
     expect(source.data.features[0].geometry.coordinates).toEqual([
       [0, 51],
       [0.001, 51],
     ])
+    expect(source.data.features[1].geometry.coordinates).toEqual([
+      [0.001, 51],
+      [0.002, 51],
+      [0.003, 51],
+    ])
     expect(maplibre.instance.addLayer).toHaveBeenCalledOnce()
+  })
+
+  it('breaks a line where the route has a gap, and nowhere else', async () => {
+    const gapped: RouteLine[] = [
+      {
+        key: 'run-1',
+        colorToken: '--color-route-1',
+        segments: [
+          [point(0), point(0.001)],
+          [point(0.001), point(0.002)],
+          // A pause, or fixes the recorder threw out: the line stops and starts.
+          [point(0.005), point(0.006)],
+        ],
+      },
+    ]
+    renderWithProviders(<RouteMap lines={gapped} onUnavailable={vi.fn()} />)
+    await waitFor(() => expect(maplibre.options).toHaveLength(1))
+
+    maplibre.fire('load')
+    const [, source] = maplibre.instance.addSource.mock.calls[0] as [
+      string,
+      { data: FeatureCollection<LineString, { color: string }> },
+    ]
+    expect(source.data.features.map((feature) => feature.geometry.coordinates.length)).toEqual([
+      3, 2,
+    ])
   })
 
   it('takes the dark style under the dark palette', async () => {
