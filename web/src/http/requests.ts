@@ -722,6 +722,11 @@ const tryCatch = async <T>(
 
       if (options.rethrow) throw error
 
+      if (error.code === Code.ResourceExhausted) {
+        requestErrorMessage = i18n.t('common.tooManyAttempts')
+        return
+      }
+
       for (const detail of error.findDetails(ErrorDetailSchema)) {
         switch (detail.error) {
           case Error.EMAIL_NOT_VERIFIED:

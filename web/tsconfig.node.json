@@ -4,7 +4,8 @@
     "vite.config.*",
     "vitest.config.*",
     "playwright.config.*",
-    "playwright.screenshots.config.*"
+    "playwright.screenshots.config.*",
+    "tests/auth-rate-policy.ts"
   ],
   "compilerOptions": {
     "composite": true,
