@@ -4,6 +4,12 @@
   @apply card mb-4 divide-y divide-border overflow-hidden;
 }
 
+/* The eyebrow the app uses for every section label, indented to the row
+   gutter so the heading and the titles under it share a left edge. */
+.heading {
+  @apply px-4 py-3 text-eyebrow font-bold uppercase text-text-subtle;
+}
+
 .fetching {
   @apply flex h-16 items-center justify-center text-text-muted;
 }

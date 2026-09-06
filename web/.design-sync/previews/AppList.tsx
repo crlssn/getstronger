@@ -1,4 +1,4 @@
-import { AppList, AppListItem, AppListRow } from 'getstronger-ds'
+import { AppList, AppListRow } from 'getstronger-ds'
 
 export const OfRows = () => (
   <AppList>
@@ -8,11 +8,11 @@ export const OfRows = () => (
   </AppList>
 )
 
-export const OfItems = () => (
-  <AppList>
-    <AppListItem is="header">This week</AppListItem>
-    <AppListItem>Push day A</AppListItem>
-    <AppListItem>Pull day B</AppListItem>
+// The heading is the section label and the list's accessible name at once.
+export const WithHeading = () => (
+  <AppList heading="This week">
+    <AppListRow title="Push day A" meta="Fri 28 Aug · 51 min" trailing="7,240 kg" />
+    <AppListRow title="Pull day B" meta="Wed 26 Aug · 48 min" trailing="6,880 kg" />
   </AppList>
 )
 

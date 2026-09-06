@@ -12,3 +12,7 @@ something the reader finds out.
 Below 520px the `trailing` value drops under the title instead of competing
 with it: on a 390px screen a long exercise name and its heaviest set cannot
 both have the room they need on one line.
+
+`tone="danger"` is the row that destroys something. Danger is the title's
+colour, never a red fill — the same rule `<AppButton colour="destructive">`
+follows, because a red panel shouts before it is read.

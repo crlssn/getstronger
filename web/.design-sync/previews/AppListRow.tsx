@@ -43,3 +43,11 @@ export const WithoutLink = () => (
     <AppListRow title="Sessions" meta="This week" trailing="3" />
   </AppList>
 )
+
+// Danger is the title's colour, never a red fill.
+export const DangerTone = () => (
+  <AppList heading="Danger zone">
+    <AppListRow title="Export your data" to="/settings/export" />
+    <AppListRow title="Delete this routine" tone="danger" to="/routines/1/delete" />
+  </AppList>
+)

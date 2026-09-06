@@ -253,8 +253,15 @@ styled as destructive, because every one of them today is a delete.
 
 ### `<AppList>`
 
-An unordered list that fetches its next page when the bottom scrolls into view.
-`canFetch` controls whether the sentinel row exists at all.
+The card that holds rows. `canFetch` decides whether it also fetches its next
+page as the bottom scrolls into view, so the same component is the plain
+container and the infinite one — a list that has everything it will ever have
+simply leaves the sentinel out.
+
+`heading` is a section label above the first row, drawn as the app's eyebrow.
+It is also the list's accessible name, so the row itself is `aria-hidden` and
+the section is announced once rather than twice. One card, one heading: a list
+that wants two of them is two cards.
 
 ### `<AppListItem>` and `<AppListItemLink>`
 
@@ -273,6 +280,10 @@ something the reader finds out.
 Below 520px the `trailing` value drops under the title instead of competing
 with it: on a 390px screen a long exercise name and its heaviest set cannot
 both have the room they need on one line.
+
+`tone="danger"` is the row that destroys something. Danger is the title's
+colour, never a red fill — the same rule `<AppButton colour="destructive">`
+follows, because a red panel shouts before it is read.
 
 ### `<AppOptionRow>`
 

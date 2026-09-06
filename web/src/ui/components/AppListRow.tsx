@@ -21,6 +21,11 @@ interface Props {
    * one on the profile, and only one of them looked tappable.
    */
   to?: string
+  /**
+   * `danger` for a row that destroys something. Danger is danger text, never a
+   * red fill — the same rule `<AppButton colour="destructive">` follows.
+   */
+  tone?: 'default' | 'danger'
   className?: string
 }
 
@@ -35,7 +40,15 @@ interface Props {
  * for the width: on a 390px screen a long exercise name and its heaviest set
  * cannot both have the room they need on one line.
  */
-export const AppListRow = ({ leading, title, meta, trailing, to, className }: Props) => {
+export const AppListRow = ({
+  leading,
+  title,
+  meta,
+  trailing,
+  to,
+  tone = 'default',
+  className,
+}: Props) => {
   const content = (
     <>
       {leading && <span className={styles.leading}>{leading}</span>}
@@ -54,7 +67,7 @@ export const AppListRow = ({ leading, title, meta, trailing, to, className }: Pr
   )
 
   return (
-    <li className={cn(styles.row, className)}>
+    <li className={cn(styles.row, tone === 'danger' && styles.danger, className)}>
       {to ? (
         <Link className={styles.inner} to={to}>
           {content}
