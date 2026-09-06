@@ -1,5 +1,7 @@
 import { AppList, AppListItem, AppListItemLink } from 'getstronger-ds'
 
+// Deprecated: new work uses AppList + AppListRow. Kept until the removal release.
+
 export const Default = () => (
   <AppList>
     <AppListItemLink to="/settings/account">Account</AppListItemLink>

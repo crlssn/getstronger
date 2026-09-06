@@ -113,6 +113,19 @@ export default tseslint.config(
           message:
             'The app has no select. Use <AppSegmented> for a few options, or add one to the design system.',
         },
+        // Deprecated, and removed after one release. Both of these describe
+        // themselves as a row, and <AppListRow> is the one with fixed slots
+        // and a chevron on every row that navigates.
+        {
+          selector: 'JSXOpeningElement[name.name="AppListItem"]',
+          message:
+            'Use <AppListRow> from @/ui/components. is="danger" is tone="danger" there, is="header" is <AppList heading>, and content that is none of leading, title, meta or trailing is not a list row — see src/ui/components/README.md.',
+        },
+        {
+          selector: 'JSXOpeningElement[name.name="AppListItemLink"]',
+          message:
+            'Use <AppListRow to> from @/ui/components, which draws the chevron that says the row goes somewhere.',
+        },
       ],
     },
   },
