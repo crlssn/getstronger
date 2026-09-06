@@ -31,6 +31,7 @@
     "@capacitor-community/keep-awake": "8.0.1",
     "@capacitor/app": "8.1.1",
     "@capacitor/core": "8.5.0",
+    "@capacitor/preferences": "8.0.1",
     "@capacitor/splash-screen": "8.0.2",
     "@connectrpc/connect": "2.1.2",
     "@connectrpc/connect-web": "2.1.2",

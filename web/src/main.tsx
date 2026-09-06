@@ -21,23 +21,30 @@ import { warmLazyRoutesWhenIdle } from '@/router/warmRoutes'
 import { selectAuthorised, useAuthStore } from '@/stores/auth'
 import { startLocale, startTheme } from '@/stores/locale'
 import { useNotificationStore } from '@/stores/notifications'
+import { rehydrated } from '@/stores/persisted'
 
 const rootElement = document.getElementById('root')
 if (rootElement === null) throw new Error('#root element is missing from index.html')
 
-// Before the router, so the first screen renders in the chosen language rather
-// than in the device's and then switching under the reader.
-startLocale()
-// The boot script painted a first answer; this re-applies the stored choice
-// and starts following the device for as long as the app is open.
-startTheme()
-
-const router = createRouter()
-// Registered before the first render: the HTTP layer redirects through this,
-// and a request fired by a route loader can beat the router's own mount.
-setNavigator((to, options) => router.navigate(to, options))
-
 const init = async () => {
+  // Inside the native app the stores read from the OS and land a tick after
+  // they are created. Everything below reads one — the router's guards run
+  // their first loader on creation — so nothing starts until they have.
+  // Immediate on the web, where `localStorage` is read synchronously.
+  await rehydrated()
+
+  // Before the router, so the first screen renders in the chosen language
+  // rather than in the device's and then switching under the reader.
+  startLocale()
+  // The boot script painted a first answer; this re-applies the stored choice
+  // and starts following the device for as long as the app is open.
+  startTheme()
+
+  const router = createRouter()
+  // Registered before the first render: the HTTP layer redirects through this,
+  // and a request fired by a route loader can beat the router's own mount.
+  setNavigator((to, options) => router.navigate(to, options))
+
   if (selectAuthorised(useAuthStore.getState())) {
     await refreshAccessTokenOrLogout()
 
