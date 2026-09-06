@@ -1,0 +1,49 @@
+@reference '../../assets/base.css';
+
+.row {
+  @apply transition-colors duration-200;
+}
+
+.inner {
+  @apply flex items-center justify-between gap-x-6 px-4 py-5;
+}
+
+.copy {
+  @apply flex w-full items-center gap-x-3;
+}
+
+.tile {
+  @apply grid size-11 shrink-0 place-items-center rounded-control bg-ink-surface text-text-subtle;
+}
+
+.tile svg {
+  @apply size-6;
+}
+
+.body {
+  @apply w-full;
+}
+
+/* The sentence is ordinary weight with the actor's name set in bold inside it,
+   so the row reads as prose rather than as a heading. */
+.what {
+  @apply block font-normal text-text-muted;
+}
+
+.when {
+  @apply block text-meta text-text-subtle;
+}
+
+.chevron {
+  @apply size-5 shrink-0 text-text-subtle;
+}
+
+/* Unread is the same row at full strength: an ink tile and the copy in the
+   text colour rather than a step below it. */
+.unread .tile {
+  @apply bg-ink-tint text-ink-strong;
+}
+
+.unread .what {
+  @apply text-text;
+}

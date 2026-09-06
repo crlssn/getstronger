@@ -2,10 +2,10 @@ import type { User } from '@/proto/api/v1/shared_pb'
 import type { Workout } from '@/proto/api/v1/workout_service_pb'
 
 import { ChatBubbleLeftRightIcon } from '@heroicons/react/24/outline'
-import { Link } from 'react-router-dom'
 
 import { RichMessage } from '@/i18n/RichMessage'
 import { useAuthStore } from '@/stores/auth'
+import { NotificationRow } from '@/ui/features/NotificationRow'
 import { formatUnixTimestamp } from '@/utils/datetime'
 import { handle } from '@/utils/names'
 
@@ -13,10 +13,12 @@ interface Props {
   actor?: User
   timestamp: bigint
   workout?: Workout
+  read: boolean
+  onOpen: () => void
 }
 
 /** A "someone commented" row, linking to the workout they commented on. */
-export const NotificationWorkoutComment = ({ actor, timestamp, workout }: Props) => {
+export const NotificationWorkoutComment = ({ actor, timestamp, workout, read, onOpen }: Props) => {
   const userId = useAuthStore((state) => state.userId)
 
   // The owner changes the sentence, not just a word ("din"/"sin" bind to the
@@ -29,21 +31,21 @@ export const NotificationWorkoutComment = ({ actor, timestamp, workout }: Props)
         : 'notifications.commentedOnUsersWorkout'
 
   return (
-    <Link to={`/workouts/${workout?.id}`} className="flex w-full items-center gap-x-3">
-      <ChatBubbleLeftRightIcon className="size-7" aria-hidden="true" />
-      <div className="w-full font-normal">
-        <div>
-          <RichMessage
-            i18nKey={messageKey}
-            values={{ owner: handle(workout?.user?.username) }}
-            nodes={{
-              name: <span className="font-semibold">{handle(actor?.username)}</span>,
-              workout: <span className="font-semibold">{workout?.name}</span>,
-            }}
-          />
-        </div>
-        <p className="text-sm text-text-subtle">{formatUnixTimestamp(timestamp)}</p>
-      </div>
-    </Link>
+    <NotificationRow
+      icon={<ChatBubbleLeftRightIcon />}
+      read={read}
+      to={`/workouts/${workout?.id}`}
+      when={formatUnixTimestamp(timestamp)}
+      onOpen={onOpen}
+    >
+      <RichMessage
+        i18nKey={messageKey}
+        nodes={{
+          name: <span className="font-semibold">{handle(actor?.username)}</span>,
+          workout: <span className="font-semibold">{workout?.name}</span>,
+        }}
+        values={{ owner: handle(workout?.user?.username) }}
+      />
+    </NotificationRow>
   )
 }

@@ -1,25 +1,20 @@
 import type { Notification } from '@/proto/api/v1/notification_service_pb'
 
-import { ChevronRightIcon } from '@heroicons/react/24/outline'
-import { useCallback, useEffect, useState } from 'react'
+import { Fragment, useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { listNotifications, markNotificationAsRead } from '@/http/requests'
 import { useNotificationStore } from '@/stores/notifications'
-import { cn } from '@/ui/cn'
 import { AppButton } from '@/ui/components/AppButton'
 import { AppEmptyState } from '@/ui/components/AppEmptyState'
 import { AppErrorState } from '@/ui/components/AppErrorState'
 import { AppList } from '@/ui/components/AppList'
-import { AppListItem } from '@/ui/components/AppListItem'
-import { AppUnreadDot } from '@/ui/components/AppUnreadDot'
 import { AppSkeleton } from '@/ui/components/AppSkeleton'
 import { PageNavAction } from '@/ui/components/PageNavAction'
 import { NotificationUserFollow } from '@/ui/features/NotificationUserFollow'
 import { NotificationWorkoutComment } from '@/ui/features/NotificationWorkoutComment'
 import { appendPage } from '@/utils/appendPage'
 import { usePagination } from '@/utils/usePagination'
-import styles from './ListNotifications.module.css'
 
 /** Everything that happened while the user was away, newest first. */
 export const ListNotifications = () => {
@@ -125,32 +120,25 @@ export const ListNotifications = () => {
       {notifications.length > 0 && (
         <AppList canFetch={hasMorePages && !failed} onFetch={() => void fetchNotifications()}>
           {notifications.map((notification) => (
-            <AppListItem
-              key={notification.id}
-              className={cn(styles.notificationItem, !notification.read && styles.unread)}
-              onClick={() => markAsRead(notification)}
-            >
-              {!notification.read && (
-                <span className="sr-only">{t('profile.unreadNotification')}</span>
-              )}
-
+            <Fragment key={notification.id}>
               {notification.type.case === 'userFollowed' && (
                 <NotificationUserFollow
                   actor={notification.type.value.actor}
+                  read={notification.read}
                   timestamp={notification.notifiedAtUnix}
+                  onOpen={() => markAsRead(notification)}
                 />
               )}
               {notification.type.case === 'workoutComment' && (
                 <NotificationWorkoutComment
                   actor={notification.type.value.actor}
-                  workout={notification.type.value.workout}
+                  read={notification.read}
                   timestamp={notification.notifiedAtUnix}
+                  workout={notification.type.value.workout}
+                  onOpen={() => markAsRead(notification)}
                 />
               )}
-
-              {!notification.read && <AppUnreadDot />}
-              <ChevronRightIcon aria-hidden="true" />
-            </AppListItem>
+            </Fragment>
           ))}
         </AppList>
       )}
