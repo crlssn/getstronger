@@ -1,7 +1,7 @@
 @reference '../../assets/base.css';
 
 /* A stat is read inside whatever frame its caller gives it — a grid cell, a
-   sunken tile — so it claims no width of its own and lets the label truncate. */
+   sunken tile — so it claims no width of its own. */
 .stat {
   @apply min-w-0;
 }

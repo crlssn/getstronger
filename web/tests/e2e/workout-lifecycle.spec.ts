@@ -694,12 +694,14 @@ test.describe('weight units', () => {
       // The completed view splits the duration into units and derives a pace
       // from the set's own distance unit: 12:30 over 3.5 mi is 3:34 min/mi.
       // Distance and time each appear twice — the summary totals every unit
-      // the session trained in, and the set row keeps its own values.
+      // the session trained in, and the set row keeps its own values. The
+      // summary's unit is its own element, so nothing separates it from the
+      // figure in the cell's text.
       await expect(
-        page.getByRole('listitem').filter({ hasText: /^Distance3\.5 mi$/ }),
+        page.getByRole('listitem').filter({ hasText: /^Distance\s*3\.5\s*mi$/ }),
       ).toBeVisible()
       await expect(
-        page.getByRole('listitem').filter({ hasText: /^Time12 min 30 sec$/ }),
+        page.getByRole('listitem').filter({ hasText: /^Time\s*12 min 30 sec$/ }),
       ).toBeVisible()
       await expect(page.getByRole('cell', { name: /3\.5\s*mi/ })).toBeVisible()
       await expect(page.getByText('3:34 min/mi')).toBeVisible()
@@ -839,11 +841,23 @@ test.describe('planned workouts and history', () => {
     expect(new Set(strokes.filter((_, index) => index % 2 === 1)).size).toBe(1)
     expect(strokes[0]).not.toBe(strokes[1])
     await expect(route.getByRole('list').first()).toHaveText(/Walk.*Run/)
-    await expect(
-      route.getByText(/^Active time 36:00 · Recorded distance 5\.\d\d km$/),
-    ).toBeVisible()
-    await expect(route.getByText(/^Walk · Round 1 · 2:00 · 0\.1\d km$/)).toBeVisible()
-    await expect(route.getByText(/^Run · Round 6 · 4:00 · 0\.7\d km$/)).toBeVisible()
+
+    // The two totals are a tile each rather than one sentence.
+    await expect(route.getByText('Active time', { exact: true })).toBeVisible()
+    await expect(route.getByText('36:00', { exact: true })).toBeVisible()
+    await expect(route.getByText(/^5\.\d\d\s*km$/)).toBeVisible()
+
+    // And the twelve interval lines are the six rounds they were, headed by
+    // what the circuit prescribed.
+    await expect(route.getByText('6 rounds')).toBeVisible()
+    await expect(route.getByText('Walk 2:00 → Run 4:00')).toBeVisible()
+    const rounds = route.getByRole('list').nth(1).getByRole('listitem')
+    await expect(rounds).toHaveCount(6)
+    await expect(rounds.first()).toContainText('Walk')
+    await expect(rounds.first()).toContainText(/2:00/)
+    await expect(rounds.first()).toContainText(/0\.1\d km/)
+    await expect(rounds.last()).toContainText('Run')
+    await expect(rounds.last()).toContainText(/0\.7\d km/)
 
     // The same route read in miles, once that is what the athlete prefers.
     const distanceUnit = () => page.getByRole('group', { name: 'Preferred distance unit' })
@@ -853,10 +867,11 @@ test.describe('planned workouts and history', () => {
       await expect(page.getByRole('status')).toContainText('Distance unit updated')
 
       await page.goto(workoutURL)
-      await expect(
-        page.getByText(/^Active time 36:00 · Recorded distance 3\.\d\d mi$/),
-      ).toBeVisible()
-      await expect(page.getByText(/^Run · Round 6 · 4:00 · 0\.4\d mi$/)).toBeVisible()
+      const inMiles = sectionWithHeading(page, 'Workout route')
+      await expect(inMiles.getByText(/^3\.\d\d\s*mi$/)).toBeVisible()
+      await expect(inMiles.getByRole('list').nth(1).getByRole('listitem').last()).toContainText(
+        /0\.4\d mi/,
+      )
     } finally {
       // Put the seeded default back: the account is shared with the tests
       // after this one.
