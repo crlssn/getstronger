@@ -168,7 +168,7 @@ run = [{ task = "worktree:guard" }, '''
 set -euo pipefail
 
 # See the note in 'db:reset' on why the binary is resolved through mise.
-"$(mise which go)" run server/testing/factory/seed/main.go \
+"$(mise which go)" run ./server/testing/factory/seed \
   -email="$USER_EMAIL" \
   -password="$USER_PASSWORD" \
   -name="$USER_NAME" \

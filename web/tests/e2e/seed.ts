@@ -34,7 +34,7 @@ const runCommand = (program: string, args: string[]) => {
 // copies the result aside. Every reset after that is a copy back, which costs
 // milliseconds. See server/testing/factory/snapshot/main.go.
 export const seedDatabase = () => {
-  runCommand('server/testing/factory/seed/main.go', [
+  runCommand('./server/testing/factory/seed', [
     `-email=${seedEmail}`,
     `-password=${seedPassword}`,
     `-name=${process.env.USER_NAME ?? 'Alex Morgan'}`,
