@@ -192,3 +192,110 @@ func TestAuthRateLimitFailureAndAuthenticatedBypass(t *testing.T) {
 		})
 	}
 }
+
+// budgetedAuthAttempts allows a fixed number of reservations, then refuses.
+type budgetedAuthAttempts struct {
+	remaining int
+	calls     int
+}
+
+func (b *budgetedAuthAttempts) ConsumeAuthAttempt(context.Context, string, int, time.Duration) (bool, error) {
+	b.calls++
+	if b.remaining == 0 {
+		return false, nil
+	}
+	b.remaining--
+	return true, nil
+}
+
+func (b *budgetedAuthAttempts) PasswordResetAccount(context.Context, uuid.UUID) (uuid.UUID, error) {
+	return uuid.Nil, sql.ErrNoRows
+}
+
+// rateLimitStreamingConn is the smallest connect.StreamingHandlerConn the
+// interceptor needs: it reads the spec, the peer and the request header.
+type rateLimitStreamingConn struct {
+	spec   connect.Spec
+	header http.Header
+}
+
+func (c *rateLimitStreamingConn) Spec() connect.Spec           { return c.spec }
+func (c *rateLimitStreamingConn) Peer() connect.Peer           { return connect.Peer{Addr: "192.0.2.1:1234"} }
+func (c *rateLimitStreamingConn) Receive(any) error            { return nil }
+func (c *rateLimitStreamingConn) RequestHeader() http.Header   { return c.header }
+func (c *rateLimitStreamingConn) Send(any) error               { return nil }
+func (c *rateLimitStreamingConn) ResponseHeader() http.Header  { return make(http.Header) }
+func (c *rateLimitStreamingConn) ResponseTrailer() http.Header { return make(http.Header) }
+
+// A stream opens on the same budget as a unary call: until its token is read an
+// SSE connection is another way to spend a guest procedure's source allowance.
+func TestAuthRateLimitStreamingHandler(t *testing.T) {
+	t.Parallel()
+	methods := apiv1.File_api_v1_auth_service_proto.Services().ByName("AuthService").Methods()
+	spec := func(name string) connect.Spec {
+		return connect.Spec{
+			Procedure:  "/api.v1.AuthService/" + name,
+			StreamType: connect.StreamTypeServer,
+			Schema:     methods.ByName(protoreflect.Name(name)),
+		}
+	}
+
+	for _, tc := range []struct {
+		name    string
+		spec    connect.Spec
+		budget  int
+		reached bool
+		code    connect.Code
+		calls   int
+	}{
+		{"guest within budget", spec("Login"), 1, true, 0, 1},
+		{"guest over budget", spec("Login"), 0, false, connect.CodeResourceExhausted, 1},
+		{"authenticated bypass", spec("DeleteAccount"), 0, true, 0, 0},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			store := &budgetedAuthAttempts{remaining: tc.budget}
+			limit := &authRateLimit{
+				log:    zap.NewNop(),
+				store:  store,
+				policy: &config.AuthRateLimit{SourceAttempts: 1, SourceWindow: time.Minute},
+				key:    []byte("test"),
+			}
+
+			var reached bool
+			err := limit.WrapStreamingHandler(func(context.Context, connect.StreamingHandlerConn) error {
+				reached = true
+				return nil
+			})(t.Context(), &rateLimitStreamingConn{spec: tc.spec, header: make(http.Header)})
+
+			require.Equal(t, tc.reached, reached)
+			require.Equal(t, tc.calls, store.calls, "authenticated procedures never touch the limiter store")
+			if tc.code != 0 {
+				require.Equal(t, tc.code, connect.CodeOf(err))
+				return
+			}
+			require.NoError(t, err)
+		})
+	}
+}
+
+// The client half limits nothing: it is the outbound side of a duplex the API
+// does not serve, so it hands the call straight on.
+func TestAuthRateLimitStreamingClientPassesThrough(t *testing.T) {
+	t.Parallel()
+	limit := &authRateLimit{
+		log:    zap.NewNop(),
+		store:  &budgetedAuthAttempts{},
+		policy: &config.AuthRateLimit{},
+		key:    []byte("test"),
+	}
+
+	called := false
+	wrapped := limit.WrapStreamingClient(func(context.Context, connect.Spec) connect.StreamingClientConn {
+		called = true
+		return nil
+	})
+
+	require.Nil(t, wrapped(t.Context(), connect.Spec{}))
+	require.True(t, called)
+}
