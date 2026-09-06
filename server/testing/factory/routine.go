@@ -98,10 +98,19 @@ func RoutineName(name string) RoutineOpt {
 	}
 }
 
-// AddRoutineExercise appends the exercises to the routine, continuing from the
-// routine's current last position so repeated calls keep extending the order.
-// They join the routine's last group, the way the app appends them.
+// AddRoutineExercise appends the exercises to the routine's last group, each
+// logged by hand rather than held against the clock.
 func (f *Factory) AddRoutineExercise(routine *models.Routine, exercises ...*models.Exercise) {
+	f.AddTimedRoutineExercise(routine, 0, exercises...)
+}
+
+// AddTimedRoutineExercise appends the exercises to the routine, continuing
+// from the routine's current last position so repeated calls keep extending
+// the order. They join the routine's last group, the way the app appends them,
+// and each is held for targetDurationSeconds when a circuit is guided.
+func (f *Factory) AddTimedRoutineExercise(
+	routine *models.Routine, targetDurationSeconds int32, exercises ...*models.Exercise,
+) {
 	ctx := context.Background()
 
 	lastLink, err := models.ExercisesRoutines.Query(
@@ -124,6 +133,7 @@ func (f *Factory) AddRoutineExercise(routine *models.Routine, exercises ...*mode
 			bobfactory.ExercisesRoutineMods.WithExistingExercise(exerciseWithoutRelationships(exercise)),
 			bobfactory.ExercisesRoutineMods.WithExistingGroupRoutineGroup(routineGroupWithoutRelationships(group)),
 			bobfactory.ExercisesRoutineMods.Position(position),
+			bobfactory.ExercisesRoutineMods.TargetDurationSeconds(targetDurationSeconds),
 		).MustCreate(ctx, f.exec)
 	}
 }
@@ -135,6 +145,13 @@ func RoutineGroupCircuit(restBetweenExercisesSeconds, restBetweenRoundsSeconds i
 		group.Mode = omit.From(enums.RoutineGroupModeCircuit)
 		group.RestBetweenExercisesSeconds = omit.From(restBetweenExercisesSeconds)
 		group.RestBetweenRoundsSeconds = omit.From(restBetweenRoundsSeconds)
+	}
+}
+
+// RoutineGroupRounds is how many times a circuit is worked through.
+func RoutineGroupRounds(rounds int32) RoutineGroupOpt {
+	return func(group *models.RoutineGroupSetter) {
+		group.Rounds = omit.From(rounds)
 	}
 }
 

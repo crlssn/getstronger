@@ -44,7 +44,12 @@ func (f *Factory) NewWorkout(opts ...WorkoutOpt) *models.Workout { //nolint:cycl
 		user = f.NewUser()
 	}
 
-	mods := []bobfactory.WorkoutMod{bobfactory.WorkoutMods.WithExistingUser(userWithoutRelationships(user))}
+	// A workout is logged by hand unless a recording is asked for: the
+	// generated factory would otherwise fill the column with a random string.
+	mods := []bobfactory.WorkoutMod{
+		bobfactory.WorkoutMods.WithExistingUser(userWithoutRelationships(user)),
+		bobfactory.WorkoutMods.RecordingJSON(setter.RecordingJSON.GetOrZero()),
+	}
 	if value, ok := setter.ID.Get(); ok {
 		mods = append(mods, bobfactory.WorkoutMods.ID(value))
 	}
@@ -124,6 +129,20 @@ func WorkoutStartedAt(startedAt time.Time) WorkoutOpt {
 func WorkoutFinishedAt(finishedAt time.Time) WorkoutOpt {
 	return func(workout *models.WorkoutSetter) {
 		workout.FinishedAt = omit.From(finishedAt)
+	}
+}
+
+// WorkoutRoutineID is the routine the workout followed.
+func WorkoutRoutineID(routineID any) WorkoutOpt {
+	return func(workout *models.WorkoutSetter) {
+		workout.RoutineID = omitnull.From(nativeUUID(routineID))
+	}
+}
+
+// WorkoutRecordingJSON is the guided-circuit recording saved with the workout.
+func WorkoutRecordingJSON(recording string) WorkoutOpt {
+	return func(workout *models.WorkoutSetter) {
+		workout.RecordingJSON = omit.From(recording)
 	}
 }
 

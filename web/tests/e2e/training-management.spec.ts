@@ -60,6 +60,10 @@ const stepRounds = async (page: Parameters<typeof logIn>[0], by: 'Add' | 'Subtra
 const restChip = (page: Parameters<typeof logIn>[0], name: string, value: string) =>
   page.getByRole('button', { name: `Rest between sets of ${name}: ${value}`, exact: true })
 
+// A circuit's row reads its target the same way, and Off is a value too.
+const targetChip = (page: Parameters<typeof logIn>[0], name: string, value: string) =>
+  page.getByRole('button', { name: `Target duration for ${name}: ${value}`, exact: true })
+
 const deleteExercise = async (page: Parameters<typeof logIn>[0], name: string) => {
   await page.goto('/exercises')
   await page.getByLabel('Search exercises').fill(name)
@@ -522,6 +526,12 @@ test.describe('routine lifecycle', () => {
       // Grouping is the advanced half of the form; a circuit lives inside it.
       await page.getByRole('button', { name: 'Advanced', exact: true }).click()
       await page.getByRole('button', { name: 'Circuit', exact: true }).click()
+      // A circuit's rows carry a target instead of a rest between sets: how
+      // long a round holds the exercise when the session is guided on a phone.
+      // Off until asked, and nudged by the same stepper as a rest.
+      await targetChip(page, first, 'Off').click()
+      await stepRest(page, `Target duration for ${first}`, 'Add', 4)
+      await expect(targetChip(page, first, '2:00')).toBeVisible()
       await stepRest(page, 'Rest after each exercise in group A', 'Subtract', 2)
       await stepRest(page, 'Rest after each round in group A', 'Add')
       // A new circuit arrives prescribed for three rounds; two is enough here.
@@ -554,6 +564,9 @@ test.describe('routine lifecycle', () => {
       )
       await expect(page.getByRole('spinbutton', { name: 'Rounds in group A' })).toHaveText('2')
       await expect(routineExercises(page)).toHaveCount(2)
+      // The target came back with the routine, for the one row it was set on.
+      await expect(targetChip(page, first, '2:00')).toBeVisible()
+      await expect(targetChip(page, second, 'Off')).toBeVisible()
 
       await stepRest(page, 'Rest after each round in group A', 'Subtract', 3)
       await page.getByRole('button', { name: 'Save changes' }).click()

@@ -805,6 +805,58 @@ test.describe('planned workouts and history', () => {
     await expect(page).toHaveURL(/\/plans$/)
   })
 
+  // A circuit recorded on a phone comes back on the web as its route: every
+  // interval's time and distance, one colour per exercise across all the
+  // rounds, and the totals in whichever unit the athlete prefers.
+  test('shows a recorded circuit as a route in the preferred unit @mutation', async ({ page }) => {
+    await page.goto('/workout')
+    const history = sectionWithHeading(page, 'Previous workouts')
+    await history.getByRole('link').filter({ hasText: 'Walk/Run Intervals' }).first().click()
+    await expect(
+      page.getByRole('heading', { name: 'Walk/Run Intervals', exact: true }),
+    ).toBeVisible()
+    const workoutURL = page.url()
+
+    const route = sectionWithHeading(page, 'Workout route')
+    await expect(route.getByRole('heading', { name: 'Workout route' })).toBeVisible()
+    // Twelve intervals, twelve segments, and each exercise wears one colour on
+    // every round it appears in.
+    const segments = route.getByRole('img', { name: 'Workout route' }).locator('path')
+    await expect(segments).toHaveCount(12)
+    const strokes = await segments.evaluateAll((paths) =>
+      paths.map((path) => (path as SVGPathElement).style.stroke),
+    )
+    expect(new Set(strokes.filter((_, index) => index % 2 === 0)).size).toBe(1)
+    expect(new Set(strokes.filter((_, index) => index % 2 === 1)).size).toBe(1)
+    expect(strokes[0]).not.toBe(strokes[1])
+    await expect(route.getByRole('list').first()).toHaveText(/Walk.*Run/)
+    await expect(
+      route.getByText(/^Active time 36:00 · Recorded distance 5\.\d\d km$/),
+    ).toBeVisible()
+    await expect(route.getByText(/^Walk · Round 1 · 2:00 · 0\.1\d km$/)).toBeVisible()
+    await expect(route.getByText(/^Run · Round 6 · 4:00 · 0\.7\d km$/)).toBeVisible()
+
+    // The same route read in miles, once that is what the athlete prefers.
+    const distanceUnit = () => page.getByRole('group', { name: 'Preferred distance unit' })
+    try {
+      await page.goto('/settings/units')
+      await distanceUnit().getByRole('button', { name: 'mi', exact: true }).click()
+      await expect(page.getByRole('status')).toContainText('Distance unit updated')
+
+      await page.goto(workoutURL)
+      await expect(
+        page.getByText(/^Active time 36:00 · Recorded distance 3\.\d\d mi$/),
+      ).toBeVisible()
+      await expect(page.getByText(/^Run · Round 6 · 4:00 · 0\.4\d mi$/)).toBeVisible()
+    } finally {
+      // Put the seeded default back: the account is shared with the tests
+      // after this one.
+      await page.goto('/settings/units')
+      await distanceUnit().getByRole('button', { name: 'km', exact: true }).click()
+      await expect(page.getByRole('status')).toContainText('Distance unit updated')
+    }
+  })
+
   test('loads previous workouts to a clear end state and opens a summary', async ({ page }) => {
     await page.goto('/workout')
     const history = sectionWithHeading(page, 'Previous workouts')

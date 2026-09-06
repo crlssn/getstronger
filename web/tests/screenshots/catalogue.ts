@@ -12,6 +12,8 @@ export type Ids = {
   exerciseId?: string
   followeeId?: string
   planId?: string
+  /** The seeded circuit recorded on a phone, whose page carries a route map. */
+  recordedWorkoutId?: string
   routineId?: string
   runExerciseId?: string
   userId?: string
@@ -267,6 +269,13 @@ export const authenticatedPages: PageEntry[] = [
     },
     route: () => '/exercises',
   },
+  // Last so the pages before it keep their numbers, which is what a diff
+  // against an older set compares by.
+  {
+    component: 'src/ui/features/WorkoutRoute.tsx',
+    name: 'view-workout-route',
+    route: ({ recordedWorkoutId }) => recordedWorkoutId && `/workouts/${recordedWorkoutId}`,
+  },
 ]
 
 const uuid = '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}'
@@ -288,28 +297,30 @@ export const resolveIds = async (
     return hrefs.map((href) => pattern.exec(href)?.[1]).filter((id) => id !== undefined)
   }
 
-  // The seeded Run is found by its name on the page just visited, so a persona
-  // without it simply skips the cardio trend capture.
-  const runIdOnExercises = async () => {
-    const pattern = new RegExp(`^/exercises/(${uuid})$`)
-    const links = await page.locator('a[href^="/exercises/"]').evaluateAll((anchors) =>
+  // A seeded record is found by its name on the page just visited, so a
+  // persona without it simply skips that capture.
+  const idOfLink = async (collection: string, title: string) => {
+    const pattern = new RegExp(`^/${collection}/(${uuid})$`)
+    const links = await page.locator(`a[href^="/${collection}/"]`).evaluateAll((anchors) =>
       anchors.map((anchor) => ({
         href: anchor.getAttribute('href') ?? '',
-        title: anchor.querySelector('strong')?.textContent ?? '',
+        // The name is the row's first text; a record chip may follow it.
+        title: anchor.querySelector('strong')?.firstChild?.textContent?.trim() ?? '',
       })),
     )
 
     return links
-      .filter((link) => link.title === 'Run')
+      .filter((link) => link.title === title)
       .map((link) => pattern.exec(link.href)?.[1])
       .find((id) => id !== undefined)
   }
 
   const [userId] = await idsOn('/profile', 'users')
   const [workoutId] = await idsOn('/workout', 'workouts')
+  const recordedWorkoutId = await idOfLink('workouts', 'Walk/Run Intervals')
   const [routineId] = await idsOn('/routines', 'routines')
   const [exerciseId] = await idsOn('/exercises', 'exercises')
-  const runExerciseId = await runIdOnExercises()
+  const runExerciseId = await idOfLink('exercises', 'Run')
   const [planId] = await idsOn('/plans', 'plans')
   const followees = userId ? await idsOn(`/users/${userId}/follows`, 'users') : []
 
@@ -317,6 +328,7 @@ export const resolveIds = async (
     exerciseId,
     followeeId: followees.find((id) => id !== userId),
     planId,
+    recordedWorkoutId,
     routineId,
     runExerciseId,
     userId,
