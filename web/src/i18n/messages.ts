@@ -26,8 +26,11 @@ export const en = {
     noRoute: 'No reliable route was recorded.',
     incomplete:
       'Tracking is incomplete. Distances include only accepted GPS sections; gaps and paused movement are excluded.',
-    total: 'Active time {duration} · Recorded distance {distance}',
-    interval: '{name} · Round {round} · {duration} · {distance}',
+    activeTime: 'Active time',
+    recordedDistance: 'Recorded distance',
+    rounds_one: '{count} round',
+    rounds_other: '{count} rounds',
+    roundsHeading: 'Rounds',
   },
   common: {
     cancel: 'Cancel',
@@ -840,8 +843,11 @@ export const sv = {
     noRoute: 'Ingen tillförlitlig rutt registrerades.',
     incomplete:
       'Spårningen är ofullständig. Distansen omfattar bara godkända GPS-sträckor; luckor och rörelse under pauser ingår inte.',
-    total: 'Aktiv tid {duration} · Registrerad distans {distance}',
-    interval: '{name} · Varv {round} · {duration} · {distance}',
+    activeTime: 'Aktiv tid',
+    recordedDistance: 'Registrerad distans',
+    rounds_one: '{count} varv',
+    rounds_other: '{count} varv',
+    roundsHeading: 'Varv',
   },
   common: {
     cancel: 'Avbryt',

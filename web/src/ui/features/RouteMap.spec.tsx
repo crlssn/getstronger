@@ -78,11 +78,12 @@ describe('RouteMap', () => {
     renderWithProviders(<RouteMap lines={lines} onUnavailable={vi.fn()} />)
 
     expect(screen.getByRole('region', { name: 'Route map' })).toBeInTheDocument()
-    expect(screen.getByText(/Data from OpenStreetMap/)).toBeInTheDocument()
     await waitFor(() => expect(maplibre.options).toHaveLength(1))
     expect(maplibre.options[0].style).toBe('https://tiles.openfreemap.org/styles/positron')
     expect(maplibre.options[0].cooperativeGestures).toBe(true)
-    // The credit is written beside the map, so the map's own control is off.
+    // The card credits the tiles beside the map, so the map's own control is
+    // off: the built-in one is a 24px button, under the tap floor, over the
+    // route.
     expect(maplibre.options[0].attributionControl).toBe(false)
 
     maplibre.fire('load')

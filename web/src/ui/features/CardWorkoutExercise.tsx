@@ -1,13 +1,14 @@
 import type { ExerciseMetric, Set } from '@/proto/api/v1/shared_pb'
 import type { CSSProperties } from 'react'
 
-import { ChevronDownIcon } from '@heroicons/react/24/outline'
+import { ArrowRightIcon, ChevronDownIcon } from '@heroicons/react/24/outline'
 import { TrophyIcon } from '@heroicons/react/24/solid'
 import { useId } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { cn } from '@/ui/cn'
 import { AppButton } from '@/ui/components/AppButton'
+import { AppChip } from '@/ui/components/AppChip'
 import { AppOptionRow } from '@/ui/components/AppOptionRow'
 import { distanceUnitLabel } from '@/utils/distanceUnits'
 import {
@@ -86,12 +87,7 @@ export const CardWorkoutExercise = ({
           <span className={styles.name}>{name}</span>
           {/* The marker is on the row rather than only inside it: what a reader
               scans this list for is which exercises went well. */}
-          {hasPersonalBest && (
-            <span className={styles.personalBestBadge}>
-              <TrophyIcon aria-hidden="true" />
-              {t('workout.personalBest')}
-            </span>
-          )}
+          {hasPersonalBest && <AppChip tone="record">{t('workout.personalBest')}</AppChip>}
           <span className={styles.setCount}>
             {t('workout.setsCompact', { count: sets.length })}
           </span>
@@ -188,6 +184,7 @@ export const CardWorkoutExercise = ({
             to={`/exercises/${exerciseId}`}
           >
             {t('workout.viewExercise')}
+            <ArrowRightIcon className="size-4" aria-hidden="true" />
           </AppButton>
         </div>
       )}

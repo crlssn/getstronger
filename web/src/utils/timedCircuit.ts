@@ -33,6 +33,21 @@ interface Interval {
   durationSeconds: number
 }
 
+/**
+ * The recording a saved workout carries, or nothing when it carries none.
+ *
+ * A document an older client wrote is not worth failing the page for: the
+ * workout around it still reads, it simply has no route.
+ */
+export const parseRecording = (json?: string): Recording | undefined => {
+  if (!json) return undefined
+  try {
+    return JSON.parse(json) as Recording
+  } catch {
+    return undefined
+  }
+}
+
 /** Freeze the prescription before recording so later routine edits cannot change it. */
 export const circuitPhases = (
   groups: readonly RoutineGroup[],

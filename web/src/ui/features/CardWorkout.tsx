@@ -2,7 +2,7 @@ import type { Workout, WorkoutComment, WorkoutGroup } from '@/proto/api/v1/worko
 import type { DropdownItem } from '@/types/dropdown'
 
 import { CheckIcon, ChevronRightIcon, TrophyIcon } from '@heroicons/react/24/outline'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useNavigate } from 'react-router-dom'
 
@@ -12,6 +12,7 @@ import { useToastStore } from '@/stores/toasts'
 import { useAuthStore } from '@/stores/auth'
 import { useConfirmationStore } from '@/stores/confirmation'
 import { AppChip } from '@/ui/components/AppChip'
+import { AppStat } from '@/ui/components/AppStat'
 import { AppEmptyInline } from '@/ui/components/AppEmptyInline'
 import { AppButton } from '@/ui/components/AppButton'
 import { AppTextarea } from '@/ui/components/AppTextarea'
@@ -21,13 +22,15 @@ import { cn } from '@/ui/cn'
 import { CardWorkoutCircuit } from '@/ui/features/CardWorkoutCircuit'
 import { CardWorkoutComment } from '@/ui/features/CardWorkoutComment'
 import { CardWorkoutExercise } from '@/ui/features/CardWorkoutExercise'
+import { WorkoutRoute } from '@/ui/features/WorkoutRoute'
 import { AppInlineError } from '@/ui/components/AppInlineError'
 import { DropdownButton } from '@/ui/components/DropdownButton'
 import { handle, initials } from '@/utils/names'
-import { formatDistanceIn, formatDurationDisplay } from '@/utils/exerciseMeasurements'
+import { distanceIn, formatDistanceIn, formatDurationDisplay } from '@/utils/exerciseMeasurements'
 import { formatNumber } from '@/utils/numbers'
 import { usePreferencesStore } from '@/stores/preferences'
 import { groupLetter } from '@/utils/routineGroups'
+import { parseRecording } from '@/utils/timedCircuit'
 import { workoutSummary } from '@/utils/workoutSummary'
 import styles from './CardWorkout.module.css'
 
@@ -78,6 +81,13 @@ export const CardWorkout = ({ workout, compact, unseen = false }: Props) => {
     totalSetSeconds,
   } = workoutSummary(workout)
   const isOwner = workout.user?.id === userId
+
+  // Parsed once rather than per render: a recorded session is a long document,
+  // and the comment field below re-renders this card on every keystroke.
+  const recording = useMemo(
+    () => (compact ? undefined : parseRecording(workout.recordingJson)),
+    [compact, workout.recordingJson],
+  )
 
   // One straight block is the plain session every workout used to be, so it is
   // shown as one rather than wearing a badge saying "Group A".
@@ -153,27 +163,39 @@ export const CardWorkout = ({ workout, compact, unseen = false }: Props) => {
     </AppChip>
   )
 
-  const metric = (label: string, value: string) => (
-    <li>
-      <span>{label}</span>
-      <strong>{value}</strong>
+  const metric = (label: string, value: string, unit?: string, tone?: 'record') => (
+    <li key={label}>
+      <AppStat label={label} value={value} unit={unit} tone={tone} />
     </li>
   )
 
-  // The units the session actually trained in, then the session's own
-  // numbers, as the list every other collection is: the 2x2 quadrant left a
-  // hole whenever the count of metrics came out odd.
-  const metricList = (
-    <ul className={styles.metricList}>
-      {workout.intensity > 0 &&
-        metric(t('workout.totalVolume'), `${formatNumber(workout.intensity)} ${t('common.kg')}`)}
-      {totalReps > 0 && metric(t('common.reps'), formatNumber(totalReps))}
-      {totalDistanceKm > 0 &&
-        metric(t('common.distance'), formatDistanceIn(totalDistanceKm, preferredDistanceUnit))}
-      {totalSetSeconds > 0 && metric(t('common.time'), formatDurationDisplay(totalSetSeconds))}
-      {metric(t('common.duration'), `${durationMinutes} ${t('common.min')}`)}
-      {metric(t('workout.setsLogged'), `${setCount}`)}
-      {metric(t('workout.personalRecords'), `${personalBestCount}`)}
+  // Time is the clock the sets themselves ran for and duration is the clock
+  // the session ran on. A workout logged straight through makes them the same
+  // number, and two identical numbers under two names read as an error.
+  const distinctSetTime =
+    totalSetSeconds > 0 && Math.round(totalSetSeconds / 60) !== durationMinutes
+  const distance = distanceIn(totalDistanceKm, preferredDistanceUnit)
+
+  // The units the session actually trained in, then the session's own numbers.
+  // Paired rather than listed: a number is read against the one beside it, and
+  // an odd count spans the last cell rather than leaving a hole.
+  const metricGrid = (
+    <ul className={styles.metricGrid}>
+      {[
+        workout.intensity > 0 &&
+          metric(t('workout.totalVolume'), formatNumber(workout.intensity), t('common.kg')),
+        totalReps > 0 && metric(t('common.reps'), formatNumber(totalReps)),
+        totalDistanceKm > 0 && metric(t('common.distance'), distance.value, distance.unit),
+        distinctSetTime && metric(t('common.time'), formatDurationDisplay(totalSetSeconds)),
+        metric(t('common.duration'), `${durationMinutes}`, t('common.min')),
+        metric(t('workout.setsLogged'), `${setCount}`),
+        metric(
+          t('workout.personalRecords'),
+          `${personalBestCount}`,
+          undefined,
+          personalBestCount > 0 ? 'record' : undefined,
+        ),
+      ].filter(Boolean)}
     </ul>
   )
 
@@ -281,7 +303,7 @@ export const CardWorkout = ({ workout, compact, unseen = false }: Props) => {
           {personalBestBadge}
         </div>
 
-        {metricList}
+        {metricGrid}
         {note}
       </section>
 
@@ -290,7 +312,7 @@ export const CardWorkout = ({ workout, compact, unseen = false }: Props) => {
           <div>
             <h2>{t('common.exercises')}</h2>
           </div>
-          <span>{t('home.exerciseCount', { count: workout.exerciseSets.length })}</span>
+          <AppChip>{t('home.exerciseCount', { count: workout.exerciseSets.length })}</AppChip>
         </header>
 
         {/* A session trained in blocks reads as its blocks; one that was not —
@@ -361,13 +383,17 @@ export const CardWorkout = ({ workout, compact, unseen = false }: Props) => {
         )}
       </section>
 
+      {/* The route is what the session was, so it reads with the exercises
+          rather than below what other people said about them. */}
+      {recording && <WorkoutRoute recording={recording} />}
+
       {showComments && (
         <section className={styles.commentsCard}>
           <header className={styles.sectionHeading}>
             <div>
               <h2>{t('workout.card.comments')}</h2>
             </div>
-            <span>{comments.length}</span>
+            <AppChip>{comments.length}</AppChip>
           </header>
 
           {comments.length > 0 ? (

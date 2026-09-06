@@ -60,6 +60,9 @@ const roles = {
     'ProgressView.module.css',
     // The one PR chip, shared: gold worn as a pill beside a title.
     'components/AppChip.module.css',
+    // And the figure counting them: a session's PR total, gold when there is
+    // one to count and ordinary ink when there is not.
+    'components/AppStat.module.css',
     'features/CardWorkout.module.css',
     // A circuit is read round by round rather than as a table of sets, so the
     // trophy that marks a record has to travel with it.

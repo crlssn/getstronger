@@ -111,20 +111,31 @@
   @apply size-3.5 stroke-[2.5];
 }
 
-/* Four numbers, divided by hairlines and set in tabular figures so a column of
-   them lines up. */
-/* The list grammar, not a quadrant: one row per number, divided by
-   hairlines, so an odd count of metrics leaves no hole. */
-.metricList li {
-  @apply flex items-baseline justify-between gap-3 border-b border-border px-4 py-3 last:border-b-0;
+/* The session's numbers, two to a row and divided by hairlines. A figure is
+   read against the one beside it — distance against duration, sets against
+   records — which a column of label-and-value rows never let it be. */
+.metricGrid {
+  @apply grid grid-cols-2;
 }
 
-.metricList span {
-  @apply truncate text-eyebrow font-bold uppercase text-text-subtle;
+.metricGrid li {
+  @apply p-4;
 }
 
-.metricList strong {
-  @apply shrink-0 text-body-lg font-bold tabular-nums text-text;
+/* The band above supplies the first rule and the card's own edge closes the
+   last, so only the seams between cells are drawn. */
+.metricGrid li:nth-child(n + 3) {
+  @apply border-t border-border;
+}
+
+.metricGrid li:nth-child(odd):not(:last-child) {
+  @apply border-r border-border;
+}
+
+/* An odd count of metrics spans the last cell rather than leaving a hole:
+   a lifting session reports five numbers and a run four. */
+.metricGrid li:last-child:nth-child(odd) {
+  @apply col-span-2;
 }
 
 .detailSection,
@@ -149,7 +160,7 @@
 }
 
 .sectionHeading > span {
-  @apply rounded-pill bg-ink-surface px-2.5 py-1 text-meta font-bold tabular-nums text-text-muted;
+  @apply tabular-nums;
 }
 
 .exerciseList {
