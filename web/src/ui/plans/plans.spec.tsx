@@ -4,7 +4,7 @@ import type { MessageInitShape } from '@bufbuild/protobuf'
 
 import { create } from '@bufbuild/protobuf'
 import { DateTime } from 'luxon'
-import { screen, waitFor, within } from '@testing-library/react'
+import { act, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
@@ -401,6 +401,36 @@ describe('PlanForm', () => {
 
       expect(await screen.findByDisplayValue('Push pull legs')).toBeInTheDocument()
       expect(screen.getByRole('button', { name: 'Save changes' })).toBeInTheDocument()
+    })
+
+    // Effects run twice under StrictMode, so two loads can be in flight at
+    // once. The slower answer used to arrive after the field was on screen and
+    // overwrite whatever had been typed into it.
+    test('keeps what has been typed while a load is still in flight', async () => {
+      const answers: (() => void)[] = []
+      mocked.getPlan.mockImplementation(
+        () =>
+          new Promise((resolve) => {
+            answers.push(() => resolve(create(GetPlanResponseSchema, { plan: plan() })))
+          }),
+      )
+      renderWithProviders(<PlanForm planId="plan-1" />, {
+        reactStrictMode: true,
+        route: '/plans/plan-1/edit',
+      })
+
+      await waitFor(() => expect(answers.length).toBeGreaterThan(0))
+      answers.shift()?.()
+
+      const field = await screen.findByDisplayValue('Push pull legs')
+      await userEvent.clear(field)
+      await userEvent.type(field, 'Renamed')
+
+      await act(async () => {
+        answers.forEach((answer) => answer())
+      })
+
+      expect(field).toHaveValue('Renamed')
     })
 
     test('saves the changes', async () => {

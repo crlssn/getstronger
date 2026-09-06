@@ -10,6 +10,13 @@ import { identifyUser, resetUser } from '@/posthog'
 interface AuthState {
   userId: string
   accessToken: string
+  /**
+   * The last account signed in on this device, kept across the sign-out.
+   *
+   * Signing out blanks `userId`, so it cannot tell the next sign-in whether the
+   * athlete coming back is the one whose drafts the device still holds.
+   */
+  lastUserId: string
   setAccessToken: (token: string) => void
   logout: () => void
 }
@@ -22,6 +29,7 @@ export const useAuthStore = create<AuthState>()(
     (set, get) => ({
       userId: '',
       accessToken: '',
+      lastUserId: '',
 
       setAccessToken: (token) => {
         const claims = jwtDecode<AccessToken>(token)
@@ -30,7 +38,7 @@ export const useAuthStore = create<AuthState>()(
 
         if (isSwitchingAccounts) resetUser()
 
-        set({ userId: claims.userId, accessToken: token })
+        set({ userId: claims.userId, accessToken: token, lastUserId: claims.userId })
 
         if (!wasAuthorised || isSwitchingAccounts) identifyUser(claims.userId)
       },
@@ -43,7 +51,7 @@ export const useAuthStore = create<AuthState>()(
     {
       name: 'auth',
       storage: migratedStorage(),
-      partialize: ({ userId, accessToken }) => ({ userId, accessToken }),
+      partialize: ({ userId, accessToken, lastUserId }) => ({ userId, accessToken, lastUserId }),
     },
   ),
 )

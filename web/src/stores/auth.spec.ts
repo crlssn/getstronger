@@ -22,7 +22,7 @@ const authorised = () => selectAuthorised(useAuthStore.getState())
 describe('useAuthStore', () => {
   beforeEach(() => {
     localStorage.clear()
-    useAuthStore.setState({ userId: '', accessToken: '' })
+    useAuthStore.setState({ userId: '', accessToken: '', lastUserId: '' })
     identifyUserMock.mockReset()
     resetUserMock.mockReset()
   })
@@ -74,11 +74,22 @@ describe('useAuthStore', () => {
     expect(resetUserMock).not.toHaveBeenCalled()
   })
 
+  // The device keeps a signed-out athlete's drafts for their way back in, so
+  // the next sign-in has to be able to tell them from a stranger. `userId` is
+  // blank by then; this is what is left to compare against.
+  test('remembers the account across the sign-out', () => {
+    useAuthStore.getState().setAccessToken(fakeToken('user-1'))
+
+    useAuthStore.getState().logout()
+
+    expect(useAuthStore.getState().lastUserId).toBe('user-1')
+  })
+
   test('persists the session so a reload stays signed in', () => {
     useAuthStore.getState().setAccessToken(fakeToken('user-1'))
 
     expect(JSON.parse(localStorage.getItem('auth') ?? '{}')).toMatchObject({
-      state: { userId: 'user-1' },
+      state: { userId: 'user-1', lastUserId: 'user-1' },
     })
   })
 })

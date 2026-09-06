@@ -20,7 +20,7 @@ const atPath = (pathname: string) => {
 }
 
 const signedIn = () => {
-  useAuthStore.setState({ userId: 'user-1', accessToken: 'token' })
+  useAuthStore.setState({ userId: 'user-1', accessToken: 'token', lastUserId: '' })
   usePreferencesStore.setState({ weightUnit: WeightUnit.POUNDS })
 }
 
