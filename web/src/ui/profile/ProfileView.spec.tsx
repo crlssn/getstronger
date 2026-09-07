@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { create } from '@bufbuild/protobuf'
-import { screen, waitFor, within } from '@testing-library/react'
+import { act, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
@@ -260,6 +260,36 @@ describe('ProfileView', () => {
 
     await waitFor(() => expect(mocked.updateUserAutofillSets).toHaveBeenCalledWith(true))
     expect(usePreferencesStore.getState().autofillSets).toBe(true)
+  })
+
+  // The tab asks the account what the preferences are as it opens, and it
+  // writes the reply into a store that outlives it — so a preference can move
+  // while the read is out, from the units screen the tab was left for. The
+  // reply is then the older of the two answers, and writing it back reverts a
+  // unit the server has already accepted, here and on every other screen
+  // reading the same cache.
+  test('keeps a preference changed while the account was still being read', async () => {
+    let answer = () => {}
+    mocked.getCurrentUser.mockReturnValue(
+      new Promise((resolve) => {
+        answer = () => resolve(profile({ weightUnit: WeightUnit.POUNDS, autofillSets: true }))
+      }),
+    )
+    render()
+
+    await waitFor(() => expect(mocked.getCurrentUser).toHaveBeenCalled())
+    usePreferencesStore.getState().setDistanceUnit(DistanceUnit.MILES)
+    await act(async () => {
+      answer()
+    })
+
+    // Nothing from the reply lands: the cache moved under it, so all three of
+    // the values it carries are the stale ones.
+    expect(usePreferencesStore.getState()).toMatchObject({
+      distanceUnit: DistanceUnit.MILES,
+      weightUnit: WeightUnit.KILOGRAMS,
+      autofillSets: false,
+    })
   })
 
   // Three levels of alarm for something done once: the only filled red button
