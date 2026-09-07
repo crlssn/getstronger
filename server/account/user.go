@@ -40,6 +40,7 @@ type User struct {
 	WeightUnit   weightunit.Unit
 	DistanceUnit distanceunit.Unit
 	AutofillSets bool
+	AutoPause    bool
 	CreatedAt    time.Time
 	// FeedSeenAt is when the athlete last had the home feed in front of them,
 	// or zero while they never have.

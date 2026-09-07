@@ -45,6 +45,7 @@ func userFromRow(row *models.User) *account.User {
 		WeightUnit:   weightunit.Normalize(row.WeightUnit),
 		DistanceUnit: distanceunit.Normalize(row.DistanceUnit),
 		AutofillSets: row.AutofillSets,
+		AutoPause:    row.AutoPause,
 		CreatedAt:    row.CreatedAt,
 		FeedSeenAt:   row.FeedSeenAt.GetOrZero(),
 	}

@@ -16,11 +16,16 @@ func TestRecordingValidation(t *testing.T) {
 	open := `{"version":1,"startedAt":1000,"endedAt":121000,"phases":[{"exerciseId":"a","stationKey":"a","name":"Bike commute","round":1,"instruction":"Bike commute"}],"pauses":[],"points":[{"timestamp":2000,"latitude":51,"longitude":0,"accuracy":3}],"interrupted":false}`
 	// An interval routine's phases say which part of it they came from.
 	interval := strings.Replace(valid, `"instruction":"Walk"`, `"instruction":"Walk","role":"warmup"`, 1)
+	// A recording that held itself while the athlete stood still carries the
+	// speed it judged that by, and marks the pauses it opened as its own.
+	held := strings.Replace(valid, `"pauses":[]`, `"pauses":[{"startedAt":2000,"endedAt":3000,"auto":true}]`, 1)
+	held = strings.Replace(held, `"accuracy":3`, `"accuracy":3,"speed":0`, 1)
 	for name, raw := range map[string]string{
 		"legacy":        "",
 		"recorded":      valid,
 		"open interval": open,
 		"interval role": interval,
+		"auto-paused":   held,
 	} {
 		t.Run(name, func(t *testing.T) {
 			if err := training.ValidateRecording(raw, period); err != nil {
@@ -41,6 +46,7 @@ func TestRecordingValidation(t *testing.T) {
 		"open beside timed": strings.Replace(open, `"phases":[`, `"phases":[{"exerciseId":"b","stationKey":"b","name":"Walk","round":1,"durationSeconds":60,"instruction":"Walk"},`, 1),
 		"open pause":        strings.Replace(valid, `"pauses":[]`, `"pauses":[{"startedAt":2000}]`, 1),
 		"unknown role":      strings.Replace(interval, `"role":"warmup"`, `"role":"sprint"`, 1),
+		"negative speed":    strings.Replace(held, `"speed":0`, `"speed":-1`, 1),
 		"oversized":         strings.Repeat(" ", 5000001),
 	} {
 		t.Run(name, func(t *testing.T) {

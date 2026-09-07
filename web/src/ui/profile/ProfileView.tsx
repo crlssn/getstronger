@@ -5,7 +5,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 
-import { getCurrentUser, updateUserAutofillSets } from '@/http/requests'
+import { getCurrentUser, updateUserAutofillSets, updateUserAutoPause } from '@/http/requests'
 import { localeNames } from '@/i18n'
 import { useAuthStore } from '@/stores/auth'
 import { useDashboardStore } from '@/stores/dashboard'
@@ -42,6 +42,7 @@ export const ProfileView = () => {
   const weightUnit = usePreferencesStore((state) => state.weightUnit)
   const distanceUnit = usePreferencesStore((state) => state.distanceUnit)
   const autofillSets = usePreferencesStore((state) => state.autofillSets)
+  const autoPause = usePreferencesStore((state) => state.autoPause)
   const cueLead = usePreferencesStore((state) => state.intervalCueLeadSeconds)
   const paceReference = usePreferencesStore((state) => state.paceReference)
   const locale = useLocaleStore(selectLocale)
@@ -83,7 +84,8 @@ export const ProfileView = () => {
     if (
       preferences.weightUnit !== asked.weightUnit ||
       preferences.distanceUnit !== asked.distanceUnit ||
-      preferences.autofillSets !== asked.autofillSets
+      preferences.autofillSets !== asked.autofillSets ||
+      preferences.autoPause !== asked.autoPause
     ) {
       return
     }
@@ -91,6 +93,7 @@ export const ProfileView = () => {
     preferences.setWeightUnit(response.user.weightUnit)
     preferences.setDistanceUnit(response.user.distanceUnit)
     preferences.setAutofillSets(response.user.autofillSets)
+    preferences.setAutoPause(response.user.autoPause)
   }, [])
 
   useEffect(() => {
@@ -273,6 +276,36 @@ export const ProfileView = () => {
                       {
                         updated: t('profile.autofillSetsUpdated'),
                         failed: t('profile.autofillSetsUpdateFailed'),
+                      },
+                    )
+                  }
+                />
+              }
+            />
+          </li>
+
+          {/* Beside the prefill rather than behind the recorder: it changes
+              what a session does before there is a session to change it on. */}
+          <li>
+            <AppPreferenceRow
+              title={t('profile.autoPause')}
+              body={t('profile.autoPauseBody')}
+              error={failureOn('autoPause')}
+              control={
+                <AppSwitch
+                  checked={autoPause}
+                  disabled={saving('autoPause')}
+                  label={t('profile.autoPause')}
+                  onChange={(enabled) =>
+                    void save(
+                      'autoPause',
+                      autoPause,
+                      enabled,
+                      usePreferencesStore.getState().setAutoPause,
+                      () => updateUserAutoPause(enabled),
+                      {
+                        updated: t('profile.autoPauseUpdated'),
+                        failed: t('profile.autoPauseUpdateFailed'),
                       },
                     )
                   }

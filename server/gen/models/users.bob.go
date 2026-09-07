@@ -40,6 +40,7 @@ type User struct {
 	Username       string              `db:"username" `
 	AutofillSets   bool                `db:"autofill_sets" `
 	FeedSeenAt     null.Val[time.Time] `db:"feed_seen_at" `
+	AutoPause      bool                `db:"auto_pause" `
 
 	R userR `db:"-" `
 
@@ -90,7 +91,7 @@ type userRLoaded struct {
 
 func buildUserColumns(tableName string) userColumns {
 	columnsExpr := expr.NewColumnsExpr(
-		"id", "created_at", "auth_id", "weight_unit", "distance_unit", "name", "full_name_search", "username", "autofill_sets", "feed_seen_at",
+		"id", "created_at", "auth_id", "weight_unit", "distance_unit", "name", "full_name_search", "username", "autofill_sets", "feed_seen_at", "auto_pause",
 	)
 
 	if tableName != "" {
@@ -110,6 +111,7 @@ func buildUserColumns(tableName string) userColumns {
 		Username:       buildUserColumn(tableName, "username"),
 		AutofillSets:   buildUserColumn(tableName, "autofill_sets"),
 		FeedSeenAt:     buildUserColumn(tableName, "feed_seen_at"),
+		AutoPause:      buildUserColumn(tableName, "auto_pause"),
 	}
 }
 
@@ -126,6 +128,7 @@ type userColumns struct {
 	Username       userColumn
 	AutofillSets   userColumn
 	FeedSeenAt     userColumn
+	AutoPause      userColumn
 }
 
 // Alias returns the current table alias for the columns set.
@@ -180,10 +183,11 @@ type UserSetter struct {
 	Username     omit.Val[string]        `db:"username" `
 	AutofillSets omit.Val[bool]          `db:"autofill_sets" `
 	FeedSeenAt   omitnull.Val[time.Time] `db:"feed_seen_at" `
+	AutoPause    omit.Val[bool]          `db:"auto_pause" `
 }
 
 func (s UserSetter) SetColumns() []string {
-	vals := make([]string, 0, 9)
+	vals := make([]string, 0, 10)
 	if s.ID.IsValue() {
 		vals = append(vals, "id")
 	}
@@ -210,6 +214,9 @@ func (s UserSetter) SetColumns() []string {
 	}
 	if s.FeedSeenAt.IsValue() || s.FeedSeenAt.IsNull() {
 		vals = append(vals, "feed_seen_at")
+	}
+	if s.AutoPause.IsValue() {
+		vals = append(vals, "auto_pause")
 	}
 	return vals
 }
@@ -241,6 +248,9 @@ func (s UserSetter) Overwrite(t *User) {
 	}
 	if s.FeedSeenAt.IsValue() || s.FeedSeenAt.IsNull() {
 		t.FeedSeenAt = s.FeedSeenAt.MustGetNull()
+	}
+	if s.AutoPause.IsValue() {
+		t.AutoPause = s.AutoPause.MustGet()
 	}
 }
 
@@ -295,6 +305,11 @@ func (s *UserSetter) Apply(q *dialect.InsertQuery) {
 				return psql.Raw("DEFAULT").WriteSQL(ctx, w, d, start)
 			}
 			return psql.Arg(s.FeedSeenAt.MustGetNull()).WriteSQL(ctx, w, d, start)
+		}), bob.ExpressionFunc(func(ctx context.Context, w io.StringWriter, d bob.Dialect, start int) ([]any, error) {
+			if s.AutoPause.IsUnset() {
+				return psql.Raw("DEFAULT").WriteSQL(ctx, w, d, start)
+			}
+			return psql.Arg(s.AutoPause.MustGet()).WriteSQL(ctx, w, d, start)
 		}))
 }
 
@@ -303,7 +318,7 @@ func (s UserSetter) UpdateMod() bob.Mod[*dialect.UpdateQuery] {
 }
 
 func (s UserSetter) Expressions(prefix ...string) []bob.Expression {
-	exprs := make([]bob.Expression, 0, 9)
+	exprs := make([]bob.Expression, 0, 10)
 
 	if s.ID.IsValue() {
 		exprs = append(exprs, expr.Join{Sep: " = ", Exprs: []bob.Expression{
@@ -368,6 +383,13 @@ func (s UserSetter) Expressions(prefix ...string) []bob.Expression {
 		}})
 	}
 
+	if s.AutoPause.IsValue() {
+		exprs = append(exprs, expr.Join{Sep: " = ", Exprs: []bob.Expression{
+			psql.Quote(append(prefix, "auto_pause")...),
+			psql.Arg(s.AutoPause),
+		}})
+	}
+
 	return exprs
 }
 
@@ -378,7 +400,7 @@ func userScanMapper(ctx context.Context, cols []string) (scan.BeforeFunc, func(a
 		idx int
 		dst func(o *User) any
 	}
-	targets := make([]target, 0, 10)
+	targets := make([]target, 0, 11)
 	for i, col := range cols {
 		switch col {
 		case "id":
@@ -401,6 +423,8 @@ func userScanMapper(ctx context.Context, cols []string) (scan.BeforeFunc, func(a
 			targets = append(targets, target{i, func(o *User) any { return &o.AutofillSets }})
 		case "feed_seen_at":
 			targets = append(targets, target{i, func(o *User) any { return &o.FeedSeenAt }})
+		case "auto_pause":
+			targets = append(targets, target{i, func(o *User) any { return &o.AutoPause }})
 		}
 	}
 
@@ -1593,6 +1617,7 @@ type userWhere[Q psql.Filterable] struct {
 	Username       psql.WhereMod[Q, string]
 	AutofillSets   psql.WhereMod[Q, bool]
 	FeedSeenAt     psql.WhereNullMod[Q, time.Time]
+	AutoPause      psql.WhereMod[Q, bool]
 	R              userWhereR[Q]
 }
 
@@ -1613,6 +1638,7 @@ func buildUserWhere[Q psql.Filterable](cols userColumns) userWhere[Q] {
 		Username:       psql.Where[Q, string](cols.Username.Expression),
 		AutofillSets:   psql.Where[Q, bool](cols.AutofillSets.Expression),
 		FeedSeenAt:     psql.WhereNull[Q, time.Time](cols.FeedSeenAt.Expression),
+		AutoPause:      psql.Where[Q, bool](cols.AutoPause.Expression),
 		R:              userWhereR[Q]{cols: cols},
 	}
 }
@@ -1784,6 +1810,7 @@ type userPreloadBuf struct {
 	Username       null.Val[string]
 	AutofillSets   null.Val[bool]
 	FeedSeenAt     null.Val[time.Time]
+	AutoPause      null.Val[bool]
 }
 
 // userScanMapperNullable maps the preloaded user
@@ -1798,7 +1825,7 @@ func userScanMapperNullable(prefix string) scan.Mapper[*User] {
 			idx int
 			dst func(b *userPreloadBuf) any
 		}
-		targets := make([]target, 0, 10)
+		targets := make([]target, 0, 11)
 		for i, col := range cols {
 			name, ok := strings.CutPrefix(col, prefix)
 			if !ok {
@@ -1825,6 +1852,8 @@ func userScanMapperNullable(prefix string) scan.Mapper[*User] {
 				targets = append(targets, target{i, func(b *userPreloadBuf) any { return &b.AutofillSets }})
 			case "feed_seen_at":
 				targets = append(targets, target{i, func(b *userPreloadBuf) any { return &b.FeedSeenAt }})
+			case "auto_pause":
+				targets = append(targets, target{i, func(b *userPreloadBuf) any { return &b.AutoPause }})
 			}
 		}
 
@@ -1856,7 +1885,8 @@ func userScanMapperNullable(prefix string) scan.Mapper[*User] {
 					!(buf.FullNameSearch.IsValue()) &&
 					!(buf.Username.IsValue()) &&
 					!(buf.AutofillSets.IsValue()) &&
-					!(buf.FeedSeenAt.IsValue()) {
+					!(buf.FeedSeenAt.IsValue()) &&
+					!(buf.AutoPause.IsValue()) {
 					return nil, nil
 				}
 
@@ -1889,6 +1919,9 @@ func userScanMapperNullable(prefix string) scan.Mapper[*User] {
 					o.AutofillSets = buf.AutofillSets.MustGet()
 				}
 				o.FeedSeenAt = buf.FeedSeenAt
+				if buf.AutoPause.IsValue() {
+					o.AutoPause = buf.AutoPause.MustGet()
+				}
 				return o, nil
 			}
 	}

@@ -2,6 +2,26 @@ import AVFoundation
 import Capacitor
 import CoreLocation
 
+/// One fix as the stationary detector reads it, which is the route's fix plus
+/// the speed the receiver measured.
+private struct Fix {
+    let timestamp: Double
+    let latitude: Double
+    let longitude: Double
+    let accuracy: Double
+    let speed: Double?
+}
+
+// Auto-pause, mirroring `web/src/utils/movement.ts`: below a walking pace for
+// the dwell holds the recording, and above twice that lets it go. The gap
+// between the two keeps a pace either side of one line from fluttering it.
+private let pauseSpeed = 1000.0 / 3600
+private let resumeSpeed = 2000.0 / 3600
+private let dwellMs = 5000.0
+private let continuousMs = 3000.0
+private let maxFixes = 60
+private let maxAccuracy = 30.0
+
 /// Native ownership keeps the recording independent of the WebView lifecycle.
 @objc(TimedCircuitPlugin)
 public class TimedCircuitPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManagerDelegate {
@@ -20,6 +40,8 @@ public class TimedCircuitPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManagerD
     private var locale = "en"
     private var volume = 1.0
     private var audible = false
+    private var autoPauses = false
+    private var fixes: [Fix] = []
     private var spoken = -1
     /// Seconds of warning before an interval ends; 0 sounds nothing.
     private var cueLead = 10.0
@@ -58,6 +80,7 @@ public class TimedCircuitPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManagerD
             if let bytes = try? Data(contentsOf: self.file),
                let saved = try? JSONSerialization.jsonObject(with: bytes) as? [String: Any] {
                 self.key = saved["key"] as? String ?? ""
+                self.autoPauses = saved["autoPause"] as? Bool ?? false
                 self.recording = saved["recording"] as? [String: Any]
                 if self.recording?["endedAt"] == nil {
                     self.recording?["interrupted"] = true
@@ -136,6 +159,8 @@ public class TimedCircuitPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManagerD
         volume = min(max(call.getDouble("volume") ?? 1, 0), 1)
         cueLead = Double(call.getInt("cueLeadSeconds") ?? 10)
         readPacing(call.getObject("pacing"))
+        autoPauses = call.getBool("autoPause") ?? false
+        fixes = []
         let start = now
         recording = ["version": 1, "startedAt": start, "phases": phases,
                      "pauses": [[String: Any]](), "points": [[String: Any]](), "interrupted": false]
@@ -370,18 +395,87 @@ public class TimedCircuitPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManagerD
     public func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         tick()
         guard let data = recording, data["endedAt"] == nil else { return }
-        let pauses = data["pauses"] as? [[String: Any]] ?? []
-        if let last = pauses.last, last["endedAt"] == nil { return }
         var points = data["points"] as? [[String: Any]] ?? []
         for fix in locations {
             let timestamp = (fix.timestamp.timeIntervalSince1970 * 1000).rounded()
+            let seen = max(points.last?["timestamp"] as? Double ?? 0, self.fixes.last?.timestamp ?? 0)
             guard timestamp >= (data["startedAt"] as? Double ?? now), timestamp <= now,
-                  timestamp > (points.last?["timestamp"] as? Double ?? 0), fix.horizontalAccuracy >= 0 else { continue }
+                  timestamp > seen, fix.horizontalAccuracy >= 0 else { continue }
+            // A receiver that could not measure a speed reports a negative one.
+            let speed = fix.speed >= 0 ? fix.speed : nil
+            self.fixes.append(Fix(timestamp: timestamp, latitude: fix.coordinate.latitude,
+                                  longitude: fix.coordinate.longitude,
+                                  accuracy: fix.horizontalAccuracy, speed: speed))
+            self.fixes = Array(self.fixes.suffix(maxFixes))
+            autoPause(at: timestamp)
+            let pauses = recording?["pauses"] as? [[String: Any]] ?? []
+            if let last = pauses.last, last["endedAt"] == nil { continue }
             if points.count >= 90000 { recording?["interrupted"] = true; end(at: now); return }
-            points.append(["timestamp": timestamp, "latitude": fix.coordinate.latitude,
-                           "longitude": fix.coordinate.longitude, "accuracy": fix.horizontalAccuracy])
+            var point: [String: Any] = ["timestamp": timestamp, "latitude": fix.coordinate.latitude,
+                                        "longitude": fix.coordinate.longitude, "accuracy": fix.horizontalAccuracy]
+            if let speed { point["speed"] = speed }
+            points.append(point)
         }
         recording?["points"] = points
+        checkpoint()
+    }
+
+    /// How fast the window read, or nothing when it holds no evidence.
+    ///
+    /// A receiver that measures speed is believed; one that does not is judged
+    /// on where the athlete ended up, less what its error circles account for.
+    private func windowSpeed(_ window: [Fix]) -> Double? {
+        if let fastest = window.compactMap({ $0.speed }).max() { return fastest }
+        guard let first = window.first, let last = window.last else { return nil }
+        let seconds = (last.timestamp - first.timestamp) / 1000
+        guard seconds > 0 else { return nil }
+        let meters = CLLocation(latitude: first.latitude, longitude: first.longitude)
+            .distance(from: CLLocation(latitude: last.latitude, longitude: last.longitude))
+        return max(0, meters - max(first.accuracy, last.accuracy)) / seconds
+    }
+
+    /// What the recent fixes say the athlete is doing, or nothing when they say
+    /// neither. The dwell is the window itself, so "still" already means still
+    /// for the whole of it.
+    private func readMovement(at: Double) -> String? {
+        let seen = fixes.filter { $0.accuracy >= 0 && $0.accuracy <= maxAccuracy && $0.timestamp <= at }
+        // The window reaches back to where the athlete was when the dwell
+        // began, so it needs a fix from before that.
+        guard let anchor = seen.last(where: { $0.timestamp <= at - dwellMs }) else { return nil }
+        let window = seen.filter { $0.timestamp >= anchor.timestamp }
+        // A hole in the fixes hides whatever happened during it.
+        var previous = anchor.timestamp
+        for fix in window.dropFirst() {
+            if fix.timestamp - previous > continuousMs { return nil }
+            previous = fix.timestamp
+        }
+        if at - previous > continuousMs { return nil }
+        guard let speed = windowSpeed(window) else { return nil }
+        if speed < pauseSpeed { return "still" }
+        return speed > resumeSpeed ? "moving" : nil
+    }
+
+    /// Hold or release the recording on what the fixes say, when it was asked
+    /// to. Only a pause it opened itself is released: an athlete who paused by
+    /// hand meant it.
+    private func autoPause(at: Double) {
+        guard autoPauses, let data = recording, data["endedAt"] == nil else { return }
+        var pauses = data["pauses"] as? [[String: Any]] ?? []
+        let open = pauses.last.map { $0["endedAt"] == nil } ?? false
+        if open, pauses[pauses.count - 1]["auto"] == nil { return }
+        guard let movement = readMovement(at: at) else { return }
+        if open {
+            guard movement == "moving" else { return }
+            pauses[pauses.count - 1]["endedAt"] = at
+        } else {
+            guard movement == "still" else { return }
+            // Held from where the athlete stopped rather than from where the
+            // dwell noticed, and never back past the last thing that happened.
+            let after = pauses.last?["endedAt"] as? Double ?? data["startedAt"] as? Double ?? at
+            pauses.append(["startedAt": max(at - dwellMs, after), "auto": true])
+            speech.stopSpeaking(at: .immediate)
+        }
+        recording?["pauses"] = pauses
         checkpoint()
     }
 
@@ -436,6 +530,7 @@ public class TimedCircuitPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManagerD
             do { if FileManager.default.fileExists(atPath: self.file.path) { try FileManager.default.removeItem(at: self.file) } }
             catch { call.reject("Recording could not be removed", nil, error); return }
             self.recording = nil
+            self.fixes = []
             self.key = ""
             call.resolve()
         }
@@ -474,7 +569,9 @@ public class TimedCircuitPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManagerD
     private func persist() throws {
         guard let recording else { return }
         lastCheckpoint = now
-        let bytes = try JSONSerialization.data(withJSONObject: ["key": key, "recording": recording, "checkpoint": lastCheckpoint])
+        let bytes = try JSONSerialization.data(withJSONObject: [
+            "key": key, "recording": recording, "checkpoint": lastCheckpoint, "autoPause": autoPauses,
+        ])
         try FileManager.default.createDirectory(at: file.deletingLastPathComponent(), withIntermediateDirectories: true)
         try bytes.write(to: file, options: [.atomic, .completeFileProtectionUntilFirstUserAuthentication])
         var url = file

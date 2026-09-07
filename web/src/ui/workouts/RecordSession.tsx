@@ -77,6 +77,7 @@ export const RecordSession = () => {
   const distanceUnit = usePreferencesStore((state) => state.distanceUnit)
   const weightUnit = usePreferencesStore((state) => state.weightUnit)
   const cueLeadSeconds = usePreferencesStore((state) => state.intervalCueLeadSeconds)
+  const autoPause = usePreferencesStore((state) => state.autoPause)
 
   const [exercise, setExercise] = useState<Exercise>()
   const [recording, setRecording] = useState<Recording>()
@@ -149,6 +150,7 @@ export const RecordSession = () => {
         // The one open interval never reaches a boundary, so nothing here can
         // sound; the recorder is told the athlete's lead all the same.
         cueLeadSeconds,
+        autoPause,
       })
       const result = await timedCircuit.read({ key })
       setRecording(result.recording)
@@ -324,7 +326,9 @@ export const RecordSession = () => {
             <span className="sr-only">
               {t(
                 openPause
-                  ? 'timedCircuit.paused'
+                  ? openPause.auto
+                    ? 'timedCircuit.pausedAuto'
+                    : 'timedCircuit.paused'
                   : gps
                     ? 'timedCircuit.gpsGood'
                     : 'timedCircuit.gpsPoor',
@@ -339,7 +343,11 @@ export const RecordSession = () => {
       <div className={cn(styles.clock, openPause && styles.held)}>
         <div className={styles.head}>
           <span className={styles.eyebrow}>{t('timedCircuit.activeTime')}</span>
-          {openPause && <span className={styles.chip}>{t('timedCircuit.pausedLabel')}</span>}
+          {openPause && (
+            <span className={styles.chip}>
+              {t(openPause.auto ? 'timedCircuit.pausedAutoLabel' : 'timedCircuit.pausedLabel')}
+            </span>
+          )}
         </div>
         <p className={styles.time}>{elapsedLabel(activeSeconds)}</p>
         <div className={styles.foot}>

@@ -64,6 +64,9 @@ const (
 	// UserServiceUpdateUserDistanceUnitProcedure is the fully-qualified name of the UserService's
 	// UpdateUserDistanceUnit RPC.
 	UserServiceUpdateUserDistanceUnitProcedure = "/api.v1.UserService/UpdateUserDistanceUnit"
+	// UserServiceUpdateUserAutoPauseProcedure is the fully-qualified name of the UserService's
+	// UpdateUserAutoPause RPC.
+	UserServiceUpdateUserAutoPauseProcedure = "/api.v1.UserService/UpdateUserAutoPause"
 )
 
 // UserServiceClient is a client for the api.v1.UserService service.
@@ -79,6 +82,7 @@ type UserServiceClient interface {
 	UpdateUserAutofillSets(context.Context, *connect.Request[v1.UpdateUserAutofillSetsRequest]) (*connect.Response[v1.UpdateUserAutofillSetsResponse], error)
 	UpdateUserWeightUnit(context.Context, *connect.Request[v1.UpdateUserWeightUnitRequest]) (*connect.Response[v1.UpdateUserWeightUnitResponse], error)
 	UpdateUserDistanceUnit(context.Context, *connect.Request[v1.UpdateUserDistanceUnitRequest]) (*connect.Response[v1.UpdateUserDistanceUnitResponse], error)
+	UpdateUserAutoPause(context.Context, *connect.Request[v1.UpdateUserAutoPauseRequest]) (*connect.Response[v1.UpdateUserAutoPauseResponse], error)
 }
 
 // NewUserServiceClient constructs a client for the api.v1.UserService service. By default, it uses
@@ -158,6 +162,12 @@ func NewUserServiceClient(httpClient connect.HTTPClient, baseURL string, opts ..
 			connect.WithSchema(userServiceMethods.ByName("UpdateUserDistanceUnit")),
 			connect.WithClientOptions(opts...),
 		),
+		updateUserAutoPause: connect.NewClient[v1.UpdateUserAutoPauseRequest, v1.UpdateUserAutoPauseResponse](
+			httpClient,
+			baseURL+UserServiceUpdateUserAutoPauseProcedure,
+			connect.WithSchema(userServiceMethods.ByName("UpdateUserAutoPause")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -174,6 +184,7 @@ type userServiceClient struct {
 	updateUserAutofillSets *connect.Client[v1.UpdateUserAutofillSetsRequest, v1.UpdateUserAutofillSetsResponse]
 	updateUserWeightUnit   *connect.Client[v1.UpdateUserWeightUnitRequest, v1.UpdateUserWeightUnitResponse]
 	updateUserDistanceUnit *connect.Client[v1.UpdateUserDistanceUnitRequest, v1.UpdateUserDistanceUnitResponse]
+	updateUserAutoPause    *connect.Client[v1.UpdateUserAutoPauseRequest, v1.UpdateUserAutoPauseResponse]
 }
 
 // GetUser calls api.v1.UserService.GetUser.
@@ -231,6 +242,11 @@ func (c *userServiceClient) UpdateUserDistanceUnit(ctx context.Context, req *con
 	return c.updateUserDistanceUnit.CallUnary(ctx, req)
 }
 
+// UpdateUserAutoPause calls api.v1.UserService.UpdateUserAutoPause.
+func (c *userServiceClient) UpdateUserAutoPause(ctx context.Context, req *connect.Request[v1.UpdateUserAutoPauseRequest]) (*connect.Response[v1.UpdateUserAutoPauseResponse], error) {
+	return c.updateUserAutoPause.CallUnary(ctx, req)
+}
+
 // UserServiceHandler is an implementation of the api.v1.UserService service.
 type UserServiceHandler interface {
 	GetUser(context.Context, *connect.Request[v1.GetUserRequest]) (*connect.Response[v1.GetUserResponse], error)
@@ -244,6 +260,7 @@ type UserServiceHandler interface {
 	UpdateUserAutofillSets(context.Context, *connect.Request[v1.UpdateUserAutofillSetsRequest]) (*connect.Response[v1.UpdateUserAutofillSetsResponse], error)
 	UpdateUserWeightUnit(context.Context, *connect.Request[v1.UpdateUserWeightUnitRequest]) (*connect.Response[v1.UpdateUserWeightUnitResponse], error)
 	UpdateUserDistanceUnit(context.Context, *connect.Request[v1.UpdateUserDistanceUnitRequest]) (*connect.Response[v1.UpdateUserDistanceUnitResponse], error)
+	UpdateUserAutoPause(context.Context, *connect.Request[v1.UpdateUserAutoPauseRequest]) (*connect.Response[v1.UpdateUserAutoPauseResponse], error)
 }
 
 // NewUserServiceHandler builds an HTTP handler from the service implementation. It returns the path
@@ -319,6 +336,12 @@ func NewUserServiceHandler(svc UserServiceHandler, opts ...connect.HandlerOption
 		connect.WithSchema(userServiceMethods.ByName("UpdateUserDistanceUnit")),
 		connect.WithHandlerOptions(opts...),
 	)
+	userServiceUpdateUserAutoPauseHandler := connect.NewUnaryHandler(
+		UserServiceUpdateUserAutoPauseProcedure,
+		svc.UpdateUserAutoPause,
+		connect.WithSchema(userServiceMethods.ByName("UpdateUserAutoPause")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/api.v1.UserService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case UserServiceGetUserProcedure:
@@ -343,6 +366,8 @@ func NewUserServiceHandler(svc UserServiceHandler, opts ...connect.HandlerOption
 			userServiceUpdateUserWeightUnitHandler.ServeHTTP(w, r)
 		case UserServiceUpdateUserDistanceUnitProcedure:
 			userServiceUpdateUserDistanceUnitHandler.ServeHTTP(w, r)
+		case UserServiceUpdateUserAutoPauseProcedure:
+			userServiceUpdateUserAutoPauseHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -394,4 +419,8 @@ func (UnimplementedUserServiceHandler) UpdateUserWeightUnit(context.Context, *co
 
 func (UnimplementedUserServiceHandler) UpdateUserDistanceUnit(context.Context, *connect.Request[v1.UpdateUserDistanceUnitRequest]) (*connect.Response[v1.UpdateUserDistanceUnitResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.UserService.UpdateUserDistanceUnit is not implemented"))
+}
+
+func (UnimplementedUserServiceHandler) UpdateUserAutoPause(context.Context, *connect.Request[v1.UpdateUserAutoPauseRequest]) (*connect.Response[v1.UpdateUserAutoPauseResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.UserService.UpdateUserAutoPause is not implemented"))
 }

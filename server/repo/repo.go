@@ -351,6 +351,12 @@ func UpdateUserAutofillSets(enabled bool) UpdateUserOpt {
 	}
 }
 
+func UpdateUserAutoPause(enabled bool) UpdateUserOpt {
+	return func() (columns, error) {
+		return columns{models.Users.Columns.AutoPause.Name(): enabled}, nil
+	}
+}
+
 func UpdateUserDistanceUnit(unit string) UpdateUserOpt {
 	return func() (columns, error) {
 		return columns{models.Users.Columns.DistanceUnit.Name(): string(distanceunit.Normalize(unit))}, nil

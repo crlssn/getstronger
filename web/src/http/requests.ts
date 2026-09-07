@@ -34,6 +34,8 @@ import {
   type UnfollowUserResponse,
   UpdateUserAutofillSetsRequestSchema,
   type UpdateUserAutofillSetsResponse,
+  UpdateUserAutoPauseRequestSchema,
+  type UpdateUserAutoPauseResponse,
   UpdateUserDistanceUnitRequestSchema,
   type UpdateUserDistanceUnitResponse,
   UpdateUserNameRequestSchema,
@@ -571,6 +573,13 @@ export const updateUserAutofillSets = async (
 ): Promise<UpdateUserAutofillSetsResponse | void> => {
   const req = create(UpdateUserAutofillSetsRequestSchema, { enabled })
   return tryCatch(() => userClient.updateUserAutofillSets(req))
+}
+
+export const updateUserAutoPause = async (
+  enabled: boolean,
+): Promise<UpdateUserAutoPauseResponse | void> => {
+  const req = create(UpdateUserAutoPauseRequestSchema, { enabled })
+  return tryCatch(() => userClient.updateUserAutoPause(req))
 }
 
 export const updateUserDistanceUnit = async (

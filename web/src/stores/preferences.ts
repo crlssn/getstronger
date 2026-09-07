@@ -14,12 +14,14 @@ interface PreferencesState {
   weightUnit: WeightUnit
   distanceUnit: DistanceUnit
   autofillSets: boolean
+  autoPause: boolean
   /** Seconds of warning before an interval ends; 0 sounds nothing. */
   intervalCueLeadSeconds: number
   paceReference: PaceReferenceChoice
   setWeightUnit: (unit?: WeightUnit) => void
   setDistanceUnit: (unit?: DistanceUnit) => void
   setAutofillSets: (enabled?: boolean) => void
+  setAutoPause: (enabled?: boolean) => void
   setIntervalCueLeadSeconds: (seconds?: number) => void
   setPaceReference: (reference: PaceReferenceChoice) => void
   reset: () => void
@@ -31,6 +33,9 @@ const defaults = {
   // Off unless the account asked for it: a value nobody typed is a surprise,
   // so the workout screen only prefills when this is true.
   autofillSets: false,
+  // Off unless the account asked for it too: a clock that stops on its own is
+  // a surprise to anyone who did not ask a recording to hold itself.
+  autoPause: false,
   intervalCueLeadSeconds: defaultCueLead,
   // Which session a recording is paced against. The last rather than the best,
   // because an athlete two weeks into a routine is chasing what they did on
@@ -52,6 +57,7 @@ export const usePreferencesStore = create<PreferencesState>()(
       setWeightUnit: (unit) => set({ weightUnit: normalizeWeightUnit(unit) }),
       setDistanceUnit: (unit) => set({ distanceUnit: normalizeDistanceUnit(unit) }),
       setAutofillSets: (enabled) => set({ autofillSets: enabled ?? false }),
+      setAutoPause: (enabled) => set({ autoPause: enabled ?? false }),
       setIntervalCueLeadSeconds: (seconds) =>
         set({ intervalCueLeadSeconds: normalizeCueLead(seconds) }),
       setPaceReference: (reference) => set({ paceReference: reference }),
@@ -65,12 +71,14 @@ export const usePreferencesStore = create<PreferencesState>()(
         weightUnit,
         distanceUnit,
         autofillSets,
+        autoPause,
         intervalCueLeadSeconds,
         paceReference,
       }) => ({
         weightUnit,
         distanceUnit,
         autofillSets,
+        autoPause,
         intervalCueLeadSeconds,
         paceReference,
       }),

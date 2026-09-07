@@ -1,5 +1,12 @@
+import { movementThresholds, readMovement } from '@/utils/movement'
 import { newPaceWatch, watchPace, type Pacing, type PaceTone } from '@/utils/pacing'
-import { currentPace, type Phase, type Recording } from '@/utils/timedCircuit'
+import {
+  currentPace,
+  type Pause,
+  type Phase,
+  type Recording,
+  type RoutePoint,
+} from '@/utils/timedCircuit'
 
 import { playCue, playTone } from '@/native/cueTone'
 import { cuesInterval } from '@/utils/intervalCue'
@@ -24,6 +31,9 @@ const maxPhases = 10000
 const maxPoints = 90000
 const tickMs = 250
 const fixTimeoutMs = 30000
+// Enough to read the dwell through at any fix rate a browser offers, and no
+// more: this window is the detector's whole input.
+const maxFixes = 60
 
 // The two notes, in hertz: the interval is going better than the reference, or
 // worse than it. Higher is better is the one convention nobody has to be
@@ -43,6 +53,7 @@ interface Saved {
   volume: number
   // The session this one is paced against, absent where there is none.
   pacing?: Pacing
+  autoPause?: boolean
 }
 
 let saved: Saved | undefined
@@ -54,6 +65,10 @@ let cued = -1
 // Held in memory rather than with the recording: a reload has heard nothing,
 // so it starts the comparison over rather than resuming a crossing.
 let pace = newPaceWatch()
+// The fixes the stationary detector reads, which unlike the route go on
+// arriving while the recording is held — otherwise nothing could tell it the
+// athlete had set off again.
+let fixes: RoutePoint[] = []
 
 const now = () => Math.round(Date.now())
 
@@ -107,12 +122,18 @@ const stopWatching = () => {
   timer = undefined
 }
 
+/** The pause the recording is currently held by, if it is held at all. */
+const held = (recording: Recording): Pause | undefined => {
+  const last = recording.pauses.at(-1)
+  return last && !last.endedAt ? last : undefined
+}
+
 const end = (at: number) => {
   if (!saved || saved.recording.endedAt) return
   const recording = saved.recording
   recording.endedAt = at
-  const last = recording.pauses.at(-1)
-  if (last && !last.endedAt) last.endedAt = at
+  const last = held(recording)
+  if (last) last.endedAt = at
   stopWatching()
   persist()
 }
@@ -155,7 +176,7 @@ const tick = () => {
     end(at)
     return
   }
-  if (recording.pauses.at(-1) && !recording.pauses.at(-1)?.endedAt) return
+  if (held(recording)) return
   const elapsed = activeMilliseconds(recording, at)
   const lead = saved.cueLeadSeconds * 1000
   let boundary = 0
@@ -180,29 +201,64 @@ const tick = () => {
   end(at - (elapsed - boundary))
 }
 
+/**
+ * Hold or release the recording on what the fixes say, when it was asked to.
+ *
+ * Only a pause it opened itself is released: an athlete who paused by hand
+ * meant it, and the traffic moving off is not their cue to start recording.
+ */
+const autoPause = (at: number) => {
+  if (!saved?.autoPause || saved.recording.endedAt) return
+  const recording = saved.recording
+  const open = held(recording)
+  if (open && !open.auto) return
+  const movement = readMovement(fixes, at)
+  if (open) {
+    if (movement !== 'moving') return
+    open.endedAt = at
+    persist()
+    return
+  }
+  if (movement !== 'still') return
+  // Held from where the athlete stopped rather than from where the dwell
+  // noticed, without ever reaching back past the last thing that happened.
+  recording.pauses.push({
+    startedAt: Math.max(
+      at - movementThresholds.dwellMs,
+      recording.pauses.at(-1)?.endedAt ?? recording.startedAt,
+    ),
+    auto: true,
+  })
+  persist()
+}
+
 const record = (position: GeolocationPosition) => {
   tick()
   if (!saved || saved.recording.endedAt) return
   const recording = saved.recording
-  if (recording.pauses.at(-1) && !recording.pauses.at(-1)?.endedAt) return
   const timestamp = Math.round(position.timestamp)
-  if (
-    timestamp < recording.startedAt ||
-    timestamp > now() ||
-    timestamp <= (recording.points.at(-1)?.timestamp ?? 0)
-  )
-    return
+  const seen = Math.max(recording.points.at(-1)?.timestamp ?? 0, fixes.at(-1)?.timestamp ?? 0)
+  if (timestamp < recording.startedAt || timestamp > now() || timestamp <= seen) return
+  const point: RoutePoint = {
+    timestamp,
+    latitude: position.coords.latitude,
+    longitude: position.coords.longitude,
+    accuracy: position.coords.accuracy,
+    // Null is what a receiver that measured no speed reports, and negative is
+    // what one that tried and failed reports.
+    ...(position.coords.speed !== null && position.coords.speed >= 0
+      ? { speed: position.coords.speed }
+      : {}),
+  }
+  fixes = [...fixes, point].slice(-maxFixes)
+  autoPause(timestamp)
+  if (held(recording)) return
   if (recording.points.length >= maxPoints) {
     recording.interrupted = true
     end(now())
     return
   }
-  recording.points.push({
-    timestamp,
-    latitude: position.coords.latitude,
-    longitude: position.coords.longitude,
-    accuracy: position.coords.accuracy,
-  })
+  recording.points.push(point)
   persist()
 }
 
@@ -218,11 +274,13 @@ const begin = (
   phases: Phase[],
   cueLeadSeconds: number,
   volume: number,
+  autoPauses: boolean,
   pacing?: Pacing,
 ) =>
   new Promise<void>((resolve, reject) => {
     cued = -1
     pace = newPaceWatch()
+    fixes = []
     saved = {
       key,
       volume,
@@ -237,6 +295,7 @@ const begin = (
       },
       cueLeadSeconds,
       checkpoint: now(),
+      autoPause: autoPauses,
     }
     persist()
     let settled = false
@@ -289,11 +348,19 @@ export const TimedCircuitWeb = {
     volume: number
     cueLeadSeconds: number
     pacing?: Pacing
+    autoPause?: boolean
   }): Promise<void> {
     load()
     if (saved) throw new Error('A recording is already saved or active')
     if (!valid(options.phases)) throw new Error('Invalid prescription')
-    await begin(options.key, options.phases, options.cueLeadSeconds, options.volume, options.pacing)
+    await begin(
+      options.key,
+      options.phases,
+      options.cueLeadSeconds,
+      options.volume,
+      options.autoPause ?? false,
+      options.pacing,
+    )
   },
 
   read(options: { key: string }): Promise<{ recording?: Recording }> {
@@ -305,16 +372,15 @@ export const TimedCircuitWeb = {
   pause(options: { key: string }): Promise<void> {
     return mutate(options.key, () => {
       if (!saved || saved.recording.endedAt) return
-      const last = saved.recording.pauses.at(-1)
-      if (last && !last.endedAt) return
+      if (held(saved.recording)) return
       saved.recording.pauses.push({ startedAt: now() })
     })
   },
 
   resume(options: { key: string }): Promise<void> {
     return mutate(options.key, () => {
-      const last = saved?.recording.pauses.at(-1)
-      if (!last || last.endedAt) return
+      const last = saved && held(saved.recording)
+      if (!last) return
       last.endedAt = now()
     })
   },
@@ -335,6 +401,7 @@ export const TimedCircuitWeb = {
     end(now())
     saved = undefined
     pace = newPaceWatch()
+    fixes = []
     try {
       store()?.removeItem(storageKey)
     } catch {

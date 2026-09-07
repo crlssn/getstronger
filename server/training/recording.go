@@ -51,6 +51,8 @@ type recordingPhase struct {
 type recordingPause struct {
 	StartedAt int64 `json:"startedAt"`
 	EndedAt   int64 `json:"endedAt"`
+	// Opened by the client's stationary detector rather than by the athlete.
+	Auto bool `json:"auto"`
 }
 
 type recordingPoint struct {
@@ -58,6 +60,8 @@ type recordingPoint struct {
 	Latitude  float64 `json:"latitude"`
 	Longitude float64 `json:"longitude"`
 	Accuracy  float64 `json:"accuracy"`
+	// Metres a second, and absent from a fix whose receiver measured none.
+	Speed *float64 `json:"speed"`
 }
 
 // recording mirrors the document the mobile app records natively and the web
@@ -197,7 +201,8 @@ func (r *recording) validatePoints() error {
 		if point.Timestamp <= last || point.Timestamp > r.EndedAt ||
 			math.Abs(point.Latitude) > recordingMaxLatitude ||
 			math.Abs(point.Longitude) > recordingMaxLongitude ||
-			point.Accuracy < 0 {
+			point.Accuracy < 0 ||
+			(point.Speed != nil && *point.Speed < 0) {
 			return ErrInvalidRecording
 		}
 		last = point.Timestamp

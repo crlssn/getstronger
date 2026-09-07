@@ -8,10 +8,14 @@ import { TimedCircuitWeb } from './timedCircuitWeb'
 
 vi.mock('@/native/cueTone', () => ({ playCue: vi.fn(), playTone: vi.fn() }))
 
-const fix = (timestamp: number, longitude: number): GeolocationPosition =>
+const fix = (
+  timestamp: number,
+  longitude: number,
+  speed: number | null = null,
+): GeolocationPosition =>
   ({
     timestamp,
-    coords: { latitude: 0, longitude, accuracy: 5 },
+    coords: { latitude: 0, longitude, accuracy: 5, speed },
   }) as GeolocationPosition
 
 const denial = { code: 1, PERMISSION_DENIED: 1 } as GeolocationPositionError
@@ -74,14 +78,23 @@ describe('the browser recorder', () => {
     watchers[0].success(fix(1_000_000 + seconds * 1000, metres * metreDegrees))
   }
 
-  const open = () =>
+  const open = (autoPause = false) =>
     TimedCircuitWeb.start({
       key: 'athlete',
       phases: openSessionPhases('Bike commute', 'Recording Bike commute', 'bike'),
       locale: 'en',
       volume: 1,
       cueLeadSeconds: 10,
+      autoPause,
     })
+
+  /** A fix a second, at a standstill from the second one on. */
+  const rideThenStop = () => {
+    for (let second = 1; second <= 6; second += 1) {
+      vi.setSystemTime(1_000_000 + second * 1000)
+      watchers[0].success(fix(1_000_000 + second * 1000, 0, 0))
+    }
+  }
 
   const interval = (name: string, durationSeconds: number): Phase => ({
     exerciseId: 'run',
@@ -267,5 +280,53 @@ describe('the browser recorder', () => {
     await runTo(600)
 
     expect(playCue).not.toHaveBeenCalled()
+  })
+
+  it('holds itself at a standstill and lets go when the athlete rides on', async () => {
+    const started = open(true)
+    watchers[0].success(fix(1_000_000, 0, 5))
+    await started
+
+    rideThenStop()
+    const held = await TimedCircuitWeb.read({ key: 'athlete' })
+    // Held from where the standstill began, not from where it was noticed.
+    expect(held.recording?.pauses).toEqual([{ startedAt: 1_001_000, auto: true }])
+
+    vi.setSystemTime(1_007_000)
+    watchers[0].success(fix(1_007_000, 0.001, 5))
+    const { recording } = await TimedCircuitWeb.read({ key: 'athlete' })
+    expect(recording?.pauses).toEqual([{ startedAt: 1_001_000, endedAt: 1_007_000, auto: true }])
+    // The standstill is not part of the route: the fixes it held through are
+    // read for movement and dropped.
+    expect(recording?.points.map((point) => point.timestamp)).toEqual([
+      1_000_000, 1_001_000, 1_002_000, 1_003_000, 1_004_000, 1_005_000, 1_007_000,
+    ])
+  })
+
+  it('holds nothing by itself when the athlete never asked it to', async () => {
+    const started = open()
+    watchers[0].success(fix(1_000_000, 0, 5))
+    await started
+
+    rideThenStop()
+    const { recording } = await TimedCircuitWeb.read({ key: 'athlete' })
+    expect(recording?.pauses).toEqual([])
+    expect(recording?.points).toHaveLength(7)
+  })
+
+  it('never lets go of a pause the athlete opened by hand', async () => {
+    const started = open(true)
+    watchers[0].success(fix(1_000_000, 0, 5))
+    await started
+
+    vi.setSystemTime(1_001_000)
+    await TimedCircuitWeb.pause({ key: 'athlete' })
+    for (let second = 2; second <= 8; second += 1) {
+      vi.setSystemTime(1_000_000 + second * 1000)
+      watchers[0].success(fix(1_000_000 + second * 1000, second * 0.0001, 5))
+    }
+
+    const { recording } = await TimedCircuitWeb.read({ key: 'athlete' })
+    expect(recording?.pauses).toEqual([{ startedAt: 1_001_000 }])
   })
 })

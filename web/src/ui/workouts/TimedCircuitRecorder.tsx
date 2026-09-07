@@ -51,6 +51,7 @@ export const TimedCircuitRecorder = ({
 }: Props) => {
   const { t, i18n } = useTranslation()
   const unit = usePreferencesStore((state) => state.distanceUnit)
+  const autoPause = usePreferencesStore((state) => state.autoPause)
   const volume = useAnnouncementsStore((state) => state.volume)
   const cueLeadSeconds = usePreferencesStore((state) => state.intervalCueLeadSeconds)
   const paceReference = usePreferencesStore((state) => state.paceReference)
@@ -96,6 +97,7 @@ export const TimedCircuitRecorder = ({
           volume: speechVolume(volume),
           cueLeadSeconds,
           pacing,
+          autoPause,
         })
       else await timedCircuit[kind]({ key })
       if (kind === 'clear') {
@@ -266,7 +268,9 @@ export const TimedCircuitRecorder = ({
                 <span className="sr-only">
                   {t(
                     paused
-                      ? 'timedCircuit.paused'
+                      ? held?.auto
+                        ? 'timedCircuit.pausedAuto'
+                        : 'timedCircuit.paused'
                       : gps
                         ? 'timedCircuit.gpsGood'
                         : 'timedCircuit.gpsPoor',
@@ -279,7 +283,11 @@ export const TimedCircuitRecorder = ({
           <div className={cn(styles.countdown, paused && styles.held)}>
             <div className={styles.head}>
               <span className={styles.eyebrow}>{t('timedCircuit.intervalLeft')}</span>
-              {paused && <span className={styles.chip}>{t('timedCircuit.pausedLabel')}</span>}
+              {paused && (
+                <span className={styles.chip}>
+                  {t(held?.auto ? 'timedCircuit.pausedAutoLabel' : 'timedCircuit.pausedLabel')}
+                </span>
+              )}
             </div>
             <p className={styles.time}>
               {elapsedLabel(

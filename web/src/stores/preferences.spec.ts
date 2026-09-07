@@ -15,6 +15,7 @@ describe('usePreferencesStore', () => {
       weightUnit: WeightUnit.KILOGRAMS,
       distanceUnit: DistanceUnit.KILOMETERS,
       autofillSets: false,
+      autoPause: false,
       intervalCueLeadSeconds: defaultCueLead,
     })
   })
@@ -39,6 +40,20 @@ describe('usePreferencesStore', () => {
     store().setAutofillSets(value)
 
     expect(store().autofillSets).toBe(false)
+  })
+
+  // A recording that holds itself is opt-in the same way, and for the same
+  // reason: nobody expects a clock to stop on its own.
+  test('leaves auto-pause off until the account asks for it', () => {
+    expect(store().autoPause).toBe(false)
+
+    store().setAutoPause(true)
+
+    expect(store().autoPause).toBe(true)
+
+    store().setAutoPause(undefined)
+
+    expect(store().autoPause).toBe(false)
   })
 
   // The lead a runner gets before an interval ends, and the value the three
@@ -94,6 +109,7 @@ describe('usePreferencesStore', () => {
     store().setWeightUnit(WeightUnit.POUNDS)
     store().setDistanceUnit(DistanceUnit.MILES)
     store().setAutofillSets(true)
+    store().setAutoPause(true)
     store().setIntervalCueLeadSeconds(0)
 
     store().reset()
@@ -101,6 +117,7 @@ describe('usePreferencesStore', () => {
     expect(store().weightUnit).toBe(WeightUnit.KILOGRAMS)
     expect(store().distanceUnit).toBe(DistanceUnit.KILOMETERS)
     expect(store().autofillSets).toBe(false)
+    expect(store().autoPause).toBe(false)
     expect(store().intervalCueLeadSeconds).toBe(defaultCueLead)
   })
 
