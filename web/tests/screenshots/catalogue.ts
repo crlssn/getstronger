@@ -131,6 +131,11 @@ export const authenticatedPages: PageEntry[] = [
     route: () => '/settings/appearance',
   },
   {
+    component: 'src/ui/profile/IntervalCueSettings.tsx',
+    name: 'settings-interval-cue',
+    route: () => '/settings/interval-cue',
+  },
+  {
     component: 'src/ui/profile/AccountSettings.tsx',
     name: 'settings-account',
     route: () => '/settings/account',

@@ -2,7 +2,14 @@ import { registerPlugin } from '@capacitor/core'
 import type { Phase, Recording } from '@/utils/timedCircuit'
 
 interface TimedCircuitPlugin {
-  start(options: { key: string; phases: Phase[]; locale: string; volume: number }): Promise<void>
+  /** `cueLeadSeconds` is the athlete's warning before an interval ends; 0 sounds nothing. */
+  start(options: {
+    key: string
+    phases: Phase[]
+    locale: string
+    volume: number
+    cueLeadSeconds: number
+  }): Promise<void>
   read(options: { key: string }): Promise<{ recording?: Recording }>
   pause(options: { key: string }): Promise<void>
   resume(options: { key: string }): Promise<void>

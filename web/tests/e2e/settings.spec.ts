@@ -104,6 +104,44 @@ test.describe('settings', () => {
     await expect(page.locator('body')).toHaveCSS('background-color', 'rgb(242, 241, 237)')
   })
 
+  // The cue is only ever heard, and only on a phone in a pocket, so the row
+  // is where the lead can be read and the screen behind it is where it moves.
+  test('changes the interval cue lead and keeps it', async ({ page }) => {
+    await page.goto('/profile')
+    await expect(settings(page).getByRole('link', { name: /Interval cue/ })).toContainText(
+      '10 seconds',
+    )
+
+    await settings(page)
+      .getByRole('link', { name: /Interval cue/ })
+      .click()
+    await expect(page).toHaveURL(/\/settings\/interval-cue$/)
+    await page.getByRole('button', { name: '20 seconds' }).click()
+    await expect(page.getByRole('button', { name: '20 seconds' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    )
+
+    // Kept on the device, so a reload is what proves it landed.
+    await page.reload()
+    await expect(page.getByRole('button', { name: '20 seconds' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    )
+
+    await page.goto('/profile')
+    await expect(settings(page).getByRole('link', { name: /Interval cue/ })).toContainText(
+      '20 seconds',
+    )
+
+    // Silence is a choice of its own, and the row says so rather than showing
+    // a lead of zero.
+    await page.goto('/settings/interval-cue')
+    await page.getByRole('button', { name: /Off/ }).click()
+    await page.goto('/profile')
+    await expect(settings(page).getByRole('link', { name: /Interval cue/ })).toContainText('Off')
+  })
+
   // System is live: while the app is open, the device changing its palette
   // repaints the page with no navigation.
   test('follows the device while it moves', async ({ page }) => {

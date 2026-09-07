@@ -48,6 +48,7 @@ export const TimedCircuitRecorder = ({
   const { t, i18n } = useTranslation()
   const unit = usePreferencesStore((state) => state.distanceUnit)
   const volume = useAnnouncementsStore((state) => state.volume)
+  const cueLeadSeconds = usePreferencesStore((state) => state.intervalCueLeadSeconds)
   const [recording, setRecording] = useState(saved)
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
@@ -88,6 +89,7 @@ export const TimedCircuitRecorder = ({
           phases,
           locale: i18n.language,
           volume: speechVolume(volume),
+          cueLeadSeconds,
         })
       else await timedCircuit[kind]({ key })
       if (kind === 'clear') {

@@ -1,5 +1,8 @@
 import type { Phase, Recording } from '@/utils/timedCircuit'
 
+import { playCue } from '@/native/cueTone'
+import { cuesInterval } from '@/utils/intervalCue'
+
 /**
  * The recorder a browser can run, standing in for the native plugin.
  *
@@ -10,7 +13,8 @@ import type { Phase, Recording } from '@/utils/timedCircuit'
  * records against.
  *
  * It measures without speaking: there is no announcement here to turn down, so
- * the volume the phones take is accepted and ignored.
+ * the volume the phones take is accepted and ignored. The interval cue is a
+ * tone rather than speech, and this does sound that.
  */
 
 const storageKey = 'getstronger:timed-circuit'
@@ -23,6 +27,8 @@ const fixTimeoutMs = 30000
 interface Saved {
   key: string
   recording: Recording
+  /** Seconds of warning before an interval ends; 0 sounds nothing. */
+  cueLeadSeconds: number
   checkpoint: number
 }
 
@@ -30,6 +36,8 @@ let saved: Saved | undefined
 let watch: number | undefined
 let timer: ReturnType<typeof setInterval> | undefined
 let loaded = false
+/** The interval already warned about, so a tone sounds once per interval. */
+let cued = -1
 
 const now = () => Math.round(Date.now())
 
@@ -111,11 +119,20 @@ const tick = () => {
   }
   if (recording.pauses.at(-1) && !recording.pauses.at(-1)?.endedAt) return
   const elapsed = activeMilliseconds(recording, at)
+  const lead = saved.cueLeadSeconds * 1000
   let boundary = 0
-  for (const phase of recording.phases) {
+  for (const [index, phase] of recording.phases.entries()) {
     if (phase.durationSeconds === undefined) return
     boundary += phase.durationSeconds * 1000
     if (elapsed < boundary) {
+      if (
+        cued !== index &&
+        cuesInterval(phase.durationSeconds, saved.cueLeadSeconds) &&
+        elapsed >= boundary - lead
+      ) {
+        cued = index
+        playCue()
+      }
       if (at - saved.checkpoint > 1000) persist()
       return
     }
@@ -156,8 +173,9 @@ const valid = (phases: Phase[]) =>
   (phases.every((phase) => (phase.durationSeconds ?? 0) > 0) ||
     (phases.length === 1 && phases[0].durationSeconds === undefined))
 
-const begin = (key: string, phases: Phase[]) =>
+const begin = (key: string, phases: Phase[], cueLeadSeconds: number) =>
   new Promise<void>((resolve, reject) => {
+    cued = -1
     saved = {
       key,
       recording: {
@@ -168,6 +186,7 @@ const begin = (key: string, phases: Phase[]) =>
         points: [],
         interrupted: false,
       },
+      cueLeadSeconds,
       checkpoint: now(),
     }
     persist()
@@ -219,11 +238,12 @@ export const TimedCircuitWeb = {
     phases: Phase[]
     locale: string
     volume: number
+    cueLeadSeconds: number
   }): Promise<void> {
     load()
     if (saved) throw new Error('A recording is already saved or active')
     if (!valid(options.phases)) throw new Error('Invalid prescription')
-    await begin(options.key, options.phases)
+    await begin(options.key, options.phases, options.cueLeadSeconds)
   },
 
   read(options: { key: string }): Promise<{ recording?: Recording }> {

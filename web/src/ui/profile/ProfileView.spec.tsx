@@ -79,6 +79,7 @@ describe('ProfileView', () => {
       weightUnit: WeightUnit.KILOGRAMS,
       distanceUnit: DistanceUnit.KILOMETERS,
       autofillSets: false,
+      intervalCueLeadSeconds: 10,
     })
     useToastStore.getState().dismiss()
   })
@@ -240,6 +241,21 @@ describe('ProfileView', () => {
     const appearance = settings.getByRole('link', { name: /Appearance/ })
     expect(appearance).toHaveAttribute('href', '/settings/appearance')
     expect(appearance).toHaveTextContent('Device appearance')
+
+    // The warning a recording gives before an interval ends, which is only
+    // ever heard: the row is where it can be read.
+    const cue = settings.getByRole('link', { name: /Interval cue/ })
+    expect(cue).toHaveAttribute('href', '/settings/interval-cue')
+    expect(cue).toHaveTextContent('10 seconds')
+  })
+
+  test('says the interval cue is off once it is turned off', async () => {
+    usePreferencesStore.setState({ intervalCueLeadSeconds: 0 })
+    render()
+
+    await loaded()
+    const settings = within(await screen.findByRole('region', { name: 'Settings' }))
+    expect(settings.getByRole('link', { name: /Interval cue/ })).toHaveTextContent('Off')
   })
 
   test('names the chosen palette on the appearance row once there is one', async () => {

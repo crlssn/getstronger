@@ -76,6 +76,7 @@ export const RecordSession = () => {
 
   const distanceUnit = usePreferencesStore((state) => state.distanceUnit)
   const weightUnit = usePreferencesStore((state) => state.weightUnit)
+  const cueLeadSeconds = usePreferencesStore((state) => state.intervalCueLeadSeconds)
 
   const [exercise, setExercise] = useState<Exercise>()
   const [recording, setRecording] = useState<Recording>()
@@ -145,6 +146,9 @@ export const RecordSession = () => {
         // One announcement, at the start — but it is still the phone talking,
         // so it obeys the level the recording screen sets.
         volume: speechVolume(useAnnouncementsStore.getState().volume),
+        // The one open interval never reaches a boundary, so nothing here can
+        // sound; the recorder is told the athlete's lead all the same.
+        cueLeadSeconds,
       })
       const result = await timedCircuit.read({ key })
       setRecording(result.recording)

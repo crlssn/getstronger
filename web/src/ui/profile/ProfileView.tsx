@@ -40,6 +40,7 @@ export const ProfileView = () => {
   const weightUnit = usePreferencesStore((state) => state.weightUnit)
   const distanceUnit = usePreferencesStore((state) => state.distanceUnit)
   const autofillSets = usePreferencesStore((state) => state.autofillSets)
+  const cueLead = usePreferencesStore((state) => state.intervalCueLeadSeconds)
   const locale = useLocaleStore(selectLocale)
   const theme = useLocaleStore((state) => state.theme)
 
@@ -224,6 +225,15 @@ export const ProfileView = () => {
             to="/settings/appearance"
             title={t('settings.appearance')}
             meta={t(theme === undefined ? 'settings.appearanceSystem' : themeLabelKey[theme])}
+          />
+          {/* The lead a recording gives before an interval ends, which only
+              the phone in a pocket can act on — so the row reads it back. */}
+          <AppListRow
+            to="/settings/interval-cue"
+            title={t('settings.intervalCue')}
+            meta={
+              cueLead === 0 ? t('settings.intervalCueOff') : t('common.seconds', { count: cueLead })
+            }
           />
           {/* The one row with no value to show: the card at the top of the tab
               is already the name, the username and the address it would
