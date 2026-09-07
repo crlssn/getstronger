@@ -7,6 +7,7 @@ import { Link } from 'react-router-dom'
 
 import { getCurrentUser, updateUserAutofillSets, updateUserAutoPause } from '@/http/requests'
 import { localeNames } from '@/i18n'
+import { useAnnouncementsStore, volumeLabelKey } from '@/stores/announcements'
 import { useAuthStore } from '@/stores/auth'
 import { useDashboardStore } from '@/stores/dashboard'
 import { selectLocale, useLocaleStore } from '@/stores/locale'
@@ -44,6 +45,7 @@ export const ProfileView = () => {
   const autofillSets = usePreferencesStore((state) => state.autofillSets)
   const autoPause = usePreferencesStore((state) => state.autoPause)
   const cueLead = usePreferencesStore((state) => state.intervalCueLeadSeconds)
+  const volume = useAnnouncementsStore((state) => state.volume)
   const paceReference = usePreferencesStore((state) => state.paceReference)
   const locale = useLocaleStore(selectLocale)
   const theme = useLocaleStore((state) => state.theme)
@@ -242,6 +244,13 @@ export const ProfileView = () => {
                 ? t('settings.intervalCueOff')
                 : t('settings.intervalCueLead', { count: cueLead })
             }
+          />
+          {/* The level the recording screen's pill cycles, findable from here
+              too: a pill that reads "Full" beside GPS passes for a status. */}
+          <AppListRow
+            to="/settings/announcements"
+            title={t('settings.announcements')}
+            meta={t(volumeLabelKey[volume])}
           />
           {/* The one row with no value to show: the card at the top of the tab
               is already the name, the username and the address it would

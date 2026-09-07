@@ -73,6 +73,12 @@ export const routes: AppRoute[] = [
     titleKey: 'pages.intervalCue',
   },
   {
+    name: 'settings-announcements',
+    path: '/settings/announcements',
+    access: 'auth',
+    titleKey: 'pages.announcements',
+  },
+  {
     name: 'settings-account',
     path: '/settings/account',
     access: 'auth',

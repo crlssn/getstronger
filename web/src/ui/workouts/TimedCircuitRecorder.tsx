@@ -6,6 +6,7 @@ import {
   nextVolume,
   speechVolume,
   useAnnouncementsStore,
+  volumeLabelKey,
   type AnnouncementVolume,
 } from '@/stores/announcements'
 import { useConfirmationStore } from '@/stores/confirmation'
@@ -207,9 +208,9 @@ export const TimedCircuitRecorder = ({
     ),
   ]
   const volumeLabels: Record<AnnouncementVolume, string> = {
-    full: t('timedCircuit.volumeFull'),
-    low: t('timedCircuit.volumeLow'),
-    off: t('timedCircuit.volumeOff'),
+    full: t(volumeLabelKey.full),
+    low: t(volumeLabelKey.low),
+    off: t(volumeLabelKey.off),
   }
   const paceNow = pace === undefined ? undefined : paceIn(pace, unit)
   const lastPace = last && paceIn((last.durationSeconds / last.distanceMeters) * 1000, unit)

@@ -793,6 +793,10 @@ export const en = {
     // seconds" reads as the second of those.
     intervalCueLead_one: '{count} second before the end',
     intervalCueLead_other: '{count} seconds before the end',
+    announcements: 'Voice announcements',
+    announcementsIntro:
+      'How loudly a recording calls each interval. It is kept on this device, and the recording screen changes it mid-session.',
+    announcementsOffBody: 'The interval cue still sounds',
     account: 'Account',
     accountBody: 'Your details, password and deletion',
     accountIntro: 'Who you are on this account, and how to leave it.',
@@ -909,6 +913,7 @@ export const en = {
     language: 'Language',
     appearance: 'Appearance',
     intervalCue: 'Interval cue',
+    announcements: 'Voice announcements',
     account: 'Account',
     privacy: 'Privacy policy',
     notFound: 'Not found',
@@ -1710,6 +1715,10 @@ export const sv = {
     intervalCueOffBody: 'Intervall tar slut utan ljud',
     intervalCueLead_one: '{count} sekund innan slutet',
     intervalCueLead_other: '{count} sekunder innan slutet',
+    announcements: 'Röstbesked',
+    announcementsIntro:
+      'Hur högt en inspelning ropar ut varje intervall. Det sparas bara på den här enheten, och inspelningsskärmen ändrar det under passet.',
+    announcementsOffBody: 'Intervallsignalen hörs ändå',
     account: 'Konto',
     accountBody: 'Dina uppgifter, lösenord och borttagning',
     accountIntro: 'Vem du är på det här kontot, och hur du lämnar det.',
@@ -1825,6 +1834,7 @@ export const sv = {
     language: 'Språk',
     appearance: 'Utseende',
     intervalCue: 'Intervallsignal',
+    announcements: 'Röstbesked',
     account: 'Konto',
     privacy: 'Integritetspolicy',
     notFound: 'Sidan hittades inte',

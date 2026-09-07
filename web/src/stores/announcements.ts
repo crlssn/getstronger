@@ -8,6 +8,16 @@ export type AnnouncementVolume = 'full' | 'low' | 'off'
 
 const order: readonly AnnouncementVolume[] = ['full', 'low', 'off']
 
+/** The one word each level goes by, wherever it is shown. */
+export const volumeLabelKey: Record<AnnouncementVolume, string> = {
+  full: 'timedCircuit.volumeFull',
+  low: 'timedCircuit.volumeLow',
+  off: 'timedCircuit.volumeOff',
+}
+
+/** The levels in the order the recording screen's pill cycles them. */
+export const announcementVolumes = order
+
 const fractions: Record<AnnouncementVolume, number> = {
   full: 1,
   low: 0.4,
