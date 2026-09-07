@@ -102,6 +102,29 @@ func (s *feedSuite) TestListFeedItemsMarksPersonalBestsOfWorkoutOwners() {
 	s.Require().False(personalBests[lesserSet.ID.String()])
 }
 
+// The feed renders a workout as a summary card, which never reads the
+// recording; shipping it would put megabytes of GPS fixes on the home screen.
+func (s *feedSuite) TestListFeedItemsOmitsTheRecording() {
+	viewer := s.factory.NewUser()
+	s.factory.NewWorkout(
+		factory.WorkoutUserID(viewer.ID),
+		factory.WorkoutRecordingJSON(`{"version":1,"points":[]}`),
+	)
+
+	ctx := xcontext.WithUserID(context.Background(), viewer.ID)
+	ctx = xcontext.WithLogger(ctx, zap.NewExample())
+
+	res, err := s.handler.ListFeedItems(ctx, &connect.Request[apiv1.ListFeedItemsRequest]{
+		Msg: &apiv1.ListFeedItemsRequest{
+			FollowedOnly: true,
+			Pagination:   &apiv1.PaginationRequest{PageLimit: 10},
+		},
+	})
+	s.Require().NoError(err)
+	s.Require().Len(res.Msg.GetItems(), 1)
+	s.Require().Empty(res.Msg.GetItems()[0].GetWorkout().GetRecordingJson())
+}
+
 func (s *feedSuite) TestListFeedItemsPaginates() {
 	viewer := s.factory.NewUser()
 	now := time.Now().UTC()

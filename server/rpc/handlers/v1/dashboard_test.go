@@ -150,6 +150,20 @@ func (s *dashboardSuite) TestThisWeekCountsOnlyWorkoutsFinishedSinceMonday() {
 	s.Require().Len(msg.GetRecentWorkouts(), 2, "recent workouts are not limited to the current week")
 }
 
+// The dashboard previews recent workouts as summary tiles, so a recording one
+// of them carries is weight no tile reads.
+func (s *dashboardSuite) TestRecentWorkoutsOmitTheRecording() {
+	ctx, user := s.athlete()
+	s.factory.NewWorkout(
+		factory.WorkoutUserID(user.ID),
+		factory.WorkoutRecordingJSON(`{"version":1,"points":[]}`),
+	)
+
+	msg := s.dashboard(ctx, "")
+	s.Require().Len(msg.GetRecentWorkouts(), 1)
+	s.Require().Empty(msg.GetRecentWorkouts()[0].GetRecordingJson())
+}
+
 func (s *dashboardSuite) TestWorkoutCountAndRecordsAreLifetimeTotals() {
 	ctx, user := s.athlete()
 	exercises := []*models.Exercise{

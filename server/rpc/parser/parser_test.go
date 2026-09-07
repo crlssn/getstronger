@@ -63,16 +63,21 @@ func newSet(exercise *training.Exercise, weight float64, reps int32) *training.S
 	}
 }
 
+// The heaviest thing a workout carries: megabytes of GPS fixes on a recorded
+// session, which only the workout read on its own draws.
+const recordingJSON = `{"version":1,"points":[]}`
+
 func newWorkout() *training.Workout {
 	id := newID()
 	user := newUser()
 	return &training.Workout{
-		ID:         id,
-		UserID:     user.ID,
-		Name:       "Workout " + id.String(),
-		StartedAt:  startedAt(),
-		FinishedAt: finishedAt(),
-		User:       user,
+		ID:            id,
+		UserID:        user.ID,
+		Name:          "Workout " + id.String(),
+		StartedAt:     startedAt(),
+		FinishedAt:    finishedAt(),
+		User:          user,
+		RecordingJSON: recordingJSON,
 	}
 }
 
@@ -355,6 +360,21 @@ func TestWorkout(t *testing.T) {
 	workout = newWorkout()
 	workout.Note = "note"
 	require.Equal(t, "note", parser.Workout(workout).GetNote())
+}
+
+// A recorded session is the only workout worth megabytes, and only the workout
+// read on its own draws it. Every list of workouts leaves it behind.
+func TestWorkoutRecordingIsOptedIn(t *testing.T) {
+	t.Parallel()
+
+	workout := newWorkout()
+	require.Empty(t, parser.Workout(workout).GetRecordingJson())
+	require.JSONEq(t, recordingJSON,
+		parser.Workout(workout, parser.WorkoutRecording(workout.RecordingJSON)).GetRecordingJson())
+
+	workouts := []*training.Workout{workout}
+	require.Empty(t, parser.WorkoutSlice(workouts, nil)[0].GetRecordingJson())
+	require.Empty(t, parser.FeedItemSlice(workouts, nil)[0].GetWorkout().GetRecordingJson())
 }
 
 func TestWorkoutSlice(t *testing.T) {

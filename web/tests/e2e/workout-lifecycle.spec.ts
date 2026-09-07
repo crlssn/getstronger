@@ -12,6 +12,7 @@ import {
   seedPassword,
   test,
   uniqueName,
+  waitForHome,
 } from './fixtures'
 
 test.beforeAll(resetSeedData)
@@ -878,6 +879,64 @@ test.describe('planned workouts and history', () => {
       await page.goto('/settings/units')
       await distanceUnit().getByRole('button', { name: 'km', exact: true }).click()
       await expect(page.getByRole('status')).toContainText('Distance unit updated')
+    }
+  })
+
+  // A recorded circuit runs to megabytes of GPS fixes, and only the page that
+  // draws the route reads them. Every other screen shows a workout as a
+  // summary, so a phone on mobile data must not download the recording there
+  // and throw it away.
+  test('sends the recording to the workout that draws it and to no list', async ({ page }) => {
+    // The detail page reaches for map tiles, which a test must not depend on.
+    test.info().annotations.push(allowRuntimeErrors)
+    await page.route('https://tiles.openfreemap.org/**', (route) => route.abort())
+
+    // A response body is only readable until the page navigates away from it,
+    // so each leg of the walk reads its own answers before the next one. The
+    // history pages itself as it settles; the first page is the one the
+    // recorded circuit is on.
+    const answersTo = async (procedures: string[], open: () => Promise<unknown>) => {
+      const answered = procedures.map((procedure) =>
+        page.waitForResponse(
+          (response) =>
+            response.url().endsWith(`/${procedure}`) &&
+            !(response.request().postData() ?? '').includes('pageToken'),
+        ),
+      )
+      await open()
+      const responses = await Promise.all(answered)
+      return Promise.all(responses.map((response) => response.text()))
+    }
+
+    const [listed, dashboard] = await answersTo(['ListWorkouts', 'GetDashboard'], () =>
+      page.goto('/workout'),
+    )
+
+    const history = sectionWithHeading(page, 'Previous workouts')
+    const [fetched] = await answersTo(['GetWorkout'], () =>
+      history.getByRole('link').filter({ hasText: 'Walk/Run Intervals' }).first().click(),
+    )
+    await expect(
+      sectionWithHeading(page, 'Workout route').getByRole('heading', { name: 'Workout route' }),
+    ).toBeVisible()
+    const [, recorded] = /\/workouts\/([0-9a-f-]+)/.exec(page.url()) ?? []
+
+    const [feed] = await answersTo(['ListFeedItems'], () => page.goto('/home'))
+    await waitForHome(page)
+
+    // Reading a workout on its own is what draws the route, so that is the one
+    // call the recording travels on.
+    expect(fetched).toContain('recordingJson')
+
+    for (const [screen, body] of [
+      ['the workout history', listed],
+      ['the dashboard', dashboard],
+      ['the feed', feed],
+    ] as const) {
+      // A screen carrying none of the recording because it carried none of the
+      // recorded workout would prove nothing.
+      expect(body, `${screen} lists the recorded workout`).toContain(recorded)
+      expect(body, `${screen} ships no recording`).not.toContain('recordingJson')
     }
   })
 

@@ -236,9 +236,18 @@ func WorkoutIntensity(sets []*training.Set) WorkoutOpt {
 	}
 }
 
+// WorkoutRecording adds the route and intervals a phone recorded. Only the
+// workout read on its own draws them, and a recording runs to megabytes, so a
+// list of workouts asks for none.
+func WorkoutRecording(recording string) WorkoutOpt {
+	return func(w *apiv1.Workout) {
+		w.RecordingJson = recording
+	}
+}
+
 func Workout(workout *training.Workout, opts ...WorkoutOpt) *apiv1.Workout {
 	w := &apiv1.Workout{
-		RecordingJson: workout.RecordingJSON,
+		RecordingJson: "",
 		Id:            workout.ID.String(),
 		Name:          workout.Name,
 		StartedAt:     timestamppb.New(workout.StartedAt),

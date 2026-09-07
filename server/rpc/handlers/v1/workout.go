@@ -279,6 +279,7 @@ func (h *workoutHandler) GetWorkout(ctx context.Context, req *connect.Request[ap
 		Msg: &apiv1.GetWorkoutResponse{
 			Workout: parser.Workout(
 				workout,
+				parser.WorkoutRecording(workout.RecordingJSON),
 				parser.WorkoutIntensity(workout.Sets),
 				parser.WorkoutExerciseSets(workout.Sets, personalBests),
 				parser.WorkoutBlocks(groups[workout.ID], workout.Sets, personalBests),

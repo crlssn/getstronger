@@ -554,6 +554,36 @@ func (s *workoutSuite) TestGetWorkoutNotFound() {
 	s.Require().Equal(connect.NewError(connect.CodeNotFound, nil).Error(), err.Error())
 }
 
+// A recorded session is megabytes of GPS fixes, and only the detail page draws
+// them. A page of the workout list carrying twenty-five of those is a download
+// a phone on mobile data makes and throws away.
+func (s *workoutSuite) TestOnlyTheWorkoutReadOnItsOwnCarriesTheRecording() {
+	const recording = `{"version":1,"points":[]}`
+
+	user := s.factory.NewUser()
+	workout := s.factory.NewWorkout(
+		factory.WorkoutUserID(user.ID),
+		factory.WorkoutRecordingJSON(recording),
+	)
+
+	ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
+	ctx = xcontext.WithUserID(ctx, user.ID)
+
+	fetched, err := s.handler.GetWorkout(ctx, connect.NewRequest(&apiv1.GetWorkoutRequest{
+		Id: workout.ID.String(),
+	}))
+	s.Require().NoError(err)
+	s.Require().JSONEq(recording, fetched.Msg.GetWorkout().GetRecordingJson())
+
+	listed, err := s.handler.ListWorkouts(ctx, connect.NewRequest(&apiv1.ListWorkoutsRequest{
+		UserIds:    []string{user.ID.String()},
+		Pagination: &apiv1.PaginationRequest{PageLimit: 10},
+	}))
+	s.Require().NoError(err)
+	s.Require().Len(listed.Msg.GetWorkouts(), 1)
+	s.Require().Empty(listed.Msg.GetWorkouts()[0].GetRecordingJson())
+}
+
 func (s *workoutSuite) TestListWorkoutsPaginates() {
 	user := s.factory.NewUser()
 	// Created a second apart so the page token, which is a timestamp, orders them.
