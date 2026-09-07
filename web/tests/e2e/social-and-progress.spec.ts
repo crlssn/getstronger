@@ -50,9 +50,13 @@ test.describe('social feed and discovery', () => {
   test('pictures a recorded route on the feed and keeps the map on the workout', async ({
     page,
   }) => {
+    // The tile host itself, not a URL that merely mentions it: a substring
+    // match here would read `openfreemap.org.example.com` as the real thing.
+    const tileHost = 'openfreemap.org'
     const tiles: string[] = []
     page.on('request', (request) => {
-      if (request.url().includes('openfreemap.org')) tiles.push(request.url())
+      const { hostname } = new URL(request.url())
+      if (hostname === tileHost || hostname.endsWith(`.${tileHost}`)) tiles.push(request.url())
     })
     await page.reload()
     await waitForHome(page)
