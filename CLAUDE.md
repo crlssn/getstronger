@@ -112,8 +112,10 @@ worktree. The local stack is not shared, so set it up before running anything.
 - Resolve conflicts locally and rerun the relevant tests, linters, and builds
   after the rebase — a clean rebase can still break behaviour when the incoming
   changes interact with yours.
-- Prefer rebasing over merge commits so each branch stays a linear series of
-  commits on top of `main`.
+- Never merge `main` into a branch — no `git merge main`, and no "update branch"
+  button on GitHub, which merges rather than rebases. Rebase the branch on top of
+  `main` instead, so it stays a linear series of commits and its diff shows only
+  your own work.
 - The pre-push hook formats, lints, and tests only the areas the push changes,
   so a web-only push never starts a database container. Let it run: `--no-verify`
   is for a hook that is broken, not for one that is slow.
