@@ -35,6 +35,7 @@ type joins[Q dialect.Joinable] struct {
 	ExercisesRoutines     joinSet[exercisesRoutineJoins[Q]]
 	Followers             joinSet[followerJoins[Q]]
 	Notifications         joinSet[notificationJoins[Q]]
+	PersonalBests         joinSet[personalBestJoins[Q]]
 	PlanRoutines          joinSet[planRoutineJoins[Q]]
 	Plans                 joinSet[planJoins[Q]]
 	RoutineGroups         joinSet[routineGroupJoins[Q]]
@@ -62,6 +63,7 @@ func getJoins[Q dialect.Joinable]() joins[Q] {
 		ExercisesRoutines:     buildJoinSet[exercisesRoutineJoins[Q]](ExercisesRoutines.Columns, buildExercisesRoutineJoins),
 		Followers:             buildJoinSet[followerJoins[Q]](Followers.Columns, buildFollowerJoins),
 		Notifications:         buildJoinSet[notificationJoins[Q]](Notifications.Columns, buildNotificationJoins),
+		PersonalBests:         buildJoinSet[personalBestJoins[Q]](PersonalBests.Columns, buildPersonalBestJoins),
 		PlanRoutines:          buildJoinSet[planRoutineJoins[Q]](PlanRoutines.Columns, buildPlanRoutineJoins),
 		Plans:                 buildJoinSet[planJoins[Q]](Plans.Columns, buildPlanJoins),
 		RoutineGroups:         buildJoinSet[routineGroupJoins[Q]](RoutineGroups.Columns, buildRoutineGroupJoins),

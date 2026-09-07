@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"strings"
 	"time"
 
 	"github.com/aarondl/opt/null"
@@ -43,6 +44,8 @@ type Set struct {
 	Position               int32               `db:"position" `
 
 	R setR `db:"-" `
+
+	C setC `db:"-" `
 }
 
 // SetSlice is an alias for a slice of pointers to Set.
@@ -57,6 +60,7 @@ type SetsQuery = *psql.ViewQuery[*Set, SetSlice]
 
 // setR is where relationships are stored.
 type setR struct {
+	PersonalBests        PersonalBestSlice     // personal_bests.personal_bests_set_id_fkey
 	Exercise             *Exercise             // sets.sets_exercise_id_fkey
 	User                 *User                 // sets.sets_user_id_fkey
 	WorkoutGroupExercise *WorkoutGroupExercise // sets.sets_workout_group_exercise_id_fkey
@@ -69,6 +73,7 @@ type setR struct {
 
 // setRLoaded tracks which relationships on Set have been loaded.
 type setRLoaded struct {
+	PersonalBests        bool // personal_bests.personal_bests_set_id_fkey
 	Exercise             bool // sets.sets_exercise_id_fkey
 	User                 bool // sets.sets_user_id_fkey
 	WorkoutGroupExercise bool // sets.sets_workout_group_exercise_id_fkey
@@ -751,6 +756,29 @@ func (o SetSlice) ReloadAll(ctx context.Context, exec bob.Executor) error {
 	return nil
 }
 
+// PersonalBests starts a query for related objects on personal_bests
+func (o *Set) PersonalBests(mods ...bob.Mod[*dialect.SelectQuery]) PersonalBestsQuery {
+	return PersonalBests.Query(append(mods,
+		sm.Where(PersonalBests.Columns.SetID.EQ(psql.Arg(o.ID))),
+	)...)
+}
+
+func (os SetSlice) PersonalBests(mods ...bob.Mod[*dialect.SelectQuery]) PersonalBestsQuery {
+	pkID := make(pgtypes.Array[uuid.UUID], 0, len(os))
+
+	for _, o := range os {
+		if o == nil {
+			continue
+		}
+		pkID = append(pkID, o.ID)
+	}
+	PKArgExpr := psql.Any(psql.Cast(psql.Arg(pkID), "uuid[]"))
+
+	return PersonalBests.Query(append(mods,
+		sm.Where(PersonalBests.Columns.SetID.EQ(PKArgExpr)),
+	)...)
+}
+
 // Exercise starts a query for related objects on exercises
 func (o *Set) Exercise(mods ...bob.Mod[*dialect.SelectQuery]) ExercisesQuery {
 	return Exercises.Query(append(mods,
@@ -869,6 +897,76 @@ func (os SetSlice) Workout(mods ...bob.Mod[*dialect.SelectQuery]) WorkoutsQuery 
 	return Workouts.Query(append(mods,
 		sm.Where(Workouts.Columns.ID.EQ(PKArgExpr)),
 	)...)
+}
+
+func insertSetPersonalBests0(ctx context.Context, exec bob.Executor, personalBests1 []*PersonalBestSetter, set0 *Set) (PersonalBestSlice, error) {
+	for i := range personalBests1 {
+		personalBests1[i].SetID = omit.From(set0.ID)
+	}
+
+	ret, err := PersonalBests.Insert(bob.ToMods(personalBests1...)).All(ctx, exec)
+	if err != nil {
+		return ret, fmt.Errorf("insertSetPersonalBests0: %w", err)
+	}
+
+	return ret, nil
+}
+
+func attachSetPersonalBests0(ctx context.Context, exec bob.Executor, count int, personalBests1 PersonalBestSlice, set0 *Set) (PersonalBestSlice, error) {
+	setter := &PersonalBestSetter{
+		SetID: omit.From(set0.ID),
+	}
+
+	err := personalBests1.UpdateAll(ctx, exec, *setter)
+	if err != nil {
+		return nil, fmt.Errorf("attachSetPersonalBests0: %w", err)
+	}
+
+	return personalBests1, nil
+}
+
+func (set0 *Set) InsertPersonalBests(ctx context.Context, exec bob.Executor, related ...*PersonalBestSetter) error {
+	if len(related) == 0 {
+		return nil
+	}
+
+	var err error
+
+	personalBests1, err := insertSetPersonalBests0(ctx, exec, related, set0)
+	if err != nil {
+		return err
+	}
+
+	set0.R.PersonalBests = append(set0.R.PersonalBests, personalBests1...)
+
+	for _, rel := range personalBests1 {
+		rel.R.Set = set0
+		rel.R.Loaded.Set = true
+	}
+	return nil
+}
+
+func (set0 *Set) AttachPersonalBests(ctx context.Context, exec bob.Executor, related ...*PersonalBest) error {
+	if len(related) == 0 {
+		return nil
+	}
+
+	var err error
+	personalBests1 := PersonalBestSlice(related)
+
+	_, err = attachSetPersonalBests0(ctx, exec, len(related), personalBests1, set0)
+	if err != nil {
+		return err
+	}
+
+	set0.R.PersonalBests = append(set0.R.PersonalBests, personalBests1...)
+
+	for _, rel := range related {
+		rel.R.Set = set0
+		rel.R.Loaded.Set = true
+	}
+
+	return nil
 }
 
 func attachSetExercise0(ctx context.Context, exec bob.Executor, count int, set0 *Set, exercise1 *Exercise) (*Set, error) {
@@ -1120,6 +1218,20 @@ type setWhereR[Q psql.Filterable] struct {
 	cols setColumns
 }
 
+// HasPersonalBests filters parents that have a matching PersonalBests using a
+// correlated EXISTS subquery (semi-join). Unlike an INNER JOIN it does not
+// multiply parent rows, so no DISTINCT is needed. The optional filters are
+// applied to the subquery (i.e. to PersonalBests).
+func (w setWhereR[Q]) HasPersonalBests(filters ...bob.Mod[*dialect.SelectQuery]) mods.Where[Q] {
+	q := psql.Select(
+		sm.Columns(psql.Raw("1")),
+		sm.From(PersonalBests.NameExpr()),
+		sm.Where(PersonalBests.Columns.SetID.EQ(w.cols.ID)),
+	)
+	q.Apply(filters...)
+	return mods.Where[Q]{E: psql.Exists(q)}
+}
+
 // HasExercise filters parents that have a matching Exercise using a
 // correlated EXISTS subquery (semi-join). Unlike an INNER JOIN it does not
 // multiply parent rows, so no DISTINCT is needed. The optional filters are
@@ -1176,12 +1288,173 @@ func (w setWhereR[Q]) HasWorkout(filters ...bob.Mod[*dialect.SelectQuery]) mods.
 	return mods.Where[Q]{E: psql.Exists(q)}
 }
 
+// NULL-tolerant scan buffer for setScanMapperNullable:
+// on a LEFT JOIN miss every column comes back NULL, so each field uses the
+// nullable version of the column type even when the column itself is NOT NULL.
+type setPreloadBuf struct {
+	ID                     null.Val[uuid.UUID]
+	WorkoutID              null.Val[uuid.UUID]
+	ExerciseID             null.Val[uuid.UUID]
+	Weight                 null.Val[float64]
+	Reps                   null.Val[int32]
+	CreatedAt              null.Val[time.Time]
+	UserID                 null.Val[uuid.UUID]
+	Distance               null.Val[float64]
+	DurationSeconds        null.Val[int32]
+	WeightUnit             null.Val[string]
+	DistanceUnit           null.Val[string]
+	WorkoutGroupExerciseID null.Val[uuid.UUID]
+	Position               null.Val[int32]
+}
+
+// setScanMapperNullable maps the preloaded set
+// columns (prefixed with the runtime join alias) without reflection, while
+// keeping the LEFT JOIN semantics of the reflection-based mapper: a row whose
+// prefixed columns are all NULL yields nil (no child), and NULL values never
+// error, they just leave the zero value in the field.
+func setScanMapperNullable(prefix string) scan.Mapper[*Set] {
+	return func(ctx context.Context, cols []string) (scan.BeforeFunc, func(any) (*Set, error)) {
+		// resolve the column names once per query, not per row
+		type target struct {
+			idx int
+			dst func(b *setPreloadBuf) any
+		}
+		targets := make([]target, 0, 13)
+		for i, col := range cols {
+			name, ok := strings.CutPrefix(col, prefix)
+			if !ok {
+				continue
+			}
+			switch name {
+			case "id":
+				targets = append(targets, target{i, func(b *setPreloadBuf) any { return &b.ID }})
+			case "workout_id":
+				targets = append(targets, target{i, func(b *setPreloadBuf) any { return &b.WorkoutID }})
+			case "exercise_id":
+				targets = append(targets, target{i, func(b *setPreloadBuf) any { return &b.ExerciseID }})
+			case "weight":
+				targets = append(targets, target{i, func(b *setPreloadBuf) any { return &b.Weight }})
+			case "reps":
+				targets = append(targets, target{i, func(b *setPreloadBuf) any { return &b.Reps }})
+			case "created_at":
+				targets = append(targets, target{i, func(b *setPreloadBuf) any { return &b.CreatedAt }})
+			case "user_id":
+				targets = append(targets, target{i, func(b *setPreloadBuf) any { return &b.UserID }})
+			case "distance":
+				targets = append(targets, target{i, func(b *setPreloadBuf) any { return &b.Distance }})
+			case "duration_seconds":
+				targets = append(targets, target{i, func(b *setPreloadBuf) any { return &b.DurationSeconds }})
+			case "weight_unit":
+				targets = append(targets, target{i, func(b *setPreloadBuf) any { return &b.WeightUnit }})
+			case "distance_unit":
+				targets = append(targets, target{i, func(b *setPreloadBuf) any { return &b.DistanceUnit }})
+			case "workout_group_exercise_id":
+				targets = append(targets, target{i, func(b *setPreloadBuf) any { return &b.WorkoutGroupExerciseID }})
+			case "position":
+				targets = append(targets, target{i, func(b *setPreloadBuf) any { return &b.Position }})
+			}
+		}
+
+		// One scratch buffer reused for every row: before -> scan -> after runs
+		// synchronously per row, the scheduled columns are fully overwritten each
+		// row, and unselected columns stay zero, so a single buffer preserves the
+		// per-row NULL semantics without allocating a buffer per parent row. The
+		// returned child (o below) is always freshly allocated, so buf never
+		// escapes past the after func.
+		buf := new(setPreloadBuf)
+		return func(row *scan.Row) (any, error) {
+				for _, t := range targets {
+					row.ScheduleScanByIndex(t.idx, t.dst(buf))
+				}
+				return buf, nil
+			}, func(link any) (*Set, error) {
+				buf := link.(*setPreloadBuf)
+
+				// Same rule as the reflection mapper's row validator: the child
+				// exists only if at least one of its columns is not NULL. Columns
+				// not selected by the query are never scanned and stay invalid,
+				// so this check also matches when only a subset is selected.
+				if !(buf.ID.IsValue()) &&
+					!(buf.WorkoutID.IsValue()) &&
+					!(buf.ExerciseID.IsValue()) &&
+					!(buf.Weight.IsValue()) &&
+					!(buf.Reps.IsValue()) &&
+					!(buf.CreatedAt.IsValue()) &&
+					!(buf.UserID.IsValue()) &&
+					!(buf.Distance.IsValue()) &&
+					!(buf.DurationSeconds.IsValue()) &&
+					!(buf.WeightUnit.IsValue()) &&
+					!(buf.DistanceUnit.IsValue()) &&
+					!(buf.WorkoutGroupExerciseID.IsValue()) &&
+					!(buf.Position.IsValue()) {
+					return nil, nil
+				}
+
+				o := new(Set)
+				if buf.ID.IsValue() {
+					o.ID = buf.ID.MustGet()
+				}
+				if buf.WorkoutID.IsValue() {
+					o.WorkoutID = buf.WorkoutID.MustGet()
+				}
+				if buf.ExerciseID.IsValue() {
+					o.ExerciseID = buf.ExerciseID.MustGet()
+				}
+				if buf.Weight.IsValue() {
+					o.Weight = buf.Weight.MustGet()
+				}
+				if buf.Reps.IsValue() {
+					o.Reps = buf.Reps.MustGet()
+				}
+				if buf.CreatedAt.IsValue() {
+					o.CreatedAt = buf.CreatedAt.MustGet()
+				}
+				if buf.UserID.IsValue() {
+					o.UserID = buf.UserID.MustGet()
+				}
+				if buf.Distance.IsValue() {
+					o.Distance = buf.Distance.MustGet()
+				}
+				if buf.DurationSeconds.IsValue() {
+					o.DurationSeconds = buf.DurationSeconds.MustGet()
+				}
+				if buf.WeightUnit.IsValue() {
+					o.WeightUnit = buf.WeightUnit.MustGet()
+				}
+				if buf.DistanceUnit.IsValue() {
+					o.DistanceUnit = buf.DistanceUnit.MustGet()
+				}
+				o.WorkoutGroupExerciseID = buf.WorkoutGroupExerciseID
+				if buf.Position.IsValue() {
+					o.Position = buf.Position.MustGet()
+				}
+				return o, nil
+			}
+	}
+}
+
 func (o *Set) Preload(name string, retrieved any) error {
 	if o == nil {
 		return nil
 	}
 
 	switch name {
+	case "PersonalBests":
+		rels, ok := retrieved.(PersonalBestSlice)
+		if !ok {
+			return fmt.Errorf("set cannot load %T as %q", retrieved, name)
+		}
+
+		o.R.PersonalBests = rels
+		o.R.Loaded.PersonalBests = true
+
+		for _, rel := range rels {
+			if rel != nil {
+				rel.R.Set = o
+				rel.R.Loaded.Set = true
+			}
+		}
+		return nil
 	case "Exercise":
 		rel, ok := retrieved.(*Exercise)
 		if !ok {
@@ -1304,6 +1577,7 @@ func buildSetPreloader() setPreloader {
 }
 
 type setThenLoader[Q orm.Loadable] struct {
+	PersonalBests        func(...bob.Mod[*dialect.SelectQuery]) orm.Loader[Q]
 	Exercise             func(...bob.Mod[*dialect.SelectQuery]) orm.Loader[Q]
 	User                 func(...bob.Mod[*dialect.SelectQuery]) orm.Loader[Q]
 	WorkoutGroupExercise func(...bob.Mod[*dialect.SelectQuery]) orm.Loader[Q]
@@ -1311,6 +1585,9 @@ type setThenLoader[Q orm.Loadable] struct {
 }
 
 func buildSetThenLoader[Q orm.Loadable]() setThenLoader[Q] {
+	type PersonalBestsLoadInterface interface {
+		LoadPersonalBests(context.Context, bob.Executor, ...bob.Mod[*dialect.SelectQuery]) error
+	}
 	type ExerciseLoadInterface interface {
 		LoadExercise(context.Context, bob.Executor, ...bob.Mod[*dialect.SelectQuery]) error
 	}
@@ -1325,6 +1602,12 @@ func buildSetThenLoader[Q orm.Loadable]() setThenLoader[Q] {
 	}
 
 	return setThenLoader[Q]{
+		PersonalBests: thenLoadBuilder[Q](
+			"PersonalBests",
+			func(ctx context.Context, exec bob.Executor, retrieved PersonalBestsLoadInterface, mods ...bob.Mod[*dialect.SelectQuery]) error {
+				return retrieved.LoadPersonalBests(ctx, exec, mods...)
+			},
+		),
 		Exercise: thenLoadBuilder[Q](
 			"Exercise",
 			func(ctx context.Context, exec bob.Executor, retrieved ExerciseLoadInterface, mods ...bob.Mod[*dialect.SelectQuery]) error {
@@ -1350,6 +1633,80 @@ func buildSetThenLoader[Q orm.Loadable]() setThenLoader[Q] {
 			},
 		),
 	}
+}
+
+// LoadPersonalBests loads the set's PersonalBests into the .R struct
+func (o *Set) LoadPersonalBests(ctx context.Context, exec bob.Executor, mods ...bob.Mod[*dialect.SelectQuery]) error {
+	if o == nil {
+		return nil
+	}
+
+	// Reset the relationship
+	o.R.PersonalBests = nil
+	o.R.Loaded.PersonalBests = false
+
+	related, err := o.PersonalBests(mods...).All(ctx, exec)
+	if err != nil {
+		return err
+	}
+
+	for _, rel := range related {
+		rel.R.Set = o
+		rel.R.Loaded.Set = true
+	}
+
+	o.R.PersonalBests = related
+	o.R.Loaded.PersonalBests = true
+	return nil
+}
+
+// LoadPersonalBests loads the set's PersonalBests into the .R struct
+func (os SetSlice) LoadPersonalBests(ctx context.Context, exec bob.Executor, mods ...bob.Mod[*dialect.SelectQuery]) error {
+	if len(os) == 0 {
+		return nil
+	}
+
+	personalBests, err := os.PersonalBests(mods...).All(ctx, exec)
+	if err != nil {
+		return err
+	}
+
+	for _, o := range os {
+		if o == nil {
+			continue
+		}
+
+		o.R.PersonalBests = nil
+		o.R.Loaded.PersonalBests = true
+	}
+	// O(N+M) stitch via a map keyed by the join column (key -> []parent; was O(N*M)).
+	setByKey := make(map[uuid.UUID][]*Set, len(os))
+	for _, o := range os {
+		if o == nil {
+			continue
+		}
+
+		setByKey[o.ID] = append(setByKey[o.ID], o)
+	}
+
+	for _, rel := range personalBests {
+
+		owners, ok := setByKey[rel.SetID]
+		if !ok {
+			continue
+		}
+
+		for _, o := range owners {
+
+			rel.R.Set = o
+			rel.R.Loaded.Set = true
+
+			o.R.PersonalBests = append(o.R.PersonalBests, rel)
+
+		}
+	}
+
+	return nil
 }
 
 // LoadExercise loads the set's Exercise into the .R struct
@@ -1657,8 +2014,151 @@ func (os SetSlice) LoadWorkout(ctx context.Context, exec bob.Executor, mods ...b
 	return nil
 }
 
+// setC is where relationship counts are stored.
+type setC struct {
+	PersonalBests *int64
+}
+
+// PreloadCount sets a count in the C struct by name
+func (o *Set) PreloadCount(name string, count int64) error {
+	if o == nil {
+		return nil
+	}
+
+	switch name {
+	case "PersonalBests":
+		o.C.PersonalBests = &count
+	}
+	return nil
+}
+
+type setCountPreloader struct {
+	PersonalBests func(...bob.Mod[*dialect.SelectQuery]) psql.Preloader
+}
+
+func buildSetCountPreloader() setCountPreloader {
+	return setCountPreloader{
+		PersonalBests: func(mods ...bob.Mod[*dialect.SelectQuery]) psql.Preloader {
+			return countPreloader[*Set]("PersonalBests", func(parent string) bob.Expression {
+				// Build a correlated subquery: (SELECT COUNT(*) FROM related WHERE fk = parent.pk)
+				if parent == "" {
+					parent = Sets.Alias()
+				}
+
+				subqueryMods := []bob.Mod[*dialect.SelectQuery]{
+					sm.Columns(psql.Raw("count(*)")),
+
+					sm.From(PersonalBests.NameAsExpr()),
+					sm.Where(psql.Quote(PersonalBests.Alias(), "set_id").EQ(psql.Quote(parent, "id"))),
+				}
+				subqueryMods = append(subqueryMods, mods...)
+				return psql.Group(psql.Select(subqueryMods...).Expression)
+			})
+		},
+	}
+}
+
+type setCountThenLoader[Q orm.Loadable] struct {
+	PersonalBests func(...bob.Mod[*dialect.SelectQuery]) orm.Loader[Q]
+}
+
+func buildSetCountThenLoader[Q orm.Loadable]() setCountThenLoader[Q] {
+	type PersonalBestsCountInterface interface {
+		LoadCountPersonalBests(context.Context, bob.Executor, ...bob.Mod[*dialect.SelectQuery]) error
+	}
+
+	return setCountThenLoader[Q]{
+		PersonalBests: countThenLoadBuilder[Q](
+			"PersonalBests",
+			func(ctx context.Context, exec bob.Executor, retrieved PersonalBestsCountInterface, mods ...bob.Mod[*dialect.SelectQuery]) error {
+				return retrieved.LoadCountPersonalBests(ctx, exec, mods...)
+			},
+		),
+	}
+}
+
+// LoadCountPersonalBests loads the count of PersonalBests into the C struct
+func (o *Set) LoadCountPersonalBests(ctx context.Context, exec bob.Executor, mods ...bob.Mod[*dialect.SelectQuery]) error {
+	if o == nil {
+		return nil
+	}
+
+	count, err := o.PersonalBests(mods...).Count(ctx, exec)
+	if err != nil {
+		return err
+	}
+
+	o.C.PersonalBests = &count
+	return nil
+}
+
+// LoadCountPersonalBests loads the count of PersonalBests for a slice in a single batch query
+func (os SetSlice) LoadCountPersonalBests(ctx context.Context, exec bob.Executor, mods ...bob.Mod[*dialect.SelectQuery]) error {
+	if len(os) == 0 {
+		return nil
+	}
+
+	// Build the IN arg expression from parent PKs
+
+	pkID := make(pgtypes.Array[uuid.UUID], 0, len(os))
+	for _, o := range os {
+		if o == nil {
+			continue
+		}
+		pkID = append(pkID, o.ID)
+	}
+	PKArgExpr := psql.Any(psql.Cast(psql.Arg(pkID), "uuid[]"))
+
+	// countResult holds one scanned row from the batch count query.
+	// FK columns are aliased to the parent PK column names for direct map lookup.
+	type countResult struct {
+		ID    uuid.UUID
+		Count int64
+	}
+
+	batchMods := []bob.Mod[*dialect.SelectQuery]{
+		// SELECT fk AS parent_pk, count(*)
+		sm.Columns(
+			PersonalBests.Columns.SetID.As("id"),
+			psql.Raw("count(*) as count"),
+		),
+		// Single-hop: FROM related table directly
+		sm.From(PersonalBests.NameAsExpr()),
+
+		// WHERE fk IN (parent PKs) — psql single-column FK uses `= ANY(array)` (see PKArgExpr above)
+		sm.Where(PersonalBests.Columns.SetID.EQ(PKArgExpr)),
+		// GROUP BY fk columns
+		sm.GroupBy(PersonalBests.Columns.SetID),
+	}
+	batchMods = append(batchMods, mods...)
+
+	results, err := bob.All(ctx, exec,
+		psql.Select(batchMods...),
+		scan.StructMapper[countResult](),
+	)
+	if err != nil {
+		return err
+	}
+
+	// Single-column FK: direct map lookup
+	countMap := make(map[uuid.UUID]int64, len(results))
+	for _, r := range results {
+		countMap[r.ID] = r.Count
+	}
+	for _, o := range os {
+		if o == nil {
+			continue
+		}
+		count := countMap[o.ID]
+		o.C.PersonalBests = &count
+	}
+
+	return nil
+}
+
 type setJoins[Q dialect.Joinable] struct {
 	typ                  string
+	PersonalBests        modAs[Q, personalBestColumns]
 	Exercise             modAs[Q, exerciseColumns]
 	User                 modAs[Q, userColumns]
 	WorkoutGroupExercise modAs[Q, workoutGroupExerciseColumns]
@@ -1672,6 +2172,20 @@ func (j setJoins[Q]) aliasedAs(alias string) setJoins[Q] {
 func buildSetJoins[Q dialect.Joinable](cols setColumns, typ string) setJoins[Q] {
 	return setJoins[Q]{
 		typ: typ,
+		PersonalBests: modAs[Q, personalBestColumns]{
+			c: PersonalBests.Columns,
+			f: func(to personalBestColumns) bob.Mod[Q] {
+				mods := make(mods.QueryMods[Q], 0, 1)
+
+				{
+					mods = append(mods, dialect.Join[Q](typ, PersonalBests.NameExpr().As(to.Alias())).On(
+						to.SetID.EQ(cols.ID),
+					))
+				}
+
+				return mods
+			},
+		},
 		Exercise: modAs[Q, exerciseColumns]{
 			c: Exercises.Columns,
 			f: func(to exerciseColumns) bob.Mod[Q] {

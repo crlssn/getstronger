@@ -56,6 +56,7 @@ type ExerciseTemplate struct {
 type exerciseR struct {
 	User                  *exerciseRUserR
 	ExercisesRoutines     []*exerciseRExercisesRoutinesR
+	PersonalBests         []*exerciseRPersonalBestsR
 	Routines              []*exerciseRRoutinesR
 	Sets                  []*exerciseRSetsR
 	WorkoutGroupExercises []*exerciseRWorkoutGroupExercisesR
@@ -67,6 +68,10 @@ type exerciseRUserR struct {
 type exerciseRExercisesRoutinesR struct {
 	number int
 	o      *ExercisesRoutineTemplate
+}
+type exerciseRPersonalBestsR struct {
+	number int
+	o      *PersonalBestTemplate
 }
 type exerciseRRoutinesR struct {
 	number           int
@@ -113,6 +118,21 @@ func (t ExerciseTemplate) setModelRels(o *models.Exercise) {
 		}
 		o.R.ExercisesRoutines = rel
 		o.R.Loaded.ExercisesRoutines = true
+	}
+
+	if t.r.PersonalBests != nil {
+		rel := models.PersonalBestSlice{}
+		for _, r := range t.r.PersonalBests {
+			related := r.o.BuildMany(r.number)
+			for _, rel := range related {
+				rel.ExerciseID = o.ID // h2
+				rel.R.Exercise = o
+				rel.R.Loaded.Exercise = true
+			}
+			rel = append(rel, related...)
+		}
+		o.R.PersonalBests = rel
+		o.R.Loaded.PersonalBests = true
 	}
 
 	if t.r.Routines != nil {
@@ -291,6 +311,26 @@ func (o *ExerciseTemplate) insertOptRels(ctx context.Context, exec bob.Executor,
 		}
 	}
 
+	isPersonalBestsDone, _ := exerciseRelPersonalBestsCtx.Value(ctx)
+	if !isPersonalBestsDone && o.r.PersonalBests != nil {
+		ctx = exerciseRelPersonalBestsCtx.WithValue(ctx, true)
+		for _, r := range o.r.PersonalBests {
+			if r.o.alreadyPersisted {
+				m.R.PersonalBests = append(m.R.PersonalBests, r.o.Build())
+			} else {
+				rel2, err := r.o.CreateMany(ctx, exec, r.number)
+				if err != nil {
+					return err
+				}
+
+				err = m.AttachPersonalBests(ctx, exec, rel2...)
+				if err != nil {
+					return err
+				}
+			}
+		}
+	}
+
 	isRoutinesDone, _ := exerciseRelRoutinesCtx.Value(ctx)
 	if !isRoutinesDone && o.r.Routines != nil {
 		ctx = exerciseRelRoutinesCtx.WithValue(ctx, true)
@@ -302,12 +342,12 @@ func (o *ExerciseTemplate) insertOptRels(ctx context.Context, exec bob.Executor,
 				if err != nil {
 					return err
 				}
-				rel2, err := r.o.CreateMany(ctx, exec, r.number)
+				rel3, err := r.o.CreateMany(ctx, exec, r.number)
 				if err != nil {
 					return err
 				}
 
-				err = m.AttachRoutines(ctx, exec, exercisesRoutine1, rel2...)
+				err = m.AttachRoutines(ctx, exec, exercisesRoutine1, rel3...)
 				if err != nil {
 					return err
 				}
@@ -322,12 +362,12 @@ func (o *ExerciseTemplate) insertOptRels(ctx context.Context, exec bob.Executor,
 			if r.o.alreadyPersisted {
 				m.R.Sets = append(m.R.Sets, r.o.Build())
 			} else {
-				rel3, err := r.o.CreateMany(ctx, exec, r.number)
+				rel4, err := r.o.CreateMany(ctx, exec, r.number)
 				if err != nil {
 					return err
 				}
 
-				err = m.AttachSets(ctx, exec, rel3...)
+				err = m.AttachSets(ctx, exec, rel4...)
 				if err != nil {
 					return err
 				}
@@ -342,12 +382,12 @@ func (o *ExerciseTemplate) insertOptRels(ctx context.Context, exec bob.Executor,
 			if r.o.alreadyPersisted {
 				m.R.WorkoutGroupExercises = append(m.R.WorkoutGroupExercises, r.o.Build())
 			} else {
-				rel4, err := r.o.CreateMany(ctx, exec, r.number)
+				rel5, err := r.o.CreateMany(ctx, exec, r.number)
 				if err != nil {
 					return err
 				}
 
-				err = m.AttachWorkoutGroupExercises(ctx, exec, rel4...)
+				err = m.AttachWorkoutGroupExercises(ctx, exec, rel5...)
 				if err != nil {
 					return err
 				}
@@ -411,6 +451,7 @@ func (o *ExerciseTemplate) Create(ctx context.Context, exec bob.Executor) (*mode
 		newMInCreation[k] = v
 	}
 	newMInCreation["exercises:exercises_routines:exercises_routines.routine_exercises_exercise_id_fkey"] = m
+	newMInCreation["exercises:personal_bests:personal_bests.personal_bests_exercise_id_fkey"] = m
 	newMInCreation["exercises:sets:sets.sets_exercise_id_fkey"] = m
 	newMInCreation["exercises:workout_group_exercises:workout_group_exercises.workout_group_exercises_exercise_id_fkey"] = m
 
@@ -834,6 +875,54 @@ func (m exerciseMods) AddExistingExercisesRoutines(existingModels ...*models.Exe
 func (m exerciseMods) WithoutExercisesRoutines() ExerciseMod {
 	return ExerciseModFunc(func(ctx context.Context, o *ExerciseTemplate) {
 		o.r.ExercisesRoutines = nil
+	})
+}
+
+func (m exerciseMods) WithPersonalBests(number int, related *PersonalBestTemplate) ExerciseMod {
+	return ExerciseModFunc(func(ctx context.Context, o *ExerciseTemplate) {
+		o.r.PersonalBests = []*exerciseRPersonalBestsR{{
+			number: number,
+			o:      related,
+		}}
+	})
+}
+
+func (m exerciseMods) WithNewPersonalBests(number int, mods ...PersonalBestMod) ExerciseMod {
+	return ExerciseModFunc(func(ctx context.Context, o *ExerciseTemplate) {
+		related := o.f.NewPersonalBestWithContext(ctx, mods...)
+		m.WithPersonalBests(number, related).Apply(ctx, o)
+	})
+}
+
+func (m exerciseMods) AddPersonalBests(number int, related *PersonalBestTemplate) ExerciseMod {
+	return ExerciseModFunc(func(ctx context.Context, o *ExerciseTemplate) {
+		o.r.PersonalBests = append(o.r.PersonalBests, &exerciseRPersonalBestsR{
+			number: number,
+			o:      related,
+		})
+	})
+}
+
+func (m exerciseMods) AddNewPersonalBests(number int, mods ...PersonalBestMod) ExerciseMod {
+	return ExerciseModFunc(func(ctx context.Context, o *ExerciseTemplate) {
+		related := o.f.NewPersonalBestWithContext(ctx, mods...)
+		m.AddPersonalBests(number, related).Apply(ctx, o)
+	})
+}
+
+func (m exerciseMods) AddExistingPersonalBests(existingModels ...*models.PersonalBest) ExerciseMod {
+	return ExerciseModFunc(func(ctx context.Context, o *ExerciseTemplate) {
+		for _, em := range existingModels {
+			o.r.PersonalBests = append(o.r.PersonalBests, &exerciseRPersonalBestsR{
+				o: o.f.fromExistingPersonalBest(ctx, em),
+			})
+		}
+	})
+}
+
+func (m exerciseMods) WithoutPersonalBests() ExerciseMod {
+	return ExerciseModFunc(func(ctx context.Context, o *ExerciseTemplate) {
+		o.r.PersonalBests = nil
 	})
 }
 

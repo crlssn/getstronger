@@ -22,6 +22,7 @@ type preloaders struct {
 	ExercisesRoutine     exercisesRoutinePreloader
 	Follower             followerPreloader
 	Notification         notificationPreloader
+	PersonalBest         personalBestPreloader
 	PlanRoutine          planRoutinePreloader
 	Plan                 planPreloader
 	RoutineGroup         routineGroupPreloader
@@ -41,6 +42,7 @@ func getPreloaders() preloaders {
 		ExercisesRoutine:     buildExercisesRoutinePreloader(),
 		Follower:             buildFollowerPreloader(),
 		Notification:         buildNotificationPreloader(),
+		PersonalBest:         buildPersonalBestPreloader(),
 		PlanRoutine:          buildPlanRoutinePreloader(),
 		Plan:                 buildPlanPreloader(),
 		RoutineGroup:         buildRoutineGroupPreloader(),
@@ -66,6 +68,7 @@ type thenLoaders[Q orm.Loadable] struct {
 	ExercisesRoutine     exercisesRoutineThenLoader[Q]
 	Follower             followerThenLoader[Q]
 	Notification         notificationThenLoader[Q]
+	PersonalBest         personalBestThenLoader[Q]
 	PlanRoutine          planRoutineThenLoader[Q]
 	Plan                 planThenLoader[Q]
 	RoutineGroup         routineGroupThenLoader[Q]
@@ -85,6 +88,7 @@ func getThenLoaders[Q orm.Loadable]() thenLoaders[Q] {
 		ExercisesRoutine:     buildExercisesRoutineThenLoader[Q](),
 		Follower:             buildFollowerThenLoader[Q](),
 		Notification:         buildNotificationThenLoader[Q](),
+		PersonalBest:         buildPersonalBestThenLoader[Q](),
 		PlanRoutine:          buildPlanRoutineThenLoader[Q](),
 		Plan:                 buildPlanThenLoader[Q](),
 		RoutineGroup:         buildRoutineGroupThenLoader[Q](),

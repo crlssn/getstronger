@@ -24,6 +24,7 @@ var (
 	exerciseWithParentsCascadingCtx     = newContextual[bool]("exerciseWithParentsCascading")
 	exerciseRelUserCtx                  = newContextual[bool]("exercises.users.exercises.exercises_user_id_fkey")
 	exerciseRelExercisesRoutinesCtx     = newContextual[bool]("exercises.exercises_routines.exercises_routines.routine_exercises_exercise_id_fkey")
+	exerciseRelPersonalBestsCtx         = newContextual[bool]("exercises.personal_bests.personal_bests.personal_bests_exercise_id_fkey")
 	exerciseRelRoutinesCtx              = newContextual[bool]("exercises.routines.routines_exercises")
 	exerciseRelSetsCtx                  = newContextual[bool]("exercises.sets.sets.sets_exercise_id_fkey")
 	exerciseRelWorkoutGroupExercisesCtx = newContextual[bool]("exercises.workout_group_exercises.workout_group_exercises.workout_group_exercises_exercise_id_fkey")
@@ -42,6 +43,12 @@ var (
 	// Relationship Contexts for notifications
 	notificationWithParentsCascadingCtx = newContextual[bool]("notificationWithParentsCascading")
 	notificationRelUserCtx              = newContextual[bool]("notifications.users.notifications.notifications_user_id_fkey")
+
+	// Relationship Contexts for personal_bests
+	personalBestWithParentsCascadingCtx = newContextual[bool]("personalBestWithParentsCascading")
+	personalBestRelExerciseCtx          = newContextual[bool]("exercises.personal_bests.personal_bests.personal_bests_exercise_id_fkey")
+	personalBestRelSetCtx               = newContextual[bool]("personal_bests.sets.personal_bests.personal_bests_set_id_fkey")
+	personalBestRelUserCtx              = newContextual[bool]("personal_bests.users.personal_bests.personal_bests_user_id_fkey")
 
 	// Relationship Contexts for plan_routines
 	planRoutineWithParentsCascadingCtx = newContextual[bool]("planRoutineWithParentsCascading")
@@ -69,6 +76,7 @@ var (
 
 	// Relationship Contexts for sets
 	setWithParentsCascadingCtx    = newContextual[bool]("setWithParentsCascading")
+	setRelPersonalBestsCtx        = newContextual[bool]("personal_bests.sets.personal_bests.personal_bests_set_id_fkey")
 	setRelExerciseCtx             = newContextual[bool]("exercises.sets.sets.sets_exercise_id_fkey")
 	setRelUserCtx                 = newContextual[bool]("sets.users.sets.sets_user_id_fkey")
 	setRelWorkoutGroupExerciseCtx = newContextual[bool]("sets.workout_group_exercises.sets.sets_workout_group_exercise_id_fkey")
@@ -82,6 +90,7 @@ var (
 	userRelExercisesCtx         = newContextual[bool]("exercises.users.exercises.exercises_user_id_fkey")
 	userRelUsersCtx             = newContextual[bool]("users.users.followers.followers_followee_id_fkeyfollowers.followers_follower_id_fkey")
 	userRelNotificationsCtx     = newContextual[bool]("notifications.users.notifications.notifications_user_id_fkey")
+	userRelPersonalBestsCtx     = newContextual[bool]("personal_bests.users.personal_bests.personal_bests_user_id_fkey")
 	userRelPlansCtx             = newContextual[bool]("plans.users.plans.plans_user_id_fkey")
 	userRelRoutinesCtx          = newContextual[bool]("routines.users.routines.routines_user_id_fkey")
 	userRelSetsCtx              = newContextual[bool]("sets.users.sets.sets_user_id_fkey")

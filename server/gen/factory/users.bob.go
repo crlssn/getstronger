@@ -59,6 +59,7 @@ type userR struct {
 	Exercises       []*userRExercisesR
 	Users           []*userRUsersR
 	Notifications   []*userRNotificationsR
+	PersonalBests   []*userRPersonalBestsR
 	Plans           []*userRPlansR
 	Routines        []*userRRoutinesR
 	Sets            []*userRSetsR
@@ -78,6 +79,10 @@ type userRUsersR struct {
 type userRNotificationsR struct {
 	number int
 	o      *NotificationTemplate
+}
+type userRPersonalBestsR struct {
+	number int
+	o      *PersonalBestTemplate
 }
 type userRPlansR struct {
 	number int
@@ -151,6 +156,21 @@ func (t UserTemplate) setModelRels(o *models.User) {
 		}
 		o.R.Notifications = rel
 		o.R.Loaded.Notifications = true
+	}
+
+	if t.r.PersonalBests != nil {
+		rel := models.PersonalBestSlice{}
+		for _, r := range t.r.PersonalBests {
+			related := r.o.BuildMany(r.number)
+			for _, rel := range related {
+				rel.UserID = o.ID // h2
+				rel.R.User = o
+				rel.R.Loaded.User = true
+			}
+			rel = append(rel, related...)
+		}
+		o.R.PersonalBests = rel
+		o.R.Loaded.PersonalBests = true
 	}
 
 	if t.r.Plans != nil {
@@ -431,6 +451,26 @@ func (o *UserTemplate) insertOptRels(ctx context.Context, exec bob.Executor, m *
 		}
 	}
 
+	isPersonalBestsDone, _ := userRelPersonalBestsCtx.Value(ctx)
+	if !isPersonalBestsDone && o.r.PersonalBests != nil {
+		ctx = userRelPersonalBestsCtx.WithValue(ctx, true)
+		for _, r := range o.r.PersonalBests {
+			if r.o.alreadyPersisted {
+				m.R.PersonalBests = append(m.R.PersonalBests, r.o.Build())
+			} else {
+				rel3, err := r.o.CreateMany(ctx, exec, r.number)
+				if err != nil {
+					return err
+				}
+
+				err = m.AttachPersonalBests(ctx, exec, rel3...)
+				if err != nil {
+					return err
+				}
+			}
+		}
+	}
+
 	isPlansDone, _ := userRelPlansCtx.Value(ctx)
 	if !isPlansDone && o.r.Plans != nil {
 		ctx = userRelPlansCtx.WithValue(ctx, true)
@@ -438,12 +478,12 @@ func (o *UserTemplate) insertOptRels(ctx context.Context, exec bob.Executor, m *
 			if r.o.alreadyPersisted {
 				m.R.Plans = append(m.R.Plans, r.o.Build())
 			} else {
-				rel3, err := r.o.CreateMany(ctx, exec, r.number)
+				rel4, err := r.o.CreateMany(ctx, exec, r.number)
 				if err != nil {
 					return err
 				}
 
-				err = m.AttachPlans(ctx, exec, rel3...)
+				err = m.AttachPlans(ctx, exec, rel4...)
 				if err != nil {
 					return err
 				}
@@ -458,12 +498,12 @@ func (o *UserTemplate) insertOptRels(ctx context.Context, exec bob.Executor, m *
 			if r.o.alreadyPersisted {
 				m.R.Routines = append(m.R.Routines, r.o.Build())
 			} else {
-				rel4, err := r.o.CreateMany(ctx, exec, r.number)
+				rel5, err := r.o.CreateMany(ctx, exec, r.number)
 				if err != nil {
 					return err
 				}
 
-				err = m.AttachRoutines(ctx, exec, rel4...)
+				err = m.AttachRoutines(ctx, exec, rel5...)
 				if err != nil {
 					return err
 				}
@@ -478,12 +518,12 @@ func (o *UserTemplate) insertOptRels(ctx context.Context, exec bob.Executor, m *
 			if r.o.alreadyPersisted {
 				m.R.Sets = append(m.R.Sets, r.o.Build())
 			} else {
-				rel5, err := r.o.CreateMany(ctx, exec, r.number)
+				rel6, err := r.o.CreateMany(ctx, exec, r.number)
 				if err != nil {
 					return err
 				}
 
-				err = m.AttachSets(ctx, exec, rel5...)
+				err = m.AttachSets(ctx, exec, rel6...)
 				if err != nil {
 					return err
 				}
@@ -498,12 +538,12 @@ func (o *UserTemplate) insertOptRels(ctx context.Context, exec bob.Executor, m *
 			if r.o.alreadyPersisted {
 				m.R.WorkoutComments = append(m.R.WorkoutComments, r.o.Build())
 			} else {
-				rel7, err := r.o.CreateMany(ctx, exec, r.number)
+				rel8, err := r.o.CreateMany(ctx, exec, r.number)
 				if err != nil {
 					return err
 				}
 
-				err = m.AttachWorkoutComments(ctx, exec, rel7...)
+				err = m.AttachWorkoutComments(ctx, exec, rel8...)
 				if err != nil {
 					return err
 				}
@@ -518,12 +558,12 @@ func (o *UserTemplate) insertOptRels(ctx context.Context, exec bob.Executor, m *
 			if r.o.alreadyPersisted {
 				m.R.Workouts = append(m.R.Workouts, r.o.Build())
 			} else {
-				rel8, err := r.o.CreateMany(ctx, exec, r.number)
+				rel9, err := r.o.CreateMany(ctx, exec, r.number)
 				if err != nil {
 					return err
 				}
 
-				err = m.AttachWorkouts(ctx, exec, rel8...)
+				err = m.AttachWorkouts(ctx, exec, rel9...)
 				if err != nil {
 					return err
 				}
@@ -546,36 +586,36 @@ func (o *UserTemplate) Create(ctx context.Context, exec bob.Executor) (*models.U
 	// This works regardless of NoBackReferencing since it only uses child-side metadata.
 	mInCreation, _ := modelsInCreationCtx.Value(ctx)
 
-	var rel6 *models.Auth
+	var rel7 *models.Auth
 
 	if o.r.Auth == nil {
 		if parentModel, found := mInCreation["auth:users:users.users_auth_id_fkey"]; found {
 			if pModel, ok := parentModel.(*models.Auth); ok {
-				rel6 = pModel
+				rel7 = pModel
 			}
 		}
 	}
 
-	if rel6 == nil {
+	if rel7 == nil {
 		if o.r.Auth == nil {
 			UserMods.WithNewAuth().Apply(ctx, o)
 		}
 
 		if o.r.Auth.o.alreadyPersisted {
-			rel6 = o.r.Auth.o.Build()
+			rel7 = o.r.Auth.o.Build()
 		} else {
 			// A user's required auth parent has an optional inverse user relation.
 			// Clear it before creating the parent so a cascading factory does not
 			// insert a second user for the same unique auth ID.
 			AuthMods.WithoutUser().Apply(ctx, o.r.Auth.o)
-			rel6, err = o.r.Auth.o.Create(ctx, exec)
+			rel7, err = o.r.Auth.o.Create(ctx, exec)
 			if err != nil {
 				return nil, err
 			}
 		}
 	}
 
-	opt.AuthID = omit.From(rel6.ID)
+	opt.AuthID = omit.From(rel7.ID)
 
 	m, err := models.Users.Insert(opt).One(ctx, exec)
 	if err != nil {
@@ -595,6 +635,7 @@ func (o *UserTemplate) Create(ctx context.Context, exec bob.Executor) (*models.U
 	newMInCreation["users:followers:followers.followers_followee_id_fkey"] = m
 	newMInCreation["users:followers:followers.followers_follower_id_fkey"] = m
 	newMInCreation["users:notifications:notifications.notifications_user_id_fkey"] = m
+	newMInCreation["users:personal_bests:personal_bests.personal_bests_user_id_fkey"] = m
 	newMInCreation["users:plans:plans.plans_user_id_fkey"] = m
 	newMInCreation["users:routines:routines.routines_user_id_fkey"] = m
 	newMInCreation["users:sets:sets.sets_user_id_fkey"] = m
@@ -603,7 +644,7 @@ func (o *UserTemplate) Create(ctx context.Context, exec bob.Executor) (*models.U
 
 	ctx = modelsInCreationCtx.WithValue(ctx, newMInCreation)
 
-	m.R.Auth = rel6
+	m.R.Auth = rel7
 	m.R.Loaded.Auth = true
 
 	if err := o.insertOptRels(ctx, exec, m); err != nil {
@@ -1213,6 +1254,54 @@ func (m userMods) AddExistingNotifications(existingModels ...*models.Notificatio
 func (m userMods) WithoutNotifications() UserMod {
 	return UserModFunc(func(ctx context.Context, o *UserTemplate) {
 		o.r.Notifications = nil
+	})
+}
+
+func (m userMods) WithPersonalBests(number int, related *PersonalBestTemplate) UserMod {
+	return UserModFunc(func(ctx context.Context, o *UserTemplate) {
+		o.r.PersonalBests = []*userRPersonalBestsR{{
+			number: number,
+			o:      related,
+		}}
+	})
+}
+
+func (m userMods) WithNewPersonalBests(number int, mods ...PersonalBestMod) UserMod {
+	return UserModFunc(func(ctx context.Context, o *UserTemplate) {
+		related := o.f.NewPersonalBestWithContext(ctx, mods...)
+		m.WithPersonalBests(number, related).Apply(ctx, o)
+	})
+}
+
+func (m userMods) AddPersonalBests(number int, related *PersonalBestTemplate) UserMod {
+	return UserModFunc(func(ctx context.Context, o *UserTemplate) {
+		o.r.PersonalBests = append(o.r.PersonalBests, &userRPersonalBestsR{
+			number: number,
+			o:      related,
+		})
+	})
+}
+
+func (m userMods) AddNewPersonalBests(number int, mods ...PersonalBestMod) UserMod {
+	return UserModFunc(func(ctx context.Context, o *UserTemplate) {
+		related := o.f.NewPersonalBestWithContext(ctx, mods...)
+		m.AddPersonalBests(number, related).Apply(ctx, o)
+	})
+}
+
+func (m userMods) AddExistingPersonalBests(existingModels ...*models.PersonalBest) UserMod {
+	return UserModFunc(func(ctx context.Context, o *UserTemplate) {
+		for _, em := range existingModels {
+			o.r.PersonalBests = append(o.r.PersonalBests, &userRPersonalBestsR{
+				o: o.f.fromExistingPersonalBest(ctx, em),
+			})
+		}
+	})
+}
+
+func (m userMods) WithoutPersonalBests() UserMod {
+	return UserModFunc(func(ctx context.Context, o *UserTemplate) {
+		o.r.PersonalBests = nil
 	})
 }
 

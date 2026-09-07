@@ -140,6 +140,9 @@ func (f *Factory) newSetSetter(opts ...SetOpt) (*models.SetSetter, *models.Set) 
 	if value, ok := setter.DistanceUnit.Get(); ok {
 		mods = append(mods, bobfactory.SetMods.DistanceUnit(value))
 	}
+	if value, ok := setter.Position.Get(); ok {
+		mods = append(mods, bobfactory.SetMods.Position(value))
+	}
 
 	template := f.generated.NewSet(mods...)
 	built := template.Build()
@@ -213,5 +216,14 @@ func SetDistanceUnit(unit distanceunit.Unit) SetOpt {
 func SetCreatedAt(createdAt time.Time) SetOpt {
 	return func(set *models.SetSetter) {
 		set.CreatedAt = omit.From(createdAt)
+	}
+}
+
+// SetPosition is where the set sat in its exercise's run of sets. Every set of
+// a workout shares created_at, so this is the only thing telling two identical
+// ones apart.
+func SetPosition(position int) SetOpt {
+	return func(set *models.SetSetter) {
+		set.Position = omit.From(safe.Int32FromInt(position))
 	}
 }

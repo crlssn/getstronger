@@ -144,6 +144,44 @@ func TestCreateExerciseWithExercisesRoutinesDoesNotDuplicateParent(t *testing.T)
 	}
 }
 
+func TestCreateExerciseWithPersonalBestsDoesNotDuplicateParent(t *testing.T) {
+	if testDB == nil {
+		t.Skip("skipping test, no DSN provided")
+	}
+
+	ctx, cancel := context.WithCancel(t.Context())
+	t.Cleanup(cancel)
+
+	tx, err := testDB.Begin(ctx)
+	if err != nil {
+		t.Fatalf("Error starting transaction: %v", err)
+	}
+
+	defer func() {
+		if err := tx.Rollback(ctx); err != nil {
+			t.Fatalf("Error rolling back transaction: %v", err)
+		}
+	}()
+
+	before, err := models.Exercises.Query().Count(ctx, tx)
+	if err != nil {
+		t.Fatalf("Error counting Exercises: %v", err)
+	}
+
+	if _, err := New().NewExerciseWithContext(ctx, ExerciseMods.WithNewPersonalBests(2)).Create(ctx, tx); err != nil {
+		t.Fatalf("Error creating Exercise with PersonalBests: %v", err)
+	}
+
+	after, err := models.Exercises.Query().Count(ctx, tx)
+	if err != nil {
+		t.Fatalf("Error counting Exercises: %v", err)
+	}
+
+	if got := after - before; got != 1 {
+		t.Fatalf("Expected Exercises to increase by 1, got %d", got)
+	}
+}
+
 func TestCreateExerciseWithSetsDoesNotDuplicateParent(t *testing.T) {
 	if testDB == nil {
 		t.Skip("skipping test, no DSN provided")
@@ -289,6 +327,30 @@ func TestCreateNotification(t *testing.T) {
 
 	if _, err := New().NewNotificationWithContext(ctx).Create(ctx, tx); err != nil {
 		t.Fatalf("Error creating Notification: %v", err)
+	}
+}
+
+func TestCreatePersonalBest(t *testing.T) {
+	if testDB == nil {
+		t.Skip("skipping test, no DSN provided")
+	}
+
+	ctx, cancel := context.WithCancel(t.Context())
+	t.Cleanup(cancel)
+
+	tx, err := testDB.Begin(ctx)
+	if err != nil {
+		t.Fatalf("Error starting transaction: %v", err)
+	}
+
+	defer func() {
+		if err := tx.Rollback(ctx); err != nil {
+			t.Fatalf("Error rolling back transaction: %v", err)
+		}
+	}()
+
+	if _, err := New().NewPersonalBestWithContext(ctx).Create(ctx, tx); err != nil {
+		t.Fatalf("Error creating PersonalBest: %v", err)
 	}
 }
 
@@ -640,6 +702,44 @@ func TestCreateSet(t *testing.T) {
 	}
 }
 
+func TestCreateSetWithPersonalBestsDoesNotDuplicateParent(t *testing.T) {
+	if testDB == nil {
+		t.Skip("skipping test, no DSN provided")
+	}
+
+	ctx, cancel := context.WithCancel(t.Context())
+	t.Cleanup(cancel)
+
+	tx, err := testDB.Begin(ctx)
+	if err != nil {
+		t.Fatalf("Error starting transaction: %v", err)
+	}
+
+	defer func() {
+		if err := tx.Rollback(ctx); err != nil {
+			t.Fatalf("Error rolling back transaction: %v", err)
+		}
+	}()
+
+	before, err := models.Sets.Query().Count(ctx, tx)
+	if err != nil {
+		t.Fatalf("Error counting Sets: %v", err)
+	}
+
+	if _, err := New().NewSetWithContext(ctx, SetMods.WithNewPersonalBests(2)).Create(ctx, tx); err != nil {
+		t.Fatalf("Error creating Set with PersonalBests: %v", err)
+	}
+
+	after, err := models.Sets.Query().Count(ctx, tx)
+	if err != nil {
+		t.Fatalf("Error counting Sets: %v", err)
+	}
+
+	if got := after - before; got != 1 {
+		t.Fatalf("Expected Sets to increase by 1, got %d", got)
+	}
+}
+
 func TestCreateTrace(t *testing.T) {
 	if testDB == nil {
 		t.Skip("skipping test, no DSN provided")
@@ -752,6 +852,44 @@ func TestCreateUserWithNotificationsDoesNotDuplicateParent(t *testing.T) {
 
 	if _, err := New().NewUserWithContext(ctx, UserMods.WithNewNotifications(2)).Create(ctx, tx); err != nil {
 		t.Fatalf("Error creating User with Notifications: %v", err)
+	}
+
+	after, err := models.Users.Query().Count(ctx, tx)
+	if err != nil {
+		t.Fatalf("Error counting Users: %v", err)
+	}
+
+	if got := after - before; got != 1 {
+		t.Fatalf("Expected Users to increase by 1, got %d", got)
+	}
+}
+
+func TestCreateUserWithPersonalBestsDoesNotDuplicateParent(t *testing.T) {
+	if testDB == nil {
+		t.Skip("skipping test, no DSN provided")
+	}
+
+	ctx, cancel := context.WithCancel(t.Context())
+	t.Cleanup(cancel)
+
+	tx, err := testDB.Begin(ctx)
+	if err != nil {
+		t.Fatalf("Error starting transaction: %v", err)
+	}
+
+	defer func() {
+		if err := tx.Rollback(ctx); err != nil {
+			t.Fatalf("Error rolling back transaction: %v", err)
+		}
+	}()
+
+	before, err := models.Users.Query().Count(ctx, tx)
+	if err != nil {
+		t.Fatalf("Error counting Users: %v", err)
+	}
+
+	if _, err := New().NewUserWithContext(ctx, UserMods.WithNewPersonalBests(2)).Create(ctx, tx); err != nil {
+		t.Fatalf("Error creating User with PersonalBests: %v", err)
 	}
 
 	after, err := models.Users.Query().Count(ctx, tx)

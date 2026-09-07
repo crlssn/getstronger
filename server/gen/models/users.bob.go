@@ -61,6 +61,7 @@ type userR struct {
 	Exercises       ExerciseSlice       // exercises.exercises_user_id_fkey
 	Users           UserSlice           // followers.followers_followee_id_fkeyfollowers.followers_follower_id_fkey
 	Notifications   NotificationSlice   // notifications.notifications_user_id_fkey
+	PersonalBests   PersonalBestSlice   // personal_bests.personal_bests_user_id_fkey
 	Plans           PlanSlice           // plans.plans_user_id_fkey
 	Routines        RoutineSlice        // routines.routines_user_id_fkey
 	Sets            SetSlice            // sets.sets_user_id_fkey
@@ -78,6 +79,7 @@ type userRLoaded struct {
 	Exercises       bool // exercises.exercises_user_id_fkey
 	Users           bool // followers.followers_followee_id_fkeyfollowers.followers_follower_id_fkey
 	Notifications   bool // notifications.notifications_user_id_fkey
+	PersonalBests   bool // personal_bests.personal_bests_user_id_fkey
 	Plans           bool // plans.plans_user_id_fkey
 	Routines        bool // routines.routines_user_id_fkey
 	Sets            bool // sets.sets_user_id_fkey
@@ -748,6 +750,29 @@ func (os UserSlice) Notifications(mods ...bob.Mod[*dialect.SelectQuery]) Notific
 	)...)
 }
 
+// PersonalBests starts a query for related objects on personal_bests
+func (o *User) PersonalBests(mods ...bob.Mod[*dialect.SelectQuery]) PersonalBestsQuery {
+	return PersonalBests.Query(append(mods,
+		sm.Where(PersonalBests.Columns.UserID.EQ(psql.Arg(o.ID))),
+	)...)
+}
+
+func (os UserSlice) PersonalBests(mods ...bob.Mod[*dialect.SelectQuery]) PersonalBestsQuery {
+	pkID := make(pgtypes.Array[uuid.UUID], 0, len(os))
+
+	for _, o := range os {
+		if o == nil {
+			continue
+		}
+		pkID = append(pkID, o.ID)
+	}
+	PKArgExpr := psql.Any(psql.Cast(psql.Arg(pkID), "uuid[]"))
+
+	return PersonalBests.Query(append(mods,
+		sm.Where(PersonalBests.Columns.UserID.EQ(PKArgExpr)),
+	)...)
+}
+
 // Plans starts a query for related objects on plans
 func (o *User) Plans(mods ...bob.Mod[*dialect.SelectQuery]) PlansQuery {
 	return Plans.Query(append(mods,
@@ -1075,6 +1100,76 @@ func (user0 *User) AttachNotifications(ctx context.Context, exec bob.Executor, r
 	}
 
 	user0.R.Notifications = append(user0.R.Notifications, notifications1...)
+
+	for _, rel := range related {
+		rel.R.User = user0
+		rel.R.Loaded.User = true
+	}
+
+	return nil
+}
+
+func insertUserPersonalBests0(ctx context.Context, exec bob.Executor, personalBests1 []*PersonalBestSetter, user0 *User) (PersonalBestSlice, error) {
+	for i := range personalBests1 {
+		personalBests1[i].UserID = omit.From(user0.ID)
+	}
+
+	ret, err := PersonalBests.Insert(bob.ToMods(personalBests1...)).All(ctx, exec)
+	if err != nil {
+		return ret, fmt.Errorf("insertUserPersonalBests0: %w", err)
+	}
+
+	return ret, nil
+}
+
+func attachUserPersonalBests0(ctx context.Context, exec bob.Executor, count int, personalBests1 PersonalBestSlice, user0 *User) (PersonalBestSlice, error) {
+	setter := &PersonalBestSetter{
+		UserID: omit.From(user0.ID),
+	}
+
+	err := personalBests1.UpdateAll(ctx, exec, *setter)
+	if err != nil {
+		return nil, fmt.Errorf("attachUserPersonalBests0: %w", err)
+	}
+
+	return personalBests1, nil
+}
+
+func (user0 *User) InsertPersonalBests(ctx context.Context, exec bob.Executor, related ...*PersonalBestSetter) error {
+	if len(related) == 0 {
+		return nil
+	}
+
+	var err error
+
+	personalBests1, err := insertUserPersonalBests0(ctx, exec, related, user0)
+	if err != nil {
+		return err
+	}
+
+	user0.R.PersonalBests = append(user0.R.PersonalBests, personalBests1...)
+
+	for _, rel := range personalBests1 {
+		rel.R.User = user0
+		rel.R.Loaded.User = true
+	}
+	return nil
+}
+
+func (user0 *User) AttachPersonalBests(ctx context.Context, exec bob.Executor, related ...*PersonalBest) error {
+	if len(related) == 0 {
+		return nil
+	}
+
+	var err error
+	personalBests1 := PersonalBestSlice(related)
+
+	_, err = attachUserPersonalBests0(ctx, exec, len(related), personalBests1, user0)
+	if err != nil {
+		return err
+	}
+
+	user0.R.PersonalBests = append(user0.R.PersonalBests, personalBests1...)
 
 	for _, rel := range related {
 		rel.R.User = user0
@@ -1557,6 +1652,20 @@ func (w userWhereR[Q]) HasNotifications(filters ...bob.Mod[*dialect.SelectQuery]
 	return mods.Where[Q]{E: psql.Exists(q)}
 }
 
+// HasPersonalBests filters parents that have a matching PersonalBests using a
+// correlated EXISTS subquery (semi-join). Unlike an INNER JOIN it does not
+// multiply parent rows, so no DISTINCT is needed. The optional filters are
+// applied to the subquery (i.e. to PersonalBests).
+func (w userWhereR[Q]) HasPersonalBests(filters ...bob.Mod[*dialect.SelectQuery]) mods.Where[Q] {
+	q := psql.Select(
+		sm.Columns(psql.Raw("1")),
+		sm.From(PersonalBests.NameExpr()),
+		sm.Where(PersonalBests.Columns.UserID.EQ(w.cols.ID)),
+	)
+	q.Apply(filters...)
+	return mods.Where[Q]{E: psql.Exists(q)}
+}
+
 // HasPlans filters parents that have a matching Plans using a
 // correlated EXISTS subquery (semi-join). Unlike an INNER JOIN it does not
 // multiply parent rows, so no DISTINCT is needed. The optional filters are
@@ -1833,6 +1942,22 @@ func (o *User) Preload(name string, retrieved any) error {
 			}
 		}
 		return nil
+	case "PersonalBests":
+		rels, ok := retrieved.(PersonalBestSlice)
+		if !ok {
+			return fmt.Errorf("user cannot load %T as %q", retrieved, name)
+		}
+
+		o.R.PersonalBests = rels
+		o.R.Loaded.PersonalBests = true
+
+		for _, rel := range rels {
+			if rel != nil {
+				rel.R.User = o
+				rel.R.Loaded.User = true
+			}
+		}
+		return nil
 	case "Plans":
 		rels, ok := retrieved.(PlanSlice)
 		if !ok {
@@ -1958,6 +2083,7 @@ type userThenLoader[Q orm.Loadable] struct {
 	Exercises       func(...bob.Mod[*dialect.SelectQuery]) orm.Loader[Q]
 	Users           func(...bob.Mod[*dialect.SelectQuery]) orm.Loader[Q]
 	Notifications   func(...bob.Mod[*dialect.SelectQuery]) orm.Loader[Q]
+	PersonalBests   func(...bob.Mod[*dialect.SelectQuery]) orm.Loader[Q]
 	Plans           func(...bob.Mod[*dialect.SelectQuery]) orm.Loader[Q]
 	Routines        func(...bob.Mod[*dialect.SelectQuery]) orm.Loader[Q]
 	Sets            func(...bob.Mod[*dialect.SelectQuery]) orm.Loader[Q]
@@ -1975,6 +2101,9 @@ func buildUserThenLoader[Q orm.Loadable]() userThenLoader[Q] {
 	}
 	type NotificationsLoadInterface interface {
 		LoadNotifications(context.Context, bob.Executor, ...bob.Mod[*dialect.SelectQuery]) error
+	}
+	type PersonalBestsLoadInterface interface {
+		LoadPersonalBests(context.Context, bob.Executor, ...bob.Mod[*dialect.SelectQuery]) error
 	}
 	type PlansLoadInterface interface {
 		LoadPlans(context.Context, bob.Executor, ...bob.Mod[*dialect.SelectQuery]) error
@@ -2012,6 +2141,12 @@ func buildUserThenLoader[Q orm.Loadable]() userThenLoader[Q] {
 			"Notifications",
 			func(ctx context.Context, exec bob.Executor, retrieved NotificationsLoadInterface, mods ...bob.Mod[*dialect.SelectQuery]) error {
 				return retrieved.LoadNotifications(ctx, exec, mods...)
+			},
+		),
+		PersonalBests: thenLoadBuilder[Q](
+			"PersonalBests",
+			func(ctx context.Context, exec bob.Executor, retrieved PersonalBestsLoadInterface, mods ...bob.Mod[*dialect.SelectQuery]) error {
+				return retrieved.LoadPersonalBests(ctx, exec, mods...)
 			},
 		),
 		Plans: thenLoadBuilder[Q](
@@ -2297,6 +2432,80 @@ func (os UserSlice) LoadNotifications(ctx context.Context, exec bob.Executor, mo
 			rel.R.Loaded.User = true
 
 			o.R.Notifications = append(o.R.Notifications, rel)
+
+		}
+	}
+
+	return nil
+}
+
+// LoadPersonalBests loads the user's PersonalBests into the .R struct
+func (o *User) LoadPersonalBests(ctx context.Context, exec bob.Executor, mods ...bob.Mod[*dialect.SelectQuery]) error {
+	if o == nil {
+		return nil
+	}
+
+	// Reset the relationship
+	o.R.PersonalBests = nil
+	o.R.Loaded.PersonalBests = false
+
+	related, err := o.PersonalBests(mods...).All(ctx, exec)
+	if err != nil {
+		return err
+	}
+
+	for _, rel := range related {
+		rel.R.User = o
+		rel.R.Loaded.User = true
+	}
+
+	o.R.PersonalBests = related
+	o.R.Loaded.PersonalBests = true
+	return nil
+}
+
+// LoadPersonalBests loads the user's PersonalBests into the .R struct
+func (os UserSlice) LoadPersonalBests(ctx context.Context, exec bob.Executor, mods ...bob.Mod[*dialect.SelectQuery]) error {
+	if len(os) == 0 {
+		return nil
+	}
+
+	personalBests, err := os.PersonalBests(mods...).All(ctx, exec)
+	if err != nil {
+		return err
+	}
+
+	for _, o := range os {
+		if o == nil {
+			continue
+		}
+
+		o.R.PersonalBests = nil
+		o.R.Loaded.PersonalBests = true
+	}
+	// O(N+M) stitch via a map keyed by the join column (key -> []parent; was O(N*M)).
+	userByKey := make(map[uuid.UUID][]*User, len(os))
+	for _, o := range os {
+		if o == nil {
+			continue
+		}
+
+		userByKey[o.ID] = append(userByKey[o.ID], o)
+	}
+
+	for _, rel := range personalBests {
+
+		owners, ok := userByKey[rel.UserID]
+		if !ok {
+			continue
+		}
+
+		for _, o := range owners {
+
+			rel.R.User = o
+			rel.R.Loaded.User = true
+
+			o.R.PersonalBests = append(o.R.PersonalBests, rel)
 
 		}
 	}
@@ -2756,6 +2965,7 @@ type userC struct {
 	Exercises       *int64
 	Users           *int64
 	Notifications   *int64
+	PersonalBests   *int64
 	Plans           *int64
 	Routines        *int64
 	Sets            *int64
@@ -2776,6 +2986,8 @@ func (o *User) PreloadCount(name string, count int64) error {
 		o.C.Users = &count
 	case "Notifications":
 		o.C.Notifications = &count
+	case "PersonalBests":
+		o.C.PersonalBests = &count
 	case "Plans":
 		o.C.Plans = &count
 	case "Routines":
@@ -2794,6 +3006,7 @@ type userCountPreloader struct {
 	Exercises       func(...bob.Mod[*dialect.SelectQuery]) psql.Preloader
 	Users           func(...bob.Mod[*dialect.SelectQuery]) psql.Preloader
 	Notifications   func(...bob.Mod[*dialect.SelectQuery]) psql.Preloader
+	PersonalBests   func(...bob.Mod[*dialect.SelectQuery]) psql.Preloader
 	Plans           func(...bob.Mod[*dialect.SelectQuery]) psql.Preloader
 	Routines        func(...bob.Mod[*dialect.SelectQuery]) psql.Preloader
 	Sets            func(...bob.Mod[*dialect.SelectQuery]) psql.Preloader
@@ -2852,6 +3065,23 @@ func buildUserCountPreloader() userCountPreloader {
 
 					sm.From(Notifications.NameAsExpr()),
 					sm.Where(psql.Quote(Notifications.Alias(), "user_id").EQ(psql.Quote(parent, "id"))),
+				}
+				subqueryMods = append(subqueryMods, mods...)
+				return psql.Group(psql.Select(subqueryMods...).Expression)
+			})
+		},
+		PersonalBests: func(mods ...bob.Mod[*dialect.SelectQuery]) psql.Preloader {
+			return countPreloader[*User]("PersonalBests", func(parent string) bob.Expression {
+				// Build a correlated subquery: (SELECT COUNT(*) FROM related WHERE fk = parent.pk)
+				if parent == "" {
+					parent = Users.Alias()
+				}
+
+				subqueryMods := []bob.Mod[*dialect.SelectQuery]{
+					sm.Columns(psql.Raw("count(*)")),
+
+					sm.From(PersonalBests.NameAsExpr()),
+					sm.Where(psql.Quote(PersonalBests.Alias(), "user_id").EQ(psql.Quote(parent, "id"))),
 				}
 				subqueryMods = append(subqueryMods, mods...)
 				return psql.Group(psql.Select(subqueryMods...).Expression)
@@ -2949,6 +3179,7 @@ type userCountThenLoader[Q orm.Loadable] struct {
 	Exercises       func(...bob.Mod[*dialect.SelectQuery]) orm.Loader[Q]
 	Users           func(...bob.Mod[*dialect.SelectQuery]) orm.Loader[Q]
 	Notifications   func(...bob.Mod[*dialect.SelectQuery]) orm.Loader[Q]
+	PersonalBests   func(...bob.Mod[*dialect.SelectQuery]) orm.Loader[Q]
 	Plans           func(...bob.Mod[*dialect.SelectQuery]) orm.Loader[Q]
 	Routines        func(...bob.Mod[*dialect.SelectQuery]) orm.Loader[Q]
 	Sets            func(...bob.Mod[*dialect.SelectQuery]) orm.Loader[Q]
@@ -2965,6 +3196,9 @@ func buildUserCountThenLoader[Q orm.Loadable]() userCountThenLoader[Q] {
 	}
 	type NotificationsCountInterface interface {
 		LoadCountNotifications(context.Context, bob.Executor, ...bob.Mod[*dialect.SelectQuery]) error
+	}
+	type PersonalBestsCountInterface interface {
+		LoadCountPersonalBests(context.Context, bob.Executor, ...bob.Mod[*dialect.SelectQuery]) error
 	}
 	type PlansCountInterface interface {
 		LoadCountPlans(context.Context, bob.Executor, ...bob.Mod[*dialect.SelectQuery]) error
@@ -2999,6 +3233,12 @@ func buildUserCountThenLoader[Q orm.Loadable]() userCountThenLoader[Q] {
 			"Notifications",
 			func(ctx context.Context, exec bob.Executor, retrieved NotificationsCountInterface, mods ...bob.Mod[*dialect.SelectQuery]) error {
 				return retrieved.LoadCountNotifications(ctx, exec, mods...)
+			},
+		),
+		PersonalBests: countThenLoadBuilder[Q](
+			"PersonalBests",
+			func(ctx context.Context, exec bob.Executor, retrieved PersonalBestsCountInterface, mods ...bob.Mod[*dialect.SelectQuery]) error {
+				return retrieved.LoadCountPersonalBests(ctx, exec, mods...)
 			},
 		),
 		Plans: countThenLoadBuilder[Q](
@@ -3269,6 +3509,85 @@ func (os UserSlice) LoadCountNotifications(ctx context.Context, exec bob.Executo
 		}
 		count := countMap[o.ID]
 		o.C.Notifications = &count
+	}
+
+	return nil
+}
+
+// LoadCountPersonalBests loads the count of PersonalBests into the C struct
+func (o *User) LoadCountPersonalBests(ctx context.Context, exec bob.Executor, mods ...bob.Mod[*dialect.SelectQuery]) error {
+	if o == nil {
+		return nil
+	}
+
+	count, err := o.PersonalBests(mods...).Count(ctx, exec)
+	if err != nil {
+		return err
+	}
+
+	o.C.PersonalBests = &count
+	return nil
+}
+
+// LoadCountPersonalBests loads the count of PersonalBests for a slice in a single batch query
+func (os UserSlice) LoadCountPersonalBests(ctx context.Context, exec bob.Executor, mods ...bob.Mod[*dialect.SelectQuery]) error {
+	if len(os) == 0 {
+		return nil
+	}
+
+	// Build the IN arg expression from parent PKs
+
+	pkID := make(pgtypes.Array[uuid.UUID], 0, len(os))
+	for _, o := range os {
+		if o == nil {
+			continue
+		}
+		pkID = append(pkID, o.ID)
+	}
+	PKArgExpr := psql.Any(psql.Cast(psql.Arg(pkID), "uuid[]"))
+
+	// countResult holds one scanned row from the batch count query.
+	// FK columns are aliased to the parent PK column names for direct map lookup.
+	type countResult struct {
+		ID    uuid.UUID
+		Count int64
+	}
+
+	batchMods := []bob.Mod[*dialect.SelectQuery]{
+		// SELECT fk AS parent_pk, count(*)
+		sm.Columns(
+			PersonalBests.Columns.UserID.As("id"),
+			psql.Raw("count(*) as count"),
+		),
+		// Single-hop: FROM related table directly
+		sm.From(PersonalBests.NameAsExpr()),
+
+		// WHERE fk IN (parent PKs) — psql single-column FK uses `= ANY(array)` (see PKArgExpr above)
+		sm.Where(PersonalBests.Columns.UserID.EQ(PKArgExpr)),
+		// GROUP BY fk columns
+		sm.GroupBy(PersonalBests.Columns.UserID),
+	}
+	batchMods = append(batchMods, mods...)
+
+	results, err := bob.All(ctx, exec,
+		psql.Select(batchMods...),
+		scan.StructMapper[countResult](),
+	)
+	if err != nil {
+		return err
+	}
+
+	// Single-column FK: direct map lookup
+	countMap := make(map[uuid.UUID]int64, len(results))
+	for _, r := range results {
+		countMap[r.ID] = r.Count
+	}
+	for _, o := range os {
+		if o == nil {
+			continue
+		}
+		count := countMap[o.ID]
+		o.C.PersonalBests = &count
 	}
 
 	return nil
@@ -3674,6 +3993,7 @@ type userJoins[Q dialect.Joinable] struct {
 	Exercises       modAs[Q, exerciseColumns]
 	Users           modAs[Q, userColumns]
 	Notifications   modAs[Q, notificationColumns]
+	PersonalBests   modAs[Q, personalBestColumns]
 	Plans           modAs[Q, planColumns]
 	Routines        modAs[Q, routineColumns]
 	Sets            modAs[Q, setColumns]
@@ -3732,6 +4052,20 @@ func buildUserJoins[Q dialect.Joinable](cols userColumns, typ string) userJoins[
 
 				{
 					mods = append(mods, dialect.Join[Q](typ, Notifications.NameExpr().As(to.Alias())).On(
+						to.UserID.EQ(cols.ID),
+					))
+				}
+
+				return mods
+			},
+		},
+		PersonalBests: modAs[Q, personalBestColumns]{
+			c: PersonalBests.Columns,
+			f: func(to personalBestColumns) bob.Mod[Q] {
+				mods := make(mods.QueryMods[Q], 0, 1)
+
+				{
+					mods = append(mods, dialect.Join[Q](typ, PersonalBests.NameExpr().As(to.Alias())).On(
 						to.UserID.EQ(cols.ID),
 					))
 				}

@@ -124,23 +124,6 @@ var Auths = Table[
 			Where:         "",
 			Include:       []string{},
 		},
-		AuthEmailKey: index{
-			Type: "btree",
-			Name: "auth_email_key",
-			Columns: []indexColumn{
-				{
-					Name:         "email",
-					Desc:         null.FromCond(false, true),
-					IsExpression: false,
-				},
-			},
-			Unique:        true,
-			Comment:       "",
-			NullsFirst:    []bool{false},
-			NullsDistinct: false,
-			Where:         "",
-			Include:       []string{},
-		},
 		IdxAuthEmailLower: index{
 			Type: "btree",
 			Name: "idx_auth_email_lower",
@@ -163,14 +146,6 @@ var Auths = Table[
 		Name:    "auth_pkey",
 		Columns: []string{"id"},
 		Comment: "",
-	},
-
-	Uniques: authUniques{
-		AuthEmailKey: constraint{
-			Name:    "auth_email_key",
-			Columns: []string{"email"},
-			Comment: "",
-		},
 	},
 
 	Comment: "",
@@ -197,13 +172,12 @@ func (c authColumns) AsSlice() []column {
 
 type authIndexes struct {
 	AuthPkey          index
-	AuthEmailKey      index
 	IdxAuthEmailLower index
 }
 
 func (i authIndexes) AsSlice() []index {
 	return []index{
-		i.AuthPkey, i.AuthEmailKey, i.IdxAuthEmailLower,
+		i.AuthPkey, i.IdxAuthEmailLower,
 	}
 }
 
@@ -213,14 +187,10 @@ func (f authForeignKeys) AsSlice() []foreignKey {
 	return []foreignKey{}
 }
 
-type authUniques struct {
-	AuthEmailKey constraint
-}
+type authUniques struct{}
 
 func (u authUniques) AsSlice() []constraint {
-	return []constraint{
-		u.AuthEmailKey,
-	}
+	return []constraint{}
 }
 
 type authChecks struct{}

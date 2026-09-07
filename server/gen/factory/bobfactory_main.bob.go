@@ -25,6 +25,7 @@ type Factory struct {
 	baseExercisesRoutineMods     ExercisesRoutineModSlice
 	baseFollowerMods             FollowerModSlice
 	baseNotificationMods         NotificationModSlice
+	basePersonalBestMods         PersonalBestModSlice
 	basePlanRoutineMods          PlanRoutineModSlice
 	basePlanMods                 PlanModSlice
 	baseRoutineGroupMods         RoutineGroupModSlice
@@ -199,6 +200,9 @@ func (f *Factory) fromExistingExercise(ctx context.Context, m *models.Exercise) 
 	if len(m.R.ExercisesRoutines) > 0 {
 		ExerciseMods.AddExistingExercisesRoutines(m.R.ExercisesRoutines...).Apply(ctx, o)
 	}
+	if len(m.R.PersonalBests) > 0 {
+		ExerciseMods.AddExistingPersonalBests(m.R.PersonalBests...).Apply(ctx, o)
+	}
 	if len(m.R.Routines) > 0 {
 		ExerciseMods.AddExistingRoutines(m.R.Routines...).Apply(ctx, o)
 	}
@@ -351,6 +355,55 @@ func (f *Factory) fromExistingNotification(ctx context.Context, m *models.Notifi
 	}
 	if m.R.User != nil {
 		NotificationMods.WithExistingUser(m.R.User).Apply(ctx, o)
+	}
+
+	return o
+}
+
+func (f *Factory) NewPersonalBest(mods ...PersonalBestMod) *PersonalBestTemplate {
+	return f.NewPersonalBestWithContext(context.Background(), mods...)
+}
+
+func (f *Factory) NewPersonalBestWithContext(ctx context.Context, mods ...PersonalBestMod) *PersonalBestTemplate {
+	o := &PersonalBestTemplate{f: f}
+
+	if f != nil {
+		f.basePersonalBestMods.Apply(ctx, o)
+	}
+
+	PersonalBestModSlice(mods).Apply(ctx, o)
+
+	return o
+}
+
+func (f *Factory) FromExistingPersonalBest(ctx context.Context, m *models.PersonalBest) *PersonalBestTemplate {
+	visited := make(map[uintptr]struct{})
+	ctx = factoryVisitedCtx.WithValue(ctx, visited)
+	return f.fromExistingPersonalBest(ctx, m)
+}
+
+func (f *Factory) fromExistingPersonalBest(ctx context.Context, m *models.PersonalBest) *PersonalBestTemplate {
+	o := &PersonalBestTemplate{f: f, alreadyPersisted: true}
+
+	o.UserID = func() uuid.UUID { return m.UserID }
+	o.ExerciseID = func() uuid.UUID { return m.ExerciseID }
+	o.SetID = func() uuid.UUID { return m.SetID }
+
+	if visited, ok := factoryVisitedCtx.Value(ctx); ok {
+		ptr := uintptr(unsafe.Pointer(m))
+		if _, seen := visited[ptr]; seen {
+			return o
+		}
+		visited[ptr] = struct{}{}
+	}
+	if m.R.Exercise != nil {
+		PersonalBestMods.WithExistingExercise(m.R.Exercise).Apply(ctx, o)
+	}
+	if m.R.Set != nil {
+		PersonalBestMods.WithExistingSet(m.R.Set).Apply(ctx, o)
+	}
+	if m.R.User != nil {
+		PersonalBestMods.WithExistingUser(m.R.User).Apply(ctx, o)
 	}
 
 	return o
@@ -609,6 +662,9 @@ func (f *Factory) fromExistingSet(ctx context.Context, m *models.Set) *SetTempla
 		}
 		visited[ptr] = struct{}{}
 	}
+	if len(m.R.PersonalBests) > 0 {
+		SetMods.AddExistingPersonalBests(m.R.PersonalBests...).Apply(ctx, o)
+	}
 	if m.R.Exercise != nil {
 		SetMods.WithExistingExercise(m.R.Exercise).Apply(ctx, o)
 	}
@@ -708,6 +764,9 @@ func (f *Factory) fromExistingUser(ctx context.Context, m *models.User) *UserTem
 	}
 	if len(m.R.Notifications) > 0 {
 		UserMods.AddExistingNotifications(m.R.Notifications...).Apply(ctx, o)
+	}
+	if len(m.R.PersonalBests) > 0 {
+		UserMods.AddExistingPersonalBests(m.R.PersonalBests...).Apply(ctx, o)
 	}
 	if len(m.R.Plans) > 0 {
 		UserMods.AddExistingPlans(m.R.Plans...).Apply(ctx, o)
@@ -996,6 +1055,14 @@ func (f *Factory) ClearBaseNotificationMods() {
 
 func (f *Factory) AddBaseNotificationMod(mods ...NotificationMod) {
 	f.baseNotificationMods = append(f.baseNotificationMods, mods...)
+}
+
+func (f *Factory) ClearBasePersonalBestMods() {
+	f.basePersonalBestMods = nil
+}
+
+func (f *Factory) AddBasePersonalBestMod(mods ...PersonalBestMod) {
+	f.basePersonalBestMods = append(f.basePersonalBestMods, mods...)
 }
 
 func (f *Factory) ClearBasePlanRoutineMods() {
