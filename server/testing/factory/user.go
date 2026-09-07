@@ -149,6 +149,12 @@ func UserAutofillSets(enabled bool) UserOpt {
 	}
 }
 
+func UserAutoPause(enabled bool) UserOpt {
+	return func(m *models.UserSetter) {
+		m.AutoPause = omit.From(enabled)
+	}
+}
+
 func UserFeedSeenAt(seenAt time.Time) UserOpt {
 	return func(m *models.UserSetter) {
 		m.FeedSeenAt = omitnull.From(seenAt)

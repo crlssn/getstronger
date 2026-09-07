@@ -115,6 +115,8 @@ message User {
   DistanceUnit distance_unit = 7 [(buf.validate.field).enum.defined_only = true];
   // Whether an empty set input is prefilled from the previous session.
   bool autofill_sets = 10;
+  // Whether a live recording holds itself while the athlete is standing still.
+  bool auto_pause = 11;
 }
 
 message PaginationRequest {

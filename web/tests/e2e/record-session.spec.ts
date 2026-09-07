@@ -26,6 +26,23 @@ const walkTheRoute = async (page: Parameters<typeof logIn>[0]) => {
   }
 }
 
+// Standing at a crossing is not standing perfectly still: the fixes go on
+// arriving and wander half a metre either side of the same spot, which is the
+// drift the detector has to see through.
+const driftDegrees = 0.0000045
+const dwellMs = 500
+const dwells = 18
+
+const standStill = async (page: Parameters<typeof logIn>[0]) => {
+  for (let step = 1; step <= dwells; step += 1) {
+    await page.waitForTimeout(dwellMs)
+    await page.context().setGeolocation({
+      latitude: 59.3326 + (step % 2 ? driftDegrees : 0),
+      longitude: startLongitude,
+    })
+  }
+}
+
 // The map's tiles come from the internet, which a test must not depend on.
 // Withholding them is the offline case, and the route falls back to its bare
 // shape — which is what these assertions read.
@@ -112,5 +129,37 @@ test.describe('a session with no set length', () => {
     await expect(page.getByRole('dialog', { name: 'What was this?' })).toHaveCount(0)
     await expect(page).toHaveURL(/\/workouts\/[0-9a-f-]+$/)
     await expect(page.getByRole('heading', { name: 'Run', exact: true })).toBeVisible()
+  })
+
+  test('holds itself at a standstill once the athlete asks it to @mutation', async ({ page }) => {
+    await withoutTiles(page)
+    await logIn(page)
+
+    // The preference is the account's, so it travels from this switch through
+    // the server to the recorder that reads it when the session starts.
+    await page.goto('/profile')
+    await page.getByRole('switch', { name: 'Pause while I stand still' }).click()
+    await expect(page.getByRole('status')).toContainText('Auto-pause updated')
+
+    await page.goto('/record')
+    await page.getByRole('button', { name: 'Start recording' }).click()
+    await walkTheRoute(page)
+    await expect(page.getByText('Auto-paused')).toHaveCount(0)
+
+    await standStill(page)
+    await expect(page.getByText('Auto-paused')).toBeVisible()
+    await expect(page.getByText(/^Paused for /)).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Resume' })).toBeVisible()
+
+    // And lets go on its own the moment the athlete moves off again.
+    await walkTheRoute(page)
+    await expect(page.getByText('Auto-paused')).toHaveCount(0)
+    await expect(page.getByRole('button', { name: 'Pause' })).toBeVisible()
+
+    await page.getByRole('button', { name: 'End session' }).click()
+    const sheet = page.getByRole('dialog', { name: 'What was this?' })
+    await sheet.getByRole('button', { name: /^Run\b/ }).click()
+    await sheet.getByRole('button', { name: 'Save as Run' }).click()
+    await expect(page).toHaveURL(/\/workouts\/[0-9a-f-]+$/)
   })
 })

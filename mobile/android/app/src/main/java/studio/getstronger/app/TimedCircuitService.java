@@ -27,6 +27,8 @@ import org.json.JSONObject;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 
 /** The foreground service owns the clock, speech and private recording file. */
@@ -36,6 +38,31 @@ public class TimedCircuitService extends Service implements LocationListener {
     private static final int TONE_MS = 200;
     /** How loud a pace note is against a full-volume announcement. */
     private static final double PACE_TONE_VOLUME = 0.2;
+    // Auto-pause, mirroring web/src/utils/movement.ts: below a walking pace for
+    // the dwell holds the recording, above twice that lets it go. The gap
+    // between the two keeps a pace either side of one line from fluttering it.
+    private static final double PAUSE_SPEED = 1000.0 / 3600;
+    private static final double RESUME_SPEED = 2000.0 / 3600;
+    private static final long DWELL_MS = 5000;
+    private static final long CONTINUOUS_MS = 3000;
+    private static final int MAX_FIXES = 60;
+    private static final double MAX_ACCURACY = 30;
+    /** One fix as the detector reads it: the route's, plus a measured speed. */
+    private static final class Fix {
+        final long timestamp;
+        final double latitude;
+        final double longitude;
+        final double accuracy;
+        final Double speed;
+        Fix(long timestamp, double latitude, double longitude, double accuracy, Double speed) {
+            this.timestamp = timestamp;
+            this.latitude = latitude;
+            this.longitude = longitude;
+            this.accuracy = accuracy;
+            this.speed = speed;
+        }
+    }
+    private final List<Fix> fixes = new ArrayList<>();
     private static JSONObject saved;
     private static TimedCircuitService active;
     private final Handler handler = new Handler(Looper.getMainLooper());
@@ -99,6 +126,7 @@ public class TimedCircuitService extends Service implements LocationListener {
         saved = new JSONObject().put("key", options.getString("key")).put("locale", options.optString("locale", "en"))
             .put("volume", level(options.optDouble("volume", 1)))
             .put("cueLeadSeconds", options.optInt("cueLeadSeconds", 10))
+            .put("autoPause", options.optBoolean("autoPause"))
             .put("recording", data).put("checkpoint", now);
         if (options.optJSONObject("pacing") != null) saved.put("pacing", options.getJSONObject("pacing"));
         try { persist(context); } catch (Exception error) { saved = null; throw error; }
@@ -166,6 +194,7 @@ public class TimedCircuitService extends Service implements LocationListener {
             load(this);
             if (saved == null || saved.getJSONObject("recording").has("endedAt")) { stopSelf(); return START_NOT_STICKY; }
             active = this;
+            fixes.clear();
             NotificationManager notifications = getSystemService(NotificationManager.class);
             notifications.createNotificationChannel(new NotificationChannel(CHANNEL, getString(R.string.app_name), NotificationManager.IMPORTANCE_LOW));
             startForeground(1382, notification(saved.getJSONObject("recording").getJSONArray("phases").getJSONObject(0).getString("instruction")));
@@ -399,17 +428,106 @@ public class TimedCircuitService extends Service implements LocationListener {
             tick();
             if (active == null) return;
             JSONObject data = saved.getJSONObject("recording");
-            JSONArray pauses = data.getJSONArray("pauses");
-            if (pauses.length() > 0 && !pauses.getJSONObject(pauses.length() - 1).has("endedAt")) return;
             JSONArray points = data.getJSONArray("points");
             long timestamp = location.getTime();
-            if (timestamp < data.getLong("startedAt") || timestamp > System.currentTimeMillis() ||
-                points.length() > 0 && timestamp <= points.getJSONObject(points.length() - 1).getLong("timestamp")) return;
+            long seen = points.length() > 0 ? points.getJSONObject(points.length() - 1).getLong("timestamp") : 0;
+            if (!fixes.isEmpty()) seen = Math.max(seen, fixes.get(fixes.size() - 1).timestamp);
+            if (timestamp < data.getLong("startedAt") || timestamp > System.currentTimeMillis() || timestamp <= seen) return;
+            double accuracy = location.hasAccuracy() ? location.getAccuracy() : 10000;
+            Double speed = location.hasSpeed() ? (double) location.getSpeed() : null;
+            fixes.add(new Fix(timestamp, location.getLatitude(), location.getLongitude(), accuracy, speed));
+            if (fixes.size() > MAX_FIXES) fixes.remove(0);
+            autoPause(timestamp);
+            JSONArray pauses = data.getJSONArray("pauses");
+            if (pauses.length() > 0 && !pauses.getJSONObject(pauses.length() - 1).has("endedAt")) return;
             if (points.length() >= 90000) { fail(); return; }
-            points.put(new JSONObject().put("timestamp", timestamp).put("latitude", location.getLatitude())
-                .put("longitude", location.getLongitude()).put("accuracy", location.hasAccuracy() ? location.getAccuracy() : 10000));
+            JSONObject point = new JSONObject().put("timestamp", timestamp).put("latitude", location.getLatitude())
+                .put("longitude", location.getLongitude()).put("accuracy", accuracy);
+            if (speed != null) point.put("speed", (double) speed);
+            points.put(point);
             persist(this);
         } catch (Exception error) { fail(); }
+    }
+
+    /**
+     * Hold or release the recording on what the fixes say, when it was asked to.
+     *
+     * Only a pause it opened itself is released: an athlete who paused by hand
+     * meant it, and the traffic moving off is not their cue to start recording.
+     */
+    private void autoPause(long at) throws Exception {
+        if (saved == null || !saved.optBoolean("autoPause")) return;
+        JSONObject data = saved.getJSONObject("recording");
+        if (data.has("endedAt")) return;
+        JSONArray pauses = data.getJSONArray("pauses");
+        JSONObject last = pauses.length() > 0 ? pauses.getJSONObject(pauses.length() - 1) : null;
+        JSONObject open = last != null && !last.has("endedAt") ? last : null;
+        if (open != null && !open.optBoolean("auto")) return;
+        String movement = readMovement(at);
+        if (movement == null) return;
+        if (open != null) {
+            if (!movement.equals("moving")) return;
+            open.put("endedAt", at);
+        } else {
+            if (!movement.equals("still")) return;
+            // Held from where the athlete stopped rather than from where the
+            // dwell noticed, and never back past the last thing that happened.
+            long after = last != null ? last.getLong("endedAt") : data.getLong("startedAt");
+            pauses.put(new JSONObject().put("startedAt", Math.max(at - DWELL_MS, after)).put("auto", true));
+            if (speech != null) speech.stop();
+        }
+        persist(this);
+    }
+
+    /**
+     * What the recent fixes say the athlete is doing, or null when they say
+     * neither. The dwell is the window itself, so "still" already means still
+     * for the whole of it.
+     */
+    private String readMovement(long at) {
+        List<Fix> window = new ArrayList<>();
+        boolean anchored = false;
+        for (Fix fix : fixes) {
+            if (fix.accuracy < 0 || fix.accuracy > MAX_ACCURACY || fix.timestamp > at) continue;
+            // The window reaches back to where the athlete was when the dwell
+            // began, so it starts at the last fix from before that.
+            if (fix.timestamp <= at - DWELL_MS) { window.clear(); anchored = true; }
+            window.add(fix);
+        }
+        if (!anchored) return null;
+        // A hole in the fixes hides whatever happened during it.
+        long previous = window.get(0).timestamp;
+        for (Fix fix : window) {
+            if (fix.timestamp - previous > CONTINUOUS_MS) return null;
+            previous = fix.timestamp;
+        }
+        if (at - previous > CONTINUOUS_MS) return null;
+        Double speed = windowSpeed(window);
+        if (speed == null) return null;
+        if (speed < PAUSE_SPEED) return "still";
+        return speed > RESUME_SPEED ? "moving" : null;
+    }
+
+    /**
+     * How fast the window read, or null when it holds no evidence.
+     *
+     * A receiver that measures speed is believed; one that does not is judged on
+     * where the athlete ended up, less what its error circles account for: a
+     * phone standing still reports fixes metres apart.
+     */
+    private Double windowSpeed(List<Fix> window) {
+        Double fastest = null;
+        for (Fix fix : window) {
+            if (fix.speed != null && (fastest == null || fix.speed > fastest)) fastest = fix.speed;
+        }
+        if (fastest != null) return fastest;
+        Fix first = window.get(0);
+        Fix last = window.get(window.size() - 1);
+        double seconds = (last.timestamp - first.timestamp) / 1000.0;
+        if (seconds <= 0) return null;
+        float[] meters = new float[1];
+        Location.distanceBetween(first.latitude, first.longitude, last.latitude, last.longitude, meters);
+        return Math.max(0, meters[0] - Math.max(first.accuracy, last.accuracy)) / seconds;
     }
     @Override public void onProviderDisabled(String provider) { fail(); }
     private void fail() {

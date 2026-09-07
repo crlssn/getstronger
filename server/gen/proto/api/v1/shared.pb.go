@@ -641,7 +641,9 @@ type User struct {
 	WeightUnit   WeightUnit             `protobuf:"varint,6,opt,name=weight_unit,json=weightUnit,proto3,enum=api.v1.WeightUnit" json:"weight_unit,omitempty"`
 	DistanceUnit DistanceUnit           `protobuf:"varint,7,opt,name=distance_unit,json=distanceUnit,proto3,enum=api.v1.DistanceUnit" json:"distance_unit,omitempty"`
 	// Whether an empty set input is prefilled from the previous session.
-	AutofillSets  bool `protobuf:"varint,10,opt,name=autofill_sets,json=autofillSets,proto3" json:"autofill_sets,omitempty"`
+	AutofillSets bool `protobuf:"varint,10,opt,name=autofill_sets,json=autofillSets,proto3" json:"autofill_sets,omitempty"`
+	// Whether a live recording holds itself while the athlete is standing still.
+	AutoPause     bool `protobuf:"varint,11,opt,name=auto_pause,json=autoPause,proto3" json:"auto_pause,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -728,6 +730,13 @@ func (x *User) GetDistanceUnit() DistanceUnit {
 func (x *User) GetAutofillSets() bool {
 	if x != nil {
 		return x.AutofillSets
+	}
+	return false
+}
+
+func (x *User) GetAutoPause() bool {
+	if x != nil {
+		return x.AutoPause
 	}
 	return false
 }
@@ -861,7 +870,7 @@ const file_api_v1_shared_proto_rawDesc = "" +
 	"workout_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\tworkoutId\x129\n" +
 	"\n" +
 	"created_at\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x12#\n" +
-	"\rpersonal_best\x18\x03 \x01(\bR\fpersonalBest\"\xd7\x02\n" +
+	"\rpersonal_best\x18\x03 \x01(\bR\fpersonalBest\"\xf6\x02\n" +
 	"\x04User\x12\x18\n" +
 	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x02id\x12\x1b\n" +
 	"\x04name\x18\b \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x04name\x12\x1a\n" +
@@ -872,7 +881,9 @@ const file_api_v1_shared_proto_rawDesc = "" +
 	"weightUnit\x12C\n" +
 	"\rdistance_unit\x18\a \x01(\x0e2\x14.api.v1.DistanceUnitB\b\xbaH\x05\x82\x01\x02\x10\x01R\fdistanceUnit\x12#\n" +
 	"\rautofill_sets\x18\n" +
-	" \x01(\bR\fautofillSetsJ\x04\b\x02\x10\x03J\x04\b\x03\x10\x04R\n" +
+	" \x01(\bR\fautofillSets\x12\x1d\n" +
+	"\n" +
+	"auto_pause\x18\v \x01(\bR\tautoPauseJ\x04\b\x02\x10\x03J\x04\b\x03\x10\x04R\n" +
 	"first_nameR\tlast_name\"\\\n" +
 	"\x11PaginationRequest\x12(\n" +
 	"\n" +

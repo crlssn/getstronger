@@ -2,6 +2,7 @@ package v1_test
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"strings"
 	"testing"
@@ -225,35 +226,59 @@ func (s *userSuite) TestUpdateUserWeightUnit() {
 	}
 }
 
-func (s *userSuite) TestUpdateUserAutofillSets() {
+// The Me tab's two switches are the same preference twice over: a boolean the
+// account holds, applied at once and read back from the store.
+func (s *userSuite) TestUpdateUserSwitches() {
 	type test struct {
 		name    string
-		initial bool
-		enabled bool
+		initial func(bool) factory.UserOpt
+		update  func(context.Context, bool) bool
+		stored  func(*account.User) bool
 	}
 
 	tests := []test{
-		{name: "ok_autofill_enabled", initial: false, enabled: true},
-		{name: "ok_autofill_disabled", initial: true, enabled: false},
+		{
+			name:    "autofill_sets",
+			initial: factory.UserAutofillSets,
+			update: func(ctx context.Context, enabled bool) bool {
+				res, err := s.handler.UpdateUserAutofillSets(ctx, &connect.Request[v1.UpdateUserAutofillSetsRequest]{
+					Msg: &v1.UpdateUserAutofillSetsRequest{Enabled: enabled},
+				})
+				s.Require().NoError(err)
+
+				return res.Msg.GetUser().GetAutofillSets()
+			},
+			stored: func(user *account.User) bool { return user.AutofillSets },
+		},
+		{
+			name:    "auto_pause",
+			initial: factory.UserAutoPause,
+			update: func(ctx context.Context, enabled bool) bool {
+				res, err := s.handler.UpdateUserAutoPause(ctx, &connect.Request[v1.UpdateUserAutoPauseRequest]{
+					Msg: &v1.UpdateUserAutoPauseRequest{Enabled: enabled},
+				})
+				s.Require().NoError(err)
+
+				return res.Msg.GetUser().GetAutoPause()
+			},
+			stored: func(user *account.User) bool { return user.AutoPause },
+		},
 	}
 
 	for _, t := range tests {
-		s.Run(t.name, func() {
-			user := s.factory.NewUser(factory.UserAutofillSets(t.initial))
-			ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
-			ctx = xcontext.WithUserID(ctx, user.ID)
+		for _, enabled := range []bool{true, false} {
+			s.Run(fmt.Sprintf("ok_%s_set_to_%t", t.name, enabled), func() {
+				user := s.factory.NewUser(t.initial(!enabled))
+				ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
+				ctx = xcontext.WithUserID(ctx, user.ID)
 
-			res, err := s.handler.UpdateUserAutofillSets(ctx, &connect.Request[v1.UpdateUserAutofillSetsRequest]{
-				Msg: &v1.UpdateUserAutofillSetsRequest{Enabled: t.enabled},
+				s.Require().Equal(enabled, t.update(ctx, enabled))
+
+				stored, err := s.repo.GetUser(ctx, repo.GetUserWithID(user.ID))
+				s.Require().NoError(err)
+				s.Require().Equal(enabled, t.stored(stored))
 			})
-			s.Require().NoError(err)
-			s.Require().NotNil(res)
-			s.Require().Equal(t.enabled, res.Msg.GetUser().GetAutofillSets())
-
-			stored, err := s.repo.GetUser(ctx, repo.GetUserWithID(user.ID))
-			s.Require().NoError(err)
-			s.Require().Equal(t.enabled, stored.AutofillSets)
-		})
+		}
 	}
 }
 
@@ -300,6 +325,7 @@ func (s *userSuite) TestGetUserAutofillSetsDefaultsOff() {
 	})
 	s.Require().NoError(err)
 	s.Require().False(res.Msg.GetUser().GetAutofillSets())
+	s.Require().False(res.Msg.GetUser().GetAutoPause())
 }
 
 // Changing a unit preference must never rewrite the units historical sets were

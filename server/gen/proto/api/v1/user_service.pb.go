@@ -907,6 +907,94 @@ func (x *UpdateUserAutofillSetsResponse) GetUser() *User {
 	return nil
 }
 
+type UpdateUserAutoPauseRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Enabled       bool                   `protobuf:"varint,1,opt,name=enabled,proto3" json:"enabled,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpdateUserAutoPauseRequest) Reset() {
+	*x = UpdateUserAutoPauseRequest{}
+	mi := &file_api_v1_user_service_proto_msgTypes[20]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateUserAutoPauseRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateUserAutoPauseRequest) ProtoMessage() {}
+
+func (x *UpdateUserAutoPauseRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_api_v1_user_service_proto_msgTypes[20]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateUserAutoPauseRequest.ProtoReflect.Descriptor instead.
+func (*UpdateUserAutoPauseRequest) Descriptor() ([]byte, []int) {
+	return file_api_v1_user_service_proto_rawDescGZIP(), []int{20}
+}
+
+func (x *UpdateUserAutoPauseRequest) GetEnabled() bool {
+	if x != nil {
+		return x.Enabled
+	}
+	return false
+}
+
+type UpdateUserAutoPauseResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	User          *User                  `protobuf:"bytes,1,opt,name=user,proto3" json:"user,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpdateUserAutoPauseResponse) Reset() {
+	*x = UpdateUserAutoPauseResponse{}
+	mi := &file_api_v1_user_service_proto_msgTypes[21]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateUserAutoPauseResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateUserAutoPauseResponse) ProtoMessage() {}
+
+func (x *UpdateUserAutoPauseResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_api_v1_user_service_proto_msgTypes[21]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateUserAutoPauseResponse.ProtoReflect.Descriptor instead.
+func (*UpdateUserAutoPauseResponse) Descriptor() ([]byte, []int) {
+	return file_api_v1_user_service_proto_rawDescGZIP(), []int{21}
+}
+
+func (x *UpdateUserAutoPauseResponse) GetUser() *User {
+	if x != nil {
+		return x.User
+	}
+	return nil
+}
+
 type UpdateUserDistanceUnitRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	DistanceUnit  DistanceUnit           `protobuf:"varint,1,opt,name=distance_unit,json=distanceUnit,proto3,enum=api.v1.DistanceUnit" json:"distance_unit,omitempty"`
@@ -916,7 +1004,7 @@ type UpdateUserDistanceUnitRequest struct {
 
 func (x *UpdateUserDistanceUnitRequest) Reset() {
 	*x = UpdateUserDistanceUnitRequest{}
-	mi := &file_api_v1_user_service_proto_msgTypes[20]
+	mi := &file_api_v1_user_service_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -928,7 +1016,7 @@ func (x *UpdateUserDistanceUnitRequest) String() string {
 func (*UpdateUserDistanceUnitRequest) ProtoMessage() {}
 
 func (x *UpdateUserDistanceUnitRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_user_service_proto_msgTypes[20]
+	mi := &file_api_v1_user_service_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -941,7 +1029,7 @@ func (x *UpdateUserDistanceUnitRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateUserDistanceUnitRequest.ProtoReflect.Descriptor instead.
 func (*UpdateUserDistanceUnitRequest) Descriptor() ([]byte, []int) {
-	return file_api_v1_user_service_proto_rawDescGZIP(), []int{20}
+	return file_api_v1_user_service_proto_rawDescGZIP(), []int{22}
 }
 
 func (x *UpdateUserDistanceUnitRequest) GetDistanceUnit() DistanceUnit {
@@ -960,7 +1048,7 @@ type UpdateUserDistanceUnitResponse struct {
 
 func (x *UpdateUserDistanceUnitResponse) Reset() {
 	*x = UpdateUserDistanceUnitResponse{}
-	mi := &file_api_v1_user_service_proto_msgTypes[21]
+	mi := &file_api_v1_user_service_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -972,7 +1060,7 @@ func (x *UpdateUserDistanceUnitResponse) String() string {
 func (*UpdateUserDistanceUnitResponse) ProtoMessage() {}
 
 func (x *UpdateUserDistanceUnitResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_user_service_proto_msgTypes[21]
+	mi := &file_api_v1_user_service_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -985,7 +1073,7 @@ func (x *UpdateUserDistanceUnitResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateUserDistanceUnitResponse.ProtoReflect.Descriptor instead.
 func (*UpdateUserDistanceUnitResponse) Descriptor() ([]byte, []int) {
-	return file_api_v1_user_service_proto_rawDescGZIP(), []int{21}
+	return file_api_v1_user_service_proto_rawDescGZIP(), []int{23}
 }
 
 func (x *UpdateUserDistanceUnitResponse) GetUser() *User {
@@ -1045,11 +1133,15 @@ const file_api_v1_user_service_proto_rawDesc = "" +
 	"\x1dUpdateUserAutofillSetsRequest\x12\x18\n" +
 	"\aenabled\x18\x01 \x01(\bR\aenabled\"B\n" +
 	"\x1eUpdateUserAutofillSetsResponse\x12 \n" +
+	"\x04user\x18\x01 \x01(\v2\f.api.v1.UserR\x04user\"6\n" +
+	"\x1aUpdateUserAutoPauseRequest\x12\x18\n" +
+	"\aenabled\x18\x01 \x01(\bR\aenabled\"?\n" +
+	"\x1bUpdateUserAutoPauseResponse\x12 \n" +
 	"\x04user\x18\x01 \x01(\v2\f.api.v1.UserR\x04user\"g\n" +
 	"\x1dUpdateUserDistanceUnitRequest\x12F\n" +
 	"\rdistance_unit\x18\x01 \x01(\x0e2\x14.api.v1.DistanceUnitB\v\xbaH\b\x82\x01\x05\x10\x01\"\x01\x00R\fdistanceUnit\"B\n" +
 	"\x1eUpdateUserDistanceUnitResponse\x12 \n" +
-	"\x04user\x18\x01 \x01(\v2\f.api.v1.UserR\x04user2\xb6\a\n" +
+	"\x04user\x18\x01 \x01(\v2\f.api.v1.UserR\x04user2\x98\b\n" +
 	"\vUserService\x12<\n" +
 	"\aGetUser\x12\x16.api.v1.GetUserRequest\x1a\x17.api.v1.GetUserResponse\"\x00\x12E\n" +
 	"\n" +
@@ -1062,7 +1154,8 @@ const file_api_v1_user_service_proto_rawDesc = "" +
 	"\x12UpdateUserUsername\x12!.api.v1.UpdateUserUsernameRequest\x1a\".api.v1.UpdateUserUsernameResponse\"\x00\x12i\n" +
 	"\x16UpdateUserAutofillSets\x12%.api.v1.UpdateUserAutofillSetsRequest\x1a&.api.v1.UpdateUserAutofillSetsResponse\"\x00\x12c\n" +
 	"\x14UpdateUserWeightUnit\x12#.api.v1.UpdateUserWeightUnitRequest\x1a$.api.v1.UpdateUserWeightUnitResponse\"\x00\x12i\n" +
-	"\x16UpdateUserDistanceUnit\x12%.api.v1.UpdateUserDistanceUnitRequest\x1a&.api.v1.UpdateUserDistanceUnitResponse\"\x00B\x94\x01\n" +
+	"\x16UpdateUserDistanceUnit\x12%.api.v1.UpdateUserDistanceUnitRequest\x1a&.api.v1.UpdateUserDistanceUnitResponse\"\x00\x12`\n" +
+	"\x13UpdateUserAutoPause\x12\".api.v1.UpdateUserAutoPauseRequest\x1a#.api.v1.UpdateUserAutoPauseResponse\"\x00B\x94\x01\n" +
 	"\n" +
 	"com.api.v1B\x10UserServiceProtoP\x01Z;github.com/crlssn/getstronger/server/gen/proto/api/v1;apiv1\xa2\x02\x03AXX\xaa\x02\x06Api.V1\xca\x02\x06Api\\V1\xe2\x02\x12Api\\V1\\GPBMetadata\xea\x02\aApi::V1b\x06proto3"
 
@@ -1078,7 +1171,7 @@ func file_api_v1_user_service_proto_rawDescGZIP() []byte {
 	return file_api_v1_user_service_proto_rawDescData
 }
 
-var file_api_v1_user_service_proto_msgTypes = make([]protoimpl.MessageInfo, 22)
+var file_api_v1_user_service_proto_msgTypes = make([]protoimpl.MessageInfo, 24)
 var file_api_v1_user_service_proto_goTypes = []any{
 	(*GetUserRequest)(nil),                 // 0: api.v1.GetUserRequest
 	(*GetUserResponse)(nil),                // 1: api.v1.GetUserResponse
@@ -1100,55 +1193,60 @@ var file_api_v1_user_service_proto_goTypes = []any{
 	(*UpdateUserWeightUnitResponse)(nil),   // 17: api.v1.UpdateUserWeightUnitResponse
 	(*UpdateUserAutofillSetsRequest)(nil),  // 18: api.v1.UpdateUserAutofillSetsRequest
 	(*UpdateUserAutofillSetsResponse)(nil), // 19: api.v1.UpdateUserAutofillSetsResponse
-	(*UpdateUserDistanceUnitRequest)(nil),  // 20: api.v1.UpdateUserDistanceUnitRequest
-	(*UpdateUserDistanceUnitResponse)(nil), // 21: api.v1.UpdateUserDistanceUnitResponse
-	(*User)(nil),                           // 22: api.v1.User
-	(*PaginationRequest)(nil),              // 23: api.v1.PaginationRequest
-	(*PaginationResponse)(nil),             // 24: api.v1.PaginationResponse
-	(WeightUnit)(0),                        // 25: api.v1.WeightUnit
-	(DistanceUnit)(0),                      // 26: api.v1.DistanceUnit
+	(*UpdateUserAutoPauseRequest)(nil),     // 20: api.v1.UpdateUserAutoPauseRequest
+	(*UpdateUserAutoPauseResponse)(nil),    // 21: api.v1.UpdateUserAutoPauseResponse
+	(*UpdateUserDistanceUnitRequest)(nil),  // 22: api.v1.UpdateUserDistanceUnitRequest
+	(*UpdateUserDistanceUnitResponse)(nil), // 23: api.v1.UpdateUserDistanceUnitResponse
+	(*User)(nil),                           // 24: api.v1.User
+	(*PaginationRequest)(nil),              // 25: api.v1.PaginationRequest
+	(*PaginationResponse)(nil),             // 26: api.v1.PaginationResponse
+	(WeightUnit)(0),                        // 27: api.v1.WeightUnit
+	(DistanceUnit)(0),                      // 28: api.v1.DistanceUnit
 }
 var file_api_v1_user_service_proto_depIdxs = []int32{
-	22, // 0: api.v1.GetUserResponse.user:type_name -> api.v1.User
-	22, // 1: api.v1.ListFollowersResponse.followers:type_name -> api.v1.User
-	22, // 2: api.v1.ListFolloweesResponse.followees:type_name -> api.v1.User
-	23, // 3: api.v1.SearchUsersRequest.pagination:type_name -> api.v1.PaginationRequest
-	22, // 4: api.v1.SearchUsersResponse.users:type_name -> api.v1.User
-	24, // 5: api.v1.SearchUsersResponse.pagination:type_name -> api.v1.PaginationResponse
-	22, // 6: api.v1.UpdateUserNameResponse.user:type_name -> api.v1.User
-	22, // 7: api.v1.UpdateUserUsernameResponse.user:type_name -> api.v1.User
-	25, // 8: api.v1.UpdateUserWeightUnitRequest.weight_unit:type_name -> api.v1.WeightUnit
-	22, // 9: api.v1.UpdateUserWeightUnitResponse.user:type_name -> api.v1.User
-	22, // 10: api.v1.UpdateUserAutofillSetsResponse.user:type_name -> api.v1.User
-	26, // 11: api.v1.UpdateUserDistanceUnitRequest.distance_unit:type_name -> api.v1.DistanceUnit
-	22, // 12: api.v1.UpdateUserDistanceUnitResponse.user:type_name -> api.v1.User
-	0,  // 13: api.v1.UserService.GetUser:input_type -> api.v1.GetUserRequest
-	2,  // 14: api.v1.UserService.FollowUser:input_type -> api.v1.FollowUserRequest
-	4,  // 15: api.v1.UserService.UnfollowUser:input_type -> api.v1.UnfollowUserRequest
-	6,  // 16: api.v1.UserService.ListFollowers:input_type -> api.v1.ListFollowersRequest
-	8,  // 17: api.v1.UserService.ListFollowees:input_type -> api.v1.ListFolloweesRequest
-	10, // 18: api.v1.UserService.SearchUsers:input_type -> api.v1.SearchUsersRequest
-	12, // 19: api.v1.UserService.UpdateUserName:input_type -> api.v1.UpdateUserNameRequest
-	14, // 20: api.v1.UserService.UpdateUserUsername:input_type -> api.v1.UpdateUserUsernameRequest
-	18, // 21: api.v1.UserService.UpdateUserAutofillSets:input_type -> api.v1.UpdateUserAutofillSetsRequest
-	16, // 22: api.v1.UserService.UpdateUserWeightUnit:input_type -> api.v1.UpdateUserWeightUnitRequest
-	20, // 23: api.v1.UserService.UpdateUserDistanceUnit:input_type -> api.v1.UpdateUserDistanceUnitRequest
-	1,  // 24: api.v1.UserService.GetUser:output_type -> api.v1.GetUserResponse
-	3,  // 25: api.v1.UserService.FollowUser:output_type -> api.v1.FollowUserResponse
-	5,  // 26: api.v1.UserService.UnfollowUser:output_type -> api.v1.UnfollowUserResponse
-	7,  // 27: api.v1.UserService.ListFollowers:output_type -> api.v1.ListFollowersResponse
-	9,  // 28: api.v1.UserService.ListFollowees:output_type -> api.v1.ListFolloweesResponse
-	11, // 29: api.v1.UserService.SearchUsers:output_type -> api.v1.SearchUsersResponse
-	13, // 30: api.v1.UserService.UpdateUserName:output_type -> api.v1.UpdateUserNameResponse
-	15, // 31: api.v1.UserService.UpdateUserUsername:output_type -> api.v1.UpdateUserUsernameResponse
-	19, // 32: api.v1.UserService.UpdateUserAutofillSets:output_type -> api.v1.UpdateUserAutofillSetsResponse
-	17, // 33: api.v1.UserService.UpdateUserWeightUnit:output_type -> api.v1.UpdateUserWeightUnitResponse
-	21, // 34: api.v1.UserService.UpdateUserDistanceUnit:output_type -> api.v1.UpdateUserDistanceUnitResponse
-	24, // [24:35] is the sub-list for method output_type
-	13, // [13:24] is the sub-list for method input_type
-	13, // [13:13] is the sub-list for extension type_name
-	13, // [13:13] is the sub-list for extension extendee
-	0,  // [0:13] is the sub-list for field type_name
+	24, // 0: api.v1.GetUserResponse.user:type_name -> api.v1.User
+	24, // 1: api.v1.ListFollowersResponse.followers:type_name -> api.v1.User
+	24, // 2: api.v1.ListFolloweesResponse.followees:type_name -> api.v1.User
+	25, // 3: api.v1.SearchUsersRequest.pagination:type_name -> api.v1.PaginationRequest
+	24, // 4: api.v1.SearchUsersResponse.users:type_name -> api.v1.User
+	26, // 5: api.v1.SearchUsersResponse.pagination:type_name -> api.v1.PaginationResponse
+	24, // 6: api.v1.UpdateUserNameResponse.user:type_name -> api.v1.User
+	24, // 7: api.v1.UpdateUserUsernameResponse.user:type_name -> api.v1.User
+	27, // 8: api.v1.UpdateUserWeightUnitRequest.weight_unit:type_name -> api.v1.WeightUnit
+	24, // 9: api.v1.UpdateUserWeightUnitResponse.user:type_name -> api.v1.User
+	24, // 10: api.v1.UpdateUserAutofillSetsResponse.user:type_name -> api.v1.User
+	24, // 11: api.v1.UpdateUserAutoPauseResponse.user:type_name -> api.v1.User
+	28, // 12: api.v1.UpdateUserDistanceUnitRequest.distance_unit:type_name -> api.v1.DistanceUnit
+	24, // 13: api.v1.UpdateUserDistanceUnitResponse.user:type_name -> api.v1.User
+	0,  // 14: api.v1.UserService.GetUser:input_type -> api.v1.GetUserRequest
+	2,  // 15: api.v1.UserService.FollowUser:input_type -> api.v1.FollowUserRequest
+	4,  // 16: api.v1.UserService.UnfollowUser:input_type -> api.v1.UnfollowUserRequest
+	6,  // 17: api.v1.UserService.ListFollowers:input_type -> api.v1.ListFollowersRequest
+	8,  // 18: api.v1.UserService.ListFollowees:input_type -> api.v1.ListFolloweesRequest
+	10, // 19: api.v1.UserService.SearchUsers:input_type -> api.v1.SearchUsersRequest
+	12, // 20: api.v1.UserService.UpdateUserName:input_type -> api.v1.UpdateUserNameRequest
+	14, // 21: api.v1.UserService.UpdateUserUsername:input_type -> api.v1.UpdateUserUsernameRequest
+	18, // 22: api.v1.UserService.UpdateUserAutofillSets:input_type -> api.v1.UpdateUserAutofillSetsRequest
+	16, // 23: api.v1.UserService.UpdateUserWeightUnit:input_type -> api.v1.UpdateUserWeightUnitRequest
+	22, // 24: api.v1.UserService.UpdateUserDistanceUnit:input_type -> api.v1.UpdateUserDistanceUnitRequest
+	20, // 25: api.v1.UserService.UpdateUserAutoPause:input_type -> api.v1.UpdateUserAutoPauseRequest
+	1,  // 26: api.v1.UserService.GetUser:output_type -> api.v1.GetUserResponse
+	3,  // 27: api.v1.UserService.FollowUser:output_type -> api.v1.FollowUserResponse
+	5,  // 28: api.v1.UserService.UnfollowUser:output_type -> api.v1.UnfollowUserResponse
+	7,  // 29: api.v1.UserService.ListFollowers:output_type -> api.v1.ListFollowersResponse
+	9,  // 30: api.v1.UserService.ListFollowees:output_type -> api.v1.ListFolloweesResponse
+	11, // 31: api.v1.UserService.SearchUsers:output_type -> api.v1.SearchUsersResponse
+	13, // 32: api.v1.UserService.UpdateUserName:output_type -> api.v1.UpdateUserNameResponse
+	15, // 33: api.v1.UserService.UpdateUserUsername:output_type -> api.v1.UpdateUserUsernameResponse
+	19, // 34: api.v1.UserService.UpdateUserAutofillSets:output_type -> api.v1.UpdateUserAutofillSetsResponse
+	17, // 35: api.v1.UserService.UpdateUserWeightUnit:output_type -> api.v1.UpdateUserWeightUnitResponse
+	23, // 36: api.v1.UserService.UpdateUserDistanceUnit:output_type -> api.v1.UpdateUserDistanceUnitResponse
+	21, // 37: api.v1.UserService.UpdateUserAutoPause:output_type -> api.v1.UpdateUserAutoPauseResponse
+	26, // [26:38] is the sub-list for method output_type
+	14, // [14:26] is the sub-list for method input_type
+	14, // [14:14] is the sub-list for extension type_name
+	14, // [14:14] is the sub-list for extension extendee
+	0,  // [0:14] is the sub-list for field type_name
 }
 
 func init() { file_api_v1_user_service_proto_init() }
@@ -1163,7 +1261,7 @@ func file_api_v1_user_service_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_api_v1_user_service_proto_rawDesc), len(file_api_v1_user_service_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   22,
+			NumMessages:   24,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

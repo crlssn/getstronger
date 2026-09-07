@@ -110,6 +110,7 @@ const cases: Array<[string, () => Promise<unknown>]> = [
   ['user.updateUserWeightUnit', () => requests.updateUserWeightUnit(WeightUnit.POUNDS)],
   ['user.updateUserDistanceUnit', () => requests.updateUserDistanceUnit(DistanceUnit.MILES)],
   ['user.updateUserAutofillSets', () => requests.updateUserAutofillSets(true)],
+  ['user.updateUserAutoPause', () => requests.updateUserAutoPause(true)],
 
   ['feed.listFeedItems', () => requests.listFeedItems(page, true)],
   ['feed.markFeedAsSeen', () => requests.markFeedAsSeen()],

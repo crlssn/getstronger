@@ -105,6 +105,15 @@ var Users = Table[
 			Generated: false,
 			AutoIncr:  false,
 		},
+		AutoPause: column{
+			Name:      "auto_pause",
+			DBType:    "boolean",
+			Default:   "false",
+			Comment:   "",
+			Nullable:  false,
+			Generated: false,
+			AutoIncr:  false,
+		},
 	},
 	Indexes: userIndexes{
 		UsersPkey: index{
@@ -231,11 +240,12 @@ type userColumns struct {
 	Username       column
 	AutofillSets   column
 	FeedSeenAt     column
+	AutoPause      column
 }
 
 func (c userColumns) AsSlice() []column {
 	return []column{
-		c.ID, c.CreatedAt, c.AuthID, c.WeightUnit, c.DistanceUnit, c.Name, c.FullNameSearch, c.Username, c.AutofillSets, c.FeedSeenAt,
+		c.ID, c.CreatedAt, c.AuthID, c.WeightUnit, c.DistanceUnit, c.Name, c.FullNameSearch, c.Username, c.AutofillSets, c.FeedSeenAt, c.AutoPause,
 	}
 }
 

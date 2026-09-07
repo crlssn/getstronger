@@ -103,6 +103,7 @@ func User(user *account.User, opts ...UserOpt) *apiv1.User {
 		WeightUnit:   WeightUnitToProto(user.WeightUnit),
 		DistanceUnit: DistanceUnitToProto(user.DistanceUnit),
 		AutofillSets: user.AutofillSets,
+		AutoPause:    user.AutoPause,
 	}
 
 	for _, opt := range opts {

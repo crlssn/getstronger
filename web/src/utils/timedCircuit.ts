@@ -31,6 +31,20 @@ export interface RoutePoint {
   latitude: number
   longitude: number
   accuracy: number
+  /**
+   * Metres a second, when the receiver measured one. A phone standing still
+   * knows it far better than the wandering fixes it reports do, which is what
+   * the stationary detector leans on.
+   */
+  speed?: number
+}
+
+/** A stretch the recording did not measure, held by hand or by the detector. */
+export interface Pause {
+  startedAt: number
+  endedAt?: number
+  /** Opened by the stationary detector rather than by the athlete. */
+  auto?: boolean
 }
 
 export interface Recording {
@@ -38,7 +52,7 @@ export interface Recording {
   startedAt: number
   endedAt?: number
   phases: Phase[]
-  pauses: { startedAt: number; endedAt?: number }[]
+  pauses: Pause[]
   points: RoutePoint[]
   interrupted: boolean
 }
@@ -234,7 +248,9 @@ export const buildTimeline = (recording: Recording, now: number): Interval[] => 
 export const routeToken = (index: number) => `--color-route-${(index % 6) + 1}`
 
 const radians = (degrees: number) => (degrees * Math.PI) / 180
-const distance = (a: RoutePoint, b: RoutePoint) => {
+
+/** How far apart two fixes are, in metres, over the great circle between them. */
+export const metersBetween = (a: RoutePoint, b: RoutePoint) => {
   const h =
     Math.sin(radians(b.latitude - a.latitude) / 2) ** 2 +
     Math.cos(radians(a.latitude)) *
@@ -253,8 +269,9 @@ const interpolate = (a: RoutePoint, b: RoutePoint, timestamp: number): RoutePoin
     accuracy: Math.max(a.accuracy, b.accuracy),
   }
 }
-const usable = (point: RoutePoint) =>
-  Object.values(point).every(Number.isFinite) &&
+/** Whether a fix is precise enough, and sane enough, to place the athlete by. */
+export const usableFix = (point: RoutePoint) =>
+  [point.timestamp, point.latitude, point.longitude, point.accuracy].every(Number.isFinite) &&
   Math.abs(point.latitude) <= 90 &&
   Math.abs(point.longitude) <= 180 &&
   point.accuracy >= 0 &&
@@ -270,8 +287,8 @@ const usable = (point: RoutePoint) =>
  */
 const accepted = (recording: Recording, a: RoutePoint, b: RoutePoint) => {
   const seconds = (b.timestamp - a.timestamp) / 1000
-  if (!usable(a) || !usable(b) || seconds <= 0 || seconds > 15) return false
-  if (distance(a, b) / seconds > 15) return false
+  if (!usableFix(a) || !usableFix(b) || seconds <= 0 || seconds > 15) return false
+  if (metersBetween(a, b) / seconds > 15) return false
   return !recording.pauses.some(
     (pause) => a.timestamp < (pause.endedAt ?? Infinity) && b.timestamp > pause.startedAt,
   )
@@ -296,7 +313,7 @@ export const currentPace = (recording: Recording, now: number, windowSeconds = 1
     // would weigh a partial edge against a window it was never measured over.
     if (b.timestamp <= since || b.timestamp > now) continue
     if (!accepted(recording, a, b)) continue
-    meters += distance(a, b)
+    meters += metersBetween(a, b)
     seconds += (b.timestamp - a.timestamp) / 1000
   }
   return meters > 0 ? (seconds / meters) * 1000 : undefined
@@ -316,7 +333,7 @@ export const measureRoute = (recording: Recording, intervals: Interval[]) => {
   for (let index = 1; index < recording.points.length; index += 1) {
     const a = recording.points[index - 1]
     const b = recording.points[index]
-    const meters = distance(a, b)
+    const meters = metersBetween(a, b)
     const counts = accepted(recording, a, b)
     routes.forEach((route) => {
       if (!route.phase.exerciseId) return

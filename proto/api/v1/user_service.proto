@@ -18,6 +18,7 @@ service UserService {
   rpc UpdateUserAutofillSets (UpdateUserAutofillSetsRequest) returns (UpdateUserAutofillSetsResponse) {}
   rpc UpdateUserWeightUnit (UpdateUserWeightUnitRequest) returns (UpdateUserWeightUnitResponse) {}
   rpc UpdateUserDistanceUnit (UpdateUserDistanceUnitRequest) returns (UpdateUserDistanceUnitResponse) {}
+  rpc UpdateUserAutoPause (UpdateUserAutoPauseRequest) returns (UpdateUserAutoPauseResponse) {}
 }
 
 message GetUserRequest {
@@ -104,6 +105,13 @@ message UpdateUserAutofillSetsRequest {
   bool enabled = 1;
 }
 message UpdateUserAutofillSetsResponse {
+  User user = 1;
+}
+
+message UpdateUserAutoPauseRequest {
+  bool enabled = 1;
+}
+message UpdateUserAutoPauseResponse {
   User user = 1;
 }
 

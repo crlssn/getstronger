@@ -268,6 +268,19 @@ func (h *userHandler) UpdateUserDistanceUnit(ctx context.Context, req *connect.R
 	}, nil
 }
 
+func (h *userHandler) UpdateUserAutoPause(ctx context.Context, req *connect.Request[apiv1.UpdateUserAutoPauseRequest]) (*connect.Response[apiv1.UpdateUserAutoPauseResponse], error) {
+	user, err := h.updateUserPreference(ctx, "set auto-pause", repo.UpdateUserAutoPause(req.Msg.GetEnabled()))
+	if err != nil {
+		return nil, err
+	}
+
+	return &connect.Response[apiv1.UpdateUserAutoPauseResponse]{
+		Msg: &apiv1.UpdateUserAutoPauseResponse{
+			User: user,
+		},
+	}, nil
+}
+
 func (h *userHandler) updateUserPreference(ctx context.Context, preference string, opt repo.UpdateUserOpt) (*apiv1.User, error) {
 	log := xcontext.MustExtractLogger(ctx)
 	userID := xcontext.MustExtractUserID(ctx)

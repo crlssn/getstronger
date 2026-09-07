@@ -13,6 +13,8 @@ interface TimedCircuitPlugin {
     volume: number
     cueLeadSeconds: number
     pacing?: Pacing
+    /** Whether the recorder holds itself while the athlete is standing still. */
+    autoPause: boolean
   }): Promise<void>
   read(options: { key: string }): Promise<{ recording?: Recording }>
   pause(options: { key: string }): Promise<void>

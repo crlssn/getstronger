@@ -48,6 +48,7 @@ type UserTemplate struct {
 	Username       func() string
 	AutofillSets   func() bool
 	FeedSeenAt     func() null.Val[time.Time]
+	AutoPause      func() bool
 
 	r userR
 	f *Factory
@@ -299,6 +300,10 @@ func (o UserTemplate) BuildSetter() *models.UserSetter {
 		val := o.FeedSeenAt()
 		m.FeedSeenAt = omitnull.FromNull(val)
 	}
+	if o.AutoPause != nil {
+		val := o.AutoPause()
+		m.AutoPause = omit.From(val)
+	}
 
 	return m
 }
@@ -350,6 +355,9 @@ func (o UserTemplate) Build() *models.User {
 	}
 	if o.FeedSeenAt != nil {
 		m.FeedSeenAt = o.FeedSeenAt()
+	}
+	if o.AutoPause != nil {
+		m.AutoPause = o.AutoPause()
 	}
 
 	o.setModelRels(m)
@@ -734,6 +742,7 @@ func (m userMods) RandomizeAllColumns(f *faker.Faker) UserMod {
 		UserMods.RandomUsername(f),
 		UserMods.RandomAutofillSets(f),
 		UserMods.RandomFeedSeenAt(f),
+		UserMods.RandomAutoPause(f),
 	}
 }
 
@@ -1065,6 +1074,37 @@ func (m userMods) RandomFeedSeenAtNotNull(f *faker.Faker) UserMod {
 
 			val := random_time_Time(f)
 			return null.From(val)
+		}
+	})
+}
+
+// Set the model columns to this value
+func (m userMods) AutoPause(val bool) UserMod {
+	return UserModFunc(func(_ context.Context, o *UserTemplate) {
+		o.AutoPause = func() bool { return val }
+	})
+}
+
+// Set the Column from the function
+func (m userMods) AutoPauseFunc(f func() bool) UserMod {
+	return UserModFunc(func(_ context.Context, o *UserTemplate) {
+		o.AutoPause = f
+	})
+}
+
+// Clear any values for the column
+func (m userMods) UnsetAutoPause() UserMod {
+	return UserModFunc(func(_ context.Context, o *UserTemplate) {
+		o.AutoPause = nil
+	})
+}
+
+// Generates a random value for the column using the given faker
+// if faker is nil, a default faker is used
+func (m userMods) RandomAutoPause(f *faker.Faker) UserMod {
+	return UserModFunc(func(_ context.Context, o *UserTemplate) {
+		o.AutoPause = func() bool {
+			return random_bool(f)
 		}
 	})
 }
