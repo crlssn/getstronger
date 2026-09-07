@@ -10,6 +10,8 @@ import android.content.Intent;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.media.AudioManager;
+import android.media.ToneGenerator;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -27,14 +29,19 @@ import java.util.Locale;
 /** The foreground service owns the clock, speech and private recording file. */
 public class TimedCircuitService extends Service implements LocationListener {
     private static final String CHANNEL = "timed-circuit";
+    private static final int TONE_VOLUME = 100;
+    private static final int TONE_MS = 200;
     private static JSONObject saved;
     private static TimedCircuitService active;
     private final Handler handler = new Handler(Looper.getMainLooper());
     private LocationManager locations;
     private PowerManager.WakeLock wakeLock;
     private TextToSpeech speech;
+    private ToneGenerator tones;
     private boolean speechReady;
     private int spoken = -1;
+    /** The interval already warned about, so the tone sounds once per interval. */
+    private int cued = -1;
     private long checkpoint;
     private final Runnable ticker = new Runnable() {
         @Override public void run() {
@@ -72,7 +79,9 @@ public class TimedCircuitService extends Service implements LocationListener {
         JSONObject data = new JSONObject().put("version", 1).put("startedAt", now)
             .put("phases", phases).put("pauses", new JSONArray()).put("points", new JSONArray()).put("interrupted", false);
         saved = new JSONObject().put("key", options.getString("key")).put("locale", options.optString("locale", "en"))
-            .put("volume", level(options.optDouble("volume", 1))).put("recording", data).put("checkpoint", now);
+            .put("volume", level(options.optDouble("volume", 1)))
+            .put("cueLeadSeconds", options.optInt("cueLeadSeconds", 10))
+            .put("recording", data).put("checkpoint", now);
         try { persist(context); } catch (Exception error) { saved = null; throw error; }
     }
     static JSONObject read(Context context, String key) throws Exception {
@@ -145,6 +154,11 @@ public class TimedCircuitService extends Service implements LocationListener {
             wakeLock.acquire(86400000L);
             locations = getSystemService(LocationManager.class);
             locations.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000, 0, this, Looper.getMainLooper());
+            // The tone that warns an interval is about to end. A generator the
+            // platform owns needs no asset of ours, and a device that refuses
+            // one records on in silence.
+            try { tones = new ToneGenerator(AudioManager.STREAM_MUSIC, TONE_VOLUME); }
+            catch (Exception ignored) { tones = null; }
             speech = new TextToSpeech(this, status -> {
                 if (status == TextToSpeech.SUCCESS) {
                     speechReady = true;
@@ -187,6 +201,11 @@ public class TimedCircuitService extends Service implements LocationListener {
                     if (announce(instruction, index) == TextToSpeech.ERROR) data.put("interrupted", true);
                     getSystemService(NotificationManager.class).notify(1382, notification(instruction));
                 }
+                long lead = saved.optInt("cueLeadSeconds", 10) * 1000L;
+                if (cued != index && cues(phase, lead) && elapsed >= boundary - lead) {
+                    cued = index;
+                    if (tones != null) tones.startTone(ToneGenerator.TONE_PROP_BEEP, TONE_MS);
+                }
                 if (now - checkpoint > 1000) { persist(this); checkpoint = now; }
                 return;
             }
@@ -202,6 +221,16 @@ public class TimedCircuitService extends Service implements LocationListener {
         Bundle params = new Bundle();
         params.putFloat(TextToSpeech.Engine.KEY_PARAM_VOLUME, (float) volume);
         return speech.speak(instruction, TextToSpeech.QUEUE_FLUSH, params, "phase-" + index);
+    }
+    /**
+     * Whether an interval is long enough to be worth warning about.
+     *
+     * A cue at or before the midpoint is a second instruction rather than a
+     * warning, so anything shorter than twice the lead runs out unannounced.
+     */
+    private static boolean cues(JSONObject phase, long leadMs) throws Exception {
+        if (leadMs <= 0 || phase.isNull("durationSeconds")) return false;
+        return phase.getLong("durationSeconds") * 1000L >= leadMs * 2;
     }
     @Override public void onLocationChanged(Location location) {
         try {
@@ -236,6 +265,7 @@ public class TimedCircuitService extends Service implements LocationListener {
         handler.removeCallbacks(ticker);
         if (locations != null) locations.removeUpdates(this);
         if (speech != null) { speech.stop(); speech.shutdown(); speech = null; }
+        if (tones != null) { tones.release(); tones = null; }
         if (wakeLock != null && wakeLock.isHeld()) wakeLock.release();
         active = null;
         stopForeground(STOP_FOREGROUND_REMOVE);

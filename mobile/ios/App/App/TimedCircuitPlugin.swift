@@ -18,6 +18,10 @@ public class TimedCircuitPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManagerD
     private var volume = 1.0
     private var audible = false
     private var spoken = -1
+    /// Seconds of warning before an interval ends; 0 sounds nothing.
+    private var cueLead = 10.0
+    /// The interval already warned about, so the tone sounds once per interval.
+    private var cued = -1
     private var permissionCall: CAPPluginCall?
     private var lastCheckpoint = 0.0
     private var now: Double { (Date().timeIntervalSince1970 * 1000).rounded() }
@@ -68,6 +72,43 @@ public class TimedCircuitPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManagerD
         phase["durationSeconds"] == nil || phase["durationSeconds"] is NSNull
     }
 
+    /// Whether an interval is long enough to be worth warning about.
+    ///
+    /// A cue at or before the midpoint is a second instruction rather than a
+    /// warning, so anything shorter than twice the lead runs out unannounced.
+    private func cues(_ phase: [String: Any]) -> Bool {
+        guard cueLead > 0, !openInterval(phase) else { return false }
+        return (phase["durationSeconds"] as? Double ?? 0) >= cueLead * 2
+    }
+
+    /// The tone that warns an interval is about to end.
+    ///
+    /// Built in memory rather than shipped as an asset: a fifth of a second of
+    /// a sine wave is smaller written out than a file would be to add to the
+    /// project, and it sounds through the recording's own audio session, which
+    /// is what reaches a locked phone.
+    private lazy var cue: AVAudioPlayer? = {
+        let rate = 44100, seconds = 0.2, frequency = 880.0, peak = 0.7
+        let frames = Int(Double(rate) * seconds)
+        var samples = Data(capacity: frames * 2)
+        for frame in 0..<frames {
+            // Fading each end over 10 ms keeps the tone from clicking.
+            let fade = min(1, min(Double(frame), Double(frames - frame)) / (Double(rate) * 0.01))
+            let value = sin(2 * .pi * frequency * Double(frame) / Double(rate)) * fade * peak
+            withUnsafeBytes(of: Int16(value * 32767).littleEndian) { samples.append(contentsOf: $0) }
+        }
+        func bytes(_ value: Int, _ count: Int) -> Data {
+            Data((0..<count).map { UInt8((value >> (8 * $0)) & 0xff) })
+        }
+        var wav = Data("RIFF".utf8) + bytes(36 + samples.count, 4) + Data("WAVEfmt ".utf8)
+        wav += bytes(16, 4) + bytes(1, 2) + bytes(1, 2) + bytes(rate, 4)
+        wav += bytes(rate * 2, 4) + bytes(2, 2) + bytes(16, 2)
+        wav += Data("data".utf8) + bytes(samples.count, 4) + samples
+        guard let player = try? AVAudioPlayer(data: wav) else { return nil }
+        player.prepareToPlay()
+        return player
+    }()
+
     private func begin(_ call: CAPPluginCall) {
         guard let phases = call.getArray("phases", [String: Any].self), !phases.isEmpty,
               phases.count <= 10000,
@@ -77,14 +118,16 @@ public class TimedCircuitPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManagerD
         key = requestedKey
         locale = call.getString("locale") ?? "en"
         volume = min(max(call.getDouble("volume") ?? 1, 0), 1)
+        cueLead = Double(call.getInt("cueLeadSeconds") ?? 10)
         let start = now
         recording = ["version": 1, "startedAt": start, "phases": phases,
                      "pauses": [[String: Any]](), "points": [[String: Any]](), "interrupted": false]
         do {
-            if volume > 0 { try openAudio() }
+            if needsAudio { try openAudio() }
             try persist()
         } catch { recording = nil; call.reject("Recording could not start", nil, error); return }
         spoken = -1
+        cued = -1
         location.startUpdatingLocation()
         timer = Timer.scheduledTimer(withTimeInterval: 0.25, repeats: true) { [weak self] _ in self?.tick() }
         tick()
@@ -100,6 +143,13 @@ public class TimedCircuitPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManagerD
         utterance.volume = Float(volume)
         speech.speak(utterance)
     }
+
+    /// Whether anything still wants the audio session.
+    ///
+    /// The announcements and the cue are two settings, so turning the speech
+    /// off is not turning the tone off — and either alone is reason to hold
+    /// the session open.
+    private var needsAudio: Bool { volume > 0 || cueLead > 0 }
 
     private func openAudio() throws {
         guard !audible else { return }
@@ -141,6 +191,11 @@ public class TimedCircuitPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManagerD
                     if spoken >= 0 && index > spoken + 1 { recording?["interrupted"] = true }
                     spoken = index
                     speak(phase["instruction"] as? String ?? "")
+                }
+                if cued != index, cues(phase), elapsed >= boundary - cueLead * 1000 {
+                    cued = index
+                    cue?.currentTime = 0
+                    cue?.play()
                 }
                 if time - lastCheckpoint > 1000 { checkpoint() }
                 return
@@ -217,14 +272,11 @@ public class TimedCircuitPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManagerD
         DispatchQueue.main.async {
             guard call.getString("key") == self.key else { call.reject("Recording not found"); return }
             self.volume = min(max(call.getDouble("volume") ?? 1, 0), 1)
-            if self.volume > 0 {
-                // A session that started silent has no audio session yet, and
-                // failing to open one is a quiet run rather than a lost one.
-                try? self.openAudio()
-            } else {
-                self.speech.stopSpeaking(at: .immediate)
-                self.closeAudio()
-            }
+            if self.volume == 0 { self.speech.stopSpeaking(at: .immediate) }
+            // A session that started silent has no audio session yet, and
+            // failing to open one is a quiet run rather than a lost one. The
+            // cue holds it open on its own once the announcements are off.
+            if self.needsAudio { try? self.openAudio() } else { self.closeAudio() }
             call.resolve()
         }
     }

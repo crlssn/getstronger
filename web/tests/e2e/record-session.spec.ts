@@ -74,6 +74,23 @@ test.describe('a session with no set length', () => {
     await expect(page.getByRole('link', { name: /Run.*workout details$/ }).first()).toBeVisible()
   })
 
+  // A lead changed in settings has to reach the recorder, and it only ever
+  // does so when the next session starts — which is what this pins.
+  test('starts the recorder with the interval cue lead chosen in settings', async ({ page }) => {
+    await withoutTiles(page)
+    await logIn(page)
+
+    await page.goto('/settings/interval-cue')
+    await page.getByRole('button', { name: '20 seconds before the end' }).click()
+
+    await page.goto('/record')
+    await page.getByRole('button', { name: 'Start recording' }).click()
+    await expect(page.getByText('Active time')).toBeVisible()
+
+    const saved = await page.evaluate(() => localStorage.getItem('getstronger:timed-circuit'))
+    expect(JSON.parse(saved ?? '{}')).toMatchObject({ cueLeadSeconds: 20 })
+  })
+
   test('records from an exercise and saves without asking @mutation', async ({ page }) => {
     await withoutTiles(page)
     await logIn(page)

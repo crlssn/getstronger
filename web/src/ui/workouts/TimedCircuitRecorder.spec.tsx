@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { timedCircuit } from '@/native/timedCircuit'
 import { useAnnouncementsStore } from '@/stores/announcements'
 import { useConfirmationStore } from '@/stores/confirmation'
+import { usePreferencesStore } from '@/stores/preferences'
 import { renderWithProviders } from '@/ui/testing'
 import type { Recording, RoutePoint } from '@/utils/timedCircuit'
 import { TimedCircuitRecorder } from './TimedCircuitRecorder'
@@ -26,6 +27,7 @@ describe('TimedCircuitRecorder', () => {
     vi.mocked(timedCircuit.read).mockResolvedValue({})
     useConfirmationStore.setState({ confirmation: null, resolver: null })
     useAnnouncementsStore.setState({ volume: 'full' })
+    usePreferencesStore.setState({ intervalCueLeadSeconds: 10 })
   })
   const phase = {
     exerciseId: 'walk',
@@ -56,6 +58,26 @@ describe('TimedCircuitRecorder', () => {
     expect(screen.getByRole('alert')).toHaveTextContent('Check location permission')
     await user.click(screen.getByRole('button', { name: 'Log manually' }))
     expect(cancel).toHaveBeenCalledOnce()
+  })
+
+  // The recorder is told the lead when the session starts, which is what makes
+  // a change in settings reach the next recording and not this one.
+  it('hands the athlete lead to the recorder it starts', async () => {
+    const user = userEvent.setup()
+    usePreferencesStore.setState({ intervalCueLeadSeconds: 20 })
+    vi.mocked(timedCircuit.start).mockResolvedValue(undefined)
+    renderWithProviders(
+      <TimedCircuitRecorder
+        recordingKey="athlete:routine"
+        phases={[phase]}
+        onComplete={vi.fn()}
+        onCancel={vi.fn()}
+      />,
+    )
+
+    await user.click(screen.getByRole('button', { name: 'Start guided circuit' }))
+
+    expect(timedCircuit.start).toHaveBeenCalledWith(expect.objectContaining({ cueLeadSeconds: 20 }))
   })
 
   it('restores native progress and sends pause, resume, and early finish to native', async () => {
