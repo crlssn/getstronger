@@ -1,0 +1,106 @@
+@reference '../../assets/base.css';
+
+/* The same screen as the guided recorder, minus the countdown and the round:
+   read at arm's length while moving, so it holds four numbers and nothing
+   else, and the controls never leave the bottom of it. */
+.screen {
+  @apply flex min-h-[calc(100dvh-9rem)] flex-col gap-3.5;
+}
+
+.intro {
+  @apply flex flex-col gap-4;
+}
+
+/* The pill says GPS and the dot says whether fixes are arriving; the sentence
+   behind it is left to a screen reader. */
+.gps {
+  @apply flex h-11 shrink-0 items-center gap-2 rounded-pill bg-surface px-3 text-meta font-bold text-text shadow-raised;
+}
+
+.dot {
+  @apply size-2 shrink-0 rounded-full bg-text-subtle;
+}
+
+.tracking .dot {
+  @apply bg-success;
+}
+
+.clock {
+  @apply flex flex-col gap-2.5 rounded-card bg-ink px-5 pb-4.5 pt-5.5 text-text-inverse;
+}
+
+/* Paused, the card steps off the ink and its edge is drawn rather than solid:
+   the session is still there, it is simply not running. */
+.clock.held {
+  @apply border-2 border-dashed border-border-strong bg-surface text-text;
+}
+
+.head {
+  @apply flex items-center justify-between gap-2;
+}
+
+.eyebrow {
+  @apply block text-eyebrow font-bold uppercase text-text-inverse-muted;
+}
+
+.held .eyebrow {
+  @apply text-text-subtle;
+}
+
+.chip {
+  @apply rounded-pill bg-ink px-2.5 py-1 text-eyebrow font-extrabold uppercase text-text-inverse;
+}
+
+.time {
+  @apply text-clock font-extrabold tabular-nums;
+}
+
+.held .time {
+  @apply text-text-muted;
+}
+
+.foot {
+  @apply flex justify-between gap-3 text-meta font-semibold tabular-nums text-text-inverse-muted;
+}
+
+.held .foot {
+  @apply text-text-subtle;
+}
+
+.numbers {
+  @apply grid grid-cols-2 overflow-hidden rounded-card bg-surface shadow-card;
+}
+
+.cell {
+  @apply px-4.5 py-4;
+}
+
+.divided {
+  @apply border-r border-border;
+}
+
+.dash {
+  @apply text-text-subtle;
+}
+
+.strip {
+  @apply col-span-2 flex items-center justify-between gap-3 border-t border-border bg-ink-surface px-4.5 py-3 text-meta font-bold text-text-muted;
+}
+
+.stripValue {
+  @apply shrink-0 text-body-lg font-bold tabular-nums text-text;
+}
+
+.stripValue small {
+  @apply ml-1 text-meta font-semibold text-text-subtle;
+}
+
+/* Pushed to the bottom by the gap above them, so a number never pushes the way
+   out of a session off the viewport. */
+.controls {
+  @apply mt-auto flex flex-col gap-2.5 pb-3;
+}
+
+.secondaryControls {
+  @apply grid grid-cols-2 gap-2.5;
+}

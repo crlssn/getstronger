@@ -53,10 +53,12 @@ describe('routes', () => {
     expect(untitled, untitled.join('\n')).toEqual([])
   })
 
-  test('only the quick-workout screens hide the chrome', () => {
+  // A session in progress, however it was started: the tab bar would steal
+  // logging space and invite navigation away from a running clock.
+  test('only a session in progress hides the chrome', () => {
     const focused = all.filter((route) => route.focusedShell).map((route) => route.name)
 
-    expect(focused).toEqual(['quick-workout', 'workout-routine'])
+    expect(focused).toEqual(['quick-workout', 'record-session', 'workout-routine'])
   })
 
   test('the catch-all is last, so nothing is shadowed by it', () => {

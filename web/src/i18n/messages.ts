@@ -1,4 +1,25 @@
 export const en = {
+  record: {
+    title: 'Record a session',
+    entryMeta: 'No set length · you end it by hand',
+    eyebrow: 'Recording',
+    session: 'Session',
+    instruction: 'Recording {name}',
+    start: 'Start recording',
+    permission:
+      'Allow location access so your route, distance and pace are measured while you move. The session runs until you end it.',
+    openEnded: 'Runs until you end it',
+    startedAt: 'Started {time}',
+    average: 'Average',
+    chooseTitle: 'What was this?',
+    chooseSummary: '{time} · {distance}',
+    recent: 'Recent',
+    saveAs: 'Save as {name}',
+    emptyLibrary: 'Nothing in your library is measured by distance and time yet.',
+    locationDenied: 'Location access is needed to record a route. Allow it and try again.',
+    saveFailed: 'The session could not be saved. Try again.',
+    exerciseBody: '{name}, measured as you go.',
+  },
   timedCircuit: {
     title: 'Guided circuit',
     start: 'Start guided circuit',
@@ -840,6 +861,7 @@ export const en = {
     profile: 'Profile',
     workout: 'Workout',
     quickWorkout: 'Quick workout',
+    record: 'Record a session',
     editWorkout: 'Edit workout',
     training: 'Training',
     newPlan: 'New plan',
@@ -869,6 +891,27 @@ export const en = {
 }
 
 export const sv = {
+  record: {
+    title: 'Spela in ett pass',
+    entryMeta: 'Ingen bestämd längd · du avslutar själv',
+    eyebrow: 'Spelar in',
+    session: 'Pass',
+    instruction: 'Spelar in {name}',
+    start: 'Starta inspelning',
+    permission:
+      'Tillåt platsåtkomst så att rutt, distans och tempo mäts medan du rör dig. Passet pågår tills du avslutar det.',
+    openEnded: 'Pågår tills du avslutar',
+    startedAt: 'Startade {time}',
+    average: 'Snitt',
+    chooseTitle: 'Vad var det här?',
+    chooseSummary: '{time} · {distance}',
+    recent: 'Nyss',
+    saveAs: 'Spara som {name}',
+    emptyLibrary: 'Inget i ditt bibliotek mäts i distans och tid ännu.',
+    locationDenied: 'Platsåtkomst behövs för att spela in en rutt. Tillåt den och försök igen.',
+    saveFailed: 'Passet kunde inte sparas. Försök igen.',
+    exerciseBody: '{name}, mätt medan du rör dig.',
+  },
   timedCircuit: {
     title: 'Guidat cirkelpass',
     start: 'Starta guidat cirkelpass',
@@ -1710,6 +1753,7 @@ export const sv = {
     profile: 'Profil',
     workout: 'Träna',
     quickWorkout: 'Snabbpass',
+    record: 'Spela in ett pass',
     editWorkout: 'Redigera träningspass',
     training: 'Träning',
     newPlan: 'Ny plan',

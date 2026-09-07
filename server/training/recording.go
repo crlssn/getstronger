@@ -34,11 +34,13 @@ const (
 )
 
 type recordingPhase struct {
-	ExerciseID      string `json:"exerciseId"`
-	StationKey      string `json:"stationKey"`
-	Name            string `json:"name"`
-	Round           int    `json:"round"`
-	DurationSeconds int    `json:"durationSeconds"`
+	ExerciseID string `json:"exerciseId"`
+	StationKey string `json:"stationKey"`
+	Name       string `json:"name"`
+	Round      int    `json:"round"`
+	// Absent for an open interval: a session with no set length, which ran
+	// until the athlete ended it.
+	DurationSeconds *int   `json:"durationSeconds"`
 	Instruction     string `json:"instruction"`
 }
 
@@ -126,16 +128,32 @@ func (r *recording) validateSpan(period Period) error {
 	return nil
 }
 
+// validatePhases wants every interval held against the clock, save for an open
+// one: that says the session had no set length, which only the whole of it can.
 func (r *recording) validatePhases() error {
 	for _, phase := range r.Phases {
-		if phase.DurationSeconds < 1 || phase.DurationSeconds > recordingPhaseMaxSeconds ||
-			phase.Round < 1 || phase.Round > recordingMaxRound ||
-			len(phase.Name) > recordingMaxName ||
-			len(phase.Instruction) > recordingMaxInstruction ||
-			len(phase.ExerciseID) > recordingMaxExerciseID ||
-			len(phase.StationKey) > recordingMaxStationKey {
+		if phase.DurationSeconds == nil && len(r.Phases) > 1 {
 			return ErrInvalidRecording
 		}
+		if err := phase.validate(); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (p recordingPhase) validate() error {
+	if p.DurationSeconds != nil &&
+		(*p.DurationSeconds < 1 || *p.DurationSeconds > recordingPhaseMaxSeconds) {
+		return ErrInvalidRecording
+	}
+	if p.Round < 1 || p.Round > recordingMaxRound ||
+		len(p.Name) > recordingMaxName ||
+		len(p.Instruction) > recordingMaxInstruction ||
+		len(p.ExerciseID) > recordingMaxExerciseID ||
+		len(p.StationKey) > recordingMaxStationKey {
+		return ErrInvalidRecording
 	}
 
 	return nil

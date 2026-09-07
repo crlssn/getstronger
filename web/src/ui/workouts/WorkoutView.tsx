@@ -199,6 +199,16 @@ export const WorkoutView = () => {
         <ChevronRightIcon aria-hidden="true" />
       </Link>
 
+      {/* A commute follows no routine and has no set length, so the way into
+          one sits beside the other way of starting without a routine. */}
+      <Link to="/record" className={styles.quickCard}>
+        <span>
+          <strong>{t('record.title')}</strong>
+          <small>{t('record.entryMeta')}</small>
+        </span>
+        <ChevronRightIcon aria-hidden="true" />
+      </Link>
+
       <section className={styles.workoutHistory}>
         <header>
           <h2>{t('workout.previous')}</h2>

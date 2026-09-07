@@ -59,9 +59,13 @@ public class TimedCircuitService extends Service implements LocationListener {
         if (saved != null) throw new IllegalStateException("Another recording exists");
         JSONArray phases = options.getJSONArray("phases");
         if (phases.length() == 0 || phases.length() > 10000) throw new IllegalArgumentException("Invalid prescription");
-        for (int i = 0; i < phases.length(); i++) {
-            int duration = phases.getJSONObject(i).getInt("durationSeconds");
-            if (duration <= 0 || duration > 86400) throw new IllegalArgumentException("Invalid duration");
+        // A lone phase naming no duration is the open interval of a session with
+        // no set length; every other prescription is held against the clock.
+        if (phases.length() > 1 || !phases.getJSONObject(0).isNull("durationSeconds")) {
+            for (int i = 0; i < phases.length(); i++) {
+                int duration = phases.getJSONObject(i).optInt("durationSeconds", 0);
+                if (duration <= 0 || duration > 86400) throw new IllegalArgumentException("Invalid duration");
+            }
         }
         long now = System.currentTimeMillis();
         JSONObject data = new JSONObject().put("version", 1).put("startedAt", now)
@@ -160,8 +164,9 @@ public class TimedCircuitService extends Service implements LocationListener {
         long boundary = 0;
         for (int index = 0; index < phases.length(); index++) {
             JSONObject phase = phases.getJSONObject(index);
-            boundary += phase.getLong("durationSeconds") * 1000;
-            if (elapsed < boundary) {
+            boolean open = phase.isNull("durationSeconds");
+            if (!open) boundary += phase.getLong("durationSeconds") * 1000;
+            if (open || elapsed < boundary) {
                 if (spoken != index && speechReady) {
                     if (spoken >= 0 && index > spoken + 1) data.put("interrupted", true);
                     spoken = index;

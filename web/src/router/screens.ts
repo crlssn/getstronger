@@ -53,6 +53,9 @@ export const screens: Partial<Record<string, ScreenLoader>> = {
   'workout-routine': async () => ({
     Component: (await import('@/ui/workouts/StartWorkout')).StartWorkout,
   }),
+  'record-session': async () => ({
+    Component: (await import('@/ui/workouts/RecordSession')).RecordSession,
+  }),
   'view-workout': async () => ({
     Component: (await import('@/ui/workouts/ViewWorkout')).ViewWorkout,
   }),
