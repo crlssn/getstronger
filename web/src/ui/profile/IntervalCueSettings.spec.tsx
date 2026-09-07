@@ -18,23 +18,27 @@ describe('IntervalCueSettings', () => {
     usePreferencesStore.setState({ intervalCueLeadSeconds: defaultCueLead })
   })
 
+  // Each row says what its number is measured from: a bare "10 seconds" reads
+  // as how long the tone lasts rather than how far ahead of the end it sounds.
   test('offers silence and every lead the recorders read', () => {
     render()
 
     expect(screen.getByRole('button', { name: /Off/ })).toBeInTheDocument()
     for (const seconds of [5, 10, 15, 20]) {
-      expect(screen.getByRole('button', { name: `${seconds} seconds` })).toBeInTheDocument()
+      expect(
+        screen.getByRole('button', { name: `${seconds} seconds before the end` }),
+      ).toBeInTheDocument()
     }
   })
 
   test('marks the lead in use, which is ten seconds until it is changed', () => {
     render()
 
-    expect(screen.getByRole('button', { name: '10 seconds' })).toHaveAttribute(
+    expect(screen.getByRole('button', { name: '10 seconds before the end' })).toHaveAttribute(
       'aria-pressed',
       'true',
     )
-    expect(screen.getByRole('button', { name: '20 seconds' })).toHaveAttribute(
+    expect(screen.getByRole('button', { name: '20 seconds before the end' })).toHaveAttribute(
       'aria-pressed',
       'false',
     )
@@ -43,7 +47,7 @@ describe('IntervalCueSettings', () => {
   test('keeps a chosen lead, which the next recording is started with', async () => {
     render()
 
-    await userEvent.click(screen.getByRole('button', { name: '20 seconds' }))
+    await userEvent.click(screen.getByRole('button', { name: '20 seconds before the end' }))
 
     expect(usePreferencesStore.getState().intervalCueLeadSeconds).toBe(20)
   })

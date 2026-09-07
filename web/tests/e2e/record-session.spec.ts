@@ -81,7 +81,7 @@ test.describe('a session with no set length', () => {
     await logIn(page)
 
     await page.goto('/settings/interval-cue')
-    await page.getByRole('button', { name: '20 seconds' }).click()
+    await page.getByRole('button', { name: '20 seconds before the end' }).click()
 
     await page.goto('/record')
     await page.getByRole('button', { name: 'Start recording' }).click()

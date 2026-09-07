@@ -109,29 +109,29 @@ test.describe('settings', () => {
   test('changes the interval cue lead and keeps it', async ({ page }) => {
     await page.goto('/profile')
     await expect(settings(page).getByRole('link', { name: /Interval cue/ })).toContainText(
-      '10 seconds',
+      '10 seconds before the end',
     )
 
     await settings(page)
       .getByRole('link', { name: /Interval cue/ })
       .click()
     await expect(page).toHaveURL(/\/settings\/interval-cue$/)
-    await page.getByRole('button', { name: '20 seconds' }).click()
-    await expect(page.getByRole('button', { name: '20 seconds' })).toHaveAttribute(
+    await page.getByRole('button', { name: '20 seconds before the end' }).click()
+    await expect(page.getByRole('button', { name: '20 seconds before the end' })).toHaveAttribute(
       'aria-pressed',
       'true',
     )
 
     // Kept on the device, so a reload is what proves it landed.
     await page.reload()
-    await expect(page.getByRole('button', { name: '20 seconds' })).toHaveAttribute(
+    await expect(page.getByRole('button', { name: '20 seconds before the end' })).toHaveAttribute(
       'aria-pressed',
       'true',
     )
 
     await page.goto('/profile')
     await expect(settings(page).getByRole('link', { name: /Interval cue/ })).toContainText(
-      '20 seconds',
+      '20 seconds before the end',
     )
 
     // Silence is a choice of its own, and the row says so rather than showing

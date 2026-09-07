@@ -232,7 +232,9 @@ export const ProfileView = () => {
             to="/settings/interval-cue"
             title={t('settings.intervalCue')}
             meta={
-              cueLead === 0 ? t('settings.intervalCueOff') : t('common.seconds', { count: cueLead })
+              cueLead === 0
+                ? t('settings.intervalCueOff')
+                : t('settings.intervalCueLead', { count: cueLead })
             }
           />
           {/* The one row with no value to show: the card at the top of the tab

@@ -32,7 +32,7 @@ export const IntervalCueSettings = () => {
             <strong>
               {seconds === 0
                 ? t('settings.intervalCueOff')
-                : t('common.seconds', { count: seconds })}
+                : t('settings.intervalCueLead', { count: seconds })}
             </strong>
             {/* Silence is a choice too, and the row says what it means rather
                 than leaving Off to be read as a broken cue. */}

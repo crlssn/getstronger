@@ -243,10 +243,12 @@ describe('ProfileView', () => {
     expect(appearance).toHaveTextContent('Device appearance')
 
     // The warning a recording gives before an interval ends, which is only
-    // ever heard: the row is where it can be read.
+    // ever heard: the row is where it can be read. What the number is measured
+    // from is part of the value — "10 seconds" alone reads as how long the
+    // tone lasts.
     const cue = settings.getByRole('link', { name: /Interval cue/ })
     expect(cue).toHaveAttribute('href', '/settings/interval-cue')
-    expect(cue).toHaveTextContent('10 seconds')
+    expect(cue).toHaveTextContent('10 seconds before the end')
   })
 
   test('says the interval cue is off once it is turned off', async () => {

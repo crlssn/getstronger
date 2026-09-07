@@ -774,9 +774,13 @@ export const en = {
     appearanceDark: 'Dark',
     intervalCue: 'Interval cue',
     intervalCueIntro:
-      'A tone sounds this long before an interval ends, so you can change pace without looking. It is kept on this device, and an interval shorter than twice the lead runs out unannounced.',
+      'The tone gives you time to change pace without looking at the phone. It is kept on this device, and an interval shorter than twice the lead runs out unannounced.',
     intervalCueOff: 'Off',
     intervalCueOffBody: 'Intervals end without a sound',
+    // How far ahead of the end, not how long the tone lasts — a bare "10
+    // seconds" reads as the second of those.
+    intervalCueLead_one: '{count} second before the end',
+    intervalCueLead_other: '{count} seconds before the end',
     account: 'Account',
     accountBody: 'Your details, password and deletion',
     accountIntro: 'Who you are on this account, and how to leave it.',
@@ -1677,9 +1681,11 @@ export const sv = {
     appearanceDark: 'Mörkt',
     intervalCue: 'Intervallsignal',
     intervalCueIntro:
-      'En ton ljuder så här långt innan ett intervall tar slut, så att du kan byta tempo utan att titta. Den sparas bara på den här enheten, och ett intervall som är kortare än dubbla förvarningen tar slut utan ljud.',
+      'Tonen ger dig tid att byta tempo utan att titta på telefonen. Den sparas bara på den här enheten, och ett intervall som är kortare än dubbla förvarningen tar slut utan ljud.',
     intervalCueOff: 'Av',
     intervalCueOffBody: 'Intervall tar slut utan ljud',
+    intervalCueLead_one: '{count} sekund innan slutet',
+    intervalCueLead_other: '{count} sekunder innan slutet',
     account: 'Konto',
     accountBody: 'Dina uppgifter, lösenord och borttagning',
     accountIntro: 'Vem du är på det här kontot, och hur du lämnar det.',
