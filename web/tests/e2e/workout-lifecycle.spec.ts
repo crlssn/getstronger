@@ -11,6 +11,7 @@ import {
   scrollToListEnd,
   seedPassword,
   test,
+  testCreatedName,
   uniqueName,
 } from './fixtures'
 
@@ -42,12 +43,18 @@ const setRow = (page: E2EPage, number: number) =>
 const sectionWithHeading = (page: E2EPage, heading: string) =>
   page.locator('section').filter({ has: page.getByRole('heading', { name: heading }) })
 
-const addFirstExercise = async (page: Parameters<typeof logIn>[0]) => {
+const addFirstExercise = async (page: E2EPage) => {
   await page.getByRole('button', { name: 'Choose exercise' }).click()
   const picker = page.getByRole('dialog', { name: 'Add exercise' })
   // The callers log weight and reps, so the seeded cardio exercise — whose
-  // set inputs are distance and time — must never be the one picked.
-  const option = pickerOptions(page, picker).filter({ hasNotText: 'Cardio' }).first()
+  // set inputs are distance and time — must never be the one picked. Nor must
+  // an exercise another test made and failed to delete: newest-first puts a
+  // leftover at the front, and the caller then times out on a field that a
+  // distance exercise does not have.
+  const option = pickerOptions(page, picker)
+    .filter({ hasNotText: 'Cardio' })
+    .filter({ hasNotText: testCreatedName })
+    .first()
   const name = (await option.locator('strong').innerText()).trim()
   await option.click()
   return name
@@ -771,6 +778,13 @@ test.describe('weight units', () => {
       await page.goto('/exercises')
       await page.getByLabel('Search exercises').fill(exerciseName)
       const link = page.getByRole('link').filter({ hasText: exerciseName }).first()
+      // isVisible() does not retry, so the search settles on a hit or on its
+      // empty state before the guard below reads it. That guard is for a try
+      // block that failed before the exercise existed, not for a slow list:
+      // skipping the deletion leaves a distance-only exercise behind.
+      await expect(
+        link.or(page.getByRole('heading', { name: 'No matching exercises' })),
+      ).toBeVisible()
       if (await link.isVisible()) {
         await link.click()
         await openExerciseActions(page)
