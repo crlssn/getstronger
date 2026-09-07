@@ -13,9 +13,9 @@ import { cuesInterval } from '@/utils/intervalCue'
  * an open-ended session runs on outside the app, and what the end-to-end suite
  * records against.
  *
- * It measures without speaking: there is no announcement here to turn down, so
- * the volume the phones take is accepted and ignored. The interval cue and the
- * pace tones are tones rather than speech, and this does sound those.
+ * It speaks nothing, so the volume the phones announce at is applied to the
+ * pace tones instead — turned all the way down, the recorder sounds none. The
+ * interval cue keeps its own setting, as it does on the phones.
  */
 
 const storageKey = 'getstronger:timed-circuit'
@@ -37,6 +37,8 @@ interface Saved {
   /** Seconds of warning before an interval ends; 0 sounds nothing. */
   cueLeadSeconds: number
   checkpoint: number
+  /** How loudly the recorder sounds, 0 to 1; 0 is silent. */
+  volume: number
   // The session this one is paced against, absent where there is none.
   pacing?: Pacing
 }
@@ -207,12 +209,19 @@ const valid = (phases: Phase[]) =>
   (phases.every((phase) => (phase.durationSeconds ?? 0) > 0) ||
     (phases.length === 1 && phases[0].durationSeconds === undefined))
 
-const begin = (key: string, phases: Phase[], cueLeadSeconds: number, pacing?: Pacing) =>
+const begin = (
+  key: string,
+  phases: Phase[],
+  cueLeadSeconds: number,
+  volume: number,
+  pacing?: Pacing,
+) =>
   new Promise<void>((resolve, reject) => {
     cued = -1
     pace = newPaceWatch()
     saved = {
       key,
+      volume,
       pacing,
       recording: {
         version: 1,
@@ -280,7 +289,13 @@ export const TimedCircuitWeb = {
     load()
     if (saved) throw new Error('A recording is already saved or active')
     if (!valid(options.phases)) throw new Error('Invalid prescription')
-    await begin(options.key, options.phases, options.cueLeadSeconds, options.pacing)
+    await begin(
+      options.key,
+      options.phases,
+      options.cueLeadSeconds,
+      options.volume,
+      options.pacing,
+    )
   },
 
   read(options: { key: string }): Promise<{ recording?: Recording }> {
@@ -310,7 +325,9 @@ export const TimedCircuitWeb = {
     return mutate(options.key, () => end(now()))
   },
 
-  setVolume(_options: { key: string; volume: number }): Promise<void> {
+  setVolume(options: { key: string; volume: number }): Promise<void> {
+    load()
+    if (saved?.key === options.key) saved.volume = Math.min(Math.max(options.volume, 0), 1)
     return Promise.resolve()
   },
 

@@ -10,7 +10,10 @@ import android.content.Intent;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.media.AudioAttributes;
+import android.media.AudioFormat;
 import android.media.AudioManager;
+import android.media.AudioTrack;
 import android.media.ToneGenerator;
 import android.os.Bundle;
 import android.os.Handler;
@@ -31,6 +34,8 @@ public class TimedCircuitService extends Service implements LocationListener {
     private static final String CHANNEL = "timed-circuit";
     private static final int TONE_VOLUME = 100;
     private static final int TONE_MS = 200;
+    /** How loud a pace note is against a full-volume announcement. */
+    private static final double PACE_TONE_VOLUME = 0.2;
     private static JSONObject saved;
     private static TimedCircuitService active;
     private final Handler handler = new Handler(Looper.getMainLooper());
@@ -43,6 +48,19 @@ public class TimedCircuitService extends Service implements LocationListener {
     /** The interval already warned about, so the tone sounds once per interval. */
     private int cued = -1;
     private long checkpoint;
+    // The session this one is paced against, as the web app settled it: a
+    // target for each interval, and the three numbers that say when a
+    // difference is worth hearing. No targets is a recording with nothing to
+    // compare against, which is every first recording of a routine.
+    private double[] paceTargets = new double[0];
+    private double paceTolerance;
+    private double paceGap;
+    private double paceWindow;
+    private String paceZone = "";
+    private int paceZonePhase = -1;
+    private long paceTonedAt;
+    private AudioTrack aheadTone;
+    private AudioTrack behindTone;
     private final Runnable ticker = new Runnable() {
         @Override public void run() {
             try { tick(); if (active != null) handler.postDelayed(this, 250); }
@@ -82,6 +100,7 @@ public class TimedCircuitService extends Service implements LocationListener {
             .put("volume", level(options.optDouble("volume", 1)))
             .put("cueLeadSeconds", options.optInt("cueLeadSeconds", 10))
             .put("recording", data).put("checkpoint", now);
+        if (options.optJSONObject("pacing") != null) saved.put("pacing", options.getJSONObject("pacing"));
         try { persist(context); } catch (Exception error) { saved = null; throw error; }
     }
     static JSONObject read(Context context, String key) throws Exception {
@@ -159,6 +178,7 @@ public class TimedCircuitService extends Service implements LocationListener {
             // one records on in silence.
             try { tones = new ToneGenerator(AudioManager.STREAM_MUSIC, TONE_VOLUME); }
             catch (Exception ignored) { tones = null; }
+            readPacing(saved.optJSONObject("pacing"));
             speech = new TextToSpeech(this, status -> {
                 if (status == TextToSpeech.SUCCESS) {
                     speechReady = true;
@@ -192,6 +212,7 @@ public class TimedCircuitService extends Service implements LocationListener {
         for (int index = 0; index < phases.length(); index++) {
             JSONObject phase = phases.getJSONObject(index);
             boolean open = phase.isNull("durationSeconds");
+            long opened = boundary;
             if (!open) boundary += phase.getLong("durationSeconds") * 1000;
             if (open || elapsed < boundary) {
                 if (spoken != index && speechReady) {
@@ -206,6 +227,7 @@ public class TimedCircuitService extends Service implements LocationListener {
                     cued = index;
                     if (tones != null) tones.startTone(ToneGenerator.TONE_PROP_BEEP, TONE_MS);
                 }
+                judge(index, (elapsed - opened) / 1000.0, now);
                 if (now - checkpoint > 1000) { persist(this); checkpoint = now; }
                 return;
             }
@@ -232,6 +254,142 @@ public class TimedCircuitService extends Service implements LocationListener {
         if (leadMs <= 0 || phase.isNull("durationSeconds")) return false;
         return phase.getLong("durationSeconds") * 1000L >= leadMs * 2;
     }
+
+    /** The comparison the recorder holds each interval to, or none at all. */
+    private void readPacing(JSONObject pacing) {
+        paceZone = "";
+        paceZonePhase = -1;
+        paceTonedAt = 0;
+        if (pacing == null) return;
+        JSONArray targets = pacing.optJSONArray("targets");
+        paceTargets = new double[targets == null ? 0 : targets.length()];
+        for (int index = 0; index < paceTargets.length; index++) paceTargets[index] = targets.optDouble(index, 0);
+        paceTolerance = pacing.optDouble("toleranceSeconds", 0);
+        paceGap = pacing.optDouble("minimumGapSeconds", 0);
+        paceWindow = pacing.optDouble("windowSeconds", 0);
+        if (paceTargets.length == 0) return;
+        // Higher for ahead and lower for behind, generated rather than
+        // shipped: the same two notes the browser recorder sounds. Both sit
+        // clear of the cue, so three sounds in one run are three sounds.
+        aheadTone = note(1320);
+        behindTone = note(440);
+    }
+
+    private AudioTrack note(double hertz) {
+        int rate = 44100;
+        int frames = (int) (rate * 0.18);
+        short[] samples = new short[frames];
+        for (int frame = 0; frame < frames; frame++) {
+            // Faded at both ends: a square edge on a sine is heard as a click.
+            double fade = Math.min(1.0, Math.min(frame, frames - frame) / (rate * 0.02));
+            samples[frame] = (short) (Math.sin(2 * Math.PI * hertz * frame / rate) * Short.MAX_VALUE * fade);
+        }
+        AudioTrack track = new AudioTrack.Builder()
+            .setAudioAttributes(new AudioAttributes.Builder()
+                .setUsage(AudioAttributes.USAGE_ASSISTANCE_SONIFICATION)
+                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION).build())
+            .setAudioFormat(new AudioFormat.Builder()
+                .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
+                .setSampleRate(rate)
+                .setChannelMask(AudioFormat.CHANNEL_OUT_MONO).build())
+            .setBufferSizeInBytes(samples.length * 2)
+            .setTransferMode(AudioTrack.MODE_STATIC)
+            .build();
+        track.write(samples, 0, samples.length);
+        return track;
+    }
+
+    /** A note follows the announcement volume: a session that says nothing must not beep. */
+    private void play(String zone) {
+        AudioTrack track = zone.equals("ahead") ? aheadTone : behindTone;
+        double volume = level(saved.optDouble("volume", 1));
+        if (track == null || volume == 0) return;
+        try {
+            track.setVolume((float) (PACE_TONE_VOLUME * volume));
+            track.stop();
+            track.reloadStaticData();
+            track.play();
+        } catch (IllegalStateException error) { /* A note nobody hears is not worth a failed session. */ }
+    }
+
+    /**
+     * Whether the movement between two fixes is worth measuring, on the same
+     * terms the app measures a saved route on.
+     */
+    private boolean accepted(JSONObject a, JSONObject b, JSONArray pauses) throws Exception {
+        double seconds = (b.getLong("timestamp") - a.getLong("timestamp")) / 1000.0;
+        if (seconds <= 0 || seconds > 15) return false;
+        if (a.optDouble("accuracy", 0) > 30 || b.optDouble("accuracy", 0) > 30) return false;
+        if (metres(a, b) / seconds > 15) return false;
+        for (int index = 0; index < pauses.length(); index++) {
+            JSONObject pause = pauses.getJSONObject(index);
+            long ended = pause.has("endedAt") ? pause.getLong("endedAt") : Long.MAX_VALUE;
+            if (a.getLong("timestamp") < ended && b.getLong("timestamp") > pause.getLong("startedAt")) return false;
+        }
+        return true;
+    }
+
+    private double metres(JSONObject a, JSONObject b) throws Exception {
+        double from = Math.toRadians(a.getDouble("latitude"));
+        double to = Math.toRadians(b.getDouble("latitude"));
+        double latitude = to - from;
+        double longitude = Math.toRadians(b.getDouble("longitude") - a.getDouble("longitude"));
+        double h = Math.pow(Math.sin(latitude / 2), 2)
+            + Math.cos(from) * Math.cos(to) * Math.pow(Math.sin(longitude / 2), 2);
+        return 6371000 * 2 * Math.asin(Math.min(1, Math.sqrt(h)));
+    }
+
+    /**
+     * Pace over the trailing window in seconds per kilometre, or nothing: one
+     * fix is a position rather than a speed.
+     */
+    private double currentPace(long time) throws Exception {
+        JSONObject data = saved.getJSONObject("recording");
+        JSONArray points = data.getJSONArray("points");
+        JSONArray pauses = data.getJSONArray("pauses");
+        double since = time - paceWindow * 1000;
+        double covered = 0;
+        double seconds = 0;
+        for (int index = 1; index < points.length(); index++) {
+            JSONObject a = points.getJSONObject(index - 1);
+            JSONObject b = points.getJSONObject(index);
+            long closed = b.getLong("timestamp");
+            // Whole edges, by the fix that closed them, as the app measures.
+            if (closed <= since || closed > time || !accepted(a, b, pauses)) continue;
+            covered += metres(a, b);
+            seconds += (closed - a.getLong("timestamp")) / 1000.0;
+        }
+        return covered > 0 ? (seconds / covered) * 1000 : 0;
+    }
+
+    /**
+     * Sounds the crossing where this interval leaves the band the reference
+     * session set for it, at most once every gap.
+     */
+    private void judge(int index, double seconds, long time) throws Exception {
+        if (paceZonePhase != index) {
+            paceZonePhase = index;
+            paceZone = "";
+        }
+        if (index >= paceTargets.length) return;
+        double target = paceTargets[index];
+        if (target <= 0 || seconds < paceWindow) return;
+        double pace = currentPace(time);
+        if (pace <= 0) return;
+
+        String zone = pace < target - paceTolerance ? "ahead" : pace > target + paceTolerance ? "behind" : "holding";
+        if (zone.equals("holding")) {
+            paceZone = zone;
+            return;
+        }
+        // A crossing the gap swallowed stays pending, so it is heard late
+        // rather than not at all.
+        if (zone.equals(paceZone) || (paceTonedAt != 0 && time - paceTonedAt < paceGap * 1000)) return;
+        paceZone = zone;
+        paceTonedAt = time;
+        play(zone);
+    }
+
     @Override public void onLocationChanged(Location location) {
         try {
             tick();
@@ -266,6 +424,8 @@ public class TimedCircuitService extends Service implements LocationListener {
         if (locations != null) locations.removeUpdates(this);
         if (speech != null) { speech.stop(); speech.shutdown(); speech = null; }
         if (tones != null) { tones.release(); tones = null; }
+        if (aheadTone != null) { aheadTone.release(); aheadTone = null; }
+        if (behindTone != null) { behindTone.release(); behindTone = null; }
         if (wakeLock != null && wakeLock.isHeld()) wakeLock.release();
         active = null;
         stopForeground(STOP_FOREGROUND_REMOVE);
