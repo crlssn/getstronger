@@ -38,15 +38,22 @@ public class TimedCircuitService extends Service implements LocationListener {
     private static final int TONE_MS = 200;
     /** How loud a pace note is against a full-volume announcement. */
     private static final double PACE_TONE_VOLUME = 0.2;
-    // Auto-pause, mirroring web/src/utils/movement.ts: below a walking pace for
-    // the dwell holds the recording, above twice that lets it go. The gap
-    // between the two keeps a pace either side of one line from fluttering it.
-    private static final double PAUSE_SPEED = 1000.0 / 3600;
-    private static final double RESUME_SPEED = 2000.0 / 3600;
-    private static final long DWELL_MS = 5000;
+    // Auto-pause, mirroring web/src/utils/movement.ts: under half a slow walk
+    // for the dwell holds the recording, over that again lets it go. The gap
+    // between the two keeps a pace either side of one line from fluttering it,
+    // and the dwell is short because the hold is backdated to where the
+    // athlete stopped.
+    private static final double PAUSE_SPEED = 2000.0 / 3600;
+    private static final double RESUME_SPEED = 3000.0 / 3600;
+    private static final long DWELL_MS = 2000;
     private static final long CONTINUOUS_MS = 3000;
     private static final int MAX_FIXES = 60;
     private static final double MAX_ACCURACY = 30;
+    /**
+     * Under this a measured speed is a phone standing and its fixes wandering,
+     * mirroring {@code standingSpeed} in {@code web/src/utils/timedCircuit.ts}.
+     */
+    private static final double STANDING_SPEED = 0.3;
     /** One fix as the detector reads it: the route's, plus a measured speed. */
     private static final class Fix {
         final long timestamp;
@@ -358,6 +365,19 @@ public class TimedCircuitService extends Service implements LocationListener {
         return true;
     }
 
+    /**
+     * How far the athlete went between two fixes, as the app measures it: the
+     * receiver's speed over the time between them where it measured one at both
+     * ends, and the chord where it did not. The chords of wandering fixes sum to
+     * more ground than was covered.
+     */
+    private double edgeMetres(JSONObject a, JSONObject b) throws Exception {
+        double seconds = (b.getLong("timestamp") - a.getLong("timestamp")) / 1000.0;
+        if (!a.has("speed") || !b.has("speed") || seconds <= 0) return metres(a, b);
+        double speed = (a.getDouble("speed") + b.getDouble("speed")) / 2;
+        return speed < STANDING_SPEED ? 0 : speed * seconds;
+    }
+
     private double metres(JSONObject a, JSONObject b) throws Exception {
         double from = Math.toRadians(a.getDouble("latitude"));
         double to = Math.toRadians(b.getDouble("latitude"));
@@ -385,7 +405,7 @@ public class TimedCircuitService extends Service implements LocationListener {
             long closed = b.getLong("timestamp");
             // Whole edges, by the fix that closed them, as the app measures.
             if (closed <= since || closed > time || !accepted(a, b, pauses)) continue;
-            covered += metres(a, b);
+            covered += edgeMetres(a, b);
             seconds += (closed - a.getLong("timestamp")) / 1000.0;
         }
         return covered > 0 ? (seconds / covered) * 1000 : 0;

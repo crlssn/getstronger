@@ -31,6 +31,9 @@ export const screens: Partial<Record<string, ScreenLoader>> = {
   'settings-interval-cue': async () => ({
     Component: (await import('@/ui/profile/IntervalCueSettings')).IntervalCueSettings,
   }),
+  'settings-announcements': async () => ({
+    Component: (await import('@/ui/profile/AnnouncementSettings')).AnnouncementSettings,
+  }),
   'settings-account': async () => ({
     Component: (await import('@/ui/profile/AccountSettings')).AccountSettings,
   }),

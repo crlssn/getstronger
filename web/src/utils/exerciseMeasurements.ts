@@ -121,19 +121,34 @@ export interface Measured {
  * Distances are stored and sent in kilometres whatever unit the set was entered
  * in, so every total shown outside a set's own row goes through here.
  */
-export const distanceIn = (kilometers: number, unit?: DistanceUnit): Measured => {
+/**
+ * A distance in the athlete's unit, to two decimals unless told otherwise.
+ *
+ * `fixedDigits` is for a number being watched rather than read: it keeps every
+ * decimal, so a live total ticks up with each fix instead of turning over
+ * once every ten metres, and it holds its width while it does.
+ */
+export const distanceIn = (
+  kilometers: number,
+  unit?: DistanceUnit,
+  fixedDigits?: number,
+): Measured => {
   const preferred = normalizeDistanceUnit(unit)
+  const digits = fixedDigits ?? 2
   // Metres are a sub-unit of ground covered, not of none: a week with nothing
   // in it reads "0 km", where "0 m" reads as a distance somebody measured.
   if (preferred === DistanceUnit.KILOMETERS && kilometers > 0 && kilometers < 1) {
     return { value: formatNumber(kilometers * 1000), unit: 'm' }
   }
   if (preferred === DistanceUnit.KILOMETERS && kilometers > 0) {
-    return { value: formatNumber(kilometers, 2), unit: 'km' }
+    return { value: formatNumber(kilometers, digits, fixedDigits), unit: 'km' }
   }
 
   const distance = convertDistance(kilometers, DistanceUnit.KILOMETERS, preferred)
-  return { value: formatNumber(distance, 2), unit: distanceUnitLabel(preferred) }
+  return {
+    value: formatNumber(distance, digits, fixedDigits),
+    unit: distanceUnitLabel(preferred),
+  }
 }
 
 export const formatDistanceIn = (kilometers: number, unit?: DistanceUnit) => {

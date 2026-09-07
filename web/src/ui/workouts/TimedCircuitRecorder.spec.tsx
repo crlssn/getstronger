@@ -8,7 +8,7 @@ import { usePreferencesStore } from '@/stores/preferences'
 import { renderWithProviders } from '@/ui/testing'
 import { pacingFor } from '@/utils/pacing'
 import type { Recording, RoutePoint } from '@/utils/timedCircuit'
-import { TimedCircuitRecorder } from './TimedCircuitRecorder'
+import { paceRefreshMs, TimedCircuitRecorder } from './TimedCircuitRecorder'
 
 vi.mock('@/native/timedCircuit', () => ({
   timedCircuit: {
@@ -183,7 +183,7 @@ describe('TimedCircuitRecorder', () => {
     )
     await screen.findByRole('heading', { name: 'Run' })
     expect(screen.getByText('Pace now').parentElement).toHaveTextContent('4:10/km')
-    expect(screen.getByText('Distance').parentElement).toHaveTextContent('1.3km')
+    expect(screen.getByText('Distance').parentElement).toHaveTextContent('1.300km')
     // The interval that finished, named and measured: what there is to beat.
     const last = screen.getByText('Last · Walk 1')
     expect(last.parentElement).toHaveTextContent('5:33/km')
@@ -219,6 +219,32 @@ describe('TimedCircuitRecorder', () => {
     expect(screen.queryByText(/Tones compare each interval/)).not.toBeInTheDocument()
   })
 
+  // A window that moves a second at a time takes a new fix on every poll, so
+  // the figure would change every second: it is read at the last refresh.
+  it('holds the pace between refreshes', async () => {
+    const clock = vi.spyOn(Date, 'now').mockReturnValue(1_800_000_000_000 + paceRefreshMs - 1000)
+    const sprinting = running()
+    // Faster over the last four seconds, which are after the last refresh.
+    sprinting.points = sprinting.points.map((point, index, points) =>
+      index >= points.length - 4
+        ? { ...point, latitude: points[points.length - 5].latitude + 0.0001 * (index - 396) }
+        : point,
+    )
+    vi.mocked(timedCircuit.read).mockResolvedValue({ recording: sprinting })
+    renderWithProviders(
+      <TimedCircuitRecorder
+        recordingKey="athlete:routine"
+        pacing={pacingFor([phase])}
+        phases={[phase]}
+        onComplete={vi.fn()}
+        onCancel={vi.fn()}
+      />,
+    )
+    await screen.findByRole('heading', { name: 'Run' })
+    expect(screen.getByText('Pace now').parentElement).toHaveTextContent('4:10/km')
+    clock.mockRestore()
+  })
+
   it('reads pace as a dash until enough accurate fixes exist, and while paused', async () => {
     const user = userEvent.setup()
     const blurred = running()
@@ -246,7 +272,7 @@ describe('TimedCircuitRecorder', () => {
     // Standing still is not a pace, but the ground already covered is a
     // distance: only the number that means "now" gives up its value.
     expect(screen.getByText('Pace now').parentElement).toHaveTextContent('—')
-    expect(screen.getByText('Distance').parentElement).toHaveTextContent('1.28km')
+    expect(screen.getByText('Distance').parentElement).toHaveTextContent('1.280km')
   })
 
   // Discard is half a button wide beside End session, and a recorded run is

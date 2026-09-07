@@ -46,17 +46,26 @@ describe('the stationary detector', () => {
   it('waits out the whole dwell before a standstill reads as one', () => {
     const stopping = [0, 6, 12, 18, 24, 24, 24, 24, 24, 24]
     // Four seconds in it is a run that has only just stopped.
-    expect(readMovement(watched(stopping), at)).toBe('moving')
-    expect(readMovement(watched(stopping), start + 9000)).toBe('still')
+    expect(readMovement(watched(stopping), start + 4000)).toBe('moving')
+    expect(readMovement(watched(stopping), at)).toBe('still')
+  })
+
+  it('reads a stop within three seconds of the receiver seeing it', () => {
+    // The speed a receiver reports falls over a second or so after the
+    // athlete stops: a fix reading fast, one reading slow, then still.
+    const speeds = [1.4, 1.4, 1.4, 1.4, 0.9, 0.3, 0.1, 0]
+    const fixes = speeds.map((speed, second) => fix(second, 0, { speed }))
+    expect(readMovement(fixes, start + 6000)).toBe('moving')
+    expect(readMovement(fixes, start + 7000)).toBe('still')
   })
 
   it('says nothing between the two thresholds', () => {
-    const dawdling = watched([0, 0, 0, 0, 0, 0, 0], { speed: 0.42 })
+    const dawdling = watched([0, 0, 0, 0, 0, 0, 0], { speed: 0.7 })
     expect(readMovement(dawdling, at)).toBeUndefined()
   })
 
   it('says nothing until the dwell has fixes on both sides of it', () => {
-    expect(readMovement(watched([0, 0, 0]), start + 2000)).toBeUndefined()
+    expect(readMovement(watched([0, 0]), start + 1000)).toBeUndefined()
   })
 
   it('says nothing once the fixes have stopped arriving', () => {
@@ -78,8 +87,8 @@ describe('the stationary detector', () => {
   })
 
   it('holds to the thresholds the athlete was promised', () => {
-    expect(movementThresholds.pauseSpeed * 3.6).toBeCloseTo(1)
-    expect(movementThresholds.resumeSpeed * 3.6).toBeCloseTo(2)
-    expect(movementThresholds.dwellMs).toBe(5000)
+    expect(movementThresholds.pauseSpeed * 3.6).toBeCloseTo(2)
+    expect(movementThresholds.resumeSpeed * 3.6).toBeCloseTo(3)
+    expect(movementThresholds.dwellMs).toBe(2000)
   })
 })

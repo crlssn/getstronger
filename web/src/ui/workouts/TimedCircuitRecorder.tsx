@@ -6,6 +6,7 @@ import {
   nextVolume,
   speechVolume,
   useAnnouncementsStore,
+  volumeLabelKey,
   type AnnouncementVolume,
 } from '@/stores/announcements'
 import { useConfirmationStore } from '@/stores/confirmation'
@@ -30,6 +31,12 @@ import {
 } from '@/utils/timedCircuit'
 import { elapsedLabel } from '@/utils/workoutSession'
 import styles from './TimedCircuitRecorder.module.css'
+
+/** How often the pace on the screen changes, in milliseconds. */
+export const paceRefreshMs = 5000
+
+/** The decimals the live total keeps, so it moves with the athlete. */
+const liveDistanceDigits = 3
 
 interface Props {
   recordingKey: string
@@ -171,10 +178,17 @@ export const TimedCircuitRecorder = ({
             .map((phase) => phase.round),
           1,
         )
-  const pace = recording && !paused ? currentPace(recording, now) : undefined
+  // Read at the last refresh rather than at every poll: a window that moves a
+  // second at a time takes a new fix on every poll, and a figure that changes
+  // every second is not one a runner can act on.
+  const pace =
+    recording && !paused ? currentPace(recording, now - (now % paceRefreshMs)) : undefined
+  // Every decimal, and every fix: a total that turns over once every ten
+  // metres reads as a stalled GPS at a walk.
   const total = distanceIn(
     routes.reduce((sum, route) => sum + route.distanceMeters, 0) / 1000,
     unit,
+    liveDistanceDigits,
   )
   // The last interval the athlete actually completed, not the rest after it:
   // resting faster than last time is not a thing anyone is chasing.
@@ -194,9 +208,9 @@ export const TimedCircuitRecorder = ({
     ),
   ]
   const volumeLabels: Record<AnnouncementVolume, string> = {
-    full: t('timedCircuit.volumeFull'),
-    low: t('timedCircuit.volumeLow'),
-    off: t('timedCircuit.volumeOff'),
+    full: t(volumeLabelKey.full),
+    low: t(volumeLabelKey.low),
+    off: t(volumeLabelKey.off),
   }
   const paceNow = pace === undefined ? undefined : paceIn(pace, unit)
   const lastPace = last && paceIn((last.durationSeconds / last.distanceMeters) * 1000, unit)

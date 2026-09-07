@@ -299,7 +299,7 @@ describe('the browser recorder', () => {
     // The standstill is not part of the route: the fixes it held through are
     // read for movement and dropped.
     expect(recording?.points.map((point) => point.timestamp)).toEqual([
-      1_000_000, 1_001_000, 1_002_000, 1_003_000, 1_004_000, 1_005_000, 1_007_000,
+      1_000_000, 1_001_000, 1_002_000, 1_007_000,
     ])
   })
 

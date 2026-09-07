@@ -7,6 +7,7 @@ import {
   buildTimeline,
   circuitPhases,
   currentPace,
+  edgeMeters,
   isIntervalRecording,
   measureRoute,
   namedRecording,
@@ -174,6 +175,41 @@ describe('recorded timeline', () => {
     ]
     expect(measureRoute(data, buildTimeline(data, 361000))[0].distanceMeters).toBe(0)
   })
+
+  it('measures a walk by the speed the receiver read rather than the chord', () => {
+    const data = recording()
+    // Fixes that zigzag around a straight walk at 1.4 m/s: chord by chord they
+    // add up to more ground than the walk covered.
+    data.points = Array.from({ length: 121 }, (_, second) => ({
+      ...fix(1000 + second * 1000, second * 1.4 + (second % 2 ? 1.5 : -1.5)),
+      speed: 1.4,
+    }))
+    const walked = measureRoute(data, buildTimeline(data, 361000))[0]
+    expect(walked.distanceMeters).toBeCloseTo(168, 0)
+    expect(walked.incomplete).toBe(false)
+  })
+
+  it('counts a standstill the receiver saw as no distance, and still complete', () => {
+    const data = recording()
+    data.points = Array.from({ length: 121 }, (_, second) => ({
+      ...fix(1000 + second * 1000, second % 2 ? 4 : -4),
+      speed: 0,
+    }))
+    const stood = measureRoute(data, buildTimeline(data, 361000))[0]
+    expect(stood.distanceMeters).toBe(0)
+    expect(stood.incomplete).toBe(false)
+  })
+})
+
+describe('edgeMeters', () => {
+  it('falls back to the chord when either fix has no measured speed', () => {
+    expect(edgeMeters(fix(0, 0), fix(1000, 10))).toBeCloseTo(10, 5)
+    expect(edgeMeters({ ...fix(0, 0), speed: 1 }, fix(1000, 10))).toBeCloseTo(10, 5)
+  })
+
+  it('reads the mean of the two speeds over the time between them', () => {
+    expect(edgeMeters({ ...fix(0, 0), speed: 1 }, { ...fix(2000, 10), speed: 2 })).toBe(3)
+  })
 })
 
 describe('parseRecording', () => {
@@ -290,6 +326,12 @@ describe('currentPace', () => {
     expect(currentPace(data, 75000)).toBeUndefined()
     data.pauses = []
     data.points = [fix(72000, 10), fix(75000, 10)]
+    expect(currentPace(data, 75000)).toBeUndefined()
+    // Wandering fixes with a receiver that says the phone is standing.
+    data.points = [
+      { ...fix(72000, 0), speed: 0 },
+      { ...fix(75000, 8), speed: 0 },
+    ]
     expect(currentPace(data, 75000)).toBeUndefined()
   })
 })
