@@ -3,6 +3,7 @@ import { useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { selectTheme, useLocaleStore } from '@/stores/locale'
 import type { AppTheme } from '@/theme'
+import { routeRuns } from '@/utils/routeShape'
 import type { RoutePoint } from '@/utils/timedCircuit'
 // The worker built by Vite as its own bundle, with the module it imports
 // folded in. Left to MapLibre, the worker is a URL relative to its own module,
@@ -42,26 +43,6 @@ const fallbackColors: Record<string, string> = {
   '--color-route-6': '#0e8aa6',
 }
 
-/**
- * Joins consecutive edges into as few lines as the gaps allow.
- *
- * The map tiles its GeoJSON and simplifies each feature on its own, so an
- * edge a few metres long — one line per fix — vanishes at the zoom a phone
- * shows a route at, leaving a scatter of stubs. One line per unbroken run
- * survives at any zoom, and joins where the edges meet.
- */
-const chain = (segments: [RoutePoint, RoutePoint][]): [number, number][][] => {
-  const runs: [number, number][][] = []
-  let previous: RoutePoint | undefined
-  for (const [a, b] of segments) {
-    if (previous?.timestamp !== a.timestamp) runs.push([[a.longitude, a.latitude]])
-    runs[runs.length - 1].push([b.longitude, b.latitude])
-    previous = b
-  }
-
-  return runs
-}
-
 const resolveColor = (token: string) =>
   getComputedStyle(document.documentElement).getPropertyValue(token).trim() ||
   fallbackColors[token] ||
@@ -95,10 +76,13 @@ export const RouteMap = ({ lines, onUnavailable }: Props) => {
       maplibregl.setWorkerUrl(workerUrl)
 
       const features: Feature<LineString, { color: string }>[] = lines.flatMap((line) =>
-        chain(line.segments).map((coordinates) => ({
+        routeRuns(line.segments).map((run) => ({
           type: 'Feature',
           properties: { color: resolveColor(line.colorToken) },
-          geometry: { type: 'LineString', coordinates },
+          geometry: {
+            type: 'LineString',
+            coordinates: run.map((fix) => [fix.longitude, fix.latitude]),
+          },
         })),
       )
       const bounds = new maplibregl.LngLatBounds()

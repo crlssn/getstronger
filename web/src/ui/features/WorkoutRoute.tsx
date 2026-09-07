@@ -5,39 +5,25 @@ import { DistanceUnit } from '@/proto/api/v1/shared_pb'
 import { AppChip } from '@/ui/components/AppChip'
 import { AppStat } from '@/ui/components/AppStat'
 import { distanceUnitLabel } from '@/utils/distanceUnits'
-import { buildTimeline, measureRoute, type Recording } from '@/utils/timedCircuit'
+import { fitRoute, routeIntervals } from '@/utils/routeShape'
+import type { Recording, RoutePoint } from '@/utils/timedCircuit'
 import { elapsedLabel } from '@/utils/workoutSession'
 import { mapSupported } from '@/utils/mapSupport'
 import { RouteMap, type RouteLine } from './RouteMap'
 import styles from './WorkoutRoute.module.css'
 
-// The theme owns the hues, in both palettes; this only cycles through them.
-const routeColors = 6
-const routeToken = (index: number) => `--color-route-${(index % routeColors) + 1}`
-
 const metersPerKilometer = 1000
 const metersPerMile = 1609.344
+
+// The square the route is drawn into when there is no map behind it.
+const frame = 300
+const frameInset = 15
 
 export const WorkoutRoute = ({ recording }: { recording: Recording }) => {
   const { t } = useTranslation()
   const unit = usePreferencesStore((state) => state.distanceUnit)
-  const routes = useMemo(
-    () =>
-      measureRoute(
-        recording,
-        buildTimeline(recording, recording.endedAt ?? recording.startedAt),
-      ).filter((route) => route.phase.exerciseId && route.durationSeconds > 0),
-    [recording],
-  )
-  const exercises = useMemo(
-    () => [...new Map(routes.map(({ phase }) => [phase.exerciseId, phase.name])).entries()],
-    [routes],
-  )
-  const token = useCallback(
-    (id: string) => routeToken(exercises.findIndex(([exerciseId]) => exerciseId === id)),
-    [exercises],
-  )
-  const color = (id: string) => `var(${token(id)})`
+  const { routes, exercises, colorToken } = useMemo(() => routeIntervals(recording), [recording])
+  const color = (id: string) => `var(${colorToken(id)})`
   const points = routes.flatMap((route) => route.segments.flat())
 
   // A session reads as its rounds rather than as its intervals: twelve lines
@@ -66,36 +52,15 @@ export const WorkoutRoute = ({ recording }: { recording: Recording }) => {
     () =>
       routes.map((route) => ({
         key: `${route.phase.stationKey}-${route.phase.round}`,
-        colorToken: token(route.phase.exerciseId),
+        colorToken: colorToken(route.phase.exerciseId),
         segments: route.segments,
       })),
-    [routes, token],
+    [routes, colorToken],
   )
-  const origin = points[0]?.longitude ?? 0
-  const project = (latitude: number, longitude: number) => ({
-    x: ((longitude - origin + 540) % 360) - 180,
-    y:
-      (-Math.log(Math.tan(Math.PI / 4 + (Math.max(-85, Math.min(85, latitude)) * Math.PI) / 360)) *
-        180) /
-      Math.PI,
-  })
-  const projected = points.map((point) => project(point.latitude, point.longitude))
-  const bounds = projected.reduce(
-    (box, point) => ({
-      minX: Math.min(box.minX, point.x),
-      minY: Math.min(box.minY, point.y),
-      maxX: Math.max(box.maxX, point.x),
-      maxY: Math.max(box.maxY, point.y),
-    }),
-    { minX: Infinity, minY: Infinity, maxX: -Infinity, maxY: -Infinity },
-  )
-  const { minX, minY } = bounds
-  const spanX = bounds.maxX - minX
-  const spanY = bounds.maxY - minY
-  const scale = 270 / Math.max(spanX, spanY, 0.00001)
-  const xy = (latitude: number, longitude: number) => {
-    const point = project(latitude, longitude)
-    return `${15 + (point.x - minX) * scale},${15 + (point.y - minY) * scale}`
+  const fit = fitRoute(points, frame, frameInset)
+  const xy = (point: RoutePoint) => {
+    const { x, y } = fit(point)
+    return `${x},${y}`
   }
   const measured = (meters: number) => ({
     value: (meters / (unit === DistanceUnit.MILES ? metersPerMile : metersPerKilometer)).toFixed(2),
@@ -122,17 +87,12 @@ export const WorkoutRoute = ({ recording }: { recording: Recording }) => {
           {mapped ? (
             <RouteMap lines={lines} onUnavailable={onMapUnavailable} />
           ) : (
-            <svg viewBox="0 0 300 300" role="img" aria-label={t('timedCircuit.route')}>
+            <svg viewBox={`0 0 ${frame} ${frame}`} role="img" aria-label={t('timedCircuit.route')}>
               <title>{t('timedCircuit.route')}</title>
               {routes.map((route) => (
                 <path
                   key={`${route.phase.stationKey}-${route.phase.round}`}
-                  d={route.segments
-                    .map(
-                      ([a, b]) =>
-                        `M ${xy(a.latitude, a.longitude)} L ${xy(b.latitude, b.longitude)}`,
-                    )
-                    .join(' ')}
+                  d={route.segments.map(([a, b]) => `M ${xy(a)} L ${xy(b)}`).join(' ')}
                   fill="none"
                   // A presentation attribute cannot read a custom property; a style can.
                   style={{ stroke: color(route.phase.exerciseId) }}
