@@ -8,6 +8,9 @@ import type { Phase, Recording } from '@/utils/timedCircuit'
  * `localStorage` and reads the same fixes from the Geolocation API. It is what
  * an open-ended session runs on outside the app, and what the end-to-end suite
  * records against.
+ *
+ * It measures without speaking: there is no announcement here to turn down, so
+ * the volume the phones take is accepted and ignored.
  */
 
 const storageKey = 'getstronger:timed-circuit'
@@ -211,7 +214,12 @@ const mutate = (key: string, action: () => void): Promise<void> => {
 }
 
 export const TimedCircuitWeb = {
-  async start(options: { key: string; phases: Phase[]; locale: string }): Promise<void> {
+  async start(options: {
+    key: string
+    phases: Phase[]
+    locale: string
+    volume: number
+  }): Promise<void> {
     load()
     if (saved) throw new Error('A recording is already saved or active')
     if (!valid(options.phases)) throw new Error('Invalid prescription')
@@ -243,6 +251,10 @@ export const TimedCircuitWeb = {
 
   finish(options: { key: string }): Promise<void> {
     return mutate(options.key, () => end(now()))
+  },
+
+  setVolume(_options: { key: string; volume: number }): Promise<void> {
+    return Promise.resolve()
   },
 
   clear(options: { key: string }): Promise<void> {

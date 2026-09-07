@@ -15,6 +15,7 @@ import posthog from '@/posthog'
 import { ExerciseSetsSchema } from '@/proto/api/v1/shared_pb'
 import { CreateWorkoutRequestSchema, WorkoutService } from '@/proto/api/v1/workout_service_pb'
 import { useActivityStore } from '@/stores/activity'
+import { speechVolume, useAnnouncementsStore } from '@/stores/announcements'
 import { useAuthStore } from '@/stores/auth'
 import { useConfirmationStore } from '@/stores/confirmation'
 import { useConnectionStore } from '@/stores/connection'
@@ -141,6 +142,9 @@ export const RecordSession = () => {
         key,
         phases: openSessionPhases(title, t('record.instruction', { name: title }), exercise?.id),
         locale: i18n.language,
+        // One announcement, at the start — but it is still the phone talking,
+        // so it obeys the level the recording screen sets.
+        volume: speechVolume(useAnnouncementsStore.getState().volume),
       })
       const result = await timedCircuit.read({ key })
       setRecording(result.recording)

@@ -45,6 +45,14 @@ public class TimedCircuitPlugin extends Plugin {
     @PluginMethod public void resume(PluginCall call) { command(call, "resume"); }
     @PluginMethod public void finish(PluginCall call) { command(call, "finish"); }
     @PluginMethod public void clear(PluginCall call) { command(call, "clear"); }
+    @PluginMethod public void setVolume(PluginCall call) {
+        getActivity().runOnUiThread(() -> {
+            try {
+                TimedCircuitService.setVolume(getContext(), call.getString("key"), call.getDouble("volume", 1d));
+                call.resolve();
+            } catch (Exception error) { call.reject("Recording could not be updated", error); }
+        });
+    }
     private void command(PluginCall call, String action) {
         getActivity().runOnUiThread(() -> {
             try { TimedCircuitService.command(getContext(), call.getString("key"), action); call.resolve(); }

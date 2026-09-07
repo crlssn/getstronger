@@ -38,17 +38,17 @@ A selector is written as a standalone function of the state so both call sites
 above can use it — one subscribing, one reading once.
 
 **Persistence** uses Zustand's `persist` middleware over `migratedStorage` from
-[`persistence.ts`](persistence.ts). Seven stores persist: `auth`, `dashboard`,
-`emailVerification`, `locale`, `mutationQueue`, `preferences` and `workout`. Each names
-its fields in `partialize` explicitly, so actions and transient state never
-reach storage — a store that persisted its whole object would write its own
-functions out and read them back as data.
+[`persistence.ts`](persistence.ts). Eight stores persist: `announcements`,
+`auth`, `dashboard`, `emailVerification`, `locale`, `mutationQueue`,
+`preferences` and `workout`. Each names its fields in `partialize` explicitly,
+so actions and transient state never reach storage — a store that persisted its
+whole object would write its own functions out and read them back as data.
 
 On the web that storage is `localStorage`. Inside the native app the same
 adapter keeps every store with the OS through `@capacitor/preferences`, because
 a WebView's `localStorage` is website data iOS is free to clear. That read is
 asynchronous, so a store on native is empty for a tick after it is created:
-[`persisted.ts`](persisted.ts) lists the seven and `rehydrated()` is what
+[`persisted.ts`](persisted.ts) lists the eight and `rehydrated()` is what
 `main.tsx` waits on before anything reads one. A new persisted store goes on
 that list — its spec fails otherwise.
 
