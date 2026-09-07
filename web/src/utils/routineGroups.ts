@@ -1,7 +1,7 @@
 import type { RoutineGroup } from '@/proto/api/v1/routine_service_pb'
 import type { Exercise } from '@/proto/api/v1/shared_pb'
 
-import { ExerciseMetric, RoutineGroupMode } from '@/proto/api/v1/shared_pb'
+import { ExerciseMetric, RoutineGroupMode, RoutineGroupRole } from '@/proto/api/v1/shared_pb'
 
 /**
  * How a group's exercises are worked through: straight sets finish one exercise
@@ -9,6 +9,24 @@ import { ExerciseMetric, RoutineGroupMode } from '@/proto/api/v1/shared_pb'
  * again, for the rounds it is prescribed or for as many as the session takes.
  */
 export type GroupMode = 'straight' | 'circuit'
+
+/**
+ * Where a block sits in an interval routine: a warm-up worked once before the
+ * round count, the block that count repeats, a cool-down worked once after it.
+ *
+ * The empty string is a block with no such place — every gym circuit, and every
+ * routine saved before intervals existed.
+ */
+export type GroupRole = '' | 'warmup' | 'repeat' | 'cooldown'
+
+/** The three parts of an interval routine, in the order they are trained. */
+export const intervalRoles = ['warmup', 'repeat', 'cooldown'] as const
+
+/**
+ * How a routine is built: one list, blocks of its own choosing, or the fixed
+ * three parts of an interval session.
+ */
+export type RoutineShape = 'simple' | 'groups' | 'intervals'
 
 /** How long an exercise rests between sets when nothing says otherwise. */
 export const defaultRestSeconds = 90
@@ -18,6 +36,13 @@ export const defaultRoundRestSeconds = 90
 
 /** How many times a new circuit is prescribed to go round. */
 export const defaultRounds = 3
+
+/**
+ * A block worked once through, which is what a warm-up and a cool-down are.
+ * Stored as a round rather than as nothing so the recording guides them the
+ * same way it guides the block between them.
+ */
+const singleRound = 1
 
 const maximumRestSeconds = 3600
 
@@ -82,6 +107,17 @@ export interface DraftGroup {
    * block is straight sets rather than cleared.
    */
   rounds: number
+  /**
+   * Where this block sits in an interval routine, or nothing at all where the
+   * routine is not one.
+   */
+  role: GroupRole
+  /**
+   * Whether the repeating block drops its last exercise on its final round, so
+   * a walk-run does not end the session with a walk. Only the repeating block
+   * reads it.
+   */
+  skipLastOnFinalRound: boolean
   entries: DraftEntry[]
 }
 
@@ -104,6 +140,8 @@ const straightGroup = (
   // and none to count.
   restBetweenRoundsSeconds: 0,
   rounds: 0,
+  role: '',
+  skipLastOnFinalRound: false,
   entries,
 })
 
@@ -164,6 +202,134 @@ export const groupExerciseIds = (groups: readonly DraftGroup[]): string[] =>
 export const isGrouped = (groups: readonly DraftGroup[]): boolean =>
   groups.length > 1 || groups.some((group) => group.mode === 'circuit')
 
+/**
+ * Whether the routine is built as intervals rather than as blocks of its own
+ * choosing. One part carrying a role is enough: a routine with an empty warm-up
+ * saves two parts, not three.
+ */
+export const isIntervals = (groups: readonly DraftGroup[]): boolean =>
+  groups.some((group) => group.role !== '')
+
+/** Which of the three shapes the form is holding. */
+export const routineShape = (groups: readonly DraftGroup[]): RoutineShape =>
+  isIntervals(groups) ? 'intervals' : isGrouped(groups) ? 'groups' : 'simple'
+
+/**
+ * One part of an interval routine.
+ *
+ * Every part is a circuit: an interval is held for the time it says and the
+ * next one starts, which is the same thing a guided round does. It rests
+ * nowhere, because in an interval session the easy interval is the rest.
+ */
+const intervalPart = (role: GroupRole, entries: DraftEntry[] = []): DraftGroup => ({
+  id: newLocalId('group'),
+  mode: 'circuit',
+  restTimers: false,
+  restBetweenExercisesSeconds: 0,
+  restBetweenRoundsSeconds: 0,
+  rounds: role === 'repeat' ? defaultRounds : singleRound,
+  role,
+  // A walk-run that ends on a walk ends on the part nobody came for, so a new
+  // repeating block drops it and the athlete turns that off if they want it.
+  skipLastOnFinalRound: role === 'repeat',
+  entries,
+})
+
+/**
+ * The three parts an interval routine is, in the order they are trained.
+ *
+ * The exercises go into the repeating block, which is the one the session is
+ * built around; a warm-up and a cool-down are added to it by hand.
+ */
+export const intervalGroups = (entries: DraftEntry[] = []): DraftGroup[] =>
+  intervalRoles.map((role) => intervalPart(role, role === 'repeat' ? entries : []))
+
+/** The part of an interval routine that plays this role, if the form holds one. */
+export const intervalPartOf = (
+  groups: readonly DraftGroup[],
+  role: GroupRole,
+): DraftGroup | undefined => groups.find((group) => group.role === role)
+
+/**
+ * Reshapes the form into the three parts of an interval routine, keeping every
+ * exercise it already held.
+ *
+ * A routine already built as intervals keeps its parts as they are — a walk-run
+ * walks in the warm-up and again in the block, which is two occurrences of one
+ * exercise and the point of the shape. Anything else folds into the repeating
+ * block, which is the block a session is built around, and one block trains an
+ * exercise once.
+ */
+export const toIntervalGroups = (groups: readonly DraftGroup[]): DraftGroup[] => {
+  if (isIntervals(groups)) return intervalDrafts(groups)
+
+  const seen = new Set<string>()
+  const entries = groups
+    .flatMap((group) => group.entries)
+    .filter((entry) => {
+      if (seen.has(entry.exerciseId)) return false
+      seen.add(entry.exerciseId)
+      return true
+    })
+
+  return intervalGroups(entries)
+}
+
+/**
+ * Drops the interval shape and keeps the blocks, which is what a routine built
+ * as intervals is once it is read as groups.
+ */
+export const clearIntervalRoles = (groups: readonly DraftGroup[]): DraftGroup[] =>
+  groups.map((group) => ({ ...group, role: '', skipLastOnFinalRound: false }))
+
+/**
+ * How many intervals the routine prescribes: the warm-up, the block once per
+ * round, and the cool-down, less the exercise the final round drops.
+ */
+export const intervalCount = (groups: readonly DraftGroup[]): number =>
+  groups.reduce((count, group) => count + intervalsIn(group), 0)
+
+/** How long the routine is planned to take, in seconds. */
+export const intervalSeconds = (groups: readonly DraftGroup[]): number =>
+  groups.reduce((seconds, group) => {
+    const block = group.entries.reduce(
+      (sum, entry) => sum + (entry.targetDurationSeconds ?? 0),
+      0,
+    )
+    const skipped = skipsLast(group) ? (group.entries.at(-1)?.targetDurationSeconds ?? 0) : 0
+    return seconds + block * roundsOf(group) - skipped
+  }, 0)
+
+/** Whether this block ends its final round an exercise early. */
+const skipsLast = (group: DraftGroup): boolean =>
+  group.skipLastOnFinalRound && group.role === 'repeat' && group.entries.length > 1
+
+const roundsOf = (group: DraftGroup) => Math.max(group.rounds, singleRound)
+
+const intervalsIn = (group: DraftGroup) =>
+  group.entries.length * roundsOf(group) - (skipsLast(group) ? 1 : 0)
+
+/**
+ * How the interval parts came back from the API, filled out to the three the
+ * form edits. An empty part is not saved, so a routine with no cool-down comes
+ * back with two.
+ */
+const intervalDrafts = (groups: readonly DraftGroup[]): DraftGroup[] =>
+  intervalRoles.map((role) => intervalPartOf(groups, role) ?? intervalPart(role))
+
+const roleFromProto = (role: RoutineGroupRole): GroupRole => {
+  switch (role) {
+    case RoutineGroupRole.WARMUP:
+      return 'warmup'
+    case RoutineGroupRole.REPEAT:
+      return 'repeat'
+    case RoutineGroupRole.COOLDOWN:
+      return 'cooldown'
+    default:
+      return ''
+  }
+}
+
 /** Reads a saved routine into the form, tolerating one saved before grouping. */
 export const draftGroupsFromRoutine = (
   groups: readonly RoutineGroup[],
@@ -171,7 +337,7 @@ export const draftGroupsFromRoutine = (
 ): DraftGroup[] => {
   if (!groups.length) return singleStraightGroup(exerciseIds)
 
-  return groups.map((group) => {
+  const drafts: DraftGroup[] = groups.map((group) => {
     // A block that rests nowhere is a block with the timer off. Its fields fall
     // back to what a new occurrence would take, so switching the timer on hands
     // back a routine's worth of lengths rather than a column of zeros.
@@ -191,6 +357,8 @@ export const draftGroupsFromRoutine = (
         ? group.restBetweenRoundsSeconds
         : defaultRoundRestSeconds,
       rounds: group.rounds,
+      role: roleFromProto(group.role),
+      skipLastOnFinalRound: group.skipLastOnFinalRound,
       entries: group.exercises.map((entry) => ({
         key: newLocalId('entry'),
         exerciseId: entry.exercise?.id ?? '',
@@ -201,7 +369,16 @@ export const draftGroupsFromRoutine = (
       })),
     }
   })
+
+  return isIntervals(drafts) ? intervalDrafts(drafts) : drafts
 }
+
+/** Changes one block of the form and leaves the others as they are. */
+export const withGroup = (
+  groups: readonly DraftGroup[],
+  groupId: string,
+  changes: Partial<DraftGroup>,
+): DraftGroup[] => groups.map((group) => (group.id === groupId ? { ...group, ...changes } : group))
 
 /** Whether the group already trains this exercise, and so will not take it again. */
 const groupHasExercise = (group: DraftGroup, exerciseId: string): boolean =>
@@ -285,6 +462,8 @@ export const addGroup = (groups: readonly DraftGroup[]): DraftGroup[] => [
     restBetweenExercisesSeconds: 0,
     restBetweenRoundsSeconds: defaultRoundRestSeconds,
     rounds: defaultRounds,
+    role: '',
+    skipLastOnFinalRound: false,
     entries: [],
   },
 ]
@@ -324,8 +503,15 @@ const clampRounds = (value: number) =>
 /** Keeps a group's settings inside what the API accepts. */
 const clampGroup = (group: DraftGroup): DraftGroup => {
   // Rounds are how the block is worked through rather than how it rests, so a
-  // block with its timer off is still prescribed for the rounds it says.
-  const rounds = group.mode === 'circuit' ? clampRounds(group.rounds) : 0
+  // block with its timer off is still prescribed for the rounds it says. A part
+  // of an interval routine is worked at least once: an open-ended warm-up is a
+  // session with no shape, which is what the other two modes are for.
+  const rounds =
+    group.mode !== 'circuit'
+      ? 0
+      : group.role === ''
+        ? clampRounds(group.rounds)
+        : Math.max(clampRounds(group.rounds), singleRound)
 
   // No timer is no rest: the lengths the draft is holding are what the switch
   // would hand back, not what this routine trains with.

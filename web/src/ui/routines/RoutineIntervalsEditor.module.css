@@ -1,0 +1,55 @@
+@reference '../../assets/base.css';
+
+/* A part is a titled thing on the page, the way a group is: what it is and when
+   it is worked sit above the card, and the card holds what is being built. */
+.part {
+  @apply mb-4 flex flex-col;
+}
+
+.partHeader {
+  @apply mb-1 flex items-center gap-2.5 px-1;
+}
+
+/* W and C, quiet — a warm-up is scaffolding around the session. */
+.partBadge {
+  @apply grid size-8 shrink-0 place-items-center rounded-control bg-info-surface text-sm font-semibold text-text-muted;
+}
+
+/* The round count is the one thing on the screen that says what the session is,
+   so it is the one badge that carries weight. */
+.roundBadge {
+  @apply bg-ink font-bold tabular-nums text-text-inverse;
+}
+
+.partTitle {
+  @apply min-w-0 truncate text-body font-bold text-text;
+}
+
+.partNote {
+  @apply ml-auto shrink-0 text-meta text-text-subtle;
+}
+
+.partCard {
+  @apply card divide-y divide-border overflow-hidden;
+}
+
+/* Ruled off from the exercises above it: adding one is what a part is built
+   with, so it is the width of the card rather than a button parked in a row. */
+.partActions {
+  @apply px-2;
+}
+
+.addExercise {
+  @apply w-full;
+}
+
+/* The skip sits under the block it changes, on the tint that says it is a
+   setting of the part rather than another exercise in it. */
+.skip {
+  @apply bg-ink-surface;
+}
+
+/* What the routine adds up to, read off the parts above it. */
+.plan {
+  @apply mb-4 flex items-baseline justify-between gap-3 px-1 text-meta tabular-nums text-text-subtle;
+}

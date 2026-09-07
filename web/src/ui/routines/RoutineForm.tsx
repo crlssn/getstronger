@@ -1,6 +1,6 @@
 import type { RoutineGroup } from '@/proto/api/v1/routine_service_pb'
 import type { Exercise } from '@/proto/api/v1/shared_pb'
-import type { DraftGroup } from '@/utils/routineGroups'
+import type { DraftGroup, RoutineShape } from '@/utils/routineGroups'
 
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -10,17 +10,28 @@ import { AppFormFooter } from '@/ui/components/AppFormFooter'
 import { AppInput } from '@/ui/components/AppInput'
 import { AppSegmented } from '@/ui/components/AppSegmented'
 import { RoutineGroupsEditor } from '@/ui/routines/RoutineGroupsEditor'
+import { RoutineIntervalsEditor } from '@/ui/routines/RoutineIntervalsEditor'
+import { intervalPartTitle } from '@/ui/routines/intervalParts'
 import { ExercisePickerSheet } from '@/ui/workouts/ExercisePickerSheet'
 import {
   addExerciseToGroup,
+  clearIntervalRoles,
   draftGroupsFromRoutine,
   groupExerciseIds,
   groupLetter,
   collapseToSingleGroup,
-  isGrouped,
+  routineShape,
   saveableGroups,
+  toIntervalGroups,
 } from '@/utils/routineGroups'
 import styles from './RoutineForm.module.css'
+
+/** What each shape does to the form, in a line under the choice. */
+const shapeHints: Record<RoutineShape, string> = {
+  simple: 'routine.form.groups.simpleHint',
+  groups: 'routine.form.groups.groupsHint',
+  intervals: 'routine.form.groups.intervalsHint',
+}
 
 interface Props {
   submitLabel: string
@@ -63,9 +74,10 @@ export const RoutineForm = ({
 
   const [name, setName] = useState(initialName)
   const [groups, setGroups] = useState<DraftGroup[]>(() => initial)
-  // Grouping is the advanced half of the screen: a routine that is one plain
-  // block never has to meet it, and one that is already grouped opens on it.
-  const [advanced, setAdvanced] = useState(() => isGrouped(initial))
+  // The shape decides what the rest of the screen is: a routine that is one
+  // plain block never has to meet the other two, and one that is already
+  // grouped or built as intervals opens on the shape it was saved in.
+  const [shape, setShape] = useState<RoutineShape>(() => routineShape(initial))
   // Every exercise the form has seen: the ones the routine came with, and the
   // ones picked since. Its name is what labels the row.
   const [library, setLibrary] = useState<Record<string, Exercise>>(() =>
@@ -97,11 +109,14 @@ export const RoutineForm = ({
       ? t('routine.form.needsExercise')
       : undefined
 
-  // Turning grouping off keeps the exercises, in order, and drops the structure
-  // — the one thing a single block cannot express.
-  const setAdvancedMode = (enabled: boolean) => {
-    setAdvanced(enabled)
-    if (!enabled) setGroups(collapseToSingleGroup(groups))
+  // Every change of shape keeps the exercises, in order, and drops whatever the
+  // new shape cannot express: a single block has no structure, and a grouped
+  // routine has no warm-up and no round count outside its blocks.
+  const setRoutineShape = (chosen: RoutineShape) => {
+    setShape(chosen)
+    if (chosen === 'simple') setGroups(collapseToSingleGroup(groups))
+    else if (chosen === 'intervals') setGroups(toIntervalGroups(groups))
+    else setGroups(clearIntervalRoles(groups))
   }
 
   const addExercise = (exercise: Exercise) => {
@@ -115,7 +130,15 @@ export const RoutineForm = ({
     onSave(name.trim(), groupExerciseIds(saved), saved)
   }
 
+  const pickerGroup = groups.find((group) => group.id === pickerGroupId)
   const pickerGroupIndex = groups.findIndex((group) => group.id === pickerGroupId)
+  // The sheet says which block it is filling, so a routine with three of them
+  // never leaves the athlete guessing where the exercise is about to land.
+  const pickerEyebrow = pickerGroup?.role
+    ? t(intervalPartTitle[pickerGroup.role])
+    : shape === 'groups' && pickerGroupIndex >= 0
+        ? t('routine.form.groups.groupName', { letter: groupLetter(pickerGroupIndex) })
+        : t('routine.form.eyebrow')
 
   return (
     <form
@@ -140,29 +163,37 @@ export const RoutineForm = ({
       />
 
       {/* The question that decides the shape of everything below it, so it is
-          asked before any of it — and answered in a line, because "Advanced"
-          on its own says nothing about what it does to the form. */}
-      <AppSegmented
+          asked before any of it — and answered in a line, because three words
+          on their own say nothing about what each does to the form. */}
+      <AppSegmented<RoutineShape>
         className={styles.structure}
         label={t('routine.form.groups.section')}
         options={[
-          { label: t('routine.form.groups.simple'), value: false },
-          { label: t('routine.form.groups.advanced'), value: true },
+          { label: t('routine.form.groups.shapeSimple'), value: 'simple' },
+          { label: t('routine.form.groups.shapeGroups'), value: 'groups' },
+          { label: t('routine.form.groups.shapeIntervals'), value: 'intervals' },
         ]}
-        value={advanced}
-        onChange={setAdvancedMode}
+        value={shape}
+        onChange={setRoutineShape}
       />
-      <p className={styles.structureHint}>
-        {advanced ? t('routine.form.groups.advancedHint') : t('routine.form.groups.simpleHint')}
-      </p>
+      <p className={styles.structureHint}>{t(shapeHints[shape])}</p>
 
-      <RoutineGroupsEditor
-        groups={groups}
-        grouped={advanced}
-        nameOf={(exerciseId) => library[exerciseId]?.name ?? exerciseId}
-        onChange={setGroups}
-        onAddExercise={setPickerGroupId}
-      />
+      {shape === 'intervals' ? (
+        <RoutineIntervalsEditor
+          groups={groups}
+          nameOf={(exerciseId) => library[exerciseId]?.name ?? exerciseId}
+          onChange={setGroups}
+          onAddExercise={setPickerGroupId}
+        />
+      ) : (
+        <RoutineGroupsEditor
+          groups={groups}
+          grouped={shape === 'groups'}
+          nameOf={(exerciseId) => library[exerciseId]?.name ?? exerciseId}
+          onChange={setGroups}
+          onAddExercise={setPickerGroupId}
+        />
+      )}
 
       {/* Pinned rather than parked at the end of the scroll, where a routine
           with ten exercises hid it. */}
@@ -181,11 +212,7 @@ export const RoutineForm = ({
               .find((group) => group.id === pickerGroupId)
               ?.entries.map((entry) => entry.exerciseId) ?? []
           }
-          eyebrow={
-            advanced && pickerGroupIndex >= 0
-              ? t('routine.form.groups.groupName', { letter: groupLetter(pickerGroupIndex) })
-              : t('routine.form.eyebrow')
-          }
+          eyebrow={pickerEyebrow}
           onAdd={addExercise}
           onClose={() => setPickerGroupId('')}
         />

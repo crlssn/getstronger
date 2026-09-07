@@ -6,7 +6,13 @@ import { AppChip } from '@/ui/components/AppChip'
 import { AppStat } from '@/ui/components/AppStat'
 import { distanceUnitLabel } from '@/utils/distanceUnits'
 import { fitRoute, routeIntervals } from '@/utils/routeShape'
-import type { Recording, RoutePoint } from '@/utils/timedCircuit'
+import {
+  isIntervalRecording,
+  recordedRounds,
+  type Recording,
+  type RoutePoint,
+} from '@/utils/timedCircuit'
+import { WorkoutIntervals } from './WorkoutIntervals'
 import { elapsedLabel } from '@/utils/workoutSession'
 import { mapSupported } from '@/utils/mapSupport'
 import { RouteMap, type RouteLine } from './RouteMap'
@@ -25,6 +31,11 @@ export const WorkoutRoute = ({ recording }: { recording: Recording }) => {
   const { routes, exercises, colorToken } = useMemo(() => routeIntervals(recording), [recording])
   const color = (id: string) => `var(${colorToken(id)})`
   const points = routes.flatMap((route) => route.segments.flat())
+
+  // An interval routine is one session with a shape, so it reads as one
+  // numbered sequence; a gym circuit has no such shape and reads as its rounds.
+  const readsAsIntervals = isIntervalRecording(recording)
+  const roundCount = recordedRounds(recording)
 
   // A session reads as its rounds rather than as its intervals: twelve lines
   // saying "Walk · Round 1" and "Run · Round 1" are six laps of the same loop.
@@ -76,8 +87,10 @@ export const WorkoutRoute = ({ recording }: { recording: Recording }) => {
   return (
     <section className={styles.route}>
       <header className={styles.heading}>
-        <h2>{t('timedCircuit.route')}</h2>
-        <AppChip>{t('timedCircuit.rounds', { count: rounds.length })}</AppChip>
+        <h2>{t(readsAsIntervals ? 'timedCircuit.intervals' : 'timedCircuit.route')}</h2>
+        <AppChip>
+          {t('timedCircuit.rounds', { count: readsAsIntervals ? roundCount : rounds.length })}
+        </AppChip>
       </header>
 
       {/* A square, so the loop a session ran reads as a shape. Nothing to draw
@@ -144,58 +157,69 @@ export const WorkoutRoute = ({ recording }: { recording: Recording }) => {
         </p>
       )}
 
-      {rounds.length > 0 && (
-        <>
-          <div className={styles.roundsHeading}>
-            <span>{t('timedCircuit.roundsHeading')}</span>
-            <small>{prescription}</small>
-          </div>
+      {readsAsIntervals ? (
+        <WorkoutIntervals
+          intervals={routes}
+          rounds={roundCount}
+          colour={color}
+          distance={label}
+          metresPerUnit={unit === DistanceUnit.MILES ? metersPerMile : metersPerKilometer}
+          unit={distanceUnitLabel(unit)}
+        />
+      ) : (
+        rounds.length > 0 && (
+          <>
+            <div className={styles.roundsHeading}>
+              <span>{t('timedCircuit.roundsHeading')}</span>
+              <small>{prescription}</small>
+            </div>
 
-          <ol className={styles.rounds}>
-            {rounds.map(([round, intervals]) => (
-              <li key={round}>
-                {/* The lap number, and what it is in words: a bare "3" beside
+            <ol className={styles.rounds}>
+              {rounds.map(([round, intervals]) => (
+                <li key={round}>
+                  {/* The lap number, and what it is in words: a bare "3" beside
                     two intervals says nothing about what the three counts. */}
-                <span className={styles.roundNumber}>
-                  <span aria-hidden="true">{round}</span>
-                  <span className="sr-only">{t('workout.roundPosition', { round })}</span>
-                </span>
-
-                <div className={styles.roundBody}>
-                  {/* The lap at a glance: how the round was divided, in the
-                      colours the map is drawn in. The line below carries the
-                      numbers, so the bar says nothing a reader cannot read. */}
-                  <span className={styles.bar} aria-hidden="true">
-                    {intervals.map((interval) => (
-                      <span
-                        key={`${interval.phase.stationKey}-${interval.phase.round}`}
-                        style={{
-                          flexGrow: interval.durationSeconds,
-                          backgroundColor: color(interval.phase.exerciseId),
-                        }}
-                      />
-                    ))}
+                  <span className={styles.roundNumber}>
+                    <span aria-hidden="true">{round}</span>
+                    <span className="sr-only">{t('workout.roundPosition', { round })}</span>
                   </span>
 
-                  <p className={styles.intervals}>
-                    {intervals.map((interval) => (
-                      <span key={`${interval.phase.stationKey}-${interval.phase.round}`}>
+                  <div className={styles.roundBody}>
+                    {/* The lap at a glance: how the round was divided, in the
+                      colours the map is drawn in. The line below carries the
+                      numbers, so the bar says nothing a reader cannot read. */}
+                    <span className={styles.bar} aria-hidden="true">
+                      {intervals.map((interval) => (
                         <span
-                          className={styles.dot}
-                          style={{ backgroundColor: color(interval.phase.exerciseId) }}
-                          aria-hidden="true"
+                          key={`${interval.phase.stationKey}-${interval.phase.round}`}
+                          style={{
+                            flexGrow: interval.durationSeconds,
+                            backgroundColor: color(interval.phase.exerciseId),
+                          }}
                         />
-                        {interval.phase.name}
-                        <strong>{elapsedLabel(Math.round(interval.durationSeconds))}</strong>
-                        <small>{label(interval.distanceMeters)}</small>
-                      </span>
-                    ))}
-                  </p>
-                </div>
-              </li>
-            ))}
-          </ol>
-        </>
+                      ))}
+                    </span>
+
+                    <p className={styles.intervals}>
+                      {intervals.map((interval) => (
+                        <span key={`${interval.phase.stationKey}-${interval.phase.round}`}>
+                          <span
+                            className={styles.dot}
+                            style={{ backgroundColor: color(interval.phase.exerciseId) }}
+                            aria-hidden="true"
+                          />
+                          {interval.phase.name}
+                          <strong>{elapsedLabel(Math.round(interval.durationSeconds))}</strong>
+                          <small>{label(interval.distanceMeters)}</small>
+                        </span>
+                      ))}
+                    </p>
+                  </div>
+                </li>
+              ))}
+            </ol>
+          </>
+        )
       )}
     </section>
   )

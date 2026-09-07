@@ -24,6 +24,7 @@ import {
   removeGroup,
   reorderEntry,
   setEntryRest,
+  withGroup,
 } from '@/utils/routineGroups'
 import { useSortable } from '@/utils/useSortable'
 import styles from './RoutineGroupsEditor.module.css'
@@ -38,10 +39,7 @@ interface Props {
   onAddExercise: (groupId: string) => void
 }
 
-const withGroup = (groups: DraftGroup[], groupId: string, changes: Partial<DraftGroup>) =>
-  groups.map((group) => (group.id === groupId ? { ...group, ...changes } : group))
-
-const setMode = (groups: DraftGroup[], groupId: string, mode: GroupMode) => {
+const setMode = (groups: readonly DraftGroup[], groupId: string, mode: GroupMode) => {
   const group = groups.find((entry) => entry.id === groupId)
   if (mode !== 'circuit') return withGroup(groups, groupId, { mode })
 
@@ -55,7 +53,8 @@ const setMode = (groups: DraftGroup[], groupId: string, mode: GroupMode) => {
   })
 }
 
-interface EntriesProps {
+/** @public Exported for the intervals editor, whose parts hold the same rows. */
+export interface EntriesProps {
   groups: DraftGroup[]
   group: DraftGroup
   /** Whether the rest between sets is a setting this block has at all. */
@@ -70,7 +69,7 @@ interface EntriesProps {
  * Its own component because each list is dragged on its own, and a hook cannot
  * be called once per group from a loop.
  */
-const GroupEntries = ({ groups, group, restBetweenSets, nameOf, onChange }: EntriesProps) => {
+export const GroupEntries = ({ groups, group, restBetweenSets, nameOf, onChange }: EntriesProps) => {
   const { t } = useTranslation()
 
   // Which row has its rest open. One at a time: a rest is a detour from

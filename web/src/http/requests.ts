@@ -2,8 +2,8 @@ import { type FieldMask } from '@bufbuild/protobuf/wkt'
 import type { RoutineExercise, RoutineGroup } from '@/proto/api/v1/routine_service_pb'
 import type { DistanceUnit, Exercise, WeightUnit } from '@/proto/api/v1/shared_pb'
 
-import { RoutineGroupMode } from '@/proto/api/v1/shared_pb'
-import type { DraftGroup } from '@/utils/routineGroups'
+import { RoutineGroupMode, RoutineGroupRole } from '@/proto/api/v1/shared_pb'
+import type { DraftGroup, GroupRole } from '@/utils/routineGroups'
 
 import { create } from '@bufbuild/protobuf'
 import { Code, ConnectError } from '@connectrpc/connect'
@@ -363,6 +363,13 @@ export const listExerciseTags = async (): Promise<string[]> => {
 
 // The groups say how the exercises are worked through. A routine that is one
 // plain block sends none, which is what every routine sent before grouping.
+const roleMessages: Record<GroupRole, RoutineGroupRole> = {
+  '': RoutineGroupRole.UNSPECIFIED,
+  warmup: RoutineGroupRole.WARMUP,
+  repeat: RoutineGroupRole.REPEAT,
+  cooldown: RoutineGroupRole.COOLDOWN,
+}
+
 const routineGroupMessages = (groups: readonly DraftGroup[] | undefined): RoutineGroup[] =>
   (groups ?? []).map(
     (group) =>
@@ -371,6 +378,8 @@ const routineGroupMessages = (groups: readonly DraftGroup[] | undefined): Routin
         restBetweenExercisesSeconds: group.restBetweenExercisesSeconds,
         restBetweenRoundsSeconds: group.restBetweenRoundsSeconds,
         rounds: group.rounds,
+        role: roleMessages[group.role],
+        skipLastOnFinalRound: group.skipLastOnFinalRound,
         exercises: group.entries.map(
           (entry) =>
             ({
