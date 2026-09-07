@@ -33,7 +33,8 @@ import { AppIconButton } from '@/ui/components/AppIconButton'
 import { AppSkeleton } from '@/ui/components/AppSkeleton'
 import { ExerciseTags } from '@/ui/exercises/ExerciseTags'
 import { formatExerciseSet } from '@/utils/exerciseMeasurements'
-import { groupLetter } from '@/utils/routineGroups'
+import { groupLetter, groupRole } from '@/utils/routineGroups'
+import { intervalPartBadge, intervalPartNote, intervalPartTitle } from '@/ui/routines/intervalParts'
 import { useSortable } from '@/utils/useSortable'
 import styles from './ViewRoutine.module.css'
 
@@ -242,28 +243,38 @@ export const ViewRoutine = () => {
             {groups.map((group, groupIndex) => {
               const letter = groupLetter(groupIndex)
               const circuit = group.mode === RoutineGroupMode.CIRCUIT
+              // An interval routine is a warm-up, a block repeated and a
+              // cool-down, so its parts are named for what they are rather than
+              // lettered as blocks whose order says nothing.
+              const role = groupRole(group.role)
 
               return (
                 <section key={group.id} className={styles.group}>
                   <header className={styles.groupHeader}>
                     <span className={styles.groupBadge} aria-hidden="true">
-                      {letter}
+                      {role ? t(intervalPartBadge[role], { count: group.rounds }) : letter}
                     </span>
                     <div>
-                      <strong>{t('routine.form.groups.groupName', { letter })}</strong>
+                      <strong>
+                        {role
+                          ? t(intervalPartTitle[role])
+                          : t('routine.form.groups.groupName', { letter })}
+                      </strong>
                       {/* A prescribed circuit says so here, beside what it
                           is: how many times round is the first thing anyone
                           reads off a circuit. */}
                       <small>
-                        {circuit
-                          ? [
-                              t('routine.view.groupCircuit'),
-                              group.rounds > 0 &&
-                                t('routine.view.groupRounds', { count: group.rounds }),
-                            ]
-                              .filter(Boolean)
-                              .join(' · ')
-                          : t('routine.view.groupStraight')}
+                        {role
+                          ? t(intervalPartNote[role], { count: group.rounds })
+                          : circuit
+                            ? [
+                                t('routine.view.groupCircuit'),
+                                group.rounds > 0 &&
+                                  t('routine.view.groupRounds', { count: group.rounds }),
+                              ]
+                                .filter(Boolean)
+                                .join(' · ')
+                            : t('routine.view.groupStraight')}
                       </small>
                     </div>
                   </header>

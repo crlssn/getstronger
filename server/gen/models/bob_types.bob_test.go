@@ -110,3 +110,9 @@ var _ sql.Scanner = (*enums.RoutineGroupMode)(nil)
 
 // Make sure the type enums.RoutineGroupMode satisfies database/sql/driver.Valuer
 var _ driver.Valuer = *new(enums.RoutineGroupMode)
+
+// Make sure the type enums.RoutineGroupRole satisfies database/sql.Scanner
+var _ sql.Scanner = (*enums.RoutineGroupRole)(nil)
+
+// Make sure the type enums.RoutineGroupRole satisfies database/sql/driver.Valuer
+var _ driver.Valuer = *new(enums.RoutineGroupRole)

@@ -1,5 +1,15 @@
 import type { RoutineGroup } from '@/proto/api/v1/routine_service_pb'
-import { RoutineGroupMode } from '@/proto/api/v1/shared_pb'
+import type { IntervalRole } from '@/utils/routineGroups'
+
+import { RoutineGroupMode, RoutineGroupRole } from '@/proto/api/v1/shared_pb'
+
+/**
+ * Where the block an interval came from sits in the routine: a warm-up worked
+ * once before the round count, the block that count repeats, a cool-down worked
+ * once after it. The recording keeps its own copy, so a routine edited later
+ * cannot change how a finished session reads.
+ */
+export type PhaseRole = IntervalRole
 
 export interface Phase {
   exerciseId: string
@@ -8,6 +18,11 @@ export interface Phase {
   round: number
   durationSeconds: number
   instruction: string
+  /**
+   * Absent for a gym circuit, and for every recording written before interval
+   * routines existed — both of which read as their groups and rounds instead.
+   */
+  role?: PhaseRole
 }
 
 export interface RoutePoint {
@@ -48,6 +63,29 @@ export const parseRecording = (json?: string): Recording | undefined => {
   }
 }
 
+const phaseRoles: Partial<Record<RoutineGroupRole, PhaseRole>> = {
+  [RoutineGroupRole.WARMUP]: 'warmup',
+  [RoutineGroupRole.REPEAT]: 'repeat',
+  [RoutineGroupRole.COOLDOWN]: 'cooldown',
+}
+
+/** Whether the session was recorded as intervals rather than as circuit rounds. */
+export const isIntervalRecording = (recording: Recording): boolean =>
+  recording.phases.some((phase) => phase.role)
+
+/**
+ * How many rounds the recording counted.
+ *
+ * An interval session counts the repeating block alone: its warm-up and its
+ * cool-down are worked once, outside the count. A circuit counts every block.
+ */
+export const recordedRounds = (recording: Recording): number => {
+  const counted = isIntervalRecording(recording)
+    ? recording.phases.filter((phase) => phase.role === 'repeat')
+    : recording.phases
+  return counted.reduce((rounds, phase) => Math.max(rounds, phase.round), 0)
+}
+
 /** Freeze the prescription before recording so later routine edits cannot change it. */
 export const circuitPhases = (
   groups: readonly RoutineGroup[],
@@ -77,8 +115,17 @@ export const circuitPhases = (
         stationKey: occurrence === 1 ? exercise.id : `${exercise.id}#${occurrence}`,
       }
     })
-    return Array.from({ length: group.rounds }, (_, index) =>
-      stations.flatMap(({ entry, exercise, stationKey }, position) => {
+    const role = phaseRoles[group.role]
+    return Array.from({ length: group.rounds }, (_, index) => {
+      // A walk-run that ran its last walk ended on the part nobody came for, so
+      // the repeating block may stop an exercise short of its final round.
+      const finalRound = index === group.rounds - 1
+      const worked =
+        group.skipLastOnFinalRound && role === 'repeat' && finalRound && stations.length > 1
+          ? stations.slice(0, -1)
+          : stations
+
+      return worked.flatMap(({ entry, exercise, stationKey }, position) => {
         const phase: Phase = {
           exerciseId: exercise.id,
           stationKey,
@@ -86,13 +133,14 @@ export const circuitPhases = (
           round: index + 1,
           durationSeconds: entry.targetDurationSeconds,
           instruction: instruction(exercise.name, entry.targetDurationSeconds),
+          ...(role ? { role } : {}),
         }
         const rest =
-          position < stations.length - 1
+          position < worked.length - 1
             ? group.restBetweenExercisesSeconds
-            : index < group.rounds - 1
-              ? group.restBetweenRoundsSeconds
-              : 0
+            : finalRound
+              ? 0
+              : group.restBetweenRoundsSeconds
         return rest > 0
           ? [
               phase,
@@ -105,8 +153,8 @@ export const circuitPhases = (
               },
             ]
           : [phase]
-      }),
-    ).flat()
+      })
+    }).flat()
   })
 }
 
@@ -217,6 +265,9 @@ export const currentPace = (recording: Recording, now: number, windowSeconds = 1
   }
   return meters > 0 ? (seconds / meters) * 1000 : undefined
 }
+
+/** One interval as it was actually run: how long it took, and how far it went. */
+export type MeasuredInterval = ReturnType<typeof measureRoute>[number]
 
 /** Attribute accepted GPS edges by time, splitting an edge at exercise boundaries. */
 export const measureRoute = (recording: Recording, intervals: Interval[]) => {

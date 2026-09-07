@@ -67,6 +67,16 @@ func random_enums_RoutineGroupMode(f *faker.Faker, limits ...string) enums.Routi
 	return all[f.IntBetween(0, len(all)-1)]
 }
 
+func random_enums_RoutineGroupRole(f *faker.Faker, limits ...string) enums.RoutineGroupRole {
+	if f == nil {
+		f = &defaultFaker
+	}
+
+	var e enums.RoutineGroupRole
+	all := e.All()
+	return all[f.IntBetween(0, len(all)-1)]
+}
+
 func random_float64(f *faker.Faker, limits ...string) float64 {
 	if f == nil {
 		f = &defaultFaker

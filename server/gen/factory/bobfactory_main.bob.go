@@ -538,6 +538,8 @@ func (f *Factory) fromExistingRoutineGroup(ctx context.Context, m *models.Routin
 	o.RestBetweenRoundsSeconds = func() int32 { return m.RestBetweenRoundsSeconds }
 	o.CreatedAt = func() time.Time { return m.CreatedAt }
 	o.Rounds = func() int32 { return m.Rounds }
+	o.Role = func() null.Val[enums.RoutineGroupRole] { return m.Role }
+	o.SkipLastOnFinalRound = func() bool { return m.SkipLastOnFinalRound }
 
 	if visited, ok := factoryVisitedCtx.Value(ctx); ok {
 		ptr := uintptr(unsafe.Pointer(m))

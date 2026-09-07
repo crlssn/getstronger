@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/aarondl/opt/omit"
+	"github.com/aarondl/opt/omitnull"
 	"github.com/stephenafamo/bob/dialect/psql/im"
 	"github.com/stephenafamo/bob/dialect/psql/sm"
 
@@ -152,6 +153,15 @@ func RoutineGroupCircuit(restBetweenExercisesSeconds, restBetweenRoundsSeconds i
 func RoutineGroupRounds(rounds int32) RoutineGroupOpt {
 	return func(group *models.RoutineGroupSetter) {
 		group.Rounds = omit.From(rounds)
+	}
+}
+
+// RoutineGroupRole is where the block sits in an interval routine, and whether
+// the repeating one drops its last exercise on the final round.
+func RoutineGroupRole(role enums.RoutineGroupRole, skipLastOnFinalRound bool) RoutineGroupOpt {
+	return func(group *models.RoutineGroupSetter) {
+		group.Role = omitnull.From(role)
+		group.SkipLastOnFinalRound = omit.From(skipLastOnFinalRound)
 	}
 }
 

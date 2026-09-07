@@ -87,6 +87,9 @@ describe('WorkoutRoute', () => {
 
     const distance = screen.getByText('Recorded distance').closest('div')
     expect(within(distance!).getByText('km')).toBeVisible()
+
+    // A gym circuit covers no ground worth a pace.
+    expect(screen.queryByText('Average pace')).not.toBeInTheDocument()
   })
 
   // The tiles are somebody else's, and the licence asks to be told so beside
@@ -112,5 +115,95 @@ describe('WorkoutRoute', () => {
     expect(screen.getByText('No reliable route was recorded.')).toBeVisible()
     expect(screen.getByText('Recorded distance').closest('div')).toHaveTextContent('0.00mi')
     expect(screen.getByRole('status')).toHaveTextContent('Tracking is incomplete')
+  })
+
+  // An interval routine is one session with a shape, so it reads as one list
+  // rather than as the three parts it was built from.
+  describe('an interval session', () => {
+    // A warm-up walk, then two rounds of run and walk, the last walk dropped.
+    const intervals = (): Recording => ({
+      ...recording(),
+      endedAt: 21000,
+      phases: [
+        { name: 'walk', role: 'warmup' as const, round: 1 },
+        { name: 'run', role: 'repeat' as const, round: 1 },
+        { name: 'walk', role: 'repeat' as const, round: 1 },
+        { name: 'run', role: 'repeat' as const, round: 2 },
+        { name: 'walk', role: 'cooldown' as const, round: 1 },
+      ].map(({ name, role, round }) => ({
+        exerciseId: name,
+        stationKey: name,
+        name,
+        round,
+        role,
+        durationSeconds: 4,
+        instruction: name,
+      })),
+      points: Array.from({ length: 21 }, (_, index) => ({
+        timestamp: 1000 + index * 1000,
+        latitude: 51,
+        longitude: index * 0.0001,
+        accuracy: 3,
+      })),
+    })
+
+    const intervalRows = () =>
+      screen.getAllByRole('listitem').filter((item) => within(item).queryByText('/km') !== null)
+
+    it('numbers every interval straight through, whatever part it came from', () => {
+      renderWithProviders(<WorkoutRoute recording={intervals()} />)
+
+      const rows = intervalRows()
+      expect(rows).toHaveLength(5)
+      expect(rows.map((row) => within(row).getByText(/^Interval \d+$/).textContent)).toEqual([
+        'Interval 1',
+        'Interval 2',
+        'Interval 3',
+        'Interval 4',
+        'Interval 5',
+      ])
+    })
+
+    // The round is where an interval sits in the sequence, not a heading over a
+    // group of them — and the warm-up and cool-down sit outside the count.
+    it('says the round under the name, and only inside the block', () => {
+      renderWithProviders(<WorkoutRoute recording={intervals()} />)
+
+      const rows = intervalRows()
+      expect(within(rows[0]).getByText('Warm-up')).toBeVisible()
+      expect(within(rows[1]).getByText('Round 1 of 2')).toBeVisible()
+      expect(within(rows[3]).getByText('Round 2 of 2')).toBeVisible()
+      expect(within(rows[4]).getByText('Cool-down')).toBeVisible()
+      expect(screen.getByText('2 rounds')).toBeVisible()
+    })
+
+    // The number the session was for, on every row and once over the whole of
+    // it — which is a tile a gym circuit never earns.
+    it('paces each interval on its own row, and the session as a whole', () => {
+      renderWithProviders(<WorkoutRoute recording={intervals()} />)
+
+      // Five rows and the tile beside the totals.
+      expect(screen.getAllByText('/km')).toHaveLength(6)
+      expect(intervalRows().every((row) => within(row).queryByText('—') === null)).toBe(true)
+      expect(screen.getByText('Average pace')).toBeVisible()
+    })
+
+    // What the routine asked for: the warm-up once, the block with its count in
+    // front of it, the cool-down after.
+    it('heads the sequence with the prescription', () => {
+      renderWithProviders(<WorkoutRoute recording={intervals()} />)
+
+      expect(screen.getByText('walk 0:04 · 2 × (run 0:04 → walk 0:04) · walk 0:04')).toBeVisible()
+    })
+
+    // The block dropped its last walk, so the sequence ends on the run and the
+    // final round is a row shorter than the ones before it.
+    it('ends the block on the run when the final round skipped its last', () => {
+      renderWithProviders(<WorkoutRoute recording={intervals()} />)
+
+      const rows = intervalRows()
+      expect(within(rows[3]).getByText('run')).toBeVisible()
+      expect(rows.filter((row) => within(row).queryByText('walk') !== null)).toHaveLength(3)
+    })
   })
 })

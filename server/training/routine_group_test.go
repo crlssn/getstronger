@@ -308,6 +308,65 @@ func TestNormalizeRoutineGroupSettings(t *testing.T) {
 	})
 }
 
+// Where a block sits in an interval routine, and the one setting only the
+// repeating block has.
+func TestNormalizeRoutineGroupRoles(t *testing.T) {
+	t.Parallel()
+
+	runNormalizeCases(t, []normalizeCase{
+		{
+			name: "the three parts of an interval routine keep their roles",
+			groups: []training.RoutineGroupDraft{
+				{Mode: training.RoutineGroupModeCircuit, Rounds: 1, Role: training.RoutineGroupRoleWarmup, Exercises: exercises("a")},
+				{Mode: training.RoutineGroupModeCircuit, Rounds: 5, Role: training.RoutineGroupRoleRepeat, Exercises: exercises("b")},
+				{Mode: training.RoutineGroupModeCircuit, Rounds: 1, Role: training.RoutineGroupRoleCooldown, Exercises: exercises("c")},
+			},
+			ordered: []string{"a", "b", "c"},
+			expected: []training.RoutineGroupDraft{
+				{Mode: training.RoutineGroupModeCircuit, Rounds: 1, Role: training.RoutineGroupRoleWarmup, Exercises: exercises("a")},
+				{Mode: training.RoutineGroupModeCircuit, Rounds: 5, Role: training.RoutineGroupRoleRepeat, Exercises: exercises("b")},
+				{Mode: training.RoutineGroupModeCircuit, Rounds: 1, Role: training.RoutineGroupRoleCooldown, Exercises: exercises("c")},
+			},
+		},
+		{
+			// The warm-up is worked once, so it has no final round to end
+			// early: only the block the count repeats does.
+			name: "only the repeating block keeps the skip",
+			groups: []training.RoutineGroupDraft{
+				{Mode: training.RoutineGroupModeCircuit, Rounds: 1, Role: training.RoutineGroupRoleWarmup, SkipLastOnFinalRound: true, Exercises: exercises("a")},
+				{Mode: training.RoutineGroupModeCircuit, Rounds: 5, Role: training.RoutineGroupRoleRepeat, SkipLastOnFinalRound: true, Exercises: exercises("b")},
+			},
+			ordered: []string{"a", "b"},
+			expected: []training.RoutineGroupDraft{
+				{Mode: training.RoutineGroupModeCircuit, Rounds: 1, Role: training.RoutineGroupRoleWarmup, Exercises: exercises("a")},
+				{Mode: training.RoutineGroupModeCircuit, Rounds: 5, Role: training.RoutineGroupRoleRepeat, SkipLastOnFinalRound: true, Exercises: exercises("b")},
+			},
+		},
+		{
+			// Every gym circuit saved before intervals existed, and every one
+			// saved since: no role, and nothing to skip.
+			name: "a group with no role is not part of an interval routine",
+			groups: []training.RoutineGroupDraft{
+				{Mode: training.RoutineGroupModeCircuit, Rounds: 3, SkipLastOnFinalRound: true, Exercises: exercises("a")},
+			},
+			ordered: []string{"a"},
+			expected: []training.RoutineGroupDraft{
+				{Mode: training.RoutineGroupModeCircuit, Rounds: 3, Exercises: exercises("a")},
+			},
+		},
+		{
+			name: "a role the schema does not know is no role at all",
+			groups: []training.RoutineGroupDraft{
+				{Mode: training.RoutineGroupModeStraight, Role: training.RoutineGroupRole("sprint"), Exercises: exercises("a")},
+			},
+			ordered: []string{"a"},
+			expected: []training.RoutineGroupDraft{
+				{Mode: training.RoutineGroupModeStraight, Exercises: exercises("a")},
+			},
+		},
+	})
+}
+
 // exercises names a group's exercises, none of them saying anything about rest
 // — which is every routine written before a routine could.
 func exercises(names ...string) []training.RoutineExerciseDraft {

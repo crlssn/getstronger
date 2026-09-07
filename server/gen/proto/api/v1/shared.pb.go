@@ -134,6 +134,65 @@ func (RoutineGroupMode) EnumDescriptor() ([]byte, []int) {
 	return file_api_v1_shared_proto_rawDescGZIP(), []int{1}
 }
 
+// Where a block sits in an interval routine: a warm-up worked once before the
+// round count, the block that count repeats, a cool-down worked once after it.
+// A session reads as one numbered sequence of intervals rather than as groups
+// when its blocks carry these.
+//
+// Unspecified is every other routine, gym circuits included, which have no
+// such shape.
+type RoutineGroupRole int32
+
+const (
+	RoutineGroupRole_ROUTINE_GROUP_ROLE_UNSPECIFIED RoutineGroupRole = 0
+	RoutineGroupRole_ROUTINE_GROUP_ROLE_WARMUP      RoutineGroupRole = 1
+	RoutineGroupRole_ROUTINE_GROUP_ROLE_REPEAT      RoutineGroupRole = 2
+	RoutineGroupRole_ROUTINE_GROUP_ROLE_COOLDOWN    RoutineGroupRole = 3
+)
+
+// Enum value maps for RoutineGroupRole.
+var (
+	RoutineGroupRole_name = map[int32]string{
+		0: "ROUTINE_GROUP_ROLE_UNSPECIFIED",
+		1: "ROUTINE_GROUP_ROLE_WARMUP",
+		2: "ROUTINE_GROUP_ROLE_REPEAT",
+		3: "ROUTINE_GROUP_ROLE_COOLDOWN",
+	}
+	RoutineGroupRole_value = map[string]int32{
+		"ROUTINE_GROUP_ROLE_UNSPECIFIED": 0,
+		"ROUTINE_GROUP_ROLE_WARMUP":      1,
+		"ROUTINE_GROUP_ROLE_REPEAT":      2,
+		"ROUTINE_GROUP_ROLE_COOLDOWN":    3,
+	}
+)
+
+func (x RoutineGroupRole) Enum() *RoutineGroupRole {
+	p := new(RoutineGroupRole)
+	*p = x
+	return p
+}
+
+func (x RoutineGroupRole) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (RoutineGroupRole) Descriptor() protoreflect.EnumDescriptor {
+	return file_api_v1_shared_proto_enumTypes[2].Descriptor()
+}
+
+func (RoutineGroupRole) Type() protoreflect.EnumType {
+	return &file_api_v1_shared_proto_enumTypes[2]
+}
+
+func (x RoutineGroupRole) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use RoutineGroupRole.Descriptor instead.
+func (RoutineGroupRole) EnumDescriptor() ([]byte, []int) {
+	return file_api_v1_shared_proto_rawDescGZIP(), []int{2}
+}
+
 type WeightUnit int32
 
 const (
@@ -167,11 +226,11 @@ func (x WeightUnit) String() string {
 }
 
 func (WeightUnit) Descriptor() protoreflect.EnumDescriptor {
-	return file_api_v1_shared_proto_enumTypes[2].Descriptor()
+	return file_api_v1_shared_proto_enumTypes[3].Descriptor()
 }
 
 func (WeightUnit) Type() protoreflect.EnumType {
-	return &file_api_v1_shared_proto_enumTypes[2]
+	return &file_api_v1_shared_proto_enumTypes[3]
 }
 
 func (x WeightUnit) Number() protoreflect.EnumNumber {
@@ -180,7 +239,7 @@ func (x WeightUnit) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use WeightUnit.Descriptor instead.
 func (WeightUnit) EnumDescriptor() ([]byte, []int) {
-	return file_api_v1_shared_proto_rawDescGZIP(), []int{2}
+	return file_api_v1_shared_proto_rawDescGZIP(), []int{3}
 }
 
 type DistanceUnit int32
@@ -216,11 +275,11 @@ func (x DistanceUnit) String() string {
 }
 
 func (DistanceUnit) Descriptor() protoreflect.EnumDescriptor {
-	return file_api_v1_shared_proto_enumTypes[3].Descriptor()
+	return file_api_v1_shared_proto_enumTypes[4].Descriptor()
 }
 
 func (DistanceUnit) Type() protoreflect.EnumType {
-	return &file_api_v1_shared_proto_enumTypes[3]
+	return &file_api_v1_shared_proto_enumTypes[4]
 }
 
 func (x DistanceUnit) Number() protoreflect.EnumNumber {
@@ -229,7 +288,7 @@ func (x DistanceUnit) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use DistanceUnit.Descriptor instead.
 func (DistanceUnit) EnumDescriptor() ([]byte, []int) {
-	return file_api_v1_shared_proto_rawDescGZIP(), []int{3}
+	return file_api_v1_shared_proto_rawDescGZIP(), []int{4}
 }
 
 type ExerciseSet struct {
@@ -831,7 +890,12 @@ const file_api_v1_shared_proto_rawDesc = "" +
 	"\x10RoutineGroupMode\x12\"\n" +
 	"\x1eROUTINE_GROUP_MODE_UNSPECIFIED\x10\x00\x12\x1f\n" +
 	"\x1bROUTINE_GROUP_MODE_STRAIGHT\x10\x01\x12\x1e\n" +
-	"\x1aROUTINE_GROUP_MODE_CIRCUIT\x10\x02*\\\n" +
+	"\x1aROUTINE_GROUP_MODE_CIRCUIT\x10\x02*\x95\x01\n" +
+	"\x10RoutineGroupRole\x12\"\n" +
+	"\x1eROUTINE_GROUP_ROLE_UNSPECIFIED\x10\x00\x12\x1d\n" +
+	"\x19ROUTINE_GROUP_ROLE_WARMUP\x10\x01\x12\x1d\n" +
+	"\x19ROUTINE_GROUP_ROLE_REPEAT\x10\x02\x12\x1f\n" +
+	"\x1bROUTINE_GROUP_ROLE_COOLDOWN\x10\x03*\\\n" +
 	"\n" +
 	"WeightUnit\x12\x1b\n" +
 	"\x17WEIGHT_UNIT_UNSPECIFIED\x10\x00\x12\x19\n" +
@@ -856,35 +920,36 @@ func file_api_v1_shared_proto_rawDescGZIP() []byte {
 	return file_api_v1_shared_proto_rawDescData
 }
 
-var file_api_v1_shared_proto_enumTypes = make([]protoimpl.EnumInfo, 4)
+var file_api_v1_shared_proto_enumTypes = make([]protoimpl.EnumInfo, 5)
 var file_api_v1_shared_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
 var file_api_v1_shared_proto_goTypes = []any{
 	(ExerciseMetric)(0),           // 0: api.v1.ExerciseMetric
 	(RoutineGroupMode)(0),         // 1: api.v1.RoutineGroupMode
-	(WeightUnit)(0),               // 2: api.v1.WeightUnit
-	(DistanceUnit)(0),             // 3: api.v1.DistanceUnit
-	(*ExerciseSet)(nil),           // 4: api.v1.ExerciseSet
-	(*ExerciseSets)(nil),          // 5: api.v1.ExerciseSets
-	(*Exercise)(nil),              // 6: api.v1.Exercise
-	(*Set)(nil),                   // 7: api.v1.Set
-	(*MetadataSet)(nil),           // 8: api.v1.MetadataSet
-	(*User)(nil),                  // 9: api.v1.User
-	(*PaginationRequest)(nil),     // 10: api.v1.PaginationRequest
-	(*PaginationResponse)(nil),    // 11: api.v1.PaginationResponse
-	(*timestamppb.Timestamp)(nil), // 12: google.protobuf.Timestamp
+	(RoutineGroupRole)(0),         // 2: api.v1.RoutineGroupRole
+	(WeightUnit)(0),               // 3: api.v1.WeightUnit
+	(DistanceUnit)(0),             // 4: api.v1.DistanceUnit
+	(*ExerciseSet)(nil),           // 5: api.v1.ExerciseSet
+	(*ExerciseSets)(nil),          // 6: api.v1.ExerciseSets
+	(*Exercise)(nil),              // 7: api.v1.Exercise
+	(*Set)(nil),                   // 8: api.v1.Set
+	(*MetadataSet)(nil),           // 9: api.v1.MetadataSet
+	(*User)(nil),                  // 10: api.v1.User
+	(*PaginationRequest)(nil),     // 11: api.v1.PaginationRequest
+	(*PaginationResponse)(nil),    // 12: api.v1.PaginationResponse
+	(*timestamppb.Timestamp)(nil), // 13: google.protobuf.Timestamp
 }
 var file_api_v1_shared_proto_depIdxs = []int32{
-	6,  // 0: api.v1.ExerciseSet.exercise:type_name -> api.v1.Exercise
-	7,  // 1: api.v1.ExerciseSet.set:type_name -> api.v1.Set
-	6,  // 2: api.v1.ExerciseSets.exercise:type_name -> api.v1.Exercise
-	7,  // 3: api.v1.ExerciseSets.sets:type_name -> api.v1.Set
+	7,  // 0: api.v1.ExerciseSet.exercise:type_name -> api.v1.Exercise
+	8,  // 1: api.v1.ExerciseSet.set:type_name -> api.v1.Set
+	7,  // 2: api.v1.ExerciseSets.exercise:type_name -> api.v1.Exercise
+	8,  // 3: api.v1.ExerciseSets.sets:type_name -> api.v1.Set
 	0,  // 4: api.v1.Exercise.metrics:type_name -> api.v1.ExerciseMetric
-	8,  // 5: api.v1.Set.metadata:type_name -> api.v1.MetadataSet
-	2,  // 6: api.v1.Set.weight_unit:type_name -> api.v1.WeightUnit
-	3,  // 7: api.v1.Set.distance_unit:type_name -> api.v1.DistanceUnit
-	12, // 8: api.v1.MetadataSet.created_at:type_name -> google.protobuf.Timestamp
-	2,  // 9: api.v1.User.weight_unit:type_name -> api.v1.WeightUnit
-	3,  // 10: api.v1.User.distance_unit:type_name -> api.v1.DistanceUnit
+	9,  // 5: api.v1.Set.metadata:type_name -> api.v1.MetadataSet
+	3,  // 6: api.v1.Set.weight_unit:type_name -> api.v1.WeightUnit
+	4,  // 7: api.v1.Set.distance_unit:type_name -> api.v1.DistanceUnit
+	13, // 8: api.v1.MetadataSet.created_at:type_name -> google.protobuf.Timestamp
+	3,  // 9: api.v1.User.weight_unit:type_name -> api.v1.WeightUnit
+	4,  // 10: api.v1.User.distance_unit:type_name -> api.v1.DistanceUnit
 	11, // [11:11] is the sub-list for method output_type
 	11, // [11:11] is the sub-list for method input_type
 	11, // [11:11] is the sub-list for extension type_name
@@ -902,7 +967,7 @@ func file_api_v1_shared_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_api_v1_shared_proto_rawDesc), len(file_api_v1_shared_proto_rawDesc)),
-			NumEnums:      4,
+			NumEnums:      5,
 			NumMessages:   8,
 			NumExtensions: 0,
 			NumServices:   0,

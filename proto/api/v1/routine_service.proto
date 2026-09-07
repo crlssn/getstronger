@@ -131,6 +131,12 @@ message RoutineGroup {
   // rounds as the session takes. A target rather than a limit: the session may
   // take another round or stop short of it. Ignored outside a circuit.
   int32 rounds = 8 [(buf.validate.field).int32 = {gte: 0, lte: 99}];
+  // Where this block sits in an interval routine. Unspecified everywhere else,
+  // which is every routine saved before intervals existed.
+  RoutineGroupRole role = 9;
+  // Whether the repeating block drops its last exercise on its final round, so
+  // a walk-run does not end the session with a walk. Ignored outside it.
+  bool skip_last_on_final_round = 10;
 }
 
 // One exercise where a routine trains it. The same exercise in another group,

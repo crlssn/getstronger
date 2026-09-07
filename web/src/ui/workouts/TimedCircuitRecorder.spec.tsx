@@ -209,4 +209,63 @@ describe('TimedCircuitRecorder', () => {
     await waitFor(() => expect(cancel).toHaveBeenCalledOnce())
     expect(timedCircuit.clear).toHaveBeenCalledWith({ key: 'athlete:routine' })
   })
+
+  // A warm-up is worked once, before the count, so announcing it as a round of
+  // anything says something the routine never asked for.
+  it('counts the rounds of the repeating block alone', async () => {
+    const intervals: Recording = {
+      version: 1,
+      startedAt: Date.now() - 1000,
+      phases: [
+        { ...phase, role: 'warmup', durationSeconds: 300 },
+        { ...phase, exerciseId: 'run', stationKey: 'run', name: 'Run', role: 'repeat' },
+        { ...phase, role: 'repeat', round: 2 },
+      ],
+      pauses: [],
+      points: [],
+      interrupted: false,
+    }
+    vi.mocked(timedCircuit.read).mockResolvedValue({ recording: intervals })
+
+    renderWithProviders(
+      <TimedCircuitRecorder
+        recordingKey="athlete:routine"
+        phases={intervals.phases}
+        onComplete={vi.fn()}
+        onCancel={vi.fn()}
+      />,
+    )
+
+    await screen.findByRole('heading', { name: 'Walk' })
+    expect(screen.queryByText(/^Round \d+ of \d+$/)).not.toBeInTheDocument()
+  })
+
+  it('announces the round once the repeating block starts', async () => {
+    const intervals: Recording = {
+      version: 1,
+      // The warm-up is behind us, so the block is what is being worked now.
+      startedAt: Date.now() - 301000,
+      phases: [
+        { ...phase, role: 'warmup', durationSeconds: 300 },
+        { ...phase, exerciseId: 'run', stationKey: 'run', name: 'Run', role: 'repeat' },
+        { ...phase, role: 'repeat', round: 2 },
+      ],
+      pauses: [],
+      points: [],
+      interrupted: false,
+    }
+    vi.mocked(timedCircuit.read).mockResolvedValue({ recording: intervals })
+
+    renderWithProviders(
+      <TimedCircuitRecorder
+        recordingKey="athlete:routine"
+        phases={intervals.phases}
+        onComplete={vi.fn()}
+        onCancel={vi.fn()}
+      />,
+    )
+
+    await screen.findByRole('heading', { name: 'Run' })
+    expect(screen.getByText('Round 1 of 2')).toBeVisible()
+  })
 })

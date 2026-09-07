@@ -4,24 +4,37 @@ import { create } from '@bufbuild/protobuf'
 import { describe, expect, it } from 'vitest'
 
 import { RoutineGroupSchema } from '@/proto/api/v1/routine_service_pb'
-import { ExerciseMetric, ExerciseSchema, RoutineGroupMode } from '@/proto/api/v1/shared_pb'
+import {
+  ExerciseMetric,
+  ExerciseSchema,
+  RoutineGroupMode,
+  RoutineGroupRole,
+} from '@/proto/api/v1/shared_pb'
 import {
   addExerciseToGroup,
   addGroup,
+  clearIntervalRoles,
   collapseToSingleGroup,
   defaultRestSeconds,
   defaultRoundRestSeconds,
   defaultRounds,
   draftGroupsFromRoutine,
   groupExerciseIds,
+  intervalCount,
+  intervalGroups,
+  intervalPartOf,
+  intervalSeconds,
   isGrouped,
+  isIntervals,
   removeEntry,
   newOccurrenceRestSeconds,
   removeGroup,
   reorderEntry,
+  routineShape,
   saveableGroups,
   setEntryRest,
   singleStraightGroup,
+  toIntervalGroups,
 } from '@/utils/routineGroups'
 
 const exercise = (id: string) => create(ExerciseSchema, { id, name: id })
@@ -353,5 +366,137 @@ describe('isGrouped', () => {
   it('is true once there is a second group or a circuit', () => {
     expect(isGrouped(addGroup(singleStraightGroup(['a'])))).toBe(true)
     expect(isGrouped([{ ...singleStraightGroup(['a'])[0], mode: 'circuit' }])).toBe(true)
+  })
+})
+
+/** The walk-run of the ticket, as the form holds it: a walk, then run and walk. */
+const walkRun = () => {
+  const groups = intervalGroups()
+  const withBlock = ['run', 'walk'].reduce(
+    (current, id) => addExerciseToGroup(current, groups[1].id, exercise(id)),
+    groups,
+  )
+  return addExerciseToGroup(withBlock, groups[0].id, exercise('walk'))
+}
+
+/** Every entry a target, which is what a guided interval needs. */
+const timed = (groups: readonly DraftGroup[], seconds: number) =>
+  groups.map((group) => ({
+    ...group,
+    entries: group.entries.map((entry) => ({ ...entry, targetDurationSeconds: seconds })),
+  }))
+
+describe('intervalGroups', () => {
+  it('is a warm-up, a repeating block and a cool-down, in that order', () => {
+    expect(intervalGroups().map((group) => group.role)).toEqual(['warmup', 'repeat', 'cooldown'])
+  })
+
+  it('works the warm-up and cool-down once and the block for the default rounds', () => {
+    const [warmup, repeat, cooldown] = intervalGroups()
+    expect(warmup.rounds).toBe(1)
+    expect(cooldown.rounds).toBe(1)
+    expect(repeat.rounds).toBe(defaultRounds)
+  })
+
+  it('drops the last exercise of the block on its final round', () => {
+    expect(intervalPartOf(intervalGroups(), 'repeat')?.skipLastOnFinalRound).toBe(true)
+  })
+
+  it('rests nowhere, since the easy interval is the rest', () => {
+    expect(intervalGroups().every((group) => !group.restTimers)).toBe(true)
+  })
+})
+
+describe('routineShape', () => {
+  it('is intervals as soon as one part says where it sits', () => {
+    expect(isIntervals(intervalGroups())).toBe(true)
+    expect(routineShape(intervalGroups())).toBe('intervals')
+  })
+
+  it('is groups for a gym circuit and simple for one plain block', () => {
+    expect(routineShape(twoGroups(['a'], ['b']))).toBe('groups')
+    expect(routineShape(singleStraightGroup(['a']))).toBe('simple')
+  })
+})
+
+describe('toIntervalGroups', () => {
+  it('hands the exercises of a plain routine to the repeating block', () => {
+    const groups = toIntervalGroups(singleStraightGroup(['a', 'b']))
+
+    expect(groups.map((group) => group.role)).toEqual(['warmup', 'repeat', 'cooldown'])
+    expect(groups[1].entries.map((entry) => entry.exerciseId)).toEqual(['a', 'b'])
+    expect(groups[0].entries).toEqual([])
+  })
+
+  it('trains an exercise once however many groups named it', () => {
+    expect(groupExerciseIds(toIntervalGroups(twoGroups(['a'], ['a', 'b'])))).toEqual(['a', 'b'])
+  })
+
+  it('leaves a routine already built as intervals alone', () => {
+    const groups = walkRun()
+    expect(groupExerciseIds(toIntervalGroups(groups))).toEqual(groupExerciseIds(groups))
+  })
+})
+
+describe('clearIntervalRoles', () => {
+  it('keeps the blocks and drops the shape', () => {
+    const groups = clearIntervalRoles(walkRun())
+
+    expect(isIntervals(groups)).toBe(false)
+    expect(groups.every((group) => !group.skipLastOnFinalRound)).toBe(true)
+    expect(groupExerciseIds(groups)).toEqual(groupExerciseIds(walkRun()))
+  })
+})
+
+describe('the planned session', () => {
+  it('counts the warm-up once, the block once a round, and the exercise it drops', () => {
+    const groups = timed(walkRun(), 60)
+
+    // A warm-up walk, then five rounds of run and walk less the final walk.
+    expect(intervalCount(groups)).toBe(1 + defaultRounds * 2 - 1)
+    expect(intervalSeconds(groups)).toBe(60 * (1 + defaultRounds * 2 - 1))
+  })
+
+  it('runs every round in full once the skip is off', () => {
+    const groups = timed(walkRun(), 60).map((group) => ({
+      ...group,
+      skipLastOnFinalRound: false,
+    }))
+
+    expect(intervalCount(groups)).toBe(1 + defaultRounds * 2)
+  })
+})
+
+describe('saving an interval routine', () => {
+  it('works every part at least once', () => {
+    const groups = saveableGroups(timed(walkRun(), 60).map((group) => ({ ...group, rounds: 0 })))
+
+    expect(groups.every((group) => group.rounds >= 1)).toBe(true)
+  })
+
+  it('reads its parts back in order, filling in the one it did not save', () => {
+    const groups = draftGroupsFromRoutine(
+      [
+        create(RoutineGroupSchema, {
+          mode: RoutineGroupMode.CIRCUIT,
+          rounds: 1,
+          role: RoutineGroupRole.WARMUP,
+          exercises: [trains('walk', 0)],
+        }),
+        create(RoutineGroupSchema, {
+          mode: RoutineGroupMode.CIRCUIT,
+          rounds: 5,
+          role: RoutineGroupRole.REPEAT,
+          skipLastOnFinalRound: true,
+          exercises: [trains('run', 0), trains('walk', 0)],
+        }),
+      ],
+      [],
+    )
+
+    expect(groups.map((group) => group.role)).toEqual(['warmup', 'repeat', 'cooldown'])
+    expect(groups[1].skipLastOnFinalRound).toBe(true)
+    expect(groups[1].rounds).toBe(5)
+    expect(groups[2].entries).toEqual([])
   })
 })

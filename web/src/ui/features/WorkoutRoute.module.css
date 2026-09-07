@@ -52,8 +52,10 @@
   @apply px-4 pt-2 text-eyebrow tracking-normal text-text-subtle sm:px-5;
 }
 
+/* Two or three tiles, whichever the session has: an interval session is also
+   read as its pace, and a gym circuit covers no ground worth one. */
 .totals {
-  @apply grid grid-cols-2 gap-2 px-4 pb-1 pt-3.5 sm:px-5;
+  @apply grid grid-cols-[repeat(auto-fit,minmax(6rem,1fr))] gap-2 px-4 pb-1 pt-3.5 sm:px-5;
 }
 
 .tile {

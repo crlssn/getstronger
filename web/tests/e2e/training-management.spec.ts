@@ -497,6 +497,85 @@ test.describe('routine lifecycle', () => {
     await expect(page).toHaveURL(/\/routines$/)
   })
 
+  // The walk-run of the ticket, end to end: a longer first walk and a block
+  // repeated, built as one routine rather than as two groups, saved, read back,
+  // and reopened still in the shape it was built in. The recorded reading it
+  // produces is the seeded session the test below reads.
+  test('builds a warm-up and a repeating block as one routine @mutation', async ({ page }) => {
+    const routineName = uniqueName('E2E Intervals')
+    const walk = uniqueName('E2E Intervals walk')
+    const run = uniqueName('E2E Intervals run')
+
+    try {
+      for (const exercise of [walk, run]) {
+        await page.goto('/exercises/create')
+        await page.locator('form input[type="text"]').first().fill(exercise)
+        await page.getByRole('button', { name: 'Create exercise' }).click()
+        await expect(page).toHaveURL(/\/exercises$/)
+      }
+
+      await page.goto('/routines/create')
+      await page.getByLabel('Routine name').fill(routineName)
+      await page.getByRole('button', { name: 'Intervals', exact: true }).click()
+
+      // Three parts, one button each, and no way to add a fourth: the shape is
+      // fixed, which is the whole point of this mode.
+      await expect(page.getByRole('button', { name: 'Add exercise' })).toHaveCount(3)
+      await expect(page.getByRole('button', { name: 'New group' })).toHaveCount(0)
+
+      // A five-minute walk to warm up, then a minute's run and two minutes'
+      // walk, five times through. The same walk is trained in two parts, so a
+      // row's stepper is folded away again before the next one is opened —
+      // otherwise both rows answer to the same nudge.
+      const setTarget = async (exercise: string, halfMinutes: number, value: string) => {
+        await targetChip(page, exercise, 'Off').click()
+        await stepRest(page, `Target duration for ${exercise}`, 'Add', halfMinutes)
+        await targetChip(page, exercise, value).click()
+      }
+
+      await addRoutineExercise(page, walk, 0)
+      await setTarget(walk, 10, '5:00')
+      await addRoutineExercise(page, run, 1)
+      await setTarget(run, 2, '1:00')
+      await addRoutineExercise(page, walk, 1)
+      await setTarget(walk, 4, '2:00')
+
+      await stepRounds(page, 'Add', 2)
+      await expect(page.getByText('Announced as Round n of 5')).toBeVisible()
+      await expect(page.getByText(`${run} and ${walk}, 5 times through`)).toBeVisible()
+
+      // The last walk is dropped, so the session ends on the run: ten intervals
+      // rather than eleven, and eighteen minutes rather than twenty.
+      await expect(page.getByText('10 intervals')).toBeVisible()
+      await expect(page.getByText('18 min planned')).toBeVisible()
+
+      await page.getByRole('button', { name: 'Create routine' }).click()
+      await expect(page).toHaveURL(/\/routines$/)
+
+      // Reopened for editing, the builder shows the three parts it was built
+      // with rather than the groups they are stored as.
+      await page.getByLabel('Search routines').fill(routineName)
+      await page.getByRole('heading', { name: routineName }).click()
+      await page.getByRole('link', { name: 'Edit exercises' }).click()
+
+      await expect(page.getByRole('button', { name: 'Intervals', exact: true })).toHaveAttribute(
+        'aria-pressed',
+        'true',
+      )
+      await expect(page.getByText('Warm-up', { exact: true })).toBeVisible()
+      await expect(page.getByText('Cool-down', { exact: true })).toBeVisible()
+      await expect(page.getByRole('spinbutton', { name: 'Rounds' })).toHaveText('5')
+      await expect(
+        page.getByRole('switch', { name: 'Skip last exercise on final round' }),
+      ).toBeChecked()
+      await expect(page.getByText('10 intervals')).toBeVisible()
+    } finally {
+      await deleteRoutine(page, routineName)
+      await deleteExercise(page, walk)
+      await deleteExercise(page, run)
+    }
+  })
+
   // The whole circuit, end to end: built in groups and prescribed for a number
   // of rounds, saved, read back, and then trained one round at a time until the
   // last round walks the block out.
@@ -524,7 +603,7 @@ test.describe('routine lifecycle', () => {
       await expect(routineExercises(page)).toHaveCount(2)
 
       // Grouping is the advanced half of the form; a circuit lives inside it.
-      await page.getByRole('button', { name: 'Advanced', exact: true }).click()
+      await page.getByRole('button', { name: 'Groups', exact: true }).click()
       await page.getByRole('button', { name: 'Circuit', exact: true }).click()
       // A circuit's rows carry a target instead of a rest between sets: how
       // long a round holds the exercise when the session is guided on a phone.
@@ -554,7 +633,7 @@ test.describe('routine lifecycle', () => {
       // than as the plain block a routine starts as, and a change to it is
       // saved as one.
       await page.getByRole('link', { name: 'Edit exercises' }).click()
-      await expect(page.getByRole('button', { name: 'Advanced', exact: true })).toHaveAttribute(
+      await expect(page.getByRole('button', { name: 'Groups', exact: true })).toHaveAttribute(
         'aria-pressed',
         'true',
       )

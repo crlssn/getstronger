@@ -285,6 +285,8 @@ func routineGroupDrafts(groups []*apiv1.RoutineGroup) ([]training.RoutineGroupDr
 			RestBetweenExercisesSeconds: group.GetRestBetweenExercisesSeconds(),
 			RestBetweenRoundsSeconds:    group.GetRestBetweenRoundsSeconds(),
 			Rounds:                      group.GetRounds(),
+			Role:                        parser.RoutineGroupRoleFromProto(group.GetRole()),
+			SkipLastOnFinalRound:        group.GetSkipLastOnFinalRound(),
 			Exercises:                   exercises,
 		})
 	}

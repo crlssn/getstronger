@@ -59,6 +59,20 @@ enum RoutineGroupMode {
   ROUTINE_GROUP_MODE_CIRCUIT = 2;
 }
 
+// Where a block sits in an interval routine: a warm-up worked once before the
+// round count, the block that count repeats, a cool-down worked once after it.
+// A session reads as one numbered sequence of intervals rather than as groups
+// when its blocks carry these.
+//
+// Unspecified is every other routine, gym circuits included, which have no
+// such shape.
+enum RoutineGroupRole {
+  ROUTINE_GROUP_ROLE_UNSPECIFIED = 0;
+  ROUTINE_GROUP_ROLE_WARMUP = 1;
+  ROUTINE_GROUP_ROLE_REPEAT = 2;
+  ROUTINE_GROUP_ROLE_COOLDOWN = 3;
+}
+
 enum WeightUnit {
   WEIGHT_UNIT_UNSPECIFIED = 0;
   WEIGHT_UNIT_KILOGRAMS = 1;

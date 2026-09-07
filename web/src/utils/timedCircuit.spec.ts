@@ -2,15 +2,45 @@ import { describe, expect, it } from 'vitest'
 import { create } from '@bufbuild/protobuf'
 import { RoutineGroupSchema } from '@/proto/api/v1/routine_service_pb'
 import { RoutineGroupMode } from '@/proto/api/v1/shared_pb'
+import { RoutineGroupRole } from '@/proto/api/v1/shared_pb'
 import {
   buildTimeline,
   circuitPhases,
   currentPace,
+  isIntervalRecording,
   measureRoute,
   parseRecording,
+  recordedRounds,
   type Recording,
   type RoutePoint,
 } from './timedCircuit'
+
+/** The walk-run of the ticket: a longer first walk, then five rounds of both. */
+const walkRunGroups = (skipLastOnFinalRound: boolean) => [
+  create(RoutineGroupSchema, {
+    mode: RoutineGroupMode.CIRCUIT,
+    rounds: 1,
+    role: RoutineGroupRole.WARMUP,
+    exercises: [{ exercise: { id: 'walk', name: 'Walk' }, targetDurationSeconds: 300 }],
+  }),
+  create(RoutineGroupSchema, {
+    mode: RoutineGroupMode.CIRCUIT,
+    rounds: 5,
+    role: RoutineGroupRole.REPEAT,
+    skipLastOnFinalRound,
+    exercises: [
+      { exercise: { id: 'run', name: 'Run' }, targetDurationSeconds: 60 },
+      { exercise: { id: 'walk', name: 'Walk' }, targetDurationSeconds: 120 },
+    ],
+  }),
+]
+
+const phasesOf = (skipLastOnFinalRound: boolean) =>
+  circuitPhases(
+    walkRunGroups(skipLastOnFinalRound),
+    (name, seconds) => `${name} ${seconds}`,
+    'Rest',
+  )
 
 const recording = (): Recording => ({
   version: 1,
@@ -119,6 +149,65 @@ describe('parseRecording', () => {
     expect(parseRecording(undefined)).toBeUndefined()
     expect(parseRecording('')).toBeUndefined()
     expect(parseRecording('{ not json')).toBeUndefined()
+  })
+})
+
+describe('interval routines', () => {
+  it('reads the warm-up once and the block five times, numbered straight through', () => {
+    const phases = phasesOf(false)
+
+    expect(phases).toHaveLength(11)
+    expect(phases[0]).toMatchObject({ name: 'Walk', role: 'warmup', round: 1 })
+    expect(phases[1]).toMatchObject({ name: 'Run', role: 'repeat', round: 1 })
+    expect(phases.at(-1)).toMatchObject({ name: 'Walk', role: 'repeat', round: 5 })
+    // Five rounds, whatever the warm-up in front of them is worked for.
+    expect(recordedRounds({ ...recording(), phases })).toBe(5)
+    expect(isIntervalRecording({ ...recording(), phases })).toBe(true)
+  })
+
+  it('ends the final round on the run when the block skips its last exercise', () => {
+    const phases = phasesOf(true)
+
+    expect(phases).toHaveLength(10)
+    expect(phases.at(-1)).toMatchObject({ name: 'Run', role: 'repeat', round: 5 })
+    expect(phases.filter((phase) => phase.name === 'Walk')).toHaveLength(5)
+    expect(recordedRounds({ ...recording(), phases })).toBe(5)
+  })
+
+  // A walk-run walks in the warm-up and again in the block. They are two
+  // stations of one session, and anything that draws or lists an interval keys
+  // on the station and the round — so two of them answering to one name is a
+  // segment that silently goes missing.
+  it('tells two occurrences of one exercise apart', () => {
+    const keys = phasesOf(false)
+      .filter((phase) => phase.exerciseId)
+      .map((phase) => `${phase.stationKey}-${phase.round}`)
+
+    expect(new Set(keys).size).toBe(keys.length)
+  })
+
+  it('leaves a gym circuit reading as its groups and its rounds', () => {
+    const phases = circuitPhases(
+      [
+        create(RoutineGroupSchema, {
+          mode: RoutineGroupMode.CIRCUIT,
+          rounds: 3,
+          // Nothing an interval routine says applies here, the skip included.
+          skipLastOnFinalRound: true,
+          exercises: [
+            { exercise: { id: 'squat', name: 'Squat' }, targetDurationSeconds: 40 },
+            { exercise: { id: 'row', name: 'Row' }, targetDurationSeconds: 40 },
+          ],
+        }),
+      ],
+      (name, seconds) => `${name} ${seconds}`,
+      'Rest',
+    )
+
+    expect(phases).toHaveLength(6)
+    expect(phases.every((phase) => phase.role === undefined)).toBe(true)
+    expect(isIntervalRecording({ ...recording(), phases })).toBe(false)
+    expect(recordedRounds({ ...recording(), phases })).toBe(3)
   })
 })
 

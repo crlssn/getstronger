@@ -355,7 +355,7 @@ describe('CreateRoutine', () => {
     await addExercise(/Bench press/)
     await addExercise(/^Row/)
 
-    await userEvent.click(screen.getByRole('button', { name: 'Advanced' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Groups' }))
     await userEvent.click(screen.getByRole('button', { name: 'Circuit' }))
 
     await userEvent.click(screen.getByRole('button', { name: 'Create routine' }))
@@ -384,7 +384,7 @@ describe('CreateRoutine', () => {
     await userEvent.type(await screen.findByLabelText('Routine name'), 'Full body')
     await addExercise(/Bench press/)
     await addExercise(/Row/)
-    await userEvent.click(screen.getByRole('button', { name: 'Advanced' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Groups' }))
     await userEvent.click(screen.getByRole('button', { name: 'Circuit' }))
 
     await userEvent.click(
@@ -417,7 +417,7 @@ describe('CreateRoutine', () => {
 
     await userEvent.type(await screen.findByLabelText('Routine name'), 'Full body')
     await addExercise(/Bench press/)
-    await userEvent.click(screen.getByRole('button', { name: 'Advanced' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Groups' }))
     await userEvent.click(screen.getByRole('button', { name: 'New group' }))
     await addExercise(/^Row/, 1)
 
@@ -442,7 +442,7 @@ describe('CreateRoutine', () => {
 
     await userEvent.type(await screen.findByLabelText('Routine name'), 'Full body')
     await addExercise(/Bench press/)
-    await userEvent.click(screen.getByRole('button', { name: 'Advanced' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Groups' }))
     await userEvent.click(screen.getByRole('button', { name: 'New group' }))
     await addExercise(/Bench press/, 1)
 
@@ -476,7 +476,7 @@ describe('CreateRoutine', () => {
     await userEvent.type(await screen.findByLabelText('Routine name'), 'Full body')
     await addExercise(/Bench press/)
 
-    await userEvent.click(screen.getByRole('button', { name: 'Advanced' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Groups' }))
     await userEvent.click(screen.getByRole('button', { name: 'New group' }))
     await addExercise(/^Row/, 1)
     await userEvent.click(screen.getByRole('button', { name: 'Remove group B' }))
@@ -630,7 +630,7 @@ describe('CreateRoutine', () => {
     await addExercise(/Bench press/)
     expect(screen.getByLabelText('Rest between sets of Bench press: 1:30')).toBeInTheDocument()
 
-    await userEvent.click(screen.getByRole('button', { name: 'Advanced' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Groups' }))
     await userEvent.click(screen.getByRole('button', { name: 'Circuit' }))
 
     expect(
@@ -644,7 +644,7 @@ describe('CreateRoutine', () => {
     await userEvent.type(await screen.findByLabelText('Routine name'), 'Full body')
     await addExercise(/Bench press/)
 
-    await userEvent.click(screen.getByRole('button', { name: 'Advanced' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Groups' }))
     await userEvent.click(screen.getByRole('button', { name: 'Circuit' }))
     await userEvent.click(screen.getByRole('button', { name: 'Standard' }))
 
@@ -659,6 +659,102 @@ describe('CreateRoutine', () => {
         [expect.objectContaining({ mode: 'straight', restBetweenRoundsSeconds: 0 })],
       ),
     )
+  })
+
+  // The walk-run of the ticket, built as one routine: a longer first walk, then
+  // a block of run and walk repeated, and no second group anywhere.
+  describe('intervals', () => {
+    const buildWalkRun = async () => {
+      await userEvent.type(await screen.findByLabelText('Routine name'), 'Walk-run')
+      await userEvent.click(screen.getByRole('button', { name: 'Intervals' }))
+      // Warm-up, repeating block, cool-down — three parts, one button each.
+      await addExercise(/^Row/, 0)
+      await addExercise(/Bench press/, 1)
+      await addExercise(/^Row/, 1)
+    }
+
+    test('is a warm-up, a repeating block and a cool-down', async () => {
+      render()
+      await userEvent.type(await screen.findByLabelText('Routine name'), 'Walk-run')
+      await userEvent.click(screen.getByRole('button', { name: 'Intervals' }))
+
+      expect(screen.getByText('Warm-up')).toBeInTheDocument()
+      expect(screen.getByText('Repeat')).toBeInTheDocument()
+      expect(screen.getByText('Cool-down')).toBeInTheDocument()
+      expect(screen.getAllByRole('button', { name: 'Add exercise' })).toHaveLength(3)
+      // The blocks a grouped routine is built from are not on this screen.
+      expect(screen.queryByRole('button', { name: 'New group' })).not.toBeInTheDocument()
+    })
+
+    test('saves the whole session as one routine, without a second group', async () => {
+      render()
+      await buildWalkRun()
+
+      await userEvent.click(screen.getByRole('button', { name: 'Create routine' }))
+
+      await waitFor(() =>
+        expect(mocked.createRoutine).toHaveBeenCalledWith(
+          'Walk-run',
+          ['row', 'bench', 'row'],
+          [
+            expect.objectContaining({ role: 'warmup', rounds: 1 }),
+            expect.objectContaining({
+              role: 'repeat',
+              rounds: 3,
+              skipLastOnFinalRound: true,
+            }),
+          ],
+        ),
+      )
+    })
+
+    test('counts the rounds, the intervals and the minutes as the stepper moves', async () => {
+      render()
+      await buildWalkRun()
+
+      // A warm-up and three rounds of two, less the exercise the last one drops.
+      expect(screen.getByText('6 intervals')).toBeInTheDocument()
+      // Nothing is timed yet, and "0 min" would be a claim about a session
+      // rather than the absence of one.
+      expect(screen.getByText('No times set yet')).toBeInTheDocument()
+      expect(screen.getByText('Bench press and Row, 3 times through')).toBeInTheDocument()
+
+      await userEvent.click(screen.getByRole('button', { name: 'Add a round to Rounds' }))
+
+      expect(screen.getByText('8 intervals')).toBeInTheDocument()
+      expect(screen.getByText('Announced as Round n of 4')).toBeInTheDocument()
+    })
+
+    test('runs every round in full once the skip is turned off', async () => {
+      render()
+      await buildWalkRun()
+
+      await userEvent.click(
+        screen.getByRole('switch', { name: 'Skip last exercise on final round' }),
+      )
+
+      expect(screen.getByText('Every round runs in full')).toBeInTheDocument()
+      expect(screen.getByText('7 intervals')).toBeInTheDocument()
+    })
+
+    test('keeps the exercises when the shape changes back to groups', async () => {
+      render()
+      await buildWalkRun()
+
+      await userEvent.click(screen.getByRole('button', { name: 'Groups' }))
+      await userEvent.click(screen.getByRole('button', { name: 'Create routine' }))
+
+      await waitFor(() =>
+        expect(mocked.createRoutine).toHaveBeenCalledWith(
+          'Walk-run',
+          ['row', 'bench', 'row'],
+          [
+            expect.objectContaining({ role: '', skipLastOnFinalRound: false }),
+            expect.objectContaining({ role: '', skipLastOnFinalRound: false }),
+          ],
+        ),
+      )
+    })
   })
 })
 
@@ -736,7 +832,7 @@ describe('EditRoutine', () => {
 
     render()
 
-    expect(await screen.findByRole('button', { name: 'Advanced' })).toHaveAttribute(
+    expect(await screen.findByRole('button', { name: 'Groups' })).toHaveAttribute(
       'aria-pressed',
       'true',
     )

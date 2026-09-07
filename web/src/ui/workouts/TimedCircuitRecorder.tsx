@@ -12,6 +12,8 @@ import { distanceIn, paceIn } from '@/utils/exerciseMeasurements'
 import {
   buildTimeline,
   currentPace,
+  isIntervalRecording,
+  recordedRounds,
   measureRoute,
   routeToken,
   type Phase,
@@ -116,12 +118,19 @@ export const TimedCircuitRecorder = ({
   const held = recording?.pauses.at(-1)
   const elapsed = timeline.reduce((sum, interval) => sum + interval.durationSeconds, 0)
   const progress = current ? current.durationSeconds / current.phase.durationSeconds : 0
-  const rounds = Math.max(
-    ...(recording?.phases ?? [])
-      .filter((phase) => phase.stationKey === current?.phase.stationKey)
-      .map((phase) => phase.round),
-    1,
-  )
+  // A circuit counts every block, so the total is the station's own rounds; an
+  // interval session counts the block the routine repeats, and nothing else.
+  const intervals = recording ? isIntervalRecording(recording) : false
+  const counted = !intervals || current?.phase.role === 'repeat'
+  const rounds =
+    recording && intervals
+      ? recordedRounds(recording)
+      : Math.max(
+          ...(recording?.phases ?? [])
+            .filter((phase) => phase.stationKey === current?.phase.stationKey)
+            .map((phase) => phase.round),
+          1,
+        )
   const pace = recording && !paused ? currentPace(recording, now) : undefined
   const total = distanceIn(
     routes.reduce((sum, route) => sum + route.distanceMeters, 0) / 1000,
@@ -187,9 +196,14 @@ export const TimedCircuitRecorder = ({
                 heading in, and the name is the louder of the two facts. */}
             <div>
               <h1>{current?.phase.name}</h1>
-              <p className={styles.round}>
-                {t('timedCircuit.round', { round: current?.phase.round ?? 1, total: rounds })}
-              </p>
+              {/* An interval session counts its repeating block alone: the
+                  warm-up and the cool-down are worked once, outside the count,
+                  so neither is announced as a round of anything. */}
+              {counted && (
+                <p className={styles.round}>
+                  {t('timedCircuit.round', { round: current?.phase.round ?? 1, total: rounds })}
+                </p>
+              )}
             </div>
             {/* The pill says GPS; the live region says what about it. */}
             <p role="status" className={cn(styles.gps, gps && !paused && styles.tracking)}>

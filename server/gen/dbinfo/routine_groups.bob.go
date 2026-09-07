@@ -87,6 +87,24 @@ var RoutineGroups = Table[
 			Generated: false,
 			AutoIncr:  false,
 		},
+		Role: column{
+			Name:      "role",
+			DBType:    "public.routine_group_role",
+			Default:   "NULL",
+			Comment:   "",
+			Nullable:  true,
+			Generated: false,
+			AutoIncr:  false,
+		},
+		SkipLastOnFinalRound: column{
+			Name:      "skip_last_on_final_round",
+			DBType:    "boolean",
+			Default:   "false",
+			Comment:   "",
+			Nullable:  false,
+			Generated: false,
+			AutoIncr:  false,
+		},
 	},
 	Indexes: routineGroupIndexes{
 		RoutineGroupsPkey: index{
@@ -198,11 +216,13 @@ type routineGroupColumns struct {
 	RestBetweenRoundsSeconds    column
 	CreatedAt                   column
 	Rounds                      column
+	Role                        column
+	SkipLastOnFinalRound        column
 }
 
 func (c routineGroupColumns) AsSlice() []column {
 	return []column{
-		c.ID, c.RoutineID, c.Position, c.Mode, c.RestBetweenExercisesSeconds, c.RestBetweenRoundsSeconds, c.CreatedAt, c.Rounds,
+		c.ID, c.RoutineID, c.Position, c.Mode, c.RestBetweenExercisesSeconds, c.RestBetweenRoundsSeconds, c.CreatedAt, c.Rounds, c.Role, c.SkipLastOnFinalRound,
 	}
 }
 

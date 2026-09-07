@@ -12,6 +12,7 @@ import (
 
 	"github.com/aarondl/opt/null"
 	"github.com/aarondl/opt/omit"
+	"github.com/aarondl/opt/omitnull"
 	enums "github.com/crlssn/getstronger/server/gen/models/enums"
 	"github.com/gofrs/uuid/v5"
 	"github.com/stephenafamo/bob"
@@ -29,14 +30,16 @@ import (
 
 // RoutineGroup is an object representing the database table.
 type RoutineGroup struct {
-	ID                          uuid.UUID              `db:"id,pk" `
-	RoutineID                   uuid.UUID              `db:"routine_id" `
-	Position                    int32                  `db:"position" `
-	Mode                        enums.RoutineGroupMode `db:"mode" `
-	RestBetweenExercisesSeconds int32                  `db:"rest_between_exercises_seconds" `
-	RestBetweenRoundsSeconds    int32                  `db:"rest_between_rounds_seconds" `
-	CreatedAt                   time.Time              `db:"created_at" `
-	Rounds                      int32                  `db:"rounds" `
+	ID                          uuid.UUID                        `db:"id,pk" `
+	RoutineID                   uuid.UUID                        `db:"routine_id" `
+	Position                    int32                            `db:"position" `
+	Mode                        enums.RoutineGroupMode           `db:"mode" `
+	RestBetweenExercisesSeconds int32                            `db:"rest_between_exercises_seconds" `
+	RestBetweenRoundsSeconds    int32                            `db:"rest_between_rounds_seconds" `
+	CreatedAt                   time.Time                        `db:"created_at" `
+	Rounds                      int32                            `db:"rounds" `
+	Role                        null.Val[enums.RoutineGroupRole] `db:"role" `
+	SkipLastOnFinalRound        bool                             `db:"skip_last_on_final_round" `
 
 	R routineGroupR `db:"-" `
 
@@ -71,7 +74,7 @@ type routineGroupRLoaded struct {
 
 func buildRoutineGroupColumns(tableName string) routineGroupColumns {
 	columnsExpr := expr.NewColumnsExpr(
-		"id", "routine_id", "position", "mode", "rest_between_exercises_seconds", "rest_between_rounds_seconds", "created_at", "rounds",
+		"id", "routine_id", "position", "mode", "rest_between_exercises_seconds", "rest_between_rounds_seconds", "created_at", "rounds", "role", "skip_last_on_final_round",
 	)
 
 	if tableName != "" {
@@ -89,6 +92,8 @@ func buildRoutineGroupColumns(tableName string) routineGroupColumns {
 		RestBetweenRoundsSeconds:    buildRoutineGroupColumn(tableName, "rest_between_rounds_seconds"),
 		CreatedAt:                   buildRoutineGroupColumn(tableName, "created_at"),
 		Rounds:                      buildRoutineGroupColumn(tableName, "rounds"),
+		Role:                        buildRoutineGroupColumn(tableName, "role"),
+		SkipLastOnFinalRound:        buildRoutineGroupColumn(tableName, "skip_last_on_final_round"),
 	}
 }
 
@@ -103,6 +108,8 @@ type routineGroupColumns struct {
 	RestBetweenRoundsSeconds    routineGroupColumn
 	CreatedAt                   routineGroupColumn
 	Rounds                      routineGroupColumn
+	Role                        routineGroupColumn
+	SkipLastOnFinalRound        routineGroupColumn
 }
 
 // Alias returns the current table alias for the columns set.
@@ -148,18 +155,20 @@ func (c routineGroupColumn) ShouldOmitParens() bool {
 // All values are optional, and do not have to be set
 // Generated columns are not included
 type RoutineGroupSetter struct {
-	ID                          omit.Val[uuid.UUID]              `db:"id,pk" `
-	RoutineID                   omit.Val[uuid.UUID]              `db:"routine_id" `
-	Position                    omit.Val[int32]                  `db:"position" `
-	Mode                        omit.Val[enums.RoutineGroupMode] `db:"mode" `
-	RestBetweenExercisesSeconds omit.Val[int32]                  `db:"rest_between_exercises_seconds" `
-	RestBetweenRoundsSeconds    omit.Val[int32]                  `db:"rest_between_rounds_seconds" `
-	CreatedAt                   omit.Val[time.Time]              `db:"created_at" `
-	Rounds                      omit.Val[int32]                  `db:"rounds" `
+	ID                          omit.Val[uuid.UUID]                  `db:"id,pk" `
+	RoutineID                   omit.Val[uuid.UUID]                  `db:"routine_id" `
+	Position                    omit.Val[int32]                      `db:"position" `
+	Mode                        omit.Val[enums.RoutineGroupMode]     `db:"mode" `
+	RestBetweenExercisesSeconds omit.Val[int32]                      `db:"rest_between_exercises_seconds" `
+	RestBetweenRoundsSeconds    omit.Val[int32]                      `db:"rest_between_rounds_seconds" `
+	CreatedAt                   omit.Val[time.Time]                  `db:"created_at" `
+	Rounds                      omit.Val[int32]                      `db:"rounds" `
+	Role                        omitnull.Val[enums.RoutineGroupRole] `db:"role" `
+	SkipLastOnFinalRound        omit.Val[bool]                       `db:"skip_last_on_final_round" `
 }
 
 func (s RoutineGroupSetter) SetColumns() []string {
-	vals := make([]string, 0, 8)
+	vals := make([]string, 0, 10)
 	if s.ID.IsValue() {
 		vals = append(vals, "id")
 	}
@@ -183,6 +192,12 @@ func (s RoutineGroupSetter) SetColumns() []string {
 	}
 	if s.Rounds.IsValue() {
 		vals = append(vals, "rounds")
+	}
+	if s.Role.IsValue() || s.Role.IsNull() {
+		vals = append(vals, "role")
+	}
+	if s.SkipLastOnFinalRound.IsValue() {
+		vals = append(vals, "skip_last_on_final_round")
 	}
 	return vals
 }
@@ -211,6 +226,12 @@ func (s RoutineGroupSetter) Overwrite(t *RoutineGroup) {
 	}
 	if s.Rounds.IsValue() {
 		t.Rounds = s.Rounds.MustGet()
+	}
+	if s.Role.IsValue() || s.Role.IsNull() {
+		t.Role = s.Role.MustGetNull()
+	}
+	if s.SkipLastOnFinalRound.IsValue() {
+		t.SkipLastOnFinalRound = s.SkipLastOnFinalRound.MustGet()
 	}
 }
 
@@ -260,6 +281,16 @@ func (s *RoutineGroupSetter) Apply(q *dialect.InsertQuery) {
 				return psql.Raw("DEFAULT").WriteSQL(ctx, w, d, start)
 			}
 			return psql.Arg(s.Rounds.MustGet()).WriteSQL(ctx, w, d, start)
+		}), bob.ExpressionFunc(func(ctx context.Context, w io.StringWriter, d bob.Dialect, start int) ([]any, error) {
+			if s.Role.IsUnset() {
+				return psql.Raw("DEFAULT").WriteSQL(ctx, w, d, start)
+			}
+			return psql.Arg(s.Role.MustGetNull()).WriteSQL(ctx, w, d, start)
+		}), bob.ExpressionFunc(func(ctx context.Context, w io.StringWriter, d bob.Dialect, start int) ([]any, error) {
+			if s.SkipLastOnFinalRound.IsUnset() {
+				return psql.Raw("DEFAULT").WriteSQL(ctx, w, d, start)
+			}
+			return psql.Arg(s.SkipLastOnFinalRound.MustGet()).WriteSQL(ctx, w, d, start)
 		}))
 }
 
@@ -268,7 +299,7 @@ func (s RoutineGroupSetter) UpdateMod() bob.Mod[*dialect.UpdateQuery] {
 }
 
 func (s RoutineGroupSetter) Expressions(prefix ...string) []bob.Expression {
-	exprs := make([]bob.Expression, 0, 8)
+	exprs := make([]bob.Expression, 0, 10)
 
 	if s.ID.IsValue() {
 		exprs = append(exprs, expr.Join{Sep: " = ", Exprs: []bob.Expression{
@@ -326,6 +357,20 @@ func (s RoutineGroupSetter) Expressions(prefix ...string) []bob.Expression {
 		}})
 	}
 
+	if s.Role.IsValue() || s.Role.IsNull() {
+		exprs = append(exprs, expr.Join{Sep: " = ", Exprs: []bob.Expression{
+			psql.Quote(append(prefix, "role")...),
+			psql.Arg(s.Role),
+		}})
+	}
+
+	if s.SkipLastOnFinalRound.IsValue() {
+		exprs = append(exprs, expr.Join{Sep: " = ", Exprs: []bob.Expression{
+			psql.Quote(append(prefix, "skip_last_on_final_round")...),
+			psql.Arg(s.SkipLastOnFinalRound),
+		}})
+	}
+
 	return exprs
 }
 
@@ -336,7 +381,7 @@ func routineGroupScanMapper(ctx context.Context, cols []string) (scan.BeforeFunc
 		idx int
 		dst func(o *RoutineGroup) any
 	}
-	targets := make([]target, 0, 8)
+	targets := make([]target, 0, 10)
 	for i, col := range cols {
 		switch col {
 		case "id":
@@ -355,6 +400,10 @@ func routineGroupScanMapper(ctx context.Context, cols []string) (scan.BeforeFunc
 			targets = append(targets, target{i, func(o *RoutineGroup) any { return &o.CreatedAt }})
 		case "rounds":
 			targets = append(targets, target{i, func(o *RoutineGroup) any { return &o.Rounds }})
+		case "role":
+			targets = append(targets, target{i, func(o *RoutineGroup) any { return &o.Role }})
+		case "skip_last_on_final_round":
+			targets = append(targets, target{i, func(o *RoutineGroup) any { return &o.SkipLastOnFinalRound }})
 		}
 	}
 
@@ -813,6 +862,8 @@ type routineGroupWhere[Q psql.Filterable] struct {
 	RestBetweenRoundsSeconds    psql.WhereMod[Q, int32]
 	CreatedAt                   psql.WhereMod[Q, time.Time]
 	Rounds                      psql.WhereMod[Q, int32]
+	Role                        psql.WhereNullMod[Q, enums.RoutineGroupRole]
+	SkipLastOnFinalRound        psql.WhereMod[Q, bool]
 	R                           routineGroupWhereR[Q]
 }
 
@@ -831,6 +882,8 @@ func buildRoutineGroupWhere[Q psql.Filterable](cols routineGroupColumns) routine
 		RestBetweenRoundsSeconds:    psql.Where[Q, int32](cols.RestBetweenRoundsSeconds.Expression),
 		CreatedAt:                   psql.Where[Q, time.Time](cols.CreatedAt.Expression),
 		Rounds:                      psql.Where[Q, int32](cols.Rounds.Expression),
+		Role:                        psql.WhereNull[Q, enums.RoutineGroupRole](cols.Role.Expression),
+		SkipLastOnFinalRound:        psql.Where[Q, bool](cols.SkipLastOnFinalRound.Expression),
 		R:                           routineGroupWhereR[Q]{cols: cols},
 	}
 }
@@ -882,6 +935,8 @@ type routineGroupPreloadBuf struct {
 	RestBetweenRoundsSeconds    null.Val[int32]
 	CreatedAt                   null.Val[time.Time]
 	Rounds                      null.Val[int32]
+	Role                        null.Val[enums.RoutineGroupRole]
+	SkipLastOnFinalRound        null.Val[bool]
 }
 
 // routineGroupScanMapperNullable maps the preloaded routineGroup
@@ -896,7 +951,7 @@ func routineGroupScanMapperNullable(prefix string) scan.Mapper[*RoutineGroup] {
 			idx int
 			dst func(b *routineGroupPreloadBuf) any
 		}
-		targets := make([]target, 0, 8)
+		targets := make([]target, 0, 10)
 		for i, col := range cols {
 			name, ok := strings.CutPrefix(col, prefix)
 			if !ok {
@@ -919,6 +974,10 @@ func routineGroupScanMapperNullable(prefix string) scan.Mapper[*RoutineGroup] {
 				targets = append(targets, target{i, func(b *routineGroupPreloadBuf) any { return &b.CreatedAt }})
 			case "rounds":
 				targets = append(targets, target{i, func(b *routineGroupPreloadBuf) any { return &b.Rounds }})
+			case "role":
+				targets = append(targets, target{i, func(b *routineGroupPreloadBuf) any { return &b.Role }})
+			case "skip_last_on_final_round":
+				targets = append(targets, target{i, func(b *routineGroupPreloadBuf) any { return &b.SkipLastOnFinalRound }})
 			}
 		}
 
@@ -948,7 +1007,9 @@ func routineGroupScanMapperNullable(prefix string) scan.Mapper[*RoutineGroup] {
 					!(buf.RestBetweenExercisesSeconds.IsValue()) &&
 					!(buf.RestBetweenRoundsSeconds.IsValue()) &&
 					!(buf.CreatedAt.IsValue()) &&
-					!(buf.Rounds.IsValue()) {
+					!(buf.Rounds.IsValue()) &&
+					!(buf.Role.IsValue()) &&
+					!(buf.SkipLastOnFinalRound.IsValue()) {
 					return nil, nil
 				}
 
@@ -976,6 +1037,10 @@ func routineGroupScanMapperNullable(prefix string) scan.Mapper[*RoutineGroup] {
 				}
 				if buf.Rounds.IsValue() {
 					o.Rounds = buf.Rounds.MustGet()
+				}
+				o.Role = buf.Role
+				if buf.SkipLastOnFinalRound.IsValue() {
+					o.SkipLastOnFinalRound = buf.SkipLastOnFinalRound.MustGet()
 				}
 				return o, nil
 			}
