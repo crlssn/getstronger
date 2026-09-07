@@ -1,3 +1,4 @@
+import { useAnnouncementsStore } from '@/stores/announcements'
 import { useAuthStore } from '@/stores/auth'
 import { useDashboardStore } from '@/stores/dashboard'
 import { useEmailVerificationStore } from '@/stores/emailVerification'
@@ -16,6 +17,7 @@ interface Persisted {
 
 /** Every store that persists, so the app can wait for all of them at once. */
 export const persistedStores: readonly Persisted[] = [
+  useAnnouncementsStore,
   useAuthStore,
   useDashboardStore,
   useEmailVerificationStore,

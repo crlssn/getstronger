@@ -26,6 +26,12 @@
   @apply block text-eyebrow font-bold uppercase text-text-subtle;
 }
 
+/* Two pills beside the title, where a glance already is: how loudly the
+   session is talking, and how well it is being followed. */
+.pills {
+  @apply flex shrink-0 items-center gap-2;
+}
+
 /* A pill rather than a line of prose: it says one thing, and it says it beside
    the title where a glance already is. The word is decoration — the sentence
    behind it is what the live region announces. */

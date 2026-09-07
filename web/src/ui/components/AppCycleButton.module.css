@@ -1,0 +1,27 @@
+@reference '../../assets/base.css';
+
+/* The value is the label: a control that has to be read and changed mid-stride
+ * says where it is now rather than what tapping it would do. Pill-shaped and
+ * raised, so it reads as a control beside the status pills it sits with. */
+.cycle {
+  @apply inline-flex min-h-(--size-control-sm) shrink-0 items-center gap-2 rounded-pill text-meta font-bold shadow-raised transition;
+  padding: 0 0.75rem 0 0.625rem;
+}
+
+.cycle svg {
+  @apply size-5;
+}
+
+/* Filled while the setting is doing something, a quiet surface while it is
+ * not: the one difference a glance has to make out. */
+.on {
+  @apply bg-ink text-text-inverse;
+}
+
+.off {
+  @apply bg-surface text-text-muted;
+}
+
+.cycle:disabled {
+  @apply cursor-not-allowed opacity-40;
+}

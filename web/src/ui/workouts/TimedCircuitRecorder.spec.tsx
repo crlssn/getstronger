@@ -2,6 +2,7 @@ import { screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { timedCircuit } from '@/native/timedCircuit'
+import { useAnnouncementsStore } from '@/stores/announcements'
 import { useConfirmationStore } from '@/stores/confirmation'
 import { renderWithProviders } from '@/ui/testing'
 import type { Recording, RoutePoint } from '@/utils/timedCircuit'
@@ -15,6 +16,7 @@ vi.mock('@/native/timedCircuit', () => ({
     resume: vi.fn(),
     finish: vi.fn(),
     clear: vi.fn(),
+    setVolume: vi.fn(),
   },
 }))
 
@@ -23,6 +25,7 @@ describe('TimedCircuitRecorder', () => {
     vi.clearAllMocks()
     vi.mocked(timedCircuit.read).mockResolvedValue({})
     useConfirmationStore.setState({ confirmation: null, resolver: null })
+    useAnnouncementsStore.setState({ volume: 'full' })
   })
   const phase = {
     exerciseId: 'walk',
@@ -238,6 +241,56 @@ describe('TimedCircuitRecorder', () => {
 
     await screen.findByRole('heading', { name: 'Walk' })
     expect(screen.queryByText(/^Round \d+ of \d+$/)).not.toBeInTheDocument()
+  })
+
+  // One tap, mid-run, one-handed: the level is on the control, and every step
+  // reaches the recorder that is doing the speaking.
+  it('cycles the announcement volume and hands each level to the recorder', async () => {
+    const user = userEvent.setup()
+    vi.mocked(timedCircuit.read).mockResolvedValue({ recording: running() })
+    vi.mocked(timedCircuit.setVolume).mockResolvedValue()
+    renderWithProviders(
+      <TimedCircuitRecorder
+        recordingKey="athlete:routine"
+        phases={[phase]}
+        onComplete={vi.fn()}
+        onCancel={vi.fn()}
+      />,
+    )
+    await screen.findByRole('heading', { name: 'Run' })
+
+    await user.click(screen.getByRole('button', { name: 'Voice volume: Full. Tap to change' }))
+    expect(timedCircuit.setVolume).toHaveBeenLastCalledWith({
+      key: 'athlete:routine',
+      volume: 0.4,
+    })
+
+    await user.click(screen.getByRole('button', { name: 'Voice volume: Low. Tap to change' }))
+    expect(timedCircuit.setVolume).toHaveBeenLastCalledWith({ key: 'athlete:routine', volume: 0 })
+
+    await user.click(screen.getByRole('button', { name: 'Voice volume: Off. Tap to change' }))
+    expect(timedCircuit.setVolume).toHaveBeenLastCalledWith({ key: 'athlete:routine', volume: 1 })
+    expect(screen.getByRole('button', { name: 'Voice volume: Full. Tap to change' })).toBeVisible()
+  })
+
+  // Turned down last time is turned down this time: the level is the athlete's
+  // rather than the session's.
+  it('starts the next session at the level the last one was left on', async () => {
+    const user = userEvent.setup()
+    useAnnouncementsStore.setState({ volume: 'off' })
+    vi.mocked(timedCircuit.start).mockResolvedValue()
+    renderWithProviders(
+      <TimedCircuitRecorder
+        recordingKey="athlete:routine"
+        phases={[phase]}
+        onComplete={vi.fn()}
+        onCancel={vi.fn()}
+      />,
+    )
+
+    await user.click(screen.getByRole('button', { name: 'Start guided circuit' }))
+
+    expect(timedCircuit.start).toHaveBeenCalledWith(expect.objectContaining({ volume: 0 }))
   })
 
   it('announces the round once the repeating block starts', async () => {

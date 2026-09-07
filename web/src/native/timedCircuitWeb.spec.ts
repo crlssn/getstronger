@@ -44,6 +44,7 @@ describe('the browser recorder', () => {
       key: 'athlete',
       phases: openSessionPhases('Bike commute', 'Recording Bike commute', 'bike'),
       locale: 'en',
+      volume: 1,
     })
 
   it('records an open session until it is finished, excluding paused movement', async () => {
@@ -71,6 +72,16 @@ describe('the browser recorder', () => {
     expect(recording?.pauses).toEqual([{ startedAt: 1_030_000, endedAt: 1_060_000 }])
   })
 
+  // Nothing here speaks, so the level is taken and dropped rather than
+  // refused: the screen is the same one the phones render.
+  it('takes a volume it has no announcement to apply it to', async () => {
+    const started = open()
+    watchers[0].success(fix(1_000_000, 0))
+    await started
+
+    await expect(TimedCircuitWeb.setVolume({ key: 'athlete', volume: 0 })).resolves.toBeUndefined()
+  })
+
   it('refuses a session another one is already recording, and answers only its own key', async () => {
     const started = open()
     watchers[0].success(fix(1_000_000, 0))
@@ -96,6 +107,7 @@ describe('the browser recorder', () => {
           { exerciseId: 'run', stationKey: 'run', name: 'Run', round: 1, instruction: 'Run' },
         ],
         locale: 'en',
+        volume: 1,
       }),
     ).rejects.toThrow('Invalid prescription')
   })

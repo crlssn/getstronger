@@ -1,10 +1,18 @@
+import { SpeakerWaveIcon, SpeakerXMarkIcon } from '@heroicons/react/24/outline'
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { timedCircuit } from '@/native/timedCircuit'
+import {
+  nextVolume,
+  speechVolume,
+  useAnnouncementsStore,
+  type AnnouncementVolume,
+} from '@/stores/announcements'
 import { useConfirmationStore } from '@/stores/confirmation'
 import { usePreferencesStore } from '@/stores/preferences'
 import { cn } from '@/ui/cn'
 import { AppButton } from '@/ui/components/AppButton'
+import { AppCycleButton } from '@/ui/components/AppCycleButton'
 import { AppInlineError } from '@/ui/components/AppInlineError'
 import { AppStat } from '@/ui/components/AppStat'
 import { WorkoutRoute } from '@/ui/features/WorkoutRoute'
@@ -39,6 +47,7 @@ export const TimedCircuitRecorder = ({
 }: Props) => {
   const { t, i18n } = useTranslation()
   const unit = usePreferencesStore((state) => state.distanceUnit)
+  const volume = useAnnouncementsStore((state) => state.volume)
   const [recording, setRecording] = useState(saved)
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
@@ -73,7 +82,13 @@ export const TimedCircuitRecorder = ({
     setBusy(true)
     setError('')
     try {
-      if (kind === 'start') await timedCircuit.start({ key, phases, locale: i18n.language })
+      if (kind === 'start')
+        await timedCircuit.start({
+          key,
+          phases,
+          locale: i18n.language,
+          volume: speechVolume(volume),
+        })
       else await timedCircuit[kind]({ key })
       if (kind === 'clear') {
         onCancel()
@@ -86,6 +101,19 @@ export const TimedCircuitRecorder = ({
       setError(t('timedCircuit.failed'))
     } finally {
       setBusy(false)
+    }
+  }
+  // Never disabled and never behind a sheet: this is the one control an athlete
+  // reaches for with somebody talking to them, so the tap is the whole gesture
+  // and the level moves before the recorder has answered.
+  const turn = async () => {
+    const level = nextVolume(volume)
+    useAnnouncementsStore.getState().setVolume(level)
+    setError('')
+    try {
+      await timedCircuit.setVolume({ key, volume: speechVolume(level) })
+    } catch {
+      setError(t('timedCircuit.failed'))
     }
   }
   // A recorded run cannot be recovered, and Discard is half a button wide next
@@ -155,6 +183,11 @@ export const TimedCircuitRecorder = ({
         .map((phase) => phase.exerciseId),
     ),
   ]
+  const volumeLabels: Record<AnnouncementVolume, string> = {
+    full: t('timedCircuit.volumeFull'),
+    low: t('timedCircuit.volumeLow'),
+    off: t('timedCircuit.volumeOff'),
+  }
   const paceNow = pace === undefined ? undefined : paceIn(pace, unit)
   const lastPace = last && paceIn((last.durationSeconds / last.distanceMeters) * 1000, unit)
   const lastDistance = last && distanceIn(last.distanceMeters / 1000, unit)
@@ -207,20 +240,32 @@ export const TimedCircuitRecorder = ({
                 </p>
               )}
             </div>
-            {/* The pill says GPS; the live region says what about it. */}
-            <p role="status" className={cn(styles.gps, gps && !paused && styles.tracking)}>
-              <span className={styles.dot} aria-hidden="true" />
-              <span aria-hidden="true">{t('timedCircuit.gps')}</span>
-              <span className="sr-only">
-                {t(
-                  paused
-                    ? 'timedCircuit.paused'
-                    : gps
-                      ? 'timedCircuit.gpsGood'
-                      : 'timedCircuit.gpsPoor',
-                )}
-              </span>
-            </p>
+            <div className={styles.pills}>
+              {/* Turned down rather than switched off at the phone, which would
+                  take the music with it. */}
+              <AppCycleButton
+                icon={volume === 'off' ? SpeakerXMarkIcon : SpeakerWaveIcon}
+                active={volume !== 'off'}
+                label={t('timedCircuit.volumeAction', { level: volumeLabels[volume] })}
+                onClick={() => void turn()}
+              >
+                {volumeLabels[volume]}
+              </AppCycleButton>
+              {/* The pill says GPS; the live region says what about it. */}
+              <p role="status" className={cn(styles.gps, gps && !paused && styles.tracking)}>
+                <span className={styles.dot} aria-hidden="true" />
+                <span aria-hidden="true">{t('timedCircuit.gps')}</span>
+                <span className="sr-only">
+                  {t(
+                    paused
+                      ? 'timedCircuit.paused'
+                      : gps
+                        ? 'timedCircuit.gpsGood'
+                        : 'timedCircuit.gpsPoor',
+                  )}
+                </span>
+              </p>
+            </div>
           </header>
 
           <div className={cn(styles.countdown, paused && styles.held)}>

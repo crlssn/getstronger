@@ -10,6 +10,7 @@ import android.content.Intent;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
@@ -71,7 +72,7 @@ public class TimedCircuitService extends Service implements LocationListener {
         JSONObject data = new JSONObject().put("version", 1).put("startedAt", now)
             .put("phases", phases).put("pauses", new JSONArray()).put("points", new JSONArray()).put("interrupted", false);
         saved = new JSONObject().put("key", options.getString("key")).put("locale", options.optString("locale", "en"))
-            .put("recording", data).put("checkpoint", now);
+            .put("volume", level(options.optDouble("volume", 1))).put("recording", data).put("checkpoint", now);
         try { persist(context); } catch (Exception error) { saved = null; throw error; }
     }
     static JSONObject read(Context context, String key) throws Exception {
@@ -79,6 +80,18 @@ public class TimedCircuitService extends Service implements LocationListener {
         if (saved == null || !saved.getString("key").equals(key)) return new JSONObject();
         if (active != null) active.tick();
         return new JSONObject().put("recording", saved.getJSONObject("recording"));
+    }
+    /** How loudly the phases are announced, 0 to 1; 0 speaks nothing at all. */
+    private static double level(double volume) {
+        return Math.min(Math.max(volume, 0), 1);
+    }
+    static void setVolume(Context context, String key, double volume) throws Exception {
+        load(context);
+        if (saved == null || !saved.getString("key").equals(key)) return;
+        double next = level(volume);
+        saved.put("volume", next);
+        if (next == 0 && active != null && active.speech != null) active.speech.stop();
+        persist(context);
     }
     static void command(Context context, String key, String command) throws Exception {
         load(context);
@@ -171,7 +184,7 @@ public class TimedCircuitService extends Service implements LocationListener {
                     if (spoken >= 0 && index > spoken + 1) data.put("interrupted", true);
                     spoken = index;
                     String instruction = phase.getString("instruction");
-                    if (speech.speak(instruction, TextToSpeech.QUEUE_FLUSH, null, "phase-" + index) == TextToSpeech.ERROR) data.put("interrupted", true);
+                    if (announce(instruction, index) == TextToSpeech.ERROR) data.put("interrupted", true);
                     getSystemService(NotificationManager.class).notify(1382, notification(instruction));
                 }
                 if (now - checkpoint > 1000) { persist(this); checkpoint = now; }
@@ -181,6 +194,14 @@ public class TimedCircuitService extends Service implements LocationListener {
         close(data, now - (elapsed - boundary));
         persist(this);
         stopRecording();
+    }
+    /** Turned all the way down speaks nothing: a silent utterance still ducks whatever is playing. */
+    private int announce(String instruction, int index) {
+        double volume = level(saved.optDouble("volume", 1));
+        if (volume == 0) return TextToSpeech.SUCCESS;
+        Bundle params = new Bundle();
+        params.putFloat(TextToSpeech.Engine.KEY_PARAM_VOLUME, (float) volume);
+        return speech.speak(instruction, TextToSpeech.QUEUE_FLUSH, params, "phase-" + index);
     }
     @Override public void onLocationChanged(Location location) {
         try {

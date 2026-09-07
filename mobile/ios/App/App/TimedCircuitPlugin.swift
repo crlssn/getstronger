@@ -7,15 +7,16 @@ import CoreLocation
 public class TimedCircuitPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManagerDelegate {
     public let identifier = "TimedCircuitPlugin"
     public let jsName = "TimedCircuit"
-    public let pluginMethods = ["start", "read", "pause", "resume", "finish", "clear"].compactMap {
-        CAPPluginMethod(name: $0, returnType: CAPPluginReturnPromise)
-    }
+    public let pluginMethods = ["start", "read", "pause", "resume", "finish", "clear", "setVolume"]
+        .compactMap { CAPPluginMethod(name: $0, returnType: CAPPluginReturnPromise) }
     private let location = CLLocationManager()
     private let speech = AVSpeechSynthesizer()
     private var timer: Timer?
     private var recording: [String: Any]?
     private var key = ""
     private var locale = "en"
+    private var volume = 1.0
+    private var audible = false
     private var spoken = -1
     private var permissionCall: CAPPluginCall?
     private var lastCheckpoint = 0.0
@@ -75,13 +76,12 @@ public class TimedCircuitPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManagerD
               let requestedKey = call.getString("key") else { call.reject("Invalid prescription"); return }
         key = requestedKey
         locale = call.getString("locale") ?? "en"
+        volume = min(max(call.getDouble("volume") ?? 1, 0), 1)
         let start = now
         recording = ["version": 1, "startedAt": start, "phases": phases,
                      "pauses": [[String: Any]](), "points": [[String: Any]](), "interrupted": false]
         do {
-            try AVAudioSession.sharedInstance().setCategory(.playback, mode: .spokenAudio,
-                options: [.duckOthers, .mixWithOthers])
-            try AVAudioSession.sharedInstance().setActive(true)
+            if volume > 0 { try openAudio() }
             try persist()
         } catch { recording = nil; call.reject("Recording could not start", nil, error); return }
         spoken = -1
@@ -89,6 +89,30 @@ public class TimedCircuitPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManagerD
         timer = Timer.scheduledTimer(withTimeInterval: 0.25, repeats: true) { [weak self] _ in self?.tick() }
         tick()
         call.resolve()
+    }
+
+    /// Silence is silent all the way down: an utterance at no volume still holds
+    /// the audio session, which ducks whatever the athlete is listening to.
+    private func speak(_ instruction: String) {
+        guard volume > 0 else { return }
+        let utterance = AVSpeechUtterance(string: instruction)
+        utterance.voice = AVSpeechSynthesisVoice(language: locale)
+        utterance.volume = Float(volume)
+        speech.speak(utterance)
+    }
+
+    private func openAudio() throws {
+        guard !audible else { return }
+        try AVAudioSession.sharedInstance().setCategory(.playback, mode: .spokenAudio,
+            options: [.duckOthers, .mixWithOthers])
+        try AVAudioSession.sharedInstance().setActive(true)
+        audible = true
+    }
+
+    private func closeAudio() {
+        guard audible else { return }
+        audible = false
+        try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
     }
 
     private func activeMilliseconds(at time: Double) -> Double {
@@ -116,9 +140,7 @@ public class TimedCircuitPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManagerD
                 if spoken != index {
                     if spoken >= 0 && index > spoken + 1 { recording?["interrupted"] = true }
                     spoken = index
-                    let utterance = AVSpeechUtterance(string: phase["instruction"] as? String ?? "")
-                    utterance.voice = AVSpeechSynthesisVoice(language: locale)
-                    speech.speak(utterance)
+                    speak(phase["instruction"] as? String ?? "")
                 }
                 if time - lastCheckpoint > 1000 { checkpoint() }
                 return
@@ -190,6 +212,22 @@ public class TimedCircuitPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManagerD
         }
     }
     @objc func finish(_ call: CAPPluginCall) { mutate(call) { self.end(at: self.now) } }
+    /// Turned down mid-session, so the level is taken without touching the clock.
+    @objc func setVolume(_ call: CAPPluginCall) {
+        DispatchQueue.main.async {
+            guard call.getString("key") == self.key else { call.reject("Recording not found"); return }
+            self.volume = min(max(call.getDouble("volume") ?? 1, 0), 1)
+            if self.volume > 0 {
+                // A session that started silent has no audio session yet, and
+                // failing to open one is a quiet run rather than a lost one.
+                try? self.openAudio()
+            } else {
+                self.speech.stopSpeaking(at: .immediate)
+                self.closeAudio()
+            }
+            call.resolve()
+        }
+    }
     @objc func clear(_ call: CAPPluginCall) {
         DispatchQueue.main.async {
             guard call.getString("key") == self.key else { call.resolve(); return }
@@ -219,7 +257,7 @@ public class TimedCircuitPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManagerD
         timer?.invalidate()
         timer = nil
         speech.stopSpeaking(at: .immediate)
-        try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
+        closeAudio()
         checkpoint()
     }
     private func checkpoint() {
