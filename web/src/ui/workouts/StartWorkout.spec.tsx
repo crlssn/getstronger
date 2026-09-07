@@ -1243,6 +1243,26 @@ describe('StartWorkout', () => {
       expect(setField('Bench Press set 1 weight')).toBeVisible()
     })
 
+    // The phone reads each phase out as it starts, so the prescription is
+    // frozen in the words a synthesiser should say rather than in a count of
+    // seconds the runner has to convert mid-stride.
+    test('freezes each phase in spoken units', async () => {
+      const user = userEvent.setup()
+      vi.mocked(timedCircuit.start).mockResolvedValue(undefined)
+      await renderWorkout()
+
+      await user.click(screen.getByRole('button', { name: 'Start guided circuit' }))
+      await user.click(screen.getByRole('button', { name: 'Start guided circuit' }))
+
+      expect(timedCircuit.start).toHaveBeenCalledWith(
+        expect.objectContaining({
+          phases: expect.arrayContaining([
+            expect.objectContaining({ instruction: 'Bench Press for 1 minute' }),
+          ]),
+        }),
+      )
+    })
+
     test('is not offered off the phone', async () => {
       native.enabled = false
       await renderWorkout()

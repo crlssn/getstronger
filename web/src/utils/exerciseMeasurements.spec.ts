@@ -9,6 +9,8 @@ import {
   formatPaceDisplay,
   formatSetPace,
   isDistanceTimeExercise,
+  paceIn,
+  spokenDuration,
 } from '@/utils/exerciseMeasurements'
 
 const distanceTime = { metrics: [ExerciseMetric.DISTANCE, ExerciseMetric.TIME] }
@@ -70,6 +72,26 @@ describe('formatPaceDisplay', () => {
   it('writes seconds per kilometre as m:ss min/km', () => {
     expect(formatPaceDisplay(300)).toBe('5:00 min/km')
     expect(formatPaceDisplay(324.3)).toBe('5:24 min/km')
+  })
+})
+
+describe('spokenDuration', () => {
+  // The recorder hands these to a speech synthesiser, so they are read out
+  // rather than glanced at: "two minutes", never "one hundred and twenty".
+  it('says a whole duration in minutes and a partial one in both', () => {
+    expect(spokenDuration(120)).toBe('2 minutes')
+    expect(spokenDuration(60)).toBe('1 minute')
+    expect(spokenDuration(90)).toBe('1 minute 30 seconds')
+    expect(spokenDuration(45)).toBe('45 seconds')
+    expect(spokenDuration(1)).toBe('1 second')
+  })
+})
+
+describe('paceIn', () => {
+  it("keeps the figure apart from its unit and follows the athlete's unit", () => {
+    expect(paceIn(300)).toEqual({ value: '5:00', unit: '/km' })
+    expect(paceIn(324.3)).toEqual({ value: '5:24', unit: '/km' })
+    expect(paceIn(300, DistanceUnit.MILES)).toEqual({ value: '8:03', unit: '/mi' })
   })
 })
 

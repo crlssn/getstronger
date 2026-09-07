@@ -1,8 +1,10 @@
-import { buildTimeline, measureRoute, type Recording, type RoutePoint } from './timedCircuit'
-
-// The theme owns the hues, in both palettes; this only cycles through them.
-const routeColors = 6
-const routeToken = (index: number) => `--color-route-${(Math.max(0, index) % routeColors) + 1}`
+import {
+  buildTimeline,
+  measureRoute,
+  routeToken,
+  type Recording,
+  type RoutePoint,
+} from './timedCircuit'
 
 /**
  * The intervals of a recording that drew a line, and the colour each takes.
@@ -22,8 +24,10 @@ export const routeIntervals = (recording: Recording) => {
   return {
     routes,
     exercises,
+    // findIndex answers -1 for an exercise that drew nothing, which is no
+    // position in the palette; the first colour is the honest stand-in.
     colorToken: (id: string) =>
-      routeToken(exercises.findIndex(([exerciseId]) => exerciseId === id)),
+      routeToken(Math.max(0, exercises.findIndex(([exerciseId]) => exerciseId === id))),
   }
 }
 
