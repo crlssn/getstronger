@@ -17,6 +17,7 @@ import { AppInlineError } from '@/ui/components/AppInlineError'
 import { AppStat } from '@/ui/components/AppStat'
 import { WorkoutRoute } from '@/ui/features/WorkoutRoute'
 import { distanceIn, paceIn } from '@/utils/exerciseMeasurements'
+import { hasPaceTargets, type Pacing } from '@/utils/pacing'
 import {
   buildTimeline,
   currentPace,
@@ -33,6 +34,8 @@ import styles from './TimedCircuitRecorder.module.css'
 interface Props {
   recordingKey: string
   phases: Phase[]
+  /** The session this one is paced against, and how closely. */
+  pacing: Pacing
   saved?: Recording
   onComplete: (recording: Recording) => void
   onCancel: () => void
@@ -41,6 +44,7 @@ interface Props {
 export const TimedCircuitRecorder = ({
   recordingKey: key,
   phases,
+  pacing,
   saved,
   onComplete,
   onCancel,
@@ -49,6 +53,7 @@ export const TimedCircuitRecorder = ({
   const unit = usePreferencesStore((state) => state.distanceUnit)
   const volume = useAnnouncementsStore((state) => state.volume)
   const cueLeadSeconds = usePreferencesStore((state) => state.intervalCueLeadSeconds)
+  const paceReference = usePreferencesStore((state) => state.paceReference)
   const [recording, setRecording] = useState(saved)
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
@@ -90,6 +95,7 @@ export const TimedCircuitRecorder = ({
           locale: i18n.language,
           volume: speechVolume(volume),
           cueLeadSeconds,
+          pacing,
         })
       else await timedCircuit[kind]({ key })
       if (kind === 'clear') {
@@ -350,6 +356,20 @@ export const TimedCircuitRecorder = ({
               </div>
             )}
           </div>
+
+          {/* The tones are the only thing on this screen with no visible
+              counterpart, so the screen says once what they are comparing
+              against. Absent where the routine has never been recorded, which
+              is exactly when nothing sounds. */}
+          {hasPaceTargets(pacing) && (
+            <p className={styles.paced}>
+              {t(
+                paceReference === 'best'
+                  ? 'timedCircuit.pacedAgainstBest'
+                  : 'timedCircuit.pacedAgainstPrevious',
+              )}
+            </p>
+          )}
 
           <div className={styles.spacer} />
 

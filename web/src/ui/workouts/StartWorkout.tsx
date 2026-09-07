@@ -13,7 +13,8 @@ import type { RefObject } from 'react'
 import { create } from '@bufbuild/protobuf'
 import { Capacitor } from '@capacitor/core'
 import { timedCircuit } from '@/native/timedCircuit'
-import { circuitPhases, type Recording } from '@/utils/timedCircuit'
+import { pacingFor, paceReferenceRequested } from '@/utils/pacing'
+import { circuitPhases, parseRecording, type Recording } from '@/utils/timedCircuit'
 import { TimedCircuitRecorder } from '@/ui/workouts/TimedCircuitRecorder'
 import { timestampFromDate } from '@bufbuild/protobuf/wkt'
 import { Code, ConnectError } from '@connectrpc/connect'
@@ -35,6 +36,7 @@ import {
   createWorkout,
   getCurrentUser,
   getExercise,
+  getPaceReference,
   getPreviousWorkoutSets,
   getRoutine,
 } from '@/http/requests'
@@ -273,8 +275,12 @@ export const StartWorkout = () => {
   const weightUnit = usePreferencesStore((state) => state.weightUnit)
   const distanceUnit = usePreferencesStore((state) => state.distanceUnit)
   const autofillSets = usePreferencesStore((state) => state.autofillSets)
+  const paceReference = usePreferencesStore((state) => state.paceReference)
 
   const [session, setSession] = useState<Session>()
+  // The session this one is measured against, or nothing where the routine has
+  // never been recorded.
+  const [reference, setReference] = useState<Recording>()
   const [previousSets, setPreviousSets] = useState<ExerciseSets[]>([])
   const [activeStationIndex, setActiveStationIndex] = useState(0)
   // The round each circuit has open, by block. Unset, a block opens on the
@@ -315,11 +321,30 @@ export const StartWorkout = () => {
       disposed = true
     }
   }, [recordingKey])
-  const phases = circuitPhases(
-    session?.groups ?? [],
-    (name, seconds) => t('timedCircuit.instruction', { name, duration: spokenDuration(seconds) }),
-    t('timedCircuit.rest'),
+  const phases = useMemo(
+    () =>
+      circuitPhases(
+        session?.groups ?? [],
+        (name, seconds) =>
+          t('timedCircuit.instruction', { name, duration: spokenDuration(seconds) }),
+        t('timedCircuit.rest'),
+      ),
+    [session?.groups, t],
   )
+  // Asked for as the screen opens rather than when recording starts: the
+  // recorder is handed the whole comparison at the first interval, and by then
+  // the athlete is already moving.
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform() || quickWorkout || !phases.length) return
+    let disposed = false
+    void getPaceReference(routineID, paceReferenceRequested(paceReference)).then((res) => {
+      if (!disposed) setReference(parseRecording(res?.recordingJson))
+    })
+    return () => {
+      disposed = true
+    }
+  }, [routineID, quickWorkout, phases.length, paceReference])
+  const pacing = useMemo(() => pacingFor(phases, reference), [phases, reference])
   const recordingComplete = useCallback(
     (recording: Recording) => {
       if (!useWorkoutStore.getState().workouts[routineID]?.recording) {
@@ -1176,6 +1201,7 @@ export const StartWorkout = () => {
         <TimedCircuitRecorder
           recordingKey={recordingKey}
           phases={phases}
+          pacing={pacing}
           saved={workout?.recording}
           onComplete={recordingComplete}
           onCancel={() => {

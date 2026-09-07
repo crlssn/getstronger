@@ -49,6 +49,7 @@ const { calls, clients, listExercises } = vi.hoisted(() => {
 vi.mock('./clients', () => clients)
 
 import { WeightUnit, DistanceUnit } from '@/proto/api/v1/shared_pb'
+import { PaceReference } from '@/proto/api/v1/workout_service_pb'
 import * as requests from './requests'
 
 const page = new Uint8Array(0)
@@ -95,6 +96,7 @@ const cases: Array<[string, () => Promise<unknown>]> = [
   ['workout.deleteWorkout', () => requests.deleteWorkout('w1')],
   ['workout.listWorkouts', () => requests.listWorkouts(['u1'], page)],
   ['workout.postComment', () => requests.postWorkoutComment('w1', 'nice')],
+  ['workout.getPaceReference', () => requests.getPaceReference('r1', PaceReference.PREVIOUS)],
 
   ['user.getUser', () => requests.getUser('u1')],
   ['user.getUser', () => requests.getCurrentUser('u1')],

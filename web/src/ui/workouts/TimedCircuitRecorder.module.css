@@ -150,6 +150,13 @@
   @apply ml-0.5 text-meta font-semibold text-text-subtle;
 }
 
+/* What the tones in the athlete's ear are comparing against. Quiet, and set
+   under the numbers rather than beside them: it is read once at the start and
+   never looked at again. */
+.paced {
+  @apply text-meta font-semibold text-text-subtle;
+}
+
 /* Everything the numbers do not need, so the controls sit at the bottom. */
 .spacer {
   @apply flex-1;

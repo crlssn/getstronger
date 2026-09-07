@@ -2,11 +2,11 @@ import type { Phase } from '@/utils/timedCircuit'
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { playCue } from '@/native/cueTone'
+import { playCue, playTone } from '@/native/cueTone'
 import { openSessionPhases } from '@/utils/timedCircuit'
 import { TimedCircuitWeb } from './timedCircuitWeb'
 
-vi.mock('@/native/cueTone', () => ({ playCue: vi.fn() }))
+vi.mock('@/native/cueTone', () => ({ playCue: vi.fn(), playTone: vi.fn() }))
 
 const fix = (timestamp: number, longitude: number): GeolocationPosition =>
   ({
@@ -21,11 +21,18 @@ let watchers: {
   failure: PositionErrorCallback
 }[] = []
 
+/** A degree of longitude at the equator, on the sphere the route is measured on. */
+const metreDegrees = 180 / (6371000 * Math.PI)
+
+// Every note the recorder played, in hertz, in the order it played them.
+const tones = () => vi.mocked(playTone).mock.calls.map(([hertz]) => hertz)
+
 describe('the browser recorder', () => {
   beforeEach(() => {
     watchers = []
     localStorage.clear()
     vi.mocked(playCue).mockClear()
+    vi.mocked(playTone).mockClear()
     vi.useFakeTimers()
     vi.setSystemTime(1_000_000)
     vi.stubGlobal('navigator', {
@@ -132,6 +139,45 @@ describe('the browser recorder', () => {
     watchers[0].failure(denial)
     await expect(started).rejects.toThrow('LOCATION_DENIED')
     expect(await TimedCircuitWeb.read({ key: 'athlete' })).toEqual({})
+  })
+
+  it('sounds one tone as an interval pulls ahead of its reference and another as it falls behind', async () => {
+    const interval = (stationKey: string, name: string) => ({
+      exerciseId: stationKey,
+      stationKey,
+      name,
+      round: 1,
+      durationSeconds: 60,
+      instruction: name,
+    })
+    const started = TimedCircuitWeb.start({
+      key: 'athlete',
+      phases: [interval('run', 'Run'), interval('walk', 'Walk')],
+      locale: 'en',
+      // Five minutes a kilometre to beat on the run, nothing to beat on the walk.
+      pacing: { targets: [300, 0], toleranceSeconds: 10, minimumGapSeconds: 30, windowSeconds: 15 },
+    })
+    watchers[0].success(fix(1_000_000, 0))
+    await started
+
+    // Five metres a second, which is 200 seconds a kilometre: ahead of the
+    // target, and heard once the trailing window holds this interval alone.
+    const run = (seconds: number, metres: number) => {
+      vi.setSystemTime(1_000_000 + seconds * 1000)
+      watchers[0].success(fix(1_000_000 + seconds * 1000, metres * metreDegrees))
+    }
+    run(5, 25)
+    run(10, 50)
+    expect(tones()).toEqual([])
+
+    run(15, 75)
+    run(20, 100)
+    // The crossing sounds once, not on every fix that follows it.
+    expect(tones()).toEqual([1320])
+
+    // A metre a second from here: 1000 seconds a kilometre, well behind.
+    for (let step = 1; step <= 5; step += 1) run(20 + step * 5, 100 + step * 5)
+    expect(tones()).toEqual([1320, 440])
   })
 
   it('rejects a prescription that is neither timed throughout nor one open interval', async () => {

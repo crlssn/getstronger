@@ -1,14 +1,18 @@
 import { registerPlugin } from '@capacitor/core'
+import type { Pacing } from '@/utils/pacing'
 import type { Phase, Recording } from '@/utils/timedCircuit'
 
 interface TimedCircuitPlugin {
   /** `cueLeadSeconds` is the athlete's warning before an interval ends; 0 sounds nothing. */
+  // The pacing is optional: a routine with no session to compare against is
+  // recorded exactly as it was before there was anything to compare with.
   start(options: {
     key: string
     phases: Phase[]
     locale: string
     volume: number
     cueLeadSeconds: number
+    pacing?: Pacing
   }): Promise<void>
   read(options: { key: string }): Promise<{ recording?: Recording }>
   pause(options: { key: string }): Promise<void>

@@ -1,6 +1,7 @@
-import type { Phase, Recording } from '@/utils/timedCircuit'
+import { newPaceWatch, watchPace, type Pacing, type PaceTone } from '@/utils/pacing'
+import { currentPace, type Phase, type Recording } from '@/utils/timedCircuit'
 
-import { playCue } from '@/native/cueTone'
+import { playCue, playTone } from '@/native/cueTone'
 import { cuesInterval } from '@/utils/intervalCue'
 
 /**
@@ -13,8 +14,8 @@ import { cuesInterval } from '@/utils/intervalCue'
  * records against.
  *
  * It measures without speaking: there is no announcement here to turn down, so
- * the volume the phones take is accepted and ignored. The interval cue is a
- * tone rather than speech, and this does sound that.
+ * the volume the phones take is accepted and ignored. The interval cue and the
+ * pace tones are tones rather than speech, and this does sound those.
  */
 
 const storageKey = 'getstronger:timed-circuit'
@@ -24,12 +25,20 @@ const maxPoints = 90000
 const tickMs = 250
 const fixTimeoutMs = 30000
 
+// The two notes, in hertz: the interval is going better than the reference, or
+// worse than it. Higher is better is the one convention nobody has to be
+// taught, and both sit clear of the 880 the interval cue sounds on, so three
+// sounds in one run are three different sounds. The phones sound the same two.
+const toneHertz: Record<PaceTone, number> = { ahead: 1320, behind: 440 }
+
 interface Saved {
   key: string
   recording: Recording
   /** Seconds of warning before an interval ends; 0 sounds nothing. */
   cueLeadSeconds: number
   checkpoint: number
+  // The session this one is paced against, absent where there is none.
+  pacing?: Pacing
 }
 
 let saved: Saved | undefined
@@ -38,6 +47,9 @@ let timer: ReturnType<typeof setInterval> | undefined
 let loaded = false
 /** The interval already warned about, so a tone sounds once per interval. */
 let cued = -1
+// Held in memory rather than with the recording: a reload has heard nothing,
+// so it starts the comparison over rather than resuming a crossing.
+let pace = newPaceWatch()
 
 const now = () => Math.round(Date.now())
 
@@ -60,6 +72,26 @@ const persist = () => {
     // A full quota must not take the recording down with it: the document in
     // memory is still the one being read every second.
   }
+}
+
+/**
+ * Says how the interval is going against the session it is paced against.
+ *
+ * The trailing pace is the one the screen shows, held against the target for
+ * this interval; a tone plays where it crosses out of the band, and the watch
+ * remembers enough not to repeat itself.
+ */
+const judge = (phaseIndex: number, phaseSeconds: number, at: number) => {
+  if (!saved?.pacing) return
+  const reading = {
+    phaseIndex,
+    phaseSeconds,
+    pace: currentPace(saved.recording, at, saved.pacing.windowSeconds),
+    at,
+  }
+  const result = watchPace(pace, reading, saved.pacing)
+  pace = result.watch
+  if (result.tone) playTone(toneHertz[result.tone])
 }
 
 const stopWatching = () => {
@@ -123,6 +155,7 @@ const tick = () => {
   let boundary = 0
   for (const [index, phase] of recording.phases.entries()) {
     if (phase.durationSeconds === undefined) return
+    const opened = boundary
     boundary += phase.durationSeconds * 1000
     if (elapsed < boundary) {
       if (
@@ -133,6 +166,7 @@ const tick = () => {
         cued = index
         playCue()
       }
+      judge(index, (elapsed - opened) / 1000, at)
       if (at - saved.checkpoint > 1000) persist()
       return
     }
@@ -173,11 +207,13 @@ const valid = (phases: Phase[]) =>
   (phases.every((phase) => (phase.durationSeconds ?? 0) > 0) ||
     (phases.length === 1 && phases[0].durationSeconds === undefined))
 
-const begin = (key: string, phases: Phase[], cueLeadSeconds: number) =>
+const begin = (key: string, phases: Phase[], cueLeadSeconds: number, pacing?: Pacing) =>
   new Promise<void>((resolve, reject) => {
     cued = -1
+    pace = newPaceWatch()
     saved = {
       key,
+      pacing,
       recording: {
         version: 1,
         startedAt: now(),
@@ -239,11 +275,12 @@ export const TimedCircuitWeb = {
     locale: string
     volume: number
     cueLeadSeconds: number
+    pacing?: Pacing
   }): Promise<void> {
     load()
     if (saved) throw new Error('A recording is already saved or active')
     if (!valid(options.phases)) throw new Error('Invalid prescription')
-    await begin(options.key, options.phases, options.cueLeadSeconds)
+    await begin(options.key, options.phases, options.cueLeadSeconds, options.pacing)
   },
 
   read(options: { key: string }): Promise<{ recording?: Recording }> {
@@ -282,6 +319,7 @@ export const TimedCircuitWeb = {
     if (saved?.key !== options.key) return Promise.resolve()
     end(now())
     saved = undefined
+    pace = newPaceWatch()
     try {
       store()?.removeItem(storageKey)
     } catch {

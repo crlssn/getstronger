@@ -6,6 +6,7 @@ import { useAnnouncementsStore } from '@/stores/announcements'
 import { useConfirmationStore } from '@/stores/confirmation'
 import { usePreferencesStore } from '@/stores/preferences'
 import { renderWithProviders } from '@/ui/testing'
+import { pacingFor } from '@/utils/pacing'
 import type { Recording, RoutePoint } from '@/utils/timedCircuit'
 import { TimedCircuitRecorder } from './TimedCircuitRecorder'
 
@@ -45,6 +46,7 @@ describe('TimedCircuitRecorder', () => {
     renderWithProviders(
       <TimedCircuitRecorder
         recordingKey="athlete:routine"
+        pacing={pacingFor([phase])}
         phases={[phase]}
         onComplete={vi.fn()}
         onCancel={cancel}
@@ -52,8 +54,14 @@ describe('TimedCircuitRecorder', () => {
     )
     expect(timedCircuit.start).not.toHaveBeenCalled()
     await user.click(screen.getByRole('button', { name: 'Start guided circuit' }))
+    // The comparison travels with the prescription: the phone owns it from
+    // there, screen locked and WebView asleep.
     expect(timedCircuit.start).toHaveBeenCalledWith(
-      expect.objectContaining({ key: 'athlete:routine', phases: [phase] }),
+      expect.objectContaining({
+        key: 'athlete:routine',
+        phases: [phase],
+        pacing: pacingFor([phase]),
+      }),
     )
     expect(screen.getByRole('alert')).toHaveTextContent('Check location permission')
     await user.click(screen.getByRole('button', { name: 'Log manually' }))
@@ -69,6 +77,7 @@ describe('TimedCircuitRecorder', () => {
     renderWithProviders(
       <TimedCircuitRecorder
         recordingKey="athlete:routine"
+        pacing={pacingFor([phase])}
         phases={[phase]}
         onComplete={vi.fn()}
         onCancel={vi.fn()}
@@ -109,6 +118,7 @@ describe('TimedCircuitRecorder', () => {
     renderWithProviders(
       <TimedCircuitRecorder
         recordingKey="athlete:routine"
+        pacing={pacingFor([phase])}
         phases={[phase]}
         onComplete={complete}
         onCancel={vi.fn()}
@@ -165,6 +175,7 @@ describe('TimedCircuitRecorder', () => {
     renderWithProviders(
       <TimedCircuitRecorder
         recordingKey="athlete:routine"
+        pacing={pacingFor([phase])}
         phases={[phase]}
         onComplete={vi.fn()}
         onCancel={vi.fn()}
@@ -179,6 +190,35 @@ describe('TimedCircuitRecorder', () => {
     expect(last.parentElement).toHaveTextContent('900m')
   })
 
+  it('says which session the tones compare with, and only where there is one', async () => {
+    vi.mocked(timedCircuit.read).mockResolvedValue({ recording: running() })
+    const paced = { ...pacingFor([phase]), targets: [330] }
+    const { rerender } = renderWithProviders(
+      <TimedCircuitRecorder
+        recordingKey="athlete:routine"
+        pacing={paced}
+        phases={[phase]}
+        onComplete={vi.fn()}
+        onCancel={vi.fn()}
+      />,
+    )
+    await screen.findByRole('heading', { name: 'Run' })
+    expect(screen.getByText(/Tones compare each interval with your last session/)).toBeVisible()
+
+    // A routine recorded for the first time has nothing to compare with, and
+    // the line goes with the tones.
+    rerender(
+      <TimedCircuitRecorder
+        recordingKey="athlete:routine"
+        pacing={pacingFor([phase])}
+        phases={[phase]}
+        onComplete={vi.fn()}
+        onCancel={vi.fn()}
+      />,
+    )
+    expect(screen.queryByText(/Tones compare each interval/)).not.toBeInTheDocument()
+  })
+
   it('reads pace as a dash until enough accurate fixes exist, and while paused', async () => {
     const user = userEvent.setup()
     const blurred = running()
@@ -187,6 +227,7 @@ describe('TimedCircuitRecorder', () => {
     renderWithProviders(
       <TimedCircuitRecorder
         recordingKey="athlete:routine"
+        pacing={pacingFor([phase])}
         phases={[phase]}
         onComplete={vi.fn()}
         onCancel={vi.fn()}
@@ -217,6 +258,7 @@ describe('TimedCircuitRecorder', () => {
     renderWithProviders(
       <TimedCircuitRecorder
         recordingKey="athlete:routine"
+        pacing={pacingFor([phase])}
         phases={[phase]}
         onComplete={vi.fn()}
         onCancel={cancel}
@@ -255,6 +297,7 @@ describe('TimedCircuitRecorder', () => {
     renderWithProviders(
       <TimedCircuitRecorder
         recordingKey="athlete:routine"
+        pacing={pacingFor([phase])}
         phases={intervals.phases}
         onComplete={vi.fn()}
         onCancel={vi.fn()}
@@ -274,6 +317,7 @@ describe('TimedCircuitRecorder', () => {
     renderWithProviders(
       <TimedCircuitRecorder
         recordingKey="athlete:routine"
+        pacing={pacingFor([phase])}
         phases={[phase]}
         onComplete={vi.fn()}
         onCancel={vi.fn()}
@@ -304,6 +348,7 @@ describe('TimedCircuitRecorder', () => {
     renderWithProviders(
       <TimedCircuitRecorder
         recordingKey="athlete:routine"
+        pacing={pacingFor([phase])}
         phases={[phase]}
         onComplete={vi.fn()}
         onCancel={vi.fn()}
@@ -334,6 +379,7 @@ describe('TimedCircuitRecorder', () => {
     renderWithProviders(
       <TimedCircuitRecorder
         recordingKey="athlete:routine"
+        pacing={pacingFor([phase])}
         phases={intervals.phases}
         onComplete={vi.fn()}
         onCancel={vi.fn()}
