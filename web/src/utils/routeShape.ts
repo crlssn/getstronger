@@ -20,14 +20,14 @@ export const routeIntervals = (recording: Recording) => {
   const exercises = [
     ...new Map(routes.map(({ phase }) => [phase.exerciseId, phase.name])).entries(),
   ]
+  const palette = new Map(exercises.map(([id], index) => [id, routeToken(index)]))
 
   return {
     routes,
     exercises,
-    // findIndex answers -1 for an exercise that drew nothing, which is no
-    // position in the palette; the first colour is the honest stand-in.
-    colorToken: (id: string) =>
-      routeToken(Math.max(0, exercises.findIndex(([exerciseId]) => exerciseId === id))),
+    // An exercise that drew no line holds no position in the palette, and the
+    // first colour is a better answer than a token the theme never defines.
+    colorToken: (id: string) => palette.get(id) ?? routeToken(0),
   }
 }
 
