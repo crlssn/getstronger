@@ -155,12 +155,12 @@ describe('WorkoutRoute', () => {
 
       const rows = intervalRows()
       expect(rows).toHaveLength(5)
-      expect(rows.map((row) => within(row).getByText(/^[1-9]$/).textContent)).toEqual([
-        '1',
-        '2',
-        '3',
-        '4',
-        '5',
+      expect(rows.map((row) => within(row).getByText(/^Interval \d+$/).textContent)).toEqual([
+        'Interval 1',
+        'Interval 2',
+        'Interval 3',
+        'Interval 4',
+        'Interval 5',
       ])
     })
 

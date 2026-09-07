@@ -103,8 +103,13 @@ export const WorkoutIntervals = ({
 
           return (
             <li key={`${interval.phase.stationKey}-${interval.phase.round}`}>
-              <span className={styles.number} aria-hidden="true">
-                {position + 1}
+              {/* The number orders the sequence; read aloud, a bare "7" says
+                  nothing about what the seven counts. */}
+              <span className={styles.number}>
+                <span aria-hidden="true">{position + 1}</span>
+                <span className="sr-only">
+                  {t('timedCircuit.intervalPosition', { position: position + 1 })}
+                </span>
               </span>
 
               <span className={styles.interval}>

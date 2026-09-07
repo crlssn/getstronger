@@ -714,6 +714,9 @@ describe('CreateRoutine', () => {
 
       // A warm-up and three rounds of two, less the exercise the last one drops.
       expect(screen.getByText('6 intervals')).toBeInTheDocument()
+      // Nothing is timed yet, and "0 min" would be a claim about a session
+      // rather than the absence of one.
+      expect(screen.getByText('No times set yet')).toBeInTheDocument()
       expect(screen.getByText('Bench press and Row, 3 times through')).toBeInTheDocument()
 
       await userEvent.click(screen.getByRole('button', { name: 'Add a round to Rounds' }))

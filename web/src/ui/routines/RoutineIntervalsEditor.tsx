@@ -48,6 +48,7 @@ export const RoutineIntervalsEditor = ({ groups, nameOf, onChange, onAddExercise
   const repeat = groups.find((group) => group.role === 'repeat')
   const rounds = repeat?.rounds ?? minimumRounds
   const names = new Intl.ListFormat(i18n.language, { style: 'long', type: 'conjunction' })
+  const planned = intervalSeconds(groups)
 
   return (
     <>
@@ -155,12 +156,14 @@ export const RoutineIntervalsEditor = ({ groups, nameOf, onChange, onAddExercise
         )
       })}
 
-      {/* What the parts add up to: the one place the whole session is a number. */}
+      {/* What the parts add up to: the one place the whole session is a number.
+          A routine nobody has timed has no length to state — and "0 min" is a
+          claim about a session, not the absence of one. */}
       <p className={styles.plan}>
         <span>
-          {t('routine.form.intervals.planned', {
-            count: Math.round(intervalSeconds(groups) / 60),
-          })}
+          {planned > 0
+            ? t('routine.form.intervals.planned', { count: Math.round(planned / 60) })
+            : t('routine.form.intervals.untimed')}
         </span>
         <span>{t('routine.form.intervals.count', { count: intervalCount(groups) })}</span>
       </p>
