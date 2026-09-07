@@ -2,6 +2,7 @@ DROP TABLE IF EXISTS public.plan_routines CASCADE;
 DROP TABLE IF EXISTS public.plans CASCADE;
 DROP TABLE IF EXISTS public.events CASCADE;
 DROP TABLE IF EXISTS public.notifications CASCADE;
+DROP TABLE IF EXISTS public.auth_rate_limits CASCADE;
 DROP TABLE IF EXISTS public.traces CASCADE;
 DROP TABLE IF EXISTS public.workout_comments CASCADE;
 DROP TABLE IF EXISTS public.followers CASCADE;
