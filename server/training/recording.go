@@ -42,6 +42,10 @@ type recordingPhase struct {
 	// until the athlete ended it.
 	DurationSeconds *int   `json:"durationSeconds"`
 	Instruction     string `json:"instruction"`
+	// Where the block this interval came from sits in an interval routine.
+	// Empty for a gym circuit and for every recording written before interval
+	// routines existed.
+	Role RoutineGroupRole `json:"role,omitempty"`
 }
 
 type recordingPause struct {
@@ -143,7 +147,19 @@ func (r *recording) validatePhases() error {
 	return nil
 }
 
+// validate wants a phase from one of the three parts of an interval routine,
+// or from a gym circuit, which names no part at all.
 func (p recordingPhase) validate() error {
+	if p.Role != "" && !p.Role.Valid() {
+		return ErrInvalidRecording
+	}
+
+	return p.validateBounds()
+}
+
+// validateBounds holds a phase's duration, its round and the strings it carries
+// to what a client could have produced.
+func (p recordingPhase) validateBounds() error {
 	if p.DurationSeconds != nil &&
 		(*p.DurationSeconds < 1 || *p.DurationSeconds > recordingPhaseMaxSeconds) {
 		return ErrInvalidRecording
