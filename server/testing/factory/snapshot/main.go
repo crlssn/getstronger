@@ -58,7 +58,12 @@ func connect() (*sql.DB, error) {
 		return nil, fmt.Errorf("%w, got %s", errNotLocal, c.Environment)
 	}
 
-	database, err := db.New(c)
+	pool, err := config.NewDBPool()
+	if err != nil {
+		return nil, fmt.Errorf("resolve database pool configuration: %w", err)
+	}
+
+	database, err := db.New(c, pool)
 	if err != nil {
 		return nil, fmt.Errorf("connect to database: %w", err)
 	}
