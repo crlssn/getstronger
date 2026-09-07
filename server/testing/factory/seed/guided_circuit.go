@@ -35,6 +35,10 @@ const (
 	guidedStationsPerRound = 2
 	guidedArcStepMetres    = 0.1
 
+	// The first time a session trains an exercise; a second station of the same
+	// exercise is the occurrence after it.
+	firstOccurrence = 1
+
 	earthRadius = 6_371_000.0
 	// Derived from the same sphere the haversine measures on, so a metre laid
 	// down here reads as a metre when the route is measured back.
@@ -106,8 +110,8 @@ func seedActiveGuidedCircuit(f *factory.Factory, active *models.User, run *model
 	for round := 1; round <= guidedCircuitRounds; round++ {
 		phases = append(
 			phases,
-			guidedPhase(walk, round, guidedWalkSeconds, ""),
-			guidedPhase(run, round, guidedRunSeconds, ""),
+			guidedPhase(walk, round, guidedWalkSeconds, "", firstOccurrence),
+			guidedPhase(run, round, guidedRunSeconds, "", firstOccurrence),
 		)
 	}
 
@@ -212,10 +216,20 @@ func recordSession(
 	return recording
 }
 
-func guidedPhase(exercise *models.Exercise, round, seconds int, role string) recordedPhase {
+// guidedPhase is one interval of a recording. The station key names the
+// occurrence rather than the exercise: a walk-run walks in the warm-up and
+// again in the block, and the two are separate stations of one session — which
+// is what the web app's own circuitPhases writes, and what keeps a round's
+// intervals telling themselves apart.
+func guidedPhase(exercise *models.Exercise, round, seconds int, role string, occurrence int) recordedPhase {
+	stationKey := exercise.ID.String()
+	if occurrence > 1 {
+		stationKey = fmt.Sprintf("%s#%d", exercise.ID, occurrence)
+	}
+
 	return recordedPhase{
 		ExerciseID:      exercise.ID.String(),
-		StationKey:      exercise.ID.String(),
+		StationKey:      stationKey,
 		Name:            exercise.Title,
 		Round:           round,
 		DurationSeconds: seconds,

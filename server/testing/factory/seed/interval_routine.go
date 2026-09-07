@@ -55,16 +55,22 @@ func seedActiveIntervalRoutine(f *factory.Factory, active *models.User, walk, ru
 // intervalPhases is the session as it was actually worked: the warm-up once,
 // outside the count, then the block round by round with the final walk left out.
 func intervalPhases(walk, run *models.Exercise) []recordedPhase {
+	warmup := string(enums.RoutineGroupRoleWarmup)
+	repeat := string(enums.RoutineGroupRoleRepeat)
+
+	// The warm-up walks, and the block walks again: two stations of one
+	// exercise, numbered as the web app numbers them so a round's intervals
+	// never answer to the same name.
 	phases := []recordedPhase{
-		guidedPhase(walk, 1, intervalWarmupSeconds, string(enums.RoutineGroupRoleWarmup)),
+		guidedPhase(walk, 1, intervalWarmupSeconds, warmup, firstOccurrence),
 	}
 
 	for round := 1; round <= intervalRounds; round++ {
-		phases = append(phases, guidedPhase(run, round, intervalRunSeconds, string(enums.RoutineGroupRoleRepeat)))
+		phases = append(phases, guidedPhase(run, round, intervalRunSeconds, repeat, firstOccurrence))
 		if round == intervalRounds {
 			continue
 		}
-		phases = append(phases, guidedPhase(walk, round, intervalWalkSeconds, string(enums.RoutineGroupRoleRepeat)))
+		phases = append(phases, guidedPhase(walk, round, intervalWalkSeconds, repeat, firstOccurrence+1))
 	}
 
 	return phases

@@ -174,6 +174,18 @@ describe('interval routines', () => {
     expect(recordedRounds({ ...recording(), phases })).toBe(5)
   })
 
+  // A walk-run walks in the warm-up and again in the block. They are two
+  // stations of one session, and anything that draws or lists an interval keys
+  // on the station and the round — so two of them answering to one name is a
+  // segment that silently goes missing.
+  it('tells two occurrences of one exercise apart', () => {
+    const keys = phasesOf(false)
+      .filter((phase) => phase.exerciseId)
+      .map((phase) => `${phase.stationKey}-${phase.round}`)
+
+    expect(new Set(keys).size).toBe(keys.length)
+  })
+
   it('leaves a gym circuit reading as its groups and its rounds', () => {
     const phases = circuitPhases(
       [
