@@ -283,6 +283,14 @@ export const authenticatedPages: PageEntry[] = [
     name: 'view-workout-intervals',
     route: ({ intervalWorkoutId }) => intervalWorkoutId && `/workouts/${intervalWorkoutId}`,
   },
+  // And after it, for the same reason. Only the screen a session is entered on
+  // is photographed: the running state needs a location the harness does not
+  // grant and a clock it deliberately holds still.
+  {
+    component: 'src/ui/workouts/RecordSession.tsx',
+    name: 'record-session',
+    route: () => '/record',
+  },
 ]
 
 const uuid = '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}'
