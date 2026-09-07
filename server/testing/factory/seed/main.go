@@ -292,7 +292,10 @@ func seedActiveRuns(f *factory.Factory, active *models.User) {
 		f.NewSetBatch(setBatch...)
 	}
 
-	seedActiveGuidedCircuit(f, active, run)
+	// The walk is the same movement in both, so the two sessions read as one
+	// athlete's training rather than as two libraries.
+	walk := seedActiveGuidedCircuit(f, active, run)
+	seedActiveIntervalRoutine(f, active, walk, run)
 }
 
 func seedJaneDoe(exec bob.Executor, f *factory.Factory, active *models.User) *models.User {

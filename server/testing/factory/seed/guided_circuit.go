@@ -53,6 +53,10 @@ type recordedCircuit struct {
 	Pauses      []recordedPause `json:"pauses"`
 	Points      []recordedPoint `json:"points"`
 	Interrupted bool            `json:"interrupted"`
+
+	// How fast each exercise is worked, by name. Unexported because it lays the
+	// route down rather than travelling with the document the app reads back.
+	pace map[string]float64
 }
 
 type recordedPhase struct {
@@ -62,6 +66,9 @@ type recordedPhase struct {
 	Round           int    `json:"round"`
 	DurationSeconds int    `json:"durationSeconds"`
 	Instruction     string `json:"instruction"`
+	// Where the block this came from sits in an interval routine; empty for a
+	// gym circuit, which reads as its groups and its rounds instead.
+	Role string `json:"role,omitempty"`
 }
 
 type recordedPause struct {
@@ -79,7 +86,7 @@ type recordedPoint struct {
 // seedActiveGuidedCircuit gives the active persona a walk/run circuit held
 // against the clock and one session of it recorded on a phone, so the saved
 // route has somewhere to be looked at on the web.
-func seedActiveGuidedCircuit(f *factory.Factory, active *models.User, run *models.Exercise) {
+func seedActiveGuidedCircuit(f *factory.Factory, active *models.User, run *models.Exercise) *models.Exercise {
 	walk := f.NewExercise(
 		factory.ExerciseUserID(active.ID),
 		factory.ExerciseTitle("Walk"),
@@ -94,23 +101,49 @@ func seedActiveGuidedCircuit(f *factory.Factory, active *models.User, run *model
 
 	// On the minute, the way the API stores a workout's clock.
 	finishedAt := factory.Now().Add(-guidedCircuitFinished).Truncate(time.Minute)
-	recording := recordGuidedCircuit(walk, run, finishedAt)
+
+	phases := make([]recordedPhase, 0, guidedStationsPerRound*guidedCircuitRounds)
+	for round := 1; round <= guidedCircuitRounds; round++ {
+		phases = append(
+			phases,
+			guidedPhase(walk, round, guidedWalkSeconds, ""),
+			guidedPhase(run, round, guidedRunSeconds, ""),
+		)
+	}
+
+	recording := recordSession(phases, pacePerExercise(walk, run), finishedAt)
+	saveRecordedSession(f, active, routine, guidedCircuitName, recording, finishedAt)
+
+	return walk
+}
+
+// pacePerExercise is how fast each of the two movements is worked, by the name
+// the phases carry.
+func pacePerExercise(walk, run *models.Exercise) map[string]float64 {
+	return map[string]float64{walk.Title: guidedWalkMetresPerS, run.Title: guidedRunMetresPerS}
+}
+
+// saveRecordedSession stores the recording as a finished workout, with one set
+// per interval holding what the route measured for it.
+func saveRecordedSession(
+	f *factory.Factory, active *models.User, routine *models.Routine,
+	name string, recording recordedCircuit, finishedAt time.Time,
+) {
 	encoded, err := json.Marshal(recording)
 	if err != nil {
-		panic(fmt.Errorf("encode guided circuit recording: %w", err))
+		panic(fmt.Errorf("encode recorded session: %w", err))
 	}
 
 	workout := f.NewWorkout(
 		factory.WorkoutUserID(active.ID),
 		factory.WorkoutRoutineID(routine.ID),
-		factory.WorkoutName(guidedCircuitName),
+		factory.WorkoutName(name),
 		factory.WorkoutStartedAt(time.UnixMilli(recording.StartedAt).UTC()),
 		factory.WorkoutFinishedAt(finishedAt),
 		factory.WorkoutCreatedAt(finishedAt),
 		factory.WorkoutRecordingJSON(string(encoded)),
 	)
 
-	// One set per interval, holding what the route measured for it.
 	setBatch := make([][]factory.SetOpt, 0, len(recording.Phases))
 	start := recording.StartedAt
 	for index, phase := range recording.Phases {
@@ -130,19 +163,16 @@ func seedActiveGuidedCircuit(f *factory.Factory, active *models.User, run *model
 	f.NewSetBatch(setBatch...)
 }
 
-// recordGuidedCircuit lays the prescription out as phases and walks and runs
-// the loop at a steady pace, a GPS fix every few seconds.
-func recordGuidedCircuit(walk, run *models.Exercise, finishedAt time.Time) recordedCircuit {
-	phases := make([]recordedPhase, 0, guidedStationsPerRound*guidedCircuitRounds)
-	for round := 1; round <= guidedCircuitRounds; round++ {
-		phases = append(
-			phases,
-			guidedPhase(walk, round, guidedWalkSeconds),
-			guidedPhase(run, round, guidedRunSeconds),
-		)
+// recordSession walks and runs the loop through the phases it is given, at the
+// pace each exercise is worked at, with a GPS fix every few seconds.
+func recordSession(
+	phases []recordedPhase, pace map[string]float64, finishedAt time.Time,
+) recordedCircuit {
+	var total time.Duration
+	for _, phase := range phases {
+		total += time.Duration(phase.DurationSeconds) * time.Second
 	}
 
-	total := time.Duration(guidedCircuitRounds*(guidedWalkSeconds+guidedRunSeconds)) * time.Second
 	startedAt := finishedAt.Add(-total)
 	recording := recordedCircuit{
 		Version:   1,
@@ -151,6 +181,7 @@ func recordGuidedCircuit(walk, run *models.Exercise, finishedAt time.Time) recor
 		Phases:    phases,
 		Pauses:    []recordedPause{},
 		Points:    []recordedPoint{},
+		pace:      pace,
 	}
 
 	angle := 0.0
@@ -181,7 +212,7 @@ func recordGuidedCircuit(walk, run *models.Exercise, finishedAt time.Time) recor
 	return recording
 }
 
-func guidedPhase(exercise *models.Exercise, round, seconds int) recordedPhase {
+func guidedPhase(exercise *models.Exercise, round, seconds int, role string) recordedPhase {
 	return recordedPhase{
 		ExerciseID:      exercise.ID.String(),
 		StationKey:      exercise.ID.String(),
@@ -189,6 +220,7 @@ func guidedPhase(exercise *models.Exercise, round, seconds int) recordedPhase {
 		Round:           round,
 		DurationSeconds: seconds,
 		Instruction:     fmt.Sprintf("%s for %d seconds", exercise.Title, seconds),
+		Role:            role,
 	}
 }
 
@@ -199,11 +231,7 @@ func (r recordedCircuit) paceAt(elapsed time.Duration) float64 {
 	for _, phase := range r.Phases {
 		boundary += time.Duration(phase.DurationSeconds) * time.Second
 		if elapsed < boundary {
-			if phase.DurationSeconds == guidedWalkSeconds {
-				return guidedWalkMetresPerS
-			}
-
-			return guidedRunMetresPerS
+			return r.pace[phase.Name]
 		}
 	}
 

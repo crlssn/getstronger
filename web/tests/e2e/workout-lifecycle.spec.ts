@@ -908,6 +908,47 @@ test.describe('planned workouts and history', () => {
     }
   })
 
+  // A session recorded from an interval routine is one session with a shape, so
+  // it reads as one numbered sequence rather than as the three parts it was
+  // built from — and the round is a sub-line under an interval, not a heading
+  // over a group of them.
+  test('reads a recorded interval session as one numbered sequence', async ({ page }) => {
+    test.info().annotations.push(allowRuntimeErrors)
+    await page.route('https://tiles.openfreemap.org/**', (route) => route.abort())
+    await page.goto('/workout')
+    const history = sectionWithHeading(page, 'Previous workouts')
+    await history.getByRole('link').filter({ hasText: 'Walk-Run Intervals' }).first().click()
+    await expect(
+      page.getByRole('heading', { name: 'Walk-Run Intervals', exact: true }),
+    ).toBeVisible()
+
+    const intervals = sectionWithHeading(page, 'Intervals')
+    await expect(intervals.getByRole('heading', { name: 'Intervals' })).toBeVisible()
+    // Five rounds, counted off the repeating block alone: the warm-up in front
+    // of it is worked once, outside the count.
+    await expect(intervals.getByText('5 rounds')).toBeVisible()
+    await expect(
+      intervals.getByText('Walk 5:00 · 5 × (Run 1:00 → Walk 2:00)', { exact: true }),
+    ).toBeVisible()
+
+    // A warm-up walk, then five runs and four walks: the final walk is dropped,
+    // so the session ends on the run.
+    const rows = intervals.getByRole('list').last().getByRole('listitem')
+    await expect(rows).toHaveCount(10)
+    await expect(rows.first()).toContainText('Warm-up')
+    await expect(rows.nth(1)).toContainText('Round 1 of 5')
+    await expect(rows.last()).toContainText('Run')
+    await expect(rows.last()).toContainText('Round 5 of 5')
+
+    // Numbered straight through rather than restarting inside each part, and
+    // paced on every row, which is the number the session was for.
+    await expect(rows.first()).toContainText('1')
+    await expect(rows.last()).toContainText('10')
+    await expect(intervals.getByText('/km')).toHaveCount(10)
+    await expect(rows.nth(1)).toContainText(/\d:\d\d/)
+  })
+
+
   test('loads previous workouts to a clear end state and opens a summary', async ({ page }) => {
     await page.goto('/workout')
     const history = sectionWithHeading(page, 'Previous workouts')

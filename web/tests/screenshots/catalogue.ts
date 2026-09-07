@@ -18,6 +18,8 @@ export type Ids = {
   runExerciseId?: string
   userId?: string
   workoutId?: string
+  /** The recorded interval session, read as one numbered sequence. */
+  intervalWorkoutId?: string
 }
 
 export type PageEntry = {
@@ -276,6 +278,11 @@ export const authenticatedPages: PageEntry[] = [
     name: 'view-workout-route',
     route: ({ recordedWorkoutId }) => recordedWorkoutId && `/workouts/${recordedWorkoutId}`,
   },
+  {
+    component: 'src/ui/features/WorkoutIntervals.tsx',
+    name: 'view-workout-intervals',
+    route: ({ intervalWorkoutId }) => intervalWorkoutId && `/workouts/${intervalWorkoutId}`,
+  },
 ]
 
 const uuid = '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}'
@@ -318,6 +325,7 @@ export const resolveIds = async (
   const [userId] = await idsOn('/profile', 'users')
   const [workoutId] = await idsOn('/workout', 'workouts')
   const recordedWorkoutId = await idOfLink('workouts', 'Walk/Run Intervals')
+  const intervalWorkoutId = await idOfLink('workouts', 'Walk-Run Intervals')
   const [routineId] = await idsOn('/routines', 'routines')
   const [exerciseId] = await idsOn('/exercises', 'exercises')
   const runExerciseId = await idOfLink('exercises', 'Run')
@@ -327,6 +335,7 @@ export const resolveIds = async (
   return {
     exerciseId,
     followeeId: followees.find((id) => id !== userId),
+    intervalWorkoutId,
     planId,
     recordedWorkoutId,
     routineId,

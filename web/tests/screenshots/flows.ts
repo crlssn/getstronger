@@ -38,6 +38,7 @@ const pickerOptions = (page: Page, dialog: ReturnType<Page['getByRole']>) =>
   dialog.getByRole('button').filter({ has: page.locator('strong') })
 
 const circuitName = 'Screenshot Circuit'
+const intervalName = 'Screenshot Intervals'
 const planName = 'Screenshot Plan'
 
 // The builder picks exercises through the same sheet the session uses; each
@@ -251,7 +252,7 @@ export const flows: Flow[] = [
           await page.getByLabel('Routine name').fill(circuitName)
           circuitExercises = [await pickExercise(page, 0), await pickExercise(page, 1)]
 
-          await page.getByRole('button', { name: 'Advanced', exact: true }).click()
+          await page.getByRole('button', { name: 'Groups', exact: true }).click()
           await page.getByRole('button', { name: 'Circuit', exact: true }).click()
           await stepRest(page, 'Rest after each exercise in group A', 'Subtract')
           await stepRest(page, 'Rest after each round in group A', 'Add')
@@ -324,6 +325,53 @@ export const flows: Flow[] = [
           await expect(page.getByRole('heading', { name: 'Exercises', exact: true })).toBeVisible()
         },
         name: 'finished',
+      },
+    ],
+  },
+  {
+    cleanup: async (page) => {
+      await page.goto('/routines')
+      await page.getByLabel('Search routines').fill(intervalName)
+      const routine = page.getByRole('heading', { name: intervalName }).first()
+      if (!(await present(routine))) return
+
+      await routine.click()
+      await page.getByRole('button', { name: 'Delete' }).click()
+      await acceptConfirmation(page)
+      await expect(page).toHaveURL(/\/routines$/)
+    },
+    component: 'src/ui/routines/RoutineIntervalsEditor.tsx',
+    // The third shape of the builder: a warm-up, one block with a round count,
+    // and a cool-down. Nothing else in the set photographs it.
+    name: 'intervals',
+    personas: ['active'],
+    steps: [
+      {
+        act: async (page) => {
+          await page.goto('/routines/create')
+          await page.getByLabel('Routine name').fill(intervalName)
+          await page.getByRole('button', { name: 'Intervals', exact: true }).click()
+
+          // A longer first walk, then a block of two worked five times: the
+          // shape a walk-run session has, and the one it could not be built in.
+          await pickExercise(page, 0, 0)
+          await pickExercise(page, 1, 1)
+          await pickExercise(page, 2, 1)
+          for (const _ of [1, 2]) {
+            await page.getByRole('button', { name: 'Add a round to Rounds' }).click()
+          }
+          await expect(page.getByText('Announced as Round n of 5')).toBeVisible()
+        },
+        name: 'built',
+      },
+      {
+        // Every round in full, which is the other thing the switch says and
+        // what the count below it answers to.
+        act: async (page) => {
+          await page.getByRole('switch', { name: 'Skip last exercise on final round' }).click()
+          await expect(page.getByText('Every round runs in full')).toBeVisible()
+        },
+        name: 'no-skip',
       },
     ],
   },

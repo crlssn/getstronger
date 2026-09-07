@@ -1,6 +1,4 @@
-import type { GroupRole } from '@/utils/routineGroups'
-
-type IntervalRole = Exclude<GroupRole, ''>
+import type { IntervalRole } from '@/utils/routineGroups'
 
 /** What each part of an interval routine is called. */
 export const intervalPartTitle: Record<IntervalRole, string> = {

@@ -17,10 +17,13 @@ export type GroupMode = 'straight' | 'circuit'
  * The empty string is a block with no such place — every gym circuit, and every
  * routine saved before intervals existed.
  */
-export type GroupRole = '' | 'warmup' | 'repeat' | 'cooldown'
+export type GroupRole = '' | IntervalRole
+
+/** One of the three parts an interval routine is built from. */
+export type IntervalRole = 'warmup' | 'repeat' | 'cooldown'
 
 /** The three parts of an interval routine, in the order they are trained. */
-export const intervalRoles = ['warmup', 'repeat', 'cooldown'] as const
+export const intervalRoles: readonly IntervalRole[] = ['warmup', 'repeat', 'cooldown']
 
 /**
  * How a routine is built: one list, blocks of its own choosing, or the fixed
@@ -221,7 +224,7 @@ export const routineShape = (groups: readonly DraftGroup[]): RoutineShape =>
  * next one starts, which is the same thing a guided round does. It rests
  * nowhere, because in an interval session the easy interval is the rest.
  */
-const intervalPart = (role: GroupRole, entries: DraftEntry[] = []): DraftGroup => ({
+const intervalPart = (role: IntervalRole, entries: DraftEntry[] = []): DraftGroup => ({
   id: newLocalId('group'),
   mode: 'circuit',
   restTimers: false,
@@ -247,7 +250,7 @@ export const intervalGroups = (entries: DraftEntry[] = []): DraftGroup[] =>
 /** The part of an interval routine that plays this role, if the form holds one. */
 export const intervalPartOf = (
   groups: readonly DraftGroup[],
-  role: GroupRole,
+  role: IntervalRole,
 ): DraftGroup | undefined => groups.find((group) => group.role === role)
 
 /**
@@ -283,13 +286,13 @@ export const clearIntervalRoles = (groups: readonly DraftGroup[]): DraftGroup[] 
   groups.map((group) => ({ ...group, role: '', skipLastOnFinalRound: false }))
 
 /**
- * How many intervals the routine prescribes: the warm-up, the block once per
- * round, and the cool-down, less the exercise the final round drops.
+ * How many intervals an interval routine prescribes: the warm-up, the block
+ * once per round, and the cool-down, less the exercise the final round drops.
  */
 export const intervalCount = (groups: readonly DraftGroup[]): number =>
   groups.reduce((count, group) => count + intervalsIn(group), 0)
 
-/** How long the routine is planned to take, in seconds. */
+/** How long an interval routine is planned to take, in seconds. */
 export const intervalSeconds = (groups: readonly DraftGroup[]): number =>
   groups.reduce((seconds, group) => {
     const block = group.entries.reduce(
@@ -317,7 +320,8 @@ const intervalsIn = (group: DraftGroup) =>
 const intervalDrafts = (groups: readonly DraftGroup[]): DraftGroup[] =>
   intervalRoles.map((role) => intervalPartOf(groups, role) ?? intervalPart(role))
 
-const roleFromProto = (role: RoutineGroupRole): GroupRole => {
+/** Where a saved block sits in an interval routine, as the form names it. */
+export const groupRole = (role: RoutineGroupRole): GroupRole => {
   switch (role) {
     case RoutineGroupRole.WARMUP:
       return 'warmup'
@@ -357,7 +361,7 @@ export const draftGroupsFromRoutine = (
         ? group.restBetweenRoundsSeconds
         : defaultRoundRestSeconds,
       rounds: group.rounds,
-      role: roleFromProto(group.role),
+      role: groupRole(group.role),
       skipLastOnFinalRound: group.skipLastOnFinalRound,
       entries: group.exercises.map((entry) => ({
         key: newLocalId('entry'),

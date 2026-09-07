@@ -1,12 +1,15 @@
 import type { RoutineGroup } from '@/proto/api/v1/routine_service_pb'
+import type { IntervalRole } from '@/utils/routineGroups'
+
 import { RoutineGroupMode, RoutineGroupRole } from '@/proto/api/v1/shared_pb'
 
 /**
  * Where the block an interval came from sits in the routine: a warm-up worked
  * once before the round count, the block that count repeats, a cool-down worked
- * once after it.
+ * once after it. The recording keeps its own copy, so a routine edited later
+ * cannot change how a finished session reads.
  */
-export type PhaseRole = 'warmup' | 'repeat' | 'cooldown'
+export type PhaseRole = IntervalRole
 
 export interface Phase {
   exerciseId: string
