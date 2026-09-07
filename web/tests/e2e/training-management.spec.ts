@@ -1,3 +1,5 @@
+import type { Locator } from '@playwright/test'
+
 import {
   acceptConfirmDialog,
   expect,
@@ -64,11 +66,22 @@ const restChip = (page: Parameters<typeof logIn>[0], name: string, value: string
 const targetChip = (page: Parameters<typeof logIn>[0], name: string, value: string) =>
   page.getByRole('button', { name: `Target duration for ${name}: ${value}`, exact: true })
 
+// Whether a search found the row a cleanup is about to delete. isVisible()
+// does not retry, so the search settles on a hit or on its empty state before
+// the answer is read. The guard is for a try block that failed before the row
+// existed, not for a list that has yet to render: answering early skips the
+// deletion and leaves the row behind to poison a later test in this file.
+const foundInSearch = async (hit: Locator, emptyState: Locator) => {
+  await expect(hit.or(emptyState)).toBeVisible()
+  return hit.isVisible()
+}
+
 const deleteExercise = async (page: Parameters<typeof logIn>[0], name: string) => {
   await page.goto('/exercises')
   await page.getByLabel('Search exercises').fill(name)
   const link = page.getByRole('link').filter({ hasText: name }).first()
-  if (!(await link.isVisible())) return
+  const noMatches = page.getByRole('heading', { name: 'No matching exercises' })
+  if (!(await foundInSearch(link, noMatches))) return
   await link.click()
   await openExerciseActions(page)
   await page.getByRole('menuitem', { name: 'Delete exercise' }).click()
@@ -471,7 +484,8 @@ test.describe('routine lifecycle', () => {
       await page.goto('/routines')
       await page.getByLabel('Search routines').fill(routineName)
       const saved = page.getByRole('heading', { name: routineName })
-      if (await saved.isVisible()) {
+      const noRoutines = page.getByRole('heading', { name: 'No matching routines' })
+      if (await foundInSearch(saved, noRoutines)) {
         await saved.click()
         await page.getByRole('button', { name: 'Delete' }).click()
         await acceptConfirmDialog(page, 'Delete')
@@ -720,7 +734,8 @@ test.describe('routine lifecycle', () => {
       await page.goto('/routines')
       await page.getByLabel('Search routines').fill(routineName)
       const savedRoutine = page.getByRole('heading', { name: routineName })
-      if (await savedRoutine.isVisible()) {
+      const noRoutines = page.getByRole('heading', { name: 'No matching routines' })
+      if (await foundInSearch(savedRoutine, noRoutines)) {
         await savedRoutine.click()
         await page.getByRole('button', { name: 'Delete' }).click()
         await acceptConfirmDialog(page, 'Delete')
@@ -804,7 +819,8 @@ test.describe('routine lifecycle', () => {
       await page.goto('/routines')
       await page.getByLabel('Search routines').fill(routineName)
       const savedRoutine = page.getByRole('heading', { name: routineName })
-      if (await savedRoutine.isVisible()) {
+      const noRoutines = page.getByRole('heading', { name: 'No matching routines' })
+      if (await foundInSearch(savedRoutine, noRoutines)) {
         await savedRoutine.click()
         await page.getByRole('button', { name: 'Delete' }).click()
         await acceptConfirmDialog(page, 'Delete')
