@@ -2,9 +2,12 @@ import type { MeasuredInterval, PhaseRole } from '@/utils/timedCircuit'
 
 import { useTranslation } from 'react-i18next'
 
+import { DistanceUnit } from '@/proto/api/v1/shared_pb'
+import { distanceUnitLabel } from '@/utils/distanceUnits'
+
 import { cn } from '@/ui/cn'
 import { intervalPartTitle } from '@/ui/routines/intervalParts'
-import { formatPace } from '@/utils/exerciseMeasurements'
+import { paceIn } from '@/utils/exerciseMeasurements'
 import { elapsedLabel } from '@/utils/workoutSession'
 import styles from './WorkoutIntervals.module.css'
 
@@ -16,9 +19,8 @@ interface Props {
   colour: (exerciseId: string) => string
   /** How far this session's distances read, in the unit the athlete prefers. */
   distance: (meters: number) => string
-  /** Seconds in one of that unit, which is what turns a distance into a pace. */
-  metresPerUnit: number
-  unit: string
+  /** The unit those distances and paces are read in. */
+  unit: DistanceUnit
 }
 
 /**
@@ -30,15 +32,9 @@ interface Props {
  * with the round a sub-line under the name rather than a heading over a group
  * of them. Pace is on every row, because it is the number the session was for.
  */
-export const WorkoutIntervals = ({
-  intervals,
-  rounds,
-  colour,
-  distance,
-  metresPerUnit,
-  unit,
-}: Props) => {
+export const WorkoutIntervals = ({ intervals, rounds, colour, distance, unit }: Props) => {
   const { t } = useTranslation()
+  const unitLabel = distanceUnitLabel(unit)
 
   const label = (interval: MeasuredInterval) =>
     `${interval.phase.name} ${elapsedLabel(interval.phase.durationSeconds)}`
@@ -89,17 +85,19 @@ export const WorkoutIntervals = ({
       <div className={styles.columns} aria-hidden="true">
         <span />
         <span>{t('timedCircuit.interval')}</span>
-        <span>{t('timedCircuit.timeAndDistance', { unit })}</span>
+        <span>{t('timedCircuit.timeAndDistance', { unit: unitLabel })}</span>
         <span>{t('timedCircuit.pace')}</span>
       </div>
 
       <ol className={styles.sequence}>
         {intervals.map((interval, position) => {
           const seconds = Math.round(interval.durationSeconds)
+          // Seconds per kilometre, which is the unit paceIn reads a stored
+          // distance in before converting it to the athlete's.
           const pace =
             interval.distanceMeters > 0 && seconds > 0
-              ? formatPace((seconds * metresPerUnit) / interval.distanceMeters)
-              : t('timedCircuit.noPace')
+              ? paceIn((seconds / interval.distanceMeters) * 1000, unit)
+              : undefined
 
           return (
             <li key={`${interval.phase.stationKey}-${interval.phase.round}`}>
@@ -134,8 +132,8 @@ export const WorkoutIntervals = ({
               </span>
 
               <span className={styles.pace}>
-                {pace}
-                <small>{t('timedCircuit.perUnit', { unit })}</small>
+                {pace?.value ?? t('timedCircuit.noPace')}
+                <small>{pace?.unit ?? `/${unitLabel}`}</small>
               </span>
             </li>
           )

@@ -302,6 +302,38 @@ func TestRoutineGroupMode(t *testing.T) {
 	)
 }
 
+// Where a block sits in an interval routine, over the wire and back. Every
+// value round-trips, and anything the schema does not know is a block with no
+// place in one — every gym circuit, and every routine saved before intervals.
+func TestRoutineGroupRole(t *testing.T) {
+	t.Parallel()
+
+	roles := map[training.RoutineGroupRole]v1.RoutineGroupRole{
+		training.RoutineGroupRoleWarmup:   v1.RoutineGroupRole_ROUTINE_GROUP_ROLE_WARMUP,
+		training.RoutineGroupRoleRepeat:   v1.RoutineGroupRole_ROUTINE_GROUP_ROLE_REPEAT,
+		training.RoutineGroupRoleCooldown: v1.RoutineGroupRole_ROUTINE_GROUP_ROLE_COOLDOWN,
+	}
+
+	for role, proto := range roles {
+		require.Equal(t, proto, parser.RoutineGroupRoleToProto(role))
+		require.Equal(t, role, parser.RoutineGroupRoleFromProto(proto))
+	}
+
+	require.Equal(
+		t,
+		v1.RoutineGroupRole_ROUTINE_GROUP_ROLE_UNSPECIFIED,
+		parser.RoutineGroupRoleToProto(""),
+	)
+	require.Equal(
+		t,
+		v1.RoutineGroupRole_ROUTINE_GROUP_ROLE_UNSPECIFIED,
+		parser.RoutineGroupRoleToProto(training.RoutineGroupRole("sprint")),
+	)
+
+	require.Empty(t, parser.RoutineGroupRoleFromProto(v1.RoutineGroupRole_ROUTINE_GROUP_ROLE_UNSPECIFIED))
+	require.Empty(t, parser.RoutineGroupRoleFromProto(v1.RoutineGroupRole(99)))
+}
+
 func TestWorkout(t *testing.T) {
 	t.Parallel()
 
