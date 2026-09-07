@@ -53,6 +53,15 @@ const addFirstExercise = async (page: Parameters<typeof logIn>[0]) => {
   return name
 }
 
+// The one exercise a test made for itself, which the library offers among all
+// the others rather than first.
+const addExerciseNamed = async (page: E2EPage, name: string) => {
+  await page.getByRole('button', { name: 'Choose exercise' }).click()
+  const picker = page.getByRole('dialog', { name: 'Add exercise' })
+  await picker.getByLabel('Search exercises').fill(name)
+  await pickerOptions(page, picker).first().click()
+}
+
 // The seeded cardio exercise, whose set inputs are distance and time rather
 // than the weight and reps addFirstExercise deliberately avoids.
 const addCardioExercise = async (page: E2EPage) => {
@@ -551,15 +560,24 @@ test.describe('weight units', () => {
     )
     await expect(page.getByRole('status')).toContainText('Weight unit updated')
 
+    // An exercise of its own, so nothing but the set below can hold its
+    // record. Out-lifting the seed is not enough: the athlete is shared, and a
+    // test that lifts heavier on the library's first exercise takes that
+    // record with it.
+    exercise = uniqueName('E2E Pounds press')
+    await page.goto('/exercises/create')
+    await page.locator('form input[type="text"]').first().fill(exercise)
+    await page.getByRole('button', { name: 'Create exercise' }).click()
+    await expect(page).toHaveURL(/\/exercises$/)
+
     // New set inputs pick up the new preference as a static suffix.
     await page.goto('/workouts/quick')
-    exercise = await addFirstExercise(page)
+    await addExerciseNamed(page, exercise)
     weightEntry = unitFieldFor(page, `${exercise} set 1 weight`)
     await expect(weightEntry.locator('span')).toHaveText('lbs')
 
-    // Heavier than anything seeded so this set becomes the exercise's personal
-    // best and the records view has to render it back in the unit it was
-    // entered in.
+    // The exercise's personal best, which the records view has to render back
+    // in the unit it was entered in.
     await page
       .getByRole('textbox', { name: `${exercise} set 1 weight`, exact: true })
       .fill('330.69')
@@ -695,10 +713,7 @@ test.describe('weight units', () => {
       await expect(page.getByRole('status')).toContainText('Distance unit updated')
 
       await page.goto('/workouts/quick')
-      await page.getByRole('button', { name: 'Choose exercise' }).click()
-      const picker = page.getByRole('dialog', { name: 'Add exercise' })
-      await picker.getByLabel('Search exercises').fill(exerciseName)
-      await pickerOptions(page, picker).first().click()
+      await addExerciseNamed(page, exerciseName)
 
       // Distance is a decimal field carrying the preference as a static
       // suffix; time is a stopwatch-style field where bare digits fill in
