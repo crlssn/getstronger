@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { create } from '@bufbuild/protobuf'
-import { screen, waitFor, within } from '@testing-library/react'
+import { act, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
@@ -103,6 +103,32 @@ describe('UnitSettings', () => {
 
     await waitFor(() => expect(mocked.getCurrentUser).toHaveBeenCalled())
     expect(group('Preferred weight unit').getByRole('button', { name: 'lbs' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    )
+  })
+
+  // The page asks the account what the units are as it opens, and the athlete
+  // can answer first. The reply is then the older of the two, and applying it
+  // reverts a unit the server has already been told about — on this screen and
+  // on every other one reading the same cache.
+  test('keeps a unit chosen while the account was still being read', async () => {
+    let answer = () => {}
+    mocked.getCurrentUser.mockReturnValue(
+      new Promise((resolve) => {
+        answer = () => resolve(account())
+      }),
+    )
+    render()
+
+    await userEvent.click(group('Preferred distance unit').getByRole('button', { name: 'mi' }))
+    await waitFor(() => expect(mocked.updateUserDistanceUnit).toHaveBeenCalled())
+    await act(async () => {
+      answer()
+    })
+
+    expect(usePreferencesStore.getState().distanceUnit).toBe(DistanceUnit.MILES)
+    expect(group('Preferred distance unit').getByRole('button', { name: 'mi' })).toHaveAttribute(
       'aria-pressed',
       'true',
     )
