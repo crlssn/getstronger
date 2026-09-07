@@ -56,6 +56,7 @@ export const ProfileView = () => {
     const { userId } = useAuthStore.getState()
     if (!userId) return
 
+    const asked = usePreferencesStore.getState()
     const [response] = await Promise.all([
       getCurrentUser(userId),
       useDashboardStore.getState().load(),
@@ -68,7 +69,21 @@ export const ProfileView = () => {
 
     setFailed(false)
     setUser(response.user)
+
+    // A preference changed while this was out is the newer of the two answers,
+    // and it is already on its way to the server. The cache outlives this tab,
+    // so the change can have come from the screen the tab was left for —
+    // writing the older one back would revert it here and everywhere else
+    // reading the same cache.
     const preferences = usePreferencesStore.getState()
+    if (
+      preferences.weightUnit !== asked.weightUnit ||
+      preferences.distanceUnit !== asked.distanceUnit ||
+      preferences.autofillSets !== asked.autofillSets
+    ) {
+      return
+    }
+
     preferences.setWeightUnit(response.user.weightUnit)
     preferences.setDistanceUnit(response.user.distanceUnit)
     preferences.setAutofillSets(response.user.autofillSets)
