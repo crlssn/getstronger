@@ -228,6 +228,10 @@ export const boxOf = async (locator: Locator) => {
 export const uniqueName = (prefix: string) =>
   `${prefix} ${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
 
+// The tail uniqueName appends, which nothing seeded carries. A helper that
+// picks whatever a list offers matches on it to skip another test's leftovers.
+export const testCreatedName = /\d{10,}-[a-z0-9]+/
+
 // The app confirms risky actions with its own sheet dialog rather than the
 // native confirm(), so tests accept it by pressing the named button inside it.
 export const acceptConfirmDialog = async (page: Page, buttonName: string) => {
