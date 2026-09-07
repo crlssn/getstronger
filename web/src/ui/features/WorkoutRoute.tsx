@@ -51,9 +51,15 @@ export const WorkoutRoute = ({ recording }: { recording: Recording }) => {
   }, [routes])
 
   // What the circuit prescribed, read off its first round: the rounds below
-  // then only have to say how each of them actually went.
+  // then only have to say how each of them actually went. A session with no set
+  // length prescribed nothing, so it says nothing here.
   const prescription = (rounds[0]?.[1] ?? [])
-    .map(({ phase }) => `${phase.name} ${elapsedLabel(phase.durationSeconds)}`)
+    .map(({ phase }) =>
+      phase.durationSeconds === undefined
+        ? ''
+        : `${phase.name} ${elapsedLabel(phase.durationSeconds)}`,
+    )
+    .filter(Boolean)
     .join(' → ')
 
   // The map when the browser and the tiles allow it; the bare shape of the

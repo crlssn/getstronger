@@ -1,0 +1,15 @@
+@reference '../../assets/base.css';
+
+/* One ruled list rather than a stack of cards: the rows are a single choice,
+   and the rule between them is what says so. */
+.options {
+  @apply divide-y divide-border overflow-hidden rounded-control border border-border-strong;
+}
+
+.recent {
+  @apply text-meta text-text-subtle;
+}
+
+.empty {
+  @apply flex flex-col items-center gap-4 rounded-control bg-ink-surface p-6 text-center text-body text-text-subtle;
+}

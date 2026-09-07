@@ -16,7 +16,8 @@ export interface Phase {
   stationKey: string
   name: string
   round: number
-  durationSeconds: number
+  /** Absent for an open interval, which runs until the athlete ends it. */
+  durationSeconds?: number
   instruction: string
   /**
    * Absent for a gym circuit, and for every recording written before interval
@@ -158,6 +159,35 @@ export const circuitPhases = (
   })
 }
 
+/**
+ * The prescription for a session with no set length: one interval, open-ended.
+ *
+ * A session entered blank names no exercise until it ends, so the phase carries
+ * whatever it is known by at the time and is named for good by `namedRecording`.
+ */
+export const openSessionPhases = (name: string, instruction: string, exerciseId = ''): Phase[] => [
+  { exerciseId, stationKey: exerciseId || 'open', name, round: 1, instruction },
+]
+
+/**
+ * The recording read as one interval of `exercise`.
+ *
+ * An open session measures a route before it knows whose route it is: distances
+ * are attributed to phases that name an exercise, so the screen names the one
+ * interval provisionally and the save names it for good.
+ */
+export const namedRecording = (
+  recording: Recording,
+  exercise: { id: string; name: string },
+): Recording => ({
+  ...recording,
+  phases: recording.phases.map((phase) =>
+    phase.durationSeconds === undefined
+      ? { ...phase, exerciseId: exercise.id, stationKey: exercise.id, name: exercise.name }
+      : phase,
+  ),
+})
+
 /** Split active time into wall-clock windows; pauses never belong to an interval. */
 export const buildTimeline = (recording: Recording, now: number): Interval[] => {
   const end = Math.min(recording.endedAt ?? now, now)
@@ -172,7 +202,9 @@ export const buildTimeline = (recording: Recording, now: number): Interval[] => 
   let windowIndex = 0
   let start = active[0]?.start ?? end
   return recording.phases.map((phase) => {
-    let remaining = phase.durationSeconds * 1000
+    // An open interval takes every window left: it runs until `endedAt`, which
+    // is where the active time already stops.
+    let remaining = phase.durationSeconds === undefined ? Infinity : phase.durationSeconds * 1000
     const windows: Interval['windows'] = []
     while (remaining > 0 && windowIndex < active.length) {
       const window = active[windowIndex]
@@ -185,7 +217,11 @@ export const buildTimeline = (recording: Recording, now: number): Interval[] => 
         start = active[windowIndex]?.start ?? end
       }
     }
-    return { phase, windows, durationSeconds: phase.durationSeconds - remaining / 1000 }
+    return {
+      phase,
+      windows,
+      durationSeconds: windows.reduce((sum, window) => sum + window.end - window.start, 0) / 1000,
+    }
   })
 }
 
@@ -307,3 +343,12 @@ export const measureRoute = (recording: Recording, intervals: Interval[]) => {
   })
   return routes
 }
+
+/**
+ * Seconds per kilometre over a whole distance, or nothing when there is none.
+ *
+ * A session with no set length has no interval to compare against, so what it
+ * says beside the pace now is the average over the whole of it.
+ */
+export const averagePace = (meters: number, seconds: number): number | undefined =>
+  meters > 0 && seconds > 0 ? (seconds * 1000) / meters : undefined

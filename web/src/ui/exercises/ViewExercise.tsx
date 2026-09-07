@@ -1,7 +1,13 @@
 import type { Exercise, Set } from '@/proto/api/v1/shared_pb'
 import type { DropdownItem } from '@/types/dropdown'
 
-import { BoltIcon, ChevronRightIcon, TrashIcon, TrophyIcon } from '@heroicons/react/24/outline'
+import {
+  BoltIcon,
+  ChevronRightIcon,
+  MapIcon,
+  TrashIcon,
+  TrophyIcon,
+} from '@heroicons/react/24/outline'
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useNavigate, useParams } from 'react-router-dom'
@@ -26,7 +32,7 @@ import { ExerciseChart } from '@/ui/features/ExerciseChart'
 import { appendPage } from '@/utils/appendPage'
 import blurActiveElement from '@/utils/blurActiveElement'
 import { formatTimestamp } from '@/utils/datetime'
-import { formatExerciseSet } from '@/utils/exerciseMeasurements'
+import { formatExerciseSet, isDistanceTimeExercise } from '@/utils/exerciseMeasurements'
 import { downSample } from '@/utils/exerciseTrend'
 import { useActiveWorkout } from '@/utils/useActiveWorkout'
 import { usePagination } from '@/utils/usePagination'
@@ -134,6 +140,7 @@ export const ViewExercise = () => {
   }
 
   const isOwner = userId === exercise.userId
+  const recordable = isOwner && isDistanceTimeExercise(exercise)
 
   const exerciseActions: DropdownItem[] = [
     { href: `/exercises/${id}/edit`, title: t('exercise.edit') },
@@ -160,19 +167,28 @@ export const ViewExercise = () => {
 
       <ExerciseTags tags={exercise.tags} />
 
+      {/* Starting a run or a ride here means recording it: its distance and
+          its time are what a route measures, and nobody types those in while
+          they are moving. Everything else starts as a quick workout. */}
       {isOwner && (
         <AppOptionRow
           className={styles.startQuickCard}
           leading={
             <span className={styles.startQuickIcon}>
-              <BoltIcon aria-hidden="true" />
+              {recordable ? <MapIcon aria-hidden="true" /> : <BoltIcon aria-hidden="true" />}
             </span>
           }
           trailing={<ChevronRightIcon className={styles.startQuickChevron} aria-hidden="true" />}
-          onClick={() => void onStartQuickWorkout()}
+          onClick={() =>
+            void (recordable ? navigate(`/record?exercise=${id}`) : onStartQuickWorkout())
+          }
         >
-          <strong>{t('exercise.startQuickWorkout')}</strong>
-          <small>{t('exercise.startQuickWorkoutBody', { name: exercise.name })}</small>
+          <strong>{recordable ? t('record.title') : t('exercise.startQuickWorkout')}</strong>
+          <small>
+            {recordable
+              ? t('record.exerciseBody', { name: exercise.name })
+              : t('exercise.startQuickWorkoutBody', { name: exercise.name })}
+          </small>
         </AppOptionRow>
       )}
 

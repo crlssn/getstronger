@@ -61,9 +61,17 @@ public class TimedCircuitPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManagerD
         }
     }
 
+    /// A phase naming no duration is the one open interval of a session with no
+    /// set length; it runs until the athlete ends it.
+    private func openInterval(_ phase: [String: Any]) -> Bool {
+        phase["durationSeconds"] == nil || phase["durationSeconds"] is NSNull
+    }
+
     private func begin(_ call: CAPPluginCall) {
         guard let phases = call.getArray("phases", [String: Any].self), !phases.isEmpty,
-              phases.count <= 10000, phases.allSatisfy({ ($0["durationSeconds"] as? Int ?? 0) > 0 }),
+              phases.count <= 10000,
+              (phases.count == 1 && openInterval(phases[0]))
+                || phases.allSatisfy({ ($0["durationSeconds"] as? Int ?? 0) > 0 }),
               let requestedKey = call.getString("key") else { call.reject("Invalid prescription"); return }
         key = requestedKey
         locale = call.getString("locale") ?? "en"
@@ -103,7 +111,7 @@ public class TimedCircuitPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManagerD
         let elapsed = activeMilliseconds(at: time)
         var boundary = 0.0
         for (index, phase) in phases.enumerated() {
-            boundary += (phase["durationSeconds"] as? Double ?? 0) * 1000
+            boundary += openInterval(phase) ? .infinity : (phase["durationSeconds"] as? Double ?? 0) * 1000
             if elapsed < boundary {
                 if spoken != index {
                     if spoken >= 0 && index > spoken + 1 { recording?["interrupted"] = true }

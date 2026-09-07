@@ -81,6 +81,7 @@ const render = () =>
     <Routes>
       <Route path="/exercises" element={<p>library</p>} />
       <Route path="/workouts/quick" element={<p>quick workout</p>} />
+      <Route path="/record" element={<p>recording</p>} />
       <Route path="/exercises/:id" element={<ViewExercise />} />
     </Routes>,
     { route: '/exercises/bench' },
@@ -167,6 +168,22 @@ describe('ViewExercise', () => {
       expect(screen.queryByRole('button', { name: 'Exercise actions' })).not.toBeInTheDocument()
       expect(screen.queryByText('Start quick workout')).not.toBeInTheDocument()
     })
+  })
+
+  // A run's distance and its time are what a route measures, and nobody types
+  // those in while they are moving, so starting one here means recording it.
+  test('starts a recording rather than a quick workout for a paced exercise', async () => {
+    const paced = exercise()
+    paced.exercise!.name = 'Run'
+    paced.exercise!.metrics = [ExerciseMetric.DISTANCE, ExerciseMetric.TIME]
+    mocked.getExercise.mockResolvedValue(paced)
+    render()
+
+    expect(screen.queryByText('Start quick workout')).not.toBeInTheDocument()
+    await userEvent.click(await screen.findByText('Record a session'))
+
+    expect(await screen.findByText('recording')).toBeInTheDocument()
+    expect(useWorkoutStore.getState().workouts[quickWorkoutRoutineID]).toBeUndefined()
   })
 
   describe('starting a quick workout', () => {

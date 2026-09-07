@@ -37,7 +37,7 @@ export const WorkoutIntervals = ({ intervals, rounds, colour, distance, unit }: 
   const unitLabel = distanceUnitLabel(unit)
 
   const label = (interval: MeasuredInterval) =>
-    `${interval.phase.name} ${elapsedLabel(interval.phase.durationSeconds)}`
+    `${interval.phase.name} ${elapsedLabel(interval.phase.durationSeconds ?? 0)}`
 
   // What the routine asked for, read off the parts rather than off the rounds:
   // the warm-up once, the block with the count in front of it, the cool-down.

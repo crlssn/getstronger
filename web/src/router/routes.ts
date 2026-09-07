@@ -93,6 +93,13 @@ export const routes: AppRoute[] = [
     titleKey: 'pages.quickWorkout',
     focusedShell: true,
   },
+  {
+    name: 'record-session',
+    path: '/record',
+    access: 'auth',
+    titleKey: 'pages.record',
+    focusedShell: true,
+  },
   { name: 'view-workout', path: '/workouts/:id', access: 'auth' },
   {
     name: 'edit-workout',

@@ -9,6 +9,8 @@ import {
   currentPace,
   isIntervalRecording,
   measureRoute,
+  namedRecording,
+  openSessionPhases,
   parseRecording,
   recordedRounds,
   type Recording,
@@ -86,7 +88,7 @@ describe('recorded timeline', () => {
       'Rest',
     )
     expect(phases).toHaveLength(12)
-    expect(phases.reduce((sum, phase) => sum + phase.durationSeconds, 0)).toBe(2160)
+    expect(phases.reduce((sum, phase) => sum + (phase.durationSeconds ?? 0), 0)).toBe(2160)
     expect(phases[11]).toMatchObject({ exerciseId: 'run', round: 6, instruction: 'Run 240' })
   })
 
@@ -123,6 +125,42 @@ describe('recorded timeline', () => {
     const routes = measureRoute(data, buildTimeline(data, data.endedAt!))
     expect(routes[0].distanceMeters).toBeCloseTo(5.56, 1)
     expect(routes[1].distanceMeters).toBeCloseTo(routes[0].distanceMeters)
+  })
+
+  it('runs an open interval until the recording ends, pauses excluded', () => {
+    const data = recording()
+    data.phases = openSessionPhases('Bike commute', 'Bike commute', 'bike')
+    data.pauses = [{ startedAt: 61000, endedAt: 91000 }]
+    const [interval] = buildTimeline(data, 900000)
+    expect(interval.phase.durationSeconds).toBeUndefined()
+    expect(interval.durationSeconds).toBe(330)
+    expect(interval.windows).toEqual([
+      { start: 1000, end: 61000 },
+      { start: 91000, end: 361000 },
+    ])
+  })
+
+  it('measures the whole route of an open interval once it names its exercise', () => {
+    const data = recording()
+    data.phases = openSessionPhases('Session', 'Recording')
+    data.points = [
+      { timestamp: 120000, latitude: 0, longitude: 0, accuracy: 3 },
+      { timestamp: 122000, latitude: 0, longitude: 0.0001, accuracy: 3 },
+    ]
+    // Unnamed, the interval belongs to no exercise and so measures nothing.
+    expect(measureRoute(data, buildTimeline(data, data.endedAt!))[0].distanceMeters).toBe(0)
+
+    const named = namedRecording(data, { id: 'bike', name: 'Bike commute' })
+    expect(named.phases[0]).toMatchObject({ exerciseId: 'bike', name: 'Bike commute' })
+    const [route] = measureRoute(named, buildTimeline(named, named.endedAt!))
+    expect(route.distanceMeters).toBeCloseTo(11.12, 1)
+  })
+
+  // A circuit's intervals are already named and held against the clock; naming
+  // a recording must not rewrite them.
+  it('leaves timed intervals alone when a recording is named', () => {
+    const data = recording()
+    expect(namedRecording(data, { id: 'bike', name: 'Bike commute' }).phases).toEqual(data.phases)
   })
 
   it('does not draw across pauses, missing GPS, or implausible jumps', () => {

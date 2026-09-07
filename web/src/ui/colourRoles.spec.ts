@@ -26,6 +26,9 @@ const roles = {
     'shell/AppRestTimerBanner.module.css',
     'shell/AppToaster.module.css',
     'workouts/WorkoutRestBanner.module.css',
+    // A recording's GPS pill: the dot is green while fixes are arriving, which
+    // is the only thing on that screen that is happening rather than measured.
+    'workouts/RecordSession.module.css',
     // The tick on a row just logged, in a round as in a table of sets.
     'workouts/RoundTable.module.css',
     'workouts/SetTable.module.css',

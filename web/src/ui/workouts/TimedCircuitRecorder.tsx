@@ -108,8 +108,10 @@ export const TimedCircuitRecorder = ({
     () => (recording ? measureRoute(recording, timeline) : []),
     [recording, timeline],
   )
+  // Every interval of a circuit is held against the clock; an open one belongs
+  // to a session with no set length, which this screen never runs.
   const index = timeline.findIndex(
-    (interval) => interval.durationSeconds < interval.phase.durationSeconds,
+    (interval) => interval.durationSeconds < (interval.phase.durationSeconds ?? 0),
   )
   const current = timeline[index]
   const next = timeline[index + 1]
@@ -117,7 +119,7 @@ export const TimedCircuitRecorder = ({
   const gps = Boolean(latest && latest.accuracy <= 30 && now - latest.timestamp < 15000)
   const held = recording?.pauses.at(-1)
   const elapsed = timeline.reduce((sum, interval) => sum + interval.durationSeconds, 0)
-  const progress = current ? current.durationSeconds / current.phase.durationSeconds : 0
+  const progress = current ? current.durationSeconds / (current.phase.durationSeconds ?? 0) : 0
   // A circuit counts every block, so the total is the station's own rounds; an
   // interval session counts the block the routine repeats, and nothing else.
   const intervals = recording ? isIntervalRecording(recording) : false
@@ -143,7 +145,7 @@ export const TimedCircuitRecorder = ({
       (route) =>
         route.phase.exerciseId &&
         route.distanceMeters > 0 &&
-        route.durationSeconds >= route.phase.durationSeconds,
+        route.durationSeconds >= (route.phase.durationSeconds ?? 0),
     )
     .at(-1)
   const exercises = [
@@ -245,7 +247,7 @@ export const TimedCircuitRecorder = ({
                         name: current?.phase.name,
                         duration: elapsedLabel(current?.phase.durationSeconds ?? 0),
                         next: next.phase.name,
-                        nextDuration: elapsedLabel(next.phase.durationSeconds),
+                        nextDuration: elapsedLabel(next.phase.durationSeconds ?? 0),
                       })
                     : t('timedCircuit.nowOnly', {
                         name: current?.phase.name,
