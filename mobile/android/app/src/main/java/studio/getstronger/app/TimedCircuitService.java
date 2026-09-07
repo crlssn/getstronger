@@ -38,12 +38,14 @@ public class TimedCircuitService extends Service implements LocationListener {
     private static final int TONE_MS = 200;
     /** How loud a pace note is against a full-volume announcement. */
     private static final double PACE_TONE_VOLUME = 0.2;
-    // Auto-pause, mirroring web/src/utils/movement.ts: below a walking pace for
-    // the dwell holds the recording, above twice that lets it go. The gap
-    // between the two keeps a pace either side of one line from fluttering it.
-    private static final double PAUSE_SPEED = 1000.0 / 3600;
-    private static final double RESUME_SPEED = 2000.0 / 3600;
-    private static final long DWELL_MS = 5000;
+    // Auto-pause, mirroring web/src/utils/movement.ts: under half a slow walk
+    // for the dwell holds the recording, over that again lets it go. The gap
+    // between the two keeps a pace either side of one line from fluttering it,
+    // and the dwell is short because the hold is backdated to where the
+    // athlete stopped.
+    private static final double PAUSE_SPEED = 2000.0 / 3600;
+    private static final double RESUME_SPEED = 3000.0 / 3600;
+    private static final long DWELL_MS = 2000;
     private static final long CONTINUOUS_MS = 3000;
     private static final int MAX_FIXES = 60;
     private static final double MAX_ACCURACY = 30;

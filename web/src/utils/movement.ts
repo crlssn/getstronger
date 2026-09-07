@@ -24,11 +24,17 @@ export interface MovementThresholds {
  * A gap between the two speeds rather than one line between them: a single
  * threshold would flutter the recording on and off at the pace either side of
  * it, which on a commute is most of a junction.
+ *
+ * Both sit well under a slow walk, which is about 4 km/h, and the dwell is
+ * short: a receiver's speed takes a second or two to fall once the athlete
+ * has stopped, and the recording is held from where they stopped rather than
+ * from where the dwell noticed, so a short dwell costs no accuracy and a long
+ * one costs the athlete a clock that keeps running at every crossing.
  */
 export const movementThresholds: MovementThresholds = {
-  pauseSpeed: 1000 / 3600,
-  resumeSpeed: 2000 / 3600,
-  dwellMs: 5000,
+  pauseSpeed: 2000 / 3600,
+  resumeSpeed: 3000 / 3600,
+  dwellMs: 2000,
 }
 
 /**

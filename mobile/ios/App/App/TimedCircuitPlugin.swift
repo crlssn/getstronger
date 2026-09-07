@@ -12,12 +12,14 @@ private struct Fix {
     let speed: Double?
 }
 
-// Auto-pause, mirroring `web/src/utils/movement.ts`: below a walking pace for
-// the dwell holds the recording, and above twice that lets it go. The gap
-// between the two keeps a pace either side of one line from fluttering it.
-private let pauseSpeed = 1000.0 / 3600
-private let resumeSpeed = 2000.0 / 3600
-private let dwellMs = 5000.0
+// Auto-pause, mirroring `web/src/utils/movement.ts`: under half a slow walk
+// for the dwell holds the recording, and over that again lets it go. The gap
+// between the two keeps a pace either side of one line from fluttering it,
+// and the dwell is short because the hold is backdated to where the athlete
+// stopped: it costs nothing but the seconds before the recording notices.
+private let pauseSpeed = 2000.0 / 3600
+private let resumeSpeed = 3000.0 / 3600
+private let dwellMs = 2000.0
 private let continuousMs = 3000.0
 private let maxFixes = 60
 private let maxAccuracy = 30.0
