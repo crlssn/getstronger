@@ -2927,3 +2927,13 @@ func (s *repoSuite) TestGetPersonalBestsOfAnAthleteWhoHasLoggedNothing() {
 	s.Require().NoError(err)
 	s.Require().Empty(bests)
 }
+
+// A query the database refuses is wrapped rather than swallowed.
+func (s *repoSuite) TestGetPersonalBestsQueryError() {
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	bests, err := s.repo.GetPersonalBests(ctx, uuid.Must(uuid.NewV4()))
+	s.Require().ErrorIs(err, context.Canceled)
+	s.Require().Nil(bests)
+}
