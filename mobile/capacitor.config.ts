@@ -7,7 +7,9 @@ const config: CapacitorConfig = {
   appName: 'GetStronger',
   webDir: '../web/dist',
   plugins: {
-    // Dark icons and clock over the app's light background.
+    // The launch value only, matching the white splash below. The page paints
+    // the band the clock sits on, so once the app is up the palette owns the
+    // style instead; see web/src/native/statusBar.ts.
     StatusBar: {
       style: 'LIGHT',
     },

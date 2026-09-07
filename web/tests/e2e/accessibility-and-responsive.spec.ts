@@ -243,3 +243,25 @@ test('still scrolls a guest screen taller than the screen it is on', async ({ pa
   await last.scrollIntoViewIfNeeded()
   await expect(last).toBeInViewport()
 })
+
+// Colours rather than tokens: a band still naming --color-canvas while the
+// shell below it had moved on would read as correct and look wrong.
+const paperOf = (element: Locator) =>
+  element.evaluate((node) => getComputedStyle(node).backgroundColor)
+
+test('fills the reserved strip with the paper of the shell below it', async ({ page }) => {
+  const session = await page.context().newCDPSession(page)
+  await emulateStatusBarInset(session, statusBarInset)
+  await page.setViewportSize({ height: 844, width: 390 })
+  const band = page.locator('[data-paper]')
+
+  await page.goto('/login')
+  await expect(page.getByRole('heading', { name: 'Log in to GetStronger' })).toBeVisible()
+  // The strip itself, from the top of the screen to where the app begins.
+  expect(await boxOf(band)).toMatchObject({ y: 0, height: statusBarInset })
+  // The guest shell opens on its header, which is white rather than canvas.
+  expect(await paperOf(band)).toBe(await paperOf(page.getByRole('banner')))
+
+  await logIn(page)
+  expect(await paperOf(band)).toBe(await paperOf(page.locator('body')))
+})

@@ -1,3 +1,5 @@
+import { paintStatusBar } from '@/native/statusBar'
+
 /**
  * The two palettes the app can be drawn in.
  *
@@ -21,7 +23,13 @@ export const deviceTheme = (): AppTheme =>
     ? 'dark'
     : 'light'
 
-/** Paints the app in a palette. `data-theme` carries it to every token. */
+/**
+ * Paints the app in a palette. `data-theme` carries it to every token.
+ *
+ * The status bar is part of the app on a phone: the page paints the band
+ * behind it, so the palette owns the clock's colour too.
+ */
 export const applyTheme = (theme: AppTheme): void => {
   document.documentElement.dataset.theme = theme
+  paintStatusBar(theme)
 }

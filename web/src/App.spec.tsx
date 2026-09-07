@@ -33,6 +33,23 @@ describe('App', () => {
     expect(screen.getByRole('navigation')).toBeInTheDocument()
   })
 
+  // The band the status bar is drawn on carries the paper of the shell under
+  // it, so on a phone the app runs to the top of the screen as one surface
+  // rather than opening on a strip of its own colour.
+  test('backs the status bar with the paper of the guest header', () => {
+    const { container } = renderWithProviders(<App />, { route: '/login' })
+
+    expect(container.querySelector('[data-paper]')).toHaveAttribute('data-paper', 'surface')
+  })
+
+  test('backs the status bar with the canvas the signed-in shell sits on', () => {
+    useAuthStore.setState({ userId: 'user-me', accessToken: 'token' })
+
+    const { container } = renderWithProviders(<App />, { route: '/home' })
+
+    expect(container.querySelector('[data-paper]')).toHaveAttribute('data-paper', 'canvas')
+  })
+
   // The confirm dialog, the offline banner and the update banner belong to the
   // app rather than to any screen, so they hang off the root either way.
   test('carries the app-level dialog into both shells', async () => {
