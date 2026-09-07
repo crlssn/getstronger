@@ -11,8 +11,8 @@ interface Props {
   unit?: string
   /** `record` paints the figure gold, and gold means a personal record. */
   tone?: 'default' | 'record'
-  /** `lg` is a card's headline figure; `md` one tile in a grid of them. */
-  size?: 'md' | 'lg'
+  /** `lg` is a card's headline figure, `md` one tile in a grid, `xl` a whole screen's point. */
+  size?: 'md' | 'lg' | 'xl'
   className?: string
 }
 

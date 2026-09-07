@@ -30,6 +30,11 @@
   @apply text-title;
 }
 
+/* Read at a glance rather than looked up: a figure a screen is built around. */
+.xl .value {
+  @apply text-display;
+}
+
 /* Quieter than the number and set on its baseline: a unit is read with the
    figure, not counted as a second one. */
 .unit {

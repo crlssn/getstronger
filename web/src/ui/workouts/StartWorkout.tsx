@@ -84,7 +84,11 @@ import { WorkoutRestBanner } from '@/ui/workouts/WorkoutRestBanner'
 import { SetTable } from '@/ui/workouts/SetTable'
 import blurActiveElement from '@/utils/blurActiveElement'
 import { convertDistance, normalizeDistanceUnit } from '@/utils/distanceUnits'
-import { formatExerciseSet, isExerciseSetComplete } from '@/utils/exerciseMeasurements'
+import {
+  formatExerciseSet,
+  isExerciseSetComplete,
+  spokenDuration,
+} from '@/utils/exerciseMeasurements'
 import { isNumber } from '@/utils/numbers'
 import { restRemainingSeconds } from '@/utils/restTimer'
 import { convertWeight, normalizeWeightUnit } from '@/utils/weightUnits'
@@ -313,7 +317,7 @@ export const StartWorkout = () => {
   }, [recordingKey])
   const phases = circuitPhases(
     session?.groups ?? [],
-    (name, seconds) => t('timedCircuit.instruction', { name, seconds }),
+    (name, seconds) => t('timedCircuit.instruction', { name, duration: spokenDuration(seconds) }),
     t('timedCircuit.rest'),
   )
   const recordingComplete = useCallback(

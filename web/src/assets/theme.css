@@ -126,10 +126,16 @@
   --font-sans:
     'Plus Jakarta Sans Variable', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
 
-  /* Type — six steps, none below 12px. The eyebrow, the streak unit and the
+  /* Type — seven steps, none below 12px. The eyebrow, the streak unit and the
    * nav timer wanted to be smaller than this; they get tracking and weight
    * instead of less size. Everything from body up is tracked in a little: at
    * these weights the typeface sets loose, and a title is the worst of it. */
+  /* The seventh step is one screen's: the countdown a runner reads at arm's
+   * length, mid-stride, in daylight. Nothing else on any screen is this size,
+   * and nothing else has to be legible from that far away. */
+  --text-clock: 5.5rem; /* 88 */
+  --text-clock--line-height: 0.95;
+  --text-clock--letter-spacing: -0.04em;
   --text-display: 2.125rem; /* 34 */
   --text-display--line-height: 1.05;
   --text-display--letter-spacing: -0.02em;

@@ -141,6 +141,14 @@ export const buildTimeline = (recording: Recording, now: number): Interval[] => 
   })
 }
 
+/**
+ * The custom property an exercise's route is drawn in, by its position.
+ *
+ * The theme owns the six hues, in both palettes; this only cycles through
+ * them, so the live screen and the saved route colour the same run alike.
+ */
+export const routeToken = (index: number) => `--color-route-${(index % 6) + 1}`
+
 const radians = (degrees: number) => (degrees * Math.PI) / 180
 const distance = (a: RoutePoint, b: RoutePoint) => {
   const h =
@@ -168,6 +176,48 @@ const usable = (point: RoutePoint) =>
   point.accuracy >= 0 &&
   point.accuracy <= 30
 
+/**
+ * Whether the movement between two fixes is worth measuring.
+ *
+ * Two usable fixes, close enough in time to be one movement, slow enough to be
+ * a person on foot, and outside every pause. Every distance in the app is
+ * summed from edges this accepts, so the live numbers and the saved route
+ * cannot disagree about what counted.
+ */
+const accepted = (recording: Recording, a: RoutePoint, b: RoutePoint) => {
+  const seconds = (b.timestamp - a.timestamp) / 1000
+  if (!usable(a) || !usable(b) || seconds <= 0 || seconds > 15) return false
+  if (distance(a, b) / seconds > 15) return false
+  return !recording.pauses.some(
+    (pause) => a.timestamp < (pause.endedAt ?? Infinity) && b.timestamp > pause.startedAt,
+  )
+}
+
+/**
+ * Pace over the last few seconds, in seconds per kilometre, or nothing.
+ *
+ * An interval's average says how the interval went; a runner mid-interval is
+ * asking how they are going now, which is a short trailing window. Nothing
+ * until the window holds two accepted fixes: one fix is a position, not a
+ * speed, and a dash is honest where a number invented from one fix is not.
+ */
+export const currentPace = (recording: Recording, now: number, windowSeconds = 15) => {
+  const since = now - windowSeconds * 1000
+  let meters = 0
+  let seconds = 0
+  for (let index = 1; index < recording.points.length; index += 1) {
+    const a = recording.points[index - 1]
+    const b = recording.points[index]
+    // Whole edges, by the fix that closed them: clipping one to the window
+    // would weigh a partial edge against a window it was never measured over.
+    if (b.timestamp <= since || b.timestamp > now) continue
+    if (!accepted(recording, a, b)) continue
+    meters += distance(a, b)
+    seconds += (b.timestamp - a.timestamp) / 1000
+  }
+  return meters > 0 ? (seconds / meters) * 1000 : undefined
+}
+
 /** Attribute accepted GPS edges by time, splitting an edge at exercise boundaries. */
 export const measureRoute = (recording: Recording, intervals: Interval[]) => {
   const routes = intervals.map((interval) => ({
@@ -179,20 +229,15 @@ export const measureRoute = (recording: Recording, intervals: Interval[]) => {
   for (let index = 1; index < recording.points.length; index += 1) {
     const a = recording.points[index - 1]
     const b = recording.points[index]
-    const seconds = (b.timestamp - a.timestamp) / 1000
     const meters = distance(a, b)
-    const paused = recording.pauses.some(
-      (pause) => a.timestamp < (pause.endedAt ?? Infinity) && b.timestamp > pause.startedAt,
-    )
-    const accepted =
-      usable(a) && usable(b) && seconds > 0 && seconds <= 15 && meters / seconds <= 15 && !paused
+    const counts = accepted(recording, a, b)
     routes.forEach((route) => {
       if (!route.phase.exerciseId) return
       route.windows.forEach((window) => {
         const start = Math.max(window.start, a.timestamp)
         const end = Math.min(window.end, b.timestamp)
         if (end <= start) return
-        if (!accepted) {
+        if (!counts) {
           route.incomplete = true
           return
         }
