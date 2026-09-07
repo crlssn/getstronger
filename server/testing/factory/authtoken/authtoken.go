@@ -54,7 +54,13 @@ func Run(usage string, token func(*models.Auth) string) {
 		return
 	}
 
-	database, err := db.New(c)
+	pool, err := config.NewDBPool()
+	if err != nil {
+		log.Printf("resolve database pool configuration: %v", err)
+		return
+	}
+
+	database, err := db.New(c, pool)
 	if err != nil {
 		log.Printf("connect to database: %v", err)
 		return

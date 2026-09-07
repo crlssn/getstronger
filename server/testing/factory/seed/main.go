@@ -92,7 +92,12 @@ func main() {
 		log.Fatalf("Resolve seed configuration: %v", err)
 	}
 
-	database, err := db.New(c)
+	pool, err := config.NewDBPool()
+	if err != nil {
+		log.Fatalf("Resolve database pool configuration: %v", err)
+	}
+
+	database, err := db.New(c, pool)
 	if err != nil {
 		log.Fatalf("Connect to database: %v", err)
 	}

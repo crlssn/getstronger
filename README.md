@@ -454,6 +454,31 @@ Each source reservation costs one database statement; login costs a second, and 
 
 Scaleway documents the [headers it forwards](https://www.scaleway.com/en/docs/serverless-containers/reference-content/request-headers/), but this does not establish trusted socket ranges for your deployment. Verify the peer and appended header chain on beta, including a request carrying a forged header, before setting the CIDRs. Do not use `0.0.0.0/0` or `::/0`, or trust arbitrary client-supplied headers. Apply migration 057 before rolling out the API. These application limits bound authentication work; an ingress-level traffic limit is still needed to protect the database itself from request floods.
 
+### Database connection pool
+
+Every instance opens its own pool and instances autoscale, so the pool's ceiling
+is a share of the database's budget rather than a per-instance detail. Serverless
+SQL [documents](https://www.scaleway.com/en/docs/serverless-sql-databases/reference-content/serverless-sql-databases-overview/)
+a maximum of 1,000 connections, but only at its maximum of 15 vCPU: the number
+scales with allocated vCPU, and an active database scales back down to 1. The
+budget to divide is therefore nearer 1000/15 — about 66 — than 1,000. The
+defaults assume a maximum of eight instances, so eight connections each stays
+under that floor with room for the migration job and a `psql` session. Raise
+`DB_MAX_OPEN_CONNS` only alongside the container's maximum instance count.
+
+| Environment variable | Default | Purpose |
+| --- | --- | --- |
+| `DB_MAX_OPEN_CONNS` | `8` | Connections one instance may hold at once |
+| `DB_MAX_IDLE_CONNS` | `8` | How many of those stay warm between requests |
+| `DB_CONN_MAX_LIFETIME` | `5m` | How long a connection is reused before it is replaced |
+
+Counts and the lifetime must be positive, and the idle count may not exceed the
+open count; malformed settings prevent startup. Keeping every connection warm is
+what stops a third concurrent query from paying for a TCP connect, a TLS
+handshake and Postgres authentication on the request path. The lifetime matches
+the five minutes after which Serverless SQL idles a database: a connection held
+longer is one the pooler may already have dropped.
+
 ### 9. Profiling a deployed API
 
 The API can serve Go's runtime profiles at `/debug/pprof/`, and serves nothing there until `PPROF_TOKEN` is set on the container. The token is both the switch and the credential: there is no way to publish the profiles without also setting the secret that guards them, and a request without it gets the same 404 as any path the server does not have, so nothing on the wire says the endpoints exist.
