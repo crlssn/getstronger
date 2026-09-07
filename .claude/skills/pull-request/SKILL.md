@@ -30,10 +30,14 @@ is subtle.
   rejected alternative gets one clause, or is dropped if it does not change how
   the diff is read.
 - **Verification**: one line — commands run and tests added. Expand only for a
-  failure or a flake. A UI change puts its before/after screenshots in the body
-  with `mise run pr:screenshots <number> --append`, once the pull request is open
-  and its number known. The review happens on GitHub, so a chat reply alone
-  leaves the reviewer nothing to look at.
+  failure or a flake. Changing or deleting an existing test is the exception:
+  name it and say why it moved, in the body or a comment on the pull request.
+  The diff shows an assertion changed, not whether it was corrected or silenced,
+  and that is the reviewer's call. New tests need no such note. A UI change puts
+  its before/after screenshots in the body with
+  `mise run pr:screenshots <number> --append`, once the pull request is open and
+  its number known. The review happens on GitHub, so a chat reply alone leaves
+  the reviewer nothing to look at.
 - **Notes for the reviewer**: at most three bullets, and only what the reviewer
   genuinely needs — breaking changes, migration or deploy ordering, deliberately
   deferred work, where to start reading a large diff. Delete the section rather
