@@ -21,6 +21,9 @@ private let dwellMs = 5000.0
 private let continuousMs = 3000.0
 private let maxFixes = 60
 private let maxAccuracy = 30.0
+// Under this a measured speed is a phone standing and its fixes wandering,
+// mirroring `standingSpeed` in `web/src/utils/timedCircuit.ts`.
+private let standingSpeed = 0.3
 
 /// Native ownership keeps the recording independent of the WebView lifecycle.
 @objc(TimedCircuitPlugin)
@@ -290,6 +293,18 @@ public class TimedCircuitPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManagerD
         }
     }
 
+    /// How far the athlete went between two fixes, as the app measures it: the
+    /// receiver's speed over the time between them where it measured one at
+    /// both ends, and the chord where it did not. The chords of wandering
+    /// fixes sum to more ground than was covered.
+    private func edgeMetres(_ a: [String: Any], _ b: [String: Any]) -> Double {
+        let seconds = ((b["timestamp"] as? Double ?? 0) - (a["timestamp"] as? Double ?? 0)) / 1000
+        guard let from = a["speed"] as? Double, let to = b["speed"] as? Double, from >= 0, to >= 0,
+              seconds > 0 else { return metres(a, b) }
+        let speed = (from + to) / 2
+        return speed < standingSpeed ? 0 : speed * seconds
+    }
+
     private func metres(_ a: [String: Any], _ b: [String: Any]) -> Double {
         let fromLatitude = (a["latitude"] as? Double ?? 0) * .pi / 180
         let toLatitude = (b["latitude"] as? Double ?? 0) * .pi / 180
@@ -311,7 +326,7 @@ public class TimedCircuitPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManagerD
             let closed = b["timestamp"] as? Double ?? 0
             // Whole edges, by the fix that closed them, as the app measures.
             guard closed > since, closed <= time, accepted(a, b) else { continue }
-            metresRun += metres(a, b)
+            metresRun += edgeMetres(a, b)
             seconds += (closed - (a["timestamp"] as? Double ?? closed)) / 1000
         }
         return metresRun > 0 ? (seconds / metresRun) * 1000 : nil

@@ -278,6 +278,37 @@ export const usableFix = (point: RoutePoint) =>
   point.accuracy <= 30
 
 /**
+ * The slowest a receiver reads while an athlete is still going, in metres a
+ * second. Below it, a measured speed is the phone standing and its fixes
+ * wandering, which is jitter and not ground covered.
+ */
+const standingSpeed = 0.3
+
+/**
+ * How far the athlete went between two fixes, in metres.
+ *
+ * A receiver that measured a speed at both ends is believed over where its
+ * fixes landed: it filters, and the fixes do not. A phone standing at a
+ * crossing reports fixes metres apart and a speed of nothing, and a phone
+ * walking a straight line reports fixes that zigzag around it. Summed as
+ * chords, both read longer than the walk was, which is the ground a watch
+ * says it did not cover. Without a speed at both ends the chord is all there
+ * is.
+ */
+export const edgeMeters = (a: RoutePoint, b: RoutePoint) => {
+  const seconds = (b.timestamp - a.timestamp) / 1000
+  if (measuredSpeed(a) === undefined || measuredSpeed(b) === undefined || seconds <= 0)
+    return metersBetween(a, b)
+  const speed = (measuredSpeed(a)! + measuredSpeed(b)!) / 2
+  return speed < standingSpeed ? 0 : speed * seconds
+}
+
+const measuredSpeed = (point: RoutePoint) =>
+  point.speed !== undefined && Number.isFinite(point.speed) && point.speed >= 0
+    ? point.speed
+    : undefined
+
+/**
  * Whether the movement between two fixes is worth measuring.
  *
  * Two usable fixes, close enough in time to be one movement, slow enough to be
@@ -313,7 +344,7 @@ export const currentPace = (recording: Recording, now: number, windowSeconds = 1
     // would weigh a partial edge against a window it was never measured over.
     if (b.timestamp <= since || b.timestamp > now) continue
     if (!accepted(recording, a, b)) continue
-    meters += metersBetween(a, b)
+    meters += edgeMeters(a, b)
     seconds += (b.timestamp - a.timestamp) / 1000
   }
   return meters > 0 ? (seconds / meters) * 1000 : undefined
@@ -333,7 +364,7 @@ export const measureRoute = (recording: Recording, intervals: Interval[]) => {
   for (let index = 1; index < recording.points.length; index += 1) {
     const a = recording.points[index - 1]
     const b = recording.points[index]
-    const meters = metersBetween(a, b)
+    const meters = edgeMeters(a, b)
     const counts = accepted(recording, a, b)
     routes.forEach((route) => {
       if (!route.phase.exerciseId) return

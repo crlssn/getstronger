@@ -47,6 +47,11 @@ public class TimedCircuitService extends Service implements LocationListener {
     private static final long CONTINUOUS_MS = 3000;
     private static final int MAX_FIXES = 60;
     private static final double MAX_ACCURACY = 30;
+    /**
+     * Under this a measured speed is a phone standing and its fixes wandering,
+     * mirroring {@code standingSpeed} in {@code web/src/utils/timedCircuit.ts}.
+     */
+    private static final double STANDING_SPEED = 0.3;
     /** One fix as the detector reads it: the route's, plus a measured speed. */
     private static final class Fix {
         final long timestamp;
@@ -358,6 +363,19 @@ public class TimedCircuitService extends Service implements LocationListener {
         return true;
     }
 
+    /**
+     * How far the athlete went between two fixes, as the app measures it: the
+     * receiver's speed over the time between them where it measured one at both
+     * ends, and the chord where it did not. The chords of wandering fixes sum to
+     * more ground than was covered.
+     */
+    private double edgeMetres(JSONObject a, JSONObject b) throws Exception {
+        double seconds = (b.getLong("timestamp") - a.getLong("timestamp")) / 1000.0;
+        if (!a.has("speed") || !b.has("speed") || seconds <= 0) return metres(a, b);
+        double speed = (a.getDouble("speed") + b.getDouble("speed")) / 2;
+        return speed < STANDING_SPEED ? 0 : speed * seconds;
+    }
+
     private double metres(JSONObject a, JSONObject b) throws Exception {
         double from = Math.toRadians(a.getDouble("latitude"));
         double to = Math.toRadians(b.getDouble("latitude"));
@@ -385,7 +403,7 @@ public class TimedCircuitService extends Service implements LocationListener {
             long closed = b.getLong("timestamp");
             // Whole edges, by the fix that closed them, as the app measures.
             if (closed <= since || closed > time || !accepted(a, b, pauses)) continue;
-            covered += metres(a, b);
+            covered += edgeMetres(a, b);
             seconds += (closed - a.getLong("timestamp")) / 1000.0;
         }
         return covered > 0 ? (seconds / covered) * 1000 : 0;
