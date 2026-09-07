@@ -87,6 +87,9 @@ describe('WorkoutRoute', () => {
 
     const distance = screen.getByText('Recorded distance').closest('div')
     expect(within(distance!).getByText('km')).toBeVisible()
+
+    // A gym circuit covers no ground worth a pace.
+    expect(screen.queryByText('Average pace')).not.toBeInTheDocument()
   })
 
   // The tiles are somebody else's, and the licence asks to be told so beside
@@ -174,12 +177,15 @@ describe('WorkoutRoute', () => {
       expect(screen.getByText('2 rounds')).toBeVisible()
     })
 
-    // The number the session was for, on every row rather than as one average.
-    it('paces each interval on its own row', () => {
+    // The number the session was for, on every row and once over the whole of
+    // it — which is a tile a gym circuit never earns.
+    it('paces each interval on its own row, and the session as a whole', () => {
       renderWithProviders(<WorkoutRoute recording={intervals()} />)
 
-      expect(screen.getAllByText('/km')).toHaveLength(5)
+      // Five rows and the tile beside the totals.
+      expect(screen.getAllByText('/km')).toHaveLength(6)
       expect(intervalRows().every((row) => within(row).queryByText('—') === null)).toBe(true)
+      expect(screen.getByText('Average pace')).toBeVisible()
     })
 
     // What the routine asked for: the warm-up once, the block with its count in

@@ -5,6 +5,7 @@ import { DistanceUnit } from '@/proto/api/v1/shared_pb'
 import { AppChip } from '@/ui/components/AppChip'
 import { AppStat } from '@/ui/components/AppStat'
 import { distanceUnitLabel } from '@/utils/distanceUnits'
+import { paceIn } from '@/utils/exerciseMeasurements'
 import { fitRoute, routeIntervals } from '@/utils/routeShape'
 import {
   isIntervalRecording,
@@ -82,7 +83,15 @@ export const WorkoutRoute = ({ recording }: { recording: Recording }) => {
     return `${value} ${suffix}`
   }
   const mapped = points.length > 0 && !mapUnavailable
-  const recorded = measured(routes.reduce((sum, route) => sum + route.distanceMeters, 0))
+  const activeSeconds = Math.round(routes.reduce((sum, route) => sum + route.durationSeconds, 0))
+  const meters = routes.reduce((sum, route) => sum + route.distanceMeters, 0)
+  const recorded = measured(meters)
+  // The number an interval session was for, over the whole of it. A gym circuit
+  // covers no ground worth a pace, so it is not offered one.
+  const averagePace =
+    readsAsIntervals && meters > 0 && activeSeconds > 0
+      ? paceIn((activeSeconds / meters) * 1000, unit)
+      : undefined
 
   return (
     <section className={styles.route}>
@@ -138,9 +147,7 @@ export const WorkoutRoute = ({ recording }: { recording: Recording }) => {
           className={styles.tile}
           size="md"
           label={t('timedCircuit.activeTime')}
-          value={elapsedLabel(
-            Math.round(routes.reduce((sum, route) => sum + route.durationSeconds, 0)),
-          )}
+          value={elapsedLabel(activeSeconds)}
         />
         <AppStat
           className={styles.tile}
@@ -149,6 +156,15 @@ export const WorkoutRoute = ({ recording }: { recording: Recording }) => {
           value={recorded.value}
           unit={recorded.unit}
         />
+        {averagePace && (
+          <AppStat
+            className={styles.tile}
+            size="md"
+            label={t('timedCircuit.averagePace')}
+            value={averagePace.value}
+            unit={averagePace.unit}
+          />
+        )}
       </div>
 
       {routes.some((route) => route.incomplete) && (
@@ -163,8 +179,7 @@ export const WorkoutRoute = ({ recording }: { recording: Recording }) => {
           rounds={roundCount}
           colour={color}
           distance={label}
-          metresPerUnit={unit === DistanceUnit.MILES ? metersPerMile : metersPerKilometer}
-          unit={distanceUnitLabel(unit)}
+          unit={unit}
         />
       ) : (
         rounds.length > 0 && (

@@ -944,7 +944,10 @@ test.describe('planned workouts and history', () => {
     // paced on every row, which is the number the session was for.
     await expect(rows.first()).toContainText('1')
     await expect(rows.last()).toContainText('10')
-    await expect(intervals.getByText('/km')).toHaveCount(10)
+    // Ten rows and the tile beside the totals: the pace of each interval, and
+    // of the whole session.
+    await expect(intervals.getByText('/km')).toHaveCount(11)
+    await expect(intervals.getByText('Average pace')).toBeVisible()
     await expect(rows.nth(1)).toContainText(/\d:\d\d/)
   })
 
