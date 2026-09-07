@@ -76,6 +76,23 @@ export const formatDurationDisplay = (seconds: number) => {
   return `${minutes} ${t('common.min')} ${remainder} ${t('common.sec')}`
 }
 
+/**
+ * A duration in the words a synthesiser should say, not the ones a screen shows.
+ *
+ * The circuit recorder speaks each phase as it starts, and "for one hundred and
+ * twenty seconds" is a number the runner has to convert while running. The
+ * abbreviations `formatDurationDisplay` uses are read aloud as badly as they
+ * scan well, so this spells both units out and counts them.
+ */
+export const spokenDuration = (seconds: number): string => {
+  const { t } = i18n
+  const minutes = Math.floor(seconds / 60)
+  const remainder = seconds % 60
+  if (!minutes) return t('common.seconds', { count: remainder })
+  if (!remainder) return t('common.minutes', { count: minutes })
+  return `${t('common.minutes', { count: minutes })} ${t('common.seconds', { count: remainder })}`
+}
+
 // Pace only makes sense for exercises measured as distance × time alone; a
 // swim with reps (intervals) or any other combination has no single speed.
 export const isDistanceTimeExercise = (exercise?: Pick<Exercise, 'metrics'>) => {

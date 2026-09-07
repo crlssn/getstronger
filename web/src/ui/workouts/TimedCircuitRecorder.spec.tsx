@@ -30,7 +30,7 @@ describe('TimedCircuitRecorder', () => {
     name: 'Walk',
     round: 1,
     durationSeconds: 120,
-    instruction: 'Walk for 120 seconds',
+    instruction: 'Walk for 2 minutes',
   }
 
   it('requests native recording only after start and leaves manual logging available after refusal', async () => {

@@ -2,7 +2,7 @@ export const en = {
   timedCircuit: {
     title: 'Guided circuit',
     start: 'Start guided circuit',
-    instruction: '{name} for {seconds} seconds',
+    instruction: '{name} for {duration}',
     rest: 'Rest',
     round: 'Round {round} of {total}',
     permission:
@@ -78,6 +78,10 @@ export const en = {
     kg: 'kg',
     min: 'min',
     sec: 'sec',
+    minutes_one: '{count} minute',
+    minutes_other: '{count} minutes',
+    seconds_one: '{count} second',
+    seconds_other: '{count} seconds',
     durationDecrease: 'Subtract {seconds} seconds from {label}',
     durationIncrease: 'Add {seconds} seconds to {label}',
     pace: 'Pace',
@@ -835,7 +839,7 @@ export const sv = {
   timedCircuit: {
     title: 'Guidat cirkelpass',
     start: 'Starta guidat cirkelpass',
-    instruction: '{name} i {seconds} sekunder',
+    instruction: '{name} i {duration}',
     rest: 'Vila',
     round: 'Varv {round} av {total}',
     permission:
@@ -911,6 +915,10 @@ export const sv = {
     kg: 'kg',
     min: 'min',
     sec: 'sek',
+    minutes_one: '{count} minut',
+    minutes_other: '{count} minuter',
+    seconds_one: '{count} sekund',
+    seconds_other: '{count} sekunder',
     durationDecrease: 'Dra bort {seconds} sekunder från {label}',
     durationIncrease: 'Lägg till {seconds} sekunder till {label}',
     pace: 'Tempo',
