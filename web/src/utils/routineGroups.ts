@@ -295,10 +295,7 @@ export const intervalCount = (groups: readonly DraftGroup[]): number =>
 /** How long an interval routine is planned to take, in seconds. */
 export const intervalSeconds = (groups: readonly DraftGroup[]): number =>
   groups.reduce((seconds, group) => {
-    const block = group.entries.reduce(
-      (sum, entry) => sum + (entry.targetDurationSeconds ?? 0),
-      0,
-    )
+    const block = group.entries.reduce((sum, entry) => sum + (entry.targetDurationSeconds ?? 0), 0)
     const skipped = skipsLast(group) ? (group.entries.at(-1)?.targetDurationSeconds ?? 0) : 0
     return seconds + block * roundsOf(group) - skipped
   }, 0)

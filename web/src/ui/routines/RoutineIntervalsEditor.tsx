@@ -8,11 +8,7 @@ import { AppPreferenceRow } from '@/ui/components/AppPreferenceRow'
 import { AppStepper } from '@/ui/components/AppStepper'
 import { AppSwitch } from '@/ui/components/AppSwitch'
 import { GroupEntries } from '@/ui/routines/RoutineGroupsEditor'
-import {
-  intervalPartBadge,
-  intervalPartNote,
-  intervalPartTitle,
-} from '@/ui/routines/intervalParts'
+import { intervalPartBadge, intervalPartNote, intervalPartTitle } from '@/ui/routines/intervalParts'
 import { cn } from '@/ui/cn'
 import {
   intervalCount,
@@ -73,7 +69,9 @@ export const RoutineIntervalsEditor = ({ groups, nameOf, onChange, onAddExercise
                 {t(intervalPartBadge[role], { count: rounds })}
               </span>
               <strong className={styles.partTitle}>{t(intervalPartTitle[role])}</strong>
-              <span className={styles.partNote}>{t(intervalPartNote[role], { count: rounds })}</span>
+              <span className={styles.partNote}>
+                {t(intervalPartNote[role], { count: rounds })}
+              </span>
             </header>
 
             <div className={styles.partCard}>

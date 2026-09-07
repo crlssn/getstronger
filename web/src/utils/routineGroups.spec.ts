@@ -469,9 +469,7 @@ describe('the planned session', () => {
 
 describe('saving an interval routine', () => {
   it('works every part at least once', () => {
-    const groups = saveableGroups(
-      timed(walkRun(), 60).map((group) => ({ ...group, rounds: 0 })),
-    )
+    const groups = saveableGroups(timed(walkRun(), 60).map((group) => ({ ...group, rounds: 0 })))
 
     expect(groups.every((group) => group.rounds >= 1)).toBe(true)
   })

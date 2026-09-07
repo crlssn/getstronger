@@ -36,7 +36,11 @@ const walkRunGroups = (skipLastOnFinalRound: boolean) => [
 ]
 
 const phasesOf = (skipLastOnFinalRound: boolean) =>
-  circuitPhases(walkRunGroups(skipLastOnFinalRound), (name, seconds) => `${name} ${seconds}`, 'Rest')
+  circuitPhases(
+    walkRunGroups(skipLastOnFinalRound),
+    (name, seconds) => `${name} ${seconds}`,
+    'Rest',
+  )
 
 const recording = (): Recording => ({
   version: 1,

@@ -137,8 +137,8 @@ export const RoutineForm = ({
   const pickerEyebrow = pickerGroup?.role
     ? t(intervalPartTitle[pickerGroup.role])
     : shape === 'groups' && pickerGroupIndex >= 0
-        ? t('routine.form.groups.groupName', { letter: groupLetter(pickerGroupIndex) })
-        : t('routine.form.eyebrow')
+      ? t('routine.form.groups.groupName', { letter: groupLetter(pickerGroupIndex) })
+      : t('routine.form.eyebrow')
 
   return (
     <form

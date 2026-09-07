@@ -69,7 +69,13 @@ export interface EntriesProps {
  * Its own component because each list is dragged on its own, and a hook cannot
  * be called once per group from a loop.
  */
-export const GroupEntries = ({ groups, group, restBetweenSets, nameOf, onChange }: EntriesProps) => {
+export const GroupEntries = ({
+  groups,
+  group,
+  restBetweenSets,
+  nameOf,
+  onChange,
+}: EntriesProps) => {
   const { t } = useTranslation()
 
   // Which row has its rest open. One at a time: a rest is a detour from

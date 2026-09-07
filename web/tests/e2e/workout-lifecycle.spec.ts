@@ -951,7 +951,6 @@ test.describe('planned workouts and history', () => {
     await expect(rows.nth(1)).toContainText(/\d:\d\d/)
   })
 
-
   test('loads previous workouts to a clear end state and opens a summary', async ({ page }) => {
     await page.goto('/workout')
     const history = sectionWithHeading(page, 'Previous workouts')

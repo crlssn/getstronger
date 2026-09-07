@@ -34,11 +34,7 @@ import { AppSkeleton } from '@/ui/components/AppSkeleton'
 import { ExerciseTags } from '@/ui/exercises/ExerciseTags'
 import { formatExerciseSet } from '@/utils/exerciseMeasurements'
 import { groupLetter, groupRole } from '@/utils/routineGroups'
-import {
-  intervalPartBadge,
-  intervalPartNote,
-  intervalPartTitle,
-} from '@/ui/routines/intervalParts'
+import { intervalPartBadge, intervalPartNote, intervalPartTitle } from '@/ui/routines/intervalParts'
 import { useSortable } from '@/utils/useSortable'
 import styles from './ViewRoutine.module.css'
 
