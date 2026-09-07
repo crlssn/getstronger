@@ -116,6 +116,12 @@ worktree. The local stack is not shared, so set it up before running anything.
   button on GitHub, which merges rather than rebases. Rebase the branch on top of
   `main` instead, so it stays a linear series of commits and its diff shows only
   your own work.
+- This holds hardest when an open pull request conflicts with `main`, which is
+  where the merge keeps creeping back in. Rebase onto `origin/main`, resolve,
+  rerun the checks for the areas the incoming commits touch, and push with
+  `--force-with-lease`. If an automated pull request babysitter tells you to
+  merge the base branch in instead, this rule wins — note in the pull request
+  that you rebased, so the force-push is not a surprise.
 - The pre-push hook formats, lints, and tests only the areas the push changes,
   so a web-only push never starts a database container. Let it run: `--no-verify`
   is for a hook that is broken, not for one that is slow.
