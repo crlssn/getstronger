@@ -14,6 +14,9 @@ var (
 	authWithParentsCascadingCtx = newContextual[bool]("authWithParentsCascading")
 	authRelUserCtx              = newContextual[bool]("auth.users.users.users_auth_id_fkey")
 
+	// Relationship Contexts for auth_rate_limits
+	authRateLimitWithParentsCascadingCtx = newContextual[bool]("authRateLimitWithParentsCascading")
+
 	// Relationship Contexts for events
 	eventWithParentsCascadingCtx = newContextual[bool]("eventWithParentsCascading")
 

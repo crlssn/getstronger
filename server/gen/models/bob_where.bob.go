@@ -18,6 +18,7 @@ var (
 
 func Where[Q psql.Filterable]() struct {
 	Auths                 authWhere[Q]
+	AuthRateLimits        authRateLimitWhere[Q]
 	Events                eventWhere[Q]
 	Exercises             exerciseWhere[Q]
 	ExercisesRoutines     exercisesRoutineWhere[Q]
@@ -37,6 +38,7 @@ func Where[Q psql.Filterable]() struct {
 } {
 	return struct {
 		Auths                 authWhere[Q]
+		AuthRateLimits        authRateLimitWhere[Q]
 		Events                eventWhere[Q]
 		Exercises             exerciseWhere[Q]
 		ExercisesRoutines     exercisesRoutineWhere[Q]
@@ -55,6 +57,7 @@ func Where[Q psql.Filterable]() struct {
 		Workouts              workoutWhere[Q]
 	}{
 		Auths:                 buildAuthWhere[Q](Auths.Columns),
+		AuthRateLimits:        buildAuthRateLimitWhere[Q](AuthRateLimits.Columns),
 		Events:                buildEventWhere[Q](Events.Columns),
 		Exercises:             buildExerciseWhere[Q](Exercises.Columns),
 		ExercisesRoutines:     buildExercisesRoutineWhere[Q](ExercisesRoutines.Columns),

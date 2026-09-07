@@ -2,6 +2,7 @@ import { defineConfig, devices } from '@playwright/test'
 import { fileURLToPath } from 'node:url'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
+import { localAuthRatePolicy } from './tests/auth-rate-policy'
 
 const webRoot = fileURLToPath(new URL('.', import.meta.url))
 const repositoryRoot = fileURLToPath(new URL('..', import.meta.url))
@@ -43,6 +44,7 @@ export default defineConfig({
       command: 'mise run app:backend',
       cwd: repositoryRoot,
       env: {
+        ...localAuthRatePolicy,
         CORS_ALLOWED_ORIGIN: baseURL,
         EMAIL_PROVIDER: 'noop',
         GOCACHE: join(tmpdir(), 'getstronger-go-cache'),

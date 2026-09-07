@@ -25,6 +25,7 @@ vi.mock('./clients', () => ({
 
 import { Error as ApiError, ErrorDetailSchema } from '@/proto/api/v1/errors_pb'
 import { setNavigator, type Navigate } from '@/router/navigation'
+import { i18n } from '@/i18n'
 import { useToastStore } from '@/stores/toasts'
 import { useAuthStore } from '@/stores/auth'
 import { useConnectionStore } from '@/stores/connection'
@@ -160,6 +161,23 @@ describe('shared error handling', () => {
     useToastStore.getState().dismiss()
     useConnectionStore.setState({ online: true })
     useAuthStore.setState({ userId: 'user-1', accessToken: 'token' })
+  })
+
+  it.each([
+    ['en', 'Too many attempts. Please try again later.'],
+    ['sv', 'För många försök. Försök igen senare.'],
+  ])('localizes exhausted request budgets in %s', async (locale, message) => {
+    const previous = i18n.language
+    try {
+      await i18n.changeLanguage(locale)
+      getUser.mockRejectedValue(new ConnectError('server text', Code.ResourceExhausted))
+      await getCurrentUser('user-1')
+      expect(consumeRequestError()).toBe(message)
+      expect(useConnectionStore.getState().online).toBe(true)
+      expect(useAuthStore.getState().accessToken).toBe('token')
+    } finally {
+      await i18n.changeLanguage(previous)
+    }
   })
 
   it('records an application error for the caller to render inline', async () => {

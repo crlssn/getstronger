@@ -31,6 +31,24 @@ func TestCheckConstraintErrors(t *testing.T) {
 		t.Fatal("expected ErrCheckConstraint.Is not to match unique violation")
 	}
 
+	t.Run("AuthRateLimit_ErrCheckAuthRateLimitsAttemptsCheck", func(t *testing.T) {
+		matchingErr := newCheckErr("23514", "auth_rate_limits_attempts_check")
+		if !errors.Is(AuthRateLimitErrors.ErrCheckAuthRateLimitsAttemptsCheck, matchingErr) {
+			t.Fatalf("expected ErrCheckAuthRateLimitsAttemptsCheck to match constraint %q", "auth_rate_limits_attempts_check")
+		}
+		if !AuthRateLimitErrors.ErrCheckAuthRateLimitsAttemptsCheck.Is(matchingErr) {
+			t.Fatalf("expected ErrCheckAuthRateLimitsAttemptsCheck.Is to match constraint %q", "auth_rate_limits_attempts_check")
+		}
+
+		nonMatchingErr := newCheckErr("23514", "other_constraint")
+		if errors.Is(AuthRateLimitErrors.ErrCheckAuthRateLimitsAttemptsCheck, nonMatchingErr) {
+			t.Fatal("expected ErrCheckAuthRateLimitsAttemptsCheck not to match different constraint")
+		}
+		if AuthRateLimitErrors.ErrCheckAuthRateLimitsAttemptsCheck.Is(nonMatchingErr) {
+			t.Fatal("expected ErrCheckAuthRateLimitsAttemptsCheck.Is not to match different constraint")
+		}
+	})
+
 	t.Run("Exercise_ErrCheckExercisesMetricsNotEmpty", func(t *testing.T) {
 		matchingErr := newCheckErr("23514", "exercises_metrics_not_empty")
 		if !errors.Is(ExerciseErrors.ErrCheckExercisesMetricsNotEmpty, matchingErr) {

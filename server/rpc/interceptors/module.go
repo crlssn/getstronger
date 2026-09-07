@@ -3,34 +3,42 @@ package interceptors
 import (
 	"connectrpc.com/connect"
 	"go.uber.org/fx"
+
+	"github.com/crlssn/getstronger/server/config"
+	"github.com/crlssn/getstronger/server/repo"
 )
 
-const fxGroupInterceptors = `group:"interceptors"`
+const (
+	fxAuth          = `name:"auth"`
+	fxAuthRateLimit = `name:"authRateLimit"`
+	fxValidator     = `name:"validator"`
+)
 
 func Module() fx.Option {
 	return fx.Module("interceptors", fx.Options(
 		fx.Provide(
-			// Annotate the interceptors to provide a slice of their interface.
+			config.NewAuthRateLimit,
+			func(store *repo.Repo) authAttempts { return store },
+			fx.Annotate(newAuthRateLimit, fx.ResultTags(fxAuthRateLimit)),
+			// Named values preserve order: fx groups deliberately do not.
 			fx.Annotate(
 				NewAuth,
-				fx.ResultTags(fxGroupInterceptors),
+				fx.ResultTags(fxAuth),
 			),
 			fx.Annotate(
 				newValidator,
-				fx.ResultTags(fxGroupInterceptors),
+				fx.ResultTags(fxValidator),
 			),
 			fx.Annotate(
 				provideHandlerOptions,
-				fx.ParamTags(fxGroupInterceptors),
+				fx.ParamTags(fxAuth, fxAuthRateLimit, fxValidator),
 			),
 		),
 	))
 }
 
-func provideHandlerOptions(interceptors []connect.Interceptor) []connect.HandlerOption {
-	opts := make([]connect.HandlerOption, 0, len(interceptors))
-	for _, interceptor := range interceptors {
-		opts = append(opts, connect.WithInterceptors(interceptor))
-	}
-	return opts
+// Authentication establishes the request context; limiting precedes validation
+// so malformed guest requests consume the same source budget as valid ones.
+func provideHandlerOptions(auth, limit, validator connect.Interceptor) []connect.HandlerOption {
+	return []connect.HandlerOption{connect.WithInterceptors(auth, limit, validator)}
 }
