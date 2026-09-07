@@ -1294,37 +1294,35 @@ ORDER BY created_at;
 // by the triggers migration 059 puts on sets, so this costs what it returns
 // instead of the whole history it was chosen from.
 func (r *Repo) GetPersonalBests(ctx context.Context, userIDs ...uuid.UUID) ([]*training.Set, error) {
-	ids := make([]string, 0, len(userIDs))
-	for _, userID := range userIDs {
-		ids = append(ids, userID.String())
-	}
-
-	rows, err := r.sqlExec().QueryContext(ctx, `
-	SELECT set_id
-	FROM public.personal_bests
-	WHERE user_id = ANY ($1);
-`, pq.Array(ids))
-	if err != nil {
-		return nil, fmt.Errorf("personal bests fetch: %w", err)
-	}
-
-	setIDs, err := scanIDs(rows)
-	if err != nil {
-		return nil, fmt.Errorf("personal bests fetch: %w", err)
-	}
-
-	// An athlete who has logged nothing is the first thing a new account asks
-	// for, and there is nothing for the set list to look up.
-	if len(setIDs) == 0 {
+	// No athletes to ask about, which one empty page of the feed is.
+	if len(userIDs) == 0 {
 		return nil, nil
 	}
 
 	return r.ListSets(
 		ctx,
-		ListSetsWithID(setIDs...),
+		listSetsHeldAsPersonalBestBy(userIDs),
 		ListSetsLoadExercise(),
 		ListSetsOrderByCreatedAt(DESC),
 	)
+}
+
+// listSetsHeldAsPersonalBestBy narrows a set list to the records the athletes
+// hold. A subquery rather than a round trip of its own: the ids it selects are
+// only ever fed straight back to the set list.
+func listSetsHeldAsPersonalBestBy(userIDs []uuid.UUID) ListSetsOpt {
+	return func() (bob.Mod[*dialect.SelectQuery], error) {
+		owners := make([]bob.Expression, 0, len(userIDs))
+		for _, userID := range userIDs {
+			owners = append(owners, psql.Arg(userID))
+		}
+
+		return sm.Where(models.Sets.Columns.ID.In(psql.Select(
+			sm.Columns(models.PersonalBests.Columns.SetID),
+			sm.From(models.PersonalBests.NameAsExpr()),
+			sm.Where(models.PersonalBests.Columns.UserID.In(owners...)),
+		))), nil
+	}
 }
 
 type FollowParams struct {

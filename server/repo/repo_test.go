@@ -2926,6 +2926,11 @@ func (s *repoSuite) TestGetPersonalBestsOfAnAthleteWhoHasLoggedNothing() {
 	bests, err := s.repo.GetPersonalBests(ctx, uuid.Must(uuid.NewV4()))
 	s.Require().NoError(err)
 	s.Require().Empty(bests)
+
+	// And no athletes at all, which one empty page of the feed asks for.
+	bests, err = s.repo.GetPersonalBests(ctx)
+	s.Require().NoError(err)
+	s.Require().Empty(bests)
 }
 
 // A query the database refuses is wrapped rather than swallowed.
