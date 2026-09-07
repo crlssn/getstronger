@@ -44,6 +44,43 @@ test.describe('social feed and discovery', () => {
     await expect(page.getByRole('navigation', { name: 'Profile sections' })).toBeVisible()
   })
 
+  // A run is recognised by its shape, and the feed is the first place it is
+  // looked for. The shape is drawn from the recording the list already carries,
+  // so the home page never reaches for a map.
+  test('pictures a recorded route on the feed and keeps the map on the workout', async ({
+    page,
+  }) => {
+    const tiles: string[] = []
+    page.on('request', (request) => {
+      if (request.url().includes('openfreemap.org')) tiles.push(request.url())
+    })
+    await page.reload()
+    await waitForHome(page)
+
+    // The seed logs the guided circuit twice and records one of them, so the
+    // row that draws a route is the one to follow rather than the one named.
+    const recorded = page
+      .getByRole('listitem')
+      .filter({ has: page.locator('polyline') })
+      .first()
+    await expect(recorded).toContainText('Walk/Run Intervals')
+
+    // The walk and the run keep the colours the full map gives them.
+    const strokes = await recorded
+      .locator('polyline')
+      .evaluateAll((lines) => lines.map((line) => getComputedStyle(line).stroke))
+    expect(new Set(strokes).size).toBe(2)
+
+    // A session with nothing recorded is the row it has always been.
+    const lifted = page.getByRole('listitem').filter({ hasText: '@janedoe' }).first()
+    await expect(lifted.locator('polyline')).toHaveCount(0)
+    expect(tiles).toEqual([])
+
+    // And the thumbnail's own session is the one carrying the full map.
+    await recorded.getByRole('link', { name: /View .* workout details/ }).click()
+    await expect(page.getByRole('heading', { name: 'Workout route' })).toBeVisible()
+  })
+
   test('opens a feed workout and posts a comment @mutation', async ({ page }) => {
     const card = page.getByRole('listitem').filter({ hasText: '@janedoe' }).first()
     await expect(card).toBeVisible()

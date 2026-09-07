@@ -22,6 +22,7 @@ import { cn } from '@/ui/cn'
 import { CardWorkoutCircuit } from '@/ui/features/CardWorkoutCircuit'
 import { CardWorkoutComment } from '@/ui/features/CardWorkoutComment'
 import { CardWorkoutExercise } from '@/ui/features/CardWorkoutExercise'
+import { RouteThumbnail } from '@/ui/features/RouteThumbnail'
 import { WorkoutRoute } from '@/ui/features/WorkoutRoute'
 import { AppInlineError } from '@/ui/components/AppInlineError'
 import { DropdownButton } from '@/ui/components/DropdownButton'
@@ -84,10 +85,7 @@ export const CardWorkout = ({ workout, compact, unseen = false }: Props) => {
 
   // Parsed once rather than per render: a recorded session is a long document,
   // and the comment field below re-renders this card on every keystroke.
-  const recording = useMemo(
-    () => (compact ? undefined : parseRecording(workout.recordingJson)),
-    [compact, workout.recordingJson],
-  )
+  const recording = useMemo(() => parseRecording(workout.recordingJson), [workout.recordingJson])
 
   // One straight block is the plain session every workout used to be, so it is
   // shown as one rather than wearing a badge saying "Group A".
@@ -260,6 +258,10 @@ export const CardWorkout = ({ workout, compact, unseen = false }: Props) => {
           </div>
 
           {unseen && <AppUnreadDot />}
+
+          {/* A run is recognised by its shape long before it is read as its
+              numbers, and the map that carries the shape is a page away. */}
+          {recording && <RouteThumbnail recording={recording} />}
 
           {/* Every card opens the workout, including your own: editing and
               deleting live in the nav bar once it is open. */}

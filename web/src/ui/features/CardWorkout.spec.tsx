@@ -96,6 +96,36 @@ const ran = (clock: Pick<WorkoutInit, 'startedAt' | 'finishedAt'> = {}) =>
     ],
   })
 
+// A session with a route saved on it: two intervals walked around a corner,
+// which is what the feed row draws its thumbnail from.
+const recorded = () =>
+  create(WorkoutSchema, {
+    id: 'workout-3',
+    name: 'Walk/Run Intervals',
+    user: { id: ownerId, name: 'Alice Lifter', username: 'alice' },
+    recordingJson: JSON.stringify({
+      version: 1,
+      startedAt: 1000,
+      endedAt: 9000,
+      interrupted: false,
+      pauses: [],
+      phases: ['walk', 'run'].map((name) => ({
+        exerciseId: name,
+        stationKey: name,
+        name,
+        round: 1,
+        durationSeconds: 4,
+        instruction: name,
+      })),
+      points: Array.from({ length: 9 }, (_, index) => ({
+        timestamp: 1000 + index * 1000,
+        latitude: 51 + index * 0.00003,
+        longitude: index * 0.0001,
+        accuracy: 3,
+      })),
+    }),
+  })
+
 const lift = (id: string, name: string) => ({
   id,
   name,
@@ -200,6 +230,25 @@ describe('CardWorkout', () => {
       render(<CardWorkout compact workout={ran()} />)
 
       expect(screen.getByText(/5.2 km/)).toHaveTextContent(/2 sets/)
+    })
+
+    // A run is recognised by its shape long before it is read as its numbers,
+    // and the map that carries the shape is a page away.
+    test('pictures the route a recorded session followed', () => {
+      const { container } = render(<CardWorkout compact workout={recorded()} />)
+
+      const lines = container.querySelectorAll('polyline')
+      expect(lines).toHaveLength(2)
+      expect(lines[0].style.stroke).toBe('var(--color-route-1)')
+      expect(lines[1].style.stroke).toBe('var(--color-route-2)')
+    })
+
+    // The tile is the avatar's own 44px, so a feed of lifts is the height it
+    // has always been.
+    test('draws no tile for a session that recorded nothing', () => {
+      const { container } = render(<CardWorkout compact workout={withSets()} />)
+
+      expect(container.querySelector('polyline')).toBeNull()
     })
 
     // A row said "0 kg" for every run and would now say "0 km" for every
