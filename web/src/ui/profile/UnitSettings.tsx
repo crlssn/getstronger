@@ -28,10 +28,21 @@ export const UnitSettings = () => {
     const { userId } = useAuthStore.getState()
     if (!userId) return
 
+    const asked = usePreferencesStore.getState()
     const response = await getCurrentUser(userId)
     if (!response?.user) return
 
+    // A unit picked while this was out is the newer of the two answers, and it
+    // is already on its way to the server. Writing the older one back would
+    // revert it here and everywhere else reading the same cache.
     const preferences = usePreferencesStore.getState()
+    if (
+      preferences.weightUnit !== asked.weightUnit ||
+      preferences.distanceUnit !== asked.distanceUnit
+    ) {
+      return
+    }
+
     preferences.setWeightUnit(response.user.weightUnit)
     preferences.setDistanceUnit(response.user.distanceUnit)
   }, [])
