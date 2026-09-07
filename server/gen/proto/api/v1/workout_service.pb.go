@@ -24,6 +24,56 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+// Which recorded session of a routine a new one is paced against.
+type PaceReference int32
+
+const (
+	PaceReference_PACE_REFERENCE_UNSPECIFIED PaceReference = 0
+	PaceReference_PACE_REFERENCE_PREVIOUS    PaceReference = 1
+	PaceReference_PACE_REFERENCE_BEST        PaceReference = 2
+)
+
+// Enum value maps for PaceReference.
+var (
+	PaceReference_name = map[int32]string{
+		0: "PACE_REFERENCE_UNSPECIFIED",
+		1: "PACE_REFERENCE_PREVIOUS",
+		2: "PACE_REFERENCE_BEST",
+	}
+	PaceReference_value = map[string]int32{
+		"PACE_REFERENCE_UNSPECIFIED": 0,
+		"PACE_REFERENCE_PREVIOUS":    1,
+		"PACE_REFERENCE_BEST":        2,
+	}
+)
+
+func (x PaceReference) Enum() *PaceReference {
+	p := new(PaceReference)
+	*p = x
+	return p
+}
+
+func (x PaceReference) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (PaceReference) Descriptor() protoreflect.EnumDescriptor {
+	return file_api_v1_workout_service_proto_enumTypes[0].Descriptor()
+}
+
+func (PaceReference) Type() protoreflect.EnumType {
+	return &file_api_v1_workout_service_proto_enumTypes[0]
+}
+
+func (x PaceReference) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use PaceReference.Descriptor instead.
+func (PaceReference) EnumDescriptor() ([]byte, []int) {
+	return file_api_v1_workout_service_proto_rawDescGZIP(), []int{0}
+}
+
 type CreateWorkoutRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Optional: a quick workout follows no routine and so names none.
@@ -644,6 +694,106 @@ func (*UpdateWorkoutResponse) Descriptor() ([]byte, []int) {
 	return file_api_v1_workout_service_proto_rawDescGZIP(), []int{11}
 }
 
+type GetPaceReferenceRequest struct {
+	state     protoimpl.MessageState `protogen:"open.v1"`
+	RoutineId string                 `protobuf:"bytes,1,opt,name=routine_id,json=routineId,proto3" json:"routine_id,omitempty"`
+	// Defaults to the athlete's previous session of the routine.
+	Reference     PaceReference `protobuf:"varint,2,opt,name=reference,proto3,enum=api.v1.PaceReference" json:"reference,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetPaceReferenceRequest) Reset() {
+	*x = GetPaceReferenceRequest{}
+	mi := &file_api_v1_workout_service_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetPaceReferenceRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetPaceReferenceRequest) ProtoMessage() {}
+
+func (x *GetPaceReferenceRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_api_v1_workout_service_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetPaceReferenceRequest.ProtoReflect.Descriptor instead.
+func (*GetPaceReferenceRequest) Descriptor() ([]byte, []int) {
+	return file_api_v1_workout_service_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *GetPaceReferenceRequest) GetRoutineId() string {
+	if x != nil {
+		return x.RoutineId
+	}
+	return ""
+}
+
+func (x *GetPaceReferenceRequest) GetReference() PaceReference {
+	if x != nil {
+		return x.Reference
+	}
+	return PaceReference_PACE_REFERENCE_UNSPECIFIED
+}
+
+type GetPaceReferenceResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// The recording the new session is held against, which the recorder reads a
+	// pace per interval out of. Empty when the routine has no recorded session
+	// to compare with, which every first recording of it has.
+	RecordingJson string `protobuf:"bytes,1,opt,name=recording_json,json=recordingJson,proto3" json:"recording_json,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetPaceReferenceResponse) Reset() {
+	*x = GetPaceReferenceResponse{}
+	mi := &file_api_v1_workout_service_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetPaceReferenceResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetPaceReferenceResponse) ProtoMessage() {}
+
+func (x *GetPaceReferenceResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_api_v1_workout_service_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetPaceReferenceResponse.ProtoReflect.Descriptor instead.
+func (*GetPaceReferenceResponse) Descriptor() ([]byte, []int) {
+	return file_api_v1_workout_service_proto_rawDescGZIP(), []int{13}
+}
+
+func (x *GetPaceReferenceResponse) GetRecordingJson() string {
+	if x != nil {
+		return x.RecordingJson
+	}
+	return ""
+}
+
 type Workout struct {
 	state        protoimpl.MessageState `protogen:"open.v1"`
 	Id           string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
@@ -672,7 +822,7 @@ type Workout struct {
 
 func (x *Workout) Reset() {
 	*x = Workout{}
-	mi := &file_api_v1_workout_service_proto_msgTypes[12]
+	mi := &file_api_v1_workout_service_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -684,7 +834,7 @@ func (x *Workout) String() string {
 func (*Workout) ProtoMessage() {}
 
 func (x *Workout) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_workout_service_proto_msgTypes[12]
+	mi := &file_api_v1_workout_service_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -697,7 +847,7 @@ func (x *Workout) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Workout.ProtoReflect.Descriptor instead.
 func (*Workout) Descriptor() ([]byte, []int) {
-	return file_api_v1_workout_service_proto_rawDescGZIP(), []int{12}
+	return file_api_v1_workout_service_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *Workout) GetId() string {
@@ -803,7 +953,7 @@ type WorkoutGroup struct {
 
 func (x *WorkoutGroup) Reset() {
 	*x = WorkoutGroup{}
-	mi := &file_api_v1_workout_service_proto_msgTypes[13]
+	mi := &file_api_v1_workout_service_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -815,7 +965,7 @@ func (x *WorkoutGroup) String() string {
 func (*WorkoutGroup) ProtoMessage() {}
 
 func (x *WorkoutGroup) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_workout_service_proto_msgTypes[13]
+	mi := &file_api_v1_workout_service_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -828,7 +978,7 @@ func (x *WorkoutGroup) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WorkoutGroup.ProtoReflect.Descriptor instead.
 func (*WorkoutGroup) Descriptor() ([]byte, []int) {
-	return file_api_v1_workout_service_proto_rawDescGZIP(), []int{13}
+	return file_api_v1_workout_service_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *WorkoutGroup) GetId() string {
@@ -890,7 +1040,7 @@ type WorkoutGroupExercise struct {
 
 func (x *WorkoutGroupExercise) Reset() {
 	*x = WorkoutGroupExercise{}
-	mi := &file_api_v1_workout_service_proto_msgTypes[14]
+	mi := &file_api_v1_workout_service_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -902,7 +1052,7 @@ func (x *WorkoutGroupExercise) String() string {
 func (*WorkoutGroupExercise) ProtoMessage() {}
 
 func (x *WorkoutGroupExercise) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_workout_service_proto_msgTypes[14]
+	mi := &file_api_v1_workout_service_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -915,7 +1065,7 @@ func (x *WorkoutGroupExercise) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WorkoutGroupExercise.ProtoReflect.Descriptor instead.
 func (*WorkoutGroupExercise) Descriptor() ([]byte, []int) {
-	return file_api_v1_workout_service_proto_rawDescGZIP(), []int{14}
+	return file_api_v1_workout_service_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *WorkoutGroupExercise) GetExercise() *Exercise {
@@ -951,7 +1101,7 @@ type WorkoutComment struct {
 
 func (x *WorkoutComment) Reset() {
 	*x = WorkoutComment{}
-	mi := &file_api_v1_workout_service_proto_msgTypes[15]
+	mi := &file_api_v1_workout_service_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -963,7 +1113,7 @@ func (x *WorkoutComment) String() string {
 func (*WorkoutComment) ProtoMessage() {}
 
 func (x *WorkoutComment) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_workout_service_proto_msgTypes[15]
+	mi := &file_api_v1_workout_service_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -976,7 +1126,7 @@ func (x *WorkoutComment) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WorkoutComment.ProtoReflect.Descriptor instead.
 func (*WorkoutComment) Descriptor() ([]byte, []int) {
-	return file_api_v1_workout_service_proto_rawDescGZIP(), []int{15}
+	return file_api_v1_workout_service_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *WorkoutComment) GetId() string {
@@ -1057,7 +1207,13 @@ const file_api_v1_workout_service_proto_rawDesc = "" +
 	"\acomment\x18\x01 \x01(\v2\x16.api.v1.WorkoutCommentR\acomment\"I\n" +
 	"\x14UpdateWorkoutRequest\x121\n" +
 	"\aworkout\x18\x01 \x01(\v2\x0f.api.v1.WorkoutB\x06\xbaH\x03\xc8\x01\x01R\aworkout\"\x17\n" +
-	"\x15UpdateWorkoutResponse\"\x89\x04\n" +
+	"\x15UpdateWorkoutResponse\"\x81\x01\n" +
+	"\x17GetPaceReferenceRequest\x12'\n" +
+	"\n" +
+	"routine_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\troutineId\x12=\n" +
+	"\treference\x18\x02 \x01(\x0e2\x15.api.v1.PaceReferenceB\b\xbaH\x05\x82\x01\x02\x10\x01R\treference\"A\n" +
+	"\x18GetPaceReferenceResponse\x12%\n" +
+	"\x0erecording_json\x18\x01 \x01(\tR\rrecordingJson\"\x89\x04\n" +
 	"\aWorkout\x12\x18\n" +
 	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x02id\x12\x1b\n" +
 	"\x04name\x18\x02 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x04name\x12(\n" +
@@ -1093,7 +1249,11 @@ const file_api_v1_workout_service_proto_rawDesc = "" +
 	"\x04user\x18\x02 \x01(\v2\f.api.v1.UserB\x06\xbaH\x03\xc8\x01\x01R\x04user\x12!\n" +
 	"\acomment\x18\x04 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\acomment\x12A\n" +
 	"\n" +
-	"created_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tcreatedAt2\xde\x03\n" +
+	"created_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tcreatedAt*e\n" +
+	"\rPaceReference\x12\x1e\n" +
+	"\x1aPACE_REFERENCE_UNSPECIFIED\x10\x00\x12\x1b\n" +
+	"\x17PACE_REFERENCE_PREVIOUS\x10\x01\x12\x17\n" +
+	"\x13PACE_REFERENCE_BEST\x10\x022\xb7\x04\n" +
 	"\x0eWorkoutService\x12N\n" +
 	"\rCreateWorkout\x12\x1c.api.v1.CreateWorkoutRequest\x1a\x1d.api.v1.CreateWorkoutResponse\"\x00\x12E\n" +
 	"\n" +
@@ -1101,7 +1261,8 @@ const file_api_v1_workout_service_proto_rawDesc = "" +
 	"\fListWorkouts\x12\x1b.api.v1.ListWorkoutsRequest\x1a\x1c.api.v1.ListWorkoutsResponse\"\x00\x12N\n" +
 	"\rDeleteWorkout\x12\x1c.api.v1.DeleteWorkoutRequest\x1a\x1d.api.v1.DeleteWorkoutResponse\"\x00\x12H\n" +
 	"\vPostComment\x12\x1a.api.v1.PostCommentRequest\x1a\x1b.api.v1.PostCommentResponse\"\x00\x12N\n" +
-	"\rUpdateWorkout\x12\x1c.api.v1.UpdateWorkoutRequest\x1a\x1d.api.v1.UpdateWorkoutResponse\"\x00B\x97\x01\n" +
+	"\rUpdateWorkout\x12\x1c.api.v1.UpdateWorkoutRequest\x1a\x1d.api.v1.UpdateWorkoutResponse\"\x00\x12W\n" +
+	"\x10GetPaceReference\x12\x1f.api.v1.GetPaceReferenceRequest\x1a .api.v1.GetPaceReferenceResponse\"\x00B\x97\x01\n" +
 	"\n" +
 	"com.api.v1B\x13WorkoutServiceProtoP\x01Z;github.com/crlssn/getstronger/server/gen/proto/api/v1;apiv1\xa2\x02\x03AXX\xaa\x02\x06Api.V1\xca\x02\x06Api\\V1\xe2\x02\x12Api\\V1\\GPBMetadata\xea\x02\aApi::V1b\x06proto3"
 
@@ -1117,73 +1278,80 @@ func file_api_v1_workout_service_proto_rawDescGZIP() []byte {
 	return file_api_v1_workout_service_proto_rawDescData
 }
 
-var file_api_v1_workout_service_proto_msgTypes = make([]protoimpl.MessageInfo, 16)
+var file_api_v1_workout_service_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_api_v1_workout_service_proto_msgTypes = make([]protoimpl.MessageInfo, 18)
 var file_api_v1_workout_service_proto_goTypes = []any{
-	(*CreateWorkoutRequest)(nil),  // 0: api.v1.CreateWorkoutRequest
-	(*CreateWorkoutResponse)(nil), // 1: api.v1.CreateWorkoutResponse
-	(*ListWorkoutsRequest)(nil),   // 2: api.v1.ListWorkoutsRequest
-	(*ListWorkoutsResponse)(nil),  // 3: api.v1.ListWorkoutsResponse
-	(*GetWorkoutRequest)(nil),     // 4: api.v1.GetWorkoutRequest
-	(*GetWorkoutResponse)(nil),    // 5: api.v1.GetWorkoutResponse
-	(*DeleteWorkoutRequest)(nil),  // 6: api.v1.DeleteWorkoutRequest
-	(*DeleteWorkoutResponse)(nil), // 7: api.v1.DeleteWorkoutResponse
-	(*PostCommentRequest)(nil),    // 8: api.v1.PostCommentRequest
-	(*PostCommentResponse)(nil),   // 9: api.v1.PostCommentResponse
-	(*UpdateWorkoutRequest)(nil),  // 10: api.v1.UpdateWorkoutRequest
-	(*UpdateWorkoutResponse)(nil), // 11: api.v1.UpdateWorkoutResponse
-	(*Workout)(nil),               // 12: api.v1.Workout
-	(*WorkoutGroup)(nil),          // 13: api.v1.WorkoutGroup
-	(*WorkoutGroupExercise)(nil),  // 14: api.v1.WorkoutGroupExercise
-	(*WorkoutComment)(nil),        // 15: api.v1.WorkoutComment
-	(*ExerciseSets)(nil),          // 16: api.v1.ExerciseSets
-	(*timestamppb.Timestamp)(nil), // 17: google.protobuf.Timestamp
-	(*PaginationRequest)(nil),     // 18: api.v1.PaginationRequest
-	(*PaginationResponse)(nil),    // 19: api.v1.PaginationResponse
-	(*User)(nil),                  // 20: api.v1.User
-	(RoutineGroupMode)(0),         // 21: api.v1.RoutineGroupMode
-	(*Exercise)(nil),              // 22: api.v1.Exercise
-	(*Set)(nil),                   // 23: api.v1.Set
+	(PaceReference)(0),               // 0: api.v1.PaceReference
+	(*CreateWorkoutRequest)(nil),     // 1: api.v1.CreateWorkoutRequest
+	(*CreateWorkoutResponse)(nil),    // 2: api.v1.CreateWorkoutResponse
+	(*ListWorkoutsRequest)(nil),      // 3: api.v1.ListWorkoutsRequest
+	(*ListWorkoutsResponse)(nil),     // 4: api.v1.ListWorkoutsResponse
+	(*GetWorkoutRequest)(nil),        // 5: api.v1.GetWorkoutRequest
+	(*GetWorkoutResponse)(nil),       // 6: api.v1.GetWorkoutResponse
+	(*DeleteWorkoutRequest)(nil),     // 7: api.v1.DeleteWorkoutRequest
+	(*DeleteWorkoutResponse)(nil),    // 8: api.v1.DeleteWorkoutResponse
+	(*PostCommentRequest)(nil),       // 9: api.v1.PostCommentRequest
+	(*PostCommentResponse)(nil),      // 10: api.v1.PostCommentResponse
+	(*UpdateWorkoutRequest)(nil),     // 11: api.v1.UpdateWorkoutRequest
+	(*UpdateWorkoutResponse)(nil),    // 12: api.v1.UpdateWorkoutResponse
+	(*GetPaceReferenceRequest)(nil),  // 13: api.v1.GetPaceReferenceRequest
+	(*GetPaceReferenceResponse)(nil), // 14: api.v1.GetPaceReferenceResponse
+	(*Workout)(nil),                  // 15: api.v1.Workout
+	(*WorkoutGroup)(nil),             // 16: api.v1.WorkoutGroup
+	(*WorkoutGroupExercise)(nil),     // 17: api.v1.WorkoutGroupExercise
+	(*WorkoutComment)(nil),           // 18: api.v1.WorkoutComment
+	(*ExerciseSets)(nil),             // 19: api.v1.ExerciseSets
+	(*timestamppb.Timestamp)(nil),    // 20: google.protobuf.Timestamp
+	(*PaginationRequest)(nil),        // 21: api.v1.PaginationRequest
+	(*PaginationResponse)(nil),       // 22: api.v1.PaginationResponse
+	(*User)(nil),                     // 23: api.v1.User
+	(RoutineGroupMode)(0),            // 24: api.v1.RoutineGroupMode
+	(*Exercise)(nil),                 // 25: api.v1.Exercise
+	(*Set)(nil),                      // 26: api.v1.Set
 }
 var file_api_v1_workout_service_proto_depIdxs = []int32{
-	16, // 0: api.v1.CreateWorkoutRequest.exercise_sets:type_name -> api.v1.ExerciseSets
-	17, // 1: api.v1.CreateWorkoutRequest.started_at:type_name -> google.protobuf.Timestamp
-	17, // 2: api.v1.CreateWorkoutRequest.finished_at:type_name -> google.protobuf.Timestamp
-	13, // 3: api.v1.CreateWorkoutRequest.groups:type_name -> api.v1.WorkoutGroup
-	18, // 4: api.v1.ListWorkoutsRequest.pagination:type_name -> api.v1.PaginationRequest
-	12, // 5: api.v1.ListWorkoutsResponse.workouts:type_name -> api.v1.Workout
-	19, // 6: api.v1.ListWorkoutsResponse.pagination:type_name -> api.v1.PaginationResponse
-	12, // 7: api.v1.GetWorkoutResponse.workout:type_name -> api.v1.Workout
-	15, // 8: api.v1.PostCommentResponse.comment:type_name -> api.v1.WorkoutComment
-	12, // 9: api.v1.UpdateWorkoutRequest.workout:type_name -> api.v1.Workout
-	20, // 10: api.v1.Workout.user:type_name -> api.v1.User
-	16, // 11: api.v1.Workout.exercise_sets:type_name -> api.v1.ExerciseSets
-	15, // 12: api.v1.Workout.comments:type_name -> api.v1.WorkoutComment
-	17, // 13: api.v1.Workout.started_at:type_name -> google.protobuf.Timestamp
-	17, // 14: api.v1.Workout.finished_at:type_name -> google.protobuf.Timestamp
-	13, // 15: api.v1.Workout.groups:type_name -> api.v1.WorkoutGroup
-	21, // 16: api.v1.WorkoutGroup.mode:type_name -> api.v1.RoutineGroupMode
-	14, // 17: api.v1.WorkoutGroup.exercises:type_name -> api.v1.WorkoutGroupExercise
-	22, // 18: api.v1.WorkoutGroupExercise.exercise:type_name -> api.v1.Exercise
-	23, // 19: api.v1.WorkoutGroupExercise.sets:type_name -> api.v1.Set
-	20, // 20: api.v1.WorkoutComment.user:type_name -> api.v1.User
-	17, // 21: api.v1.WorkoutComment.created_at:type_name -> google.protobuf.Timestamp
-	0,  // 22: api.v1.WorkoutService.CreateWorkout:input_type -> api.v1.CreateWorkoutRequest
-	4,  // 23: api.v1.WorkoutService.GetWorkout:input_type -> api.v1.GetWorkoutRequest
-	2,  // 24: api.v1.WorkoutService.ListWorkouts:input_type -> api.v1.ListWorkoutsRequest
-	6,  // 25: api.v1.WorkoutService.DeleteWorkout:input_type -> api.v1.DeleteWorkoutRequest
-	8,  // 26: api.v1.WorkoutService.PostComment:input_type -> api.v1.PostCommentRequest
-	10, // 27: api.v1.WorkoutService.UpdateWorkout:input_type -> api.v1.UpdateWorkoutRequest
-	1,  // 28: api.v1.WorkoutService.CreateWorkout:output_type -> api.v1.CreateWorkoutResponse
-	5,  // 29: api.v1.WorkoutService.GetWorkout:output_type -> api.v1.GetWorkoutResponse
-	3,  // 30: api.v1.WorkoutService.ListWorkouts:output_type -> api.v1.ListWorkoutsResponse
-	7,  // 31: api.v1.WorkoutService.DeleteWorkout:output_type -> api.v1.DeleteWorkoutResponse
-	9,  // 32: api.v1.WorkoutService.PostComment:output_type -> api.v1.PostCommentResponse
-	11, // 33: api.v1.WorkoutService.UpdateWorkout:output_type -> api.v1.UpdateWorkoutResponse
-	28, // [28:34] is the sub-list for method output_type
-	22, // [22:28] is the sub-list for method input_type
-	22, // [22:22] is the sub-list for extension type_name
-	22, // [22:22] is the sub-list for extension extendee
-	0,  // [0:22] is the sub-list for field type_name
+	19, // 0: api.v1.CreateWorkoutRequest.exercise_sets:type_name -> api.v1.ExerciseSets
+	20, // 1: api.v1.CreateWorkoutRequest.started_at:type_name -> google.protobuf.Timestamp
+	20, // 2: api.v1.CreateWorkoutRequest.finished_at:type_name -> google.protobuf.Timestamp
+	16, // 3: api.v1.CreateWorkoutRequest.groups:type_name -> api.v1.WorkoutGroup
+	21, // 4: api.v1.ListWorkoutsRequest.pagination:type_name -> api.v1.PaginationRequest
+	15, // 5: api.v1.ListWorkoutsResponse.workouts:type_name -> api.v1.Workout
+	22, // 6: api.v1.ListWorkoutsResponse.pagination:type_name -> api.v1.PaginationResponse
+	15, // 7: api.v1.GetWorkoutResponse.workout:type_name -> api.v1.Workout
+	18, // 8: api.v1.PostCommentResponse.comment:type_name -> api.v1.WorkoutComment
+	15, // 9: api.v1.UpdateWorkoutRequest.workout:type_name -> api.v1.Workout
+	0,  // 10: api.v1.GetPaceReferenceRequest.reference:type_name -> api.v1.PaceReference
+	23, // 11: api.v1.Workout.user:type_name -> api.v1.User
+	19, // 12: api.v1.Workout.exercise_sets:type_name -> api.v1.ExerciseSets
+	18, // 13: api.v1.Workout.comments:type_name -> api.v1.WorkoutComment
+	20, // 14: api.v1.Workout.started_at:type_name -> google.protobuf.Timestamp
+	20, // 15: api.v1.Workout.finished_at:type_name -> google.protobuf.Timestamp
+	16, // 16: api.v1.Workout.groups:type_name -> api.v1.WorkoutGroup
+	24, // 17: api.v1.WorkoutGroup.mode:type_name -> api.v1.RoutineGroupMode
+	17, // 18: api.v1.WorkoutGroup.exercises:type_name -> api.v1.WorkoutGroupExercise
+	25, // 19: api.v1.WorkoutGroupExercise.exercise:type_name -> api.v1.Exercise
+	26, // 20: api.v1.WorkoutGroupExercise.sets:type_name -> api.v1.Set
+	23, // 21: api.v1.WorkoutComment.user:type_name -> api.v1.User
+	20, // 22: api.v1.WorkoutComment.created_at:type_name -> google.protobuf.Timestamp
+	1,  // 23: api.v1.WorkoutService.CreateWorkout:input_type -> api.v1.CreateWorkoutRequest
+	5,  // 24: api.v1.WorkoutService.GetWorkout:input_type -> api.v1.GetWorkoutRequest
+	3,  // 25: api.v1.WorkoutService.ListWorkouts:input_type -> api.v1.ListWorkoutsRequest
+	7,  // 26: api.v1.WorkoutService.DeleteWorkout:input_type -> api.v1.DeleteWorkoutRequest
+	9,  // 27: api.v1.WorkoutService.PostComment:input_type -> api.v1.PostCommentRequest
+	11, // 28: api.v1.WorkoutService.UpdateWorkout:input_type -> api.v1.UpdateWorkoutRequest
+	13, // 29: api.v1.WorkoutService.GetPaceReference:input_type -> api.v1.GetPaceReferenceRequest
+	2,  // 30: api.v1.WorkoutService.CreateWorkout:output_type -> api.v1.CreateWorkoutResponse
+	6,  // 31: api.v1.WorkoutService.GetWorkout:output_type -> api.v1.GetWorkoutResponse
+	4,  // 32: api.v1.WorkoutService.ListWorkouts:output_type -> api.v1.ListWorkoutsResponse
+	8,  // 33: api.v1.WorkoutService.DeleteWorkout:output_type -> api.v1.DeleteWorkoutResponse
+	10, // 34: api.v1.WorkoutService.PostComment:output_type -> api.v1.PostCommentResponse
+	12, // 35: api.v1.WorkoutService.UpdateWorkout:output_type -> api.v1.UpdateWorkoutResponse
+	14, // 36: api.v1.WorkoutService.GetPaceReference:output_type -> api.v1.GetPaceReferenceResponse
+	30, // [30:37] is the sub-list for method output_type
+	23, // [23:30] is the sub-list for method input_type
+	23, // [23:23] is the sub-list for extension type_name
+	23, // [23:23] is the sub-list for extension extendee
+	0,  // [0:23] is the sub-list for field type_name
 }
 
 func init() { file_api_v1_workout_service_proto_init() }
@@ -1198,13 +1366,14 @@ func file_api_v1_workout_service_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_api_v1_workout_service_proto_rawDesc), len(file_api_v1_workout_service_proto_rawDesc)),
-			NumEnums:      0,
-			NumMessages:   16,
+			NumEnums:      1,
+			NumMessages:   18,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
 		GoTypes:           file_api_v1_workout_service_proto_goTypes,
 		DependencyIndexes: file_api_v1_workout_service_proto_depIdxs,
+		EnumInfos:         file_api_v1_workout_service_proto_enumTypes,
 		MessageInfos:      file_api_v1_workout_service_proto_msgTypes,
 	}.Build()
 	File_api_v1_workout_service_proto = out.File

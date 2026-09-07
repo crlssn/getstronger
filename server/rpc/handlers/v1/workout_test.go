@@ -554,6 +554,128 @@ func (s *workoutSuite) TestGetWorkoutNotFound() {
 	s.Require().Equal(connect.NewError(connect.CodeNotFound, nil).Error(), err.Error())
 }
 
+func (s *workoutSuite) TestGetPaceReference() {
+	user := s.factory.NewUser()
+	routine := s.factory.NewRoutine(factory.RoutineUserID(user.ID))
+	exercise := s.factory.NewExercise(factory.ExerciseUserID(user.ID))
+
+	// Three recorded sessions of the routine: the fastest in the middle, so
+	// neither reference can be the other by accident.
+	sessions := []struct {
+		recording string
+		minutes   int
+		seconds   int
+	}{
+		{recording: `{"first":true}`, minutes: 3, seconds: 360},
+		{recording: `{"fastest":true}`, minutes: 2, seconds: 240},
+		{recording: `{"latest":true}`, minutes: 1, seconds: 300},
+	}
+	for _, session := range sessions {
+		finishedAt := time.Now().UTC().Add(-time.Duration(session.minutes) * time.Minute)
+		workout := s.factory.NewWorkout(
+			factory.WorkoutUserID(user.ID),
+			factory.WorkoutRoutineID(routine.ID),
+			factory.WorkoutFinishedAt(finishedAt),
+			factory.WorkoutRecordingJSON(session.recording),
+		)
+		s.factory.NewSet(
+			factory.SetUserID(user.ID),
+			factory.SetWorkoutID(workout.ID),
+			factory.SetExerciseID(exercise.ID),
+			factory.SetDistance(1),
+			factory.SetDurationSeconds(session.seconds),
+		)
+	}
+
+	ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
+	ctx = xcontext.WithUserID(ctx, user.ID)
+
+	for name, test := range map[string]struct {
+		reference apiv1.PaceReference
+		expected  string
+	}{
+		"unspecified": {apiv1.PaceReference_PACE_REFERENCE_UNSPECIFIED, `{"latest":true}`},
+		"previous":    {apiv1.PaceReference_PACE_REFERENCE_PREVIOUS, `{"latest":true}`},
+		"best":        {apiv1.PaceReference_PACE_REFERENCE_BEST, `{"fastest":true}`},
+	} {
+		s.Run(name, func() {
+			res, err := s.handler.GetPaceReference(ctx, connect.NewRequest(&apiv1.GetPaceReferenceRequest{
+				RoutineId: routine.ID.String(),
+				Reference: test.reference,
+			}))
+			s.Require().NoError(err)
+			s.Require().Equal(test.expected, res.Msg.GetRecordingJson())
+		})
+	}
+}
+
+func (s *workoutSuite) TestGetPaceReferenceWithoutARecordedSession() {
+	user := s.factory.NewUser()
+	routine := s.factory.NewRoutine(factory.RoutineUserID(user.ID))
+	// Logged by hand, so it carries no recording and no distance to pace against.
+	s.factory.NewWorkout(
+		factory.WorkoutUserID(user.ID),
+		factory.WorkoutRoutineID(routine.ID),
+	)
+
+	ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
+	ctx = xcontext.WithUserID(ctx, user.ID)
+
+	for _, reference := range []apiv1.PaceReference{
+		apiv1.PaceReference_PACE_REFERENCE_PREVIOUS,
+		apiv1.PaceReference_PACE_REFERENCE_BEST,
+	} {
+		res, err := s.handler.GetPaceReference(ctx, connect.NewRequest(&apiv1.GetPaceReferenceRequest{
+			RoutineId: routine.ID.String(),
+			Reference: reference,
+		}))
+		s.Require().NoError(err)
+		s.Require().Empty(res.Msg.GetRecordingJson())
+	}
+}
+
+// The reference is the athlete's own history: another athlete's session of the
+// same routine is not something to be paced against.
+func (s *workoutSuite) TestGetPaceReferenceIgnoresAnotherAthletesSession() {
+	user := s.factory.NewUser()
+	other := s.factory.NewUser()
+	routine := s.factory.NewRoutine(factory.RoutineUserID(other.ID))
+	exercise := s.factory.NewExercise(factory.ExerciseUserID(other.ID))
+	workout := s.factory.NewWorkout(
+		factory.WorkoutUserID(other.ID),
+		factory.WorkoutRoutineID(routine.ID),
+		factory.WorkoutRecordingJSON(`{"theirs":true}`),
+	)
+	s.factory.NewSet(
+		factory.SetUserID(other.ID),
+		factory.SetWorkoutID(workout.ID),
+		factory.SetExerciseID(exercise.ID),
+		factory.SetDistance(1),
+		factory.SetDurationSeconds(300),
+	)
+
+	ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
+	ctx = xcontext.WithUserID(ctx, user.ID)
+
+	res, err := s.handler.GetPaceReference(ctx, connect.NewRequest(&apiv1.GetPaceReferenceRequest{
+		RoutineId: routine.ID.String(),
+		Reference: apiv1.PaceReference_PACE_REFERENCE_BEST,
+	}))
+	s.Require().NoError(err)
+	s.Require().Empty(res.Msg.GetRecordingJson())
+}
+
+func (s *workoutSuite) TestGetPaceReferenceRejectsAMalformedRoutineID() {
+	ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
+	ctx = xcontext.WithUserID(ctx, uuid.Must(uuid.NewV4()))
+
+	res, err := s.handler.GetPaceReference(ctx, connect.NewRequest(&apiv1.GetPaceReferenceRequest{
+		RoutineId: "not a routine",
+	}))
+	s.Require().Nil(res)
+	s.Require().Equal(connect.NewError(connect.CodeInvalidArgument, nil).Error(), err.Error())
+}
+
 func (s *workoutSuite) TestListWorkoutsPaginates() {
 	user := s.factory.NewUser()
 	// Created a second apart so the page token, which is a timestamp, orders them.
