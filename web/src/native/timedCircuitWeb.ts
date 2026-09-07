@@ -30,6 +30,8 @@ const fixTimeoutMs = 30000
 // taught, and both sit clear of the 880 the interval cue sounds on, so three
 // sounds in one run are three different sounds. The phones sound the same two.
 const toneHertz: Record<PaceTone, number> = { ahead: 1320, behind: 440 }
+/** The peak the interval cue plays at, which a note matches at full volume. */
+const toneVolume = 0.3
 
 interface Saved {
   key: string
@@ -84,7 +86,9 @@ const persist = () => {
  * remembers enough not to repeat itself.
  */
 const judge = (phaseIndex: number, phaseSeconds: number, at: number) => {
-  if (!saved?.pacing) return
+  // Turned off, nothing is judged rather than judged and swallowed: turning
+  // the sound back on then hears the next crossing instead of missing it.
+  if (!saved?.pacing || saved.volume <= 0) return
   const reading = {
     phaseIndex,
     phaseSeconds,
@@ -93,7 +97,7 @@ const judge = (phaseIndex: number, phaseSeconds: number, at: number) => {
   }
   const result = watchPace(pace, reading, saved.pacing)
   pace = result.watch
-  if (result.tone) playTone(toneHertz[result.tone])
+  if (result.tone) playTone(toneHertz[result.tone], toneVolume * saved.volume)
 }
 
 const stopWatching = () => {
@@ -289,13 +293,7 @@ export const TimedCircuitWeb = {
     load()
     if (saved) throw new Error('A recording is already saved or active')
     if (!valid(options.phases)) throw new Error('Invalid prescription')
-    await begin(
-      options.key,
-      options.phases,
-      options.cueLeadSeconds,
-      options.volume,
-      options.pacing,
-    )
+    await begin(options.key, options.phases, options.cueLeadSeconds, options.volume, options.pacing)
   },
 
   read(options: { key: string }): Promise<{ recording?: Recording }> {

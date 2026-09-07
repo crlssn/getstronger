@@ -367,6 +367,10 @@ public class TimedCircuitService extends Service implements LocationListener {
      * session set for it, at most once every gap.
      */
     private void judge(int index, double seconds, long time) throws Exception {
+        // Turned off, nothing is judged rather than judged and swallowed:
+        // turning the sound back on hears the next crossing rather than
+        // missing it.
+        if (level(saved.optDouble("volume", 1)) == 0) return;
         if (paceZonePhase != index) {
             paceZonePhase = index;
             paceZone = "";
