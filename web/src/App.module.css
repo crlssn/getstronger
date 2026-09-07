@@ -1,15 +1,20 @@
-/* Backdrop for the status bar and Dynamic Island in the native WebView, where
-   viewport-fit=cover lets content scroll underneath them. The blur keeps the
-   clock legible over any content, like a native navigation bar. Browsers
-   report a zero inset, which collapses the element entirely. */
-.statusbarScrim {
+/* The band the status bar and the Dynamic Island are drawn over in the native
+   WebView, where viewport-fit=cover lets the page scroll underneath them. It
+   is the paper of the shell below it and it is opaque, so the app runs to the
+   top of the screen as one surface and scrolled content passes behind the
+   clock rather than through it. Browsers report a zero inset, which collapses
+   the element entirely. */
+.statusbarBackdrop {
   position: fixed;
   top: 0;
   right: 0;
   left: 0;
   z-index: 50;
   height: env(safe-area-inset-top);
-  background: rgb(255 255 255 / 0.72);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  background: var(--color-canvas);
+}
+
+/* The guest shell opens on its white header rather than on the canvas. */
+.statusbarBackdrop[data-paper='surface'] {
+  background: var(--color-surface);
 }

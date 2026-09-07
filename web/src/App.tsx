@@ -19,7 +19,11 @@ export const App = () => {
 
   return (
     <>
-      <div className={styles.statusbarScrim} aria-hidden="true" />
+      <div
+        className={styles.statusbarBackdrop}
+        data-paper={authorised ? 'canvas' : 'surface'}
+        aria-hidden="true"
+      />
       {authorised ? <AppDashboard /> : <GuestView />}
       <AppToaster />
       <AppOfflineBanner />
