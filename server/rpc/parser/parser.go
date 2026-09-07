@@ -152,6 +152,8 @@ func RoutineGroupSlice(groups []*training.RoutineGroup) []*apiv1.RoutineGroup {
 			RestBetweenExercisesSeconds: group.RestBetweenExercisesSeconds,
 			RestBetweenRoundsSeconds:    group.RestBetweenRoundsSeconds,
 			Rounds:                      group.Rounds,
+			Role:                        RoutineGroupRoleToProto(group.Role),
+			SkipLastOnFinalRound:        group.SkipLastOnFinalRound,
 			Exercises:                   RoutineExerciseSlice(group.Exercises),
 		})
 	}
@@ -180,6 +182,36 @@ func RoutineGroupModeToProto(mode training.RoutineGroupMode) apiv1.RoutineGroupM
 	}
 
 	return apiv1.RoutineGroupMode_ROUTINE_GROUP_MODE_STRAIGHT
+}
+
+// RoutineGroupRoleToProto states where a block sits in an interval routine.
+// Unspecified is a block outside one, which is every gym circuit.
+func RoutineGroupRoleToProto(role training.RoutineGroupRole) apiv1.RoutineGroupRole {
+	switch role {
+	case training.RoutineGroupRoleWarmup:
+		return apiv1.RoutineGroupRole_ROUTINE_GROUP_ROLE_WARMUP
+	case training.RoutineGroupRoleRepeat:
+		return apiv1.RoutineGroupRole_ROUTINE_GROUP_ROLE_REPEAT
+	case training.RoutineGroupRoleCooldown:
+		return apiv1.RoutineGroupRole_ROUTINE_GROUP_ROLE_COOLDOWN
+	default:
+		return apiv1.RoutineGroupRole_ROUTINE_GROUP_ROLE_UNSPECIFIED
+	}
+}
+
+func RoutineGroupRoleFromProto(role apiv1.RoutineGroupRole) training.RoutineGroupRole {
+	switch role {
+	case apiv1.RoutineGroupRole_ROUTINE_GROUP_ROLE_WARMUP:
+		return training.RoutineGroupRoleWarmup
+	case apiv1.RoutineGroupRole_ROUTINE_GROUP_ROLE_REPEAT:
+		return training.RoutineGroupRoleRepeat
+	case apiv1.RoutineGroupRole_ROUTINE_GROUP_ROLE_COOLDOWN:
+		return training.RoutineGroupRoleCooldown
+	case apiv1.RoutineGroupRole_ROUTINE_GROUP_ROLE_UNSPECIFIED:
+		return ""
+	default:
+		return ""
+	}
 }
 
 func RoutineGroupModeFromProto(mode apiv1.RoutineGroupMode) training.RoutineGroupMode {

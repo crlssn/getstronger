@@ -7,13 +7,12 @@
 package apiv1
 
 import (
-	reflect "reflect"
-	sync "sync"
-	unsafe "unsafe"
-
 	_ "buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go/buf/validate"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	reflect "reflect"
+	sync "sync"
+	unsafe "unsafe"
 )
 
 const (
@@ -909,9 +908,15 @@ type RoutineGroup struct {
 	// How many times a circuit is prescribed to go round; 0 runs it for as many
 	// rounds as the session takes. A target rather than a limit: the session may
 	// take another round or stop short of it. Ignored outside a circuit.
-	Rounds        int32 `protobuf:"varint,8,opt,name=rounds,proto3" json:"rounds,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	Rounds int32 `protobuf:"varint,8,opt,name=rounds,proto3" json:"rounds,omitempty"`
+	// Where this block sits in an interval routine. Unspecified everywhere else,
+	// which is every routine saved before intervals existed.
+	Role RoutineGroupRole `protobuf:"varint,9,opt,name=role,proto3,enum=api.v1.RoutineGroupRole" json:"role,omitempty"`
+	// Whether the repeating block drops its last exercise on its final round, so
+	// a walk-run does not end the session with a walk. Ignored outside it.
+	SkipLastOnFinalRound bool `protobuf:"varint,10,opt,name=skip_last_on_final_round,json=skipLastOnFinalRound,proto3" json:"skip_last_on_final_round,omitempty"`
+	unknownFields        protoimpl.UnknownFields
+	sizeCache            protoimpl.SizeCache
 }
 
 func (x *RoutineGroup) Reset() {
@@ -984,6 +989,20 @@ func (x *RoutineGroup) GetRounds() int32 {
 		return x.Rounds
 	}
 	return 0
+}
+
+func (x *RoutineGroup) GetRole() RoutineGroupRole {
+	if x != nil {
+		return x.Role
+	}
+	return RoutineGroupRole_ROUTINE_GROUP_ROLE_UNSPECIFIED
+}
+
+func (x *RoutineGroup) GetSkipLastOnFinalRound() bool {
+	if x != nil {
+		return x.SkipLastOnFinalRound
+	}
+	return false
 }
 
 // One exercise where a routine trains it. The same exercise in another group,
@@ -1884,7 +1903,7 @@ const file_api_v1_routine_service_proto_rawDesc = "" +
 	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x02id\x12\x1b\n" +
 	"\x04name\x18\x02 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x04name\x128\n" +
 	"\texercises\x18\x03 \x03(\v2\x10.api.v1.ExerciseB\b\xbaH\x05\x92\x01\x02\b\x01R\texercises\x12,\n" +
-	"\x06groups\x18\x04 \x03(\v2\x14.api.v1.RoutineGroupR\x06groups\"\xce\x02\n" +
+	"\x06groups\x18\x04 \x03(\v2\x14.api.v1.RoutineGroupR\x06groups\"\xb4\x03\n" +
 	"\fRoutineGroup\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12,\n" +
 	"\x04mode\x18\x02 \x01(\x0e2\x18.api.v1.RoutineGroupModeR\x04mode\x12O\n" +
@@ -1893,7 +1912,10 @@ const file_api_v1_routine_service_proto_rawDesc = "" +
 	"\x1brest_between_rounds_seconds\x18\x05 \x01(\x05B\n" +
 	"\xbaH\a\x1a\x05\x18\x90\x1c(\x00R\x18restBetweenRoundsSeconds\x125\n" +
 	"\texercises\x18\a \x03(\v2\x17.api.v1.RoutineExerciseR\texercises\x12!\n" +
-	"\x06rounds\x18\b \x01(\x05B\t\xbaH\x06\x1a\x04\x18c(\x00R\x06roundsJ\x04\b\x03\x10\x04J\x04\b\x06\x10\a\"\xb3\x01\n" +
+	"\x06rounds\x18\b \x01(\x05B\t\xbaH\x06\x1a\x04\x18c(\x00R\x06rounds\x12,\n" +
+	"\x04role\x18\t \x01(\x0e2\x18.api.v1.RoutineGroupRoleR\x04role\x126\n" +
+	"\x18skip_last_on_final_round\x18\n" +
+	" \x01(\bR\x14skipLastOnFinalRoundJ\x04\b\x03\x10\x04J\x04\b\x06\x10\a\"\xb3\x01\n" +
 	"\x0fRoutineExercise\x12,\n" +
 	"\bexercise\x18\x01 \x01(\v2\x10.api.v1.ExerciseR\bexercise\x12-\n" +
 	"\frest_seconds\x18\x02 \x01(\x05B\n" +
@@ -2018,6 +2040,7 @@ var file_api_v1_routine_service_proto_goTypes = []any{
 	(*Workout)(nil),                     // 39: api.v1.Workout
 	(*Exercise)(nil),                    // 40: api.v1.Exercise
 	(RoutineGroupMode)(0),               // 41: api.v1.RoutineGroupMode
+	(RoutineGroupRole)(0),               // 42: api.v1.RoutineGroupRole
 }
 var file_api_v1_routine_service_proto_depIdxs = []int32{
 	17, // 0: api.v1.CreateRoutineRequest.groups:type_name -> api.v1.RoutineGroup
@@ -2036,51 +2059,52 @@ var file_api_v1_routine_service_proto_depIdxs = []int32{
 	17, // 13: api.v1.Routine.groups:type_name -> api.v1.RoutineGroup
 	41, // 14: api.v1.RoutineGroup.mode:type_name -> api.v1.RoutineGroupMode
 	18, // 15: api.v1.RoutineGroup.exercises:type_name -> api.v1.RoutineExercise
-	40, // 16: api.v1.RoutineExercise.exercise:type_name -> api.v1.Exercise
-	35, // 17: api.v1.CreatePlanResponse.plan:type_name -> api.v1.Plan
-	35, // 18: api.v1.GetPlanResponse.plan:type_name -> api.v1.Plan
-	35, // 19: api.v1.ListPlansResponse.plans:type_name -> api.v1.Plan
-	35, // 20: api.v1.UpdatePlanResponse.plan:type_name -> api.v1.Plan
-	35, // 21: api.v1.SetActivePlanResponse.plan:type_name -> api.v1.Plan
-	35, // 22: api.v1.SkipPlanRoutineResponse.plan:type_name -> api.v1.Plan
-	16, // 23: api.v1.Plan.routines:type_name -> api.v1.Routine
-	0,  // 24: api.v1.RoutineService.CreateRoutine:input_type -> api.v1.CreateRoutineRequest
-	2,  // 25: api.v1.RoutineService.GetRoutine:input_type -> api.v1.GetRoutineRequest
-	4,  // 26: api.v1.RoutineService.UpdateRoutine:input_type -> api.v1.UpdateRoutineRequest
-	6,  // 27: api.v1.RoutineService.DeleteRoutine:input_type -> api.v1.DeleteRoutineRequest
-	8,  // 28: api.v1.RoutineService.ListRoutines:input_type -> api.v1.ListRoutinesRequest
-	10, // 29: api.v1.RoutineService.AddExercise:input_type -> api.v1.AddExerciseRequest
-	12, // 30: api.v1.RoutineService.UpdateExerciseOrder:input_type -> api.v1.UpdateExerciseOrderRequest
-	14, // 31: api.v1.RoutineService.GetDashboard:input_type -> api.v1.GetDashboardRequest
-	19, // 32: api.v1.RoutineService.CreatePlan:input_type -> api.v1.CreatePlanRequest
-	21, // 33: api.v1.RoutineService.GetPlan:input_type -> api.v1.GetPlanRequest
-	23, // 34: api.v1.RoutineService.ListPlans:input_type -> api.v1.ListPlansRequest
-	25, // 35: api.v1.RoutineService.UpdatePlan:input_type -> api.v1.UpdatePlanRequest
-	27, // 36: api.v1.RoutineService.DeletePlan:input_type -> api.v1.DeletePlanRequest
-	29, // 37: api.v1.RoutineService.SetActivePlan:input_type -> api.v1.SetActivePlanRequest
-	31, // 38: api.v1.RoutineService.PauseActivePlan:input_type -> api.v1.PauseActivePlanRequest
-	33, // 39: api.v1.RoutineService.SkipPlanRoutine:input_type -> api.v1.SkipPlanRoutineRequest
-	1,  // 40: api.v1.RoutineService.CreateRoutine:output_type -> api.v1.CreateRoutineResponse
-	3,  // 41: api.v1.RoutineService.GetRoutine:output_type -> api.v1.GetRoutineResponse
-	5,  // 42: api.v1.RoutineService.UpdateRoutine:output_type -> api.v1.UpdateRoutineResponse
-	7,  // 43: api.v1.RoutineService.DeleteRoutine:output_type -> api.v1.DeleteRoutineResponse
-	9,  // 44: api.v1.RoutineService.ListRoutines:output_type -> api.v1.ListRoutinesResponse
-	11, // 45: api.v1.RoutineService.AddExercise:output_type -> api.v1.AddExerciseResponse
-	13, // 46: api.v1.RoutineService.UpdateExerciseOrder:output_type -> api.v1.UpdateExerciseOrderResponse
-	15, // 47: api.v1.RoutineService.GetDashboard:output_type -> api.v1.GetDashboardResponse
-	20, // 48: api.v1.RoutineService.CreatePlan:output_type -> api.v1.CreatePlanResponse
-	22, // 49: api.v1.RoutineService.GetPlan:output_type -> api.v1.GetPlanResponse
-	24, // 50: api.v1.RoutineService.ListPlans:output_type -> api.v1.ListPlansResponse
-	26, // 51: api.v1.RoutineService.UpdatePlan:output_type -> api.v1.UpdatePlanResponse
-	28, // 52: api.v1.RoutineService.DeletePlan:output_type -> api.v1.DeletePlanResponse
-	30, // 53: api.v1.RoutineService.SetActivePlan:output_type -> api.v1.SetActivePlanResponse
-	32, // 54: api.v1.RoutineService.PauseActivePlan:output_type -> api.v1.PauseActivePlanResponse
-	34, // 55: api.v1.RoutineService.SkipPlanRoutine:output_type -> api.v1.SkipPlanRoutineResponse
-	40, // [40:56] is the sub-list for method output_type
-	24, // [24:40] is the sub-list for method input_type
-	24, // [24:24] is the sub-list for extension type_name
-	24, // [24:24] is the sub-list for extension extendee
-	0,  // [0:24] is the sub-list for field type_name
+	42, // 16: api.v1.RoutineGroup.role:type_name -> api.v1.RoutineGroupRole
+	40, // 17: api.v1.RoutineExercise.exercise:type_name -> api.v1.Exercise
+	35, // 18: api.v1.CreatePlanResponse.plan:type_name -> api.v1.Plan
+	35, // 19: api.v1.GetPlanResponse.plan:type_name -> api.v1.Plan
+	35, // 20: api.v1.ListPlansResponse.plans:type_name -> api.v1.Plan
+	35, // 21: api.v1.UpdatePlanResponse.plan:type_name -> api.v1.Plan
+	35, // 22: api.v1.SetActivePlanResponse.plan:type_name -> api.v1.Plan
+	35, // 23: api.v1.SkipPlanRoutineResponse.plan:type_name -> api.v1.Plan
+	16, // 24: api.v1.Plan.routines:type_name -> api.v1.Routine
+	0,  // 25: api.v1.RoutineService.CreateRoutine:input_type -> api.v1.CreateRoutineRequest
+	2,  // 26: api.v1.RoutineService.GetRoutine:input_type -> api.v1.GetRoutineRequest
+	4,  // 27: api.v1.RoutineService.UpdateRoutine:input_type -> api.v1.UpdateRoutineRequest
+	6,  // 28: api.v1.RoutineService.DeleteRoutine:input_type -> api.v1.DeleteRoutineRequest
+	8,  // 29: api.v1.RoutineService.ListRoutines:input_type -> api.v1.ListRoutinesRequest
+	10, // 30: api.v1.RoutineService.AddExercise:input_type -> api.v1.AddExerciseRequest
+	12, // 31: api.v1.RoutineService.UpdateExerciseOrder:input_type -> api.v1.UpdateExerciseOrderRequest
+	14, // 32: api.v1.RoutineService.GetDashboard:input_type -> api.v1.GetDashboardRequest
+	19, // 33: api.v1.RoutineService.CreatePlan:input_type -> api.v1.CreatePlanRequest
+	21, // 34: api.v1.RoutineService.GetPlan:input_type -> api.v1.GetPlanRequest
+	23, // 35: api.v1.RoutineService.ListPlans:input_type -> api.v1.ListPlansRequest
+	25, // 36: api.v1.RoutineService.UpdatePlan:input_type -> api.v1.UpdatePlanRequest
+	27, // 37: api.v1.RoutineService.DeletePlan:input_type -> api.v1.DeletePlanRequest
+	29, // 38: api.v1.RoutineService.SetActivePlan:input_type -> api.v1.SetActivePlanRequest
+	31, // 39: api.v1.RoutineService.PauseActivePlan:input_type -> api.v1.PauseActivePlanRequest
+	33, // 40: api.v1.RoutineService.SkipPlanRoutine:input_type -> api.v1.SkipPlanRoutineRequest
+	1,  // 41: api.v1.RoutineService.CreateRoutine:output_type -> api.v1.CreateRoutineResponse
+	3,  // 42: api.v1.RoutineService.GetRoutine:output_type -> api.v1.GetRoutineResponse
+	5,  // 43: api.v1.RoutineService.UpdateRoutine:output_type -> api.v1.UpdateRoutineResponse
+	7,  // 44: api.v1.RoutineService.DeleteRoutine:output_type -> api.v1.DeleteRoutineResponse
+	9,  // 45: api.v1.RoutineService.ListRoutines:output_type -> api.v1.ListRoutinesResponse
+	11, // 46: api.v1.RoutineService.AddExercise:output_type -> api.v1.AddExerciseResponse
+	13, // 47: api.v1.RoutineService.UpdateExerciseOrder:output_type -> api.v1.UpdateExerciseOrderResponse
+	15, // 48: api.v1.RoutineService.GetDashboard:output_type -> api.v1.GetDashboardResponse
+	20, // 49: api.v1.RoutineService.CreatePlan:output_type -> api.v1.CreatePlanResponse
+	22, // 50: api.v1.RoutineService.GetPlan:output_type -> api.v1.GetPlanResponse
+	24, // 51: api.v1.RoutineService.ListPlans:output_type -> api.v1.ListPlansResponse
+	26, // 52: api.v1.RoutineService.UpdatePlan:output_type -> api.v1.UpdatePlanResponse
+	28, // 53: api.v1.RoutineService.DeletePlan:output_type -> api.v1.DeletePlanResponse
+	30, // 54: api.v1.RoutineService.SetActivePlan:output_type -> api.v1.SetActivePlanResponse
+	32, // 55: api.v1.RoutineService.PauseActivePlan:output_type -> api.v1.PauseActivePlanResponse
+	34, // 56: api.v1.RoutineService.SkipPlanRoutine:output_type -> api.v1.SkipPlanRoutineResponse
+	41, // [41:57] is the sub-list for method output_type
+	25, // [25:41] is the sub-list for method input_type
+	25, // [25:25] is the sub-list for extension type_name
+	25, // [25:25] is the sub-list for extension extendee
+	0,  // [0:25] is the sub-list for field type_name
 }
 
 func init() { file_api_v1_routine_service_proto_init() }

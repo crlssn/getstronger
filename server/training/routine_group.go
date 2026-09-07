@@ -13,9 +13,19 @@ import (
 // each in turn and repeats until the session says it is done.
 type RoutineGroupMode = enums.RoutineGroupMode
 
+// RoutineGroupRole says where a block sits in an interval routine: a warm-up
+// worked once before the round count, the block that count repeats, a cool-down
+// worked once after it. The zero value is a block with no such place — every
+// gym circuit, and every routine saved before intervals existed.
+type RoutineGroupRole = enums.RoutineGroupRole
+
 const (
 	RoutineGroupModeStraight = enums.RoutineGroupModeStraight
 	RoutineGroupModeCircuit  = enums.RoutineGroupModeCircuit
+
+	RoutineGroupRoleWarmup   = enums.RoutineGroupRoleWarmup
+	RoutineGroupRoleRepeat   = enums.RoutineGroupRoleRepeat
+	RoutineGroupRoleCooldown = enums.RoutineGroupRoleCooldown
 
 	// A rest longer than an hour is a different session, not a longer rest.
 	routineGroupMaxRestSeconds = 3600
@@ -38,8 +48,15 @@ type RoutineGroup struct {
 	// Rounds is how many times a circuit is prescribed to go round; zero runs
 	// it for as many rounds as the session takes. It is a target rather than a
 	// limit: the session may take another round or stop short of it.
-	Rounds    int32
-	Exercises []RoutineExercise
+	Rounds int32
+	// Role is where this block sits in an interval routine, or nothing at all
+	// where the routine is not one.
+	Role RoutineGroupRole
+	// SkipLastOnFinalRound drops the repeating block's last exercise on its
+	// final round, so a walk-run does not end the session with a walk. Only the
+	// repeating block has it.
+	SkipLastOnFinalRound bool
+	Exercises            []RoutineExercise
 }
 
 // RoutineExercise is one exercise where a routine trains it. The same exercise
@@ -63,6 +80,8 @@ type RoutineGroupDraft struct {
 	RestBetweenExercisesSeconds int32
 	RestBetweenRoundsSeconds    int32
 	Rounds                      int32
+	Role                        RoutineGroupRole
+	SkipLastOnFinalRound        bool
 	Exercises                   []RoutineExerciseDraft
 }
 
@@ -153,11 +172,21 @@ func distinctOwned(exercises []RoutineExerciseDraft, owned map[uuid.UUID]struct{
 func normalizeRoutineGroup(group RoutineGroupDraft, exercises []RoutineExerciseDraft) RoutineGroupDraft {
 	normalized := RoutineGroupDraft{
 		Mode:      group.Mode,
+		Role:      group.Role,
 		Exercises: exercises,
 	}
 	if !normalized.Mode.Valid() {
 		normalized.Mode = RoutineGroupModeStraight
 	}
+
+	// A role names one of the three parts of an interval routine. Anything else
+	// is a block that has no such place, which is every gym circuit.
+	if !normalized.Role.Valid() {
+		normalized.Role = ""
+	}
+
+	// Only the block a round count repeats has a final round to end early.
+	normalized.SkipLastOnFinalRound = group.SkipLastOnFinalRound && normalized.Role == RoutineGroupRoleRepeat
 
 	for index, exercise := range normalized.Exercises {
 		normalized.Exercises[index].TargetDurationSeconds = clampInt32(exercise.TargetDurationSeconds, routineGroupMaxTargetDurationSeconds)

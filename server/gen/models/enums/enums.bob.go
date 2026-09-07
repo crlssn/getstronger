@@ -229,3 +229,79 @@ func (e *RoutineGroupMode) Scan(value any) error {
 
 	return nil
 }
+
+// Enum values for RoutineGroupRole
+const (
+	RoutineGroupRoleWarmup   RoutineGroupRole = "warmup"
+	RoutineGroupRoleRepeat   RoutineGroupRole = "repeat"
+	RoutineGroupRoleCooldown RoutineGroupRole = "cooldown"
+)
+
+func AllRoutineGroupRole() []RoutineGroupRole {
+	return []RoutineGroupRole{
+		RoutineGroupRoleWarmup,
+		RoutineGroupRoleRepeat,
+		RoutineGroupRoleCooldown,
+	}
+}
+
+type RoutineGroupRole string
+
+func (e RoutineGroupRole) String() string {
+	return string(e)
+}
+
+func (e RoutineGroupRole) Valid() bool {
+	switch e {
+	case RoutineGroupRoleWarmup,
+		RoutineGroupRoleRepeat,
+		RoutineGroupRoleCooldown:
+		return true
+	default:
+		return false
+	}
+}
+
+// useful when testing in other packages
+func (e RoutineGroupRole) All() []RoutineGroupRole {
+	return AllRoutineGroupRole()
+}
+
+func (e RoutineGroupRole) MarshalText() ([]byte, error) {
+	return []byte(e), nil
+}
+
+func (e *RoutineGroupRole) UnmarshalText(text []byte) error {
+	return e.Scan(text)
+}
+
+func (e RoutineGroupRole) MarshalBinary() ([]byte, error) {
+	return []byte(e), nil
+}
+
+func (e *RoutineGroupRole) UnmarshalBinary(data []byte) error {
+	return e.Scan(data)
+}
+
+func (e RoutineGroupRole) Value() (driver.Value, error) {
+	return string(e), nil
+}
+
+func (e *RoutineGroupRole) Scan(value any) error {
+	switch x := value.(type) {
+	case string:
+		*e = RoutineGroupRole(x)
+	case []byte:
+		*e = RoutineGroupRole(x)
+	case nil:
+		return fmt.Errorf("cannot nil into RoutineGroupRole")
+	default:
+		return fmt.Errorf("cannot scan type %T: %v", value, value)
+	}
+
+	if !e.Valid() {
+		return fmt.Errorf("invalid RoutineGroupRole value: %s", *e)
+	}
+
+	return nil
+}

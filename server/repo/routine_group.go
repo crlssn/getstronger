@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/aarondl/opt/omit"
+	"github.com/aarondl/opt/omitnull"
 	"github.com/gofrs/uuid/v5"
 	"github.com/stephenafamo/bob"
 	"github.com/stephenafamo/bob/dialect/psql/sm"
@@ -54,6 +55,8 @@ func (r *Repo) ListRoutineGroups(ctx context.Context, routineID uuid.UUID) ([]*t
 			RestBetweenExercisesSeconds: group.RestBetweenExercisesSeconds,
 			RestBetweenRoundsSeconds:    group.RestBetweenRoundsSeconds,
 			Rounds:                      group.Rounds,
+			Role:                        group.Role.GetOrZero(),
+			SkipLastOnFinalRound:        group.SkipLastOnFinalRound,
 			Exercises:                   make([]training.RoutineExercise, 0, len(links)),
 		}
 		parsed = append(parsed, parsedGroup)
@@ -122,6 +125,18 @@ func (r *Repo) SetRoutineGroups(ctx context.Context, routine *training.Routine, 
 	return nil
 }
 
+// nullRole is the role column a block stores. A block outside an interval
+// routine has no place in one, which the column says by holding nothing.
+func nullRole(role training.RoutineGroupRole) omitnull.Val[training.RoutineGroupRole] {
+	if !role.Valid() {
+		var absent omitnull.Val[training.RoutineGroupRole]
+		absent.Null()
+		return absent
+	}
+
+	return omitnull.From(role)
+}
+
 // newOccurrenceRests is what each of these exercises rests for where a routine
 // has just started training it, by exercise ID.
 func newOccurrenceRests(exercises []*training.Exercise) map[uuid.UUID]int32 {
@@ -177,6 +192,8 @@ func setRoutineGroups(
 			RestBetweenExercisesSeconds: omit.From(group.RestBetweenExercisesSeconds),
 			RestBetweenRoundsSeconds:    omit.From(group.RestBetweenRoundsSeconds),
 			Rounds:                      omit.From(group.Rounds),
+			Role:                        nullRole(group.Role),
+			SkipLastOnFinalRound:        omit.From(group.SkipLastOnFinalRound),
 		}).One(ctx, exec)
 		if err != nil {
 			return fmt.Errorf("routine group insert: %w", err)

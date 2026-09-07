@@ -1446,6 +1446,58 @@ func (s *repoSuite) TestSetRoutineGroupsReplacesTheWholeStructure() {
 	)
 }
 
+// An interval routine is three blocks that say where they sit, and a block
+// outside one says nothing — which is the column holding NULL rather than a
+// role nobody chose.
+func (s *repoSuite) TestSetRoutineGroupsKeepsTheIntervalRoles() {
+	user := s.factory.NewUser()
+	exercises := s.factory.NewExerciseSlice(3, factory.ExerciseUserID(user.ID))
+	exerciseIDs := []uuid.UUID{exercises[0].ID, exercises[1].ID, exercises[2].ID}
+
+	routine, err := s.repo.CreateRoutine(context.Background(), repo.CreateRoutineParams{
+		UserID:      user.ID,
+		Name:        "Walk-run 5×",
+		ExerciseIDs: exerciseIDs,
+	})
+	s.Require().NoError(err)
+
+	s.Require().NoError(s.repo.SetRoutineGroups(context.Background(), routine, []training.RoutineGroupDraft{
+		{
+			Mode:      training.RoutineGroupModeCircuit,
+			Rounds:    1,
+			Role:      training.RoutineGroupRoleWarmup,
+			Exercises: routineExercises(exerciseIDs[0]),
+		},
+		{
+			Mode:                 training.RoutineGroupModeCircuit,
+			Rounds:               5,
+			Role:                 training.RoutineGroupRoleRepeat,
+			SkipLastOnFinalRound: true,
+			Exercises:            routineExercises(exerciseIDs[1], exerciseIDs[2]),
+		},
+	}, s.loadExercises(exercises)))
+
+	groups, err := s.repo.ListRoutineGroups(context.Background(), routine.ID)
+	s.Require().NoError(err)
+	s.Require().Len(groups, 2)
+
+	s.Require().Equal(training.RoutineGroupRoleWarmup, groups[0].Role)
+	s.Require().False(groups[0].SkipLastOnFinalRound)
+	s.Require().Equal(training.RoutineGroupRoleRepeat, groups[1].Role)
+	s.Require().True(groups[1].SkipLastOnFinalRound)
+
+	// A gym circuit saved over it leaves no role behind.
+	s.Require().NoError(s.repo.SetRoutineGroups(context.Background(), routine, []training.RoutineGroupDraft{
+		{Mode: training.RoutineGroupModeCircuit, Rounds: 3, Exercises: routineExercises(exerciseIDs[0])},
+	}, s.loadExercises(exercises)))
+
+	groups, err = s.repo.ListRoutineGroups(context.Background(), routine.ID)
+	s.Require().NoError(err)
+	s.Require().Len(groups, 1)
+	s.Require().Empty(groups[0].Role)
+	s.Require().False(groups[0].SkipLastOnFinalRound)
+}
+
 // The whole point of the per-occurrence rest: the routine's own answer survives
 // a save and a reload, and a save that says nothing gets the rest a new
 // occurrence starts at rather than no rest at all.

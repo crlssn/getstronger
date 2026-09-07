@@ -8,7 +8,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/aarondl/opt/null"
 	"github.com/aarondl/opt/omit"
+	"github.com/aarondl/opt/omitnull"
 	models "github.com/crlssn/getstronger/server/gen/models"
 	enums "github.com/crlssn/getstronger/server/gen/models/enums"
 	"github.com/gofrs/uuid/v5"
@@ -45,6 +47,8 @@ type RoutineGroupTemplate struct {
 	RestBetweenRoundsSeconds    func() int32
 	CreatedAt                   func() time.Time
 	Rounds                      func() int32
+	Role                        func() null.Val[enums.RoutineGroupRole]
+	SkipLastOnFinalRound        func() bool
 
 	r routineGroupR
 	f *Factory
@@ -136,6 +140,14 @@ func (o RoutineGroupTemplate) BuildSetter() *models.RoutineGroupSetter {
 		val := o.Rounds()
 		m.Rounds = omit.From(val)
 	}
+	if o.Role != nil {
+		val := o.Role()
+		m.Role = omitnull.FromNull(val)
+	}
+	if o.SkipLastOnFinalRound != nil {
+		val := o.SkipLastOnFinalRound()
+		m.SkipLastOnFinalRound = omit.From(val)
+	}
 
 	return m
 }
@@ -181,6 +193,12 @@ func (o RoutineGroupTemplate) Build() *models.RoutineGroup {
 	}
 	if o.Rounds != nil {
 		m.Rounds = o.Rounds()
+	}
+	if o.Role != nil {
+		m.Role = o.Role()
+	}
+	if o.SkipLastOnFinalRound != nil {
+		m.SkipLastOnFinalRound = o.SkipLastOnFinalRound()
 	}
 
 	o.setModelRels(m)
@@ -385,6 +403,8 @@ func (m routineGroupMods) RandomizeAllColumns(f *faker.Faker) RoutineGroupMod {
 		RoutineGroupMods.RandomRestBetweenRoundsSeconds(f),
 		RoutineGroupMods.RandomCreatedAt(f),
 		RoutineGroupMods.RandomRounds(f),
+		RoutineGroupMods.RandomRole(f),
+		RoutineGroupMods.RandomSkipLastOnFinalRound(f),
 	}
 }
 
@@ -632,6 +652,90 @@ func (m routineGroupMods) RandomRounds(f *faker.Faker) RoutineGroupMod {
 	return RoutineGroupModFunc(func(_ context.Context, o *RoutineGroupTemplate) {
 		o.Rounds = func() int32 {
 			return random_int32(f)
+		}
+	})
+}
+
+// Set the model columns to this value
+func (m routineGroupMods) Role(val null.Val[enums.RoutineGroupRole]) RoutineGroupMod {
+	return RoutineGroupModFunc(func(_ context.Context, o *RoutineGroupTemplate) {
+		o.Role = func() null.Val[enums.RoutineGroupRole] { return val }
+	})
+}
+
+// Set the Column from the function
+func (m routineGroupMods) RoleFunc(f func() null.Val[enums.RoutineGroupRole]) RoutineGroupMod {
+	return RoutineGroupModFunc(func(_ context.Context, o *RoutineGroupTemplate) {
+		o.Role = f
+	})
+}
+
+// Clear any values for the column
+func (m routineGroupMods) UnsetRole() RoutineGroupMod {
+	return RoutineGroupModFunc(func(_ context.Context, o *RoutineGroupTemplate) {
+		o.Role = nil
+	})
+}
+
+// Generates a random value for the column using the given faker
+// if faker is nil, a default faker is used
+// The generated value is sometimes null
+func (m routineGroupMods) RandomRole(f *faker.Faker) RoutineGroupMod {
+	return RoutineGroupModFunc(func(_ context.Context, o *RoutineGroupTemplate) {
+		o.Role = func() null.Val[enums.RoutineGroupRole] {
+			if f == nil {
+				f = &defaultFaker
+			}
+
+			val := random_enums_RoutineGroupRole(f)
+			return null.From(val)
+		}
+	})
+}
+
+// Generates a random value for the column using the given faker
+// if faker is nil, a default faker is used
+// The generated value is never null
+func (m routineGroupMods) RandomRoleNotNull(f *faker.Faker) RoutineGroupMod {
+	return RoutineGroupModFunc(func(_ context.Context, o *RoutineGroupTemplate) {
+		o.Role = func() null.Val[enums.RoutineGroupRole] {
+			if f == nil {
+				f = &defaultFaker
+			}
+
+			val := random_enums_RoutineGroupRole(f)
+			return null.From(val)
+		}
+	})
+}
+
+// Set the model columns to this value
+func (m routineGroupMods) SkipLastOnFinalRound(val bool) RoutineGroupMod {
+	return RoutineGroupModFunc(func(_ context.Context, o *RoutineGroupTemplate) {
+		o.SkipLastOnFinalRound = func() bool { return val }
+	})
+}
+
+// Set the Column from the function
+func (m routineGroupMods) SkipLastOnFinalRoundFunc(f func() bool) RoutineGroupMod {
+	return RoutineGroupModFunc(func(_ context.Context, o *RoutineGroupTemplate) {
+		o.SkipLastOnFinalRound = f
+	})
+}
+
+// Clear any values for the column
+func (m routineGroupMods) UnsetSkipLastOnFinalRound() RoutineGroupMod {
+	return RoutineGroupModFunc(func(_ context.Context, o *RoutineGroupTemplate) {
+		o.SkipLastOnFinalRound = nil
+	})
+}
+
+// Generates a random value for the column using the given faker
+// if faker is nil, a default faker is used
+func (m routineGroupMods) RandomSkipLastOnFinalRound(f *faker.Faker) RoutineGroupMod {
+	return RoutineGroupModFunc(func(_ context.Context, o *RoutineGroupTemplate) {
+		o.SkipLastOnFinalRound = func() bool {
+			return random_bool(f)
 		}
 	})
 }
