@@ -916,8 +916,15 @@ test.describe('planned workouts and history', () => {
     await scrollToListEnd(page, page.getByText(/reached the end of your workout history/))
     await expect(history.getByRole('status')).toContainText('reached the end')
 
+    // The title holds a PR chip beside the name when the session set a record,
+    // and the summary's heading is the name on its own, so read the text before
+    // the chip rather than the row's whole title.
     const firstWorkoutName = (
-      await history.getByRole('link').first().locator('strong').innerText()
+      await history
+        .getByRole('link')
+        .first()
+        .locator('strong')
+        .evaluate((title) => title.childNodes[0]?.textContent ?? '')
     ).trim()
     await history.getByRole('link').first().click()
     await expect(page.getByRole('heading', { name: firstWorkoutName, exact: true })).toBeVisible()
