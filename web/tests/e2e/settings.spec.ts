@@ -142,6 +142,30 @@ test.describe('settings', () => {
     await expect(settings(page).getByRole('link', { name: /Interval cue/ })).toContainText('Off')
   })
 
+  // The tones a recording plays are compared against one of the athlete's own
+  // sessions, and which one is kept on the device with the appearance and the
+  // language rather than on the account.
+  test('chooses the session the pace tones compare with, and keeps it', async ({ page }) => {
+    await page.goto('/profile')
+
+    const tones = settings(page).getByRole('group', { name: 'Pace tones' })
+    await expect(tones.getByRole('button', { name: 'Last' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    )
+
+    await tones.getByRole('button', { name: 'Best' }).click()
+    await page.reload()
+    await expect(tones.getByRole('button', { name: 'Best' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    )
+
+    // Put the device's default back: this browser is shared with the tests
+    // after it, and a preference is exactly the kind of state that leaks.
+    await tones.getByRole('button', { name: 'Last' }).click()
+  })
+
   // System is live: while the app is open, the device changing its palette
   // repaints the page with no navigation.
   test('follows the device while it moves', async ({ page }) => {

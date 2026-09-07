@@ -1289,6 +1289,51 @@ ORDER BY created_at;
 	)
 }
 
+// GetLastRecordedWorkout is the athlete's most recent recorded session of a
+// routine. It reports sql.ErrNoRows where the routine has no recorded session,
+// which every first recording of it does.
+func (r *Repo) GetLastRecordedWorkout(ctx context.Context, userID, routineID uuid.UUID) (*training.Workout, error) {
+	workout, err := models.Workouts.Query(
+		models.SelectWhere.Workouts.UserID.EQ(userID),
+		models.SelectWhere.Workouts.RoutineID.EQ(routineID),
+		models.SelectWhere.Workouts.RecordingJSON.NE(""),
+		sm.OrderBy(models.Workouts.Columns.FinishedAt).Desc(),
+		sm.OrderBy(models.Workouts.Columns.ID).Desc(),
+		sm.Limit(1),
+	).One(ctx, r.bobExec())
+	if err != nil {
+		return nil, fmt.Errorf("last recorded workout fetch: %w", err)
+	}
+
+	return workoutFromRow(workout), nil
+}
+
+// GetFastestRecordedWorkout is the athlete's quickest recorded session of a
+// routine: the one that covered its distance in the least time, measured over
+// the whole session so a routine's intervals are weighed as they were worked.
+// It reports sql.ErrNoRows where no session of it measured a distance.
+func (r *Repo) GetFastestRecordedWorkout(ctx context.Context, userID, routineID uuid.UUID) (*training.Workout, error) {
+	// Ordered by seconds per kilometre, which is the pace the recorder holds an
+	// interval to; the sums are the session's own, so a stopped-short session
+	// is compared on what it actually covered.
+	rawQuery := `
+SELECT w.id FROM public.workouts w
+JOIN public.sets s ON s.workout_id = w.id
+WHERE w.user_id = $1 AND w.routine_id = $2 AND w.recording_json <> ''
+GROUP BY w.id
+HAVING SUM(s.distance) > 0 AND SUM(s.duration_seconds) > 0
+ORDER BY SUM(s.duration_seconds) / SUM(s.distance), w.id
+LIMIT 1;
+`
+
+	var id uuid.UUID
+	if err := r.sqlExec().QueryRowContext(ctx, rawQuery, userID, routineID).Scan(&id); err != nil {
+		return nil, fmt.Errorf("fastest recorded workout fetch: %w", err)
+	}
+
+	return r.GetWorkout(ctx, GetWorkoutWithID(id))
+}
+
 // GetPersonalBests is the best set each athlete has logged of each exercise
 // they have trained. The records are stored rather than derived, kept current
 // by the triggers migration 059 puts on sets, so this costs what it returns

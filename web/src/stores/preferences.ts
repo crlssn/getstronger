@@ -1,3 +1,5 @@
+import type { PaceReferenceChoice } from '@/utils/pacing'
+
 import { DistanceUnit, WeightUnit } from '@/proto/api/v1/shared_pb'
 
 import { create } from 'zustand'
@@ -14,10 +16,12 @@ interface PreferencesState {
   autofillSets: boolean
   /** Seconds of warning before an interval ends; 0 sounds nothing. */
   intervalCueLeadSeconds: number
+  paceReference: PaceReferenceChoice
   setWeightUnit: (unit?: WeightUnit) => void
   setDistanceUnit: (unit?: DistanceUnit) => void
   setAutofillSets: (enabled?: boolean) => void
   setIntervalCueLeadSeconds: (seconds?: number) => void
+  setPaceReference: (reference: PaceReferenceChoice) => void
   reset: () => void
 }
 
@@ -28,6 +32,10 @@ const defaults = {
   // so the workout screen only prefills when this is true.
   autofillSets: false,
   intervalCueLeadSeconds: defaultCueLead,
+  // Which session a recording is paced against. The last rather than the best,
+  // because an athlete two weeks into a routine is chasing what they did on
+  // Tuesday, not their record.
+  paceReference: 'previous' as PaceReferenceChoice,
 }
 
 // Cached locally so the UI has an immediate value while `getCurrentUser`
@@ -46,17 +54,25 @@ export const usePreferencesStore = create<PreferencesState>()(
       setAutofillSets: (enabled) => set({ autofillSets: enabled ?? false }),
       setIntervalCueLeadSeconds: (seconds) =>
         set({ intervalCueLeadSeconds: normalizeCueLead(seconds) }),
+      setPaceReference: (reference) => set({ paceReference: reference }),
 
       reset: () => set(defaults),
     }),
     {
       name: 'preferences',
       storage: migratedStorage(),
-      partialize: ({ weightUnit, distanceUnit, autofillSets, intervalCueLeadSeconds }) => ({
+      partialize: ({
         weightUnit,
         distanceUnit,
         autofillSets,
         intervalCueLeadSeconds,
+        paceReference,
+      }) => ({
+        weightUnit,
+        distanceUnit,
+        autofillSets,
+        intervalCueLeadSeconds,
+        paceReference,
       }),
     },
   ),

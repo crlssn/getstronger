@@ -15,6 +15,14 @@ service WorkoutService {
   rpc DeleteWorkout (DeleteWorkoutRequest) returns (DeleteWorkoutResponse) {}
   rpc PostComment (PostCommentRequest) returns (PostCommentResponse) {}
   rpc UpdateWorkout (UpdateWorkoutRequest) returns (UpdateWorkoutResponse) {}
+  rpc GetPaceReference (GetPaceReferenceRequest) returns (GetPaceReferenceResponse) {}
+}
+
+// Which recorded session of a routine a new one is paced against.
+enum PaceReference {
+  PACE_REFERENCE_UNSPECIFIED = 0;
+  PACE_REFERENCE_PREVIOUS = 1;
+  PACE_REFERENCE_BEST = 2;
 }
 
 message CreateWorkoutRequest {
@@ -84,6 +92,18 @@ message UpdateWorkoutRequest {
   Workout workout = 1 [(buf.validate.field).required = true];
 }
 message UpdateWorkoutResponse {}
+
+message GetPaceReferenceRequest {
+  string routine_id = 1 [(buf.validate.field).string.uuid = true];
+  // Defaults to the athlete's previous session of the routine.
+  PaceReference reference = 2 [(buf.validate.field).enum.defined_only = true];
+}
+message GetPaceReferenceResponse {
+  // The recording the new session is held against, which the recorder reads a
+  // pace per interval out of. Empty when the routine has no recorded session
+  // to compare with, which every first recording of it has.
+  string recording_json = 1;
+}
 
 message Workout {
   string id = 1 [(buf.validate.field).string.uuid = true];

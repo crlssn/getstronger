@@ -80,8 +80,11 @@ import {
   type CreateWorkoutResponse,
   DeleteWorkoutRequestSchema,
   type DeleteWorkoutResponse,
+  GetPaceReferenceRequestSchema,
+  type GetPaceReferenceResponse,
   GetWorkoutRequestSchema,
   type GetWorkoutResponse,
+  type PaceReference,
   ListWorkoutsRequestSchema,
   type ListWorkoutsResponse,
   PostCommentRequestSchema,
@@ -492,6 +495,24 @@ export const getWorkout = async (id: string): Promise<GetWorkoutResponse | void>
     id: id,
   })
   return tryCatch(() => workoutClient.getWorkout(req))
+}
+
+/**
+ * The recorded session a new one of this routine is paced against.
+ *
+ * The recorder needs it before the first interval starts, so it is asked for
+ * once when the recording screen opens rather than while the athlete is
+ * running.
+ */
+export const getPaceReference = async (
+  routineId: string,
+  reference: PaceReference,
+): Promise<GetPaceReferenceResponse | void> => {
+  const req = create(GetPaceReferenceRequestSchema, {
+    routineId: routineId,
+    reference: reference,
+  })
+  return tryCatch(() => workoutClient.getPaceReference(req), { ignoreErrors: true })
 }
 
 export const listFeedItems = async (

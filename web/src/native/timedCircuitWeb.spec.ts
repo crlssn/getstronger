@@ -2,11 +2,11 @@ import type { Phase } from '@/utils/timedCircuit'
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { playCue } from '@/native/cueTone'
+import { playCue, playTone } from '@/native/cueTone'
 import { openSessionPhases } from '@/utils/timedCircuit'
 import { TimedCircuitWeb } from './timedCircuitWeb'
 
-vi.mock('@/native/cueTone', () => ({ playCue: vi.fn() }))
+vi.mock('@/native/cueTone', () => ({ playCue: vi.fn(), playTone: vi.fn() }))
 
 const fix = (timestamp: number, longitude: number): GeolocationPosition =>
   ({
@@ -21,11 +21,18 @@ let watchers: {
   failure: PositionErrorCallback
 }[] = []
 
+/** A degree of longitude at the equator, on the sphere the route is measured on. */
+const metreDegrees = 180 / (6371000 * Math.PI)
+
+// Every note the recorder played, in hertz, in the order it played them.
+const tones = () => vi.mocked(playTone).mock.calls.map(([hertz]) => hertz)
+
 describe('the browser recorder', () => {
   beforeEach(() => {
     watchers = []
     localStorage.clear()
     vi.mocked(playCue).mockClear()
+    vi.mocked(playTone).mockClear()
     vi.useFakeTimers()
     vi.setSystemTime(1_000_000)
     vi.stubGlobal('navigator', {
@@ -44,6 +51,28 @@ describe('the browser recorder', () => {
     vi.useRealTimers()
     vi.unstubAllGlobals()
   })
+
+  const station = (stationKey: string, name: string): Phase => ({
+    exerciseId: stationKey,
+    stationKey,
+    name,
+    round: 1,
+    durationSeconds: 60,
+    instruction: name,
+  })
+  // Five minutes a kilometre to beat, and a band ten seconds either side.
+  const paced = {
+    targets: [300, 0],
+    toleranceSeconds: 10,
+    minimumGapSeconds: 30,
+    windowSeconds: 15,
+  }
+  // Five metres a second is 200 seconds a kilometre, and one metre a second is
+  // 1000: one side of the band each.
+  const stride = (seconds: number, metres: number) => {
+    vi.setSystemTime(1_000_000 + seconds * 1000)
+    watchers[0].success(fix(1_000_000 + seconds * 1000, metres * metreDegrees))
+  }
 
   const open = () =>
     TimedCircuitWeb.start({
@@ -108,14 +137,28 @@ describe('the browser recorder', () => {
     expect(recording?.pauses).toEqual([{ startedAt: 1_030_000, endedAt: 1_060_000 }])
   })
 
-  // Nothing here speaks, so the level is taken and dropped rather than
-  // refused: the screen is the same one the phones render.
-  it('takes a volume it has no announcement to apply it to', async () => {
-    const started = open()
+  // Nothing here speaks, so the level the phones announce at is what the pace
+  // tones are played at.
+  it('sounds no pace tone at all while the announcements are turned off', async () => {
+    const started = TimedCircuitWeb.start({
+      key: 'athlete',
+      phases: [station('run', 'Run'), station('walk', 'Walk')],
+      locale: 'en',
+      volume: 0,
+      cueLeadSeconds: 0,
+      pacing: paced,
+    })
     watchers[0].success(fix(1_000_000, 0))
     await started
 
-    await expect(TimedCircuitWeb.setVolume({ key: 'athlete', volume: 0 })).resolves.toBeUndefined()
+    for (let step = 1; step <= 4; step += 1) stride(step * 5, step * 25)
+    expect(tones()).toEqual([])
+
+    // Turned back up mid-run, and the crossing is heard from there: a muted
+    // interval is not judged, so nothing was used up while it was silent.
+    await expect(TimedCircuitWeb.setVolume({ key: 'athlete', volume: 1 })).resolves.toBeUndefined()
+    stride(25, 125)
+    expect(tones()).toEqual([1320])
   })
 
   it('refuses a session another one is already recording, and answers only its own key', async () => {
@@ -132,6 +175,34 @@ describe('the browser recorder', () => {
     watchers[0].failure(denial)
     await expect(started).rejects.toThrow('LOCATION_DENIED')
     expect(await TimedCircuitWeb.read({ key: 'athlete' })).toEqual({})
+  })
+
+  it('sounds one tone as an interval pulls ahead of its reference and another as it falls behind', async () => {
+    const started = TimedCircuitWeb.start({
+      key: 'athlete',
+      phases: [station('run', 'Run'), station('walk', 'Walk')],
+      locale: 'en',
+      volume: 1,
+      cueLeadSeconds: 0,
+      pacing: paced,
+    })
+    watchers[0].success(fix(1_000_000, 0))
+    await started
+
+    // Ahead of the target, and heard once the trailing window holds this
+    // interval alone.
+    stride(5, 25)
+    stride(10, 50)
+    expect(tones()).toEqual([])
+
+    stride(15, 75)
+    stride(20, 100)
+    // The crossing sounds once, not on every fix that follows it.
+    expect(tones()).toEqual([1320])
+
+    // A metre a second from here, which is well behind.
+    for (let step = 1; step <= 5; step += 1) stride(20 + step * 5, 100 + step * 5)
+    expect(tones()).toEqual([1320, 440])
   })
 
   it('rejects a prescription that is neither timed throughout nor one open interval', async () => {

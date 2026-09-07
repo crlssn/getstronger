@@ -310,6 +310,18 @@ describe('ProfileView', () => {
     })
   })
 
+  // Two named sessions rather than a yes and a no, and no request behind it:
+  // which session to be paced against is the device's own choice.
+  test('chooses the session the pace tones compare with', async () => {
+    render()
+
+    await loaded()
+    await userEvent.click(screen.getByRole('button', { name: 'Best' }))
+
+    expect(usePreferencesStore.getState().paceReference).toBe('best')
+    expect(screen.getByRole('button', { name: 'Best' })).toHaveAttribute('aria-pressed', 'true')
+  })
+
   // Three levels of alarm for something done once: the only filled red button
   // in the app, in a tinted red card, under a red-outlined log out. The
   // destructive half sits behind the account screen now, and what stays on the

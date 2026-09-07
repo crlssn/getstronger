@@ -18,9 +18,11 @@ import { AppIconButton } from '@/ui/components/AppIconButton'
 import { AppListRow } from '@/ui/components/AppListRow'
 import { AppPageHeader } from '@/ui/components/AppPageHeader'
 import { AppPreferenceRow } from '@/ui/components/AppPreferenceRow'
+import { AppSegmented } from '@/ui/components/AppSegmented'
 import { AppSkeleton } from '@/ui/components/AppSkeleton'
 import { AppSwitch } from '@/ui/components/AppSwitch'
 import { distanceUnitLabel } from '@/utils/distanceUnits'
+import type { PaceReferenceChoice } from '@/utils/pacing'
 import { formatDistanceIn } from '@/utils/exerciseMeasurements'
 import { handle, initials } from '@/utils/names'
 import { formatNumber } from '@/utils/numbers'
@@ -41,6 +43,7 @@ export const ProfileView = () => {
   const distanceUnit = usePreferencesStore((state) => state.distanceUnit)
   const autofillSets = usePreferencesStore((state) => state.autofillSets)
   const cueLead = usePreferencesStore((state) => state.intervalCueLeadSeconds)
+  const paceReference = usePreferencesStore((state) => state.paceReference)
   const locale = useLocaleStore(selectLocale)
   const theme = useLocaleStore((state) => state.theme)
 
@@ -273,6 +276,29 @@ export const ProfileView = () => {
                       },
                     )
                   }
+                />
+              }
+            />
+          </li>
+
+          {/* Two named sessions rather than a yes and a no, and the labels are
+              short enough to sit on the row beside the copy. Kept on this
+              device: it is a choice about the phone doing the recording, which
+              is why it saves without a request and cannot fail. */}
+          <li>
+            <AppPreferenceRow
+              title={t('profile.paceTones')}
+              body={t('profile.paceTonesBody')}
+              control={
+                <AppSegmented<PaceReferenceChoice>
+                  label={t('profile.paceTones')}
+                  density="compact"
+                  value={paceReference}
+                  options={[
+                    { label: t('profile.paceTonesPrevious'), value: 'previous' },
+                    { label: t('profile.paceTonesBest'), value: 'best' },
+                  ]}
+                  onChange={usePreferencesStore.getState().setPaceReference}
                 />
               }
             />

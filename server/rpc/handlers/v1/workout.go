@@ -547,6 +547,42 @@ func workoutRequestIDsFrom(request *apiv1.CreateWorkoutRequest, userID uuid.UUID
 	}, nil
 }
 
+// GetPaceReference hands the recorder the session a new one is measured
+// against: the athlete's last recording of the routine, or their fastest.
+// A routine with no such session answers with an empty recording, which is
+// what the first recording of every routine gets.
+func (h *workoutHandler) GetPaceReference(ctx context.Context, req *connect.Request[apiv1.GetPaceReferenceRequest]) (*connect.Response[apiv1.GetPaceReferenceResponse], error) {
+	log := xcontext.MustExtractLogger(ctx)
+	userID := xcontext.MustExtractUserID(ctx)
+
+	routineID, err := parser.UUID(req.Msg.GetRoutineId())
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInvalidArgument, nil)
+	}
+
+	reference := h.repo.GetLastRecordedWorkout
+	if req.Msg.GetReference() == apiv1.PaceReference_PACE_REFERENCE_BEST {
+		reference = h.repo.GetFastestRecordedWorkout
+	}
+
+	workout, err := reference(ctx, userID, routineID)
+	if errors.Is(err, sql.ErrNoRows) {
+		return &connect.Response[apiv1.GetPaceReferenceResponse]{
+			Msg: &apiv1.GetPaceReferenceResponse{},
+		}, nil
+	}
+	if err != nil {
+		log.Error("Get pace reference for recording", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
+
+	return &connect.Response[apiv1.GetPaceReferenceResponse]{
+		Msg: &apiv1.GetPaceReferenceResponse{
+			RecordingJson: workout.RecordingJSON,
+		},
+	}, nil
+}
+
 // workoutSession is the work a save logged, read off the request before the
 // transaction opens: nothing here needs the database, and a request naming a
 // row with something that is not an id is answered rather than rolled back.

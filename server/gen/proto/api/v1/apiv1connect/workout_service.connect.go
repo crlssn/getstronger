@@ -52,6 +52,9 @@ const (
 	// WorkoutServiceUpdateWorkoutProcedure is the fully-qualified name of the WorkoutService's
 	// UpdateWorkout RPC.
 	WorkoutServiceUpdateWorkoutProcedure = "/api.v1.WorkoutService/UpdateWorkout"
+	// WorkoutServiceGetPaceReferenceProcedure is the fully-qualified name of the WorkoutService's
+	// GetPaceReference RPC.
+	WorkoutServiceGetPaceReferenceProcedure = "/api.v1.WorkoutService/GetPaceReference"
 )
 
 // WorkoutServiceClient is a client for the api.v1.WorkoutService service.
@@ -62,6 +65,7 @@ type WorkoutServiceClient interface {
 	DeleteWorkout(context.Context, *connect.Request[v1.DeleteWorkoutRequest]) (*connect.Response[v1.DeleteWorkoutResponse], error)
 	PostComment(context.Context, *connect.Request[v1.PostCommentRequest]) (*connect.Response[v1.PostCommentResponse], error)
 	UpdateWorkout(context.Context, *connect.Request[v1.UpdateWorkoutRequest]) (*connect.Response[v1.UpdateWorkoutResponse], error)
+	GetPaceReference(context.Context, *connect.Request[v1.GetPaceReferenceRequest]) (*connect.Response[v1.GetPaceReferenceResponse], error)
 }
 
 // NewWorkoutServiceClient constructs a client for the api.v1.WorkoutService service. By default, it
@@ -111,17 +115,24 @@ func NewWorkoutServiceClient(httpClient connect.HTTPClient, baseURL string, opts
 			connect.WithSchema(workoutServiceMethods.ByName("UpdateWorkout")),
 			connect.WithClientOptions(opts...),
 		),
+		getPaceReference: connect.NewClient[v1.GetPaceReferenceRequest, v1.GetPaceReferenceResponse](
+			httpClient,
+			baseURL+WorkoutServiceGetPaceReferenceProcedure,
+			connect.WithSchema(workoutServiceMethods.ByName("GetPaceReference")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
 // workoutServiceClient implements WorkoutServiceClient.
 type workoutServiceClient struct {
-	createWorkout *connect.Client[v1.CreateWorkoutRequest, v1.CreateWorkoutResponse]
-	getWorkout    *connect.Client[v1.GetWorkoutRequest, v1.GetWorkoutResponse]
-	listWorkouts  *connect.Client[v1.ListWorkoutsRequest, v1.ListWorkoutsResponse]
-	deleteWorkout *connect.Client[v1.DeleteWorkoutRequest, v1.DeleteWorkoutResponse]
-	postComment   *connect.Client[v1.PostCommentRequest, v1.PostCommentResponse]
-	updateWorkout *connect.Client[v1.UpdateWorkoutRequest, v1.UpdateWorkoutResponse]
+	createWorkout    *connect.Client[v1.CreateWorkoutRequest, v1.CreateWorkoutResponse]
+	getWorkout       *connect.Client[v1.GetWorkoutRequest, v1.GetWorkoutResponse]
+	listWorkouts     *connect.Client[v1.ListWorkoutsRequest, v1.ListWorkoutsResponse]
+	deleteWorkout    *connect.Client[v1.DeleteWorkoutRequest, v1.DeleteWorkoutResponse]
+	postComment      *connect.Client[v1.PostCommentRequest, v1.PostCommentResponse]
+	updateWorkout    *connect.Client[v1.UpdateWorkoutRequest, v1.UpdateWorkoutResponse]
+	getPaceReference *connect.Client[v1.GetPaceReferenceRequest, v1.GetPaceReferenceResponse]
 }
 
 // CreateWorkout calls api.v1.WorkoutService.CreateWorkout.
@@ -154,6 +165,11 @@ func (c *workoutServiceClient) UpdateWorkout(ctx context.Context, req *connect.R
 	return c.updateWorkout.CallUnary(ctx, req)
 }
 
+// GetPaceReference calls api.v1.WorkoutService.GetPaceReference.
+func (c *workoutServiceClient) GetPaceReference(ctx context.Context, req *connect.Request[v1.GetPaceReferenceRequest]) (*connect.Response[v1.GetPaceReferenceResponse], error) {
+	return c.getPaceReference.CallUnary(ctx, req)
+}
+
 // WorkoutServiceHandler is an implementation of the api.v1.WorkoutService service.
 type WorkoutServiceHandler interface {
 	CreateWorkout(context.Context, *connect.Request[v1.CreateWorkoutRequest]) (*connect.Response[v1.CreateWorkoutResponse], error)
@@ -162,6 +178,7 @@ type WorkoutServiceHandler interface {
 	DeleteWorkout(context.Context, *connect.Request[v1.DeleteWorkoutRequest]) (*connect.Response[v1.DeleteWorkoutResponse], error)
 	PostComment(context.Context, *connect.Request[v1.PostCommentRequest]) (*connect.Response[v1.PostCommentResponse], error)
 	UpdateWorkout(context.Context, *connect.Request[v1.UpdateWorkoutRequest]) (*connect.Response[v1.UpdateWorkoutResponse], error)
+	GetPaceReference(context.Context, *connect.Request[v1.GetPaceReferenceRequest]) (*connect.Response[v1.GetPaceReferenceResponse], error)
 }
 
 // NewWorkoutServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -207,6 +224,12 @@ func NewWorkoutServiceHandler(svc WorkoutServiceHandler, opts ...connect.Handler
 		connect.WithSchema(workoutServiceMethods.ByName("UpdateWorkout")),
 		connect.WithHandlerOptions(opts...),
 	)
+	workoutServiceGetPaceReferenceHandler := connect.NewUnaryHandler(
+		WorkoutServiceGetPaceReferenceProcedure,
+		svc.GetPaceReference,
+		connect.WithSchema(workoutServiceMethods.ByName("GetPaceReference")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/api.v1.WorkoutService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case WorkoutServiceCreateWorkoutProcedure:
@@ -221,6 +244,8 @@ func NewWorkoutServiceHandler(svc WorkoutServiceHandler, opts ...connect.Handler
 			workoutServicePostCommentHandler.ServeHTTP(w, r)
 		case WorkoutServiceUpdateWorkoutProcedure:
 			workoutServiceUpdateWorkoutHandler.ServeHTTP(w, r)
+		case WorkoutServiceGetPaceReferenceProcedure:
+			workoutServiceGetPaceReferenceHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -252,4 +277,8 @@ func (UnimplementedWorkoutServiceHandler) PostComment(context.Context, *connect.
 
 func (UnimplementedWorkoutServiceHandler) UpdateWorkout(context.Context, *connect.Request[v1.UpdateWorkoutRequest]) (*connect.Response[v1.UpdateWorkoutResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.WorkoutService.UpdateWorkout is not implemented"))
+}
+
+func (UnimplementedWorkoutServiceHandler) GetPaceReference(context.Context, *connect.Request[v1.GetPaceReferenceRequest]) (*connect.Response[v1.GetPaceReferenceResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.WorkoutService.GetPaceReference is not implemented"))
 }
