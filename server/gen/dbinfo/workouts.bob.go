@@ -190,23 +190,6 @@ var Workouts = Table[
 			Where:         "",
 			Include:       []string{},
 		},
-		WorkoutsUserIDIdx: index{
-			Type: "btree",
-			Name: "workouts_user_id_idx",
-			Columns: []indexColumn{
-				{
-					Name:         "user_id",
-					Desc:         null.FromCond(false, true),
-					IsExpression: false,
-				},
-			},
-			Unique:        false,
-			Comment:       "",
-			NullsFirst:    []bool{false},
-			NullsDistinct: false,
-			Where:         "",
-			Include:       []string{},
-		},
 	},
 	PrimaryKey: &constraint{
 		Name:    "workouts_pkey",
@@ -261,12 +244,11 @@ type workoutIndexes struct {
 	WorkoutsRoutineIDIdx            index
 	WorkoutsUserIDCreatedAtIDIdx    index
 	WorkoutsUserIDIdempotencyKeyIdx index
-	WorkoutsUserIDIdx               index
 }
 
 func (i workoutIndexes) AsSlice() []index {
 	return []index{
-		i.WorkoutsPkey, i.WorkoutsRoutineIDIdx, i.WorkoutsUserIDCreatedAtIDIdx, i.WorkoutsUserIDIdempotencyKeyIdx, i.WorkoutsUserIDIdx,
+		i.WorkoutsPkey, i.WorkoutsRoutineIDIdx, i.WorkoutsUserIDCreatedAtIDIdx, i.WorkoutsUserIDIdempotencyKeyIdx,
 	}
 }
 

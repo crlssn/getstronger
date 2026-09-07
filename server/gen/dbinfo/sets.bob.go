@@ -178,23 +178,6 @@ var Sets = Table[
 			Where:         "",
 			Include:       []string{},
 		},
-		SetsExerciseIDIdx: index{
-			Type: "btree",
-			Name: "sets_exercise_id_idx",
-			Columns: []indexColumn{
-				{
-					Name:         "exercise_id",
-					Desc:         null.FromCond(false, true),
-					IsExpression: false,
-				},
-			},
-			Unique:        false,
-			Comment:       "",
-			NullsFirst:    []bool{false},
-			NullsDistinct: false,
-			Where:         "",
-			Include:       []string{},
-		},
 		SetsUserIDCreatedAtIDIdx: index{
 			Type: "btree",
 			Name: "sets_user_id_created_at_id_idx",
@@ -371,7 +354,6 @@ func (c setColumns) AsSlice() []column {
 type setIndexes struct {
 	SetsPkey                      index
 	SetsExerciseIDCreatedAtIDIdx  index
-	SetsExerciseIDIdx             index
 	SetsUserIDCreatedAtIDIdx      index
 	SetsWorkoutGroupExerciseIDIdx index
 	SetsWorkoutIDIdx              index
@@ -379,7 +361,7 @@ type setIndexes struct {
 
 func (i setIndexes) AsSlice() []index {
 	return []index{
-		i.SetsPkey, i.SetsExerciseIDCreatedAtIDIdx, i.SetsExerciseIDIdx, i.SetsUserIDCreatedAtIDIdx, i.SetsWorkoutGroupExerciseIDIdx, i.SetsWorkoutIDIdx,
+		i.SetsPkey, i.SetsExerciseIDCreatedAtIDIdx, i.SetsUserIDCreatedAtIDIdx, i.SetsWorkoutGroupExerciseIDIdx, i.SetsWorkoutIDIdx,
 	}
 }
 

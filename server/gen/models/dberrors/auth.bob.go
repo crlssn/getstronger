@@ -10,17 +10,8 @@ var AuthErrors = &authErrors{
 		columns: []string{"id"},
 		s:       "auth_pkey",
 	},
-
-	ErrUniqueAuthEmailKey: &UniqueConstraintError{
-		schema:  "",
-		table:   "auth",
-		columns: []string{"email"},
-		s:       "auth_email_key",
-	},
 }
 
 type authErrors struct {
 	ErrUniqueAuthPkey *UniqueConstraintError
-
-	ErrUniqueAuthEmailKey *UniqueConstraintError
 }
