@@ -59,12 +59,17 @@ type SetTemplate struct {
 }
 
 type setR struct {
+	PersonalBests        []*setRPersonalBestsR
 	Exercise             *setRExerciseR
 	User                 *setRUserR
 	WorkoutGroupExercise *setRWorkoutGroupExerciseR
 	Workout              *setRWorkoutR
 }
 
+type setRPersonalBestsR struct {
+	number int
+	o      *PersonalBestTemplate
+}
 type setRExerciseR struct {
 	o *ExerciseTemplate
 }
@@ -88,6 +93,21 @@ func (o *SetTemplate) Apply(ctx context.Context, mods ...SetMod) {
 // setModelRels creates and sets the relationships on *models.Set
 // according to the relationships in the template. Nothing is inserted into the db
 func (t SetTemplate) setModelRels(o *models.Set) {
+	if t.r.PersonalBests != nil {
+		rel := models.PersonalBestSlice{}
+		for _, r := range t.r.PersonalBests {
+			related := r.o.BuildMany(r.number)
+			for _, rel := range related {
+				rel.SetID = o.ID // h2
+				rel.R.Set = o
+				rel.R.Loaded.Set = true
+			}
+			rel = append(rel, related...)
+		}
+		o.R.PersonalBests = rel
+		o.R.Loaded.PersonalBests = true
+	}
+
 	if t.r.Exercise != nil {
 		rel := t.r.Exercise.o.Build()
 		rel.R.Sets = append(rel.R.Sets, o)
@@ -287,6 +307,26 @@ func ensureCreatableSet(m *models.SetSetter) {
 func (o *SetTemplate) insertOptRels(ctx context.Context, exec bob.Executor, m *models.Set) error {
 	var err error
 
+	isPersonalBestsDone, _ := setRelPersonalBestsCtx.Value(ctx)
+	if !isPersonalBestsDone && o.r.PersonalBests != nil {
+		ctx = setRelPersonalBestsCtx.WithValue(ctx, true)
+		for _, r := range o.r.PersonalBests {
+			if r.o.alreadyPersisted {
+				m.R.PersonalBests = append(m.R.PersonalBests, r.o.Build())
+			} else {
+				rel0, err := r.o.CreateMany(ctx, exec, r.number)
+				if err != nil {
+					return err
+				}
+
+				err = m.AttachPersonalBests(ctx, exec, rel0...)
+				if err != nil {
+					return err
+				}
+			}
+		}
+	}
+
 	isWorkoutGroupExerciseDone, _ := setRelWorkoutGroupExerciseCtx.Value(ctx)
 	if !isWorkoutGroupExerciseDone && o.r.WorkoutGroupExercise != nil {
 		ctx = setRelWorkoutGroupExerciseCtx.WithValue(ctx, true)
@@ -294,12 +334,12 @@ func (o *SetTemplate) insertOptRels(ctx context.Context, exec bob.Executor, m *m
 			m.R.WorkoutGroupExercise = o.r.WorkoutGroupExercise.o.Build()
 			m.R.Loaded.WorkoutGroupExercise = true
 		} else {
-			var rel2 *models.WorkoutGroupExercise
-			rel2, err = o.r.WorkoutGroupExercise.o.Create(ctx, exec)
+			var rel3 *models.WorkoutGroupExercise
+			rel3, err = o.r.WorkoutGroupExercise.o.Create(ctx, exec)
 			if err != nil {
 				return err
 			}
-			err = m.AttachWorkoutGroupExercise(ctx, exec, rel2)
+			err = m.AttachWorkoutGroupExercise(ctx, exec, rel3)
 			if err != nil {
 				return err
 			}
@@ -322,86 +362,86 @@ func (o *SetTemplate) Create(ctx context.Context, exec bob.Executor) (*models.Se
 	// This works regardless of NoBackReferencing since it only uses child-side metadata.
 	mInCreation, _ := modelsInCreationCtx.Value(ctx)
 
-	var rel0 *models.Exercise
+	var rel1 *models.Exercise
 
 	if o.r.Exercise == nil {
 		if parentModel, found := mInCreation["exercises:sets:sets.sets_exercise_id_fkey"]; found {
 			if pModel, ok := parentModel.(*models.Exercise); ok {
-				rel0 = pModel
-			}
-		}
-	}
-
-	if rel0 == nil {
-		if o.r.Exercise == nil {
-			SetMods.WithNewExercise().Apply(ctx, o)
-		}
-
-		if o.r.Exercise.o.alreadyPersisted {
-			rel0 = o.r.Exercise.o.Build()
-		} else {
-			rel0, err = o.r.Exercise.o.Create(ctx, exec)
-			if err != nil {
-				return nil, err
-			}
-		}
-	}
-
-	opt.ExerciseID = omit.From(rel0.ID)
-
-	var rel1 *models.User
-
-	if o.r.User == nil {
-		if parentModel, found := mInCreation["users:sets:sets.sets_user_id_fkey"]; found {
-			if pModel, ok := parentModel.(*models.User); ok {
 				rel1 = pModel
 			}
 		}
 	}
 
 	if rel1 == nil {
+		if o.r.Exercise == nil {
+			SetMods.WithNewExercise().Apply(ctx, o)
+		}
+
+		if o.r.Exercise.o.alreadyPersisted {
+			rel1 = o.r.Exercise.o.Build()
+		} else {
+			rel1, err = o.r.Exercise.o.Create(ctx, exec)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	opt.ExerciseID = omit.From(rel1.ID)
+
+	var rel2 *models.User
+
+	if o.r.User == nil {
+		if parentModel, found := mInCreation["users:sets:sets.sets_user_id_fkey"]; found {
+			if pModel, ok := parentModel.(*models.User); ok {
+				rel2 = pModel
+			}
+		}
+	}
+
+	if rel2 == nil {
 		if o.r.User == nil {
 			SetMods.WithNewUser().Apply(ctx, o)
 		}
 
 		if o.r.User.o.alreadyPersisted {
-			rel1 = o.r.User.o.Build()
+			rel2 = o.r.User.o.Build()
 		} else {
-			rel1, err = o.r.User.o.Create(ctx, exec)
+			rel2, err = o.r.User.o.Create(ctx, exec)
 			if err != nil {
 				return nil, err
 			}
 		}
 	}
 
-	opt.UserID = omit.From(rel1.ID)
+	opt.UserID = omit.From(rel2.ID)
 
-	var rel3 *models.Workout
+	var rel4 *models.Workout
 
 	if o.r.Workout == nil {
 		if parentModel, found := mInCreation["workouts:sets:sets.sets_workout_id_fkey"]; found {
 			if pModel, ok := parentModel.(*models.Workout); ok {
-				rel3 = pModel
+				rel4 = pModel
 			}
 		}
 	}
 
-	if rel3 == nil {
+	if rel4 == nil {
 		if o.r.Workout == nil {
 			SetMods.WithNewWorkout().Apply(ctx, o)
 		}
 
 		if o.r.Workout.o.alreadyPersisted {
-			rel3 = o.r.Workout.o.Build()
+			rel4 = o.r.Workout.o.Build()
 		} else {
-			rel3, err = o.r.Workout.o.Create(ctx, exec)
+			rel4, err = o.r.Workout.o.Create(ctx, exec)
 			if err != nil {
 				return nil, err
 			}
 		}
 	}
 
-	opt.WorkoutID = omit.From(rel3.ID)
+	opt.WorkoutID = omit.From(rel4.ID)
 
 	m, err := models.Sets.Insert(opt).One(ctx, exec)
 	if err != nil {
@@ -416,14 +456,15 @@ func (o *SetTemplate) Create(ctx context.Context, exec bob.Executor) (*models.Se
 	for k, v := range mInCreation {
 		newMInCreation[k] = v
 	}
+	newMInCreation["sets:personal_bests:personal_bests.personal_bests_set_id_fkey"] = m
 
 	ctx = modelsInCreationCtx.WithValue(ctx, newMInCreation)
 
-	m.R.Exercise = rel0
+	m.R.Exercise = rel1
 	m.R.Loaded.Exercise = true
-	m.R.User = rel1
+	m.R.User = rel2
 	m.R.Loaded.User = true
-	m.R.Workout = rel3
+	m.R.Workout = rel4
 	m.R.Loaded.Workout = true
 
 	if err := o.insertOptRels(ctx, exec, m); err != nil {
@@ -1090,5 +1131,53 @@ func (m setMods) WithExistingWorkout(em *models.Workout) SetMod {
 func (m setMods) WithoutWorkout() SetMod {
 	return SetModFunc(func(ctx context.Context, o *SetTemplate) {
 		o.r.Workout = nil
+	})
+}
+
+func (m setMods) WithPersonalBests(number int, related *PersonalBestTemplate) SetMod {
+	return SetModFunc(func(ctx context.Context, o *SetTemplate) {
+		o.r.PersonalBests = []*setRPersonalBestsR{{
+			number: number,
+			o:      related,
+		}}
+	})
+}
+
+func (m setMods) WithNewPersonalBests(number int, mods ...PersonalBestMod) SetMod {
+	return SetModFunc(func(ctx context.Context, o *SetTemplate) {
+		related := o.f.NewPersonalBestWithContext(ctx, mods...)
+		m.WithPersonalBests(number, related).Apply(ctx, o)
+	})
+}
+
+func (m setMods) AddPersonalBests(number int, related *PersonalBestTemplate) SetMod {
+	return SetModFunc(func(ctx context.Context, o *SetTemplate) {
+		o.r.PersonalBests = append(o.r.PersonalBests, &setRPersonalBestsR{
+			number: number,
+			o:      related,
+		})
+	})
+}
+
+func (m setMods) AddNewPersonalBests(number int, mods ...PersonalBestMod) SetMod {
+	return SetModFunc(func(ctx context.Context, o *SetTemplate) {
+		related := o.f.NewPersonalBestWithContext(ctx, mods...)
+		m.AddPersonalBests(number, related).Apply(ctx, o)
+	})
+}
+
+func (m setMods) AddExistingPersonalBests(existingModels ...*models.PersonalBest) SetMod {
+	return SetModFunc(func(ctx context.Context, o *SetTemplate) {
+		for _, em := range existingModels {
+			o.r.PersonalBests = append(o.r.PersonalBests, &setRPersonalBestsR{
+				o: o.f.fromExistingPersonalBest(ctx, em),
+			})
+		}
+	})
+}
+
+func (m setMods) WithoutPersonalBests() SetMod {
+	return SetModFunc(func(ctx context.Context, o *SetTemplate) {
+		o.r.PersonalBests = nil
 	})
 }

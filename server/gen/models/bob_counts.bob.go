@@ -25,6 +25,7 @@ type preloadCounts struct {
 	Plan                 planCountPreloader
 	RoutineGroup         routineGroupCountPreloader
 	Routine              routineCountPreloader
+	Set                  setCountPreloader
 	User                 userCountPreloader
 	WorkoutGroupExercise workoutGroupExerciseCountPreloader
 	WorkoutGroup         workoutGroupCountPreloader
@@ -37,6 +38,7 @@ func getPreloadCount() preloadCounts {
 		Plan:                 buildPlanCountPreloader(),
 		RoutineGroup:         buildRoutineGroupCountPreloader(),
 		Routine:              buildRoutineCountPreloader(),
+		Set:                  buildSetCountPreloader(),
 		User:                 buildUserCountPreloader(),
 		WorkoutGroupExercise: buildWorkoutGroupExerciseCountPreloader(),
 		WorkoutGroup:         buildWorkoutGroupCountPreloader(),
@@ -49,6 +51,7 @@ type thenLoadCounts[Q orm.Loadable] struct {
 	Plan                 planCountThenLoader[Q]
 	RoutineGroup         routineGroupCountThenLoader[Q]
 	Routine              routineCountThenLoader[Q]
+	Set                  setCountThenLoader[Q]
 	User                 userCountThenLoader[Q]
 	WorkoutGroupExercise workoutGroupExerciseCountThenLoader[Q]
 	WorkoutGroup         workoutGroupCountThenLoader[Q]
@@ -61,6 +64,7 @@ func getThenLoadCount[Q orm.Loadable]() thenLoadCounts[Q] {
 		Plan:                 buildPlanCountThenLoader[Q](),
 		RoutineGroup:         buildRoutineGroupCountThenLoader[Q](),
 		Routine:              buildRoutineCountThenLoader[Q](),
+		Set:                  buildSetCountThenLoader[Q](),
 		User:                 buildUserCountThenLoader[Q](),
 		WorkoutGroupExercise: buildWorkoutGroupExerciseCountThenLoader[Q](),
 		WorkoutGroup:         buildWorkoutGroupCountThenLoader[Q](),

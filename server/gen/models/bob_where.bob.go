@@ -24,6 +24,7 @@ func Where[Q psql.Filterable]() struct {
 	ExercisesRoutines     exercisesRoutineWhere[Q]
 	Followers             followerWhere[Q]
 	Notifications         notificationWhere[Q]
+	PersonalBests         personalBestWhere[Q]
 	PlanRoutines          planRoutineWhere[Q]
 	Plans                 planWhere[Q]
 	RoutineGroups         routineGroupWhere[Q]
@@ -44,6 +45,7 @@ func Where[Q psql.Filterable]() struct {
 		ExercisesRoutines     exercisesRoutineWhere[Q]
 		Followers             followerWhere[Q]
 		Notifications         notificationWhere[Q]
+		PersonalBests         personalBestWhere[Q]
 		PlanRoutines          planRoutineWhere[Q]
 		Plans                 planWhere[Q]
 		RoutineGroups         routineGroupWhere[Q]
@@ -63,6 +65,7 @@ func Where[Q psql.Filterable]() struct {
 		ExercisesRoutines:     buildExercisesRoutineWhere[Q](ExercisesRoutines.Columns),
 		Followers:             buildFollowerWhere[Q](Followers.Columns),
 		Notifications:         buildNotificationWhere[Q](Notifications.Columns),
+		PersonalBests:         buildPersonalBestWhere[Q](PersonalBests.Columns),
 		PlanRoutines:          buildPlanRoutineWhere[Q](PlanRoutines.Columns),
 		Plans:                 buildPlanWhere[Q](Plans.Columns),
 		RoutineGroups:         buildRoutineGroupWhere[Q](RoutineGroups.Columns),

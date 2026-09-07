@@ -16,6 +16,9 @@ func TestExerciseCountStruct(t *testing.T) {
 	// Verify ExercisesRoutines count field exists and is *int64
 	var _ *int64 = m.C.ExercisesRoutines
 
+	// Verify PersonalBests count field exists and is *int64
+	var _ *int64 = m.C.PersonalBests
+
 	// Verify Routines count field exists and is *int64
 	var _ *int64 = m.C.Routines
 
@@ -37,6 +40,12 @@ func TestExerciseLoadCountMethods(t *testing.T) {
 
 	// Verify LoadCountExercisesRoutines method exists on slice
 	_ = ms.LoadCountExercisesRoutines(ctx, nil)
+
+	// Verify LoadCountPersonalBests method exists on single model
+	_ = m.LoadCountPersonalBests(ctx, nil)
+
+	// Verify LoadCountPersonalBests method exists on slice
+	_ = ms.LoadCountPersonalBests(ctx, nil)
 
 	// Verify LoadCountRoutines method exists on single model
 	_ = m.LoadCountRoutines(ctx, nil)
@@ -64,6 +73,9 @@ func TestSelectThenLoadCountExercise(t *testing.T) {
 	// Verify ExercisesRoutines loader exists
 	_ = SelectThenLoadCount.Exercise.ExercisesRoutines
 
+	// Verify PersonalBests loader exists
+	_ = SelectThenLoadCount.Exercise.PersonalBests
+
 	// Verify Routines loader exists
 	_ = SelectThenLoadCount.Exercise.Routines
 
@@ -81,6 +93,9 @@ func TestPreloadCountExercise(t *testing.T) {
 	// Verify ExercisesRoutines preloader exists and returns a Preloader
 	_ = PreloadCount.Exercise.ExercisesRoutines()
 
+	// Verify PersonalBests preloader exists and returns a Preloader
+	_ = PreloadCount.Exercise.PersonalBests()
+
 	// Verify Routines preloader exists and returns a Preloader
 	_ = PreloadCount.Exercise.Routines()
 
@@ -96,6 +111,8 @@ func TestExercisePreloadCountMethod(t *testing.T) {
 	var m *Exercise
 
 	_ = m.PreloadCount("ExercisesRoutines", 0)
+
+	_ = m.PreloadCount("PersonalBests", 0)
 
 	_ = m.PreloadCount("Routines", 0)
 
@@ -307,6 +324,51 @@ func TestRoutinePreloadCountMethod(t *testing.T) {
 	_ = m.PreloadCount("Workouts", 0)
 }
 
+// Test that Set has a C field with count pointers for to-many relationships
+func TestSetCountStruct(t *testing.T) {
+	var m Set
+	_ = m.C // Verify C field exists
+
+	// Verify PersonalBests count field exists and is *int64
+	var _ *int64 = m.C.PersonalBests
+}
+
+// Test that Set has LoadCount methods for to-many relationships
+func TestSetLoadCountMethods(t *testing.T) {
+	var m *Set
+	var ms SetSlice
+	ctx := context.Background()
+
+	// Verify LoadCountPersonalBests method exists on single model
+	_ = m.LoadCountPersonalBests(ctx, nil)
+
+	// Verify LoadCountPersonalBests method exists on slice
+	_ = ms.LoadCountPersonalBests(ctx, nil)
+}
+
+// Test that SelectThenLoadCount has Set with methods for to-many relationships
+func TestSelectThenLoadCountSet(t *testing.T) {
+	_ = SelectThenLoadCount.Set
+
+	// Verify PersonalBests loader exists
+	_ = SelectThenLoadCount.Set.PersonalBests
+}
+
+// Test that PreloadCount has Set with methods for to-many relationships
+func TestPreloadCountSet(t *testing.T) {
+	_ = PreloadCount.Set
+
+	// Verify PersonalBests preloader exists and returns a Preloader
+	_ = PreloadCount.Set.PersonalBests()
+}
+
+// Test that Set has PreloadCount method
+func TestSetPreloadCountMethod(t *testing.T) {
+	var m *Set
+
+	_ = m.PreloadCount("PersonalBests", 0)
+}
+
 // Test that User has a C field with count pointers for to-many relationships
 func TestUserCountStruct(t *testing.T) {
 	var m User
@@ -320,6 +382,9 @@ func TestUserCountStruct(t *testing.T) {
 
 	// Verify Notifications count field exists and is *int64
 	var _ *int64 = m.C.Notifications
+
+	// Verify PersonalBests count field exists and is *int64
+	var _ *int64 = m.C.PersonalBests
 
 	// Verify Plans count field exists and is *int64
 	var _ *int64 = m.C.Plans
@@ -360,6 +425,12 @@ func TestUserLoadCountMethods(t *testing.T) {
 
 	// Verify LoadCountNotifications method exists on slice
 	_ = ms.LoadCountNotifications(ctx, nil)
+
+	// Verify LoadCountPersonalBests method exists on single model
+	_ = m.LoadCountPersonalBests(ctx, nil)
+
+	// Verify LoadCountPersonalBests method exists on slice
+	_ = ms.LoadCountPersonalBests(ctx, nil)
 
 	// Verify LoadCountPlans method exists on single model
 	_ = m.LoadCountPlans(ctx, nil)
@@ -405,6 +476,9 @@ func TestSelectThenLoadCountUser(t *testing.T) {
 	// Verify Notifications loader exists
 	_ = SelectThenLoadCount.User.Notifications
 
+	// Verify PersonalBests loader exists
+	_ = SelectThenLoadCount.User.PersonalBests
+
 	// Verify Plans loader exists
 	_ = SelectThenLoadCount.User.Plans
 
@@ -434,6 +508,9 @@ func TestPreloadCountUser(t *testing.T) {
 	// Verify Notifications preloader exists and returns a Preloader
 	_ = PreloadCount.User.Notifications()
 
+	// Verify PersonalBests preloader exists and returns a Preloader
+	_ = PreloadCount.User.PersonalBests()
+
 	// Verify Plans preloader exists and returns a Preloader
 	_ = PreloadCount.User.Plans()
 
@@ -459,6 +536,8 @@ func TestUserPreloadCountMethod(t *testing.T) {
 	_ = m.PreloadCount("Users", 0)
 
 	_ = m.PreloadCount("Notifications", 0)
+
+	_ = m.PreloadCount("PersonalBests", 0)
 
 	_ = m.PreloadCount("Plans", 0)
 

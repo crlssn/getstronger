@@ -1289,39 +1289,34 @@ ORDER BY created_at;
 	)
 }
 
+// GetPersonalBests is the best set each athlete has logged of each exercise
+// they have trained. The records are stored rather than derived, kept current
+// by the triggers migration 059 puts on sets, so this costs what it returns
+// instead of the whole history it was chosen from.
 func (r *Repo) GetPersonalBests(ctx context.Context, userIDs ...uuid.UUID) ([]*training.Set, error) {
-	workouts, err := r.ListWorkouts(ctx, ListWorkoutsWithUserIDs(userIDs...))
-	if err != nil {
-		return nil, fmt.Errorf("workouts fetch: %w", err)
+	ids := make([]string, 0, len(userIDs))
+	for _, userID := range userIDs {
+		ids = append(ids, userID.String())
 	}
 
-	workoutIDs := make([]string, 0, len(workouts))
-	for _, workout := range workouts {
-		workoutIDs = append(workoutIDs, workout.ID.String())
-	}
-
-	rawQuery := `
-	SELECT DISTINCT ON (sets.exercise_id) sets.id
-	FROM public.sets
-	JOIN public.exercises ON exercises.id = sets.exercise_id
-	WHERE sets.workout_id = ANY ($1)
-	ORDER BY
-		sets.exercise_id,
-		CASE WHEN 'weight' = ANY(exercises.metrics) THEN sets.weight ELSE 0 END DESC,
-		CASE WHEN 'reps' = ANY(exercises.metrics) THEN sets.reps ELSE 0 END DESC,
-		CASE WHEN 'distance' = ANY(exercises.metrics) THEN sets.distance ELSE 0 END DESC,
-		CASE WHEN 'time' = ANY(exercises.metrics) THEN sets.duration_seconds ELSE 0 END DESC,
-		sets.created_at ASC;
-`
-
-	rows, err := r.sqlExec().QueryContext(ctx, rawQuery, pq.Array(workoutIDs))
+	rows, err := r.sqlExec().QueryContext(ctx, `
+	SELECT set_id
+	FROM public.personal_bests
+	WHERE user_id = ANY ($1);
+`, pq.Array(ids))
 	if err != nil {
-		return nil, fmt.Errorf("sets fetch: %w", err)
+		return nil, fmt.Errorf("personal bests fetch: %w", err)
 	}
 
 	setIDs, err := scanIDs(rows)
 	if err != nil {
-		return nil, fmt.Errorf("sets fetch: %w", err)
+		return nil, fmt.Errorf("personal bests fetch: %w", err)
+	}
+
+	// An athlete who has logged nothing is the first thing a new account asks
+	// for, and there is nothing for the set list to look up.
+	if len(setIDs) == 0 {
+		return nil, nil
 	}
 
 	return r.ListSets(

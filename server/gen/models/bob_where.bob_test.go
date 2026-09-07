@@ -68,6 +68,20 @@ func TestExerciseHasRelationsEmitExists(t *testing.T) {
 		}
 	})
 
+	t.Run("PersonalBests", func(t *testing.T) {
+		q := psql.Select(
+			sm.From(Exercises.NameExpr()),
+			SelectWhere.Exercises.R.HasPersonalBests(),
+		)
+		sql, _, err := bob.Build(ctx, q)
+		if err != nil {
+			t.Fatalf("HasPersonalBests: build error: %v", err)
+		}
+		if !strings.Contains(sql, "EXISTS") {
+			t.Errorf("HasPersonalBests: expected EXISTS in query, got: %s", sql)
+		}
+	})
+
 	t.Run("Routines", func(t *testing.T) {
 		q := psql.Select(
 			sm.From(Exercises.NameExpr()),
@@ -205,6 +219,55 @@ func TestNotificationHasRelationsEmitExists(t *testing.T) {
 		q := psql.Select(
 			sm.From(Notifications.NameExpr()),
 			SelectWhere.Notifications.R.HasUser(),
+		)
+		sql, _, err := bob.Build(ctx, q)
+		if err != nil {
+			t.Fatalf("HasUser: build error: %v", err)
+		}
+		if !strings.Contains(sql, "EXISTS") {
+			t.Errorf("HasUser: expected EXISTS in query, got: %s", sql)
+		}
+	})
+}
+
+// TestPersonalBestHasRelationsEmitExists verifies that every generated
+// Has{Rel} helper produces a correlated EXISTS subquery (semi-join) rather than
+// an INNER JOIN, so the parent rows are never multiplied.
+func TestPersonalBestHasRelationsEmitExists(t *testing.T) {
+	ctx := context.Background()
+
+	t.Run("Exercise", func(t *testing.T) {
+		q := psql.Select(
+			sm.From(PersonalBests.NameExpr()),
+			SelectWhere.PersonalBests.R.HasExercise(),
+		)
+		sql, _, err := bob.Build(ctx, q)
+		if err != nil {
+			t.Fatalf("HasExercise: build error: %v", err)
+		}
+		if !strings.Contains(sql, "EXISTS") {
+			t.Errorf("HasExercise: expected EXISTS in query, got: %s", sql)
+		}
+	})
+
+	t.Run("Set", func(t *testing.T) {
+		q := psql.Select(
+			sm.From(PersonalBests.NameExpr()),
+			SelectWhere.PersonalBests.R.HasSet(),
+		)
+		sql, _, err := bob.Build(ctx, q)
+		if err != nil {
+			t.Fatalf("HasSet: build error: %v", err)
+		}
+		if !strings.Contains(sql, "EXISTS") {
+			t.Errorf("HasSet: expected EXISTS in query, got: %s", sql)
+		}
+	})
+
+	t.Run("User", func(t *testing.T) {
+		q := psql.Select(
+			sm.From(PersonalBests.NameExpr()),
+			SelectWhere.PersonalBests.R.HasUser(),
 		)
 		sql, _, err := bob.Build(ctx, q)
 		if err != nil {
@@ -418,6 +481,20 @@ func TestRoutineHasRelationsEmitExists(t *testing.T) {
 func TestSetHasRelationsEmitExists(t *testing.T) {
 	ctx := context.Background()
 
+	t.Run("PersonalBests", func(t *testing.T) {
+		q := psql.Select(
+			sm.From(Sets.NameExpr()),
+			SelectWhere.Sets.R.HasPersonalBests(),
+		)
+		sql, _, err := bob.Build(ctx, q)
+		if err != nil {
+			t.Fatalf("HasPersonalBests: build error: %v", err)
+		}
+		if !strings.Contains(sql, "EXISTS") {
+			t.Errorf("HasPersonalBests: expected EXISTS in query, got: %s", sql)
+		}
+	})
+
 	t.Run("Exercise", func(t *testing.T) {
 		q := psql.Select(
 			sm.From(Sets.NameExpr()),
@@ -520,6 +597,20 @@ func TestUserHasRelationsEmitExists(t *testing.T) {
 		}
 		if !strings.Contains(sql, "EXISTS") {
 			t.Errorf("HasNotifications: expected EXISTS in query, got: %s", sql)
+		}
+	})
+
+	t.Run("PersonalBests", func(t *testing.T) {
+		q := psql.Select(
+			sm.From(Users.NameExpr()),
+			SelectWhere.Users.R.HasPersonalBests(),
+		)
+		sql, _, err := bob.Build(ctx, q)
+		if err != nil {
+			t.Fatalf("HasPersonalBests: build error: %v", err)
+		}
+		if !strings.Contains(sql, "EXISTS") {
+			t.Errorf("HasPersonalBests: expected EXISTS in query, got: %s", sql)
 		}
 	})
 

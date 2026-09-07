@@ -39,6 +39,9 @@ var _ bob.HookableType = &Follower{}
 // Make sure the type Notification runs hooks after queries
 var _ bob.HookableType = &Notification{}
 
+// Make sure the type PersonalBest runs hooks after queries
+var _ bob.HookableType = &PersonalBest{}
+
 // Make sure the type PlanRoutine runs hooks after queries
 var _ bob.HookableType = &PlanRoutine{}
 

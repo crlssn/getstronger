@@ -2783,3 +2783,147 @@ func (s *repoSuite) TestMarkFeedAsSeen() {
 	err = s.repo.MarkFeedAsSeen(cancelled, user.ID)
 	s.Require().ErrorIs(err, context.Canceled)
 }
+
+// setIDsOf is the ids of the sets, in the order they came back.
+func setIDsOf(sets []*training.Set) []uuid.UUID {
+	ids := make([]uuid.UUID, 0, len(sets))
+	for _, set := range sets {
+		ids = append(ids, set.ID)
+	}
+
+	return ids
+}
+
+// The record for an exercise is the best set of it, and which set that is
+// depends on what the exercise is measured by.
+func (s *repoSuite) TestGetPersonalBestsPicksTheBestSet() {
+	ctx := context.Background()
+	user := s.factory.NewUser()
+
+	lifted := s.factory.NewExercise(factory.ExerciseUserID(user.ID), factory.ExerciseMetrics("weight", "reps"))
+	counted := s.factory.NewExercise(factory.ExerciseUserID(user.ID), factory.ExerciseMetrics("reps"))
+	workout := s.factory.NewWorkout(factory.WorkoutUserID(user.ID))
+
+	heaviest := s.factory.NewSet(
+		factory.SetUserID(user.ID), factory.SetWorkoutID(workout.ID), factory.SetExerciseID(lifted.ID),
+		factory.SetWeight(100), factory.SetReps(1),
+	)
+	s.factory.NewSet(
+		factory.SetUserID(user.ID), factory.SetWorkoutID(workout.ID), factory.SetExerciseID(lifted.ID),
+		factory.SetWeight(80), factory.SetReps(10),
+	)
+
+	// Measured by reps alone, so the heavier set is not the better one.
+	mostReps := s.factory.NewSet(
+		factory.SetUserID(user.ID), factory.SetWorkoutID(workout.ID), factory.SetExerciseID(counted.ID),
+		factory.SetWeight(0), factory.SetReps(20),
+	)
+	s.factory.NewSet(
+		factory.SetUserID(user.ID), factory.SetWorkoutID(workout.ID), factory.SetExerciseID(counted.ID),
+		factory.SetWeight(50), factory.SetReps(5),
+	)
+
+	bests, err := s.repo.GetPersonalBests(ctx, user.ID)
+	s.Require().NoError(err)
+	s.Require().ElementsMatch([]uuid.UUID{heaviest.ID, mostReps.ID}, setIDsOf(bests))
+}
+
+// Three identical sets are one record, set by the first of them. Every set of
+// a workout shares created_at to the microsecond, so without the position to
+// break the tie the winner was whichever row the planner reached first.
+func (s *repoSuite) TestGetPersonalBestsPicksTheEarliestOfIdenticalSets() {
+	ctx := context.Background()
+	user := s.factory.NewUser()
+	exercise := s.factory.NewExercise(factory.ExerciseUserID(user.ID))
+	workout := s.factory.NewWorkout(factory.WorkoutUserID(user.ID))
+
+	// Written last first, so a scan in row order meets the third set before the
+	// first and only the position can put them back in the order they happened.
+	createdAt := s.factory.Now()
+	var first uuid.UUID
+	for _, position := range []int{2, 0, 1} {
+		set := s.factory.NewSet(
+			factory.SetUserID(user.ID), factory.SetWorkoutID(workout.ID), factory.SetExerciseID(exercise.ID),
+			factory.SetWeight(60), factory.SetReps(5),
+			factory.SetCreatedAt(createdAt), factory.SetPosition(position),
+		)
+		if position == 0 {
+			first = set.ID
+		}
+	}
+
+	bests, err := s.repo.GetPersonalBests(ctx, user.ID)
+	s.Require().NoError(err)
+	s.Require().Equal([]uuid.UUID{first}, setIDsOf(bests))
+}
+
+// A record is not a fact about a set that happened to be the best once: delete
+// the workout holding it and the next best takes its place.
+func (s *repoSuite) TestGetPersonalBestsPromotesTheRunnerUp() {
+	ctx := context.Background()
+	user := s.factory.NewUser()
+	exercise := s.factory.NewExercise(factory.ExerciseUserID(user.ID))
+
+	best := s.factory.NewWorkout(factory.WorkoutUserID(user.ID))
+	s.factory.NewSet(
+		factory.SetUserID(user.ID), factory.SetWorkoutID(best.ID), factory.SetExerciseID(exercise.ID),
+		factory.SetWeight(120), factory.SetReps(1),
+	)
+
+	runnerUp := s.factory.NewWorkout(factory.WorkoutUserID(user.ID))
+	second := s.factory.NewSet(
+		factory.SetUserID(user.ID), factory.SetWorkoutID(runnerUp.ID), factory.SetExerciseID(exercise.ID),
+		factory.SetWeight(110), factory.SetReps(1),
+	)
+
+	s.Require().NoError(s.repo.DeleteWorkout(ctx, repo.DeleteWorkoutWithID(best.ID)))
+
+	bests, err := s.repo.GetPersonalBests(ctx, user.ID)
+	s.Require().NoError(err)
+	s.Require().Equal([]uuid.UUID{second.ID}, setIDsOf(bests))
+
+	// And with the last set of the exercise gone, so is the record.
+	s.Require().NoError(s.repo.DeleteWorkout(ctx, repo.DeleteWorkoutWithID(runnerUp.ID)))
+	bests, err = s.repo.GetPersonalBests(ctx, user.ID)
+	s.Require().NoError(err)
+	s.Require().Empty(bests)
+}
+
+// Changing what an exercise is measured by changes which of its sets was the
+// best one.
+func (s *repoSuite) TestGetPersonalBestsFollowsTheExerciseMeasurements() {
+	ctx := context.Background()
+	user := s.factory.NewUser()
+	exercise := s.factory.NewExercise(factory.ExerciseUserID(user.ID), factory.ExerciseMetrics("weight", "reps"))
+	workout := s.factory.NewWorkout(factory.WorkoutUserID(user.ID))
+
+	heaviest := s.factory.NewSet(
+		factory.SetUserID(user.ID), factory.SetWorkoutID(workout.ID), factory.SetExerciseID(exercise.ID),
+		factory.SetWeight(100), factory.SetReps(1),
+	)
+	mostReps := s.factory.NewSet(
+		factory.SetUserID(user.ID), factory.SetWorkoutID(workout.ID), factory.SetExerciseID(exercise.ID),
+		factory.SetWeight(40), factory.SetReps(30),
+	)
+
+	bests, err := s.repo.GetPersonalBests(ctx, user.ID)
+	s.Require().NoError(err)
+	s.Require().Equal([]uuid.UUID{heaviest.ID}, setIDsOf(bests))
+
+	s.Require().NoError(s.repo.UpdateExercise(ctx, exercise.ID, repo.UpdateExerciseMetrics([]string{"reps"})))
+
+	bests, err = s.repo.GetPersonalBests(ctx, user.ID)
+	s.Require().NoError(err)
+	s.Require().Equal([]uuid.UUID{mostReps.ID}, setIDsOf(bests))
+}
+
+// An athlete who has logged nothing holds no records — not every record in the
+// database, which is what an unfiltered set list would have returned.
+func (s *repoSuite) TestGetPersonalBestsOfAnAthleteWhoHasLoggedNothing() {
+	ctx := context.Background()
+	s.factory.NewSet()
+
+	bests, err := s.repo.GetPersonalBests(ctx, uuid.Must(uuid.NewV4()))
+	s.Require().NoError(err)
+	s.Require().Empty(bests)
+}

@@ -486,6 +486,33 @@ test.describe('quick workout lifecycle', () => {
     await finishAndSave(page)
     await expect(page).toHaveURL(/\/workouts\/[0-9a-f-]+$/)
   })
+
+  test('gives a record to the first of the sets that tie for it @mutation', async ({ page }) => {
+    await page.goto('/workouts/quick')
+    const exercise = await addFirstExercise(page)
+
+    // Three identical sets, heavier than anything seeded, so all three are the
+    // exercise's best and only the order they were logged in separates them.
+    // They are written in one transaction and share a timestamp to the
+    // microsecond, so the record used to land on whichever row was read first.
+    for (const number of [1, 2, 3]) {
+      await page
+        .getByRole('textbox', { name: `${exercise} set ${number} weight`, exact: true })
+        .fill('250')
+      await page
+        .getByRole('textbox', { name: `${exercise} set ${number} reps`, exact: true })
+        .fill('5')
+    }
+    await page.getByRole('button', { name: 'Complete exercise' }).click()
+    await finishAndSave(page)
+    await expect(page).toHaveURL(/\/workouts\/[0-9a-f-]+$/)
+
+    // One record, on the set that reached it first. The workout's first
+    // exercise opens onto its sets, so there is nothing to expand.
+    const sets = page.getByRole('table', { name: `${exercise} sets` })
+    await expect(sets.getByRole('cell', { name: 'Set 1, PR' })).toBeVisible()
+    await expect(sets.getByRole('cell', { name: /Set [23], PR/ })).toHaveCount(0)
+  })
 })
 
 test.describe('weight units', () => {
