@@ -1,0 +1,19 @@
+@reference '../../assets/base.css';
+
+/* The avatar's own 44px square, so a row with a route to show is exactly as
+   tall as one without. */
+.thumbnail {
+  @apply block size-11 shrink-0 overflow-hidden rounded-control bg-surface-sunken;
+}
+
+.thumbnail svg {
+  @apply size-full;
+}
+
+/* Stroked and never filled: at this size a closed loop fills into a blob. */
+.thumbnail polyline {
+  fill: none;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
