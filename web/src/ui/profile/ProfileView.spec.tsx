@@ -9,6 +9,7 @@ vi.mock('@/http/requests', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/http/requests')>()),
   getCurrentUser: vi.fn(),
   updateUserAutofillSets: vi.fn(),
+  updateUserAutoPause: vi.fn(),
 }))
 
 import * as requests from '@/http/requests'
@@ -17,6 +18,7 @@ import { DistanceUnit, WeightUnit } from '@/proto/api/v1/shared_pb'
 import {
   GetUserResponseSchema,
   UpdateUserAutofillSetsResponseSchema,
+  UpdateUserAutoPauseResponseSchema,
 } from '@/proto/api/v1/user_service_pb'
 import { useToastStore } from '@/stores/toasts'
 import { useAuthStore } from '@/stores/auth'
@@ -30,6 +32,7 @@ import { ProfileView } from './ProfileView'
 const mocked = {
   getCurrentUser: vi.mocked(requests.getCurrentUser),
   updateUserAutofillSets: vi.mocked(requests.updateUserAutofillSets),
+  updateUserAutoPause: vi.mocked(requests.updateUserAutoPause),
 }
 
 const me = 'user-me'
@@ -39,6 +42,7 @@ const profile = (
     username?: string
     name?: string
     autofillSets?: boolean
+    autoPause?: boolean
     weightUnit?: WeightUnit
     distanceUnit?: DistanceUnit
   } = {},
@@ -52,6 +56,7 @@ const profile = (
       weightUnit: fields.weightUnit ?? WeightUnit.KILOGRAMS,
       distanceUnit: fields.distanceUnit ?? DistanceUnit.KILOMETERS,
       autofillSets: fields.autofillSets ?? false,
+      autoPause: fields.autoPause ?? false,
     },
   })
 
@@ -69,6 +74,9 @@ describe('ProfileView', () => {
     mocked.updateUserAutofillSets.mockResolvedValue(
       create(UpdateUserAutofillSetsResponseSchema, updated()),
     )
+    mocked.updateUserAutoPause.mockResolvedValue(
+      create(UpdateUserAutoPauseResponseSchema, updated()),
+    )
     vi.spyOn(useDashboardStore.getState(), 'load').mockResolvedValue(undefined)
     vi.spyOn(useNotificationStore.getState(), 'refreshUnreadNotifications').mockResolvedValue()
     useAuthStore.setState({ userId: me })
@@ -79,6 +87,7 @@ describe('ProfileView', () => {
       weightUnit: WeightUnit.KILOGRAMS,
       distanceUnit: DistanceUnit.KILOMETERS,
       autofillSets: false,
+      autoPause: false,
       intervalCueLeadSeconds: 10,
     })
     useToastStore.getState().dismiss()
@@ -280,6 +289,18 @@ describe('ProfileView', () => {
     expect(usePreferencesStore.getState().autofillSets).toBe(true)
   })
 
+  // What a recording does before there is a recording to change it on, so it
+  // sits beside the prefill rather than behind the recorder.
+  test('switches auto-pause on and off', async () => {
+    render()
+
+    await loaded()
+    await userEvent.click(screen.getByRole('switch', { name: 'Pause while I stand still' }))
+
+    await waitFor(() => expect(mocked.updateUserAutoPause).toHaveBeenCalledWith(true))
+    expect(usePreferencesStore.getState().autoPause).toBe(true)
+  })
+
   // The tab asks the account what the preferences are as it opens, and it
   // writes the reply into a store that outlives it — so a preference can move
   // while the read is out, from the units screen the tab was left for. The
@@ -290,7 +311,8 @@ describe('ProfileView', () => {
     let answer = () => {}
     mocked.getCurrentUser.mockReturnValue(
       new Promise((resolve) => {
-        answer = () => resolve(profile({ weightUnit: WeightUnit.POUNDS, autofillSets: true }))
+        answer = () =>
+          resolve(profile({ weightUnit: WeightUnit.POUNDS, autofillSets: true, autoPause: true }))
       }),
     )
     render()
@@ -301,12 +323,13 @@ describe('ProfileView', () => {
       answer()
     })
 
-    // Nothing from the reply lands: the cache moved under it, so all three of
-    // the values it carries are the stale ones.
+    // Nothing from the reply lands: the cache moved under it, so every value
+    // it carries is the stale one.
     expect(usePreferencesStore.getState()).toMatchObject({
       distanceUnit: DistanceUnit.MILES,
       weightUnit: WeightUnit.KILOGRAMS,
       autofillSets: false,
+      autoPause: false,
     })
   })
 
@@ -320,6 +343,26 @@ describe('ProfileView', () => {
 
     expect(usePreferencesStore.getState().paceReference).toBe('best')
     expect(screen.getByRole('button', { name: 'Best' })).toHaveAttribute('aria-pressed', 'true')
+  })
+
+  // The switch this tab owns is inside the same window, and it is the one an
+  // athlete is most likely to reach for on the way out to record.
+  test('keeps auto-pause changed while the account was still being read', async () => {
+    let answer = () => {}
+    mocked.getCurrentUser.mockReturnValue(
+      new Promise((resolve) => {
+        answer = () => resolve(profile())
+      }),
+    )
+    render()
+
+    await waitFor(() => expect(mocked.getCurrentUser).toHaveBeenCalled())
+    usePreferencesStore.getState().setAutoPause(true)
+    await act(async () => {
+      answer()
+    })
+
+    expect(usePreferencesStore.getState().autoPause).toBe(true)
   })
 
   // Three levels of alarm for something done once: the only filled red button

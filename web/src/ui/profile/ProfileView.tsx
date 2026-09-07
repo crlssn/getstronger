@@ -84,7 +84,8 @@ export const ProfileView = () => {
     if (
       preferences.weightUnit !== asked.weightUnit ||
       preferences.distanceUnit !== asked.distanceUnit ||
-      preferences.autofillSets !== asked.autofillSets
+      preferences.autofillSets !== asked.autofillSets ||
+      preferences.autoPause !== asked.autoPause
     ) {
       return
     }
