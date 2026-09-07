@@ -5,15 +5,11 @@ import { DistanceUnit } from '@/proto/api/v1/shared_pb'
 import { AppChip } from '@/ui/components/AppChip'
 import { AppStat } from '@/ui/components/AppStat'
 import { distanceUnitLabel } from '@/utils/distanceUnits'
-import { buildTimeline, measureRoute, type Recording } from '@/utils/timedCircuit'
+import { buildTimeline, measureRoute, routeToken, type Recording } from '@/utils/timedCircuit'
 import { elapsedLabel } from '@/utils/workoutSession'
 import { mapSupported } from '@/utils/mapSupport'
 import { RouteMap, type RouteLine } from './RouteMap'
 import styles from './WorkoutRoute.module.css'
-
-// The theme owns the hues, in both palettes; this only cycles through them.
-const routeColors = 6
-const routeToken = (index: number) => `--color-route-${(index % routeColors) + 1}`
 
 const metersPerKilometer = 1000
 const metersPerMile = 1609.344

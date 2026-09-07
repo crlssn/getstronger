@@ -5,9 +5,11 @@ import { RoutineGroupMode } from '@/proto/api/v1/shared_pb'
 import {
   buildTimeline,
   circuitPhases,
+  currentPace,
   measureRoute,
   parseRecording,
   type Recording,
+  type RoutePoint,
 } from './timedCircuit'
 
 const recording = (): Recording => ({
@@ -117,5 +119,50 @@ describe('parseRecording', () => {
     expect(parseRecording(undefined)).toBeUndefined()
     expect(parseRecording('')).toBeUndefined()
     expect(parseRecording('{ not json')).toBeUndefined()
+  })
+})
+
+// One degree of latitude at the equator, to the metre: a test that says how
+// far apart two fixes are reads better than one that says which coordinates.
+const metersPerDegree = 111194.93
+const fix = (timestamp: number, meters: number, accuracy = 5): RoutePoint => ({
+  timestamp,
+  latitude: meters / metersPerDegree,
+  longitude: 0,
+  accuracy,
+})
+
+describe('currentPace', () => {
+  // A minute of walking then fifteen seconds of running: the number a runner
+  // acts on is the fifteen seconds, not the average that hides them.
+  it('reads the trailing window rather than the whole recording', () => {
+    const data = recording()
+    const walked = Array.from({ length: 21 }, (_, index) => fix(index * 3000, index * 5))
+    const ran = Array.from({ length: 5 }, (_, index) => fix(63000 + index * 3000, 115 + index * 15))
+    data.points = [...walked, ...ran]
+    expect(currentPace(data, 75000)).toBeCloseTo(200, 0)
+    expect(currentPace(data, 75000, 75)).toBeCloseTo(429, 0)
+  })
+
+  it('has no pace until the window holds two accepted fixes', () => {
+    const data = recording()
+    expect(currentPace(data, 75000)).toBeUndefined()
+    data.points = [fix(72000, 0), fix(75000, 10)]
+    expect(currentPace(data, 75000)).toBeCloseTo(300, 0)
+    // One fix is a position, not a speed, and an inaccurate pair is neither.
+    data.points = [fix(75000, 0)]
+    expect(currentPace(data, 75000)).toBeUndefined()
+    data.points = [fix(72000, 0, 80), fix(75000, 10, 80)]
+    expect(currentPace(data, 75000)).toBeUndefined()
+  })
+
+  it('ignores movement across a pause and while standing still', () => {
+    const data = recording()
+    data.pauses = [{ startedAt: 66000, endedAt: 74000 }]
+    data.points = [fix(65000, 0), fix(75000, 40)]
+    expect(currentPace(data, 75000)).toBeUndefined()
+    data.pauses = []
+    data.points = [fix(72000, 10), fix(75000, 10)]
+    expect(currentPace(data, 75000)).toBeUndefined()
   })
 })

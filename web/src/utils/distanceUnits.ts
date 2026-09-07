@@ -1,6 +1,6 @@
 import { DistanceUnit } from '@/proto/api/v1/shared_pb'
 
-const kilometersPerMile = 1.609344
+export const kilometersPerMile = 1.609344
 
 export const normalizeDistanceUnit = (unit?: DistanceUnit) =>
   unit === DistanceUnit.MILES ? DistanceUnit.MILES : DistanceUnit.KILOMETERS

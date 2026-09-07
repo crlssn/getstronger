@@ -29,6 +29,9 @@ const roles = {
     // The tick on a row just logged, in a round as in a table of sets.
     'workouts/RoundTable.module.css',
     'workouts/SetTable.module.css',
+    // A fix arriving now: the recorder's GPS dot is green only while the last
+    // one is fresh and accurate, and grey the moment it is neither.
+    'workouts/TimedCircuitRecorder.module.css',
   ],
   // Destructive only. Not a notification count, and not a way out of a
   // session. The two auth and input cases are invalid-field states, which is

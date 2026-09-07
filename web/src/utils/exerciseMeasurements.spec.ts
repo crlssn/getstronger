@@ -9,6 +9,7 @@ import {
   formatPaceDisplay,
   formatSetPace,
   isDistanceTimeExercise,
+  paceIn,
 } from '@/utils/exerciseMeasurements'
 
 const distanceTime = { metrics: [ExerciseMetric.DISTANCE, ExerciseMetric.TIME] }
@@ -70,6 +71,14 @@ describe('formatPaceDisplay', () => {
   it('writes seconds per kilometre as m:ss min/km', () => {
     expect(formatPaceDisplay(300)).toBe('5:00 min/km')
     expect(formatPaceDisplay(324.3)).toBe('5:24 min/km')
+  })
+})
+
+describe('paceIn', () => {
+  it("keeps the figure apart from its unit and follows the athlete's unit", () => {
+    expect(paceIn(300)).toEqual({ value: '5:00', unit: '/km' })
+    expect(paceIn(324.3)).toEqual({ value: '5:24', unit: '/km' })
+    expect(paceIn(300, DistanceUnit.MILES)).toEqual({ value: '8:03', unit: '/mi' })
   })
 })
 

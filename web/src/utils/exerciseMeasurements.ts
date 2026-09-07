@@ -1,6 +1,11 @@
 import { DistanceUnit, ExerciseMetric, type Exercise, type Set } from '@/proto/api/v1/shared_pb'
 import { weightUnitLabel } from '@/utils/weightUnits'
-import { convertDistance, distanceUnitLabel, normalizeDistanceUnit } from '@/utils/distanceUnits'
+import {
+  convertDistance,
+  distanceUnitLabel,
+  kilometersPerMile,
+  normalizeDistanceUnit,
+} from '@/utils/distanceUnits'
 import { formatNumber } from '@/utils/numbers'
 import { i18n } from '@/i18n'
 
@@ -125,6 +130,29 @@ export const formatPaceDisplay = (secondsPerKilometer: number) => {
   const minutes = Math.floor(rounded / 60)
   const seconds = rounded % 60
   return `${minutes}:${seconds.toString().padStart(2, '0')} min/km`
+}
+
+/**
+ * Pace kept apart from its unit — "5:00" and "/km" — in the athlete's unit.
+ *
+ * The two are set in different registers wherever a figure is the point of the
+ * screen, which a caller handed one string cannot do. A distance shown in
+ * miles beside a pace per kilometre is two answers to the same question, so
+ * the unit follows the athlete's rather than the storage unit.
+ */
+export const paceIn = (secondsPerKilometer: number, unit?: DistanceUnit): Measured => {
+  const preferred = normalizeDistanceUnit(unit)
+  const perUnit = Math.round(
+    preferred === DistanceUnit.MILES
+      ? secondsPerKilometer * kilometersPerMile
+      : secondsPerKilometer,
+  )
+  const minutes = Math.floor(perUnit / 60)
+  const seconds = perUnit % 60
+  return {
+    value: `${minutes}:${seconds.toString().padStart(2, '0')}`,
+    unit: `/${distanceUnitLabel(preferred)}`,
+  }
 }
 
 export const formatSetPace = (set: Partial<Set>): string | undefined => {
