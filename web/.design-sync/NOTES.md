@@ -24,13 +24,13 @@ Vite with the app's PostCSS/Tailwind config, then `tsc --emitDeclarationOnly`.
 ## Tailwind quirks this build works around
 
 - **`@apply` expands only on a CSS Module's first encounter per build.**
-  `AppIconButton.module.css` is imported by two components, so one copy comes
-  through raw. In the app that copy is a harmless duplicate of an
-  already-expanded rule in `index.css`; in a single-file library build it is the
-  only copy, and the component renders unstyled. `build-ds.mjs` re-runs Tailwind
-  over the compiled sheet and fails the build if any `@apply` survives.
-  **This is latent in the app's own build too** — `dist/assets/DropdownButton-*.css`
-  ships the unexpanded copy today.
+  A module reached twice — `DropdownButton.module.css` used to `composes` from
+  `AppIconButton.module.css` — ships its second copy raw. In the app that copy
+  was a harmless duplicate of an already-expanded rule in `index.css`; in a
+  single-file library build it is the only copy, and the component renders
+  unstyled. `build-ds.mjs` re-runs Tailwind over the compiled sheet and fails
+  the build if any `@apply` survives, and the app's `vite.config.ts` fails its
+  own build the same way.
 - **Component CSS defines no tokens.** Under `@reference` Tailwind emits
   `var(--x, fallback)` and no `:root` block, so the app's compiled `main.css`
   (tokens, base rules, utilities) is concatenated ahead of it into `ds.css`.

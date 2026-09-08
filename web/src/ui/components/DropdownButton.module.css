@@ -1,16 +1,5 @@
 @reference '../../assets/base.css';
 
-/* The same square the home search and the notification bell are, composed
-   from the one definition rather than restated here — headlessui renders the
-   trigger itself, so this is how it wears AppIconButton's clothes. */
-.menuTrigger {
-  composes: iconButton sm raised from './AppIconButton.module.css';
-}
-
-.menuTrigger svg {
-  @apply size-5;
-}
-
 .menuItems {
   @apply absolute right-0 z-50 mt-2 w-48 origin-top-right space-y-1 rounded-control border border-border bg-surface p-1.5 shadow-overlay focus:outline-none;
 }
