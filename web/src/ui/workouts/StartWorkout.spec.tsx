@@ -28,6 +28,8 @@ vi.mock('@capacitor/core', async (importOriginal) => {
     Capacitor: { ...actual.Capacitor, isNativePlatform: () => native.enabled },
   }
 })
+const haptics = vi.hoisted(() => ({ vibrateRestOver: vi.fn() }))
+vi.mock('@/native/haptics', () => haptics)
 vi.mock('@/native/timedCircuit', () => ({
   timedCircuit: {
     start: vi.fn(),
@@ -209,6 +211,7 @@ describe('StartWorkout', () => {
     vi.setSystemTime(now)
 
     Object.values(mocked).forEach((mock) => mock.mockReset())
+    haptics.vibrateRestOver.mockReset()
     mocked.getCurrentUser.mockResolvedValue(currentUser(WeightUnit.KILOGRAMS))
     mocked.getRoutine.mockResolvedValue(routineOf('Push Day'))
     mocked.getPreviousWorkoutSets.mockResolvedValue(
@@ -673,6 +676,59 @@ describe('StartWorkout', () => {
 
       expect(restBanner()).not.toBeInTheDocument()
       expect(useWorkoutStore.getState().workouts[routineID]?.restTimerEndsAt).toBeUndefined()
+    })
+
+    // Someone resting is looking at the room, not the screen, so the rest
+    // running out is felt in the hand rather than only seen.
+    test('vibrates once when the rest runs out', async () => {
+      const endsAt = new Date(now.getTime() + 2_000)
+      useWorkoutStore.setState({
+        workouts: {
+          [routineID]: {
+            startedAt: now.toISOString(),
+            restTimerEndsAt: endsAt.toISOString(),
+            restTimerTotalSeconds: 90,
+          },
+        },
+      })
+      await renderWorkout()
+
+      act(() => {
+        vi.advanceTimersByTime(5_000)
+      })
+
+      expect(haptics.vibrateRestOver).toHaveBeenCalledTimes(1)
+      expect(haptics.vibrateRestOver).toHaveBeenCalledWith(endsAt.getTime())
+    })
+
+    // Every other way a rest ends is the athlete's own doing.
+    test('stays still when the rest is extended, skipped or the workout ends', async () => {
+      const user = userEvent.setup()
+      await renderWorkout()
+      await logFirstSet(user)
+
+      await user.click(within(restBanner()!).getByRole('button', { name: '+30 sec' }))
+      await user.click(within(restBanner()!).getByRole('button', { name: 'Skip' }))
+      expect(restBanner()).not.toBeInTheDocument()
+
+      await user.type(
+        await screen.findByRole('textbox', { name: 'Bench Press set 2 weight' }),
+        '80',
+      )
+      await user.type(setField('Bench Press set 2 reps'), '8')
+      expect(restBanner()).toBeInTheDocument()
+      await user.click(primaryAction())
+      await user.type(await screen.findByRole('textbox', { name: 'Squat set 1 weight' }), '100')
+      await user.type(setField('Squat set 1 reps'), '5')
+      await user.click(screen.getAllByRole('button', { name: 'Finish workout' })[0])
+      await user.click(screen.getByRole('button', { name: 'Finish and save' }))
+      await waitFor(() => expect(mocked.createWorkout).toHaveBeenCalled())
+
+      act(() => {
+        vi.advanceTimersByTime(100_000)
+      })
+
+      expect(haptics.vibrateRestOver).not.toHaveBeenCalled()
     })
 
     // Nothing behind this station says how long it rests — a quick workout, or

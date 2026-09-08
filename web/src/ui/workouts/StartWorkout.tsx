@@ -12,6 +12,7 @@ import type { RefObject } from 'react'
 
 import { create } from '@bufbuild/protobuf'
 import { Capacitor } from '@capacitor/core'
+import { vibrateRestOver } from '@/native/haptics'
 import { timedCircuit } from '@/native/timedCircuit'
 import { pacingFor, paceReferenceRequested } from '@/utils/pacing'
 import { circuitPhases, parseRecording, type Recording } from '@/utils/timedCircuit'
@@ -499,6 +500,7 @@ export const StartWorkout = () => {
 
     retiredRest.current = restEndsAtMs
     useWorkoutStore.getState().setRestTimer(routineID)
+    vibrateRestOver(restEndsAtMs)
     focusNextSetInput(panelRef.current, suppressFocusAutofill)
   }, [now, restEndsAtMs, routineID])
 

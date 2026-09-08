@@ -31,6 +31,7 @@
     "@capacitor-community/keep-awake": "8.0.1",
     "@capacitor/app": "8.1.1",
     "@capacitor/core": "8.5.0",
+    "@capacitor/haptics": "8.0.2",
     "@capacitor/keyboard": "8.0.5",
     "@capacitor/preferences": "8.0.1",
     "@capacitor/splash-screen": "8.0.2",

@@ -3,6 +3,9 @@
 import { act, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
+const haptics = vi.hoisted(() => ({ vibrateRestOver: vi.fn() }))
+vi.mock('@/native/haptics', () => haptics)
+
 import { quickWorkoutRoutineID, useWorkoutStore } from '@/stores/workout'
 import { renderWithProviders } from '@/ui/testing'
 import { AppRestTimerBanner } from './AppRestTimerBanner'
@@ -30,6 +33,7 @@ describe('AppRestTimerBanner', () => {
     vi.useFakeTimers({ shouldAdvanceTime: true })
     vi.setSystemTime(now)
     useWorkoutStore.setState({ workouts: {} })
+    haptics.vibrateRestOver.mockReset()
   })
 
   afterEach(() => {
@@ -123,5 +127,44 @@ describe('AppRestTimerBanner', () => {
 
     expect(setRestTimer).toHaveBeenCalledTimes(1)
     setRestTimer.mockRestore()
+  })
+
+  // The athlete is looking at the room, not the screen: a rest that ends
+  // without a physical signal has not ended as far as they are concerned.
+  test('vibrates once when the rest runs out', () => {
+    resting(1)
+    renderWithProviders(<AppRestTimerBanner />, { route: '/home' })
+
+    act(() => {
+      vi.advanceTimersByTime(5000)
+    })
+
+    expect(haptics.vibrateRestOver).toHaveBeenCalledTimes(1)
+    expect(haptics.vibrateRestOver).toHaveBeenCalledWith(Date.parse(inSeconds(1)))
+  })
+
+  test('stays still while the rest is running', () => {
+    resting(90)
+    renderWithProviders(<AppRestTimerBanner />, { route: '/home' })
+
+    act(() => {
+      vi.advanceTimersByTime(5000)
+    })
+
+    expect(haptics.vibrateRestOver).not.toHaveBeenCalled()
+  })
+
+  // Clearing the timer from elsewhere — a skip on the workout screen, or the
+  // workout finishing — is not the rest running out.
+  test('stays still when the rest is cleared before it runs out', () => {
+    resting(90)
+    renderWithProviders(<AppRestTimerBanner />, { route: '/home' })
+
+    act(() => {
+      useWorkoutStore.getState().setRestTimer(quickWorkoutRoutineID)
+      vi.advanceTimersByTime(95_000)
+    })
+
+    expect(haptics.vibrateRestOver).not.toHaveBeenCalled()
   })
 })

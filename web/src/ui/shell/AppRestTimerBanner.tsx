@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useLocation, useNavigate } from 'react-router-dom'
 
+import { vibrateRestOver } from '@/native/haptics'
 import { isFocusedShellPath } from '@/router/routes'
 import { useWorkoutStore } from '@/stores/workout'
 import { AppButton } from '@/ui/components/AppButton'
@@ -50,6 +51,7 @@ export const AppRestTimerBanner = () => {
 
     retired.current = endsAtMs
     useWorkoutStore.getState().setRestTimer(workoutId)
+    vibrateRestOver(endsAtMs)
     if (away) void navigate(savedHref)
   }, [now, endsAtMs, workoutId, away, savedHref, navigate])
 
