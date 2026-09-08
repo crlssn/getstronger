@@ -1268,6 +1268,18 @@ describe('StartWorkout', () => {
       expect(screen.queryByRole('button', { name: 'Start live session' })).not.toBeInTheDocument()
     })
 
+    // The session chrome pulls itself up over whatever precedes it, so the
+    // button lives inside the chrome, as a row under the header, rather than
+    // above it where the chrome covered its lower half.
+    test('is offered from the session chrome, under its header', async () => {
+      await renderWorkout()
+
+      const header = screen.getByRole('heading', { level: 1 }).closest('header')!
+      expect(header.parentElement).toContainElement(
+        screen.getByRole('button', { name: 'Start guided circuit' }),
+      )
+    })
+
     test('picks up a finished recording, saves it with the workout, and clears it', async () => {
       const user = userEvent.setup()
       vi.mocked(timedCircuit.read).mockResolvedValue({ recording: finishedRecording() })

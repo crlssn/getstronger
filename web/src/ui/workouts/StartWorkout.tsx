@@ -1244,13 +1244,6 @@ export const StartWorkout = () => {
       {/* Header and rest bar are one piece of chrome, pinned together: the
           bar used to stick at the same offset with a higher z-index, so it
           rode up over the session title on scroll. */}
-      {Capacitor.isNativePlatform() &&
-        phases.length > 0 &&
-        (!workout || !hasLoggedSet(workout)) && (
-          <AppButton type="button" colour="primary" onClick={() => setGuided(true)}>
-            {t('timedCircuit.start')}
-          </AppButton>
-        )}
       <div className={styles.sessionChrome}>
         <header className={styles.workoutHeader}>
           <div className={styles.workoutHeaderInner}>
@@ -1290,6 +1283,18 @@ export const StartWorkout = () => {
             )}
           </div>
         </header>
+
+        {/* Inside the chrome rather than above it: the chrome pulls itself up
+            over whatever precedes it, and covered half of this button. */}
+        {Capacitor.isNativePlatform() &&
+          phases.length > 0 &&
+          (!workout || !hasLoggedSet(workout)) && (
+            <div className={styles.recordDock}>
+              <AppButton type="button" colour="primary" onClick={() => setGuided(true)}>
+                {t('timedCircuit.start')}
+              </AppButton>
+            </div>
+          )}
 
         {restSeconds > 0 && (
           <div className={styles.restDock}>
