@@ -621,6 +621,20 @@ func (s *userSuite) TestFollowUser() {
 		s.Require().Equal(connect.CodeNotFound, connect.CodeOf(err))
 		s.Require().Zero(s.followEvents(follower.ID, stranger))
 	})
+
+	// The follower is the authenticated account, so its row being gone is
+	// nothing the caller did and nothing they are told about.
+	s.Run("err_follower_account_missing_is_internal", func() {
+		followee := s.factory.NewUser()
+		ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
+		ctx = xcontext.WithUserID(ctx, uuid.Must(uuid.NewV4()))
+
+		res, err := s.handler.FollowUser(ctx, &connect.Request[v1.FollowUserRequest]{
+			Msg: &v1.FollowUserRequest{FollowId: followee.ID.String()},
+		})
+		s.Require().Nil(res)
+		s.Require().Equal(connect.CodeInternal, connect.CodeOf(err))
+	})
 }
 
 // followEvents counts the follow announcements persisted for one pair, which

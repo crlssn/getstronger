@@ -2362,6 +2362,16 @@ func (s *repoSuite) TestFollowRefusals() {
 		FolloweeID: uuid.Must(uuid.NewV4()),
 	})
 	s.Require().ErrorIs(err, sql.ErrNoRows)
+
+	// Only the followee is looked up on the caller's behalf: a follower with
+	// no account is the store's problem, not a not-found answer.
+	err = s.repo.Follow(ctx, repo.FollowParams{
+		FollowerID: uuid.Must(uuid.NewV4()),
+		FolloweeID: followee.ID,
+	})
+	s.Require().Error(err)
+	s.Require().NotErrorIs(err, sql.ErrNoRows)
+	s.Require().NotErrorIs(err, account.ErrAlreadyFollowing)
 }
 
 func (s *repoSuite) TestListFollowersAndFollowees() {
