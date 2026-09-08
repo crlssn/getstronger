@@ -126,6 +126,28 @@ describe('RecordSession', () => {
     expect(screen.queryByText('What was this?')).not.toBeInTheDocument()
   })
 
+  it('tries a refused save once per ended recording, then only when asked', async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
+    vi.mocked(getExercise).mockResolvedValue({ exercise: bike } as never)
+    // The phone's plugin crosses a bridge, so every read answers with a freshly
+    // deserialised recording rather than the same object.
+    vi.mocked(timedCircuit.read).mockImplementation(() =>
+      Promise.resolve({ recording: recorded({ endedAt: 1_120_000 }) }),
+    )
+    vi.mocked(createWorkout).mockRejectedValue(new Error('exercise deleted'))
+    renderWithProviders(<RecordSession />, { route: '/record?exercise=bike' })
+
+    await waitFor(() => expect(createWorkout).toHaveBeenCalledOnce())
+    expect(await screen.findByRole('alert')).toHaveTextContent('The session could not be saved')
+    await vi.advanceTimersByTimeAsync(5000)
+    expect(createWorkout).toHaveBeenCalledOnce()
+
+    vi.mocked(createWorkout).mockResolvedValue({ workoutId: 'saved' } as never)
+    await user.click(screen.getByRole('button', { name: 'Try again' }))
+    await waitFor(() => expect(createWorkout).toHaveBeenCalledTimes(2))
+    await waitFor(() => expect(navigate).toHaveBeenCalledWith('/workouts/saved', { replace: true }))
+  })
+
   it('reads location refusal as a reason rather than as a recording failure', async () => {
     const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
     vi.mocked(timedCircuit.start).mockRejectedValue(new Error('LOCATION_DENIED'))
