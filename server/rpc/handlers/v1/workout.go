@@ -352,7 +352,7 @@ func (h *workoutHandler) DeleteWorkout(ctx context.Context, req *connect.Request
 		repo.DeleteWorkoutWithUserID(userID),
 	); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			log.Error("Workout not found")
+			log.Warn("Workout not found for deletion", zap.Error(err))
 			return nil, connect.NewError(connect.CodeFailedPrecondition, nil)
 		}
 
@@ -469,7 +469,7 @@ func (h *workoutHandler) workoutToUpdate(ctx context.Context, workoutID, userID 
 	}
 
 	if workout.UserID != userID {
-		log.Error("Workout does not belong to user")
+		log.Warn("Workout does not belong to user")
 		return nil, connect.NewError(connect.CodePermissionDenied, nil)
 	}
 

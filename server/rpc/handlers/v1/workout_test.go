@@ -11,6 +11,7 @@ import (
 	"github.com/gofrs/uuid/v5"
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zaptest/observer"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/stephenafamo/bob"
@@ -759,7 +760,8 @@ func (s *workoutSuite) TestDeleteWorkout() {
 	})
 
 	s.Run("err_workout_not_found", func() {
-		ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
+		core, logs := observer.New(zap.DebugLevel)
+		ctx := xcontext.WithLogger(context.Background(), zap.New(core))
 		ctx = xcontext.WithUserID(ctx, uuid.Must(uuid.NewV4()))
 
 		res, err := s.handler.DeleteWorkout(ctx, connect.NewRequest(&apiv1.DeleteWorkoutRequest{
@@ -767,6 +769,10 @@ func (s *workoutSuite) TestDeleteWorkout() {
 		}))
 		s.Require().Nil(res)
 		s.Require().Equal(connect.NewError(connect.CodeFailedPrecondition, nil).Error(), err.Error())
+
+		// A missing workout is the client's mistake, logged as one rather than as a failure.
+		s.Require().Empty(logs.FilterLevelExact(zap.ErrorLevel).All())
+		s.Require().Len(logs.FilterMessage("Workout not found for deletion").FilterLevelExact(zap.WarnLevel).All(), 1)
 	})
 }
 
@@ -897,7 +903,8 @@ func (s *workoutSuite) TestUpdateWorkout() {
 		intruder := s.factory.NewUser()
 		workout := s.factory.NewWorkout(factory.WorkoutUserID(owner.ID), factory.WorkoutName("Untouched"))
 
-		ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
+		core, logs := observer.New(zap.DebugLevel)
+		ctx := xcontext.WithLogger(context.Background(), zap.New(core))
 		ctx = xcontext.WithUserID(ctx, intruder.ID)
 
 		res, err := s.handler.UpdateWorkout(ctx, connect.NewRequest(&apiv1.UpdateWorkoutRequest{
@@ -910,6 +917,10 @@ func (s *workoutSuite) TestUpdateWorkout() {
 		}))
 		s.Require().Nil(res)
 		s.Require().Equal(connect.NewError(connect.CodePermissionDenied, nil).Error(), err.Error())
+
+		// A refusal is the client's mistake, logged as one rather than as a failure.
+		s.Require().Empty(logs.FilterLevelExact(zap.ErrorLevel).All())
+		s.Require().Len(logs.FilterMessage("Workout does not belong to user").FilterLevelExact(zap.WarnLevel).All(), 1)
 
 		unchanged, err := s.repo.GetWorkout(context.Background(), repo.GetWorkoutWithID(workout.ID))
 		s.Require().NoError(err)
