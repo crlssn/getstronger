@@ -1,16 +1,15 @@
 import { describe, expect, it } from 'vitest'
-import { DistanceUnit, ExerciseMetric } from '@/proto/api/v1/shared_pb'
+import { DistanceUnit, ExerciseMetric, WeightUnit } from '@/proto/api/v1/shared_pb'
 import {
-  formatDistanceDisplay,
   formatDistanceIn,
   formatDurationDisplay,
   formatExerciseSet,
   formatMeasurementDuration,
-  formatPaceDisplay,
   formatSetPace,
   isDistanceTimeExercise,
   paceIn,
   spokenDuration,
+  weightIn,
 } from '@/utils/exerciseMeasurements'
 
 const distanceTime = { metrics: [ExerciseMetric.DISTANCE, ExerciseMetric.TIME] }
@@ -33,15 +32,11 @@ describe('formatDurationDisplay', () => {
   })
 })
 
-describe('formatDistanceDisplay', () => {
-  it('shows a sub-kilometre distance in metres', () => {
-    expect(formatDistanceDisplay(0.744)).toBe('744 m')
-    expect(formatDistanceDisplay(0)).toBe('0 m')
-  })
-
-  it('keeps kilometres from one up', () => {
-    expect(formatDistanceDisplay(1)).toBe('1 km')
-    expect(formatDistanceDisplay(5.25)).toBe('5.25 km')
+describe('weightIn', () => {
+  it("keeps the figure apart from its unit and follows the athlete's unit", () => {
+    expect(weightIn(100)).toEqual({ value: '100', unit: 'kg' })
+    expect(weightIn(100, WeightUnit.KILOGRAMS)).toEqual({ value: '100', unit: 'kg' })
+    expect(weightIn(106.59, WeightUnit.POUNDS)).toEqual({ value: '235', unit: 'lbs' })
   })
 })
 
@@ -65,13 +60,6 @@ describe('formatDistanceIn', () => {
 
   it('falls back to kilometres when no unit was chosen', () => {
     expect(formatDistanceIn(5.25)).toBe('5.25 km')
-  })
-})
-
-describe('formatPaceDisplay', () => {
-  it('writes seconds per kilometre as m:ss min/km', () => {
-    expect(formatPaceDisplay(300)).toBe('5:00 min/km')
-    expect(formatPaceDisplay(324.3)).toBe('5:24 min/km')
   })
 })
 

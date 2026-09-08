@@ -6,7 +6,7 @@ import { create } from '@bufbuild/protobuf'
 import { timestampFromDate } from '@bufbuild/protobuf/wkt'
 import { screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { describe, expect, test, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 // Chart.js draws to a canvas jsdom does not implement, so the chart reports the
 // series it was handed instead of painting it.
@@ -20,7 +20,8 @@ vi.mock('react-chartjs-2', () => ({
   ),
 }))
 
-import { ExerciseMetric, SetSchema, WeightUnit } from '@/proto/api/v1/shared_pb'
+import { DistanceUnit, ExerciseMetric, SetSchema, WeightUnit } from '@/proto/api/v1/shared_pb'
+import { usePreferencesStore } from '@/stores/preferences'
 import { renderWithProviders } from '@/ui/testing'
 import { ExerciseChart } from './ExerciseChart'
 
@@ -32,6 +33,7 @@ interface SetFields {
   distance?: number
   durationSeconds?: number
   weightUnit?: WeightUnit
+  distanceUnit?: DistanceUnit
 }
 
 const set = (createdAt: string, fields: SetFields = {}) =>
@@ -41,8 +43,12 @@ const set = (createdAt: string, fields: SetFields = {}) =>
     distance: fields.distance,
     durationSeconds: fields.durationSeconds,
     weightUnit: fields.weightUnit,
+    distanceUnit: fields.distanceUnit,
     metadata: { createdAt: timestampFromDate(new Date(createdAt)) },
   })
+
+const readsIn = (weightUnit: WeightUnit, distanceUnit: DistanceUnit) =>
+  usePreferencesStore.setState({ weightUnit, distanceUnit })
 
 const lift = { metrics: [ExerciseMetric.WEIGHT, ExerciseMetric.REPS] }
 const cardio = { metrics: [ExerciseMetric.DISTANCE, ExerciseMetric.TIME] }
@@ -61,6 +67,10 @@ const values = () =>
   JSON.parse(screen.getByRole('img').getAttribute('data-values') ?? '[]') as number[]
 
 describe('ExerciseChart', () => {
+  beforeEach(() => {
+    readsIn(WeightUnit.KILOGRAMS, DistanceUnit.KILOMETERS)
+  })
+
   // The measures on offer follow what the exercise records, so a run is never
   // asked about its 1RM.
   test('offers a lift the measures a lift has', () => {
@@ -155,6 +165,50 @@ describe('ExerciseChart', () => {
 
     // The latest interval covered 0.74 km in 4 minutes: 5:24 min/km.
     expect(screen.getByText('5:24 min/km')).toBeInTheDocument()
+  })
+
+  // The set list under the chart reads every set in the athlete's unit, so a
+  // chart still in kilograms gives the same screen two answers.
+  test("reads a lift in the athlete's weight unit", async () => {
+    readsIn(WeightUnit.POUNDS, DistanceUnit.KILOMETERS)
+    const lifts = [
+      set('2026-08-13T08:00:00Z', { weight: 225, reps: 5, weightUnit: WeightUnit.POUNDS }),
+      set('2026-08-14T08:00:00Z', { weight: 235, reps: 5, weightUnit: WeightUnit.POUNDS }),
+    ]
+    renderWithProviders(<ExerciseChart sets={lifts} exercise={lift} />)
+
+    expect(metrics()).toEqual(['1RM', 'lbs', 'Reps', 'Vol'])
+    // 235 lbs × 5 by Epley is a shade over 274 lbs, not the 124 kg it is stored as.
+    expect(screen.getByText('274 lbs')).toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole('button', { name: 'lbs' }))
+    expect(screen.getByText('235 lbs')).toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole('button', { name: 'Vol' }))
+    expect(screen.getByText('1,175 lbs')).toBeInTheDocument()
+  })
+
+  test("reads a run in the athlete's distance unit", async () => {
+    readsIn(WeightUnit.KILOGRAMS, DistanceUnit.MILES)
+    const runs = [
+      set('2026-08-13T08:00:00Z', {
+        distance: 3,
+        durationSeconds: 1500,
+        distanceUnit: DistanceUnit.MILES,
+      }),
+      set('2026-08-14T08:00:00Z', {
+        distance: 4,
+        durationSeconds: 2000,
+        distanceUnit: DistanceUnit.MILES,
+      }),
+    ]
+    renderWithProviders(<ExerciseChart sets={runs} exercise={cardio} />)
+
+    expect(screen.getByText('4 mi')).toBeInTheDocument()
+
+    // 4 miles in 33 min 20 sec is 8:20 min/mi — the pace the set list shows.
+    await userEvent.click(screen.getByRole('button', { name: 'Pace' }))
+    expect(screen.getByText('8:20 min/mi')).toBeInTheDocument()
   })
 
   test('reports the move from the first day to the last', () => {
