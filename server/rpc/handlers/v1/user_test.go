@@ -11,6 +11,8 @@ import (
 	"connectrpc.com/connect"
 	"github.com/gofrs/uuid/v5"
 	"github.com/stephenafamo/bob"
+	"github.com/stephenafamo/bob/dialect/psql"
+	"github.com/stephenafamo/bob/dialect/psql/sm"
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/zap"
 
@@ -564,7 +566,10 @@ func (s *userSuite) TestFollowUser() {
 		}, 5*time.Second, 50*time.Millisecond)
 	})
 
-	s.Run("err_following_the_same_person_twice", func() {
+	// A double tap, or two devices, asks for a state the account is already in.
+	// That is answered as the success it is, and the follow is announced only
+	// the once it was recorded.
+	s.Run("ok_following_the_same_person_twice_announces_once", func() {
 		follower := s.factory.NewUser()
 		followee := s.factory.NewUser()
 		ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
@@ -577,21 +582,73 @@ func (s *userSuite) TestFollowUser() {
 		s.Require().NoError(err)
 
 		res, err := s.handler.FollowUser(ctx, req)
+		s.Require().NoError(err)
+		s.Require().NotNil(res)
+
+		followed, err := s.repo.IsUserFollowedByUserID(ctx, &account.User{ID: followee.ID}, follower.ID)
+		s.Require().NoError(err)
+		s.Require().True(followed)
+		s.Require().EqualValues(1, s.followEvents(follower.ID, followee.ID))
+	})
+
+	s.Run("err_following_yourself", func() {
+		user := s.factory.NewUser()
+		ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
+		ctx = xcontext.WithUserID(ctx, user.ID)
+
+		res, err := s.handler.FollowUser(ctx, &connect.Request[v1.FollowUserRequest]{
+			Msg: &v1.FollowUserRequest{FollowId: user.ID.String()},
+		})
 		s.Require().Nil(res)
-		s.Require().Equal(connect.NewError(connect.CodeInternal, nil).Error(), err.Error())
+		s.Require().Equal(connect.CodeInvalidArgument, connect.CodeOf(err))
+
+		followed, err := s.repo.IsUserFollowedByUserID(ctx, &account.User{ID: user.ID}, user.ID)
+		s.Require().NoError(err)
+		s.Require().False(followed)
+		s.Require().Zero(s.followEvents(user.ID, user.ID))
 	})
 
 	s.Run("err_following_somebody_who_does_not_exist", func() {
 		follower := s.factory.NewUser()
+		stranger := uuid.Must(uuid.NewV4())
 		ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
 		ctx = xcontext.WithUserID(ctx, follower.ID)
 
 		res, err := s.handler.FollowUser(ctx, &connect.Request[v1.FollowUserRequest]{
-			Msg: &v1.FollowUserRequest{FollowId: uuid.Must(uuid.NewV4()).String()},
+			Msg: &v1.FollowUserRequest{FollowId: stranger.String()},
 		})
 		s.Require().Nil(res)
-		s.Require().Equal(connect.NewError(connect.CodeInternal, nil).Error(), err.Error())
+		s.Require().Equal(connect.CodeNotFound, connect.CodeOf(err))
+		s.Require().Zero(s.followEvents(follower.ID, stranger))
 	})
+
+	// The follower is the authenticated account, so its row being gone is
+	// nothing the caller did and nothing they are told about.
+	s.Run("err_follower_account_missing_is_internal", func() {
+		followee := s.factory.NewUser()
+		ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
+		ctx = xcontext.WithUserID(ctx, uuid.Must(uuid.NewV4()))
+
+		res, err := s.handler.FollowUser(ctx, &connect.Request[v1.FollowUserRequest]{
+			Msg: &v1.FollowUserRequest{FollowId: followee.ID.String()},
+		})
+		s.Require().Nil(res)
+		s.Require().Equal(connect.CodeInternal, connect.CodeOf(err))
+	})
+}
+
+// followEvents counts the follow announcements persisted for one pair, which
+// is what the notification is written from: the suite's bus has no subscriber,
+// so an announcement never made is the only proof nobody would be told.
+func (s *userSuite) followEvents(followerID, followeeID uuid.UUID) int64 {
+	count, err := models.Events.Query(
+		models.SelectWhere.Events.Topic.EQ(events.TopicFollowedUser),
+		sm.Where(psql.Raw("payload ->> 'followerId' = ?", followerID)),
+		sm.Where(psql.Raw("payload ->> 'followeeId' = ?", followeeID)),
+	).Count(context.Background(), bob.NewDB(s.container.DB))
+	s.Require().NoError(err)
+
+	return count
 }
 
 func (s *userSuite) TestUnfollowUser() {

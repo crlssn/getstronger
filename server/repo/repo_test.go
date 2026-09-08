@@ -2339,6 +2339,41 @@ func (s *repoSuite) TestUpdateWorkout() {
 	}
 }
 
+// Postgres refuses both with a constraint violation; the store names each for
+// what it is, so a caller need never read a constraint name.
+func (s *repoSuite) TestFollowRefusals() {
+	ctx := context.Background()
+	follower := s.factory.NewUser()
+	followee := s.factory.NewUser()
+
+	s.Require().NoError(s.repo.Follow(ctx, repo.FollowParams{
+		FollowerID: follower.ID,
+		FolloweeID: followee.ID,
+	}))
+
+	err := s.repo.Follow(ctx, repo.FollowParams{
+		FollowerID: follower.ID,
+		FolloweeID: followee.ID,
+	})
+	s.Require().ErrorIs(err, account.ErrAlreadyFollowing)
+
+	err = s.repo.Follow(ctx, repo.FollowParams{
+		FollowerID: follower.ID,
+		FolloweeID: uuid.Must(uuid.NewV4()),
+	})
+	s.Require().ErrorIs(err, sql.ErrNoRows)
+
+	// Only the followee is looked up on the caller's behalf: a follower with
+	// no account is the store's problem, not a not-found answer.
+	err = s.repo.Follow(ctx, repo.FollowParams{
+		FollowerID: uuid.Must(uuid.NewV4()),
+		FolloweeID: followee.ID,
+	})
+	s.Require().Error(err)
+	s.Require().NotErrorIs(err, sql.ErrNoRows)
+	s.Require().NotErrorIs(err, account.ErrAlreadyFollowing)
+}
+
 func (s *repoSuite) TestListFollowersAndFollowees() {
 	ctx := context.Background()
 	follower := s.factory.NewUser()
