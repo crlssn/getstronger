@@ -325,6 +325,13 @@ func uniqueViolation(err error, name string) bool {
 	return errors.As(err, &pgErr) && pgErr.Code == "23505" && pgErr.ConstraintName == name
 }
 
+// foreignKeyViolation reports whether err is Postgres refusing a reference
+// under the named foreign key, which is how a row names something not there.
+func foreignKeyViolation(err error, name string) bool {
+	var pgErr *pgconn.PgError
+	return errors.As(err, &pgErr) && pgErr.Code == "23503" && pgErr.ConstraintName == name
+}
+
 type UpdateUserOpt func() (columns, error)
 
 func UpdateUserUsername(username string) UpdateUserOpt {
@@ -1381,15 +1388,32 @@ type FollowParams struct {
 	FolloweeID uuid.UUID
 }
 
+// Follow records one athlete following another. A follow already recorded is
+// account.ErrAlreadyFollowing, and a followee no account answers to is
+// sql.ErrNoRows.
 func (r *Repo) Follow(ctx context.Context, p FollowParams) error {
 	if _, err := models.Followers.Insert(&models.FollowerSetter{
 		FollowerID: omit.From(p.FollowerID),
 		FolloweeID: omit.From(p.FolloweeID),
 	}).Exec(ctx, r.bobExec()); err != nil {
-		return fmt.Errorf("follow add: %w", err)
+		return fmt.Errorf("follow add: %w", translateFollowError(err))
 	}
 
 	return nil
+}
+
+// Postgres refuses both as constraint violations: the primary key is the one
+// follow an athlete gets per account, and the followee's foreign key is
+// whether that account exists at all.
+func translateFollowError(err error) error {
+	if uniqueViolation(err, "followers_pkey") {
+		return account.ErrAlreadyFollowing
+	}
+	if foreignKeyViolation(err, "followers_followee_id_fkey") {
+		return sql.ErrNoRows
+	}
+
+	return err
 }
 
 type UnfollowParams struct {

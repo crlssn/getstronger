@@ -19,6 +19,8 @@ var (
 	ErrEmailAlreadyRegistered = errors.New("email already exists")
 	// ErrUsernameTaken reports a username another athlete already answers to.
 	ErrUsernameTaken = errors.New("username already exists")
+	// ErrAlreadyFollowing reports a follow the athlete already has.
+	ErrAlreadyFollowing = errors.New("already following")
 	// ErrPasswordConfirmationMismatch reports a password typed twice, differently.
 	ErrPasswordConfirmationMismatch = errors.New("passwords do not match")
 )

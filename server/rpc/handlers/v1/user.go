@@ -116,11 +116,29 @@ func (h *userHandler) FollowUser(ctx context.Context, req *connect.Request[apiv1
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInvalidArgument, nil)
 	}
+	if followID == userID {
+		log.Warn("Self-follow refused")
+		return nil, connect.NewError(connect.CodeInvalidArgument, nil)
+	}
 
 	if err = h.repo.Follow(ctx, repo.FollowParams{
 		FollowerID: userID,
 		FolloweeID: followID,
 	}); err != nil {
+		switch {
+		case errors.Is(err, account.ErrAlreadyFollowing):
+			// The state asked for is the state there is, and the follow was
+			// announced when it was recorded: a repeat must not tell the
+			// followee twice.
+			log.Warn("Follow already recorded")
+			return &connect.Response[apiv1.FollowUserResponse]{
+				Msg: &apiv1.FollowUserResponse{},
+			}, nil
+		case errors.Is(err, sql.ErrNoRows):
+			log.Warn("User to follow not found", zap.Error(err))
+			return nil, connect.NewError(connect.CodeNotFound, nil)
+		}
+
 		log.Error("Follow user", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
