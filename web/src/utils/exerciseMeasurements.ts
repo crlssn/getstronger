@@ -1,5 +1,11 @@
-import { DistanceUnit, ExerciseMetric, type Exercise, type Set } from '@/proto/api/v1/shared_pb'
-import { weightUnitLabel } from '@/utils/weightUnits'
+import {
+  DistanceUnit,
+  ExerciseMetric,
+  WeightUnit,
+  type Exercise,
+  type Set,
+} from '@/proto/api/v1/shared_pb'
+import { convertWeight, normalizeWeightUnit, weightUnitLabel } from '@/utils/weightUnits'
 import {
   convertDistance,
   distanceUnitLabel,
@@ -106,13 +112,27 @@ export const isDistanceTimeExercise = (exercise?: Pick<Exercise, 'metrics'>) => 
 
 // A stored kilometre value under one reads better in metres: "744 m", where
 // "0.74 km" makes the reader do the conversion.
-export const formatDistanceDisplay = (kilometers: number) =>
+const formatDistanceDisplay = (kilometers: number) =>
   kilometers < 1 ? `${formatNumber(kilometers * 1000)} m` : `${formatNumber(kilometers, 2)} km`
 
 /** A figure and what it was measured in, for a caller that sets them apart. */
 export interface Measured {
   value: string
   unit: string
+}
+
+/**
+ * A kilogram figure in the unit the athlete reads in, kept in two parts.
+ *
+ * Trends are computed in kilograms whatever unit each set was logged in, so a
+ * figure that leaves the trend for the screen goes through here.
+ */
+export const weightIn = (kilograms: number, unit?: WeightUnit): Measured => {
+  const preferred = normalizeWeightUnit(unit)
+  return {
+    value: formatNumber(convertWeight(kilograms, WeightUnit.KILOGRAMS, preferred)),
+    unit: weightUnitLabel(preferred),
+  }
 }
 
 /**
@@ -154,14 +174,6 @@ export const distanceIn = (
 export const formatDistanceIn = (kilometers: number, unit?: DistanceUnit) => {
   const { value, unit: label } = distanceIn(kilometers, unit)
   return `${value} ${label}`
-}
-
-/** Pace the way runners say it: "5:24 min/km", from seconds per kilometre. */
-export const formatPaceDisplay = (secondsPerKilometer: number) => {
-  const rounded = Math.round(secondsPerKilometer)
-  const minutes = Math.floor(rounded / 60)
-  const seconds = rounded % 60
-  return `${minutes}:${seconds.toString().padStart(2, '0')} min/km`
 }
 
 /**

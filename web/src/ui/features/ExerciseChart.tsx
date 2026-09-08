@@ -17,18 +17,21 @@ import { useTranslation } from 'react-i18next'
 
 import { ExerciseMetric } from '@/proto/api/v1/shared_pb'
 import { selectTheme, useLocaleStore } from '@/stores/locale'
+import { usePreferencesStore } from '@/stores/preferences'
 import { borderColor, chartFillColor, inkColor, subtleColor, surfaceColor } from '@/ui/chartTokens'
 import { AppSegmented } from '@/ui/components/AppSegmented'
 import {
   exerciseMetrics,
-  formatDistanceDisplay,
+  formatDistanceIn,
   formatDurationDisplay,
-  formatPaceDisplay,
   isDistanceTimeExercise,
+  paceIn,
+  weightIn,
 } from '@/utils/exerciseMeasurements'
 import { trendByDay, trendBySet, trendChange } from '@/utils/exerciseTrend'
 import { formatNumber } from '@/utils/numbers'
 import { usePrefersReducedMotion } from '@/utils/usePrefersReducedMotion'
+import { weightUnitLabel } from '@/utils/weightUnits'
 import styles from './ExerciseChart.module.css'
 
 ChartJS.register(Tooltip, LineElement, CategoryScale, LinearScale, Filler, PointElement)
@@ -42,6 +45,12 @@ interface Props {
 export const ExerciseChart = ({ sets, exercise }: Props) => {
   const { t } = useTranslation()
 
+  // The trend is computed in kilograms and kilometres whatever unit each set
+  // was logged in; the set list under the chart reads in the athlete's, so
+  // every figure shown here is converted back to it.
+  const weightUnit = usePreferencesStore((state) => state.weightUnit)
+  const distanceUnit = usePreferencesStore((state) => state.distanceUnit)
+
   const selected = exerciseMetrics(exercise)
   const hasWeightAndReps =
     selected.includes(ExerciseMetric.WEIGHT) && selected.includes(ExerciseMetric.REPS)
@@ -52,7 +61,7 @@ export const ExerciseChart = ({ sets, exercise }: Props) => {
   const options: { key: TrendMetric; label: string }[] = [
     ...(hasWeightAndReps ? [{ key: 'oneRm' as const, label: t('exercise.chart.oneRmShort') }] : []),
     ...(selected.includes(ExerciseMetric.WEIGHT)
-      ? [{ key: 'weight' as const, label: t('common.kg') }]
+      ? [{ key: 'weight' as const, label: weightUnitLabel(weightUnit) }]
       : []),
     ...(selected.includes(ExerciseMetric.REPS)
       ? [{ key: 'reps' as const, label: t('common.reps') }]
@@ -75,14 +84,14 @@ export const ExerciseChart = ({ sets, exercise }: Props) => {
 
   const [metric, setMetric] = useState<TrendMetric>(options[0]?.key ?? 'weight')
 
-  const details: Record<TrendMetric, { heading: string; unit: string }> = {
-    oneRm: { heading: t('exercise.estimated1rm'), unit: t('common.kg') },
-    weight: { heading: t('exercise.chart.workingWeight'), unit: t('common.kg') },
-    volume: { heading: t('exercise.chart.dailyVolume'), unit: t('common.kg') },
-    reps: { heading: t('exercise.chart.mostReps'), unit: t('common.reps').toLocaleLowerCase() },
-    distance: { heading: t('common.distance'), unit: '' },
-    durationSeconds: { heading: t('common.time'), unit: '' },
-    pace: { heading: t('common.pace'), unit: '' },
+  const headings: Record<TrendMetric, string> = {
+    oneRm: t('exercise.estimated1rm'),
+    weight: t('exercise.chart.workingWeight'),
+    volume: t('exercise.chart.dailyVolume'),
+    reps: t('exercise.chart.mostReps'),
+    distance: t('common.distance'),
+    durationSeconds: t('common.time'),
+    pace: t('common.pace'),
   }
 
   const stillness = usePrefersReducedMotion()
@@ -102,14 +111,24 @@ export const ExerciseChart = ({ sets, exercise }: Props) => {
 
   const formatValue = (value: number) => {
     switch (metric) {
+      case 'oneRm':
+      case 'weight':
+      case 'volume': {
+        const weight = weightIn(value, weightUnit)
+        return `${weight.value} ${weight.unit}`
+      }
+      case 'reps':
+        return `${formatNumber(value)} ${t('common.reps').toLocaleLowerCase()}`
       case 'durationSeconds':
         return formatDurationDisplay(value)
       case 'distance':
-        return formatDistanceDisplay(value)
-      case 'pace':
-        return formatPaceDisplay(value)
-      default:
-        return `${formatNumber(value)} ${details[metric].unit}`
+        return formatDistanceIn(value, distanceUnit)
+      // Written the way the set list writes it, "8:20 min/mi", so the two
+      // read as one figure.
+      case 'pace': {
+        const pace = paceIn(value, distanceUnit)
+        return `${pace.value} min${pace.unit}`
+      }
     }
   }
 
@@ -161,7 +180,7 @@ export const ExerciseChart = ({ sets, exercise }: Props) => {
         callbacks: {
           // With no y axis to read against, the tooltip formats the value the
           // same way as the headline.
-          label: (item) => `${details[metric].heading}: ${formatValue(item.parsed.y ?? 0)}`,
+          label: (item) => `${headings[metric]}: ${formatValue(item.parsed.y ?? 0)}`,
         },
       },
     },
@@ -171,7 +190,7 @@ export const ExerciseChart = ({ sets, exercise }: Props) => {
     <div className={styles.exerciseChart}>
       <header>
         <div>
-          <small>{details[metric].heading}</small>
+          <small>{headings[metric]}</small>
           <strong>{formattedLatest}</strong>
         </div>
         {change && <span>{change}</span>}
@@ -198,7 +217,7 @@ export const ExerciseChart = ({ sets, exercise }: Props) => {
                   borderWidth: 2,
                   data: values,
                   fill: true,
-                  label: details[metric].heading,
+                  label: headings[metric],
                   pointBackgroundColor: surfaceColor(),
                   pointBorderColor: inkColor(),
                   pointBorderWidth: 2,
@@ -212,7 +231,7 @@ export const ExerciseChart = ({ sets, exercise }: Props) => {
               ],
             }}
             options={chartOptions}
-            aria-label={details[metric].heading}
+            aria-label={headings[metric]}
             role="img"
           />
         </div>
