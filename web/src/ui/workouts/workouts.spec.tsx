@@ -7,7 +7,7 @@ import { timestampFromDate } from '@bufbuild/protobuf/wkt'
 import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { Route, Routes } from 'react-router-dom'
-import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
 vi.mock('@/http/requests', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/http/requests')>()),
@@ -49,15 +49,22 @@ const me = 'user-me'
 type WorkoutInit = MessageInitShape<typeof WorkoutSchema>
 
 const workout = ({
+  id = 'workout-1',
+  name = 'Push day',
+  finishedAt = '2026-08-14T11:00:00Z',
   intensity,
   exerciseSets,
-}: Pick<WorkoutInit, 'intensity' | 'exerciseSets'> = {}) =>
+}: Pick<WorkoutInit, 'intensity' | 'exerciseSets'> & {
+  id?: string
+  name?: string
+  finishedAt?: string
+} = {}) =>
   create(WorkoutSchema, {
-    id: 'workout-1',
-    name: 'Push day',
+    id,
+    name,
     user: { id: me, username: 'alex', name: 'Alex Morgan' },
     startedAt: timestampFromDate(new Date('2026-08-14T10:00:00Z')),
-    finishedAt: timestampFromDate(new Date('2026-08-14T11:00:00Z')),
+    finishedAt: timestampFromDate(new Date(finishedAt)),
     intensity,
     exerciseSets,
   })
@@ -403,6 +410,61 @@ describe('WorkoutView', () => {
     expect(row).toHaveTextContent('4,200 kg')
     // Duration was "60 min" on nearly every row; it lives on the detail view.
     expect(row).not.toHaveTextContent('min')
+  })
+
+  // A heading drops the year while it is the current one, so the clock is
+  // held at the year these sessions were trained in.
+  describe('grouped by month', () => {
+    beforeEach(() => {
+      vi.useFakeTimers({ shouldAdvanceTime: true })
+      vi.setSystemTime(new Date('2026-09-08T12:00:00Z'))
+    })
+
+    afterEach(() => {
+      vi.useRealTimers()
+    })
+
+    // The history is an unbroken run of rows otherwise, with nothing in it to
+    // say where one month of training ended and the next began.
+    test('breaks the history into a card per month', async () => {
+      history([
+        workout({ id: 'w1', name: 'Push day', finishedAt: '2026-08-28T11:00:00Z' }),
+        workout({ id: 'w2', name: 'Pull day', finishedAt: '2026-08-02T11:00:00Z' }),
+        workout({ id: 'w3', name: 'Leg day', finishedAt: '2026-07-30T11:00:00Z' }),
+      ])
+      render()
+
+      const august = await screen.findByRole('list', { name: /^August/ })
+      expect(
+        within(august)
+          .getAllByRole('link')
+          .map((row) => row.textContent),
+      ).toEqual([expect.stringContaining('Push day'), expect.stringContaining('Pull day')])
+
+      const july = screen.getByRole('list', { name: /^July/ })
+      expect(within(july).getAllByRole('link')).toHaveLength(1)
+    })
+
+    test('heads each month with what it holds', async () => {
+      history([
+        workout({ id: 'w1', finishedAt: '2026-08-28T11:00:00Z', intensity: 1800 }),
+        workout({ id: 'w2', finishedAt: '2026-08-02T11:00:00Z', intensity: 1200 }),
+      ])
+      render()
+
+      expect(
+        await screen.findByRole('list', { name: 'August · 2 workouts · 3,000 kg' }),
+      ).toBeVisible()
+    })
+
+    // A month trained entirely on runs has no volume to state, and "0 kg" reads
+    // as a session that lifted nothing rather than as one that never lifted.
+    test('states no volume for a month that lifted none', async () => {
+      history([workout({ id: 'w1', finishedAt: '2026-08-28T11:00:00Z' })])
+      render()
+
+      expect(await screen.findByRole('list', { name: 'August · 1 workout' })).toBeVisible()
+    })
   })
 
   test('says so when there is no history yet', async () => {
