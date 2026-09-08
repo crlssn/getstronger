@@ -1230,16 +1230,14 @@ describe('StartWorkout', () => {
       const user = userEvent.setup()
       await renderWorkout()
 
-      await user.click(screen.getByRole('button', { name: 'Start guided circuit' }))
+      await user.click(screen.getByRole('button', { name: 'Start live session' }))
       // Nothing native has been asked for yet: the screen explains what
       // location is for and leaves the ordinary form one tap away.
       expect(screen.getByText(/Allow location access/)).toBeInTheDocument()
       expect(timedCircuit.start).not.toHaveBeenCalled()
 
       await user.click(screen.getByRole('button', { name: 'Log manually' }))
-      expect(
-        await screen.findByRole('button', { name: 'Start guided circuit' }),
-      ).toBeInTheDocument()
+      expect(await screen.findByRole('button', { name: 'Start live session' })).toBeInTheDocument()
       expect(setField('Bench Press set 1 weight')).toBeVisible()
     })
 
@@ -1251,8 +1249,8 @@ describe('StartWorkout', () => {
       vi.mocked(timedCircuit.start).mockResolvedValue(undefined)
       await renderWorkout()
 
-      await user.click(screen.getByRole('button', { name: 'Start guided circuit' }))
-      await user.click(screen.getByRole('button', { name: 'Start guided circuit' }))
+      await user.click(screen.getByRole('button', { name: 'Start live session' }))
+      await user.click(screen.getByRole('button', { name: 'Start live session' }))
 
       expect(timedCircuit.start).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -1267,7 +1265,7 @@ describe('StartWorkout', () => {
       native.enabled = false
       await renderWorkout()
 
-      expect(screen.queryByRole('button', { name: 'Start guided circuit' })).not.toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: 'Start live session' })).not.toBeInTheDocument()
     })
 
     test('picks up a finished recording, saves it with the workout, and clears it', async () => {
