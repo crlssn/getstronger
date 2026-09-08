@@ -148,6 +148,26 @@ describe('messages', () => {
     expect([...new Set(orphaned)], 'nothing renders these — delete them from en and sv').toEqual([])
   })
 
+  // The recording feature was "Guided circuit", a gym word for the routine's
+  // group mode rather than for a run out on the road. It is "Live session"
+  // everywhere it is named — heading, start button, privacy policy — and the
+  // group mode alone keeps "Circuit".
+  it.each([
+    ['en', 'Live session', 'live session', 'Circuit'],
+    ['sv', 'Livepass', 'livepass', 'Cirkel'],
+  ] as const)('names the recording feature a live session in %s', (locale, title, noun, group) => {
+    const messages = { en, sv }[locale]
+    const guided = flattenEntries(messages as unknown as Messages)
+      .filter(([, value]) => /guided circuit|guidat cirkelpass/i.test(value))
+      .map(([key, value]) => `${key}: ${value}`)
+
+    expect(guided, guided.join('\n')).toEqual([])
+    expect(messages.timedCircuit.title).toBe(title)
+    expect(messages.timedCircuit.start.toLocaleLowerCase()).toContain(noun)
+    expect(messages.privacy.collectTraining).toContain(noun)
+    expect(messages.routine.form.groups.circuit).toBe(group)
+  })
+
   // The toast tells the reader which button to press, so it must name the
   // button exactly — "Avsluta pass" pointed at a button labelled "Avsluta
   // träningspass".

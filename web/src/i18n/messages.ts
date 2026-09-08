@@ -21,8 +21,8 @@ export const en = {
     exerciseBody: '{name}, measured as you go.',
   },
   timedCircuit: {
-    title: 'Guided circuit',
-    start: 'Start guided circuit',
+    title: 'Live session',
+    start: 'Start live session',
     instruction: '{name} for {duration}',
     rest: 'Rest',
     round: 'Round {round} of {total}',
@@ -857,7 +857,7 @@ export const en = {
     collectAccount:
       'Your account: email address, name, username and password (hashed, never readable).',
     collectTraining:
-      'Your training: workouts, sets, routines, plans, exercises, notes, comments, who you follow and, for a circuit recorded on your phone, the GPS route it followed.',
+      'Your training: workouts, sets, routines, plans, exercises, notes, comments, who you follow and, for a live session recorded on your phone, the GPS route it followed.',
     collectUsage:
       'How the app is used: pages opened and errors hit, tied to your account id so a fault can be traced back to a real session.',
     useTitle: 'Why we store it',
@@ -944,8 +944,8 @@ export const sv = {
     exerciseBody: '{name}, mätt medan du rör dig.',
   },
   timedCircuit: {
-    title: 'Guidat cirkelpass',
-    start: 'Starta guidat cirkelpass',
+    title: 'Livepass',
+    start: 'Starta livepass',
     instruction: '{name} i {duration}',
     rest: 'Vila',
     round: 'Varv {round} av {total}',
@@ -1778,7 +1778,7 @@ export const sv = {
     collectAccount:
       'Ditt konto: e-postadress, namn, användarnamn och lösenord (hashat, aldrig läsbart).',
     collectTraining:
-      'Din träning: träningspass, set, pass, planer, övningar, anteckningar, kommentarer, vilka du följer och, för ett cirkelpass som spelats in på din telefon, GPS-rutten det följde.',
+      'Din träning: träningspass, set, pass, planer, övningar, anteckningar, kommentarer, vilka du följer och, för ett livepass som spelats in på din telefon, GPS-rutten det följde.',
     collectUsage:
       'Hur appen används: öppnade sidor och fel som uppstår, kopplat till ditt konto-id så att ett fel går att spåra till en verklig session.',
     useTitle: 'Varför vi lagrar det',

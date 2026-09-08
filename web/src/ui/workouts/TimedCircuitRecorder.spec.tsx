@@ -53,7 +53,10 @@ describe('TimedCircuitRecorder', () => {
       />,
     )
     expect(timedCircuit.start).not.toHaveBeenCalled()
-    await user.click(screen.getByRole('button', { name: 'Start guided circuit' }))
+    // The feature is a live session, not a "guided circuit": the group mode
+    // is what a circuit is, and this is a run with its route recorded.
+    expect(screen.getByRole('heading', { name: 'Live session' })).toBeVisible()
+    await user.click(screen.getByRole('button', { name: 'Start live session' }))
     // The comparison travels with the prescription: the phone owns it from
     // there, screen locked and WebView asleep.
     expect(timedCircuit.start).toHaveBeenCalledWith(
@@ -84,7 +87,7 @@ describe('TimedCircuitRecorder', () => {
       />,
     )
 
-    await user.click(screen.getByRole('button', { name: 'Start guided circuit' }))
+    await user.click(screen.getByRole('button', { name: 'Start live session' }))
 
     expect(timedCircuit.start).toHaveBeenCalledWith(expect.objectContaining({ cueLeadSeconds: 20 }))
   })
@@ -381,7 +384,7 @@ describe('TimedCircuitRecorder', () => {
       />,
     )
 
-    await user.click(screen.getByRole('button', { name: 'Start guided circuit' }))
+    await user.click(screen.getByRole('button', { name: 'Start live session' }))
 
     expect(timedCircuit.start).toHaveBeenCalledWith(expect.objectContaining({ volume: 0 }))
   })
