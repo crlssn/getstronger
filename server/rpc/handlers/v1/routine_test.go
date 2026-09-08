@@ -10,6 +10,7 @@ import (
 	"github.com/stephenafamo/bob"
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zaptest/observer"
 
 	"github.com/crlssn/getstronger/server/gen/models"
 	apiv1 "github.com/crlssn/getstronger/server/gen/proto/api/v1"
@@ -54,6 +55,15 @@ func (s *routineSuite) athlete() (context.Context, *models.User) {
 	ctx := xcontext.WithUserID(context.Background(), user.ID)
 
 	return xcontext.WithLogger(ctx, zap.NewExample()), user
+}
+
+// stranger returns a context authenticated as an athlete who owns nothing the
+// test created, with a logger whose entries the test can read back.
+func (s *routineSuite) stranger() (context.Context, *observer.ObservedLogs) {
+	core, logs := observer.New(zap.DebugLevel)
+	ctx := xcontext.WithUserID(context.Background(), s.factory.NewUser().ID)
+
+	return xcontext.WithLogger(ctx, zap.New(core)), logs
 }
 
 func (s *routineSuite) TestUpdateRoutineRearrangesItsExercises() {
@@ -207,11 +217,15 @@ func (s *routineSuite) TestDeleteRoutineRefusesAnotherAthletesRoutine() {
 	}))
 	s.Require().NoError(err)
 
-	strangerCtx, _ := s.athlete()
+	strangerCtx, logs := s.stranger()
 	_, err = s.handler.DeleteRoutine(strangerCtx, connect.NewRequest(&apiv1.DeleteRoutineRequest{
 		Id: created.Msg.GetId(),
 	}))
 	s.Require().Equal(connect.CodePermissionDenied, connect.CodeOf(err))
+
+	// A refusal is the client's mistake, logged as one rather than as a failure.
+	s.Require().Empty(logs.FilterLevelExact(zap.ErrorLevel).All())
+	s.Require().Len(logs.FilterMessage("Routine not owned for deletion").FilterLevelExact(zap.WarnLevel).All(), 1)
 }
 
 // An exercise added to a routine joins its last group, which is where the flat
@@ -796,12 +810,15 @@ func (s *routineSuite) TestUpdateExerciseOrderRefusesAnotherAthletesRoutine() {
 	}))
 	s.Require().NoError(err)
 
-	strangerCtx, _ := s.athlete()
+	strangerCtx, logs := s.stranger()
 	_, err = s.handler.UpdateExerciseOrder(strangerCtx, connect.NewRequest(&apiv1.UpdateExerciseOrderRequest{
 		RoutineId:   created.Msg.GetId(),
 		ExerciseIds: []string{exercise.ID.String()},
 	}))
 	s.Require().Equal(connect.CodePermissionDenied, connect.CodeOf(err))
+
+	s.Require().Empty(logs.FilterLevelExact(zap.ErrorLevel).All())
+	s.Require().Len(logs.FilterMessage("Routine not owned for exercise order").FilterLevelExact(zap.WarnLevel).All(), 1)
 }
 
 func (s *routineSuite) TestListRoutinesRejectsAMalformedPageToken() {

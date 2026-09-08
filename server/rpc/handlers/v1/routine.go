@@ -315,7 +315,7 @@ func (h *routineLibrary) DeleteRoutine(ctx context.Context, req *connect.Request
 	}
 
 	if routine.UserID != userID {
-		log.Error("Routine does not belong to user")
+		log.Warn("Routine not owned for deletion")
 		return nil, connect.NewError(connect.CodePermissionDenied, nil)
 	}
 
@@ -446,7 +446,7 @@ func (h *routineLibrary) UpdateExerciseOrder(ctx context.Context, req *connect.R
 	}
 
 	if routine.UserID != userID {
-		log.Error("Routine does not belong to user")
+		log.Warn("Routine not owned for exercise order")
 		return nil, connect.NewError(connect.CodePermissionDenied, nil)
 	}
 

@@ -50,10 +50,11 @@ func (p *planLibrary) CreatePlan(ctx context.Context, req *connect.Request[apiv1
 		RoutineIDs: routineIDs,
 	})
 	if err != nil {
-		log.Error("Create plan", zap.Error(err))
 		if training.RejectsRotation(err) || errors.Is(err, sql.ErrNoRows) {
+			log.Warn("Plan rotation rejected for creation", zap.Error(err))
 			return nil, connect.NewError(connect.CodeInvalidArgument, nil)
 		}
+		log.Error("Create plan", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
@@ -115,13 +116,15 @@ func (p *planLibrary) UpdatePlan(ctx context.Context, req *connect.Request[apiv1
 		RoutineIDs: routineIDs,
 	})
 	if err != nil {
-		log.Error("Update plan", zap.Error(err))
 		if errors.Is(err, sql.ErrNoRows) {
+			log.Warn("Plan not found for update", zap.Error(err))
 			return nil, connect.NewError(connect.CodeNotFound, nil)
 		}
 		if training.RejectsRotation(err) {
+			log.Warn("Plan rotation rejected for update", zap.Error(err))
 			return nil, connect.NewError(connect.CodeInvalidArgument, nil)
 		}
+		log.Error("Update plan", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
@@ -199,13 +202,15 @@ func (p *planLibrary) SkipPlanRoutine(ctx context.Context, req *connect.Request[
 	// A skip names no routine: it advances past whichever one is current.
 	plan, err := p.plans.AdvancePlan(ctx, planID, userID, uuid.Nil)
 	if err != nil {
-		log.Error("Skip plan routine", zap.Error(err))
 		if errors.Is(err, sql.ErrNoRows) {
+			log.Warn("Plan not found for skip", zap.Error(err))
 			return nil, connect.NewError(connect.CodeNotFound, nil)
 		}
 		if errors.Is(err, training.ErrPlanNotActive) || errors.Is(err, training.ErrPlanUnexpectedRoutine) {
+			log.Warn("Plan cannot be skipped", zap.Error(err))
 			return nil, connect.NewError(connect.CodeFailedPrecondition, nil)
 		}
+		log.Error("Skip plan routine", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
