@@ -18,6 +18,7 @@ import { Link, useLocation } from 'react-router-dom'
 
 import { useNotificationStore } from '@/stores/notifications'
 import { cn } from '@/ui/cn'
+import { useKeyboardOpen } from '@/utils/useKeyboardOpen'
 import { usePinnedHeight } from '@/utils/usePinnedHeight'
 import { useActiveWorkout } from '@/utils/useActiveWorkout'
 import { workoutTabTimer } from '@/utils/workoutClock'
@@ -39,9 +40,11 @@ export const AppNavBottom = () => {
   const { t } = useTranslation()
   const { pathname } = useLocation()
   const now = useNow()
+  const keyboardOpen = useKeyboardOpen()
 
   // Measured while it is on screen, so the toaster floats above whatever is
-  // actually there. A create screen has no tab bar at all.
+  // actually there. A create screen has no tab bar at all, and while the
+  // keyboard is up neither has this one: the ref reports null on unmount.
   const pinned = usePinnedHeight('tab-bar')
 
   const unreadCount = useNotificationStore((state) => state.unreadCount)
@@ -106,6 +109,12 @@ export const AppNavBottom = () => {
       timer: '',
     },
   ]
+
+  // Fixed to the bottom of a viewport the keyboard has shrunk, the bar would
+  // sit on the keyboard's top edge: over the field being typed into, and five
+  // ways to lose what was typed. The shell keeps its room below the list, so
+  // nothing jumps when the bar comes back.
+  if (keyboardOpen) return null
 
   return (
     <nav ref={pinned} className={styles.bottomNav} aria-label={t('nav.primary')}>
