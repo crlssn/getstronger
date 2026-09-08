@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 
 import { cn } from '@/ui/cn'
+import iconButton from './AppIconButton.module.css'
 import styles from './DropdownButton.module.css'
 
 interface Props {
@@ -19,8 +20,12 @@ export const DropdownButton = ({ items, label, className }: Props) => {
 
   return (
     <Menu as="div" className="relative inline-block text-left">
+      {/* The same square the home search and the notification bell are. Headless
+          UI renders the trigger itself, so it wears AppIconButton's classes;
+          applied here rather than through `composes`, which copies the module
+          into this chunk, where Tailwind leaves the copy's @apply unexpanded. */}
       <MenuButton
-        className={cn(styles.menuTrigger, className)}
+        className={cn(iconButton.iconButton, iconButton.sm, iconButton.raised, className)}
         aria-label={label ?? t('workout.card.actionsAria')}
       >
         <EllipsisHorizontalIcon aria-hidden="true" />

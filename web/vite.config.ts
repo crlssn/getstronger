@@ -27,6 +27,32 @@ const emitVersionFile = (): Plugin => ({
   },
 })
 
+/**
+ * Fails the build if a stylesheet still carries an `@apply`.
+ *
+ * Tailwind expands a CSS Module's `@apply` rules only the first time it meets
+ * the file in a build, so a module that reaches the bundle twice ships its
+ * second copy raw, and browsers drop the rule as an unknown at-rule. Nothing
+ * else reports it: the build stays green and the copy in a chunk every page
+ * loads masks the loss until chunking moves it.
+ */
+const rejectUnexpandedApply = (): Plugin => ({
+  name: 'reject-unexpanded-apply',
+  apply: 'build',
+  enforce: 'post',
+  generateBundle(_, bundle) {
+    const raw: string[] = []
+    for (const file of Object.values(bundle)) {
+      if (file.type !== 'asset' || !file.fileName.endsWith('.css')) continue
+      const css =
+        typeof file.source === 'string' ? file.source : new TextDecoder().decode(file.source)
+      if (/@apply\b/.test(css)) raw.push(file.fileName)
+    }
+
+    if (raw.length > 0) this.error(`@apply rules shipped unexpanded in ${raw.join(', ')}`)
+  },
+})
+
 // https://vite.dev/config/
 export default defineConfig({
   define: {
@@ -35,6 +61,7 @@ export default defineConfig({
   plugins: [
     react(),
     emitVersionFile(),
+    rejectUnexpandedApply(),
     codecovVitePlugin({
       enableBundleAnalysis: process.env.CODECOV_TOKEN !== undefined,
       bundleName: 'crlssn/getstronger/web',
