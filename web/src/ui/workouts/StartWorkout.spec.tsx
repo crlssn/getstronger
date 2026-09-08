@@ -1276,7 +1276,7 @@ describe('StartWorkout', () => {
 
       const header = screen.getByRole('heading', { level: 1 }).closest('header')!
       expect(header.parentElement).toContainElement(
-        screen.getByRole('button', { name: 'Start guided circuit' }),
+        screen.getByRole('button', { name: 'Start live session' }),
       )
     })
 
