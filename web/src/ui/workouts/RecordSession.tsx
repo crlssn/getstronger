@@ -85,8 +85,13 @@ export const RecordSession = () => {
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
   const [saving, setSaving] = useState(false)
+  // A save the server refused, waiting for the athlete to ask again.
+  const [refused, setRefused] = useState(false)
 
   const savedWorkoutId = useRef('')
+  // The phone answers every read with a fresh recording, so an effect that
+  // saved whenever it changed would re-send a refused save every second.
+  const autoSaved = useRef(false)
   // The screen reads the recording every second, so the effect that saves an
   // already-named session can fire again while the first request is still out.
   const savingSession = useRef(false)
@@ -220,6 +225,7 @@ export const RecordSession = () => {
       savingSession.current = true
       setSaving(true)
       setError('')
+      setRefused(false)
 
       const named = namedRecording(recording, chosen)
       const [route] = measureRoute(named, buildTimeline(named, recording.endedAt))
@@ -251,6 +257,7 @@ export const RecordSession = () => {
         const res = await createWorkout(request)
         if (!res?.workoutId.trim()) {
           setError(t('record.saveFailed'))
+          setRefused(true)
           return
         }
         savedWorkoutId.current = res.workoutId
@@ -278,6 +285,7 @@ export const RecordSession = () => {
           return
         }
         setError(t('record.saveFailed'))
+        setRefused(true)
       } finally {
         savingSession.current = Boolean(savedWorkoutId.current)
         setSaving(false)
@@ -286,10 +294,13 @@ export const RecordSession = () => {
     [recording, distanceUnit, weightUnit, idempotency, key, navigate, t],
   )
 
-  // A session that carried its exercise in never asks which one it was.
+  // A session that carried its exercise in never asks which one it was, and
+  // saves itself once: after a refusal, the next attempt is the athlete's.
   const ended = !!recording?.endedAt
   useEffect(() => {
-    if (ended && exercise && !savedWorkoutId.current) void save(exercise)
+    if (!ended || !exercise || savedWorkoutId.current || autoSaved.current) return
+    autoSaved.current = true
+    void save(exercise)
   }, [ended, exercise, save])
 
   if (!recording) {
@@ -397,6 +408,17 @@ export const RecordSession = () => {
       </div>
 
       {error && <AppInlineError>{error}</AppInlineError>}
+      {refused && exercise && (
+        <AppButton
+          type="button"
+          colour="primary"
+          size="lg"
+          disabled={saving}
+          onClick={() => void save(exercise)}
+        >
+          {t('common.retry')}
+        </AppButton>
+      )}
 
       <div className={styles.controls}>
         <AppButton
