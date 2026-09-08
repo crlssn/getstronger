@@ -1,14 +1,14 @@
 // @vitest-environment jsdom
 
 import { create } from '@bufbuild/protobuf'
-import { screen } from '@testing-library/react'
+import { screen, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, test } from 'vitest'
 
 import type { Workout } from '@/types/workout'
 import { ExerciseSchema } from '@/proto/api/v1/shared_pb'
 import { useNotificationStore } from '@/stores/notifications'
 import { quickWorkoutRoutineID, useWorkoutStore } from '@/stores/workout'
-import { renderWithProviders } from '@/ui/testing'
+import { lowerKeyboard, raiseKeyboard, renderWithProviders } from '@/ui/testing'
 import { AppNavBottom } from './AppNavBottom'
 
 const tab = (name: string | RegExp) => screen.getByRole('link', { name })
@@ -30,6 +30,24 @@ describe('AppNavBottom', () => {
 
     expect(screen.getByRole('navigation', { name: 'Primary navigation' })).toBeInTheDocument()
     expect(screen.getAllByRole('link')).toHaveLength(5)
+  })
+
+  // Pinned to the bottom of a viewport the keyboard has shrunk, the bar sat
+  // on the keyboard's top edge: height taken from what was being typed, and
+  // five ways to lose it by a slip of the thumb.
+  test('stands down while the keyboard is up', async () => {
+    raiseKeyboard()
+    try {
+      renderWithProviders(<AppNavBottom />, { route: '/exercises' })
+
+      await waitFor(() =>
+        expect(
+          screen.queryByRole('navigation', { name: 'Primary navigation' }),
+        ).not.toBeInTheDocument(),
+      )
+    } finally {
+      lowerKeyboard()
+    }
   })
 
   test.each([
