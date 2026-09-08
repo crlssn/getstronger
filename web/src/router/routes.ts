@@ -218,9 +218,6 @@ export const routes: AppRoute[] = [
 export const flatRoutes = (from: AppRoute[] = routes): AppRoute[] =>
   from.flatMap((route) => [route, ...flatRoutes(route.children ?? [])])
 
-export const routeByName = (name: string): AppRoute | undefined =>
-  flatRoutes().find((route) => route.name === name)
-
 const matches = (pathname: string, path: string): boolean => {
   if (!path.includes(':')) return pathname === path
   // '/workouts/routine/:routine_id' matches any single segment in its place.

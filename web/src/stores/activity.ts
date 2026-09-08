@@ -34,12 +34,6 @@ const parse = (iso: string | undefined) => {
  */
 export const lastPerformedIn = (record: Record<string, string>, id: string) => parse(record[id])
 
-export const selectLastPerformedFor = (state: ActivityState, exerciseId: string) =>
-  lastPerformedIn(state.exerciseLastPerformed, exerciseId)
-
-export const selectRoutineLastPerformedFor = (state: ActivityState, routineId: string) =>
-  lastPerformedIn(state.routineLastPerformed, routineId)
-
 export const useActivityStore = create<ActivityState>()((set, get) => {
   const refresh = async () => {
     const { userId } = useAuthStore.getState()

@@ -4,7 +4,7 @@ vi.mock('@/http/requests', () => ({ listWorkouts: vi.fn() }))
 
 import { listWorkouts } from '@/http/requests'
 import { useAuthStore } from '@/stores/auth'
-import { selectLastPerformedFor, selectRoutineLastPerformedFor, useActivityStore } from './activity'
+import { lastPerformedIn, useActivityStore } from './activity'
 
 const listWorkoutsMock = vi.mocked(listWorkouts)
 
@@ -53,8 +53,10 @@ describe('activity store', () => {
 
     await store().load()
 
-    expect(selectLastPerformedFor(store(), 'bench')?.toISODate()).toBe('2026-08-13')
-    expect(selectRoutineLastPerformedFor(store(), 'routine-1')?.toISODate()).toBe('2026-08-13')
+    expect(lastPerformedIn(store().exerciseLastPerformed, 'bench')?.toISODate()).toBe('2026-08-13')
+    expect(lastPerformedIn(store().routineLastPerformed, 'routine-1')?.toISODate()).toBe(
+      '2026-08-13',
+    )
   })
 
   // Workouts arrive newest first, so the first sighting of an exercise is the
@@ -69,7 +71,7 @@ describe('activity store', () => {
 
     await store().load()
 
-    expect(selectLastPerformedFor(store(), 'bench')?.toISODate()).toBe('2026-08-13')
+    expect(lastPerformedIn(store().exerciseLastPerformed, 'bench')?.toISODate()).toBe('2026-08-13')
   })
 
   test('has nothing to say about an exercise never performed', async () => {
@@ -77,8 +79,8 @@ describe('activity store', () => {
 
     await store().load()
 
-    expect(selectLastPerformedFor(store(), 'never-done')).toBeUndefined()
-    expect(selectRoutineLastPerformedFor(store(), 'never-run')).toBeUndefined()
+    expect(lastPerformedIn(store().exerciseLastPerformed, 'never-done')).toBeUndefined()
+    expect(lastPerformedIn(store().routineLastPerformed, 'never-run')).toBeUndefined()
   })
 
   // Quick workouts carry no routine, as does anything logged before routines
@@ -95,7 +97,7 @@ describe('activity store', () => {
 
     await store().load()
 
-    expect(selectLastPerformedFor(store(), 'bench')?.toISODate()).toBe('2026-08-13')
+    expect(lastPerformedIn(store().exerciseLastPerformed, 'bench')?.toISODate()).toBe('2026-08-13')
     expect(store().routineLastPerformed).toEqual({})
   })
 
@@ -122,7 +124,7 @@ describe('activity store', () => {
     await store().load()
 
     expect(store().failed).toBe(true)
-    expect(selectLastPerformedFor(store(), 'bench')?.toISODate()).toBe('2026-08-13')
+    expect(lastPerformedIn(store().exerciseLastPerformed, 'bench')?.toISODate()).toBe('2026-08-13')
   })
 
   test('caches for the session and refetches after a reset', async () => {

@@ -11,11 +11,7 @@ import {
   selectAddedExercises,
   selectAllSets,
   selectCompletedExerciseIds,
-  selectNote,
-  selectPlanId,
-  selectRestTimer,
   selectSets,
-  selectStartedAt,
   useWorkoutStore,
 } from './workout'
 
@@ -23,6 +19,10 @@ const store = () => useWorkoutStore.getState()
 
 const sets = (routineID: string, exerciseID: string) =>
   selectSets(useWorkoutStore.getState(), routineID, exerciseID)
+
+// The draft itself, which is what a screen subscribes to before reading the
+// clock, the note or the rest timer off it.
+const draft = (routineID: string) => useWorkoutStore.getState().workouts[routineID]
 
 const seed = (workouts: RoutineWorkout) => useWorkoutStore.setState({ workouts })
 
@@ -44,15 +44,15 @@ describe('workout store', () => {
     it('starts a draft with an empty set map and an unstarted clock', () => {
       store().initialiseWorkout('routine-id')
 
-      expect(selectStartedAt(store(), 'routine-id')).toBeUndefined()
+      expect(draft('routine-id')?.startedAt).toBeUndefined()
       expect(selectAllSets(store(), 'routine-id')).toEqual({})
-      expect(selectPlanId(store(), 'routine-id')).toBe('')
+      expect(draft('routine-id')?.planId).toBeUndefined()
     })
 
     it('records the plan a draft belongs to', () => {
       store().initialiseWorkout('routine-id', 'plan-id')
 
-      expect(selectPlanId(store(), 'routine-id')).toBe('plan-id')
+      expect(draft('routine-id')?.planId).toBe('plan-id')
     })
 
     // The key names one session across every attempt to save it, so it is
@@ -79,7 +79,7 @@ describe('workout store', () => {
 
       store().initialiseWorkout('legacy')
 
-      expect(selectStartedAt(store(), 'legacy')).toBeUndefined()
+      expect(draft('legacy')?.startedAt).toBeUndefined()
     })
 
     it('keeps the stamp on an older draft that holds a logged set', () => {
@@ -89,7 +89,7 @@ describe('workout store', () => {
 
       store().initialiseWorkout('legacy')
 
-      expect(selectStartedAt(store(), 'legacy')).toBe('2024-01-01T00:00:00Z')
+      expect(draft('legacy')?.startedAt).toBe('2024-01-01T00:00:00Z')
     })
 
     // Reopening a workout must not restart its clock or discard its sets.
@@ -97,12 +97,12 @@ describe('workout store', () => {
       store().initialiseWorkout('routine-id')
       store().addEmptySet('routine-id', 'squat')
       store().updateSet('routine-id', 'squat', 0, { weight: 100 })
-      const startedAt = selectStartedAt(store(), 'routine-id')
+      const startedAt = draft('routine-id')?.startedAt
       expect(startedAt).toBeTruthy()
 
       store().initialiseWorkout('routine-id')
 
-      expect(selectStartedAt(store(), 'routine-id')).toBe(startedAt)
+      expect(draft('routine-id')?.startedAt).toBe(startedAt)
       expect(sets('routine-id', 'squat')).toHaveLength(1)
     })
 
@@ -117,13 +117,8 @@ describe('workout store', () => {
     it('reads nothing from a draft that does not exist', () => {
       expect(sets('missing', 'squat')).toEqual([])
       expect(selectAllSets(store(), 'missing')).toBeUndefined()
-      expect(selectNote(store(), 'missing')).toBe('')
       expect(selectAddedExercises(store(), 'missing')).toEqual([])
       expect(selectCompletedExerciseIds(store(), 'missing')).toEqual([])
-      expect(selectRestTimer(store(), 'missing')).toEqual({
-        endsAt: undefined,
-        totalSeconds: 0,
-      })
     })
 
     // The draft is what survives closing the app mid-workout.
@@ -261,21 +256,21 @@ describe('workout store', () => {
     it('starts the clock at the first logged value', () => {
       store().initialiseWorkout('routine-id')
       store().addEmptySet('routine-id', 'squat')
-      expect(selectStartedAt(store(), 'routine-id')).toBeUndefined()
+      expect(draft('routine-id')?.startedAt).toBeUndefined()
 
       store().updateSet('routine-id', 'squat', 0, { weight: 100 })
 
-      expect(selectStartedAt(store(), 'routine-id')).toBeTruthy()
+      expect(draft('routine-id')?.startedAt).toBeTruthy()
     })
 
     it("keeps the first value's time when later sets are logged", () => {
       seed({ 'routine-id': { exerciseSets: { squat: [{}, {}] } } })
       store().updateSet('routine-id', 'squat', 0, { weight: 100 })
-      const startedAt = selectStartedAt(store(), 'routine-id')
+      const startedAt = draft('routine-id')?.startedAt
 
       store().updateSet('routine-id', 'squat', 1, { weight: 110 })
 
-      expect(selectStartedAt(store(), 'routine-id')).toBe(startedAt)
+      expect(draft('routine-id')?.startedAt).toBe(startedAt)
     })
 
     it('leaves the clock unstarted when a field is only cleared', () => {
@@ -283,7 +278,7 @@ describe('workout store', () => {
 
       store().updateSet('routine-id', 'squat', 0, { weight: undefined })
 
-      expect(selectStartedAt(store(), 'routine-id')).toBeUndefined()
+      expect(draft('routine-id')?.startedAt).toBeUndefined()
     })
 
     // A unit is a preference the row was stamped with, not something anybody
@@ -293,7 +288,7 @@ describe('workout store', () => {
 
       store().updateSet('routine-id', 'squat', 0, { weightUnit: WeightUnit.POUNDS })
 
-      expect(selectStartedAt(store(), 'routine-id')).toBeUndefined()
+      expect(draft('routine-id')?.startedAt).toBeUndefined()
     })
 
     // The autofill copies the last session's number into a field the athlete
@@ -304,7 +299,7 @@ describe('workout store', () => {
       store().updateSet('routine-id', 'squat', 0, { weight: 100 }, { suggested: true })
 
       expect(sets('routine-id', 'squat')[0]).toEqual({ weight: 100 })
-      expect(selectStartedAt(store(), 'routine-id')).toBeUndefined()
+      expect(draft('routine-id')?.startedAt).toBeUndefined()
     })
 
     it('starts the clock when a suggested value is typed over', () => {
@@ -313,7 +308,7 @@ describe('workout store', () => {
 
       store().updateSet('routine-id', 'squat', 0, { weight: 105 })
 
-      expect(selectStartedAt(store(), 'routine-id')).toBeTruthy()
+      expect(draft('routine-id')?.startedAt).toBeTruthy()
     })
 
     // Clearing the last number undoes the start too, or a value typed by
@@ -321,22 +316,22 @@ describe('workout store', () => {
     it('unstarts the clock when the last logged value is cleared', () => {
       seed({ 'routine-id': { exerciseSets: { squat: [{}] } } })
       store().updateSet('routine-id', 'squat', 0, { weight: 100 })
-      expect(selectStartedAt(store(), 'routine-id')).toBeTruthy()
+      expect(draft('routine-id')?.startedAt).toBeTruthy()
 
       store().updateSet('routine-id', 'squat', 0, { weight: undefined })
 
-      expect(selectStartedAt(store(), 'routine-id')).toBeUndefined()
+      expect(draft('routine-id')?.startedAt).toBeUndefined()
     })
 
     it('keeps the clock while another set still holds a value', () => {
       seed({ 'routine-id': { exerciseSets: { squat: [{}, {}] } } })
       store().updateSet('routine-id', 'squat', 0, { weight: 100 })
       store().updateSet('routine-id', 'squat', 1, { weight: 110 })
-      const startedAt = selectStartedAt(store(), 'routine-id')
+      const startedAt = draft('routine-id')?.startedAt
 
       store().updateSet('routine-id', 'squat', 0, { weight: undefined })
 
-      expect(selectStartedAt(store(), 'routine-id')).toBe(startedAt)
+      expect(draft('routine-id')?.startedAt).toBe(startedAt)
     })
 
     it('ignores a write to a set that does not exist', () => {
@@ -361,7 +356,7 @@ describe('workout store', () => {
 
       store().deleteSet('routine-id', 'squat', 0)
 
-      expect(selectStartedAt(store(), 'routine-id')).toBeUndefined()
+      expect(draft('routine-id')?.startedAt).toBeUndefined()
     })
 
     it('ignores a delete for a draft or exercise that does not exist', () => {
@@ -379,17 +374,17 @@ describe('workout store', () => {
 
       store().startWorkout('routine-id')
 
-      expect(selectStartedAt(store(), 'routine-id')).toBeTruthy()
+      expect(draft('routine-id')?.startedAt).toBeTruthy()
     })
 
     it('keeps the original time when the clock is started again', () => {
       seed({ 'routine-id': { exerciseSets: { squat: [{}] } } })
       store().updateSet('routine-id', 'squat', 0, { weight: 100 })
-      const startedAt = selectStartedAt(store(), 'routine-id')
+      const startedAt = draft('routine-id')?.startedAt
 
       store().startWorkout('routine-id')
 
-      expect(selectStartedAt(store(), 'routine-id')).toBe(startedAt)
+      expect(draft('routine-id')?.startedAt).toBe(startedAt)
     })
 
     it('ignores starting a draft that does not exist', () => {
@@ -403,23 +398,22 @@ describe('workout store', () => {
 
       store().setNote('routine-id', 'Felt strong')
 
-      expect(selectNote(store(), 'routine-id')).toBe('Felt strong')
+      expect(draft('routine-id')?.note).toBe('Felt strong')
     })
 
     it('runs and clears a rest timer', () => {
       store().initialiseWorkout('routine-id')
 
       store().setRestTimer('routine-id', '2026-08-14T12:03:00Z', 180)
-      expect(selectRestTimer(store(), 'routine-id')).toEqual({
-        endsAt: '2026-08-14T12:03:00Z',
-        totalSeconds: 180,
+      expect(draft('routine-id')).toMatchObject({
+        restTimerEndsAt: '2026-08-14T12:03:00Z',
+        restTimerTotalSeconds: 180,
       })
 
+      // Cleared by deleting both, so a stale total cannot outlive the timer.
       store().setRestTimer('routine-id')
-      expect(selectRestTimer(store(), 'routine-id')).toEqual({
-        endsAt: undefined,
-        totalSeconds: 0,
-      })
+      expect(draft('routine-id')?.restTimerEndsAt).toBeUndefined()
+      expect(draft('routine-id')?.restTimerTotalSeconds).toBeUndefined()
     })
   })
 
@@ -436,7 +430,7 @@ describe('workout store', () => {
       expect(sets(quick, 'running')).toEqual([{}])
       expect(sets(quick, 'old-exercise')).toEqual([])
       // Picked, not started: the clock waits for the first logged value.
-      expect(selectStartedAt(store(), quick)).toBeUndefined()
+      expect(draft(quick)?.startedAt).toBeUndefined()
     })
   })
 
@@ -586,7 +580,7 @@ describe('workout store', () => {
       // thirty seconds of the second walk.
       store().setRecording('routine-id', recording(101000))
 
-      expect(selectStartedAt(store(), 'routine-id')).toBe(new Date(1000).toISOString())
+      expect(draft('routine-id')?.startedAt).toBe(new Date(1000).toISOString())
       const logged = sets('routine-id', 'walk')
       expect(logged.map((set) => set.durationSeconds)).toEqual([60, 30])
       expect(logged.map((set) => set.distanceUnit)).toEqual([

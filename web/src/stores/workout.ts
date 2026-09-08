@@ -114,20 +114,6 @@ export const selectSets = (state: WorkoutState, routineID: RoutineID, exerciseID
 export const selectAllSets = (state: WorkoutState, routineID: RoutineID) =>
   state.workouts[routineID]?.exerciseSets
 
-export const selectNote = (state: WorkoutState, routineID: RoutineID) =>
-  state.workouts[routineID]?.note ?? ''
-
-export const selectStartedAt = (state: WorkoutState, routineID: RoutineID) =>
-  state.workouts[routineID]?.startedAt
-
-export const selectPlanId = (state: WorkoutState, routineID: RoutineID) =>
-  state.workouts[routineID]?.planId ?? ''
-
-export const selectRestTimer = (state: WorkoutState, routineID: RoutineID) => ({
-  endsAt: state.workouts[routineID]?.restTimerEndsAt,
-  totalSeconds: state.workouts[routineID]?.restTimerTotalSeconds ?? 0,
-})
-
 export const selectAddedExercises = (state: WorkoutState, routineID: RoutineID) =>
   state.workouts[routineID]?.addedExercises ?? noExercises
 

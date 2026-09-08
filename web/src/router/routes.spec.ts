@@ -2,7 +2,9 @@ import { describe, expect, test } from 'vitest'
 
 import { en } from '@/i18n/messages'
 import { isTabRoot, tabRootPaths } from './tabs'
-import { flatRoutes, hidesTabBarPath, isFocusedShellPath, routeByName, routes } from './routes'
+import { flatRoutes, hidesTabBarPath, isFocusedShellPath, routes } from './routes'
+
+const byName = (name: string) => flatRoutes().find((route) => route.name === name)
 
 const all = flatRoutes()
 
@@ -67,7 +69,7 @@ describe('routes', () => {
   })
 
   test('every route below /users/:id is a child of it', () => {
-    const parent = routeByName('user-view')
+    const parent = byName('user-view')
 
     expect(parent?.children?.map((child) => child.path)).toEqual([
       '',
@@ -91,7 +93,7 @@ describe('routes', () => {
     ['privacy', 'public'],
     ['not-found', 'public'],
   ])('%s is reachable by %s', (name, access) => {
-    expect(routeByName(name)?.access).toBe(access)
+    expect(byName(name)?.access).toBe(access)
   })
 
   // Everything that is not an auth screen or the two special cases holds user
@@ -166,15 +168,5 @@ describe('isFocusedShellPath', () => {
     ['/home', false],
   ])('classifies %s as %s', (pathname, expected) => {
     expect(isFocusedShellPath(pathname)).toBe(expected)
-  })
-})
-
-describe('routeByName', () => {
-  test('finds a nested route', () => {
-    expect(routeByName('user-followers')?.path).toBe('followers')
-  })
-
-  test('returns nothing for a name that is not routed', () => {
-    expect(routeByName('nowhere')).toBeUndefined()
   })
 })
