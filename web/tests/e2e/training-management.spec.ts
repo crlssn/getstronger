@@ -976,9 +976,12 @@ test.describe('plan lifecycle', () => {
     // Following it again would put it straight back into a state where it
     // cannot say what to train next, so it is not offered.
     await expect(page.getByRole('button', { name: 'Make active' })).toHaveCount(0)
+    // Scoped to this plan's own card: the list holds the seeded rotation too,
+    // and that one is still a plan there is something to follow.
     await page.goto('/plans')
-    await expect(page.getByRole('link', { name: new RegExp(planName) })).toBeVisible()
-    await expect(page.getByRole('button', { name: 'Make active' })).toHaveCount(0)
+    const planCard = page.getByRole('article').filter({ hasText: planName })
+    await expect(planCard.getByRole('link', { name: new RegExp(planName) })).toBeVisible()
+    await expect(planCard.getByRole('button', { name: 'Make active' })).toHaveCount(0)
     await page.goto(planURL)
 
     await page.getByRole('button', { name: 'Delete', exact: true }).click()
