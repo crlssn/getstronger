@@ -29,13 +29,28 @@ docker_ready() {
   docker info >/dev/null 2>&1
 }
 
+# The image ships dockerd with no init script behind it, so 'service docker
+# start' fails there and the daemon has to be launched directly. The service
+# call stays as the first try for an image that does wire one up.
+launch_dockerd() {
+  local log="${TMPDIR:-/tmp}/dockerd.log"
+
+  if [[ "$(id -u)" -eq 0 ]]; then
+    dockerd >"$log" 2>&1 &
+  elif command -v sudo >/dev/null 2>&1; then
+    sudo dockerd >"$log" 2>&1 &
+  else
+    return 1
+  fi
+}
+
 start_docker() {
   if docker_ready; then
     notes+=("Docker already up")
     return
   fi
 
-  if ! service docker start >/dev/null 2>&1; then
+  if ! service docker start >/dev/null 2>&1 && ! launch_dockerd; then
     notes+=("Docker would not start")
     return
   fi
