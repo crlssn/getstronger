@@ -87,6 +87,12 @@
   @apply mt-1 text-title font-extrabold text-text;
 }
 
+/* One card per month, spaced by the container so the last one still sits
+   clear of the status row below it. */
+.historyMonths {
+  @apply space-y-4;
+}
+
 /* AppList is the card and AppListRow the row. */
 .historyList {
   @apply mb-0;

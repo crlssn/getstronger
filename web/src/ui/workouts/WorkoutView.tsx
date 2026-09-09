@@ -1,7 +1,8 @@
 import type { Workout } from '@/proto/api/v1/workout_service_pb'
+import type { WorkoutMonth } from '@/utils/workoutMonths'
 
 import { CheckIcon, ChevronRightIcon, PlayIcon } from '@heroicons/react/24/outline'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 
@@ -23,6 +24,7 @@ import { formatTimestamp } from '@/utils/datetime'
 import { estimatedSessionMinutes } from '@/utils/sessionEstimate'
 import { formatNumber } from '@/utils/numbers'
 import { useInfiniteScroll } from '@/utils/useInfiniteScroll'
+import { groupWorkoutsByMonth } from '@/utils/workoutMonths'
 import { workoutSummary } from '@/utils/workoutSummary'
 import styles from './WorkoutView.module.css'
 
@@ -134,6 +136,22 @@ export const WorkoutView = () => {
     return parts.join(' · ')
   }
 
+  const months = useMemo(() => groupWorkoutsByMonth(workouts), [workouts])
+
+  // The landmark a scrolled history needs, and what the month adds up to:
+  // "August · 4 workouts · 12,400 kg". It is the card's accessible name too,
+  // so the section is announced before its rows rather than only seen.
+  const monthHeading = (month: WorkoutMonth) => {
+    const parts = [
+      month.label ?? t('workout.historyUndated'),
+      t('workout.workoutsCompact', { count: month.workouts.length }),
+    ]
+
+    if (month.volume > 0) parts.push(`${formatNumber(month.volume)} ${t('common.kg')}`)
+
+    return parts.join(' · ')
+  }
+
   return (
     <div className={styles.workoutPage}>
       <AppPageHeader lead={t('workout.subtitle')} title={t('workout.heading')} />
@@ -214,25 +232,29 @@ export const WorkoutView = () => {
           <h2>{t('workout.previous')}</h2>
         </header>
 
-        {workouts.length > 0 && (
-          <AppList className={styles.historyList}>
-            {workouts.map((workout) => (
-              <AppListRow
-                key={workout.id}
-                meta={<small>{workoutMeta(workout)}</small>}
-                title={
-                  workoutSummary(workout).personalBestCount > 0 ? (
-                    <>
-                      {workout.name} <AppChip tone="record">{t('common.pr')}</AppChip>
-                    </>
-                  ) : (
-                    workout.name
-                  )
-                }
-                to={`/workouts/${workout.id}`}
-              />
+        {months.length > 0 && (
+          <div className={styles.historyMonths}>
+            {months.map((month) => (
+              <AppList key={month.key} className={styles.historyList} heading={monthHeading(month)}>
+                {month.workouts.map((workout) => (
+                  <AppListRow
+                    key={workout.id}
+                    meta={<small>{workoutMeta(workout)}</small>}
+                    title={
+                      workoutSummary(workout).personalBestCount > 0 ? (
+                        <>
+                          {workout.name} <AppChip tone="record">{t('common.pr')}</AppChip>
+                        </>
+                      ) : (
+                        workout.name
+                      )
+                    }
+                    to={`/workouts/${workout.id}`}
+                  />
+                ))}
+              </AppList>
             ))}
-          </AppList>
+          </div>
         )}
 
         {!loaded ? (

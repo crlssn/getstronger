@@ -1021,6 +1021,34 @@ test.describe('planned workouts and history', () => {
     await firstExercise.click()
     await expect(page.getByRole('table').first()).toBeVisible()
   })
+
+  // The history is read by month, and a month's heading is a claim about the
+  // rows under it: state a count or a volume the rows do not add up to and the
+  // landmark is worse than none.
+  test('heads each month of history with what that month holds', async ({ page }) => {
+    await page.goto('/workout')
+    const history = sectionWithHeading(page, 'Previous workouts')
+    await expect(history.getByRole('link')).not.toHaveCount(0)
+    await scrollToListEnd(page, page.getByText(/reached the end of your workout history/))
+
+    const months = history.getByRole('list')
+    const headings = await months.evaluateAll((lists) =>
+      lists.map((list) => list.getAttribute('aria-label') ?? ''),
+    )
+
+    expect(headings.length).toBeGreaterThan(0)
+    // One card per month: a month split in two would head the same one twice.
+    expect(new Set(headings).size).toBe(headings.length)
+
+    for (const [index, heading] of headings.entries()) {
+      // "August · 4 workouts · 12,400 kg", with the year while it is not this
+      // one and the volume only where the month lifted something.
+      expect(heading).toMatch(/^\p{L}+( \d{4})? · \d+ workouts?( · [\d,]+ kg)?$/u)
+
+      const stated = Number(/(\d+) workouts?/.exec(heading)?.[1])
+      await expect(months.nth(index).getByRole('link')).toHaveCount(stated)
+    }
+  })
 })
 
 // A draft outlives the session that logged it, so the same athlete finds it on
