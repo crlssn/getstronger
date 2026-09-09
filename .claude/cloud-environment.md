@@ -62,8 +62,9 @@ go:go.uber.org/mock/mockgen@v0.6.0: Skipped due to failed dependency
 mise ERROR
 ```
 
-That is why sessions here reach for `go` and `buf` directly, against the rule
-that everything runs through `mise run`. The tasks resolving a binary with
+Until it was allowed, that is why sessions here reached for `go` and `buf`
+directly, against the rule that everything runs through `mise run`. The tasks
+resolving a binary with
 `mise which` — `lint:backend`, `db:seed`, `db:migrate` — fail for the same
 reason twice over, since a tool on `PATH` never satisfies it. With a Go of its
 own, mise can also build the five `go:` tools through `proxy.golang.org`, which
@@ -77,6 +78,33 @@ plain registry tools, so mise takes them from GitHub releases whatever the
 allowlist says, and `mise run lint:backend` stays out of reach here. Moving
 them to mise's `go:` backend would fix that at the cost of compiling them on
 every developer's machine, which is not obviously the better trade.
+
+## Environment variables
+
+The **Environment variables** field carries these two:
+
+```text
+MISE_GITHUB_ATTESTATIONS=false
+MISE_AQUA_GITHUB_ATTESTATIONS=false
+```
+
+mise checks a tool's GitHub attestation and SLSA provenance before installing
+it, and those checks call the GitHub API. The session's GitHub proxy scopes API
+access to the repositories attached to the session, so a check against
+`jdx/mise` or `stephenafamo/bob` comes back with `GitHub access to this
+repository is not enabled for this session` and the install fails. No allowlist
+entry fixes it — the proxy is doing exactly what it is there for — so without
+these, `mise run install:js` fails on a fresh session.
+
+Turning the checks off is a genuine reduction in what this sandbox verifies,
+and worth naming rather than burying. Two things bound it: the reduction stops
+at the sandbox, since a developer machine reads none of this, and the tools
+that actually install here arrive through `proxy.golang.org`, whose downloads
+are still checked against `sum.golang.org`. The GitHub-released tools the
+attestations would have covered are unreachable here for other reasons anyway.
+
+Anyone who can use the environment can read its variables, so nothing secret
+belongs in this field. Neither of these is a secret.
 
 ## The setup script
 
