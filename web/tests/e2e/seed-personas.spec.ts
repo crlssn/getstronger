@@ -33,7 +33,10 @@ test.describe('seed personas', () => {
     await expect(page.getByText('3 routines · repeat continuously')).toBeVisible()
     await expect(page.getByText('Routine 2 of 3')).toBeVisible()
 
+    // Own workouts are listed on the public profile, which the account page
+    // links to; /profile itself is settings.
     await page.goto('/profile')
+    await page.getByRole('link', { name: /Public profile/ }).click()
     await page.getByRole('link', { name: 'View Full Body Circuit workout details' }).first().click()
     await expect(page).toHaveURL(/\/workouts\/[0-9a-f-]+$/)
     await expect(page.getByText('Circuit · 3 rounds')).toBeVisible()

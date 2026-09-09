@@ -1,4 +1,5 @@
 import {
+  acceptConfirmDialog,
   expect,
   logIn,
   openExerciseActions,
@@ -44,6 +45,14 @@ test.describe('authenticated journeys', () => {
   // The routine row is how the next session is chosen: what it is left on is
   // what the dashboard says is up next the next time the screen is opened.
   test('switches what is up next from the routine row @smoke', async ({ page }) => {
+    // A plan decides the order while it runs, so the row holds the planned
+    // routine alone. Choosing the next session by hand is what happens when
+    // nothing is running, and the seeded athlete follows a rotation.
+    await page.goto('/plans')
+    await page.getByRole('button', { name: 'Pause' }).click()
+    await acceptConfirmDialog(page, 'Pause')
+    await expect(page.getByRole('heading', { name: 'No active plan' })).toBeVisible()
+
     await page.goto('/home')
 
     const row = page.getByRole('list', { name: 'Routines to train next' })
