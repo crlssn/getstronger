@@ -1,7 +1,15 @@
 // @vitest-environment jsdom
 
 import { create } from '@bufbuild/protobuf'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+
+// The bridge to the phone, which a store test has no business crossing.
+vi.mock('@/native/restNotification', () => ({
+  scheduleRestOver: vi.fn(),
+  cancelRestOver: vi.fn(),
+}))
+
+import * as native from '@/native/restNotification'
 
 import { DistanceUnit, ExerciseMetric, ExerciseSchema, WeightUnit } from '@/proto/api/v1/shared_pb'
 import type { RoutineWorkout } from '@/types/workout'
@@ -36,6 +44,8 @@ describe('workout store', () => {
   beforeEach(() => {
     localStorage.clear()
     useWorkoutStore.setState({ workouts: {} })
+    vi.mocked(native.scheduleRestOver).mockClear()
+    vi.mocked(native.cancelRestOver).mockClear()
   })
 
   describe('drafts', () => {
@@ -414,6 +424,67 @@ describe('workout store', () => {
       store().setRestTimer('routine-id')
       expect(draft('routine-id')?.restTimerEndsAt).toBeUndefined()
       expect(draft('routine-id')?.restTimerTotalSeconds).toBeUndefined()
+    })
+
+    // The store is where every rest starts and ends, so it is where the phone
+    // is told about one — the screens stay unaware of the notification.
+    it('schedules the rest notification for the deadline it stores', () => {
+      const endsAt = new Date(Date.now() + 120_000).toISOString()
+      store().initialiseWorkout('routine-id')
+
+      store().setRestTimer('routine-id', endsAt, 120)
+
+      expect(native.scheduleRestOver).toHaveBeenCalledWith(Date.parse(endsAt), {
+        routineID: 'routine-id',
+      })
+    })
+
+    it('carries the plan the workout belongs to into the notification', () => {
+      const endsAt = new Date(Date.now() + 120_000).toISOString()
+      seed({ 'routine-id': { planId: 'plan-id' } })
+
+      store().setRestTimer('routine-id', endsAt, 120)
+
+      expect(native.scheduleRestOver).toHaveBeenCalledWith(Date.parse(endsAt), {
+        routineID: 'routine-id',
+        planID: 'plan-id',
+      })
+    })
+
+    it('cancels the notification when a rest is skipped or retired', () => {
+      store().initialiseWorkout('routine-id')
+      store().setRestTimer('routine-id', new Date(Date.now() + 120_000).toISOString(), 120)
+
+      store().setRestTimer('routine-id')
+
+      expect(native.cancelRestOver).toHaveBeenCalledTimes(1)
+    })
+
+    it('cancels the notification when the workout is finished or cancelled', () => {
+      store().initialiseWorkout('routine-id')
+      store().setRestTimer('routine-id', new Date(Date.now() + 120_000).toISOString(), 120)
+
+      store().removeWorkout('routine-id')
+
+      expect(native.cancelRestOver).toHaveBeenCalledTimes(1)
+    })
+
+    it('leaves the notification alone when another draft is discarded', () => {
+      store().initialiseWorkout('routine-id')
+      store().initialiseWorkout('other-routine')
+      store().setRestTimer('routine-id', new Date(Date.now() + 120_000).toISOString(), 120)
+
+      store().removeWorkout('other-routine')
+
+      expect(native.cancelRestOver).not.toHaveBeenCalled()
+    })
+
+    // A rest is only stored against a draft that exists, and a notification
+    // must not outlive one that does not.
+    it('schedules nothing for a workout that is not in the store', () => {
+      store().setRestTimer('missing-routine', new Date(Date.now() + 120_000).toISOString(), 120)
+
+      expect(native.scheduleRestOver).not.toHaveBeenCalled()
     })
   })
 

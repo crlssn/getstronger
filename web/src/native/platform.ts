@@ -1,7 +1,10 @@
 import { Capacitor } from '@capacitor/core'
 
+import type { RestNotificationTarget } from '@/native/restNotification'
+
 import { canSwipeBack, SwipeBack } from '@/native/swipeBack'
 import { isFocusedShellPath } from '@/router/routes'
+import { workoutHref } from '@/utils/workoutHref'
 
 /** Just enough of the data router for this module, so it can be handed a stub. */
 export interface NativeRouter {
@@ -106,6 +109,14 @@ export const initNativePlatform = async (router: NativeRouter): Promise<void> =>
   await App.addListener('appUrlOpen', ({ url }) => {
     const path = deepLinkPath(url)
     if (path) void router.navigate(path)
+  })
+
+  // A rest notification fires with the app off screen, so tapping it is often
+  // the way back into the session.
+  const { LocalNotifications } = await import('@capacitor/local-notifications')
+  await LocalNotifications.addListener('localNotificationActionPerformed', ({ notification }) => {
+    const { routineID, planID } = (notification.extra ?? {}) as RestNotificationTarget
+    if (routineID) void router.navigate(workoutHref(routineID, planID))
   })
 
   // The splash screen stays up until the app has mounted (launchAutoHide is
