@@ -240,15 +240,18 @@ export const CardWorkout = ({ workout, compact, unseen = false }: Props) => {
               <Link to={`/users/${workout.user?.id}`}>{handle(workout.user?.username)}</Link>
             </div>
 
-            {/* What the session moved and how far, then sets, then the date:
-                the line truncates from the end, and the date is the part
-                worth losing first. A unit the session logged nothing in is
-                left out — every run read "0 kg", and every lift would now
-                read "0 km". */}
+            {/* What the session moved and how far, then what it was made of,
+                then the date: the line truncates from the end, and the date is
+                the part worth losing first. A unit the session logged nothing
+                in is left out — every run read "0 kg", and every lift would now
+                read "0 km". Exercises are read with the sets rather than
+                instead of them: twenty sets over three exercises and twenty
+                over ten are different sessions. */}
             <p className={styles.feedMeta}>
               {[
                 workout.intensity > 0 && `${formatNumber(workout.intensity)} ${t('common.kg')}`,
                 totalDistanceKm > 0 && formatDistanceIn(totalDistanceKm, preferredDistanceUnit),
+                t('home.exerciseCount', { count: workout.exerciseSets.length }),
                 t('workout.setsCompact', { count: setCount }),
                 finishedDate,
               ]

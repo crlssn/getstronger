@@ -71,6 +71,23 @@ const withSets = () =>
     ],
   })
 
+// The two shapes the row's counts read differently for: sets spread one apiece
+// over several exercises, and a session that is one set of one exercise.
+const spread = () =>
+  workout({
+    exerciseSets: [
+      { exercise: { id: 'exercise-1', name: 'Bench press' }, sets: [{ id: 'set-1', reps: 5 }] },
+      { exercise: { id: 'exercise-2', name: 'Squat' }, sets: [{ id: 'set-2', reps: 5 }] },
+    ],
+  })
+
+const single = () =>
+  workout({
+    exerciseSets: [
+      { exercise: { id: 'exercise-1', name: 'Bench press' }, sets: [{ id: 'set-1', reps: 5 }] },
+    ],
+  })
+
 // A session with ground covered and nothing lifted, which is what the row's
 // zero-hiding is for. The clock is optional: only the summary's own reading of
 // duration against set time needs one.
@@ -224,6 +241,24 @@ describe('CardWorkout', () => {
       render(<CardWorkout compact workout={withSets()} />)
 
       expect(screen.getByText(/4,200 kg/)).toHaveTextContent(/2 sets/)
+    })
+
+    // Twenty sets across three exercises and twenty across ten are different
+    // sessions, and the row read the same for both.
+    test('counts the exercises the sets were spread over', () => {
+      render(<CardWorkout compact workout={withSets()} />)
+
+      expect(screen.getByText(/4,200 kg/)).toHaveTextContent('1 exercise · 2 sets')
+    })
+
+    // Neither count says anything about the other's plural: one exercise can
+    // carry ten sets, and ten exercises one apiece.
+    test('plurals the two counts apart', () => {
+      render(<CardWorkout compact workout={spread()} />)
+      expect(screen.getByText(/2 exercises/)).toHaveTextContent('2 exercises · 2 sets')
+
+      render(<CardWorkout compact workout={single()} />)
+      expect(screen.getByText(/1 exercise ·/)).toHaveTextContent('1 exercise · 1 set')
     })
 
     test('counts the ground a session covered', () => {
