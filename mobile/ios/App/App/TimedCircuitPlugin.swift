@@ -65,6 +65,9 @@ public class TimedCircuitPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManagerD
     private var paceTonedAt = 0.0
     /// How loud a note is against a full-volume announcement.
     private let toneVolume = 0.2
+    /// A shade under the synthesiser's own pace, which reads a short cue as
+    /// though it were a sentence rather than a label.
+    private let announcementRate = AVSpeechUtteranceDefaultSpeechRate * 0.95
     private var permissionCall: CAPPluginCall?
     private var lastCheckpoint = 0.0
     private var now: Double { (Date().timeIntervalSince1970 * 1000).rounded() }
@@ -188,10 +191,33 @@ public class TimedCircuitPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManagerD
     /// the audio session, which ducks whatever the athlete is listening to.
     private func speak(_ instruction: String) {
         guard volume > 0 else { return }
-        let utterance = AVSpeechUtterance(string: instruction)
-        utterance.voice = AVSpeechSynthesisVoice(language: locale)
+        let utterance = AVSpeechUtterance(string: announcementPhrase(instruction))
+        utterance.voice = announcementVoice()
         utterance.volume = Float(volume)
+        utterance.rate = announcementRate
         speech.speak(utterance)
+    }
+
+    /// The best-sounding voice installed for the announcement locale, falling
+    /// back to the one the synthesiser would have picked. Every candidate is
+    /// already on the phone, so the choice costs no network.
+    private func announcementVoice() -> AVSpeechSynthesisVoice? {
+        let installed = AVSpeechSynthesisVoice.speechVoices().map {
+            SpokenVoice(identifier: $0.identifier, language: $0.language, quality: quality(of: $0))
+        }
+        if let best = bestVoice(for: locale, among: installed),
+           let voice = AVSpeechSynthesisVoice(identifier: best.identifier) {
+            return voice
+        }
+        return AVSpeechSynthesisVoice(language: announcementLocale(locale))
+    }
+
+    private func quality(of voice: AVSpeechSynthesisVoice) -> VoiceQuality {
+        switch voice.quality {
+        case .premium: return .premium
+        case .enhanced: return .enhanced
+        default: return .standard
+        }
     }
 
     /// Whether anything still wants the audio session.

@@ -228,7 +228,7 @@ run = ["buf generate", { task = "format:backend" }]
 
 [tasks.test]
 description = "Run all tests"
-run = [{ task = "test:web" }, { task = "test:backend" }]
+run = [{ task = "test:web" }, { task = "test:backend" }, { task = "test:ios" }]
 
 [tasks."test:web"]
 alias = "test_web"
@@ -243,6 +243,14 @@ run = [
 alias = "test_backend"
 description = "Run backend tests"
 run = "go test ./..."
+
+# The native logic the iOS app compiles into itself but keeps free of
+# Capacitor, so a Swift toolchain is all it takes to test.
+[tasks."test:ios"]
+alias = "test_ios"
+description = "Run the iOS unit tests"
+dir = "mobile/ios/App/AnnouncementVoice"
+run = "swift test"
 
 # The same coverage, attributed to the test that reached each line rather than
 # to the run as a whole — one entry per test under 'counts'. The first run pays
