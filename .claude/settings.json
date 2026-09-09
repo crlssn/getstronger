@@ -40,9 +40,6 @@
       "Bash(gh run view *)"
     ],
     "deny": [
-      "Read(./node_modules/**)",
-      "Read(./web/node_modules/**)",
-      "Read(./mobile/node_modules/**)",
       "Read(./web/dist/**)",
       "Read(./web/playwright-report/**)",
       "Read(./web/test-results/**)",
