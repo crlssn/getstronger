@@ -39,6 +39,8 @@ The environment runs **Custom** access with the defaults kept, plus:
 production.cloudfront.docker.com
 buf.build
 nodejs.org
+dl.google.com
+mise-versions.jdx.dev
 ```
 
 The first line is not optional. Docker Hub's own hosts are on the default list,
@@ -49,6 +51,21 @@ on the first blob, and every testcontainers suite with it.
 
 `buf.build` is what buf's remote plugins need; without it `mise run gen:protos`
 reports that the remote is unavailable.
+
+`dl.google.com` is where mise fetches Go, and it matters more than one tool.
+Several tasks resolve a binary through `mise which`, which only ever finds what
+mise installed — `lint:backend`, `db:seed` and `db:migrate` all do — so a tool
+on `PATH` does not satisfy them. With a Go of its own, mise can also build the
+five `go:` tools in `mise.toml` through `proxy.golang.org`, which brings
+`migrate`, `bobgen-psql`, `mockgen`, `goimports` and `tobari` within reach.
+`mise-versions.jdx.dev` is mise's version index; without it every lookup burns
+a retry burst against the proxy before continuing.
+
+What this still does not fix is `golangci-lint`, `buf` and `gofumpt`. They are
+plain registry tools, so mise takes them from GitHub releases whatever the
+allowlist says, and `mise run lint:backend` stays out of reach here. Moving
+them to mise's `go:` backend would fix that at the cost of compiling them on
+every developer's machine, which is not obviously the better trade.
 
 ## The setup script
 
