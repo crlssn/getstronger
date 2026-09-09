@@ -336,7 +336,9 @@ export const StartWorkout = () => {
   // recorder is handed the whole comparison at the first interval, and by then
   // the athlete is already moving.
   useEffect(() => {
+    // Off is nothing fetched rather than something fetched and ignored.
     if (!Capacitor.isNativePlatform() || quickWorkout || !phases.length) return
+    if (paceReference === 'off') return
     let disposed = false
     void getPaceReference(routineID, paceReferenceRequested(paceReference)).then((res) => {
       if (!disposed) setReference(parseRecording(res?.recordingJson))
@@ -345,7 +347,12 @@ export const StartWorkout = () => {
       disposed = true
     }
   }, [routineID, quickWorkout, phases.length, paceReference])
-  const pacing = useMemo(() => pacingFor(phases, reference), [phases, reference])
+  // Turned off, the recorder is handed no targets, and sounds none — even
+  // against a session fetched before the switch was flipped.
+  const pacing = useMemo(
+    () => pacingFor(phases, paceReference === 'off' ? undefined : reference),
+    [phases, reference, paceReference],
+  )
   const recordingComplete = useCallback(
     (recording: Recording) => {
       if (!useWorkoutStore.getState().workouts[routineID]?.recording) {

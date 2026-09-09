@@ -333,16 +333,19 @@ describe('ProfileView', () => {
     })
   })
 
-  // Two named sessions rather than a yes and a no, and no request behind it:
-  // which session to be paced against is the device's own choice.
-  test('chooses the session the pace tones compare with', async () => {
+  // Three choices rather than a yes and a no, so the row leads to a screen of
+  // its own and reads the choice back; off is the default.
+  test('leads to the pace tones screen and reads the choice back', async () => {
     render()
 
     await loaded()
-    await userEvent.click(screen.getByRole('button', { name: 'Best' }))
+    const settings = within(await screen.findByRole('region', { name: 'Settings' }))
+    const tones = settings.getByRole('link', { name: /Pace tones/ })
+    expect(tones).toHaveAttribute('href', '/settings/pace-tones')
+    expect(tones).toHaveTextContent('Off')
 
-    expect(usePreferencesStore.getState().paceReference).toBe('best')
-    expect(screen.getByRole('button', { name: 'Best' })).toHaveAttribute('aria-pressed', 'true')
+    act(() => usePreferencesStore.getState().setPaceReference('best'))
+    expect(settings.getByRole('link', { name: /Pace tones/ })).toHaveTextContent('Best session')
   })
 
   // The switch this tab owns is inside the same window, and it is the one an

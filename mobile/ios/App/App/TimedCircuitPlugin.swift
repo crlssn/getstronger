@@ -32,7 +32,7 @@ private let wanderSpeed = 3.0
 
 /// Native ownership keeps the recording independent of the WebView lifecycle.
 @objc(TimedCircuitPlugin)
-public class TimedCircuitPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManagerDelegate {
+public class TimedCircuitPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManagerDelegate, AVSpeechSynthesizerDelegate {
     public let identifier = "TimedCircuitPlugin"
     public let jsName = "TimedCircuit"
     public let pluginMethods = ["start", "read", "pause", "resume", "finish", "clear", "setVolume"]
@@ -58,9 +58,13 @@ public class TimedCircuitPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManagerD
     private var filterVariance = 0.0
     private var filterAt = 0.0
     private var spoken = -1
-    /// Seconds of warning before an interval ends; 0 sounds nothing.
+    /// Seconds of warning before an interval ends; 0 says nothing.
     private var cueLead = 10.0
-    /// The interval already warned about, so the tone sounds once per interval.
+    /// The warning, spoken: the seconds left, already in the athlete's language.
+    private var cuePhrase = ""
+    /// Said once the last interval runs out; a session ended by hand says nothing.
+    private var completedPhrase = ""
+    /// The interval already warned about, so the cue is said once per interval.
     private var cued = -1
     // The session this one is paced against, as the web app settled it: a
     // target for each interval, and the three numbers that say when a
@@ -73,8 +77,9 @@ public class TimedCircuitPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManagerD
     private var paceZone = ""
     private var paceZonePhase = -1
     private var paceTonedAt = 0.0
-    /// How loud a note is against a full-volume announcement.
-    private let toneVolume = 0.2
+    /// How loud a note is against a full-volume announcement: a fifth was
+    /// lost under a footfall on a busy road.
+    private let toneVolume = 0.6
     /// A shade under the synthesiser's own pace, which reads a short cue as
     /// though it were a sentence rather than a label.
     private let announcementRate = AVSpeechUtteranceDefaultSpeechRate * 0.95
@@ -88,6 +93,7 @@ public class TimedCircuitPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManagerD
 
     public override func load() {
         DispatchQueue.main.async {
+            self.speech.delegate = self
             self.location.delegate = self
             self.location.desiredAccuracy = kCLLocationAccuracyBestForNavigation
             self.location.distanceFilter = kCLDistanceFilterNone
@@ -138,34 +144,6 @@ public class TimedCircuitPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManagerD
         return (phase["durationSeconds"] as? Double ?? 0) >= cueLead * 2
     }
 
-    /// The tone that warns an interval is about to end.
-    ///
-    /// Built in memory rather than shipped as an asset: a fifth of a second of
-    /// a sine wave is smaller written out than a file would be to add to the
-    /// project, and it sounds through the recording's own audio session, which
-    /// is what reaches a locked phone.
-    private lazy var cue: AVAudioPlayer? = {
-        let rate = 44100, seconds = 0.2, frequency = 880.0, peak = 0.7
-        let frames = Int(Double(rate) * seconds)
-        var samples = Data(capacity: frames * 2)
-        for frame in 0..<frames {
-            // Fading each end over 10 ms keeps the tone from clicking.
-            let fade = min(1, min(Double(frame), Double(frames - frame)) / (Double(rate) * 0.01))
-            let value = sin(2 * .pi * frequency * Double(frame) / Double(rate)) * fade * peak
-            withUnsafeBytes(of: Int16(value * 32767).littleEndian) { samples.append(contentsOf: $0) }
-        }
-        func bytes(_ value: Int, _ count: Int) -> Data {
-            Data((0..<count).map { UInt8((value >> (8 * $0)) & 0xff) })
-        }
-        var wav = Data("RIFF".utf8) + bytes(36 + samples.count, 4) + Data("WAVEfmt ".utf8)
-        wav += bytes(16, 4) + bytes(1, 2) + bytes(1, 2) + bytes(rate, 4)
-        wav += bytes(rate * 2, 4) + bytes(2, 2) + bytes(16, 2)
-        wav += Data("data".utf8) + bytes(samples.count, 4) + samples
-        guard let player = try? AVAudioPlayer(data: wav) else { return nil }
-        player.prepareToPlay()
-        return player
-    }()
-
     private func begin(_ call: CAPPluginCall) {
         guard let phases = call.getArray("phases", [String: Any].self), !phases.isEmpty,
               phases.count <= 10000,
@@ -176,6 +154,8 @@ public class TimedCircuitPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManagerD
         locale = call.getString("locale") ?? "en"
         volume = min(max(call.getDouble("volume") ?? 1, 0), 1)
         cueLead = Double(call.getInt("cueLeadSeconds") ?? 10)
+        cuePhrase = call.getString("cuePhrase") ?? ""
+        completedPhrase = call.getString("completedPhrase") ?? ""
         readPacing(call.getObject("pacing"))
         autoPauses = call.getBool("autoPause") ?? false
         fixes = []
@@ -199,14 +179,34 @@ public class TimedCircuitPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManagerD
     }
 
     /// Silence is silent all the way down: an utterance at no volume still holds
-    /// the audio session, which ducks whatever the athlete is listening to.
-    private func speak(_ instruction: String) {
-        guard volume > 0 else { return }
+    /// the audio session for nothing. The level defaults to the announcements'.
+    private func speak(_ instruction: String, at level: Double? = nil) {
+        let level = level ?? volume
+        guard level > 0 else { return }
         let utterance = AVSpeechUtterance(string: announcementPhrase(instruction))
         utterance.voice = announcementVoice()
-        utterance.volume = Float(volume)
+        utterance.volume = Float(level)
         utterance.rate = announcementRate
         speech.speak(utterance)
+    }
+
+    /// The cue is its own setting, so the announcements being off does not
+    /// silence it: it is said at full volume instead.
+    private var cueVolume: Double { volume > 0 ? volume : 1 }
+
+    /// The ending is the last thing said, and the audio session waits for it:
+    /// closed under an utterance, the session cuts the word off.
+    public func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didFinish utterance: AVSpeechUtterance) {
+        releaseAudioIfDone()
+    }
+
+    public func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didCancel utterance: AVSpeechUtterance) {
+        releaseAudioIfDone()
+    }
+
+    private func releaseAudioIfDone() {
+        guard recording == nil || recording?["endedAt"] != nil, !speech.isSpeaking else { return }
+        closeAudio()
     }
 
     /// The best-sounding voice installed for the announcement locale, falling
@@ -238,10 +238,11 @@ public class TimedCircuitPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManagerD
     /// the session open.
     private var needsAudio: Bool { volume > 0 || cueLead > 0 }
 
+    /// Mixed over whatever is playing and never ducking it: a runner's music
+    /// is theirs, and a word said over it is heard without it dropping away.
     private func openAudio() throws {
         guard !audible else { return }
-        try AVAudioSession.sharedInstance().setCategory(.playback, mode: .spokenAudio,
-            options: [.duckOthers, .mixWithOthers])
+        try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default, options: [.mixWithOthers])
         try AVAudioSession.sharedInstance().setActive(true)
         audible = true
     }
@@ -272,9 +273,8 @@ public class TimedCircuitPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManagerD
     }
 
     /// Two short notes, higher for ahead and lower for behind, generated
-    /// rather than shipped: the same two the browser recorder sounds. Both sit
-    /// clear of the 880 the interval cue sounds on, so three sounds in one run
-    /// are three different sounds.
+    /// rather than shipped: the same two the browser recorder sounds. The cue
+    /// is spoken, so a note is never mistaken for it.
     ///
     /// They follow the announcement volume: turned off, the recorder holds no
     /// audio session at all, and a session that says nothing must not beep.
@@ -296,7 +296,7 @@ public class TimedCircuitPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManagerD
 
     private func note(hertz: Double, format: AVAudioFormat) -> AVAudioPCMBuffer? {
         guard let buffer = AVAudioPCMBuffer(pcmFormat: format,
-                                            frameCapacity: AVAudioFrameCount(format.sampleRate * 0.18)),
+                                            frameCapacity: AVAudioFrameCount(format.sampleRate * 0.3)),
               let samples = buffer.floatChannelData?[0] else { return nil }
         let frames = buffer.frameCapacity
         buffer.frameLength = frames
@@ -465,15 +465,14 @@ public class TimedCircuitPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManagerD
                 }
                 if cued != index, cues(phase), elapsed >= boundary - cueLead * 1000 {
                     cued = index
-                    cue?.currentTime = 0
-                    cue?.play()
+                    speak(cuePhrase, at: cueVolume)
                 }
                 judge(interval: index, seconds: (elapsed - opened) / 1000, at: time)
                 if time - lastCheckpoint > 1000 { checkpoint() }
                 return
             }
         }
-        end(at: time - (elapsed - boundary))
+        end(at: time - (elapsed - boundary), saying: completedPhrase)
     }
 
     public func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
@@ -648,7 +647,9 @@ public class TimedCircuitPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManagerD
             catch { self.recording?["interrupted"] = true; self.end(at: self.now); call.reject("Recording could not be saved", nil, error) }
         }
     }
-    private func end(at time: Double) {
+    /// Ends the recording, saying `phrase` first where the prescription ran
+    /// out on its own; a session ended by hand is cut off mid-word instead.
+    private func end(at time: Double, saying phrase: String = "") {
         guard recording != nil, recording?["endedAt"] == nil else { return }
         recording?["endedAt"] = time
         var pauses = recording?["pauses"] as? [[String: Any]] ?? []
@@ -657,9 +658,15 @@ public class TimedCircuitPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManagerD
         location.stopUpdatingLocation()
         timer?.invalidate()
         timer = nil
-        speech.stopSpeaking(at: .immediate)
         if engine.isRunning { engine.stop() }
-        closeAudio()
+        // Said, the phrase holds the session until the synthesiser reports it
+        // finished; cut off, the session goes now.
+        if phrase.isEmpty || volume <= 0 {
+            speech.stopSpeaking(at: .immediate)
+            closeAudio()
+        } else {
+            speak(phrase)
+        }
         checkpoint()
     }
     private func checkpoint() {

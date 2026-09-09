@@ -136,6 +136,11 @@ export const authenticatedPages: PageEntry[] = [
     route: () => '/settings/interval-cue',
   },
   {
+    component: 'src/ui/profile/PaceToneSettings.tsx',
+    name: 'settings-pace-tones',
+    route: () => '/settings/pace-tones',
+  },
+  {
     component: 'src/ui/profile/AccountSettings.tsx',
     name: 'settings-account',
     route: () => '/settings/account',

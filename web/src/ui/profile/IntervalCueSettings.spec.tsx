@@ -55,7 +55,7 @@ describe('IntervalCueSettings', () => {
   test('turns the cue off, and says what off means', async () => {
     render()
 
-    expect(screen.getByText('Intervals end without a sound')).toBeInTheDocument()
+    expect(screen.getByText('Intervals end without a warning')).toBeInTheDocument()
     await userEvent.click(screen.getByRole('button', { name: /Off/ }))
 
     expect(usePreferencesStore.getState().intervalCueLeadSeconds).toBe(0)

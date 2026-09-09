@@ -8,7 +8,7 @@ import {
   type RoutePoint,
 } from '@/utils/timedCircuit'
 
-import { playCue, playTone } from '@/native/cueTone'
+import { playTone, say } from '@/native/cueTone'
 import { cuesInterval } from '@/utils/intervalCue'
 
 /**
@@ -20,9 +20,10 @@ import { cuesInterval } from '@/utils/intervalCue'
  * an open-ended session runs on outside the app, and what the end-to-end suite
  * records against.
  *
- * It speaks nothing, so the volume the phones announce at is applied to the
- * pace tones instead — turned all the way down, the recorder sounds none. The
- * interval cue keeps its own setting, as it does on the phones.
+ * It announces no phases, so the volume the phones announce at is applied to
+ * the pace tones and the ending instead — turned all the way down, the
+ * recorder sounds none. The interval cue keeps its own setting, as it does on
+ * the phones: with the announcements off it is said at full volume.
  */
 
 const storageKey = 'getstronger:timed-circuit'
@@ -37,17 +38,21 @@ const maxFixes = 60
 
 // The two notes, in hertz: the interval is going better than the reference, or
 // worse than it. Higher is better is the one convention nobody has to be
-// taught, and both sit clear of the 880 the interval cue sounds on, so three
-// sounds in one run are three different sounds. The phones sound the same two.
+// taught, and the cue is spoken, so a note is never mistaken for it. The
+// phones sound the same two.
 const toneHertz: Record<PaceTone, number> = { ahead: 1320, behind: 440 }
-/** The peak the interval cue plays at, which a note matches at full volume. */
+/** How loud a note is at full volume. */
 const toneVolume = 0.3
 
 interface Saved {
   key: string
   recording: Recording
-  /** Seconds of warning before an interval ends; 0 sounds nothing. */
+  /** Seconds of warning before an interval ends; 0 says nothing. */
   cueLeadSeconds: number
+  /** The warning, spoken: the seconds left, in the athlete's language. */
+  cuePhrase: string
+  /** Said once the last interval runs out, and not when the athlete ends it. */
+  completedPhrase: string
   checkpoint: number
   /** How loudly the recorder sounds, 0 to 1; 0 is silent. */
   volume: number
@@ -60,7 +65,7 @@ let saved: Saved | undefined
 let watch: number | undefined
 let timer: ReturnType<typeof setInterval> | undefined
 let loaded = false
-/** The interval already warned about, so a tone sounds once per interval. */
+/** The interval already warned about, so the cue is said once per interval. */
 let cued = -1
 // Held in memory rather than with the recording: a reload has heard nothing,
 // so it starts the comparison over rather than resuming a crossing.
@@ -193,7 +198,9 @@ const tick = () => {
         elapsed >= boundary - lead
       ) {
         cued = index
-        playCue()
+        // The cue is its own setting, so the announcements being off does not
+        // silence it: it is said at full volume instead.
+        say(saved.cuePhrase, saved.volume > 0 ? saved.volume : 1)
       }
       judge(index, (elapsed - opened) / 1000, at)
       if (at - saved.checkpoint > 1000) persist()
@@ -201,6 +208,7 @@ const tick = () => {
     }
   }
   end(at - (elapsed - boundary))
+  say(saved.completedPhrase, saved.volume)
 }
 
 /**
@@ -275,6 +283,8 @@ const begin = (
   key: string,
   phases: Phase[],
   cueLeadSeconds: number,
+  cuePhrase: string,
+  completedPhrase: string,
   volume: number,
   autoPauses: boolean,
   pacing?: Pacing,
@@ -296,6 +306,8 @@ const begin = (
         interrupted: false,
       },
       cueLeadSeconds,
+      cuePhrase,
+      completedPhrase,
       checkpoint: now(),
       autoPause: autoPauses,
     }
@@ -349,6 +361,8 @@ export const TimedCircuitWeb = {
     locale: string
     volume: number
     cueLeadSeconds: number
+    cuePhrase: string
+    completedPhrase: string
     pacing?: Pacing
     autoPause?: boolean
   }): Promise<void> {
@@ -359,6 +373,8 @@ export const TimedCircuitWeb = {
       options.key,
       options.phases,
       options.cueLeadSeconds,
+      options.cuePhrase,
+      options.completedPhrase,
       options.volume,
       options.autoPause ?? false,
       options.pacing,

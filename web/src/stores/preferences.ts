@@ -37,10 +37,9 @@ const defaults = {
   // a surprise to anyone who did not ask a recording to hold itself.
   autoPause: false,
   intervalCueLeadSeconds: defaultCueLead,
-  // Which session a recording is paced against. The last rather than the best,
-  // because an athlete two weeks into a routine is chasing what they did on
-  // Tuesday, not their record.
-  paceReference: 'previous' as PaceReferenceChoice,
+  // Which session a recording is paced against. Off unless the account asked
+  // for it: a note in the ear nobody asked for is a surprise mid-run.
+  paceReference: 'off' as PaceReferenceChoice,
 }
 
 // Cached locally so the UI has an immediate value while `getCurrentUser`

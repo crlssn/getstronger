@@ -2,12 +2,13 @@
 
 /* The screen is read at arm's length, mid-stride, and the two controls that
    end a session have to be under a thumb without a scroll first. So the
-   numbers take the height they need and everything left over becomes the gap
-   above the buttons. The subtraction is the shell's own vertical padding; the
-   focused shell adds none of its own below. */
+   screen is exactly the viewport, the numbers take the height they need, and
+   everything left over goes to the list of finished intervals, which is the
+   one thing here that scrolls. The subtraction is the shell's own vertical
+   padding; the focused shell adds none of its own below. */
 .screen {
   @apply flex flex-col gap-3.5;
-  min-height: calc(100dvh - 2.5rem - env(safe-area-inset-top));
+  height: calc(100dvh - 2.5rem - env(safe-area-inset-top));
 }
 
 .header {
@@ -114,10 +115,21 @@
   @apply text-text-subtle;
 }
 
-/* Two figures side by side under one hairline, and the interval that just
-   finished along the bottom: what is happening, and what there is to beat. */
+/* Two rates side by side under one hairline, two distances under them, and
+   the intervals that have finished along the bottom: what is happening, and
+   what there is to beat. Shrinks with the screen rather than growing past it,
+   and it is the list that gives. */
 .numbers {
-  @apply grid grid-cols-2 overflow-hidden rounded-card bg-surface shadow-card;
+  @apply flex min-h-0 shrink flex-col overflow-hidden rounded-card bg-surface shadow-card;
+}
+
+.rates,
+.distances {
+  @apply grid shrink-0 grid-cols-2;
+}
+
+.distances {
+  @apply border-t border-border;
 }
 
 .cell {
@@ -134,27 +146,33 @@
   @apply text-text-subtle;
 }
 
-/* The two rates share the row above it; the total takes the width of both. */
-.total {
-  @apply col-span-2 border-t border-border;
-}
-
 .history {
-  @apply col-span-2 border-t border-border bg-ink-surface;
+  @apply flex min-h-0 flex-col border-t border-border bg-ink-surface;
 }
 
-.historyHeading {
-  @apply px-4.5 pb-1.5 pt-3 text-eyebrow font-bold uppercase text-text-subtle;
+/* One grid for the titles and every row under them, so each figure sits
+   under the word that names it. The name takes what the figures leave. */
+.historyRow {
+  @apply grid items-center gap-3 px-4.5;
+  grid-template-columns: minmax(0, 1fr) 4.5rem 4.5rem 4.5rem;
 }
 
-/* Four rows deep, then it scrolls: the controls that end a session stay under
-   the thumb whether the athlete is on round two or round twelve. */
+.historyTitles {
+  @apply pb-1.5 pt-3 text-eyebrow font-bold uppercase text-text-subtle;
+}
+
+.historyTitles span {
+  @apply text-right;
+}
+
+/* Two rows at the least, then it scrolls: the controls that end a session
+   stay under the thumb whether the athlete is on round two or round twelve. */
 .historyList {
-  @apply max-h-40 overflow-y-auto;
+  @apply min-h-22 flex-1 overflow-y-auto;
 }
 
 .historyList li {
-  @apply flex items-center justify-between gap-3 px-4.5 py-2;
+  @apply py-2;
 }
 
 .historyList li + li {
@@ -165,11 +183,11 @@
   @apply flex min-w-0 items-center gap-2 truncate text-meta font-bold text-text-muted;
 }
 
-.historyValues {
-  @apply flex shrink-0 gap-4 text-body-lg font-bold tabular-nums text-text;
+.historyValue {
+  @apply text-right text-body-lg font-bold tabular-nums text-text;
 }
 
-.historyValues small {
+.historyValue small {
   @apply ml-0.5 text-meta font-semibold text-text-subtle;
 }
 

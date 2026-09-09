@@ -3,7 +3,7 @@ import type { Pacing } from '@/utils/pacing'
 import type { Phase, Recording } from '@/utils/timedCircuit'
 
 interface TimedCircuitPlugin {
-  /** `cueLeadSeconds` is the athlete's warning before an interval ends; 0 sounds nothing. */
+  /** `cueLeadSeconds` is the athlete's warning before an interval ends; 0 says nothing. */
   // The pacing is optional: a routine with no session to compare against is
   // recorded exactly as it was before there was anything to compare with.
   start(options: {
@@ -12,6 +12,10 @@ interface TimedCircuitPlugin {
     locale: string
     volume: number
     cueLeadSeconds: number
+    /** The warning, spoken: the seconds left, already in the athlete's language. */
+    cuePhrase: string
+    /** Said once the last interval runs out; ending a session by hand says nothing. */
+    completedPhrase: string
     pacing?: Pacing
     /** Whether the recorder holds itself while the athlete is standing still. */
     autoPause: boolean

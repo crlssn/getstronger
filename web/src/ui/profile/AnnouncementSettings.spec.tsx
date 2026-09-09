@@ -24,7 +24,7 @@ describe('AnnouncementSettings', () => {
     expect(rows.map((row) => row.textContent)).toEqual([
       'Full',
       'Low',
-      'OffThe interval cue still sounds',
+      'OffThe interval cue is still called out',
     ])
     expect(screen.getByRole('button', { name: 'Full' })).toHaveAttribute('aria-pressed', 'true')
   })

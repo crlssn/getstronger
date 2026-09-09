@@ -2,11 +2,11 @@ import type { Phase } from '@/utils/timedCircuit'
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { playCue, playTone } from '@/native/cueTone'
+import { playTone, say } from '@/native/cueTone'
 import { openSessionPhases } from '@/utils/timedCircuit'
 import { TimedCircuitWeb } from './timedCircuitWeb'
 
-vi.mock('@/native/cueTone', () => ({ playCue: vi.fn(), playTone: vi.fn() }))
+vi.mock('@/native/cueTone', () => ({ say: vi.fn(), playTone: vi.fn() }))
 
 const fix = (
   timestamp: number,
@@ -35,7 +35,7 @@ describe('the browser recorder', () => {
   beforeEach(() => {
     watchers = []
     localStorage.clear()
-    vi.mocked(playCue).mockClear()
+    vi.mocked(say).mockClear()
     vi.mocked(playTone).mockClear()
     vi.useFakeTimers()
     vi.setSystemTime(1_000_000)
@@ -85,6 +85,8 @@ describe('the browser recorder', () => {
       locale: 'en',
       volume: 1,
       cueLeadSeconds: 10,
+      cuePhrase: '10 seconds',
+      completedPhrase: 'Workout completed',
       autoPause,
     })
 
@@ -105,16 +107,25 @@ describe('the browser recorder', () => {
     instruction: name,
   })
 
-  const circuit = async (phases: Phase[], cueLeadSeconds: number) => {
+  const circuit = async (phases: Phase[], cueLeadSeconds: number, volume = 1) => {
     const started = TimedCircuitWeb.start({
       key: 'athlete',
       phases,
       locale: 'en',
-      volume: 1,
+      volume,
       cueLeadSeconds,
+      cuePhrase: `${cueLeadSeconds} seconds`,
+      completedPhrase: 'Workout completed',
     })
-    watchers[0].success(fix(1_000_000, 0))
+    // The latest watcher: a second circuit in one test watches afresh.
+    watchers.at(-1)?.success(fix(1_000_000, 0))
     await started
+  }
+
+  /** One more second, without replaying the recording from its start. */
+  const step = async (seconds: number) => {
+    vi.setSystemTime(1_000_000 + seconds * 1000)
+    await TimedCircuitWeb.read({ key: 'athlete' })
   }
 
   /** Runs the recording forward to `seconds` in, ticking as the interval does. */
@@ -159,6 +170,8 @@ describe('the browser recorder', () => {
       locale: 'en',
       volume: 0,
       cueLeadSeconds: 0,
+      cuePhrase: '0 seconds',
+      completedPhrase: 'Workout completed',
       pacing: paced,
     })
     watchers[0].success(fix(1_000_000, 0))
@@ -197,6 +210,8 @@ describe('the browser recorder', () => {
       locale: 'en',
       volume: 1,
       cueLeadSeconds: 0,
+      cuePhrase: '0 seconds',
+      completedPhrase: 'Workout completed',
       pacing: paced,
     })
     watchers[0].success(fix(1_000_000, 0))
@@ -227,6 +242,8 @@ describe('the browser recorder', () => {
           { exerciseId: 'run', stationKey: 'run', name: 'Run', round: 1, instruction: 'Run' },
         ],
         locale: 'en',
+        cuePhrase: '10 seconds',
+        completedPhrase: 'Workout completed',
         volume: 1,
         cueLeadSeconds: 10,
       }),
@@ -234,22 +251,60 @@ describe('the browser recorder', () => {
   })
 
   // An interval used to end with the next instruction and no warning, which is
-  // no use to a runner about to change pace with the phone in a pocket.
-  it('sounds once, a lead ahead of each interval that ends', async () => {
+  // no use to a runner about to change pace with the phone in a pocket. The
+  // warning is the seconds left, said out loud: a runner mid-stride should not
+  // have to remember what a beep means.
+  it('says the seconds left once, a lead ahead of each interval that ends', async () => {
     await circuit([interval('Hard', 60), interval('Easy', 60)], 10)
 
     await runTo(49)
-    expect(playCue).not.toHaveBeenCalled()
+    expect(say).not.toHaveBeenCalled()
 
     await runTo(50)
-    expect(playCue).toHaveBeenCalledTimes(1)
+    expect(say).toHaveBeenCalledTimes(1)
+    expect(say).toHaveBeenCalledWith('10 seconds', 1)
 
     // The rest of the interval is not a second warning.
     await runTo(59)
-    expect(playCue).toHaveBeenCalledTimes(1)
+    expect(say).toHaveBeenCalledTimes(1)
 
     await runTo(110)
-    expect(playCue).toHaveBeenCalledTimes(2)
+    expect(say).toHaveBeenCalledTimes(2)
+  })
+
+  // The cue is its own setting, so the announcements being off does not take
+  // it with them: it is said at full volume instead of not at all.
+  it('says the cue at full volume while the announcements are off', async () => {
+    await circuit([interval('Hard', 60), interval('Easy', 60)], 10, 0)
+
+    await runTo(50)
+
+    expect(say).toHaveBeenCalledWith('10 seconds', 1)
+  })
+
+  it('says the workout is complete once the last interval runs out', async () => {
+    await circuit([interval('Hard', 60), interval('Easy', 60)], 10, 0.5)
+
+    await runTo(119)
+    expect(say).not.toHaveBeenCalledWith('Workout completed', expect.anything())
+
+    await step(120)
+    expect(say).toHaveBeenCalledWith('Workout completed', 0.5)
+    expect(say).toHaveBeenCalledTimes(3)
+  })
+
+  // Ending it by hand is not finishing it, and the completion follows the
+  // announcement volume the way every other announcement does.
+  it('says nothing about completion when the session is ended early or muted', async () => {
+    await circuit([interval('Hard', 60), interval('Easy', 60)], 0)
+    await runTo(30)
+    await TimedCircuitWeb.finish({ key: 'athlete' })
+    expect(say).not.toHaveBeenCalled()
+
+    await TimedCircuitWeb.clear({ key: 'athlete' })
+    await circuit([interval('Hard', 60)], 0, 0)
+    await runTo(60)
+    expect(say).not.toHaveBeenCalled()
   })
 
   // A cue at or before the midpoint is a second instruction rather than a
@@ -259,15 +314,15 @@ describe('the browser recorder', () => {
 
     await runTo(59)
 
-    expect(playCue).toHaveBeenCalledTimes(1)
+    expect(say).toHaveBeenCalledTimes(1)
   })
 
-  it('sounds nothing at all when the lead is off', async () => {
+  it('says nothing at all when the lead is off', async () => {
     await circuit([interval('Hard', 60), interval('Easy', 60)], 0)
 
     await runTo(119)
 
-    expect(playCue).not.toHaveBeenCalled()
+    expect(say).not.toHaveBeenCalledWith(expect.stringContaining('seconds'), expect.anything())
   })
 
   // The one open interval of a session with no set length never reaches a
@@ -279,7 +334,7 @@ describe('the browser recorder', () => {
 
     await runTo(600)
 
-    expect(playCue).not.toHaveBeenCalled()
+    expect(say).not.toHaveBeenCalled()
   })
 
   it('holds itself at a standstill and lets go when the athlete rides on', async () => {

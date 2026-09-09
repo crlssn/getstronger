@@ -79,6 +79,12 @@ export const routes: AppRoute[] = [
     titleKey: 'pages.announcements',
   },
   {
+    name: 'settings-pace-tones',
+    path: '/settings/pace-tones',
+    access: 'auth',
+    titleKey: 'pages.paceTones',
+  },
+  {
     name: 'settings-account',
     path: '/settings/account',
     access: 'auth',
