@@ -11,6 +11,7 @@ const bridge = vi.hoisted(() => ({
   keepAwake: vi.fn(),
   allowSleep: vi.fn(),
   setSwipeBack: vi.fn(),
+  addNotificationListener: vi.fn(),
 }))
 
 vi.mock('@capacitor/core', () => ({
@@ -26,6 +27,10 @@ vi.mock('@capacitor/splash-screen', () => ({ SplashScreen: { hide: bridge.hideSp
 
 vi.mock('@capacitor-community/keep-awake', () => ({
   KeepAwake: { keepAwake: bridge.keepAwake, allowSleep: bridge.allowSleep },
+}))
+
+vi.mock('@capacitor/local-notifications', () => ({
+  LocalNotifications: { addListener: bridge.addNotificationListener },
 }))
 
 import { deepLinkPath, initNativePlatform, type NativeRouter } from './platform'
@@ -45,6 +50,16 @@ const routerAt = (pathname: string) => {
   }
 
   return { router, go: (to: string) => listeners.forEach((l) => l({ location: { pathname: to } })) }
+}
+
+// What the OS hands back when a scheduled notification is tapped, carrying the
+// workout the rest was counting down in its extra payload.
+const notificationTap = (extra: unknown) => {
+  const handler = bridge.addNotificationListener.mock.calls.find(
+    ([name]) => name === 'localNotificationActionPerformed',
+  )?.[1] as ((payload: never) => void) | undefined
+
+  handler?.({ notification: { extra } } as never)
 }
 
 const handlerFor = (event: string) =>
@@ -87,6 +102,7 @@ describe('initNativePlatform', () => {
     bridge.keepAwake.mockReset().mockResolvedValue(undefined)
     bridge.allowSleep.mockReset().mockResolvedValue(undefined)
     bridge.setSwipeBack.mockReset().mockResolvedValue(undefined)
+    bridge.addNotificationListener.mockReset().mockResolvedValue({ remove: vi.fn() })
   })
 
   // In a browser there is no native shell to wire up, and the Capacitor plugin
@@ -207,6 +223,26 @@ describe('initNativePlatform', () => {
 
     await initNativePlatform(router)
     handlerFor('appUrlOpen')?.({ url: 'nonsense' } as never)
+
+    expect(router.navigate).not.toHaveBeenCalled()
+  })
+
+  // The rest notification is the one call-back that arrives with the app off
+  // screen, so tapping it has to land on the workout it was counting down.
+  test('opens the workout a tapped rest notification belongs to', async () => {
+    const { router } = routerAt('/home')
+
+    await initNativePlatform(router)
+    notificationTap({ routineID: 'routine-1', planID: 'plan-1' })
+
+    expect(router.navigate).toHaveBeenCalledWith('/workouts/routine/routine-1?plan_id=plan-1')
+  })
+
+  test('ignores a notification that names no workout', async () => {
+    const { router } = routerAt('/home')
+
+    await initNativePlatform(router)
+    notificationTap(undefined)
 
     expect(router.navigate).not.toHaveBeenCalled()
   })

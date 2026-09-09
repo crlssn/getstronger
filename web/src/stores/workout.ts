@@ -11,6 +11,7 @@ import { create } from 'zustand'
 import { immer } from 'zustand/middleware/immer'
 import { persist } from 'zustand/middleware'
 
+import { cancelRestOver, scheduleRestOver } from '@/native/restNotification'
 import { migratedStorage } from '@/stores/persistence'
 
 import { DistanceUnit, ExerciseMetric, WeightUnit } from '@/proto/api/v1/shared_pb'
@@ -202,20 +203,36 @@ export const useWorkoutStore = create<WorkoutState>()(
           if (workout) workout.note = note
         }),
 
-      setRestTimer: (routineID, endsAt, totalSeconds = 0) =>
+      setRestTimer: (routineID, endsAt, totalSeconds = 0) => {
+        const workout = get().workouts[routineID]
+        if (!workout) return
+
         set((state) => {
-          const workout = state.workouts[routineID]
-          if (!workout) return
+          const draft = state.workouts[routineID]
+          if (!draft) return
 
           if (!endsAt) {
-            delete workout.restTimerEndsAt
-            delete workout.restTimerTotalSeconds
+            delete draft.restTimerEndsAt
+            delete draft.restTimerTotalSeconds
             return
           }
 
-          workout.restTimerEndsAt = endsAt
-          workout.restTimerTotalSeconds = totalSeconds
-        }),
+          draft.restTimerEndsAt = endsAt
+          draft.restTimerTotalSeconds = totalSeconds
+        })
+
+        // Every rest starts and ends here, so the phone is told here too — the
+        // WebView's own countdown stops the moment the app is suspended, which
+        // is exactly when the athlete is waiting to be called back.
+        if (endsAt) {
+          scheduleRestOver(Date.parse(endsAt), {
+            routineID,
+            ...(workout.planId ? { planID: workout.planId } : {}),
+          })
+        } else {
+          cancelRestOver()
+        }
+      },
 
       addEmptySet: (routineID, exerciseID, weightUnit, distanceUnit) =>
         set((state) => {
@@ -359,10 +376,19 @@ export const useWorkoutStore = create<WorkoutState>()(
           if (!hasLoggedSet(workout)) delete workout.startedAt
         }),
 
-      removeWorkout: (routineID) =>
+      removeWorkout: (routineID) => {
+        // Only this draft's rest is retired with it: another draft may be the
+        // one the pending notification belongs to.
+        const resting = Boolean(get().workouts[routineID]?.restTimerEndsAt)
+
         set((state) => {
           delete state.workouts[routineID]
-        }),
+        })
+
+        // Finishing or cancelling ends the rest with the workout, and the
+        // phone would otherwise still be holding its deadline.
+        if (resting) cancelRestOver()
+      },
 
       startQuickWorkoutWithExercise: (exercise) => {
         const store = get()
