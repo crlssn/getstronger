@@ -154,16 +154,22 @@ test.describe('exercise library', () => {
       await page.locator('form input[type="text"]').first().fill(targetName)
       await page.getByRole('button', { name: 'Add tags' }).click()
       const tagInput = page.getByLabel('Add exercise tag')
+      const tagSuggestions = page.getByRole('listbox', { name: 'Existing exercise tags' })
       // Before a letter is typed: the tags already on the account are what the
       // field opens with, so one can be found without knowing its spelling.
       await tagInput.click()
-      await expect(page.getByRole('listbox', { name: 'Existing exercise tags' })).toBeVisible()
+      await expect(tagSuggestions).toBeVisible()
 
       await tagInput.fill(sharedTag.slice(0, Math.max(3, sharedTag.length - 3)))
-      await expect(page.getByRole('listbox', { name: 'Existing exercise tags' })).toBeVisible()
+      // The list was already open, so its presence says nothing about the
+      // typing having landed: the arrow keys walk whatever is rendered, and
+      // what has to be rendered by then is the one tag the query leaves.
+      await expect(tagSuggestions.getByRole('option')).toHaveCount(1)
       await tagInput.press('ArrowDown')
       await tagInput.press('Enter')
-      await expect(page.getByLabel('Exercise tags')).toContainText(sharedTag)
+      // Exact: the field keeps its suggestions open between tags, and
+      // "Existing exercise tags" contains this label as a substring.
+      await expect(page.getByLabel('Exercise tags', { exact: true })).toContainText(sharedTag)
 
       await tagInput.fill(sharedTag.toUpperCase())
       await tagInput.press('Enter')
@@ -173,7 +179,9 @@ test.describe('exercise library', () => {
         await tagInput.fill(`E2E tag ${index}`)
         await tagInput.press('Enter')
       }
-      await expect(page.getByLabel('Exercise tags').locator(':scope > button')).toHaveCount(10)
+      await expect(
+        page.getByLabel('Exercise tags', { exact: true }).locator(':scope > button'),
+      ).toHaveCount(10)
       await expect(page.getByLabel('Add exercise tag')).toHaveCount(0)
 
       await page.getByRole('button', { name: 'Create exercise' }).click()
