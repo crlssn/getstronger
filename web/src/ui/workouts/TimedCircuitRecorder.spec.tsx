@@ -173,7 +173,7 @@ describe('TimedCircuitRecorder', () => {
     }
   }
 
-  it('shows the pace now, the total distance, and how the last interval went', async () => {
+  it('shows the pace and speed now, the total distance, and the interval that finished', async () => {
     vi.mocked(timedCircuit.read).mockResolvedValue({ recording: running() })
     renderWithProviders(
       <TimedCircuitRecorder
@@ -186,11 +186,67 @@ describe('TimedCircuitRecorder', () => {
     )
     await screen.findByRole('heading', { name: 'Run' })
     expect(screen.getByText('Pace now').parentElement).toHaveTextContent('4:10/km')
+    // The same window as the pace, read the way a cyclist reads it.
+    expect(screen.getByText('Speed').parentElement).toHaveTextContent('14.4km/h')
     expect(screen.getByText('Distance').parentElement).toHaveTextContent('1.300km')
     // The interval that finished, named and measured: what there is to beat.
-    const last = screen.getByText('Last · Walk 1')
-    expect(last.parentElement).toHaveTextContent('5:33/km')
-    expect(last.parentElement).toHaveTextContent('900m')
+    const [finished] = screen.getAllByRole('listitem')
+    expect(finished).toHaveTextContent('Walk 1')
+    expect(finished).toHaveTextContent('5:33/km')
+    expect(finished).toHaveTextContent('10.8km/h')
+    expect(finished).toHaveTextContent('900m')
+  })
+
+  // Round four is run against rounds one to three, which is the comparison a
+  // single "last interval" block cannot show.
+  it('keeps every completed interval, newest first, and leaves the rests out', async () => {
+    const startedAt = Date.now() - 160000
+    const fix = (second: number, meters: number): RoutePoint => ({
+      timestamp: startedAt + second * 1000,
+      latitude: meters / 111194.93,
+      longitude: 0,
+      accuracy: 5,
+    })
+    const rounds: Recording = {
+      version: 1,
+      startedAt,
+      phases: [
+        { ...phase, durationSeconds: 60 },
+        { ...phase, exerciseId: '', stationKey: 'rest', name: 'Rest', durationSeconds: 30 },
+        { ...phase, exerciseId: 'run', stationKey: 'run', name: 'Run', durationSeconds: 60 },
+        { ...phase, round: 2, durationSeconds: 300 },
+      ],
+      pauses: [],
+      points: [
+        // Two metres a second walking, none through the rest, four running.
+        ...Array.from({ length: 61 }, (_, second) => fix(second, second * 2)),
+        ...Array.from({ length: 30 }, (_, second) => fix(61 + second, 120)),
+        ...Array.from({ length: 60 }, (_, second) => fix(91 + second, 120 + (second + 1) * 4)),
+        ...Array.from({ length: 10 }, (_, second) => fix(151 + second, 360 + (second + 1) * 2)),
+      ],
+      interrupted: false,
+    }
+    vi.mocked(timedCircuit.read).mockResolvedValue({ recording: rounds })
+
+    renderWithProviders(
+      <TimedCircuitRecorder
+        recordingKey="athlete:routine"
+        pacing={pacingFor([phase])}
+        phases={rounds.phases}
+        onComplete={vi.fn()}
+        onCancel={vi.fn()}
+      />,
+    )
+
+    await screen.findByRole('heading', { name: 'Walk' })
+    const finished = screen.getAllByRole('listitem')
+    expect(finished).toHaveLength(2)
+    expect(finished[0]).toHaveTextContent('Run 1')
+    expect(finished[1]).toHaveTextContent('Walk 1')
+    // A rest is not an interval anybody paces, and the round in progress has
+    // not been run yet.
+    expect(screen.queryByText(/Rest/)).not.toBeInTheDocument()
+    expect(screen.queryByText('Walk 2')).not.toBeInTheDocument()
   })
 
   it('says which session the tones compare with, and only where there is one', async () => {
@@ -264,6 +320,8 @@ describe('TimedCircuitRecorder', () => {
     )
     await screen.findByRole('heading', { name: 'Run' })
     expect(screen.getByText('Pace now').parentElement).toHaveTextContent('—')
+    // The two are read as one figure, so they are absent as one figure too.
+    expect(screen.getByText('Speed').parentElement).toHaveTextContent('—')
     expect(screen.getByRole('status')).toHaveTextContent('Waiting for accurate GPS')
 
     const paused = running()
@@ -273,8 +331,9 @@ describe('TimedCircuitRecorder', () => {
     await user.click(screen.getByRole('button', { name: /^Pause$/ }))
     expect(await screen.findByRole('button', { name: /^Resume$/ })).toBeVisible()
     // Standing still is not a pace, but the ground already covered is a
-    // distance: only the number that means "now" gives up its value.
+    // distance: only the numbers that mean "now" give up their value.
     expect(screen.getByText('Pace now').parentElement).toHaveTextContent('—')
+    expect(screen.getByText('Speed').parentElement).toHaveTextContent('—')
     expect(screen.getByText('Distance').parentElement).toHaveTextContent('1.280km')
   })
 

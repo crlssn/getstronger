@@ -8,6 +8,7 @@ import {
   formatSetPace,
   isDistanceTimeExercise,
   paceIn,
+  speedIn,
   spokenDuration,
   weightIn,
 } from '@/utils/exerciseMeasurements'
@@ -80,6 +81,19 @@ describe('paceIn', () => {
     expect(paceIn(300)).toEqual({ value: '5:00', unit: '/km' })
     expect(paceIn(324.3)).toEqual({ value: '5:24', unit: '/km' })
     expect(paceIn(300, DistanceUnit.MILES)).toEqual({ value: '8:03', unit: '/mi' })
+  })
+})
+
+describe('speedIn', () => {
+  it("reads the same movement as pace does, in the athlete's unit", () => {
+    expect(speedIn(300)).toEqual({ value: '12', unit: 'km/h' })
+    expect(speedIn(324.3)).toEqual({ value: '11.1', unit: 'km/h' })
+    // Miles per hour rather than "mi/h": nobody reads a speed that way.
+    expect(speedIn(300, DistanceUnit.MILES)).toEqual({ value: '7.5', unit: 'mph' })
+  })
+
+  it('has no speed for a pace that covered nothing', () => {
+    expect(speedIn(0)).toBeUndefined()
   })
 })
 

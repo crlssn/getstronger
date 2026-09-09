@@ -107,7 +107,9 @@ const judge = (phaseIndex: number, phaseSeconds: number, at: number) => {
   const reading = {
     phaseIndex,
     phaseSeconds,
-    pace: currentPace(saved.recording, at, saved.pacing.windowSeconds),
+    // No floor: the tones are judged over a whole interval's window against a
+    // target, which is not the standing start the screen's floor is there for.
+    pace: currentPace(saved.recording, at, saved.pacing.windowSeconds, 0),
     at,
   }
   const result = watchPace(pace, reading, saved.pacing)

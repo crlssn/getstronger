@@ -83,6 +83,11 @@
   @apply text-text-subtle;
 }
 
+/* The two rates share the row above it; the total takes the width of both. */
+.total {
+  @apply col-span-2 border-t border-border;
+}
+
 .strip {
   @apply col-span-2 flex items-center justify-between gap-3 border-t border-border bg-ink-surface px-4.5 py-3 text-meta font-bold text-text-muted;
 }

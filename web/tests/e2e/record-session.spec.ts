@@ -65,7 +65,18 @@ test.describe('a session with no set length', () => {
     await expect(page.getByText('Active time')).toBeVisible()
     await expect(page.getByText('Runs until you end it')).toBeVisible()
     await expect(page.getByText(/Round/)).toHaveCount(0)
+
+    // Neither rate is a number before the athlete has covered any ground: a
+    // dash is honest where a figure divided out of the first fix is not.
+    const paceNow = page.getByText('Pace now').locator('..')
+    const speedNow = page.getByText('Speed', { exact: true }).locator('..')
+    await expect(paceNow).toContainText('—')
+    await expect(speedNow).toContainText('—')
+
     await walkTheRoute(page)
+    // Past the floor both arrive together, per kilometre and per hour.
+    await expect(paceNow).toContainText(/\d+:\d\d\s*\/km/)
+    await expect(speedNow).toContainText(/[\d.]+\s*km\/h/)
 
     await page.getByRole('button', { name: 'End session' }).click()
     const sheet = page.getByRole('dialog', { name: 'What was this?' })

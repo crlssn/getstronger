@@ -12,6 +12,7 @@ import {
   measureRoute,
   namedRecording,
   openSessionPhases,
+  paceFloorMeters,
   parseRecording,
   recordedRounds,
   type Recording,
@@ -310,13 +311,44 @@ describe('currentPace', () => {
   it('has no pace until the window holds two accepted fixes', () => {
     const data = recording()
     expect(currentPace(data, 75000)).toBeUndefined()
-    data.points = [fix(72000, 0), fix(75000, 10)]
-    expect(currentPace(data, 75000)).toBeCloseTo(300, 0)
+    data.points = [fix(69000, 0), fix(75000, 30)]
+    expect(currentPace(data, 75000)).toBeCloseTo(200, 0)
     // One fix is a position, not a speed, and an inaccurate pair is neither.
     data.points = [fix(75000, 0)]
     expect(currentPace(data, 75000)).toBeUndefined()
-    data.points = [fix(72000, 0, 80), fix(75000, 10, 80)]
+    data.points = [fix(69000, 0, 80), fix(75000, 30, 80)]
     expect(currentPace(data, 75000)).toBeUndefined()
+  })
+
+  // Two fixes taken while the athlete is still turning out of the drive are a
+  // number that is wrong by a wide margin and then jumps, on the screen it is
+  // looked at hardest.
+  it('holds the pace back until the window has covered the floor', () => {
+    const data = recording()
+    data.points = [fix(72000, 0), fix(75000, paceFloorMeters - 1)]
+    expect(currentPace(data, 75000)).toBeUndefined()
+
+    data.points = [fix(72000, 0), fix(75000, paceFloorMeters + 1)]
+    expect(currentPace(data, 75000)).toBeCloseTo(143, 0)
+
+    // The floor is the screen's. A caller judging a reading against a target
+    // rather than showing it asks for the movement as it was measured.
+    data.points = [fix(72000, 0), fix(75000, paceFloorMeters - 1)]
+    expect(currentPace(data, 75000, 15, 0)).toBeCloseTo(158, 0)
+  })
+
+  // The floor is the window's, not the session's: ground covered before the
+  // window opened is behind the athlete, and standing still empties it again.
+  it('gives the pace up again once the window drops back under the floor', () => {
+    const data = recording()
+    const ran = Array.from({ length: 6 }, (_, index) => fix(60000 + index * 3000, index * 10))
+    data.points = ran
+    expect(currentPace(data, 75000)).toBeCloseTo(300, 0)
+
+    // Fifteen seconds standing at the crossing: the run is outside the window
+    // and the two metres of wander inside it are not a pace.
+    data.points = [...ran, fix(78000, 51), fix(90000, 52)]
+    expect(currentPace(data, 90000)).toBeUndefined()
   })
 
   it('ignores movement across a pause and while standing still', () => {

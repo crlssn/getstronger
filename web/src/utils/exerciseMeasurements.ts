@@ -199,6 +199,26 @@ export const paceIn = (secondsPerKilometer: number, unit?: DistanceUnit): Measur
   }
 }
 
+/**
+ * The same movement as a pace, read as ground per hour rather than time per
+ * unit of it.
+ *
+ * Rowing, cycling and skiing are read in speed first, so the screens that
+ * watch a pace show both. It takes a pace rather than a distance and a time so
+ * that the two figures can never disagree about the window they measured.
+ */
+export const speedIn = (secondsPerKilometer: number, unit?: DistanceUnit): Measured | undefined => {
+  if (!(secondsPerKilometer > 0)) return undefined
+  const preferred = normalizeDistanceUnit(unit)
+  const perHour = convertDistance(3600 / secondsPerKilometer, DistanceUnit.KILOMETERS, preferred)
+  return {
+    value: formatNumber(perHour, 1),
+    // "mph" rather than the "mi/h" the label would build: nobody reads a speed
+    // that way.
+    unit: preferred === DistanceUnit.MILES ? 'mph' : 'km/h',
+  }
+}
+
 export const formatSetPace = (set: Partial<Set>): string | undefined => {
   const distance = Number(set.distance ?? 0)
   const seconds = Number(set.durationSeconds ?? 0)

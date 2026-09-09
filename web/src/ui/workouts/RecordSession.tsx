@@ -32,7 +32,7 @@ import { AppPageHeader } from '@/ui/components/AppPageHeader'
 import { AppStat } from '@/ui/components/AppStat'
 import { RecordExerciseSheet } from '@/ui/workouts/RecordExerciseSheet'
 import { convertDistance } from '@/utils/distanceUnits'
-import { distanceIn, paceIn } from '@/utils/exerciseMeasurements'
+import { distanceIn, paceIn, speedIn } from '@/utils/exerciseMeasurements'
 import { DistanceUnit } from '@/proto/api/v1/shared_pb'
 import {
   averagePace,
@@ -210,6 +210,7 @@ export const RecordSession = () => {
   const average = averagePace(distanceMeters, activeSeconds)
   const distance = distanceIn(distanceMeters / metersPerKilometer, distanceUnit)
   const paceNow = pace === undefined ? undefined : paceIn(pace, distanceUnit)
+  const speedNow = pace === undefined ? undefined : speedIn(pace, distanceUnit)
   const averageOverall = average === undefined ? undefined : paceIn(average, distanceUnit)
   const latest = recording?.points.at(-1)
   const gps =
@@ -391,6 +392,15 @@ export const RecordSession = () => {
         />
         <AppStat
           className={styles.cell}
+          size="xl"
+          label={t('timedCircuit.speedNow')}
+          value={speedNow?.value ?? <span className={styles.dash}>{t('timedCircuit.noPace')}</span>}
+          unit={speedNow?.unit}
+        />
+        {/* The total takes the width of both rates above it: it is the figure
+            the session is remembered by. */}
+        <AppStat
+          className={cn(styles.cell, styles.total)}
           size="xl"
           label={t('common.distance')}
           value={distance.value}
