@@ -1181,9 +1181,9 @@ const file_api_v1_workout_service_proto_rawDesc = "" +
 	"\x10_idempotency_key\"6\n" +
 	"\x15CreateWorkoutResponse\x12\x1d\n" +
 	"\n" +
-	"workout_id\x18\x01 \x01(\tR\tworkoutId\"\x84\x01\n" +
-	"\x13ListWorkoutsRequest\x12*\n" +
-	"\buser_ids\x18\x01 \x03(\tB\x0f\xbaH\f\x92\x01\t\b\x01\"\x05r\x03\xb0\x01\x01R\auserIds\x12A\n" +
+	"workout_id\x18\x01 \x01(\tR\tworkoutId\"\x86\x01\n" +
+	"\x13ListWorkoutsRequest\x12,\n" +
+	"\buser_ids\x18\x01 \x03(\tB\x11\xbaH\x0e\x92\x01\v\b\x01\x10d\"\x05r\x03\xb0\x01\x01R\auserIds\x12A\n" +
 	"\n" +
 	"pagination\x18\x02 \x01(\v2\x19.api.v1.PaginationRequestB\x06\xbaH\x03\xc8\x01\x01R\n" +
 	"pagination\"\x7f\n" +
