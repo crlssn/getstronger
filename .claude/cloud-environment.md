@@ -52,12 +52,23 @@ on the first blob, and every testcontainers suite with it.
 `buf.build` is what buf's remote plugins need; without it `mise run gen:protos`
 reports that the remote is unavailable.
 
-`dl.google.com` is where mise fetches Go, and it matters more than one tool.
-Several tasks resolve a binary through `mise which`, which only ever finds what
-mise installed — `lint:backend`, `db:seed` and `db:migrate` all do — so a tool
-on `PATH` does not satisfy them. With a Go of its own, mise can also build the
-five `go:` tools in `mise.toml` through `proxy.golang.org`, which brings
-`migrate`, `bobgen-psql`, `mockgen`, `goimports` and `tobari` within reach.
+`dl.google.com` is where mise fetches Go, and without it `mise run` does not
+work at all. Every task installs its missing tools first, each `go:` tool in
+`mise.toml` depends on that Go, and one unreachable dependency fails the task
+before it starts — even `vet:go`, which is only `go vet ./...`:
+
+```
+go:go.uber.org/mock/mockgen@v0.6.0: Skipped due to failed dependency
+mise ERROR
+```
+
+That is why sessions here reach for `go` and `buf` directly, against the rule
+that everything runs through `mise run`. The tasks resolving a binary with
+`mise which` — `lint:backend`, `db:seed`, `db:migrate` — fail for the same
+reason twice over, since a tool on `PATH` never satisfies it. With a Go of its
+own, mise can also build the five `go:` tools through `proxy.golang.org`, which
+brings `migrate`, `bobgen-psql`, `mockgen`, `goimports` and `tobari` within
+reach.
 `mise-versions.jdx.dev` is mise's version index; without it every lookup burns
 a retry burst against the proxy before continuing.
 
