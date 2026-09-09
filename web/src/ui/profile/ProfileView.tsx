@@ -323,10 +323,10 @@ export const ProfileView = () => {
             />
           </li>
 
-          {/* Two named sessions rather than a yes and a no, and the labels are
-              short enough to sit on the row beside the copy. Kept on this
-              device: it is a choice about the phone doing the recording, which
-              is why it saves without a request and cannot fail. */}
+          {/* Off, then two named sessions: the choice is which session to be
+              held against, and off is having none. Kept on this device: it is
+              a choice about the phone doing the recording, which is why it
+              saves without a request and cannot fail. */}
           <li>
             <AppPreferenceRow
               title={t('profile.paceTones')}
@@ -337,6 +337,7 @@ export const ProfileView = () => {
                   density="compact"
                   value={paceReference}
                   options={[
+                    { label: t('profile.paceTonesOff'), value: 'off' },
                     { label: t('profile.paceTonesPrevious'), value: 'previous' },
                     { label: t('profile.paceTonesBest'), value: 'best' },
                   ]}

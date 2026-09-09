@@ -335,10 +335,12 @@ describe('ProfileView', () => {
 
   // Two named sessions rather than a yes and a no, and no request behind it:
   // which session to be paced against is the device's own choice.
-  test('chooses the session the pace tones compare with', async () => {
+  test('keeps the pace tones off until a session to compare with is chosen', async () => {
     render()
 
     await loaded()
+    expect(screen.getByRole('button', { name: 'Off' })).toHaveAttribute('aria-pressed', 'true')
+
     await userEvent.click(screen.getByRole('button', { name: 'Best' }))
 
     expect(usePreferencesStore.getState().paceReference).toBe('best')

@@ -14,6 +14,7 @@ vi.mock('@/http/requests', async (importOriginal) => ({
   createWorkout: vi.fn(),
   getCurrentUser: vi.fn(),
   getExercise: vi.fn(),
+  getPaceReference: vi.fn(),
   getPreviousWorkoutSets: vi.fn(),
   getRoutine: vi.fn(),
   listExercises: vi.fn(),
@@ -1295,6 +1296,18 @@ describe('StartWorkout', () => {
       await user.click(screen.getByRole('button', { name: 'Log manually' }))
       expect(await screen.findByRole('button', { name: 'Start live session' })).toBeInTheDocument()
       expect(setField('Bench Press set 1 weight')).toBeVisible()
+    })
+
+    // Off is the default: a runner who never asked for tones hears none, and
+    // nothing is even fetched to compare against. Turned on, the chosen
+    // session is asked for as the screen opens.
+    test('asks for a session to pace against only once the pace tones are on', async () => {
+      vi.mocked(requests.getPaceReference).mockResolvedValue(undefined)
+      await renderWorkout()
+      expect(requests.getPaceReference).not.toHaveBeenCalled()
+
+      usePreferencesStore.getState().setPaceReference('previous')
+      await waitFor(() => expect(requests.getPaceReference).toHaveBeenCalled())
     })
 
     // The phone reads each phase out as it starts, so the prescription is

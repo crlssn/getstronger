@@ -2,12 +2,13 @@ import { PaceReference } from '@/proto/api/v1/workout_service_pb'
 import { buildTimeline, measureRoute, type Phase, type Recording } from '@/utils/timedCircuit'
 
 /**
- * Which recorded session a new one is held against.
+ * Which recorded session a new one is held against, or none at all.
  *
  * Kept as the words the API uses rather than the enum, so the stored
- * preference reads the same in the console as it does in the request.
+ * preference reads the same in the console as it does in the request. Off is
+ * a session with nothing to compare against, which no recorder sounds.
  */
-export type PaceReferenceChoice = 'previous' | 'best'
+export type PaceReferenceChoice = 'off' | 'previous' | 'best'
 
 /** The stored choice as the request states it. */
 export const paceReferenceRequested = (choice: PaceReferenceChoice): PaceReference =>
