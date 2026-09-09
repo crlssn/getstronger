@@ -17,8 +17,24 @@ import (
 
 const stubCloudDocker = `#!/bin/sh
 echo "docker $*" >> "$STUB_LOG"
-if [ "$1" = "info" ]; then exit ${DOCKER_INFO_EXIT:-0}; fi
+if [ "$1" = "info" ]; then
+  if [ -f "$STUB_LOG.up" ]; then exit 0; fi
+  exit ${DOCKER_INFO_EXIT:-0}
+fi
 exit 0
+`
+
+// The daemon the image ships has no init script, so the hook launches it
+// itself. The stub marks itself up, which is what the next 'docker info' sees.
+const stubCloudDockerd = `#!/bin/sh
+echo "dockerd $*" >> "$STUB_LOG"
+if [ -n "${DOCKERD_EXIT:-}" ]; then exit "$DOCKERD_EXIT"; fi
+touch "$STUB_LOG.up"
+exit 0
+`
+
+const stubCloudSudo = `#!/bin/sh
+exec "$@"
 `
 
 const stubCloudService = `#!/bin/sh
@@ -53,6 +69,21 @@ func TestSessionStartStartsTheDockerDaemon(t *testing.T) {
 
 	require.Equal(t, 0, result.exitCode, result.output)
 	require.Contains(t, result.calls, "service docker start")
+}
+
+func TestSessionStartLaunchesTheDaemonWhenTheServiceIsMissing(t *testing.T) {
+	root := newCheckout(t)
+
+	result := runSessionStart(t, root, []string{
+		"CLAUDE_CODE_REMOTE_SESSION_ID=cse_test",
+		"DOCKER_INFO_EXIT=1",
+		"SERVICE_EXIT=1",
+		"CLOUD_DOCKER_WAIT=5",
+	})
+
+	require.Equal(t, 0, result.exitCode, result.output)
+	require.Contains(t, result.calls, "dockerd", "the image has no init script for Docker")
+	require.Contains(t, result.output, "Docker started")
 }
 
 func TestSessionStartLeavesARunningDaemonAlone(t *testing.T) {
@@ -100,6 +131,7 @@ func TestSessionStartSurvivesAnUnusableDocker(t *testing.T) {
 		"CLAUDE_CODE_REMOTE_SESSION_ID=cse_test",
 		"DOCKER_INFO_EXIT=1",
 		"SERVICE_EXIT=1",
+		"DOCKERD_EXIT=1",
 		"CLOUD_DOCKER_WAIT=1",
 	})
 
@@ -112,7 +144,12 @@ func runSessionStart(t *testing.T, root string, env []string) sessionStartResult
 
 	stubs := t.TempDir()
 	log := filepath.Join(stubs, "calls.log")
-	for name, body := range map[string]string{"docker": stubCloudDocker, "service": stubCloudService} {
+	for name, body := range map[string]string{
+		"docker":  stubCloudDocker,
+		"dockerd": stubCloudDockerd,
+		"service": stubCloudService,
+		"sudo":    stubCloudSudo,
+	} {
 		require.NoError(t, os.WriteFile(filepath.Join(stubs, name), []byte(body), 0o755))
 	}
 

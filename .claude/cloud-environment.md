@@ -2,25 +2,49 @@
 
 The routines run in an Anthropic-hosted cloud session, not a worktree on a
 developer machine. This file records what that image gives us, what it does
-not, and the setup script that closes the gap.
+not, and the setup script that closes the gap. Everything here was observed in
+run `cse_01JfKwBKUTNFftWL1iB2dL7X`, not read off the documentation, which is
+wrong about `gh`.
 
 ## What the image already has
 
 Docker (`docker`, `dockerd`, `docker compose`), PostgreSQL 16, Redis 7, Go,
-Node 20–22, bun, `git`, `gh`, `jq`, `ripgrep`. Four vCPUs, 16 GB of memory,
-30 GB of disk. Docker Hub is on the default **Trusted** network allowlist, so
-`postgres:16.4-alpine` pulls without any change to the environment.
+Node 20–22, bun 1.3.11, `git`, `jq`, `ripgrep`. Four vCPUs, 16 GB of memory,
+30 GB of disk.
 
-Docker and Postgres are installed but **not running**. Nothing starts them for
-you, which is why `scripts/cloud_session_start.sh` runs as a SessionStart hook:
-the environment's snapshot keeps installed files and no running process, so
-each session has to start the daemon itself.
+Docker and Postgres are installed but **not running**, and there is no init
+script behind `dockerd`, so `service docker start` fails and the daemon has to
+be launched directly. That is what `scripts/cloud_session_start.sh` does as a
+SessionStart hook: the environment's snapshot keeps installed files and no
+running process, so every session starts the daemon itself.
 
 ## What it does not have
 
-`mise`, which every rule in this repository is written in terms of. The setup
-script below installs it. Without it a session falls back to bare `go test`
-and `go run …@version`, which works but pins nothing.
+- **`mise`**, which every rule in this repository is written in terms of.
+- **`gh`.** The documentation's table lists it; the image does not have it.
+  Anything reaching for `gh` needs the GitHub MCP tools instead.
+- **A bun that reads our lockfile.** The image's 1.3.11 rejects the root
+  `bun.lock` — `lockfileVersion: 2` against `web/bun.lock`'s 3 — so the setup
+  script installs the pinned 1.4.0 from npm.
+
+## What the network allows
+
+The environment runs **Custom** access with the defaults kept, plus:
+
+```text
+production.cloudfront.docker.com
+buf.build
+nodejs.org
+```
+
+The first line is not optional. Docker Hub's own hosts are on the default list,
+but the layer blobs come from `production.cloudfront.docker.com` — note
+*cloudfront*, where the default list carries `production.cloudflare.docker.com`
+— so without it `docker pull postgres:16.4-alpine` authenticates and then fails
+on the first blob, and every testcontainers suite with it.
+
+`buf.build` is what buf's remote plugins need; without it `mise run gen:protos`
+reports that the remote is unavailable.
 
 ## The setup script
 
@@ -37,20 +61,26 @@ is pasted again**.
 set -u
 export MISE_YES=1
 repo=/home/user/getstronger
+export PATH="/root/go/bin:$PATH"
 
-# The npm registry is on the Trusted allowlist; mise.run is not, so the
-# installer is the fallback rather than the first choice.
-npm install -g mise || curl -fsSL https://mise.run | sh || true
-export PATH="/usr/local/bin:$HOME/.local/bin:$PATH"
-
+# npm is the only route that works: mise.run is not allowlisted, and the
+# GitHub proxy scopes release assets to the repositories attached to a session.
+npm install -g mise bun@1.4.0 || true
 mise trust "$repo/mise.toml" || true
 
-# The image pulls this for every backend suite, and the snapshot keeps it.
 docker pull postgres:16.4-alpine &
 
-# Go arrives through proxy.golang.org, which is allowlisted. The tools built
-# from GitHub releases may not: see "If the toolchain comes up short" below.
-(cd "$repo" && mise install) &
+# Every pinned tool that mise fetches from a GitHub release is unreachable
+# here, and every one of them is a Go program, so they come through
+# proxy.golang.org instead — the one host the agent proxy never touches.
+for tool in \
+  github.com/bufbuild/buf/cmd/buf@v1.72.0 \
+  github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.13.2 \
+  mvdan.cc/gofumpt@v0.10.0 \
+  golang.org/x/tools/cmd/goimports@v0.48.0 \
+  go.uber.org/mock/mockgen@v0.6.0; do
+  go install "$tool" &
+done
 
 wait
 mise --version || true
@@ -62,33 +92,15 @@ Two constraints shape it:
 - **It must exit zero.** A non-zero exit fails the session outright, so every
   step ends in `|| true` and the script ends in `exit 0`.
 - **It must finish in about five minutes**, or the snapshot never builds and
-  every session pays the cost again. The two slow halves run in parallel. If it
-  still overruns, drop the tools that are cheapest to do without: `aws-cli`
-  first, then the `go:` backends, which compile from source.
+  every session pays the cost again. The installs run in parallel. If it still
+  overruns, drop `mockgen` and `goimports` first — `go generate` and the
+  formatter are the checks a run can most easily do without.
 
 Changing the script — or the allowed domains — invalidates the snapshot, so the
 next session rebuilds it. The cache also expires on its own after about a week.
 
-## If the toolchain comes up short
-
-The GitHub proxy scopes release-asset downloads to the repositories attached to
-the session, so a setup script fetching golangci-lint, buf or gofumpt from
-their GitHub releases can get a 403 where the same URL works from a laptop. Go
-itself is safe: it comes through `proxy.golang.org`.
-
-The fix is the environment's **Custom** network access with the defaults kept
-and these added:
-
-```text
-mise.run
-mise.jdx.dev
-nodejs.org
-```
-
-Ask a session to run `mise ls` to see which tools actually landed.
-
 ## Verifying a change
 
 Trigger the routine by hand rather than waiting four hours, and read the run
-log — the environment lines at the top say whether the setup script ran and
-whether the snapshot was reused.
+log: the environment lines at the top say whether the setup script ran, and
+`ls /root/go/bin` plus `mise ls` say what actually landed.
