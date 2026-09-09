@@ -13,6 +13,7 @@ import { I18nextProvider } from 'react-i18next'
 
 import { i18n } from '@/i18n'
 import { refreshAccessTokenOrLogout } from '@/jwt/jwt'
+import { handOverLaunchScreen, hideLaunchScreen } from '@/native/launchScreen'
 import { initNativePlatform } from '@/native/platform'
 import posthog, { identifyUser, isPostHogConfigured } from '@/posthog'
 import { setNavigator } from '@/router/navigation'
@@ -25,6 +26,11 @@ import { rehydrated } from '@/stores/persisted'
 
 const rootElement = document.getElementById('root')
 if (rootElement === null) throw new Error('#root element is missing from index.html')
+
+// Before anything is awaited: the native launch screen comes down the moment
+// the boot splash has faded in over it, so a cold start waits on the animation
+// rather than on a still image of it.
+handOverLaunchScreen()
 
 const init = async () => {
   // Inside the native app the stores read from the OS and land a tick after
@@ -71,7 +77,12 @@ const init = async () => {
   )
   // After a frame, not immediately: `render` schedules the first paint rather
   // than performing it, and sweeping the splash away first shows a blank page.
-  requestAnimationFrame(() => document.getElementById('boot-splash')?.remove())
+  requestAnimationFrame(() => {
+    document.getElementById('boot-splash')?.remove()
+    // A boot this quick never let the splash finish fading in, so the launch
+    // screen is still waiting for a handover that will now never come.
+    hideLaunchScreen()
+  })
 
   // Warm the remaining route chunks so the whole app stays navigable offline.
   warmLazyRoutesWhenIdle()

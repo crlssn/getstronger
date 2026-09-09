@@ -43,9 +43,8 @@ export const deepLinkPath = (url: string): string | undefined => {
 export const initNativePlatform = async (router: NativeRouter): Promise<void> => {
   if (!Capacitor.isNativePlatform()) return
 
-  const [{ App }, { SplashScreen }, { KeepAwake }] = await Promise.all([
+  const [{ App }, { KeepAwake }] = await Promise.all([
     import('@capacitor/app'),
-    import('@capacitor/splash-screen'),
     import('@capacitor-community/keep-awake'),
   ])
 
@@ -118,8 +117,4 @@ export const initNativePlatform = async (router: NativeRouter): Promise<void> =>
     const { routineID, planID } = (notification.extra ?? {}) as RestNotificationTarget
     if (routineID) void router.navigate(workoutHref(routineID, planID))
   })
-
-  // The splash screen stays up until the app has mounted (launchAutoHide is
-  // off in capacitor.config.ts), so the user never sees an empty WebView.
-  await SplashScreen.hide()
 }

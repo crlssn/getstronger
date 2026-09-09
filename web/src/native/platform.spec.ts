@@ -7,7 +7,6 @@ const bridge = vi.hoisted(() => ({
   platform: 'ios',
   addListener: vi.fn(),
   minimizeApp: vi.fn(),
-  hideSplash: vi.fn(),
   keepAwake: vi.fn(),
   allowSleep: vi.fn(),
   setSwipeBack: vi.fn(),
@@ -22,8 +21,6 @@ vi.mock('@capacitor/core', () => ({
 vi.mock('@capacitor/app', () => ({
   App: { addListener: bridge.addListener, minimizeApp: bridge.minimizeApp },
 }))
-
-vi.mock('@capacitor/splash-screen', () => ({ SplashScreen: { hide: bridge.hideSplash } }))
 
 vi.mock('@capacitor-community/keep-awake', () => ({
   KeepAwake: { keepAwake: bridge.keepAwake, allowSleep: bridge.allowSleep },
@@ -98,7 +95,6 @@ describe('initNativePlatform', () => {
     window.history.replaceState({ idx: 1 }, '')
     bridge.addListener.mockReset().mockResolvedValue({ remove: vi.fn() })
     bridge.minimizeApp.mockReset().mockResolvedValue(undefined)
-    bridge.hideSplash.mockReset().mockResolvedValue(undefined)
     bridge.keepAwake.mockReset().mockResolvedValue(undefined)
     bridge.allowSleep.mockReset().mockResolvedValue(undefined)
     bridge.setSwipeBack.mockReset().mockResolvedValue(undefined)
@@ -114,7 +110,6 @@ describe('initNativePlatform', () => {
     await initNativePlatform(router)
 
     expect(bridge.addListener).not.toHaveBeenCalled()
-    expect(bridge.hideSplash).not.toHaveBeenCalled()
   })
 
   // Between sets the phone lies idle on a bench with the workout screen open,
@@ -245,15 +240,5 @@ describe('initNativePlatform', () => {
     notificationTap(undefined)
 
     expect(router.navigate).not.toHaveBeenCalled()
-  })
-
-  // launchAutoHide is off, so the splash stays up until the app has mounted and
-  // the user never sees an empty WebView.
-  test('takes the splash screen down last', async () => {
-    const { router } = routerAt('/home')
-
-    await initNativePlatform(router)
-
-    expect(bridge.hideSplash).toHaveBeenCalledTimes(1)
   })
 })
