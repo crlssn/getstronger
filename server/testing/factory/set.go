@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/aarondl/opt/omit"
+	"github.com/aarondl/opt/omitnull"
 	"github.com/stephenafamo/bob"
 	"github.com/stephenafamo/bob/dialect/psql/dialect"
 	"github.com/stephenafamo/bob/dialect/psql/im"
@@ -143,6 +144,9 @@ func (f *Factory) newSetSetter(opts ...SetOpt) (*models.SetSetter, *models.Set) 
 	if value, ok := setter.Position.Get(); ok {
 		mods = append(mods, bobfactory.SetMods.Position(value))
 	}
+	if value, ok := setter.WorkoutGroupExerciseID.GetNull(); ok {
+		mods = append(mods, bobfactory.SetMods.WorkoutGroupExerciseID(value))
+	}
 
 	template := f.generated.NewSet(mods...)
 	built := template.Build()
@@ -225,5 +229,13 @@ func SetCreatedAt(createdAt time.Time) SetOpt {
 func SetPosition(position int) SetOpt {
 	return func(set *models.SetSetter) {
 		set.Position = omit.From(safe.Int32FromInt(position))
+	}
+}
+
+// SetWorkoutGroupExerciseID is the block occurrence that logged the set: which
+// exercise of which block of the workout it was worked in.
+func SetWorkoutGroupExerciseID(id any) SetOpt {
+	return func(set *models.SetSetter) {
+		set.WorkoutGroupExerciseID = omitnull.From(nativeUUID(id))
 	}
 }
