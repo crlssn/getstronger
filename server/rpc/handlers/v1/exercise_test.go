@@ -502,6 +502,33 @@ func (s *exerciseSuite) TestUpdateExerciseMetrics() {
 		s.Require().Equal([]string{"reps", "weight"}, []string(updated.Metrics))
 	})
 
+	// The lock exists to protect the columns the owner's own history is stored
+	// in, so a set another athlete logged against the exercise is not history
+	// the owner has to keep.
+	s.Run("ok_metrics_changed_when_only_a_stranger_logged_the_exercise", func() {
+		user := s.factory.NewUser()
+		exercise := s.factory.NewExercise(
+			factory.ExerciseUserID(user.ID),
+			factory.ExerciseMetrics(training.MetricStrings(training.DefaultMetrics())...),
+		)
+		s.factory.NewSet(factory.SetExerciseID(exercise.ID))
+
+		ctx := xcontext.WithUserID(xcontext.WithLogger(context.Background(), zap.NewExample()), user.ID)
+		res, err := s.handler.UpdateExercise(ctx, request(
+			exercise.ID.String(),
+			v1.ExerciseMetric_EXERCISE_METRIC_DISTANCE,
+			v1.ExerciseMetric_EXERCISE_METRIC_TIME,
+		))
+		s.Require().NoError(err)
+		s.Require().Equal([]v1.ExerciseMetric{
+			v1.ExerciseMetric_EXERCISE_METRIC_DISTANCE,
+			v1.ExerciseMetric_EXERCISE_METRIC_TIME,
+		}, res.Msg.GetExercise().GetMetrics())
+
+		updated := stored(exercise.ID.String())
+		s.Require().Equal([]string{"distance", "time"}, []string(updated.Metrics))
+	})
+
 	s.Run("ok_metrics_changed_without_logged_sets", func() {
 		user := s.factory.NewUser()
 		exercise := s.factory.NewExercise(
@@ -953,7 +980,7 @@ func (s *exerciseSuite) TestGetPreviousWorkoutSets() {
 	type test struct {
 		name     string
 		req      *connect.Request[v1.GetPreviousWorkoutSetsRequest]
-		init     func(t test)
+		init     func(t test) context.Context
 		expected expected
 	}
 
@@ -965,12 +992,12 @@ func (s *exerciseSuite) TestGetPreviousWorkoutSets() {
 					ExerciseIds: []string{factory.UUID(0).String(), factory.UUID(1).String()},
 				},
 			},
-			init: func(t test) {
+			init: func(t test) context.Context {
+				user := s.factory.NewUser()
+
 				for _, exerciseSets := range t.expected.res.GetExerciseSets() {
 					exercise := exerciseSets.GetExercise()
-					user := s.factory.NewUser(
-						factory.UserID(exercise.GetUserId()),
-					)
+					exercise.UserId = user.ID.String()
 					s.factory.NewExercise(
 						factory.ExerciseID(exercise.GetId()),
 						factory.ExerciseUserID(user.ID),
@@ -1000,6 +1027,9 @@ func (s *exerciseSuite) TestGetPreviousWorkoutSets() {
 						)
 					}
 				}
+
+				ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
+				return xcontext.WithUserID(ctx, user.ID)
 			},
 			expected: expected{
 				err: nil,
@@ -1072,7 +1102,10 @@ func (s *exerciseSuite) TestGetPreviousWorkoutSets() {
 					ExerciseIds: []string{uuid.Must(uuid.NewV4()).String()},
 				},
 			},
-			init: func(_ test) {},
+			init: func(_ test) context.Context {
+				ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
+				return xcontext.WithUserID(ctx, s.factory.NewUser().ID)
+			},
 			expected: expected{
 				err: nil,
 				res: &v1.GetPreviousWorkoutSetsResponse{
@@ -1084,9 +1117,8 @@ func (s *exerciseSuite) TestGetPreviousWorkoutSets() {
 
 	for _, t := range tests {
 		s.Run(t.name, func() {
-			t.init(t)
+			ctx := t.init(t)
 
-			ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
 			res, err := s.handler.GetPreviousWorkoutSets(ctx, t.req)
 			if t.expected.err != nil {
 				s.Require().Nil(res)
@@ -1114,6 +1146,37 @@ func (s *exerciseSuite) TestGetPreviousWorkoutSets() {
 			}
 		})
 	}
+}
+
+// A set another athlete logged against the caller's exercise is the most recent
+// one there is, so a lookup that asked only for the exercise would prefill the
+// next session with a stranger's numbers.
+func (s *exerciseSuite) TestGetPreviousWorkoutSetsIgnoresOtherAthletes() {
+	user := s.factory.NewUser()
+	exercise := s.factory.NewExercise(factory.ExerciseUserID(user.ID))
+	workout := s.factory.NewWorkout(factory.WorkoutUserID(user.ID))
+
+	own := s.factory.NewSet(
+		factory.SetUserID(user.ID),
+		factory.SetExerciseID(exercise.ID),
+		factory.SetWorkoutID(workout.ID),
+		factory.SetCreatedAt(s.factory.Now()),
+	)
+	s.factory.NewSet(
+		factory.SetExerciseID(exercise.ID),
+		factory.SetCreatedAt(s.factory.Now().Add(time.Hour)),
+	)
+
+	ctx := xcontext.WithUserID(xcontext.WithLogger(context.Background(), zap.NewExample()), user.ID)
+	res, err := s.handler.GetPreviousWorkoutSets(ctx, &connect.Request[v1.GetPreviousWorkoutSetsRequest]{
+		Msg: &v1.GetPreviousWorkoutSetsRequest{
+			ExerciseIds: []string{exercise.ID.String()},
+		},
+	})
+	s.Require().NoError(err)
+	s.Require().Len(res.Msg.GetExerciseSets(), 1)
+	s.Require().Len(res.Msg.GetExerciseSets()[0].GetSets(), 1)
+	s.Require().Equal(own.ID.String(), res.Msg.GetExerciseSets()[0].GetSets()[0].GetId())
 }
 
 func (s *exerciseSuite) TestGetPersonalBests() {
@@ -1269,7 +1332,7 @@ func (s *exerciseSuite) TestListSets() {
 	type test struct {
 		name     string
 		req      *connect.Request[v1.ListSetsRequest]
-		init     func(t test)
+		init     func(t test) context.Context
 		expected expected
 	}
 
@@ -1283,17 +1346,21 @@ func (s *exerciseSuite) TestListSets() {
 					},
 				},
 			},
-			init: func(t test) {
+			init: func(t test) context.Context {
 				_, err := models.Sets.Delete().Exec(context.Background(), bob.NewDB(s.container.DB))
 				s.Require().NoError(err)
+
+				user := s.factory.NewUser()
 
 				sets := make(models.SetSlice, 0, len(t.expected.res.GetSets()))
 				for _, set := range t.expected.res.GetSets() {
 					workout := s.factory.NewWorkout(
 						factory.WorkoutID(set.GetMetadata().GetWorkoutId()),
+						factory.WorkoutUserID(user.ID),
 					)
 					sets = append(sets, s.factory.NewSet(
 						factory.SetID(set.GetId()),
+						factory.SetUserID(user.ID),
 						factory.SetWorkoutID(workout.ID),
 						factory.SetWeight(set.GetWeight()),
 						factory.SetReps(int(set.GetReps())),
@@ -1314,8 +1381,12 @@ func (s *exerciseSuite) TestListSets() {
 
 				// Additional set to create pagination token.
 				s.factory.NewSet(
+					factory.SetUserID(user.ID),
 					factory.SetCreatedAt(s.factory.Now().Add(-time.Hour)),
 				)
+
+				ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
+				return xcontext.WithUserID(ctx, user.ID)
 			},
 			expected: expected{
 				err: nil,
@@ -1355,7 +1426,7 @@ func (s *exerciseSuite) TestListSets() {
 					},
 				},
 			},
-			init: func(t test) {
+			init: func(t test) context.Context {
 				user := s.factory.NewUser(
 					factory.UserID(factory.UUID(0)),
 				)
@@ -1382,6 +1453,9 @@ func (s *exerciseSuite) TestListSets() {
 
 				// Non-matching set.
 				s.factory.NewSet()
+
+				ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
+				return xcontext.WithUserID(ctx, s.factory.NewUser().ID)
 			},
 			expected: expected{
 				err: nil,
@@ -1413,7 +1487,10 @@ func (s *exerciseSuite) TestListSets() {
 					},
 				},
 			},
-			init: func(_ test) {},
+			init: func(_ test) context.Context {
+				ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
+				return xcontext.WithUserID(ctx, s.factory.NewUser().ID)
+			},
 			expected: expected{
 				err: nil,
 				res: &v1.ListSetsResponse{
@@ -1428,9 +1505,8 @@ func (s *exerciseSuite) TestListSets() {
 
 	for _, t := range tests {
 		s.Run(t.name, func() {
-			t.init(t)
+			ctx := t.init(t)
 
-			ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
 			res, err := s.handler.ListSets(ctx, t.req)
 			if t.expected.err != nil {
 				s.Require().Nil(res)
@@ -1454,4 +1530,33 @@ func (s *exerciseSuite) TestListSets() {
 			s.Require().Equal(t.expected.res.GetPagination().GetNextPageToken(), res.Msg.GetPagination().GetNextPageToken())
 		})
 	}
+}
+
+// The exercise screen asks for one exercise and names nobody, which is the
+// caller asking for their own history rather than for everybody's.
+func (s *exerciseSuite) TestListSetsDefaultsToTheCaller() {
+	user := s.factory.NewUser()
+	exercise := s.factory.NewExercise(factory.ExerciseUserID(user.ID))
+
+	own := s.factory.NewSet(
+		factory.SetUserID(user.ID),
+		factory.SetExerciseID(exercise.ID),
+		factory.SetWorkoutID(s.factory.NewWorkout(factory.WorkoutUserID(user.ID)).ID),
+		factory.SetCreatedAt(s.factory.Now()),
+	)
+	s.factory.NewSet(
+		factory.SetExerciseID(exercise.ID),
+		factory.SetCreatedAt(s.factory.Now().Add(time.Hour)),
+	)
+
+	ctx := xcontext.WithUserID(xcontext.WithLogger(context.Background(), zap.NewExample()), user.ID)
+	res, err := s.handler.ListSets(ctx, &connect.Request[v1.ListSetsRequest]{
+		Msg: &v1.ListSetsRequest{
+			ExerciseIds: []string{exercise.ID.String()},
+			Pagination:  &v1.PaginationRequest{PageLimit: 10},
+		},
+	})
+	s.Require().NoError(err)
+	s.Require().Len(res.Msg.GetSets(), 1)
+	s.Require().Equal(own.ID.String(), res.Msg.GetSets()[0].GetId())
 }
