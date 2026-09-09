@@ -11,8 +11,33 @@ import {
 describe('matchingSuggestions', () => {
   const suggestions = ['Chest', 'Upper chest', 'Chest press', 'Back']
 
-  test('suggests nothing until something is typed', () => {
-    expect(matchingSuggestions(suggestions, [], '  ')).toEqual([])
+  // Nothing typed is the case the field exists for: an athlete who has never
+  // seen the tag cannot type the three letters that would have found it.
+  test('offers every tag before anything is typed', () => {
+    expect(matchingSuggestions(suggestions, [], '  ')).toEqual([
+      'Back',
+      'Chest',
+      'Chest press',
+      'Upper chest',
+    ])
+  })
+
+  test('offers nothing when there are no tags yet', () => {
+    expect(matchingSuggestions([], [], '')).toEqual([])
+  })
+
+  test('leaves out what is already chosen before anything is typed', () => {
+    expect(matchingSuggestions(suggestions, ['CHEST'], '')).toEqual([
+      'Back',
+      'Chest press',
+      'Upper chest',
+    ])
+  })
+
+  test('caps the untyped list at eight too', () => {
+    const many = Array.from({ length: 20 }, (_, index) => `Tag ${index}`)
+
+    expect(matchingSuggestions(many, [], '')).toHaveLength(8)
   })
 
   // The tag being typed is most likely the one that starts that way, so those
@@ -42,6 +67,7 @@ describe('matchingSuggestions', () => {
     const full = Array.from({ length: maxTags }, (_, index) => `Tag ${index}`)
 
     expect(matchingSuggestions(suggestions, full, 'chest')).toEqual([])
+    expect(matchingSuggestions(suggestions, full, '')).toEqual([])
   })
 })
 
