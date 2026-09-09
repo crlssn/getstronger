@@ -12,13 +12,13 @@ import { ExerciseTagsInput } from './ExerciseTagsInput'
 const suggestions = ['Chest', 'Chest press', 'Upper chest']
 
 /** The field is controlled, so a spec needs something holding its value. */
-const Harness = ({ initial = [] as string[], onChange = vi.fn() }) => {
+const Harness = ({ initial = [] as string[], onChange = vi.fn(), existing = suggestions }) => {
   const [tags, setTags] = useState(initial)
 
   return (
     <ExerciseTagsInput
       value={tags}
-      suggestions={suggestions}
+      suggestions={existing}
       onChange={(next) => {
         setTags(next)
         onChange(next)
@@ -91,18 +91,53 @@ describe('ExerciseTagsInput', () => {
   })
 
   describe('suggestions', () => {
-    test('appear only once something is typed', async () => {
+    test('appear as soon as the field is asked for one', async () => {
       renderWithProviders(<Harness />)
 
       await userEvent.click(field())
-      expect(options()).toHaveLength(0)
 
-      await userEvent.type(field(), 'chest')
       expect(options().map((option) => option.textContent)).toEqual([
         'ChestExisting tag',
         'Chest pressExisting tag',
         'Upper chestExisting tag',
       ])
+    })
+
+    test('narrow to what is typed', async () => {
+      renderWithProviders(<Harness />)
+
+      await userEvent.type(field(), 'press')
+
+      expect(options().map((option) => option.textContent)).toEqual(['Chest pressExisting tag'])
+    })
+
+    test('stay away when the athlete has no tags yet', async () => {
+      renderWithProviders(<Harness existing={[]} />)
+
+      await userEvent.click(field())
+
+      expect(options()).toHaveLength(0)
+      expect(field()).toHaveAttribute('aria-expanded', 'false')
+    })
+
+    // Eight rows is already most of a phone screen, and typing narrows the
+    // rest — a list of forty would bury the field that filters it.
+    test('show the first eight of many', async () => {
+      const many = Array.from({ length: 20 }, (_, index) => `Tag ${index}`)
+      renderWithProviders(<Harness existing={many} />)
+
+      await userEvent.click(field())
+
+      expect(options()).toHaveLength(8)
+    })
+
+    test('can be taken without typing anything', async () => {
+      renderWithProviders(<Harness />)
+
+      await userEvent.click(field())
+      await userEvent.click(screen.getByRole('option', { name: /Upper chest/ }))
+
+      expect(screen.getByRole('button', { name: 'Remove Upper chest' })).toBeInTheDocument()
     })
 
     test('can be picked with the pointer', async () => {

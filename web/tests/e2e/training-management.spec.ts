@@ -154,6 +154,11 @@ test.describe('exercise library', () => {
       await page.locator('form input[type="text"]').first().fill(targetName)
       await page.getByRole('button', { name: 'Add tags' }).click()
       const tagInput = page.getByLabel('Add exercise tag')
+      // Before a letter is typed: the tags already on the account are what the
+      // field opens with, so one can be found without knowing its spelling.
+      await tagInput.click()
+      await expect(page.getByRole('listbox', { name: 'Existing exercise tags' })).toBeVisible()
+
       await tagInput.fill(sharedTag.slice(0, Math.max(3, sharedTag.length - 3)))
       await expect(page.getByRole('listbox', { name: 'Existing exercise tags' })).toBeVisible()
       await tagInput.press('ArrowDown')

@@ -17,8 +17,10 @@ const lower = (value: string) => value.toLowerCase()
 /**
  * Suggestions matching what has been typed, best first.
  *
- * A tag that starts with the query comes before one that merely contains it,
- * because that is the one the typist is most likely reaching for.
+ * Nothing typed matches everything, so the field can offer the tags that
+ * already exist to someone who has never seen them. A tag that starts with the
+ * query comes before one that merely contains it, because that is the one the
+ * typist is most likely reaching for.
  */
 export const matchingSuggestions = (
   suggestions: readonly string[],
@@ -26,7 +28,7 @@ export const matchingSuggestions = (
   draft: string,
 ): string[] => {
   const query = lower(draft.trim())
-  if (!query || selected.length >= maxTags) return []
+  if (selected.length >= maxTags) return []
 
   const taken = new Set(selected.map(lower))
 
