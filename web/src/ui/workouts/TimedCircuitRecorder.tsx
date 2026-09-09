@@ -466,9 +466,12 @@ export const TimedCircuitRecorder = ({
               disabled={busy}
               onClick={() => void action(!recording ? 'start' : paused ? 'resume' : 'pause')}
             >
+              {/* The screen opens on a routine written in minutes without
+                  being asked for, so the button that starts it says what it
+                  starts — the same words the form's dock offers. */}
               {t(
                 !recording
-                  ? 'timedCircuit.begin'
+                  ? 'timedCircuit.start'
                   : paused
                     ? 'timedCircuit.resume'
                     : 'timedCircuit.pause',

@@ -1283,19 +1283,26 @@ describe('StartWorkout', () => {
       native.enabled = false
     })
 
-    test('is offered for a circuit held against the clock, and stands aside for manual logging', async () => {
+    // Rounds written in minutes are run against a clock, so the screen the
+    // routine opens on is the one that counts them down rather than the form
+    // that asks for reps.
+    test('opens on the live session for a circuit held against the clock, and stands aside for manual logging', async () => {
       const user = userEvent.setup()
-      await renderWorkout()
+      // The live screen is titled by the interval it is about to run, so the
+      // routine's own name is not on it.
+      await renderWorkout(undefined, 'Bench Press')
 
-      await user.click(screen.getByRole('button', { name: 'Start live session' }))
-      // The recorder opens on the session it is about to run, with nothing
-      // asked of the phone yet and the ordinary form one tap away.
-      expect(screen.getByRole('button', { name: 'Start' })).toBeInTheDocument()
+      // Opened on, not started: nothing is asked of the phone until the
+      // athlete taps, and the ordinary form is one tap the other way.
+      expect(await screen.findByRole('button', { name: 'Start live session' })).toBeInTheDocument()
       expect(timedCircuit.start).not.toHaveBeenCalled()
 
-      await user.click(screen.getByRole('button', { name: 'Log manually' }))
-      expect(await screen.findByRole('button', { name: 'Start live session' })).toBeInTheDocument()
-      expect(setField('Bench Press set 1 weight')).toBeVisible()
+      await user.click(screen.getByRole('button', { name: 'Fill in manually' }))
+      // The form is reached for the first time here, so its sets are written
+      // into the store as it renders rather than before.
+      expect(await screen.findByRole('textbox', { name: 'Bench Press set 1 weight' })).toBeVisible()
+      // And the way back, so declining the session is not leaving it behind.
+      expect(screen.getByRole('button', { name: 'Start live session' })).toBeInTheDocument()
     })
 
     // Off is the default: a runner who never asked for tones hears none, and
@@ -1303,7 +1310,7 @@ describe('StartWorkout', () => {
     // session is asked for as the screen opens.
     test('asks for a session to pace against only once the pace tones are on', async () => {
       vi.mocked(requests.getPaceReference).mockResolvedValue(undefined)
-      await renderWorkout()
+      await renderWorkout(undefined, 'Bench Press')
       expect(requests.getPaceReference).not.toHaveBeenCalled()
 
       usePreferencesStore.getState().setPaceReference('previous')
@@ -1316,10 +1323,9 @@ describe('StartWorkout', () => {
     test('freezes each phase in spoken units', async () => {
       const user = userEvent.setup()
       vi.mocked(timedCircuit.start).mockResolvedValue(undefined)
-      await renderWorkout()
+      await renderWorkout(undefined, 'Bench Press')
 
       await user.click(screen.getByRole('button', { name: 'Start live session' }))
-      await user.click(screen.getByRole('button', { name: 'Start' }))
 
       expect(timedCircuit.start).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -1341,7 +1347,10 @@ describe('StartWorkout', () => {
     // button lives inside the chrome, as a row under the header, rather than
     // above it where the chrome covered its lower half.
     test('is offered from the session chrome, under its header', async () => {
-      await renderWorkout()
+      const user = userEvent.setup()
+      await renderWorkout(undefined, 'Bench Press')
+      // The form is where the dock lives, so the session is declined first.
+      await user.click(screen.getByRole('button', { name: 'Fill in manually' }))
 
       const header = screen.getByRole('heading', { level: 1 }).closest('header')!
       expect(header.parentElement).toContainElement(

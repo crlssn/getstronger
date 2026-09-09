@@ -57,7 +57,7 @@ describe('TimedCircuitRecorder', () => {
     // it is started from, showing the first interval at its full length.
     expect(screen.getByRole('heading', { name: 'Walk' })).toBeVisible()
     expect(screen.getByText('2:00')).toBeVisible()
-    await user.click(screen.getByRole('button', { name: 'Start' }))
+    await user.click(screen.getByRole('button', { name: 'Start live session' }))
     // The comparison travels with the prescription: the phone owns it from
     // there, screen locked and WebView asleep.
     expect(timedCircuit.start).toHaveBeenCalledWith(
@@ -68,7 +68,7 @@ describe('TimedCircuitRecorder', () => {
       }),
     )
     expect(screen.getByRole('alert')).toHaveTextContent('Check location permission')
-    await user.click(screen.getByRole('button', { name: 'Log manually' }))
+    await user.click(screen.getByRole('button', { name: 'Fill in manually' }))
     expect(cancel).toHaveBeenCalledOnce()
   })
 
@@ -88,7 +88,7 @@ describe('TimedCircuitRecorder', () => {
       />,
     )
 
-    await user.click(screen.getByRole('button', { name: 'Start' }))
+    await user.click(screen.getByRole('button', { name: 'Start live session' }))
 
     // The recorder speaks the cue and the ending, so it is handed both in the
     // athlete's language rather than asked to translate.
@@ -464,7 +464,7 @@ describe('TimedCircuitRecorder', () => {
       />,
     )
 
-    await user.click(screen.getByRole('button', { name: 'Start' }))
+    await user.click(screen.getByRole('button', { name: 'Start live session' }))
 
     expect(timedCircuit.start).toHaveBeenCalledWith(expect.objectContaining({ volume: 0 }))
   })
