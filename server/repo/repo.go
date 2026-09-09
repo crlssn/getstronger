@@ -1272,19 +1272,24 @@ func (r *Repo) DeleteWorkout(ctx context.Context, opts ...DeleteWorkoutOpt) erro
 	})
 }
 
-func (r *Repo) GetPreviousWorkoutSets(ctx context.Context, exerciseIDs []uuid.UUID) ([]*training.Set, error) {
+// GetPreviousWorkoutSets is the athlete's own last session of each exercise.
+// The user id is what makes it theirs: an exercise id names a row, not an
+// owner, so without it a set logged against the exercise by anybody would
+// prefill the next session.
+func (r *Repo) GetPreviousWorkoutSets(ctx context.Context, userID uuid.UUID, exerciseIDs []uuid.UUID) ([]*training.Set, error) {
 	rawQuery := `
 SELECT id FROM public.sets
 WHERE (exercise_id, workout_id) IN (
-	SELECT DISTINCT ON (exercise_id) exercise_id, workout_id	
+	SELECT DISTINCT ON (exercise_id) exercise_id, workout_id
 	FROM public.sets
-	WHERE exercise_id = ANY($1)
+	WHERE exercise_id = ANY($1) AND user_id = $2
 	ORDER BY exercise_id, created_at DESC
 )
+AND user_id = $2
 ORDER BY created_at;
 `
 
-	rows, err := r.sqlExec().QueryContext(ctx, rawQuery, pq.Array(exerciseIDs))
+	rows, err := r.sqlExec().QueryContext(ctx, rawQuery, pq.Array(exerciseIDs), userID)
 	if err != nil {
 		return nil, fmt.Errorf("previous workout sets fetch: %w", err)
 	}
@@ -2005,6 +2010,12 @@ type CountSetsOpt func() bob.Mod[*dialect.SelectQuery]
 func CountSetsWithExerciseID(exerciseID uuid.UUID) CountSetsOpt {
 	return func() bob.Mod[*dialect.SelectQuery] {
 		return models.SelectWhere.Sets.ExerciseID.EQ(exerciseID)
+	}
+}
+
+func CountSetsWithUserID(userID uuid.UUID) CountSetsOpt {
+	return func() bob.Mod[*dialect.SelectQuery] {
+		return models.SelectWhere.Sets.UserID.EQ(userID)
 	}
 }
 

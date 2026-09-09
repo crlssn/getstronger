@@ -1089,6 +1089,15 @@ func (s *repoSuite) TestCountSets() {
 	count, err = s.repo.CountSets(ctx, repo.CountSetsWithExerciseID(exercise.ID))
 	s.Require().NoError(err)
 	s.Require().Equal(int64(2), count)
+
+	// Another athlete's set on the same exercise is not the owner's history.
+	s.factory.NewSet(factory.SetExerciseID(exercise.ID))
+
+	count, err = s.repo.CountSets(ctx,
+		repo.CountSetsWithExerciseID(exercise.ID),
+		repo.CountSetsWithUserID(user.ID))
+	s.Require().NoError(err)
+	s.Require().Equal(int64(2), count)
 }
 
 func (s *repoSuite) TestUpdateRoutine() {
@@ -1672,14 +1681,16 @@ func (s *repoSuite) TestGetPreviousWorkoutSets() {
 		expected    expected
 	}
 
+	user := s.factory.NewUser()
+
 	exerciseIDs := []uuid.UUID{factory.UUID(0), factory.UUID(1)}
 	for _, exerciseID := range exerciseIDs {
-		s.factory.NewExercise(factory.ExerciseID(exerciseID))
+		s.factory.NewExercise(factory.ExerciseID(exerciseID), factory.ExerciseUserID(user.ID))
 	}
 
 	workoutIDs := []uuid.UUID{factory.UUID(0), factory.UUID(1)}
 	for _, workoutID := range workoutIDs {
-		s.factory.NewWorkout(factory.WorkoutID(workoutID))
+		s.factory.NewWorkout(factory.WorkoutID(workoutID), factory.WorkoutUserID(user.ID))
 	}
 
 	tests := []test{
@@ -1687,22 +1698,33 @@ func (s *repoSuite) TestGetPreviousWorkoutSets() {
 			name:        "ok",
 			exerciseIDs: exerciseIDs,
 			init: func(t test) {
-				s.factory.NewSet(factory.SetCreatedAt(s.factory.Now().Add(-time.Minute)))
-				s.factory.NewSet(factory.SetCreatedAt(s.factory.Now().Add(-time.Minute)))
+				s.factory.NewSet(factory.SetUserID(user.ID), factory.SetCreatedAt(s.factory.Now().Add(-time.Minute)))
+				s.factory.NewSet(factory.SetUserID(user.ID), factory.SetCreatedAt(s.factory.Now().Add(-time.Minute)))
 
 				for _, exerciseID := range t.exerciseIDs {
 					s.factory.NewSet(
+						factory.SetUserID(user.ID),
 						factory.SetExerciseID(exerciseID),
 						factory.SetCreatedAt(s.factory.Now().Add(-time.Second)),
 					)
 					s.factory.NewSet(
+						factory.SetUserID(user.ID),
 						factory.SetExerciseID(exerciseID),
 						factory.SetCreatedAt(s.factory.Now().Add(-time.Second)),
+					)
+
+					// Another athlete's set on the same exercise, logged after
+					// every one of the caller's, so an unowned read would call
+					// it the previous workout.
+					s.factory.NewSet(
+						factory.SetExerciseID(exerciseID),
+						factory.SetCreatedAt(s.factory.Now().Add(time.Hour)),
 					)
 				}
 
 				for _, set := range t.expected.sets {
 					s.factory.NewSet(
+						factory.SetUserID(user.ID),
 						factory.SetWorkoutID(set.WorkoutID),
 						factory.SetExerciseID(set.ExerciseID),
 						factory.SetReps(int(set.Reps)),
@@ -1750,7 +1772,7 @@ func (s *repoSuite) TestGetPreviousWorkoutSets() {
 	for _, t := range tests {
 		s.Run(t.name, func() {
 			t.init(t)
-			sets, err := s.repo.GetPreviousWorkoutSets(context.Background(), t.exerciseIDs)
+			sets, err := s.repo.GetPreviousWorkoutSets(context.Background(), user.ID, t.exerciseIDs)
 			if t.expected.err != nil {
 				s.Require().Nil(sets)
 				s.Require().Error(err)

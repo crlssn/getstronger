@@ -157,7 +157,9 @@ func (h *exerciseHandler) metricsLocked(ctx context.Context, log *zap.Logger, ex
 		return false, connect.NewError(connect.CodeInvalidArgument, err)
 	}
 
-	sets, err := h.repo.CountSets(ctx, repo.CountSetsWithExerciseID(exercise.ID))
+	sets, err := h.repo.CountSets(ctx,
+		repo.CountSetsWithExerciseID(exercise.ID),
+		repo.CountSetsWithUserID(exercise.UserID))
 	if err != nil {
 		log.Error("Count sets for exercise measurement change", zap.Error(err))
 		return false, connect.NewError(connect.CodeInternal, nil)
@@ -278,7 +280,7 @@ func (h *exerciseHandler) GetPreviousWorkoutSets(ctx context.Context, req *conne
 		return nil, connect.NewError(connect.CodeInvalidArgument, nil)
 	}
 
-	sets, err := h.repo.GetPreviousWorkoutSets(ctx, exerciseIDs)
+	sets, err := h.repo.GetPreviousWorkoutSets(ctx, xcontext.MustExtractUserID(ctx), exerciseIDs)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return &connect.Response[apiv1.GetPreviousWorkoutSetsResponse]{
@@ -336,13 +338,17 @@ func (h *exerciseHandler) ListSets(ctx context.Context, req *connect.Request[api
 		opts = append(opts, repo.ListSetsWithExerciseID(exerciseIDs...))
 	}
 
-	if req.Msg.GetUserIds() != nil {
-		userIDs, err := parser.UUIDs(req.Msg.GetUserIds())
+	// Naming nobody means the caller: the exercise screen asks for its own
+	// history that way. Without the default the page would be everybody's.
+	userIDs := []uuid.UUID{xcontext.MustExtractUserID(ctx)}
+	if len(req.Msg.GetUserIds()) > 0 {
+		parsed, err := parser.UUIDs(req.Msg.GetUserIds())
 		if err != nil {
 			return nil, connect.NewError(connect.CodeInvalidArgument, nil)
 		}
-		opts = append(opts, repo.ListSetsWithUserID(userIDs...))
+		userIDs = parsed
 	}
+	opts = append(opts, repo.ListSetsWithUserID(userIDs...))
 
 	sets, err := h.repo.ListSets(ctx, opts...)
 	if err != nil {
@@ -358,12 +364,12 @@ func (h *exerciseHandler) ListSets(ctx context.Context, req *connect.Request[api
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	userIDs := make([]uuid.UUID, 0, len(paginated.Items))
+	setUserIDs := make([]uuid.UUID, 0, len(paginated.Items))
 	for _, set := range paginated.Items {
-		userIDs = append(userIDs, set.UserID)
+		setUserIDs = append(setUserIDs, set.UserID)
 	}
 
-	personalBests, err := h.repo.GetPersonalBests(ctx, userIDs...)
+	personalBests, err := h.repo.GetPersonalBests(ctx, setUserIDs...)
 	if err != nil {
 		log.Error("List personal bests for exercise sets", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
