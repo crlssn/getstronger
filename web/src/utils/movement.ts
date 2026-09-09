@@ -48,33 +48,29 @@ const continuousMs = 3000
 const measured = (fix: RoutePoint) =>
   fix.speed !== undefined && Number.isFinite(fix.speed) && fix.speed >= 0 ? fix.speed : undefined
 
-/**
- * How fast the window read, or nothing when it holds no evidence.
- *
- * A receiver that measures speed is believed. One that does not is judged on
- * where the athlete ended up over the whole window, less the displacement its
- * error circles already account for: a phone lying on a wall reports fixes
- * metres apart, and a speed read off that jitter never settles.
- */
-const windowSpeed = (window: RoutePoint[]): number | undefined => {
-  const speeds = window.map(measured).filter((speed) => speed !== undefined)
-  if (speeds.length) return Math.max(...speeds)
-  const first = window[0]
-  const last = window.at(-1)
-  if (!first || !last) return undefined
-  const seconds = (last.timestamp - first.timestamp) / 1000
-  if (seconds <= 0) return undefined
-  return Math.max(0, metersBetween(first, last) - Math.max(first.accuracy, last.accuracy)) / seconds
+/** The fixes from the last one at or before `since` up to `at`, unbroken. */
+const windowSince = (seen: readonly RoutePoint[], since: number, at: number) => {
+  const anchor = seen.findLast((fix) => fix.timestamp <= since)
+  if (!anchor) return undefined
+  const window = seen.filter((fix) => fix.timestamp >= anchor.timestamp)
+  const stamps = [...window.map((fix) => fix.timestamp), at]
+  if (stamps.some((stamp, index) => index > 0 && stamp - stamps[index - 1] > continuousMs))
+    return undefined
+  return window
 }
 
 /**
  * What the recent fixes say the athlete is doing at `at`, or nothing when they
  * say neither.
  *
- * The dwell is the window rather than a timer beside it, so `still` already
- * means "still for the whole dwell". Nothing is the common answer, and the safe
- * one: an unwatched window leaves a running recording running and a held one
- * held.
+ * A receiver that measures speed is believed, and the dwell is the window
+ * rather than a timer beside it, so `still` already means "still for the
+ * whole dwell". One that measures no speed leaves only where its fixes
+ * landed, and a fix a few metres from the last is as much a standing phone as
+ * a slow one: its error circles bound the movement either way, so the window
+ * grows until a standing athlete's bound falls under the pause speed, and
+ * says nothing before that. Nothing is the common answer, and the safe one:
+ * an unwatched window leaves a running recording running and a held one held.
  */
 export const readMovement = (
   fixes: readonly RoutePoint[],
@@ -85,16 +81,29 @@ export const readMovement = (
   // The window reaches back to where the athlete was when the dwell began, so
   // it needs a fix from before that: anything shorter has not watched them
   // stand through it.
-  const anchor = seen.findLast((fix) => fix.timestamp <= at - thresholds.dwellMs)
-  if (!anchor) return undefined
+  const dwell = windowSince(seen, at - thresholds.dwellMs, at)
+  if (!dwell) return undefined
 
-  const window = seen.filter((fix) => fix.timestamp >= anchor.timestamp)
-  const stamps = [...window.map((fix) => fix.timestamp), at]
-  if (stamps.some((stamp, index) => index > 0 && stamp - stamps[index - 1] > continuousMs))
-    return undefined
+  const speeds = dwell.map(measured).filter((speed) => speed !== undefined)
+  if (speeds.length) {
+    const speed = Math.max(...speeds)
+    if (speed < thresholds.pauseSpeed) return 'still'
+    return speed > thresholds.resumeSpeed ? 'moving' : undefined
+  }
 
-  const speed = windowSpeed(window)
-  if (speed === undefined) return undefined
-  if (speed < thresholds.pauseSpeed) return 'still'
-  return speed > thresholds.resumeSpeed ? 'moving' : undefined
+  const radius = Math.max(...dwell.map((fix) => fix.accuracy))
+  const window = windowSince(
+    seen,
+    at - Math.max(thresholds.dwellMs, (2 * radius * 1000) / thresholds.pauseSpeed),
+    at,
+  )
+  const first = window?.[0]
+  const last = window?.at(-1)
+  if (!first || !last) return undefined
+  const seconds = (last.timestamp - first.timestamp) / 1000
+  if (seconds <= 0) return undefined
+  const chord = metersBetween(first, last)
+  const circle = Math.max(first.accuracy, last.accuracy)
+  if ((chord + circle) / seconds < thresholds.pauseSpeed) return 'still'
+  return Math.max(0, chord - circle) / seconds > thresholds.resumeSpeed ? 'moving' : undefined
 }

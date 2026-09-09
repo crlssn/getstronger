@@ -20,21 +20,28 @@ const fix = (seconds: number, meters: number, extra: Partial<RoutePoint> = {}): 
 const watched = (meters: number[], extra: Partial<RoutePoint> = {}) =>
   meters.map((distance, second) => fix(second, distance, extra))
 
+/** Twenty seconds of fixes, which is what a receiver with no speed and a
+ * five-metre error circle needs before the window can say anything. */
+const twentySeconds = (place: (second: number) => number) =>
+  Array.from({ length: 21 }, (_, second) => place(second))
+
 const at = start + 6000
+const later = start + 20000
 
 describe('the stationary detector', () => {
   it('reads a standstill as still once it has watched the dwell through', () => {
-    expect(readMovement(watched([0, 0, 0, 0, 0, 0, 0]), at)).toBe('still')
+    expect(readMovement(watched(twentySeconds(() => 0)), later)).toBe('still')
   })
 
   it('reads a run as moving', () => {
-    expect(readMovement(watched([0, 6, 12, 18, 24, 30, 36]), at)).toBe('moving')
+    expect(readMovement(watched(twentySeconds((second) => second * 6)), later)).toBe('moving')
   })
 
   it('sees through the drift a phone reports while it is standing still', () => {
     // Fix to fix this wanders metres a second, which is why a speed read off
     // one pair of them would keep a recording running through every red light.
-    expect(readMovement(watched([0, 4, -3, 2, -4, 1, 0]), at)).toBe('still')
+    const drift = [0, 4, -3, 2, -4, 1, 0, 3, -2, 4, -1, 0, 2, -4, 3, -3, 1, 4, -2, 2, 0]
+    expect(readMovement(watched(drift), later)).toBe('still')
   })
 
   it('believes the speed the device measured over where its fixes landed', () => {
@@ -43,11 +50,23 @@ describe('the stationary detector', () => {
     expect(readMovement(watched([0, 12, -12, 12, -12, 12, 0], { speed: 0 }), at)).toBe('still')
   })
 
+  // A receiver that measures no speed leaves only the fixes, and a fix a few
+  // metres from the last is as much a standing phone as a slow one. Until the
+  // window is long enough for the error circles to fall under the pause speed
+  // it has no evidence, and no evidence must not hold the recording.
+  it('does not read a missing speed as standing on the error circle alone', () => {
+    expect(readMovement(watched([0, 0, 0, 0, 0, 0, 0]), at)).toBeUndefined()
+    expect(readMovement(watched([0, 0, 0, 0, 0, 0, 0], { accuracy: 0 }), at)).toBe('still')
+    // Twelve metres over the dwell is a run, whatever the circle says.
+    expect(readMovement(watched([0, 6, 12, 18, 24, 30, 36], { accuracy: 0 }), at)).toBe('moving')
+  })
+
   it('waits out the whole dwell before a standstill reads as one', () => {
-    const stopping = [0, 6, 12, 18, 24, 24, 24, 24, 24, 24]
+    const speeds = [3, 3, 3, 3, 0, 0, 0, 0, 0, 0]
+    const fixes = speeds.map((speed, second) => fix(second, 0, { speed }))
     // Four seconds in it is a run that has only just stopped.
-    expect(readMovement(watched(stopping), start + 4000)).toBe('moving')
-    expect(readMovement(watched(stopping), at)).toBe('still')
+    expect(readMovement(fixes, start + 4000)).toBe('moving')
+    expect(readMovement(fixes, at)).toBe('still')
   })
 
   it('reads a stop within three seconds of the receiver seeing it', () => {
@@ -65,25 +84,26 @@ describe('the stationary detector', () => {
   })
 
   it('says nothing until the dwell has fixes on both sides of it', () => {
-    expect(readMovement(watched([0, 0]), start + 1000)).toBeUndefined()
+    expect(readMovement(watched([0, 0], { speed: 0 }), start + 1000)).toBeUndefined()
   })
 
   it('says nothing once the fixes have stopped arriving', () => {
     // A lost signal is not a stopped athlete.
-    expect(readMovement(watched([0, 0, 0]), at)).toBeUndefined()
+    expect(readMovement(watched([0, 0, 0], { speed: 0 }), at)).toBeUndefined()
   })
 
   it('says nothing when a hole interrupts the window', () => {
-    expect(readMovement([fix(0, 0), fix(1, 0), fix(6, 0)], at)).toBeUndefined()
+    const fixes = [fix(0, 0, { speed: 0 }), fix(1, 0, { speed: 0 }), fix(6, 0, { speed: 0 })]
+    expect(readMovement(fixes, at)).toBeUndefined()
   })
 
   it('drops a fix too inaccurate to place, and keeps reading the rest', () => {
-    const fixes = watched([0, 0, 0, 0, 0, 0, 0])
+    const fixes = watched(twentySeconds(() => 0))
     fixes[4] = fix(4, 400, { accuracy: 400 })
-    expect(readMovement(fixes, at)).toBe('still')
+    expect(readMovement(fixes, later)).toBe('still')
 
     const allVague = fixes.map((point) => ({ ...point, accuracy: 400 }))
-    expect(readMovement(allVague, at)).toBeUndefined()
+    expect(readMovement(allVague, later)).toBeUndefined()
   })
 
   it('holds to the thresholds the athlete was promised', () => {

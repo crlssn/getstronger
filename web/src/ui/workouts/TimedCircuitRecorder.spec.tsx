@@ -157,7 +157,7 @@ describe('TimedCircuitRecorder', () => {
       timestamp: startedAt + second * 1000,
       latitude: meters / 111194.93,
       longitude: 0,
-      accuracy: 5,
+      accuracy: 0,
     })
     return {
       version: 1,
@@ -205,7 +205,7 @@ describe('TimedCircuitRecorder', () => {
       timestamp: startedAt + second * 1000,
       latitude: meters / 111194.93,
       longitude: 0,
-      accuracy: 5,
+      accuracy: 0,
     })
     const rounds: Recording = {
       version: 1,

@@ -258,17 +258,19 @@ export const metersBetween = (a: RoutePoint, b: RoutePoint) => {
       Math.sin(radians(b.longitude - a.longitude) / 2) ** 2
   return 6371000 * 2 * Math.asin(Math.sqrt(Math.min(1, h)))
 }
-const interpolate = (a: RoutePoint, b: RoutePoint, timestamp: number): RoutePoint => {
-  const fraction = (timestamp - a.timestamp) / (b.timestamp - a.timestamp)
-  // Use the short arc when a route crosses the date line.
-  const delta = ((b.longitude - a.longitude + 540) % 360) - 180
-  return {
-    timestamp,
-    latitude: a.latitude + fraction * (b.latitude - a.latitude),
-    longitude: ((a.longitude + fraction * delta + 540) % 360) - 180,
-    accuracy: Math.max(a.accuracy, b.accuracy),
-  }
-}
+/** The short way round between two longitudes, in degrees. */
+const eastward = (from: number, to: number) => ((to - from + 540) % 360) - 180
+
+const wrapLongitude = (longitude: number) => ((longitude + 540) % 360) - 180
+
+/** A point `fraction` of the way along the chord from `a` to `b`, stamped `timestamp`. */
+const along = (a: RoutePoint, b: RoutePoint, fraction: number, timestamp: number): RoutePoint => ({
+  timestamp,
+  latitude: a.latitude + fraction * (b.latitude - a.latitude),
+  longitude: wrapLongitude(a.longitude + fraction * eastward(a.longitude, b.longitude)),
+  accuracy: Math.max(a.accuracy, b.accuracy),
+})
+
 /** Whether a fix is precise enough, and sane enough, to place the athlete by. */
 export const usableFix = (point: RoutePoint) =>
   [point.timestamp, point.latitude, point.longitude, point.accuracy].every(Number.isFinite) &&
@@ -276,6 +278,56 @@ export const usableFix = (point: RoutePoint) =>
   Math.abs(point.longitude) <= 180 &&
   point.accuracy >= 0 &&
   point.accuracy <= 30
+
+/**
+ * How fast the filter lets the athlete have moved since the last fix, in
+ * metres a second: the process noise of the position filter.
+ *
+ * Higher trusts each fix more and smooths less; lower trails the athlete
+ * further behind and cuts the corners. Three is a run: simulated against a
+ * loop with turns it reads a run within a few percent either way, where the
+ * bare chords read a jittering walk at twice its length.
+ */
+const wanderSpeed = 3
+
+/**
+ * The route as the athlete most likely ran it, one smoothed fix per usable
+ * one.
+ *
+ * A fix is where the receiver thinks the phone is, give or take its accuracy,
+ * and consecutive fixes wander inside that circle: summed as chords they read
+ * more ground than was covered, worst at a walk and under trees. This is a
+ * one-dimensional Kalman filter on each axis, weighing every fix by its
+ * accuracy against how far the athlete could have moved since the last: a
+ * precise fix is believed outright, a vague one nudges the estimate, and a fix
+ * a minute after the last is believed again whatever it says. Fixes too vague
+ * to place at all are left out, and the edge across them bridges the gap.
+ */
+export const smoothRoute = (points: readonly RoutePoint[]): RoutePoint[] => {
+  const smoothed: RoutePoint[] = []
+  let latitude = 0
+  let longitude = 0
+  let variance = 0
+  let at = 0
+  for (const point of points) {
+    if (!usableFix(point) || (smoothed.length > 0 && point.timestamp <= at)) continue
+    const noise = point.accuracy ** 2
+    if (smoothed.length === 0) {
+      latitude = point.latitude
+      longitude = point.longitude
+      variance = noise
+    } else {
+      variance += (wanderSpeed ** 2 * (point.timestamp - at)) / 1000
+      const gain = variance + noise > 0 ? variance / (variance + noise) : 1
+      latitude += gain * (point.latitude - latitude)
+      longitude = wrapLongitude(longitude + gain * eastward(longitude, point.longitude))
+      variance *= 1 - gain
+    }
+    at = point.timestamp
+    smoothed.push({ ...point, latitude, longitude })
+  }
+  return smoothed
+}
 
 /**
  * The slowest a receiver reads while an athlete is still going, in metres a
@@ -296,46 +348,47 @@ const standingSpeed = 0.3
  */
 export const paceFloorMeters = 20
 
-/**
- * How far the athlete went between two fixes, in metres.
- *
- * A receiver that measured a speed at both ends is believed over where its
- * fixes landed: it filters, and the fixes do not. A phone standing at a
- * crossing reports fixes metres apart and a speed of nothing, and a phone
- * walking a straight line reports fixes that zigzag around it. Summed as
- * chords, both read longer than the walk was, which is the ground a watch
- * says it did not cover. Without a speed at both ends the chord is all there
- * is.
- */
-export const edgeMeters = (a: RoutePoint, b: RoutePoint) => {
-  const seconds = (b.timestamp - a.timestamp) / 1000
-  if (measuredSpeed(a) === undefined || measuredSpeed(b) === undefined || seconds <= 0)
-    return metersBetween(a, b)
-  const speed = (measuredSpeed(a)! + measuredSpeed(b)!) / 2
-  return speed < standingSpeed ? 0 : speed * seconds
-}
-
 const measuredSpeed = (point: RoutePoint) =>
   point.speed !== undefined && Number.isFinite(point.speed) && point.speed >= 0
     ? point.speed
     : undefined
 
 /**
- * Whether the movement between two fixes is worth measuring.
+ * How far the athlete went between two smoothed fixes, in metres.
  *
- * Two usable fixes, close enough in time to be one movement, slow enough to be
- * a person on foot, and outside every pause. Every distance in the app is
- * summed from edges this accepts, so the live numbers and the saved route
- * cannot disagree about what counted.
+ * The chord between them, unless the receiver read the phone as standing at
+ * both ends: a phone at a crossing reports fixes metres apart and a speed of
+ * nothing, and the receiver's speed is filtered where its fixes are not.
  */
-const accepted = (recording: Recording, a: RoutePoint, b: RoutePoint) => {
-  const seconds = (b.timestamp - a.timestamp) / 1000
-  if (!usableFix(a) || !usableFix(b) || seconds <= 0 || seconds > 15) return false
-  if (metersBetween(a, b) / seconds > 15) return false
-  return !recording.pauses.some(
-    (pause) => a.timestamp < (pause.endedAt ?? Infinity) && b.timestamp > pause.startedAt,
-  )
+export const edgeMeters = (a: RoutePoint, b: RoutePoint) => {
+  const from = measuredSpeed(a)
+  const to = measuredSpeed(b)
+  if (from !== undefined && to !== undefined && (from + to) / 2 < standingSpeed) return 0
+  return metersBetween(a, b)
 }
+
+/**
+ * Whether the movement between two smoothed fixes is worth measuring: in
+ * order, and slow enough to be a person on foot.
+ *
+ * Every distance in the app is summed from edges this accepts, so the live
+ * numbers and the saved route cannot disagree about what counted.
+ */
+const accepted = (a: RoutePoint, b: RoutePoint) => {
+  const seconds = (b.timestamp - a.timestamp) / 1000
+  return seconds > 0 && metersBetween(a, b) / seconds <= 15
+}
+
+const overlapsPause = (pause: Pause, from: number, to: number) =>
+  from < (pause.endedAt ?? Infinity) && to > pause.startedAt
+
+/** How much of `from` to `to` the recording was held for. */
+const pausedMs = (recording: Recording, from: number, to: number) =>
+  recording.pauses.reduce(
+    (sum, pause) =>
+      sum + Math.max(0, Math.min(pause.endedAt ?? Infinity, to) - Math.max(pause.startedAt, from)),
+    0,
+  )
 
 /**
  * Pace over the last few seconds, in seconds per kilometre, or nothing.
@@ -353,15 +406,18 @@ export const currentPace = (
   floorMeters = paceFloorMeters,
 ) => {
   const since = now - windowSeconds * 1000
+  const points = smoothRoute(recording.points)
   let meters = 0
   let seconds = 0
-  for (let index = 1; index < recording.points.length; index += 1) {
-    const a = recording.points[index - 1]
-    const b = recording.points[index]
+  for (let index = 1; index < points.length; index += 1) {
+    const a = points[index - 1]
+    const b = points[index]
     // Whole edges, by the fix that closed them: clipping one to the window
     // would weigh a partial edge against a window it was never measured over.
     if (b.timestamp <= since || b.timestamp > now) continue
-    if (!accepted(recording, a, b)) continue
+    if (!accepted(a, b)) continue
+    // An edge across a pause is mostly standing, which is not a pace.
+    if (recording.pauses.some((pause) => overlapsPause(pause, a.timestamp, b.timestamp))) continue
     meters += edgeMeters(a, b)
     seconds += (b.timestamp - a.timestamp) / 1000
   }
@@ -371,7 +427,15 @@ export const currentPace = (
 /** One interval as it was actually run: how long it took, and how far it went. */
 export type MeasuredInterval = ReturnType<typeof measureRoute>[number]
 
-/** Attribute accepted GPS edges by time, splitting an edge at exercise boundaries. */
+/**
+ * Attribute the smoothed route's edges to intervals by time, splitting an edge
+ * at exercise boundaries.
+ *
+ * An edge across a pause the detector held is the standing plus the first
+ * strides out of it, so its ground goes to the active time either side. One
+ * across a pause the athlete held by hand is dropped: they may have wandered
+ * off while held, and the interval reads as incomplete for it.
+ */
 export const measureRoute = (recording: Recording, intervals: Interval[]) => {
   const routes = intervals.map((interval) => ({
     ...interval,
@@ -379,11 +443,19 @@ export const measureRoute = (recording: Recording, intervals: Interval[]) => {
     segments: [] as [RoutePoint, RoutePoint][],
     incomplete: recording.interrupted,
   }))
-  for (let index = 1; index < recording.points.length; index += 1) {
-    const a = recording.points[index - 1]
-    const b = recording.points[index]
+  const points = smoothRoute(recording.points)
+  for (let index = 1; index < points.length; index += 1) {
+    const a = points[index - 1]
+    const b = points[index]
     const meters = edgeMeters(a, b)
-    const counts = accepted(recording, a, b)
+    const counts =
+      accepted(a, b) &&
+      !recording.pauses.some(
+        (pause) => !pause.auto && overlapsPause(pause, a.timestamp, b.timestamp),
+      )
+    const activeMs = b.timestamp - a.timestamp - pausedMs(recording, a.timestamp, b.timestamp)
+    const activeBefore = (timestamp: number) =>
+      (timestamp - a.timestamp - pausedMs(recording, a.timestamp, timestamp)) / activeMs
     routes.forEach((route) => {
       if (!route.phase.exerciseId) return
       route.windows.forEach((window) => {
@@ -394,8 +466,12 @@ export const measureRoute = (recording: Recording, intervals: Interval[]) => {
           route.incomplete = true
           return
         }
-        route.distanceMeters += (meters * (end - start)) / (b.timestamp - a.timestamp)
-        route.segments.push([interpolate(a, b, start), interpolate(a, b, end)])
+        if (activeMs <= 0) return
+        route.distanceMeters += (meters * (end - start)) / activeMs
+        route.segments.push([
+          along(a, b, activeBefore(start), start),
+          along(a, b, activeBefore(end), end),
+        ])
       })
     })
   }
