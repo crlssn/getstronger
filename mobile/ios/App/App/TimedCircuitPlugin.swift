@@ -26,6 +26,9 @@ private let maxAccuracy = 30.0
 // Under this a measured speed is a phone standing and its fixes wandering,
 // mirroring `standingSpeed` in `web/src/utils/timedCircuit.ts`.
 private let standingSpeed = 0.3
+// How fast the position filter lets the athlete have moved since the last
+// fix, mirroring `wanderSpeed` in `web/src/utils/timedCircuit.ts`.
+private let wanderSpeed = 3.0
 
 /// Native ownership keeps the recording independent of the WebView lifecycle.
 @objc(TimedCircuitPlugin)
@@ -47,6 +50,13 @@ public class TimedCircuitPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManagerD
     private var audible = false
     private var autoPauses = false
     private var fixes: [Fix] = []
+    /// The route as `smoothedPoints` has read it so far, and the filter's state.
+    private var smoothed: [[String: Any]] = []
+    private var filtered = 0
+    private var filterLatitude = 0.0
+    private var filterLongitude = 0.0
+    private var filterVariance = 0.0
+    private var filterAt = 0.0
     private var spoken = -1
     /// Seconds of warning before an interval ends; 0 sounds nothing.
     private var cueLead = 10.0
@@ -79,7 +89,7 @@ public class TimedCircuitPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManagerD
     public override func load() {
         DispatchQueue.main.async {
             self.location.delegate = self
-            self.location.desiredAccuracy = kCLLocationAccuracyBest
+            self.location.desiredAccuracy = kCLLocationAccuracyBestForNavigation
             self.location.distanceFilter = kCLDistanceFilterNone
             self.location.activityType = .fitness
             self.location.pausesLocationUpdatesAutomatically = false
@@ -169,6 +179,7 @@ public class TimedCircuitPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManagerD
         readPacing(call.getObject("pacing"))
         autoPauses = call.getBool("autoPause") ?? false
         fixes = []
+        resetFilter()
         let start = now
         recording = ["version": 1, "startedAt": start, "phases": phases,
                      "pauses": [[String: Any]](), "points": [[String: Any]](), "interrupted": false]
@@ -306,31 +317,74 @@ public class TimedCircuitPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManagerD
         tonePlayer.scheduleBuffer(buffer, at: nil, options: [])
     }
 
-    /// Whether the movement between two fixes is worth measuring, on the same
-    /// terms the app measures a saved route on.
+    private func resetFilter() {
+        smoothed = []
+        filtered = 0
+        filterAt = 0
+    }
+
+    /// The route as the athlete most likely ran it, mirroring `smoothRoute` in
+    /// `web/src/utils/timedCircuit.ts`: a Kalman filter on each axis, weighing
+    /// every usable fix by its accuracy against how far the athlete could have
+    /// moved since the last. Kept up with the recording rather than re-read
+    /// from the start on every tick.
+    private func smoothedPoints() -> [[String: Any]] {
+        let points = recording?["points"] as? [[String: Any]] ?? []
+        if points.count < filtered { resetFilter() }
+        for point in points[filtered...] {
+            filtered += 1
+            let accuracy = point["accuracy"] as? Double ?? -1
+            let timestamp = point["timestamp"] as? Double ?? 0
+            guard accuracy >= 0, accuracy <= maxAccuracy, smoothed.isEmpty || timestamp > filterAt else { continue }
+            let latitude = point["latitude"] as? Double ?? 0
+            let longitude = point["longitude"] as? Double ?? 0
+            let noise = accuracy * accuracy
+            if smoothed.isEmpty {
+                filterLatitude = latitude
+                filterLongitude = longitude
+                filterVariance = noise
+            } else {
+                filterVariance += wanderSpeed * wanderSpeed * (timestamp - filterAt) / 1000
+                let gain = filterVariance + noise > 0 ? filterVariance / (filterVariance + noise) : 1
+                filterLatitude += gain * (latitude - filterLatitude)
+                let eastward = (longitude - filterLongitude + 540).truncatingRemainder(dividingBy: 360) - 180
+                filterLongitude = (filterLongitude + gain * eastward + 540).truncatingRemainder(dividingBy: 360) - 180
+                filterVariance *= 1 - gain
+            }
+            filterAt = timestamp
+            var copy = point
+            copy["latitude"] = filterLatitude
+            copy["longitude"] = filterLongitude
+            smoothed.append(copy)
+        }
+        return smoothed
+    }
+
+    /// Whether the movement between two smoothed fixes is worth measuring, on
+    /// the same terms the app measures a saved route on: in order, and slow
+    /// enough to be a person on foot.
     private func accepted(_ a: [String: Any], _ b: [String: Any]) -> Bool {
+        let seconds = ((b["timestamp"] as? Double ?? 0) - (a["timestamp"] as? Double ?? 0)) / 1000
+        return seconds > 0 && metres(a, b) / seconds <= 15
+    }
+
+    /// Whether the recording was held for any of the time between two fixes.
+    private func spansPause(_ a: [String: Any], _ b: [String: Any]) -> Bool {
         let from = a["timestamp"] as? Double ?? 0
         let to = b["timestamp"] as? Double ?? 0
-        let seconds = (to - from) / 1000
-        guard seconds > 0, seconds <= 15,
-              (a["accuracy"] as? Double ?? 0) <= 30, (b["accuracy"] as? Double ?? 0) <= 30,
-              metres(a, b) / seconds <= 15 else { return false }
         let pauses = recording?["pauses"] as? [[String: Any]] ?? []
-        return !pauses.contains { pause in
+        return pauses.contains { pause in
             from < (pause["endedAt"] as? Double ?? .infinity) && to > (pause["startedAt"] as? Double ?? 0)
         }
     }
 
-    /// How far the athlete went between two fixes, as the app measures it: the
-    /// receiver's speed over the time between them where it measured one at
-    /// both ends, and the chord where it did not. The chords of wandering
-    /// fixes sum to more ground than was covered.
+    /// How far the athlete went between two smoothed fixes, as the app
+    /// measures it: the chord, unless the receiver read the phone as standing
+    /// at both ends, which is a phone at a crossing and its fixes wandering.
     private func edgeMetres(_ a: [String: Any], _ b: [String: Any]) -> Double {
-        let seconds = ((b["timestamp"] as? Double ?? 0) - (a["timestamp"] as? Double ?? 0)) / 1000
-        guard let from = a["speed"] as? Double, let to = b["speed"] as? Double, from >= 0, to >= 0,
-              seconds > 0 else { return metres(a, b) }
-        let speed = (from + to) / 2
-        return speed < standingSpeed ? 0 : speed * seconds
+        if let from = a["speed"] as? Double, let to = b["speed"] as? Double, from >= 0, to >= 0,
+           (from + to) / 2 < standingSpeed { return 0 }
+        return metres(a, b)
     }
 
     private func metres(_ a: [String: Any], _ b: [String: Any]) -> Double {
@@ -345,7 +399,7 @@ public class TimedCircuitPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManagerD
     /// Pace over the trailing window in seconds per kilometre, or nothing:
     /// one fix is a position rather than a speed.
     private func currentPace(at time: Double) -> Double? {
-        let points = recording?["points"] as? [[String: Any]] ?? []
+        let points = smoothedPoints()
         let since = time - paceWindow * 1000
         var metresRun = 0.0
         var seconds = 0.0
@@ -353,7 +407,8 @@ public class TimedCircuitPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManagerD
             let a = points[index - 1], b = points[index]
             let closed = b["timestamp"] as? Double ?? 0
             // Whole edges, by the fix that closed them, as the app measures.
-            guard closed > since, closed <= time, accepted(a, b) else { continue }
+            // An edge across a pause is mostly standing, which is not a pace.
+            guard closed > since, closed <= time, accepted(a, b), !spansPause(a, b) else { continue }
             metresRun += edgeMetres(a, b)
             seconds += (closed - (a["timestamp"] as? Double ?? closed)) / 1000
         }
@@ -463,39 +518,45 @@ public class TimedCircuitPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManagerD
         checkpoint()
     }
 
-    /// How fast the window read, or nothing when it holds no evidence.
-    ///
-    /// A receiver that measures speed is believed; one that does not is judged
-    /// on where the athlete ended up, less what its error circles account for.
-    private func windowSpeed(_ window: [Fix]) -> Double? {
-        if let fastest = window.compactMap({ $0.speed }).max() { return fastest }
-        guard let first = window.first, let last = window.last else { return nil }
-        let seconds = (last.timestamp - first.timestamp) / 1000
-        guard seconds > 0 else { return nil }
-        let meters = CLLocation(latitude: first.latitude, longitude: first.longitude)
-            .distance(from: CLLocation(latitude: last.latitude, longitude: last.longitude))
-        return max(0, meters - max(first.accuracy, last.accuracy)) / seconds
-    }
-
-    /// What the recent fixes say the athlete is doing, or nothing when they say
-    /// neither. The dwell is the window itself, so "still" already means still
-    /// for the whole of it.
-    private func readMovement(at: Double) -> String? {
-        let seen = fixes.filter { $0.accuracy >= 0 && $0.accuracy <= maxAccuracy && $0.timestamp <= at }
-        // The window reaches back to where the athlete was when the dwell
-        // began, so it needs a fix from before that.
-        guard let anchor = seen.last(where: { $0.timestamp <= at - dwellMs }) else { return nil }
+    /// The fixes from the last one at or before `since` up to `at`, or nothing
+    /// when a hole interrupts them: it hides whatever happened during it.
+    private func unbroken(_ seen: [Fix], since: Double, at: Double) -> [Fix]? {
+        guard let anchor = seen.last(where: { $0.timestamp <= since }) else { return nil }
         let window = seen.filter { $0.timestamp >= anchor.timestamp }
-        // A hole in the fixes hides whatever happened during it.
         var previous = anchor.timestamp
         for fix in window.dropFirst() {
             if fix.timestamp - previous > continuousMs { return nil }
             previous = fix.timestamp
         }
         if at - previous > continuousMs { return nil }
-        guard let speed = windowSpeed(window) else { return nil }
-        if speed < pauseSpeed { return "still" }
-        return speed > resumeSpeed ? "moving" : nil
+        return window
+    }
+
+    /// What the recent fixes say the athlete is doing, or nothing when they say
+    /// neither, mirroring `readMovement` in `web/src/utils/movement.ts`. A
+    /// receiver that measures speed is believed over the dwell. One that does
+    /// not leaves only where its fixes landed, whose error circles bound the
+    /// movement either way, so the window grows until a standing athlete's
+    /// bound falls under the pause speed and says nothing before that.
+    private func readMovement(at: Double) -> String? {
+        let seen = fixes.filter { $0.accuracy >= 0 && $0.accuracy <= maxAccuracy && $0.timestamp <= at }
+        // The window reaches back to where the athlete was when the dwell
+        // began, so it needs a fix from before that.
+        guard let dwell = unbroken(seen, since: at - dwellMs, at: at) else { return nil }
+        if let speed = dwell.compactMap({ $0.speed }).max() {
+            if speed < pauseSpeed { return "still" }
+            return speed > resumeSpeed ? "moving" : nil
+        }
+        let radius = dwell.map { $0.accuracy }.max() ?? 0
+        guard let window = unbroken(seen, since: at - max(dwellMs, 2 * radius * 1000 / pauseSpeed), at: at),
+              let first = window.first, let last = window.last else { return nil }
+        let seconds = (last.timestamp - first.timestamp) / 1000
+        guard seconds > 0 else { return nil }
+        let chord = CLLocation(latitude: first.latitude, longitude: first.longitude)
+            .distance(from: CLLocation(latitude: last.latitude, longitude: last.longitude))
+        let circle = max(first.accuracy, last.accuracy)
+        if (chord + circle) / seconds < pauseSpeed { return "still" }
+        return max(0, chord - circle) / seconds > resumeSpeed ? "moving" : nil
     }
 
     /// Hold or release the recording on what the fixes say, when it was asked
@@ -574,6 +635,7 @@ public class TimedCircuitPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManagerD
             catch { call.reject("Recording could not be removed", nil, error); return }
             self.recording = nil
             self.fixes = []
+            self.resetFilter()
             self.key = ""
             call.resolve()
         }
