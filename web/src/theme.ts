@@ -1,3 +1,4 @@
+import { paintCanvas } from '@/native/canvas'
 import { paintStatusBar } from '@/native/statusBar'
 
 /**
@@ -27,9 +28,11 @@ export const deviceTheme = (): AppTheme =>
  * Paints the app in a palette. `data-theme` carries it to every token.
  *
  * The status bar is part of the app on a phone: the page paints the band
- * behind it, so the palette owns the clock's colour too.
+ * behind it, so the palette owns the clock's colour too. So is the paper the
+ * WebView shows from under a screen the back-swipe peels off.
  */
 export const applyTheme = (theme: AppTheme): void => {
   document.documentElement.dataset.theme = theme
   paintStatusBar(theme)
+  paintCanvas(theme)
 }
