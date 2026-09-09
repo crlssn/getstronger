@@ -92,6 +92,26 @@ worktree. The local stack is not shared, so set it up before running anything.
   missing seed data, recreate or restart this worktree's database, apply the
   migrations, and reseed it before verification.
 
+## Issues
+
+An issue is a unit of work someone else picks up without the conversation that
+produced it. A feature spanning several layers becomes several issues, each of
+which leaves the app working; one that only makes sense alongside its neighbour
+is one issue, not two.
+
+- Say what has to land first, and record it as a GitHub dependency rather than
+  only as prose:
+  `gh api -X POST repos/crlssn/getstronger/issues/<blocked>/dependencies/blocked_by -F issue_id=<blocker>`,
+  where `<blocker>` is the blocking issue's internal id
+  (`gh api repos/crlssn/getstronger/issues/<n> --jq .id`), not its number.
+- Repeat it in the body as a `Blocked by #N` line. The dependency is what
+  tooling reads; the line is what a person reads first.
+- Before implementing an issue, ask what blocks it:
+  `gh api repos/crlssn/getstronger/issues/<n>/dependencies/blocked_by`. An open
+  blocker means implement that one instead, or state why the block no longer
+  applies. Building against an API that has not merged is how a green branch
+  breaks `main`.
+
 ## Git commits
 
 - When asked to create a commit, follow the repository's existing commit history.
