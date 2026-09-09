@@ -206,7 +206,7 @@ describe('TimedCircuitRecorder', () => {
     expect(stat('Session')).toHaveTextContent('1.300km')
     // The interval that finished, named and measured: what there is to beat.
     // The columns are titled, so three figures in a row read as three things.
-    const titles = screen.getByText('Completed intervals').parentElement
+    const titles = screen.getByText('Completed').parentElement
     expect(titles).toHaveTextContent('Pace')
     expect(titles).toHaveTextContent('Speed')
     expect(titles).toHaveTextContent('Distance')

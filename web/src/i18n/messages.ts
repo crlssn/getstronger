@@ -53,7 +53,9 @@ export const en = {
     // the rest.
     intervalDistance: 'Interval',
     totalDistance: 'Session',
-    intervalHistory: 'Completed intervals',
+    // A column title over the interval names, so one word: what the rows are
+    // is plain from them, and two wrapped onto a second line.
+    intervalHistory: 'Completed',
     intervalNamed: '{name} {round}',
     // What the recorder says: a bare count, because "10 seconds" is all a
     // runner has time to hear; and the ending, once the last interval runs out.
@@ -996,7 +998,7 @@ export const sv = {
     noPace: '—',
     intervalDistance: 'Intervall',
     totalDistance: 'Pass',
-    intervalHistory: 'Avklarade intervaller',
+    intervalHistory: 'Avklarade',
     intervalNamed: '{name} {round}',
     cueSeconds_one: '{count} sekund',
     cueSeconds_other: '{count} sekunder',
