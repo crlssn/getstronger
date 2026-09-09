@@ -37,6 +37,18 @@ body:
     validations:
       required: true
 
+  - type: input
+    id: blocked_by
+    attributes:
+      label: Blocked by
+      description: >
+        Issues that must land before this one can start, as `#1463`. Leave empty
+        when nothing blocks it. Record it as a GitHub dependency after opening
+        too — that is what keeps the issue from being picked up out of order.
+      placeholder: "#1463"
+    validations:
+      required: false
+
   - type: textarea
     id: acceptance
     attributes:
