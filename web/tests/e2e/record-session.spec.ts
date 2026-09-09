@@ -16,13 +16,21 @@ const strideDegrees = 0.0001
 const strideMs = 1100
 const strides = 6
 
+// Half-way along, one fix the phone could not place: a hundred metres out and
+// with an error circle to match, which a watch bridges and this app once
+// dropped along with the two strides either side of it.
+const vagueStride = 3
+
 const walkTheRoute = async (page: Parameters<typeof logIn>[0]) => {
   for (let step = 1; step <= strides; step += 1) {
     await page.waitForTimeout(strideMs)
-    await page.context().setGeolocation({
-      latitude: 59.3326,
-      longitude: startLongitude + step * strideDegrees,
-    })
+    await page
+      .context()
+      .setGeolocation(
+        step === vagueStride
+          ? { latitude: 59.3336, longitude: startLongitude, accuracy: 100 }
+          : { latitude: 59.3326, longitude: startLongitude + step * strideDegrees },
+      )
   }
 }
 
@@ -95,7 +103,9 @@ test.describe('a session with no set length', () => {
     await expect(route.getByText('Active time', { exact: true })).toBeVisible()
     await expect(route.getByText('1 round')).toBeVisible()
     await expect(route.getByRole('list').nth(1).getByRole('listitem')).toHaveCount(1)
-    await expect(route.getByText(/^0\.0\d\s*km$/).first()).toBeVisible()
+    // Six strides of 5.7 m, the vague one bridged: 34 m, not the 23 m left
+    // when the fixes either side of it are dropped.
+    await expect(route.getByText(/^0\.03\s*km$/).first()).toBeVisible()
 
     // And it reaches the feed the way every other workout does.
     await page.goto('/home')

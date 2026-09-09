@@ -638,8 +638,8 @@ describe('workout store', () => {
       ],
       pauses: [],
       points: [
-        { timestamp: 1000, latitude: 0, longitude: 0, accuracy: 3 },
-        { timestamp: 11000, latitude: 0, longitude: 0.0001, accuracy: 3 },
+        { timestamp: 1000, latitude: 0, longitude: 0, accuracy: 0 },
+        { timestamp: 11000, latitude: 0, longitude: 0.0001, accuracy: 0 },
       ],
       interrupted: false,
     })

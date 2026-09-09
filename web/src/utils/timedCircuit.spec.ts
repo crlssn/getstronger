@@ -15,6 +15,7 @@ import {
   paceFloorMeters,
   parseRecording,
   recordedRounds,
+  smoothRoute,
   type Recording,
   type RoutePoint,
 } from './timedCircuit'
@@ -121,8 +122,8 @@ describe('recorded timeline', () => {
   it('splits a GPS edge across a boundary without losing or doubling distance', () => {
     const data = recording()
     data.points = [
-      { timestamp: 120000, latitude: 0, longitude: 0, accuracy: 3 },
-      { timestamp: 122000, latitude: 0, longitude: 0.0001, accuracy: 3 },
+      { timestamp: 120000, latitude: 0, longitude: 0, accuracy: 0 },
+      { timestamp: 122000, latitude: 0, longitude: 0.0001, accuracy: 0 },
     ]
     const routes = measureRoute(data, buildTimeline(data, data.endedAt!))
     expect(routes[0].distanceMeters).toBeCloseTo(5.56, 1)
@@ -146,8 +147,8 @@ describe('recorded timeline', () => {
     const data = recording()
     data.phases = openSessionPhases('Session', 'Recording')
     data.points = [
-      { timestamp: 120000, latitude: 0, longitude: 0, accuracy: 3 },
-      { timestamp: 122000, latitude: 0, longitude: 0.0001, accuracy: 3 },
+      { timestamp: 120000, latitude: 0, longitude: 0, accuracy: 0 },
+      { timestamp: 122000, latitude: 0, longitude: 0.0001, accuracy: 0 },
     ]
     // Unnamed, the interval belongs to no exercise and so measures nothing.
     expect(measureRoute(data, buildTimeline(data, data.endedAt!))[0].distanceMeters).toBe(0)
@@ -165,28 +166,87 @@ describe('recorded timeline', () => {
     expect(namedRecording(data, { id: 'bike', name: 'Bike commute' }).phases).toEqual(data.phases)
   })
 
-  it('does not draw across pauses, missing GPS, or implausible jumps', () => {
+  it('drops an edge that spans a pause the athlete held by hand', () => {
     const data = recording()
     data.pauses = [{ startedAt: 5000, endedAt: 10000 }]
-    data.points = [
-      { timestamp: 4000, latitude: 0, longitude: 0, accuracy: 3 },
-      { timestamp: 11000, latitude: 0, longitude: 0.0001, accuracy: 3 },
-      { timestamp: 12000, latitude: 0, longitude: 1, accuracy: 3 },
-      { timestamp: 50000, latitude: 0, longitude: 1.0001, accuracy: 3 },
-    ]
-    expect(measureRoute(data, buildTimeline(data, 361000))[0].distanceMeters).toBe(0)
+    data.points = [fix(4000, 0, 3), fix(11000, 10, 3)]
+    const [walk] = measureRoute(data, buildTimeline(data, 361000))
+    // The athlete may have wandered off while held: the ground is not theirs.
+    expect(walk.distanceMeters).toBe(0)
+    expect(walk.incomplete).toBe(true)
   })
 
-  it('measures a walk by the speed the receiver read rather than the chord', () => {
+  // The detector holds a recording where the athlete stopped and lets it go
+  // once they are moving again, so the edge across its pause is the standing
+  // plus the first strides out of it: ground that belongs to the active time
+  // on either side, not to the pause.
+  it('credits the active time either side of an auto-pause with the edge across it', () => {
+    const data = recording()
+    data.phases = [{ ...data.phases[0], durationSeconds: 10 }]
+    data.pauses = [{ startedAt: 5000, endedAt: 10000, auto: true }]
+    // Standing at the crossing, then ten metres between the last fix before
+    // the hold and the first after it.
+    data.points = [
+      ...[1000, 2000, 3000, 4000].map((timestamp) => fix(timestamp, 0)),
+      ...[11000, 12000, 13000, 14000, 15000, 16000].map((timestamp) => fix(timestamp, 10)),
+    ]
+    const [walk] = measureRoute(data, buildTimeline(data, 361000))
+    expect(walk.distanceMeters).toBeCloseTo(10, 5)
+    expect(walk.incomplete).toBe(false)
+    // Placed along the chord by active time, so the two halves meet.
+    const [before, after] = walk.segments.filter(
+      ([, b]) => b.timestamp === 5000 || b.timestamp === 11000,
+    )
+    expect(before[1].latitude).toBeCloseTo(5 / metersPerDegree, 10)
+    expect(after[0].latitude).toBeCloseTo(before[1].latitude, 10)
+  })
+
+  it('drops an implausible jump and reads the interval as incomplete', () => {
+    const data = recording()
+    data.points = [fix(12000, 0, 0), fix(13000, 100000, 0), fix(50000, 100010, 0)]
+    const [walk] = measureRoute(data, buildTimeline(data, 361000))
+    expect(walk.distanceMeters).toBeCloseTo(10, 5)
+    expect(walk.incomplete).toBe(true)
+  })
+
+  // A phone in a pocket under trees reports fixes too vague to place for a
+  // stretch, then finds the sky again. A watch bridges the hole; dropping it
+  // is the distance this app used to lose.
+  it('bridges a stretch of fixes too vague to place', () => {
+    const data = recording()
+    data.phases = [{ ...data.phases[0], durationSeconds: 10 }]
+    // Three metres a second, with two fixes mid-way that could be anywhere.
+    data.points = Array.from({ length: 11 }, (_, second) =>
+      second === 5 || second === 6
+        ? fix(1000 + second * 1000, 40, 80)
+        : fix(1000 + second * 1000, second * 3),
+    )
+    const [walk] = measureRoute(data, buildTimeline(data, 361000))
+    expect(walk.distanceMeters).toBeCloseTo(30, 5)
+    expect(walk.incomplete).toBe(false)
+    expect(walk.segments).toHaveLength(8)
+  })
+
+  it('bridges a hole in the fixes by the chord across it', () => {
+    const data = recording()
+    data.phases = [{ ...data.phases[0], durationSeconds: 62 }]
+    // A minute in a tunnel: the straight line is the least the athlete ran.
+    data.points = [fix(1000, 0), fix(2000, 3), fix(62000, 183), fix(63000, 186)]
+    const [walk] = measureRoute(data, buildTimeline(data, 361000))
+    expect(walk.distanceMeters).toBeCloseTo(186, 2)
+    expect(walk.incomplete).toBe(false)
+  })
+
+  it('reads a jittering walk close to the ground it covered', () => {
     const data = recording()
     // Fixes that zigzag around a straight walk at 1.4 m/s: chord by chord they
-    // add up to more ground than the walk covered.
-    data.points = Array.from({ length: 121 }, (_, second) => ({
-      ...fix(1000 + second * 1000, second * 1.4 + (second % 2 ? 1.5 : -1.5)),
-      speed: 1.4,
-    }))
+    // add up to far more ground than the walk covered.
+    data.points = Array.from({ length: 121 }, (_, second) =>
+      fix(1000 + second * 1000, second * 1.4 + (second % 2 ? 1.5 : -1.5), 8),
+    )
     const walked = measureRoute(data, buildTimeline(data, 361000))[0]
-    expect(walked.distanceMeters).toBeCloseTo(168, 0)
+    expect(walked.distanceMeters).toBeGreaterThan(168 * 0.95)
+    expect(walked.distanceMeters).toBeLessThan(168 * 1.1)
     expect(walked.incomplete).toBe(false)
   })
 
@@ -200,16 +260,66 @@ describe('recorded timeline', () => {
     expect(stood.distanceMeters).toBe(0)
     expect(stood.incomplete).toBe(false)
   })
+
+  // A pace target is a distance over a time, and a live pace is read from
+  // the same fixes: both have to see the run the saved route sees.
+  it('measures the live pace and the saved route from the same smoothed fixes', () => {
+    const data = recording()
+    data.points = Array.from({ length: 16 }, (_, second) =>
+      fix(60000 + second * 1000, second * 3 + (second % 2 ? 1 : -1), 8),
+    )
+    const [walk] = measureRoute(data, buildTimeline(data, 361000))
+    const meters = walk.distanceMeters
+    expect(currentPace(data, 75000)).toBeCloseTo((15 / meters) * 1000, 5)
+  })
+})
+
+describe('smoothRoute', () => {
+  it('believes a precise fix and leans on the estimate when a fix is vague', () => {
+    const [, precise] = smoothRoute([fix(0, 0, 0), fix(1000, 10, 0)])
+    expect(precise.latitude).toBeCloseTo(10 / metersPerDegree, 10)
+    const [, vague] = smoothRoute([fix(0, 0, 0), fix(1000, 10, 30)])
+    const meters = vague.latitude * metersPerDegree
+    expect(meters).toBeGreaterThan(0)
+    expect(meters).toBeLessThan(2)
+    // A fix the filter has not seen for a long while is trusted again: the
+    // athlete could have gone anywhere in a minute.
+    const [, later] = smoothRoute([fix(0, 0, 0), fix(60000, 100, 10)])
+    expect(later.latitude * metersPerDegree).toBeGreaterThan(80)
+  })
+
+  it('keeps every field of a fix but its position, and drops the unusable', () => {
+    const points = [
+      { ...fix(0, 0, 4), speed: 2 },
+      fix(1000, 3, 80),
+      { ...fix(2000, 6, 4), speed: 2.5 },
+    ]
+    const smoothed = smoothRoute(points)
+    expect(smoothed).toHaveLength(2)
+    expect(smoothed[1]).toMatchObject({ timestamp: 2000, accuracy: 4, speed: 2.5 })
+  })
+
+  it('takes the short way round the date line', () => {
+    const [, second] = smoothRoute([
+      { timestamp: 0, latitude: 0, longitude: 179.9999, accuracy: 5 },
+      { timestamp: 1000, latitude: 0, longitude: -179.9999, accuracy: 5 },
+    ])
+    expect(Math.abs(second.longitude)).toBeGreaterThan(179.99)
+  })
 })
 
 describe('edgeMeters', () => {
-  it('falls back to the chord when either fix has no measured speed', () => {
+  it('is the chord between two fixes', () => {
     expect(edgeMeters(fix(0, 0), fix(1000, 10))).toBeCloseTo(10, 5)
     expect(edgeMeters({ ...fix(0, 0), speed: 1 }, fix(1000, 10))).toBeCloseTo(10, 5)
   })
 
-  it('reads the mean of the two speeds over the time between them', () => {
-    expect(edgeMeters({ ...fix(0, 0), speed: 1 }, { ...fix(2000, 10), speed: 2 })).toBe(3)
+  it('is nothing while the receiver read the phone as standing at both ends', () => {
+    expect(edgeMeters({ ...fix(0, 0), speed: 0.1 }, { ...fix(1000, 10), speed: 0.2 })).toBe(0)
+    expect(edgeMeters({ ...fix(0, 0), speed: 0.1 }, { ...fix(1000, 10), speed: 1 })).toBeCloseTo(
+      10,
+      5,
+    )
   })
 })
 
@@ -289,7 +399,9 @@ describe('interval routines', () => {
 // One degree of latitude at the equator, to the metre: a test that says how
 // far apart two fixes are reads better than one that says which coordinates.
 const metersPerDegree = 111194.93
-const fix = (timestamp: number, meters: number, accuracy = 5): RoutePoint => ({
+// Exact fixes by default: a test about time and attribution is not one about
+// what the smoothing makes of a five-metre error circle.
+const fix = (timestamp: number, meters: number, accuracy = 0): RoutePoint => ({
   timestamp,
   latitude: meters / metersPerDegree,
   longitude: 0,

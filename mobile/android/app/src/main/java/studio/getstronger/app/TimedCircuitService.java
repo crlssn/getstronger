@@ -54,6 +54,11 @@ public class TimedCircuitService extends Service implements LocationListener {
      * mirroring {@code standingSpeed} in {@code web/src/utils/timedCircuit.ts}.
      */
     private static final double STANDING_SPEED = 0.3;
+    /**
+     * How fast the position filter lets the athlete have moved since the last
+     * fix, mirroring {@code wanderSpeed} in {@code web/src/utils/timedCircuit.ts}.
+     */
+    private static final double WANDER_SPEED = 3;
     /** One fix as the detector reads it: the route's, plus a measured speed. */
     private static final class Fix {
         final long timestamp;
@@ -70,6 +75,13 @@ public class TimedCircuitService extends Service implements LocationListener {
         }
     }
     private final List<Fix> fixes = new ArrayList<>();
+    /** The route as {@link #smoothedPoints} has read it so far, and the filter's state. */
+    private final List<JSONObject> smoothed = new ArrayList<>();
+    private int filtered;
+    private double filterLatitude;
+    private double filterLongitude;
+    private double filterVariance;
+    private long filterAt;
     private static JSONObject saved;
     private static TimedCircuitService active;
     private final Handler handler = new Handler(Looper.getMainLooper());
@@ -202,6 +214,7 @@ public class TimedCircuitService extends Service implements LocationListener {
             if (saved == null || saved.getJSONObject("recording").has("endedAt")) { stopSelf(); return START_NOT_STICKY; }
             active = this;
             fixes.clear();
+            resetFilter();
             NotificationManager notifications = getSystemService(NotificationManager.class);
             notifications.createNotificationChannel(new NotificationChannel(CHANNEL, getString(R.string.app_name), NotificationManager.IMPORTANCE_LOW));
             startForeground(1382, notification(saved.getJSONObject("recording").getJSONArray("phases").getJSONObject(0).getString("instruction")));
@@ -348,34 +361,77 @@ public class TimedCircuitService extends Service implements LocationListener {
         } catch (IllegalStateException error) { /* A note nobody hears is not worth a failed session. */ }
     }
 
-    /**
-     * Whether the movement between two fixes is worth measuring, on the same
-     * terms the app measures a saved route on.
-     */
-    private boolean accepted(JSONObject a, JSONObject b, JSONArray pauses) throws Exception {
-        double seconds = (b.getLong("timestamp") - a.getLong("timestamp")) / 1000.0;
-        if (seconds <= 0 || seconds > 15) return false;
-        if (a.optDouble("accuracy", 0) > 30 || b.optDouble("accuracy", 0) > 30) return false;
-        if (metres(a, b) / seconds > 15) return false;
-        for (int index = 0; index < pauses.length(); index++) {
-            JSONObject pause = pauses.getJSONObject(index);
-            long ended = pause.has("endedAt") ? pause.getLong("endedAt") : Long.MAX_VALUE;
-            if (a.getLong("timestamp") < ended && b.getLong("timestamp") > pause.getLong("startedAt")) return false;
-        }
-        return true;
+    private void resetFilter() {
+        smoothed.clear();
+        filtered = 0;
+        filterAt = 0;
     }
 
     /**
-     * How far the athlete went between two fixes, as the app measures it: the
-     * receiver's speed over the time between them where it measured one at both
-     * ends, and the chord where it did not. The chords of wandering fixes sum to
-     * more ground than was covered.
+     * The route as the athlete most likely ran it, mirroring {@code smoothRoute}
+     * in {@code web/src/utils/timedCircuit.ts}: a Kalman filter on each axis,
+     * weighing every usable fix by its accuracy against how far the athlete
+     * could have moved since the last. Kept up with the recording rather than
+     * re-read from the start on every tick.
+     */
+    private List<JSONObject> smoothedPoints(JSONArray points) throws Exception {
+        if (points.length() < filtered) resetFilter();
+        for (; filtered < points.length(); filtered++) {
+            JSONObject point = points.getJSONObject(filtered);
+            double accuracy = point.optDouble("accuracy", -1);
+            long timestamp = point.getLong("timestamp");
+            if (accuracy < 0 || accuracy > MAX_ACCURACY || (!smoothed.isEmpty() && timestamp <= filterAt)) continue;
+            double latitude = point.getDouble("latitude");
+            double longitude = point.getDouble("longitude");
+            double noise = accuracy * accuracy;
+            if (smoothed.isEmpty()) {
+                filterLatitude = latitude;
+                filterLongitude = longitude;
+                filterVariance = noise;
+            } else {
+                filterVariance += WANDER_SPEED * WANDER_SPEED * (timestamp - filterAt) / 1000.0;
+                double gain = filterVariance + noise > 0 ? filterVariance / (filterVariance + noise) : 1;
+                filterLatitude += gain * (latitude - filterLatitude);
+                double eastward = ((longitude - filterLongitude + 540) % 360) - 180;
+                filterLongitude = ((filterLongitude + gain * eastward + 540) % 360) - 180;
+                filterVariance *= 1 - gain;
+            }
+            filterAt = timestamp;
+            JSONObject copy = new JSONObject(point.toString());
+            copy.put("latitude", filterLatitude).put("longitude", filterLongitude);
+            smoothed.add(copy);
+        }
+        return smoothed;
+    }
+
+    /**
+     * Whether the movement between two smoothed fixes is worth measuring, on the
+     * same terms the app measures a saved route on: in order, and slow enough to
+     * be a person on foot.
+     */
+    private boolean accepted(JSONObject a, JSONObject b) throws Exception {
+        double seconds = (b.getLong("timestamp") - a.getLong("timestamp")) / 1000.0;
+        return seconds > 0 && metres(a, b) / seconds <= 15;
+    }
+
+    /** Whether the recording was held for any of the time between two fixes. */
+    private boolean spansPause(JSONObject a, JSONObject b, JSONArray pauses) throws Exception {
+        for (int index = 0; index < pauses.length(); index++) {
+            JSONObject pause = pauses.getJSONObject(index);
+            long ended = pause.has("endedAt") ? pause.getLong("endedAt") : Long.MAX_VALUE;
+            if (a.getLong("timestamp") < ended && b.getLong("timestamp") > pause.getLong("startedAt")) return true;
+        }
+        return false;
+    }
+
+    /**
+     * How far the athlete went between two smoothed fixes, as the app measures
+     * it: the chord, unless the receiver read the phone as standing at both
+     * ends, which is a phone at a crossing and its fixes wandering.
      */
     private double edgeMetres(JSONObject a, JSONObject b) throws Exception {
-        double seconds = (b.getLong("timestamp") - a.getLong("timestamp")) / 1000.0;
-        if (!a.has("speed") || !b.has("speed") || seconds <= 0) return metres(a, b);
-        double speed = (a.getDouble("speed") + b.getDouble("speed")) / 2;
-        return speed < STANDING_SPEED ? 0 : speed * seconds;
+        if (a.has("speed") && b.has("speed") && (a.getDouble("speed") + b.getDouble("speed")) / 2 < STANDING_SPEED) return 0;
+        return metres(a, b);
     }
 
     private double metres(JSONObject a, JSONObject b) throws Exception {
@@ -394,17 +450,18 @@ public class TimedCircuitService extends Service implements LocationListener {
      */
     private double currentPace(long time) throws Exception {
         JSONObject data = saved.getJSONObject("recording");
-        JSONArray points = data.getJSONArray("points");
+        List<JSONObject> points = smoothedPoints(data.getJSONArray("points"));
         JSONArray pauses = data.getJSONArray("pauses");
         double since = time - paceWindow * 1000;
         double covered = 0;
         double seconds = 0;
-        for (int index = 1; index < points.length(); index++) {
-            JSONObject a = points.getJSONObject(index - 1);
-            JSONObject b = points.getJSONObject(index);
+        for (int index = 1; index < points.size(); index++) {
+            JSONObject a = points.get(index - 1);
+            JSONObject b = points.get(index);
             long closed = b.getLong("timestamp");
-            // Whole edges, by the fix that closed them, as the app measures.
-            if (closed <= since || closed > time || !accepted(a, b, pauses)) continue;
+            // Whole edges, by the fix that closed them, as the app measures. An
+            // edge across a pause is mostly standing, which is not a pace.
+            if (closed <= since || closed > time || !accepted(a, b) || spansPause(a, b, pauses)) continue;
             covered += edgeMetres(a, b);
             seconds += (closed - a.getLong("timestamp")) / 1000.0;
         }
@@ -500,54 +557,60 @@ public class TimedCircuitService extends Service implements LocationListener {
     }
 
     /**
-     * What the recent fixes say the athlete is doing, or null when they say
-     * neither. The dwell is the window itself, so "still" already means still
-     * for the whole of it.
+     * The fixes from the last one at or before {@code since} up to {@code at},
+     * or null when a hole interrupts them: it hides whatever happened during it.
      */
-    private String readMovement(long at) {
+    private List<Fix> unbroken(long since, long at) {
         List<Fix> window = new ArrayList<>();
         boolean anchored = false;
         for (Fix fix : fixes) {
             if (fix.accuracy < 0 || fix.accuracy > MAX_ACCURACY || fix.timestamp > at) continue;
-            // The window reaches back to where the athlete was when the dwell
-            // began, so it starts at the last fix from before that.
-            if (fix.timestamp <= at - DWELL_MS) { window.clear(); anchored = true; }
+            if (fix.timestamp <= since) { window.clear(); anchored = true; }
             window.add(fix);
         }
         if (!anchored) return null;
-        // A hole in the fixes hides whatever happened during it.
         long previous = window.get(0).timestamp;
         for (Fix fix : window) {
             if (fix.timestamp - previous > CONTINUOUS_MS) return null;
             previous = fix.timestamp;
         }
-        if (at - previous > CONTINUOUS_MS) return null;
-        Double speed = windowSpeed(window);
-        if (speed == null) return null;
-        if (speed < PAUSE_SPEED) return "still";
-        return speed > RESUME_SPEED ? "moving" : null;
+        return at - previous > CONTINUOUS_MS ? null : window;
     }
 
     /**
-     * How fast the window read, or null when it holds no evidence.
-     *
-     * A receiver that measures speed is believed; one that does not is judged on
-     * where the athlete ended up, less what its error circles account for: a
-     * phone standing still reports fixes metres apart.
+     * What the recent fixes say the athlete is doing, or null when they say
+     * neither, mirroring {@code readMovement} in web/src/utils/movement.ts. A
+     * receiver that measures speed is believed over the dwell. One that does not
+     * leaves only where its fixes landed, whose error circles bound the movement
+     * either way, so the window grows until a standing athlete's bound falls
+     * under the pause speed and says nothing before that.
      */
-    private Double windowSpeed(List<Fix> window) {
+    private String readMovement(long at) {
+        // The window reaches back to where the athlete was when the dwell
+        // began, so it starts at the last fix from before that.
+        List<Fix> dwell = unbroken(at - DWELL_MS, at);
+        if (dwell == null) return null;
         Double fastest = null;
-        for (Fix fix : window) {
+        double radius = 0;
+        for (Fix fix : dwell) {
             if (fix.speed != null && (fastest == null || fix.speed > fastest)) fastest = fix.speed;
+            radius = Math.max(radius, fix.accuracy);
         }
-        if (fastest != null) return fastest;
+        if (fastest != null) {
+            if (fastest < PAUSE_SPEED) return "still";
+            return fastest > RESUME_SPEED ? "moving" : null;
+        }
+        List<Fix> window = unbroken(at - Math.max(DWELL_MS, Math.round(2 * radius * 1000 / PAUSE_SPEED)), at);
+        if (window == null) return null;
         Fix first = window.get(0);
         Fix last = window.get(window.size() - 1);
         double seconds = (last.timestamp - first.timestamp) / 1000.0;
         if (seconds <= 0) return null;
         float[] meters = new float[1];
         Location.distanceBetween(first.latitude, first.longitude, last.latitude, last.longitude, meters);
-        return Math.max(0, meters[0] - Math.max(first.accuracy, last.accuracy)) / seconds;
+        double circle = Math.max(first.accuracy, last.accuracy);
+        if ((meters[0] + circle) / seconds < PAUSE_SPEED) return "still";
+        return Math.max(0, meters[0] - circle) / seconds > RESUME_SPEED ? "moving" : null;
     }
     @Override public void onProviderDisabled(String provider) { fail(); }
     private void fail() {

@@ -40,7 +40,7 @@ const reference = (): Recording => {
     timestamp: startedAt + index * 5000,
     latitude: 0,
     longitude: metres(index) * metreDegrees,
-    accuracy: 5,
+    accuracy: 0,
   }))
   return {
     version: 1,
