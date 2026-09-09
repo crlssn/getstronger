@@ -799,9 +799,9 @@ var File_api_v1_exercise_service_proto protoreflect.FileDescriptor
 
 const file_api_v1_exercise_service_proto_rawDesc = "" +
 	"\n" +
-	"\x1dapi/v1/exercise_service.proto\x12\x06api.v1\x1a\x13api/v1/shared.proto\x1a google/protobuf/field_mask.proto\x1a\x1bbuf/validate/validate.proto\"\xb6\x01\n" +
-	"\x15CreateExerciseRequest\x12\x1b\n" +
-	"\x04name\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x04name\x12&\n" +
+	"\x1dapi/v1/exercise_service.proto\x12\x06api.v1\x1a\x13api/v1/shared.proto\x1a google/protobuf/field_mask.proto\x1a\x1bbuf/validate/validate.proto\"\xb8\x01\n" +
+	"\x15CreateExerciseRequest\x12\x1d\n" +
+	"\x04name\x18\x01 \x01(\tB\t\xbaH\x06r\x04\x10\x01\x18dR\x04name\x12&\n" +
 	"\x04tags\x18\x02 \x03(\tB\x12\xbaH\x0f\x92\x01\f\x10\n" +
 	"\x18\x01\"\x06r\x04\x10\x01\x18@R\x04tags\x12D\n" +
 	"\ametrics\x18\x03 \x03(\x0e2\x16.api.v1.ExerciseMetricB\x12\xbaH\x0f\x92\x01\f\x18\x01\"\b\x82\x01\x05\x10\x01\"\x01\x00R\ametricsJ\x04\b\x04\x10\x05R\frest_seconds\"(\n" +
@@ -819,9 +819,9 @@ const file_api_v1_exercise_service_proto_rawDesc = "" +
 	"\bexercise\x18\x01 \x01(\v2\x10.api.v1.ExerciseR\bexercise\"1\n" +
 	"\x15DeleteExerciseRequest\x12\x18\n" +
 	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x02id\"\x18\n" +
-	"\x16DeleteExerciseResponse\"\xa1\x01\n" +
-	"\x14ListExercisesRequest\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name\x122\n" +
+	"\x16DeleteExerciseResponse\"\xaa\x01\n" +
+	"\x14ListExercisesRequest\x12\x1b\n" +
+	"\x04name\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x18dR\x04name\x122\n" +
 	"\fexercise_ids\x18\x02 \x03(\tB\x0f\xbaH\f\x92\x01\t\x10d\"\x05r\x03\xb0\x01\x01R\vexerciseIds\x12A\n" +
 	"\n" +
 	"pagination\x18\x03 \x01(\v2\x19.api.v1.PaginationRequestB\x06\xbaH\x03\xc8\x01\x01R\n" +

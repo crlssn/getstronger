@@ -376,6 +376,172 @@ func idListRequests(n int) map[string]connect.AnyRequest {
 	}
 }
 
+// The ceilings the schema puts on free text. Restated here so a test fills a
+// field to exactly what it allows, and to one character past it.
+const (
+	maxNameLen    = 100
+	maxCommentLen = 1000
+	maxNoteLen    = 2000
+)
+
+// Free text is stored as typed and read back to everyone who sees the row, so
+// the schema bounds it rather than letting one oversized value into a column
+// that has no width of its own.
+func TestValidatorRejectsUnboundedFreeText(t *testing.T) {
+	t.Parallel()
+	validator, err := protovalidate.New()
+	require.NoError(t, err)
+
+	for name, req := range freeTextRequests(1) {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			reached := false
+			next := func(_ context.Context, _ connect.AnyRequest) (connect.AnyResponse, error) {
+				reached = true
+				return connect.NewResponse(&apiv1.CreateWorkoutResponse{}), nil
+			}
+			interceptor := newValidator(zap.NewNop(), validator)
+
+			_, err := interceptor.WrapUnary(next)(context.Background(), req)
+			require.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
+			require.False(t, reached)
+		})
+	}
+}
+
+// Text of exactly the ceiling still reaches the handler.
+func TestValidatorAllowsFreeTextAtItsCeiling(t *testing.T) {
+	t.Parallel()
+	validator, err := protovalidate.New()
+	require.NoError(t, err)
+
+	for name, req := range freeTextRequests(0) {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			called := false
+			next := func(_ context.Context, _ connect.AnyRequest) (connect.AnyResponse, error) {
+				called = true
+				return connect.NewResponse(&apiv1.CreateWorkoutResponse{}), nil
+			}
+			interceptor := newValidator(zap.NewNop(), validator)
+
+			_, err := interceptor.WrapUnary(next)(context.Background(), req)
+			require.NoError(t, err)
+			require.True(t, called)
+		})
+	}
+}
+
+// One request per bounded free-text field, each filled to its ceiling plus
+// delta and otherwise valid, so only the field under test decides the outcome.
+func freeTextRequests(delta int) map[string]connect.AnyRequest {
+	name := strings.Repeat("a", maxNameLen+delta)
+	comment := strings.Repeat("a", maxCommentLen+delta)
+	note := strings.Repeat("a", maxNoteLen+delta)
+
+	page := &apiv1.PaginationRequest{PageLimit: 10}
+	exerciseSets := []*apiv1.ExerciseSets{{
+		Exercise: &apiv1.Exercise{Id: uuid.Must(uuid.NewV4()).String()},
+		Sets:     []*apiv1.Set{{Reps: 10}},
+	}}
+	workout := func(mutate func(*apiv1.Workout)) connect.AnyRequest {
+		w := &apiv1.Workout{
+			Id:   uuid.Must(uuid.NewV4()).String(),
+			Name: "Push",
+			User: &apiv1.User{
+				Id:   uuid.Must(uuid.NewV4()).String(),
+				Name: "Athlete",
+			},
+			ExerciseSets: exerciseSets,
+			FinishedAt:   timestamppb.Now(),
+		}
+		mutate(w)
+		return connect.NewRequest(&apiv1.UpdateWorkoutRequest{Workout: w})
+	}
+
+	return map[string]connect.AnyRequest{
+		"signup name": connect.NewRequest(&apiv1.SignupRequest{
+			Email:    "athlete@example.com",
+			Password: "secret1",
+			Name:     name,
+			Username: "athlete",
+		}),
+		"update user name": connect.NewRequest(&apiv1.UpdateUserNameRequest{
+			Name: name,
+		}),
+		"search users": connect.NewRequest(&apiv1.SearchUsersRequest{
+			Query:      name,
+			Pagination: page,
+		}),
+		"create exercise": connect.NewRequest(&apiv1.CreateExerciseRequest{
+			Name: name,
+		}),
+		"update exercise": connect.NewRequest(&apiv1.UpdateExerciseRequest{
+			Exercise: &apiv1.Exercise{
+				Id:   uuid.Must(uuid.NewV4()).String(),
+				Name: name,
+			},
+		}),
+		"list exercises by name": connect.NewRequest(&apiv1.ListExercisesRequest{
+			Name:       name,
+			Pagination: page,
+		}),
+		"create routine": connect.NewRequest(&apiv1.CreateRoutineRequest{
+			Name:        name,
+			ExerciseIds: []string{uuid.Must(uuid.NewV4()).String()},
+		}),
+		"update routine": connect.NewRequest(&apiv1.UpdateRoutineRequest{
+			Routine: &apiv1.Routine{
+				Id:        uuid.Must(uuid.NewV4()).String(),
+				Name:      name,
+				Exercises: []*apiv1.Exercise{{Id: uuid.Must(uuid.NewV4()).String()}},
+			},
+		}),
+		"list routines by name": connect.NewRequest(&apiv1.ListRoutinesRequest{
+			Name:       name,
+			Pagination: page,
+		}),
+		"create plan": connect.NewRequest(&apiv1.CreatePlanRequest{
+			Name:       name,
+			RoutineIds: []string{uuid.Must(uuid.NewV4()).String()},
+		}),
+		"update plan": connect.NewRequest(&apiv1.UpdatePlanRequest{
+			Id:         uuid.Must(uuid.NewV4()).String(),
+			Name:       name,
+			RoutineIds: []string{uuid.Must(uuid.NewV4()).String()},
+		}),
+		"create workout name": connect.NewRequest(&apiv1.CreateWorkoutRequest{
+			WorkoutName:  name,
+			ExerciseSets: exerciseSets,
+			StartedAt:    timestamppb.Now(),
+			FinishedAt:   timestamppb.Now(),
+		}),
+		"create workout note": connect.NewRequest(&apiv1.CreateWorkoutRequest{
+			WorkoutName:  "Push",
+			Note:         note,
+			ExerciseSets: exerciseSets,
+			StartedAt:    timestamppb.Now(),
+			FinishedAt:   timestamppb.Now(),
+		}),
+		"update workout name": workout(func(w *apiv1.Workout) { w.Name = name }),
+		"update workout note": workout(func(w *apiv1.Workout) { w.Note = note }),
+		"post comment": connect.NewRequest(&apiv1.PostCommentRequest{
+			WorkoutId: uuid.Must(uuid.NewV4()).String(),
+			Comment:   comment,
+		}),
+		"update workout comment": workout(func(w *apiv1.Workout) {
+			w.Comments = []*apiv1.WorkoutComment{{
+				Id:        uuid.Must(uuid.NewV4()).String(),
+				User:      w.GetUser(),
+				Comment:   comment,
+				CreatedAt: timestamppb.Now(),
+			}}
+		}),
+	}
+}
+
 // The idempotency key is optional, but one that is sent has to be a UUID.
 func TestValidatorRejectsAMalformedIdempotencyKey(t *testing.T) {
 	t.Parallel()

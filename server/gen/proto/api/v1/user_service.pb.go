@@ -1106,9 +1106,9 @@ const file_api_v1_user_service_proto_rawDesc = "" +
 	"\x14ListFolloweesRequest\x12!\n" +
 	"\auser_id\x18\x02 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x06userIdJ\x04\b\x01\x10\x02R\vfollowee_id\"C\n" +
 	"\x15ListFolloweesResponse\x12*\n" +
-	"\tfollowees\x18\x01 \x03(\v2\f.api.v1.UserR\tfollowees\"v\n" +
-	"\x12SearchUsersRequest\x12\x1d\n" +
-	"\x05query\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x03R\x05query\x12A\n" +
+	"\tfollowees\x18\x01 \x03(\v2\f.api.v1.UserR\tfollowees\"x\n" +
+	"\x12SearchUsersRequest\x12\x1f\n" +
+	"\x05query\x18\x01 \x01(\tB\t\xbaH\x06r\x04\x10\x03\x18dR\x05query\x12A\n" +
 	"\n" +
 	"pagination\x18\x02 \x01(\v2\x19.api.v1.PaginationRequestB\x06\xbaH\x03\xc8\x01\x01R\n" +
 	"pagination\"u\n" +
@@ -1116,9 +1116,9 @@ const file_api_v1_user_service_proto_rawDesc = "" +
 	"\x05users\x18\x01 \x03(\v2\f.api.v1.UserR\x05users\x12:\n" +
 	"\n" +
 	"pagination\x18\x02 \x01(\v2\x1a.api.v1.PaginationResponseR\n" +
-	"pagination\"4\n" +
-	"\x15UpdateUserNameRequest\x12\x1b\n" +
-	"\x04name\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x04name\":\n" +
+	"pagination\"6\n" +
+	"\x15UpdateUserNameRequest\x12\x1d\n" +
+	"\x04name\x18\x01 \x01(\tB\t\xbaH\x06r\x04\x10\x01\x18dR\x04name\":\n" +
 	"\x16UpdateUserNameResponse\x12 \n" +
 	"\x04user\x18\x01 \x01(\v2\f.api.v1.UserR\x04user\"T\n" +
 	"\x19UpdateUserUsernameRequest\x127\n" +

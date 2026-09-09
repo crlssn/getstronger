@@ -47,7 +47,10 @@ message SignupRequest {
     max_bytes: 72
   }];
   string password_confirmation = 3;
-  string name = 8 [(buf.validate.field).string.min_len = 1];
+  string name = 8 [(buf.validate.field).string = {
+    min_len: 1
+    max_len: 100
+  }];
   // Compared case-insensitively; the server stores it lowercased.
   string username = 9 [(buf.validate.field).string = {
     min_len: 3

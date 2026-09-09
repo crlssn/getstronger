@@ -34,13 +34,14 @@ message CreateWorkoutRequest {
   repeated ExerciseSets exercise_sets = 2 [(buf.validate.field).repeated.min_items = 1];
   google.protobuf.Timestamp started_at = 3 [(buf.validate.field).required = true];
   google.protobuf.Timestamp finished_at = 4 [(buf.validate.field).required = true];
-  string note = 5;
+  // Enough prose for a session; the column it lands in has no width of its own.
+  string note = 5 [(buf.validate.field).string.max_len = 2000];
   // Optional: a session trained outside a plan names none.
   string plan_id = 6 [
     (buf.validate.field).string.uuid = true,
     (buf.validate.field).ignore = IGNORE_IF_UNPOPULATED
   ];
-  string workout_name = 7;
+  string workout_name = 7 [(buf.validate.field).string.max_len = 100];
   // Optional. The blocks the session was trained in, which say how to read the
   // sets rather than carrying them: a block states how many of each exercise's
   // sets it took, and the groups are matched against exercise_sets in the order
@@ -82,7 +83,11 @@ message DeleteWorkoutResponse {}
 
 message PostCommentRequest {
   string workout_id = 1 [(buf.validate.field).string.uuid = true];
-  string comment = 2 [(buf.validate.field).string.min_len = 1];
+  // The composer stops at 500, so the schema sits well clear of what is typed.
+  string comment = 2 [(buf.validate.field).string = {
+    min_len: 1
+    max_len: 1000
+  }];
 }
 message PostCommentResponse {
   WorkoutComment comment = 1;
@@ -107,14 +112,17 @@ message GetPaceReferenceResponse {
 
 message Workout {
   string id = 1 [(buf.validate.field).string.uuid = true];
-  string name = 2 [(buf.validate.field).string.min_len = 1];
+  string name = 2 [(buf.validate.field).string = {
+    min_len: 1
+    max_len: 100
+  }];
   User user = 3 [(buf.validate.field).required = true];
   repeated ExerciseSets exercise_sets = 4 [(buf.validate.field).repeated.min_items = 1];
   repeated WorkoutComment comments = 5;
   google.protobuf.Timestamp started_at = 6;
   google.protobuf.Timestamp finished_at = 7 [(buf.validate.field).required = true];
   int32 intensity = 8; // intensity = (kg * reps) * sets
-  string note = 9;
+  string note = 9 [(buf.validate.field).string.max_len = 2000];
   // Empty for quick workouts and for workouts recorded before routines were
   // linked, which only kept the routine's name.
   string routine_id = 10;
@@ -157,6 +165,9 @@ message WorkoutGroupExercise {
 message WorkoutComment {
   string id = 1 [(buf.validate.field).string.uuid = true];
   User user = 2 [(buf.validate.field).required = true];
-  string comment = 4 [(buf.validate.field).string.min_len = 1];
+  string comment = 4 [(buf.validate.field).string = {
+    min_len: 1
+    max_len: 1000
+  }];
   google.protobuf.Timestamp created_at = 5 [(buf.validate.field).required = true];
 }

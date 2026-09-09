@@ -81,7 +81,8 @@ type CreateWorkoutRequest struct {
 	ExerciseSets []*ExerciseSets        `protobuf:"bytes,2,rep,name=exercise_sets,json=exerciseSets,proto3" json:"exercise_sets,omitempty"`
 	StartedAt    *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=started_at,json=startedAt,proto3" json:"started_at,omitempty"`
 	FinishedAt   *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=finished_at,json=finishedAt,proto3" json:"finished_at,omitempty"`
-	Note         string                 `protobuf:"bytes,5,opt,name=note,proto3" json:"note,omitempty"`
+	// Enough prose for a session; the column it lands in has no width of its own.
+	Note string `protobuf:"bytes,5,opt,name=note,proto3" json:"note,omitempty"`
 	// Optional: a session trained outside a plan names none.
 	PlanId      string `protobuf:"bytes,6,opt,name=plan_id,json=planId,proto3" json:"plan_id,omitempty"`
 	WorkoutName string `protobuf:"bytes,7,opt,name=workout_name,json=workoutName,proto3" json:"workout_name,omitempty"`
@@ -519,9 +520,10 @@ func (*DeleteWorkoutResponse) Descriptor() ([]byte, []int) {
 }
 
 type PostCommentRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	WorkoutId     string                 `protobuf:"bytes,1,opt,name=workout_id,json=workoutId,proto3" json:"workout_id,omitempty"`
-	Comment       string                 `protobuf:"bytes,2,opt,name=comment,proto3" json:"comment,omitempty"`
+	state     protoimpl.MessageState `protogen:"open.v1"`
+	WorkoutId string                 `protobuf:"bytes,1,opt,name=workout_id,json=workoutId,proto3" json:"workout_id,omitempty"`
+	// The composer stops at 500, so the schema sits well clear of what is typed.
+	Comment       string `protobuf:"bytes,2,opt,name=comment,proto3" json:"comment,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1161,7 +1163,7 @@ var File_api_v1_workout_service_proto protoreflect.FileDescriptor
 
 const file_api_v1_workout_service_proto_rawDesc = "" +
 	"\n" +
-	"\x1capi/v1/workout_service.proto\x12\x06api.v1\x1a\x13api/v1/shared.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1bbuf/validate/validate.proto\"\x99\x04\n" +
+	"\x1capi/v1/workout_service.proto\x12\x06api.v1\x1a\x13api/v1/shared.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1bbuf/validate/validate.proto\"\xac\x04\n" +
 	"\x14CreateWorkoutRequest\x12*\n" +
 	"\n" +
 	"routine_id\x18\x01 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\xb0\x01\x01R\troutineId\x12C\n" +
@@ -1169,10 +1171,10 @@ const file_api_v1_workout_service_proto_rawDesc = "" +
 	"\n" +
 	"started_at\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tstartedAt\x12C\n" +
 	"\vfinished_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\n" +
-	"finishedAt\x12\x12\n" +
-	"\x04note\x18\x05 \x01(\tR\x04note\x12$\n" +
-	"\aplan_id\x18\x06 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\xb0\x01\x01R\x06planId\x12!\n" +
-	"\fworkout_name\x18\a \x01(\tR\vworkoutName\x12,\n" +
+	"finishedAt\x12\x1c\n" +
+	"\x04note\x18\x05 \x01(\tB\b\xbaH\x05r\x03\x18\xd0\x0fR\x04note\x12$\n" +
+	"\aplan_id\x18\x06 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\xb0\x01\x01R\x06planId\x12*\n" +
+	"\fworkout_name\x18\a \x01(\tB\a\xbaH\x04r\x02\x18dR\vworkoutName\x12,\n" +
 	"\x06groups\x18\b \x03(\v2\x14.api.v1.WorkoutGroupR\x06groups\x126\n" +
 	"\x0fidempotency_key\x18\t \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01H\x00R\x0eidempotencyKey\x88\x01\x01\x121\n" +
 	"\x0erecording_json\x18\n" +
@@ -1198,11 +1200,12 @@ const file_api_v1_workout_service_proto_rawDesc = "" +
 	"\aworkout\x18\x01 \x01(\v2\x0f.api.v1.WorkoutR\aworkout\"0\n" +
 	"\x14DeleteWorkoutRequest\x12\x18\n" +
 	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x02id\"\x17\n" +
-	"\x15DeleteWorkoutResponse\"`\n" +
+	"\x15DeleteWorkoutResponse\"c\n" +
 	"\x12PostCommentRequest\x12'\n" +
 	"\n" +
-	"workout_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\tworkoutId\x12!\n" +
-	"\acomment\x18\x02 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\acomment\"G\n" +
+	"workout_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\tworkoutId\x12$\n" +
+	"\acomment\x18\x02 \x01(\tB\n" +
+	"\xbaH\ar\x05\x10\x01\x18\xe8\aR\acomment\"G\n" +
 	"\x13PostCommentResponse\x120\n" +
 	"\acomment\x18\x01 \x01(\v2\x16.api.v1.WorkoutCommentR\acomment\"I\n" +
 	"\x14UpdateWorkoutRequest\x121\n" +
@@ -1213,10 +1216,10 @@ const file_api_v1_workout_service_proto_rawDesc = "" +
 	"routine_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\troutineId\x12=\n" +
 	"\treference\x18\x02 \x01(\x0e2\x15.api.v1.PaceReferenceB\b\xbaH\x05\x82\x01\x02\x10\x01R\treference\"A\n" +
 	"\x18GetPaceReferenceResponse\x12%\n" +
-	"\x0erecording_json\x18\x01 \x01(\tR\rrecordingJson\"\x89\x04\n" +
+	"\x0erecording_json\x18\x01 \x01(\tR\rrecordingJson\"\x95\x04\n" +
 	"\aWorkout\x12\x18\n" +
-	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x02id\x12\x1b\n" +
-	"\x04name\x18\x02 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x04name\x12(\n" +
+	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x02id\x12\x1d\n" +
+	"\x04name\x18\x02 \x01(\tB\t\xbaH\x06r\x04\x10\x01\x18dR\x04name\x12(\n" +
 	"\x04user\x18\x03 \x01(\v2\f.api.v1.UserB\x06\xbaH\x03\xc8\x01\x01R\x04user\x12C\n" +
 	"\rexercise_sets\x18\x04 \x03(\v2\x14.api.v1.ExerciseSetsB\b\xbaH\x05\x92\x01\x02\b\x01R\fexerciseSets\x122\n" +
 	"\bcomments\x18\x05 \x03(\v2\x16.api.v1.WorkoutCommentR\bcomments\x129\n" +
@@ -1224,8 +1227,8 @@ const file_api_v1_workout_service_proto_rawDesc = "" +
 	"started_at\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\tstartedAt\x12C\n" +
 	"\vfinished_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\n" +
 	"finishedAt\x12\x1c\n" +
-	"\tintensity\x18\b \x01(\x05R\tintensity\x12\x12\n" +
-	"\x04note\x18\t \x01(\tR\x04note\x12\x1d\n" +
+	"\tintensity\x18\b \x01(\x05R\tintensity\x12\x1c\n" +
+	"\x04note\x18\t \x01(\tB\b\xbaH\x05r\x03\x18\xd0\x0fR\x04note\x12\x1d\n" +
 	"\n" +
 	"routine_id\x18\n" +
 	" \x01(\tR\troutineId\x12,\n" +
@@ -1243,11 +1246,12 @@ const file_api_v1_workout_service_proto_rawDesc = "" +
 	"\x14WorkoutGroupExercise\x12,\n" +
 	"\bexercise\x18\x01 \x01(\v2\x10.api.v1.ExerciseR\bexercise\x12\x1f\n" +
 	"\x04sets\x18\x02 \x03(\v2\v.api.v1.SetR\x04sets\x12$\n" +
-	"\tset_count\x18\x03 \x01(\x05B\a\xbaH\x04\x1a\x02(\x00R\bsetCount\"\xba\x01\n" +
+	"\tset_count\x18\x03 \x01(\x05B\a\xbaH\x04\x1a\x02(\x00R\bsetCount\"\xbd\x01\n" +
 	"\x0eWorkoutComment\x12\x18\n" +
 	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x02id\x12(\n" +
-	"\x04user\x18\x02 \x01(\v2\f.api.v1.UserB\x06\xbaH\x03\xc8\x01\x01R\x04user\x12!\n" +
-	"\acomment\x18\x04 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\acomment\x12A\n" +
+	"\x04user\x18\x02 \x01(\v2\f.api.v1.UserB\x06\xbaH\x03\xc8\x01\x01R\x04user\x12$\n" +
+	"\acomment\x18\x04 \x01(\tB\n" +
+	"\xbaH\ar\x05\x10\x01\x18\xe8\aR\acomment\x12A\n" +
 	"\n" +
 	"created_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tcreatedAt*e\n" +
 	"\rPaceReference\x12\x1e\n" +
