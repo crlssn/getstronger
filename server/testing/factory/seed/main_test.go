@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"slices"
 	"testing"
 	"time"
 
@@ -11,9 +12,11 @@ import (
 	"golang.org/x/crypto/bcrypt"
 
 	"github.com/stephenafamo/bob"
+	"github.com/stephenafamo/bob/dialect/psql/sm"
 
 	"github.com/crlssn/getstronger/server/config"
 	"github.com/crlssn/getstronger/server/gen/models"
+	"github.com/crlssn/getstronger/server/gen/models/enums"
 	"github.com/crlssn/getstronger/server/notification"
 	"github.com/crlssn/getstronger/server/testing/container"
 	"github.com/crlssn/getstronger/server/testing/factory"
@@ -106,6 +109,11 @@ func TestSeedPersonas(t *testing.T) {
 	}
 	require.GreaterOrEqual(t, len(runDays), 3)
 
+	// Beta is reseeded on every deploy, so a feature with no seeded example
+	// cannot be looked at there: blocks and plans each need one.
+	requireSeededBlocks(ctx, t, bob.NewDB(c.DB), activeWorkouts)
+	requireSeededPlan(ctx, t, bob.NewDB(c.DB), active)
+
 	newAuth, err := models.Auths.Query(
 		models.SelectWhere.Auths.Email.EQ(config.new.Email),
 	).One(ctx, bob.NewDB(c.DB))
@@ -132,6 +140,168 @@ func TestSeedPersonas(t *testing.T) {
 	).Count(ctx, bob.NewDB(c.DB))
 	require.NoError(t, err)
 	require.Zero(t, newFollowerCount+newFolloweeCount)
+}
+
+// The session the active persona trained in blocks: a straight block and a
+// circuit, with every set naming the block that logged it. Without it beta
+// renders every workout the way it did before blocks were recorded.
+// requireSeededBlocks checks the persona trains sessions that carry the blocks
+// they were worked in, a circuit among them, and that a recorded session's
+// every set belongs to one.
+func requireSeededBlocks(ctx context.Context, t *testing.T, exec bob.Executor, workouts models.WorkoutSlice) {
+	t.Helper()
+
+	workoutIDs := make([]uuid.UUID, 0, len(workouts))
+	for _, workout := range workouts {
+		workoutIDs = append(workoutIDs, workout.ID)
+	}
+	groups, err := models.WorkoutGroups.Query(
+		models.SelectWhere.WorkoutGroups.WorkoutID.In(workoutIDs...),
+	).All(ctx, exec)
+	require.NoError(t, err)
+
+	blocked := make(map[uuid.UUID]struct{}, len(groups))
+	circuits := 0
+	for _, group := range groups {
+		blocked[group.WorkoutID] = struct{}{}
+		if group.Mode == enums.RoutineGroupModeCircuit {
+			circuits++
+		}
+	}
+	require.GreaterOrEqual(t, len(blocked), 3)
+	require.Positive(t, circuits)
+
+	for _, workout := range workouts {
+		if workout.RecordingJSON == "" {
+			continue
+		}
+
+		sets, setsErr := models.Sets.Query(
+			models.SelectWhere.Sets.WorkoutID.EQ(workout.ID),
+		).All(ctx, exec)
+		require.NoError(t, setsErr)
+		require.NotEmpty(t, sets)
+		for _, set := range sets {
+			require.False(t, set.WorkoutGroupExerciseID.IsNull())
+		}
+	}
+}
+
+// requireSeededPlan checks the persona follows a plan the dashboard can show:
+// active, holding a rotation, and pointing inside it.
+func requireSeededPlan(ctx context.Context, t *testing.T, exec bob.Executor, active *models.User) {
+	t.Helper()
+
+	plan, err := models.Plans.Query(
+		models.SelectWhere.Plans.UserID.EQ(active.ID),
+		models.SelectWhere.Plans.Active.EQ(true),
+	).One(ctx, exec)
+	require.NoError(t, err)
+
+	routineCount, err := models.PlanRoutines.Query(
+		models.SelectWhere.PlanRoutines.PlanID.EQ(plan.ID),
+	).Count(ctx, exec)
+	require.NoError(t, err)
+	require.GreaterOrEqual(t, routineCount, int64(2))
+	require.Less(t, int64(plan.CurrentPosition), routineCount)
+}
+
+func TestSeedActiveBlocks(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	c := container.NewContainer(ctx)
+	t.Cleanup(func() {
+		require.NoError(t, c.Terminate(ctx))
+	})
+	exec := bob.NewDB(c.DB)
+	f := factory.NewFactory(c.DB)
+	active := f.NewUser()
+	for _, title := range []string{factory.TitleBackSquat, factory.TitlePushUp, factory.TitleWalkingLunge} {
+		f.NewExercise(factory.ExerciseUserID(active.ID), factory.ExerciseTitle(title))
+	}
+
+	workout := seedActiveBlocks(exec, f, active)
+
+	groups, err := models.WorkoutGroups.Query(
+		models.SelectWhere.WorkoutGroups.WorkoutID.EQ(workout.ID),
+		sm.OrderBy(models.WorkoutGroups.Columns.Position),
+	).All(ctx, exec)
+	require.NoError(t, err)
+	require.Len(t, groups, 2)
+	require.Equal(t, enums.RoutineGroupModeStraight, groups[0].Mode)
+	require.Equal(t, enums.RoutineGroupModeCircuit, groups[1].Mode)
+	require.Equal(t, int32(blockedCircuitRounds), groups[1].Rounds)
+	require.Positive(t, groups[1].RestBetweenRoundsSeconds)
+
+	occurrences, err := models.WorkoutGroupExercises.Query(
+		models.SelectWhere.WorkoutGroupExercises.WorkoutGroupID.In(groups[0].ID, groups[1].ID),
+	).All(ctx, exec)
+	require.NoError(t, err)
+	require.Len(t, occurrences, 3)
+
+	sets, err := models.Sets.Query(
+		models.SelectWhere.Sets.WorkoutID.EQ(workout.ID),
+	).All(ctx, exec)
+	require.NoError(t, err)
+	require.Len(t, sets, blockedStraightSets+blockedCircuitRounds*2)
+
+	positions := make(map[uuid.UUID][]int32)
+	for _, set := range sets {
+		require.False(t, set.WorkoutGroupExerciseID.IsNull())
+		positions[set.ExerciseID] = append(positions[set.ExerciseID], set.Position)
+	}
+	require.Len(t, positions, 3)
+	for _, exercisePositions := range positions {
+		slices.Sort(exercisePositions)
+		require.Equal(t, []int32{0, 1, 2}, exercisePositions)
+	}
+}
+
+// The plan the active persona follows: active, holding routines they already
+// train, and part-way through its rotation so the dashboard shows a plan
+// underway rather than one never started.
+func TestSeedActivePlan(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	c := container.NewContainer(ctx)
+	t.Cleanup(func() {
+		require.NoError(t, c.Terminate(ctx))
+	})
+	exec := bob.NewDB(c.DB)
+	f := factory.NewFactory(c.DB)
+	active := f.NewUser()
+
+	// Dated apart so the rotation the seed picks is the persona's oldest
+	// routines, in the order they were built.
+	oldest := make(models.RoutineSlice, 0, planRoutineCount+1)
+	for index := range planRoutineCount + 1 {
+		oldest = append(oldest, f.NewRoutine(
+			factory.RoutineUserID(active.ID),
+			factory.RoutineCreatedAt(factory.Now().Add(-time.Duration(planRoutineCount+1-index)*time.Hour)),
+		))
+	}
+
+	plan := seedActivePlan(exec, f, active)
+
+	stored, err := models.FindPlan(ctx, exec, plan.ID)
+	require.NoError(t, err)
+	require.Equal(t, active.ID, stored.UserID)
+	require.True(t, stored.Active)
+	require.Equal(t, int32(planCurrentPosition), stored.CurrentPosition)
+	require.Less(t, stored.CurrentPosition, int32(planRoutineCount))
+
+	planRoutines, err := models.PlanRoutines.Query(
+		models.SelectWhere.PlanRoutines.PlanID.EQ(plan.ID),
+		sm.OrderBy(models.PlanRoutines.Columns.Position),
+	).All(ctx, exec)
+	require.NoError(t, err)
+	require.Len(t, planRoutines, planRoutineCount)
+	for position, planRoutine := range planRoutines {
+		require.Equal(t, int32(position), planRoutine.Position)
+		require.Equal(t, oldest[position].ID, planRoutine.RoutineID)
+	}
 }
 
 func TestSeedJaneDoe(t *testing.T) {

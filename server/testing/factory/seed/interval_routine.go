@@ -49,7 +49,23 @@ func seedActiveIntervalRoutine(f *factory.Factory, active *models.User, walk, ru
 
 	finishedAt := factory.Now().Add(-intervalFinished).Truncate(time.Minute)
 	recording := recordSession(intervalPhases(walk, run), pacePerExercise(walk, run), finishedAt)
-	saveRecordedSession(f, active, routine, intervalRoutineName, recording, finishedAt)
+	// The two blocks of the routine, as they were worked: the warm-up once,
+	// then the repeating block, whose walk is a second station of the same
+	// movement.
+	blocks := []sessionBlock{
+		{
+			rounds:   1,
+			stations: []sessionStation{{key: stationKey(walk, firstOccurrence), exercise: walk}},
+		},
+		{
+			rounds: intervalRounds,
+			stations: []sessionStation{
+				{key: stationKey(run, firstOccurrence), exercise: run},
+				{key: stationKey(walk, firstOccurrence+1), exercise: walk},
+			},
+		},
+	}
+	saveRecordedSession(f, active, routine, intervalRoutineName, recording, finishedAt, blocks)
 }
 
 // intervalPhases is the session as it was actually worked: the warm-up once,

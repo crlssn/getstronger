@@ -191,6 +191,8 @@ func seedPersonas(exec bob.Executor, f *factory.Factory, config personaConfig) (
 	)
 
 	seedActiveRuns(f, active)
+	seedActiveBlocks(exec, f, active)
+	seedActivePlan(exec, f, active)
 	jane := seedJaneDoe(exec, f, active)
 	seedActiveSocialGraph(exec, active, newlySignedUp, jane)
 	return active, newlySignedUp

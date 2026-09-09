@@ -22,4 +22,22 @@ test.describe('seed personas', () => {
     await expect(page.getByRole('heading', { name: 'Alex Morgan' })).toBeVisible()
     await expect(page.getByLabel('Training summary')).not.toContainText('0workouts')
   })
+
+  // Beta is reseeded on every deploy, so a feature with no seeded example
+  // cannot be looked at there. Blocks and plans each need one.
+  test('follows a plan and keeps a workout the blocks it was trained in', async ({ page }) => {
+    await logInAs(page, 'active@getstronger.test', 'password123')
+
+    await page.goto('/plans')
+    await expect(page.getByRole('heading', { name: 'Weekly Rotation' })).toBeVisible()
+    await expect(page.getByText('3 routines · repeat continuously')).toBeVisible()
+    await expect(page.getByText('Routine 2 of 3')).toBeVisible()
+
+    await page.goto('/profile')
+    await page.getByRole('link', { name: 'View Full Body Circuit workout details' }).first().click()
+    await expect(page).toHaveURL(/\/workouts\/[0-9a-f-]+$/)
+    await expect(page.getByText('Circuit · 3 rounds')).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Round 1' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Round 3' })).toBeVisible()
+  })
 })

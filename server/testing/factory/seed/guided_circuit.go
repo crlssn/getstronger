@@ -116,7 +116,14 @@ func seedActiveGuidedCircuit(f *factory.Factory, active *models.User, run *model
 	}
 
 	recording := recordSession(phases, pacePerExercise(walk, run), finishedAt)
-	saveRecordedSession(f, active, routine, guidedCircuitName, recording, finishedAt)
+	blocks := []sessionBlock{{
+		rounds: guidedCircuitRounds,
+		stations: []sessionStation{
+			{key: stationKey(walk, firstOccurrence), exercise: walk},
+			{key: stationKey(run, firstOccurrence), exercise: run},
+		},
+	}}
+	saveRecordedSession(f, active, routine, guidedCircuitName, recording, finishedAt, blocks)
 
 	return walk
 }
@@ -127,11 +134,26 @@ func pacePerExercise(walk, run *models.Exercise) map[string]float64 {
 	return map[string]float64{walk.Title: guidedWalkMetresPerS, run.Title: guidedRunMetresPerS}
 }
 
+// sessionBlock is one block of a recorded session: how many times it was
+// worked through, and the stations whose intervals it holds. A station is
+// named by the key the recording's phases carry, which is how each set finds
+// the block that logged it.
+type sessionBlock struct {
+	rounds   int32
+	stations []sessionStation
+}
+
+type sessionStation struct {
+	key      string
+	exercise *models.Exercise
+}
+
 // saveRecordedSession stores the recording as a finished workout, with one set
-// per interval holding what the route measured for it.
+// per interval holding what the route measured for it, and the blocks it was
+// held against the clock in.
 func saveRecordedSession(
 	f *factory.Factory, active *models.User, routine *models.Routine,
-	name string, recording recordedCircuit, finishedAt time.Time,
+	name string, recording recordedCircuit, finishedAt time.Time, blocks []sessionBlock,
 ) {
 	encoded, err := json.Marshal(recording)
 	if err != nil {
@@ -148,10 +170,17 @@ func saveRecordedSession(
 		factory.WorkoutRecordingJSON(string(encoded)),
 	)
 
+	occurrences := writeSessionBlocks(f, workout, blocks)
+
 	setBatch := make([][]factory.SetOpt, 0, len(recording.Phases))
+	positions := make(map[string]int, len(blocks))
 	start := recording.StartedAt
 	for index, phase := range recording.Phases {
 		end := start + int64(phase.DurationSeconds)*int64(time.Second/time.Millisecond)
+		occurrence, ok := occurrences[phase.StationKey]
+		if !ok {
+			panic(fmt.Errorf("recorded session %q has no block for station %q", name, phase.StationKey)) //nolint:err113
+		}
 		setBatch = append(setBatch, []factory.SetOpt{
 			factory.SetUserID(active.ID),
 			factory.SetWorkoutID(workout.ID),
@@ -160,11 +189,36 @@ func saveRecordedSession(
 			factory.SetReps(0),
 			factory.SetDistance(recording.metresBetween(start, end) / metresPerKm),
 			factory.SetDurationSeconds(phase.DurationSeconds),
+			factory.SetPosition(positions[phase.ExerciseID]),
+			factory.SetWorkoutGroupExerciseID(occurrence.ID),
 			factory.SetCreatedAt(time.UnixMilli(end).UTC().Add(time.Duration(index) * time.Millisecond)),
 		})
+		positions[phase.ExerciseID]++
 		start = end
 	}
 	f.NewSetBatch(setBatch...)
+}
+
+// writeSessionBlocks stores the blocks the session was worked in and returns
+// the occurrence each station's intervals belong to, by station key.
+func writeSessionBlocks(
+	f *factory.Factory, workout *models.Workout, blocks []sessionBlock,
+) map[string]*models.WorkoutGroupExercise {
+	occurrences := make(map[string]*models.WorkoutGroupExercise)
+	for _, block := range blocks {
+		// Every recorded block is held against the clock, so every one of them
+		// is a circuit.
+		group := f.NewWorkoutGroup(
+			workout,
+			factory.WorkoutGroupCircuit(0, 0),
+			factory.WorkoutGroupRounds(block.rounds),
+		)
+		for _, station := range block.stations {
+			occurrences[station.key] = f.AddWorkoutGroupExercise(group, station.exercise)[0]
+		}
+	}
+
+	return occurrences
 }
 
 // recordSession walks and runs the loop through the phases it is given, at the
@@ -222,20 +276,25 @@ func recordSession(
 // is what the web app's own circuitPhases writes, and what keeps a round's
 // intervals telling themselves apart.
 func guidedPhase(exercise *models.Exercise, round, seconds int, role string, occurrence int) recordedPhase {
-	stationKey := exercise.ID.String()
-	if occurrence > 1 {
-		stationKey = fmt.Sprintf("%s#%d", exercise.ID, occurrence)
-	}
-
 	return recordedPhase{
 		ExerciseID:      exercise.ID.String(),
-		StationKey:      stationKey,
+		StationKey:      stationKey(exercise, occurrence),
 		Name:            exercise.Title,
 		Round:           round,
 		DurationSeconds: seconds,
 		Instruction:     fmt.Sprintf("%s for %d seconds", exercise.Title, seconds),
 		Role:            role,
 	}
+}
+
+// stationKey names one station of a session: the exercise, and which of its
+// stations this is when the session trains it more than once.
+func stationKey(exercise *models.Exercise, occurrence int) string {
+	if occurrence > 1 {
+		return fmt.Sprintf("%s#%d", exercise.ID, occurrence)
+	}
+
+	return exercise.ID.String()
 }
 
 // paceAt is how fast the athlete moves this far into the session: the walk's
