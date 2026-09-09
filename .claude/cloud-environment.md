@@ -18,6 +18,10 @@ be launched directly. That is what `scripts/cloud_session_start.sh` does as a
 SessionStart hook: the environment's snapshot keeps installed files and no
 running process, so every session starts the daemon itself.
 
+With the daemon up and the registry host below allowlisted, the Docker-backed
+suites run here: `go test ./...` came back clean over 36 packages in run
+`cse_015Mp4AonZEeaffAmmuDvEGC`.
+
 ## What it does not have
 
 - **`mise`**, which every rule in this repository is written in terms of.
@@ -62,6 +66,9 @@ set -u
 export MISE_YES=1
 repo=/home/user/getstronger
 export PATH="/root/go/bin:$PATH"
+# 'go install' otherwise picks the oldest toolchain each module allows, and a
+# golangci-lint built by Go 1.26 refuses .golangci.yml for targeting 1.27.1.
+export GOTOOLCHAIN=go1.27.1
 
 # npm is the only route that works: mise.run is not allowlisted, and the
 # GitHub proxy scopes release assets to the repositories attached to a session.
