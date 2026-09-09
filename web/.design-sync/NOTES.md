@@ -169,10 +169,40 @@ node .ds-sync/resync.mjs --config .design-sync/config.json \
   --out ./ds-bundle --remote .design-sync/.cache/remote-sync.json
 ```
 
+## Known build warns
+
+Triaged as legitimate, same rule as the render warns above — a build warn NOT in
+this list is new.
+
+- **`▲ [WARNING] Ignoring this import because "…/@bufbuild/protobuf/…" was
+marked as having no side effects`**, twice, while esbuild bundles. A bare
+  import of a module whose package declares `sideEffects: false`. Nothing in the
+  design system reads protobuf at render time, so dropping it is correct.
+
 ## Re-sync risks
 
+- **In a worktree, `mise run worktree:env` comes first.** It is what creates
+  `web/node_modules`; without it `cfg.buildCmd` fails before the converter is
+  ever reached. The order for a fresh worktree is `worktree:env` → stage
+  `.ds-sync/` (the skill's `cp -r`) → `npm i` in `.ds-sync/` →
+  `mise run design:build` → the driver.
 - `ds-dist/` is gitignored — a fresh clone must run `cfg.buildCmd` before the
   converter, or the converter exits `[NO_DIST]`.
+- **Never run `package-capture.mjs` unscoped on a fresh clone.** Grades live in
+  the gitignored `.cache/`, so a machine that has not graded before has none:
+  an unscoped run re-captures all 38 authored components and asks for grades on
+  every one of them. That is not a gate failure — the components the anchor
+  marks verified-by-upload are outside the gate — but it costs a full capture
+  and reads like a regression. Let the driver scope it, or pass `--components`.
+- **`tokens/` and `guidelines/` ship empty.** `cfg.tokensGlob` and
+  `cfg.guidelinesGlob` are unset, so the converter emits the directories with
+  nothing in them and the upload carries nothing. Designs still get every token,
+  because the compiled `main.css` is concatenated ahead of the component CSS
+  inside `_ds_bundle.css`, which `styles.css` imports. Wiring `tokensGlob` to
+  `ds-dist/tokens.css` (the section above argues for it) would additionally
+  `@import` that file from `styles.css` — a **second** definition of all 107
+  declarations in the same closure. Settle the duplication before wiring it;
+  that is why this is still unwired rather than an oversight.
 - The Tailwind post-pass depends on `@tailwindcss/postcss` and `postcss`
   resolving from `web/node_modules`; a Tailwind major bump may change the
   `@reference` semantics this relies on.
