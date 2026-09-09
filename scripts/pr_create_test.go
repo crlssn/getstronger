@@ -12,20 +12,24 @@ import (
 
 // The script's job is to make it impossible to open a pull request under the
 // wrong account, so the test cares less about the happy path than about what
-// happens when the token cannot be minted: gh must never run. gh, curl and git
-// are stubbed onto PATH, so nothing here reaches GitHub.
+// happens when the token cannot be minted: 'gh pr create' must never run, and
+// the 'pr open' workflow is dispatched instead. gh, curl and git are stubbed
+// onto PATH, so nothing here reaches GitHub.
 
+// Every gh call appends, so a run that dispatches the workflow and then polls
+// for the pull request leaves both calls in the log.
 const stubGh = `#!/bin/sh
-{ printf '%s\n' "$@"; printf 'GH_TOKEN=%s\n' "${GH_TOKEN:-}"; } > "$GH_LOG"
+{ printf '%s\n' "$@"; printf 'GH_TOKEN=%s\n' "${GH_TOKEN:-}"; } >> "$GH_LOG"
 echo "https://github.com/crlssn/getstronger/pull/999"
 `
 
-// Stands in for the base branch lookup and the diff behind the screenshot
-// reminder: GIT_EXIT makes the branch missing, GIT_DIFF names the changed files.
+// Stands in for the branch lookups and the diff behind the screenshot
+// reminder: GIT_EXIT makes a branch missing, GIT_DIFF names the changed files.
 const stubGit = `#!/bin/sh
 printf '%s\n' "$@" >> "$GIT_LOG"
 case "$1" in
   diff) printf '%s' "${GIT_DIFF:-}" ;;
+  rev-parse) echo "claude/topic" ;;
 esac
 exit "${GIT_EXIT:-0}"
 `
@@ -227,8 +231,38 @@ func TestPRCreateStaysQuietWhenNoPageCouldHaveMoved(t *testing.T) {
 }
 
 // The regression this script exists for: an empty GH_TOKEN does not stop gh,
-// it quietly falls back to the logged-in account.
+// it quietly falls back to the logged-in account. Without a token the pull
+// request is opened by the 'pr open' workflow, where the app's key is a
+// repository secret, and 'gh pr create' never runs here at all.
 func TestPRCreateNeverFallsBackToYourOwnAccount(t *testing.T) {
+	t.Parallel()
+
+	_, keyPath := writeKey(t)
+	body := bodyFile(t)
+
+	result := runPRCreate(t, []string{"fix: something", body, "--base", "claude/below"}, map[string]string{
+		"GH_APP_INSTALLATION_ID": testInstallationID,
+		"GH_APP_PRIVATE_KEY":     keyPath,
+	})
+
+	require.Equal(t, 0, result.exitCode, result.stderr)
+	require.True(t, result.ghRan)
+	require.NotContains(t, result.ghArgs, "create", "gh pr create must not run without an app token")
+	require.Contains(t, result.ghArgs, "workflow")
+	require.Contains(t, result.ghArgs, "pr.open.yml")
+	require.Contains(t, result.ghArgs, "--ref")
+	require.Contains(t, result.ghArgs, "claude/topic", "the run is dispatched on the branch itself")
+	require.Contains(t, result.ghArgs, "title=fix: something")
+	require.Contains(t, result.ghArgs, "body=@"+body)
+	require.Contains(t, result.ghArgs, "base=claude/below")
+	require.Contains(t, result.stderr, "pr open workflow")
+	require.Contains(t, result.stdout, "https://github.com/crlssn/getstronger/pull/999",
+		"the pull request the workflow opened is found and printed")
+}
+
+// The workflow runs on the branch, so a branch that was never pushed has
+// nothing to run and nothing to open.
+func TestPRCreateRefusesToDispatchForABranchThatIsNotOnTheRemote(t *testing.T) {
 	t.Parallel()
 
 	_, keyPath := writeKey(t)
@@ -236,11 +270,12 @@ func TestPRCreateNeverFallsBackToYourOwnAccount(t *testing.T) {
 	result := runPRCreate(t, []string{"fix: something", bodyFile(t)}, map[string]string{
 		"GH_APP_INSTALLATION_ID": testInstallationID,
 		"GH_APP_PRIVATE_KEY":     keyPath,
+		"GIT_EXIT":               "2",
 	})
 
 	require.NotEqual(t, 0, result.exitCode)
-	require.False(t, result.ghRan, "gh must not run without an app token")
-	require.Contains(t, result.stderr, "would have been opened as you")
+	require.False(t, result.ghRan, "GitHub is never called")
+	require.Contains(t, result.stderr, "push it first")
 }
 
 func TestPRCreateRefusesBadArguments(t *testing.T) {

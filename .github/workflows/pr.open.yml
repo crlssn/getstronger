@@ -1,0 +1,49 @@
+# Opens a pull request authored by the GitHub App from a machine that cannot
+# mint the app's token itself. The cloud routines run behind a proxy that
+# refuses the installation-token endpoint, so 'mise run pr:create' dispatches
+# this instead, and the pull request still gets an author a human can approve.
+name: pr open
+
+on:
+  workflow_dispatch:
+    inputs:
+      title:
+        description: Pull request subject, in the same style as a commit subject
+        required: true
+        type: string
+      body:
+        description: Pull request body as Markdown
+        required: true
+        type: string
+      base:
+        description: Branch the pull request targets
+        required: false
+        default: main
+        type: string
+
+permissions: {}
+
+jobs:
+  open:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      # The same app 'mise run pr:create' uses; its ids live in mise.toml.
+      - name: Mint an app token
+        id: app
+        uses: actions/create-github-app-token@v3
+        with:
+          app-id: 4701373
+          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+
+      # The run is dispatched on the branch itself, so the ref is the head.
+      - name: Open the pull request
+        env:
+          GH_TOKEN: ${{ steps.app.outputs.token }}
+          TITLE: ${{ inputs.title }}
+          BODY: ${{ inputs.body }}
+          BASE: ${{ inputs.base }}
+        run: |
+          gh pr create --repo "$GITHUB_REPOSITORY" --head "$GITHUB_REF_NAME" \
+            --base "$BASE" --title "$TITLE" --body "$BODY"
