@@ -34,6 +34,9 @@ export const screens: Partial<Record<string, ScreenLoader>> = {
   'settings-announcements': async () => ({
     Component: (await import('@/ui/profile/AnnouncementSettings')).AnnouncementSettings,
   }),
+  'settings-pace-tones': async () => ({
+    Component: (await import('@/ui/profile/PaceToneSettings')).PaceToneSettings,
+  }),
   'settings-account': async () => ({
     Component: (await import('@/ui/profile/AccountSettings')).AccountSettings,
   }),

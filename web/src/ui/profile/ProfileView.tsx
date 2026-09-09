@@ -13,17 +13,16 @@ import { useDashboardStore } from '@/stores/dashboard'
 import { selectLocale, useLocaleStore } from '@/stores/locale'
 import { useNotificationStore } from '@/stores/notifications'
 import { usePreferencesStore } from '@/stores/preferences'
+import { paceToneLabelKey } from '@/utils/pacing'
 import { themeLabelKey } from '@/theme'
 import { AppErrorState } from '@/ui/components/AppErrorState'
 import { AppIconButton } from '@/ui/components/AppIconButton'
 import { AppListRow } from '@/ui/components/AppListRow'
 import { AppPageHeader } from '@/ui/components/AppPageHeader'
 import { AppPreferenceRow } from '@/ui/components/AppPreferenceRow'
-import { AppSegmented } from '@/ui/components/AppSegmented'
 import { AppSkeleton } from '@/ui/components/AppSkeleton'
 import { AppSwitch } from '@/ui/components/AppSwitch'
 import { distanceUnitLabel } from '@/utils/distanceUnits'
-import type { PaceReferenceChoice } from '@/utils/pacing'
 import { formatDistanceIn } from '@/utils/exerciseMeasurements'
 import { handle, initials } from '@/utils/names'
 import { formatNumber } from '@/utils/numbers'
@@ -252,6 +251,13 @@ export const ProfileView = () => {
             title={t('settings.announcements')}
             meta={t(volumeLabelKey[volume])}
           />
+          {/* Three choices rather than a yes and a no, so a screen of its own;
+              the row reads the choice back. */}
+          <AppListRow
+            to="/settings/pace-tones"
+            title={t('settings.paceTones')}
+            meta={t(paceToneLabelKey[paceReference])}
+          />
           {/* The one row with no value to show: the card at the top of the tab
               is already the name, the username and the address it would
               repeat, so this says what is behind it instead. */}
@@ -318,30 +324,6 @@ export const ProfileView = () => {
                       },
                     )
                   }
-                />
-              }
-            />
-          </li>
-
-          {/* Off, then two named sessions: the choice is which session to be
-              held against, and off is having none. Kept on this device: it is
-              a choice about the phone doing the recording, which is why it
-              saves without a request and cannot fail. */}
-          <li>
-            <AppPreferenceRow
-              title={t('profile.paceTones')}
-              body={t('profile.paceTonesBody')}
-              control={
-                <AppSegmented<PaceReferenceChoice>
-                  label={t('profile.paceTones')}
-                  density="compact"
-                  value={paceReference}
-                  options={[
-                    { label: t('profile.paceTonesOff'), value: 'off' },
-                    { label: t('profile.paceTonesPrevious'), value: 'previous' },
-                    { label: t('profile.paceTonesBest'), value: 'best' },
-                  ]}
-                  onChange={usePreferencesStore.getState().setPaceReference}
                 />
               }
             />

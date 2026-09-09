@@ -10,6 +10,16 @@ import { buildTimeline, measureRoute, type Phase, type Recording } from '@/utils
  */
 export type PaceReferenceChoice = 'off' | 'previous' | 'best'
 
+/** The choices in the order the settings screen offers them: off first. */
+export const paceReferenceChoices: PaceReferenceChoice[] = ['off', 'previous', 'best']
+
+/** The name of each choice, as the settings row and screen show it. */
+export const paceToneLabelKey: Record<PaceReferenceChoice, string> = {
+  off: 'settings.paceTonesOff',
+  previous: 'settings.paceTonesPrevious',
+  best: 'settings.paceTonesBest',
+}
+
 /** The stored choice as the request states it. */
 export const paceReferenceRequested = (choice: PaceReferenceChoice): PaceReference =>
   choice === 'best' ? PaceReference.BEST : PaceReference.PREVIOUS
