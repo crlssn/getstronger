@@ -14,6 +14,8 @@ service WorkoutService {
   rpc ListWorkouts (ListWorkoutsRequest) returns (ListWorkoutsResponse) {}
   rpc DeleteWorkout (DeleteWorkoutRequest) returns (DeleteWorkoutResponse) {}
   rpc PostComment (PostCommentRequest) returns (PostCommentResponse) {}
+  rpc LikeWorkout (LikeWorkoutRequest) returns (LikeWorkoutResponse) {}
+  rpc UnlikeWorkout (UnlikeWorkoutRequest) returns (UnlikeWorkoutResponse) {}
   rpc UpdateWorkout (UpdateWorkoutRequest) returns (UpdateWorkoutResponse) {}
   rpc GetPaceReference (GetPaceReferenceRequest) returns (GetPaceReferenceResponse) {}
 }
@@ -93,6 +95,20 @@ message PostCommentResponse {
   WorkoutComment comment = 1;
 }
 
+// Liking and unliking are two procedures rather than one toggle: a toggle sent
+// twice on a slow connection lands where the athlete did not intend, while each
+// of these says what it wants and can be repeated safely. The copy calls it a
+// rep.
+message LikeWorkoutRequest {
+  string workout_id = 1 [(buf.validate.field).string.uuid = true];
+}
+message LikeWorkoutResponse {}
+
+message UnlikeWorkoutRequest {
+  string workout_id = 1 [(buf.validate.field).string.uuid = true];
+}
+message UnlikeWorkoutResponse {}
+
 message UpdateWorkoutRequest {
   Workout workout = 1 [(buf.validate.field).required = true];
 }
@@ -134,6 +150,10 @@ message Workout {
   repeated WorkoutGroup groups = 11;
   // Immutable recording snapshot, independent of later manual set corrections.
   string recording_json = 12;
+  // How many athletes have repped the session, and whether the one reading it
+  // is among them. Both are zero on a read that did not ask for the reps.
+  int32 like_count = 13;
+  bool liked_by_viewer = 14;
 }
 
 // One block of a finished workout, as it was actually trained.

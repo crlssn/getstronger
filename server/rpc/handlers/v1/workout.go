@@ -13,6 +13,7 @@ import (
 
 	apiv1 "github.com/crlssn/getstronger/server/gen/proto/api/v1"
 	"github.com/crlssn/getstronger/server/gen/proto/api/v1/apiv1connect"
+	"github.com/crlssn/getstronger/server/notification"
 	"github.com/crlssn/getstronger/server/pubsub"
 	"github.com/crlssn/getstronger/server/pubsub/events"
 	"github.com/crlssn/getstronger/server/repo"
@@ -234,6 +235,7 @@ func isPlanAdvanceSkippable(err error) bool {
 
 func (h *workoutHandler) GetWorkout(ctx context.Context, req *connect.Request[apiv1.GetWorkoutRequest]) (*connect.Response[apiv1.GetWorkoutResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
+	viewerID := xcontext.MustExtractUserID(ctx)
 
 	// TODO: Analyse query performance.
 	workoutID, err := parser.UUID(req.Msg.GetId())
@@ -247,6 +249,7 @@ func (h *workoutHandler) GetWorkout(ctx context.Context, req *connect.Request[ap
 		repo.GetWorkoutLoadSets(),
 		repo.GetWorkoutLoadUser(),
 		repo.GetWorkoutLoadComments(),
+		repo.GetWorkoutLoadLikes(),
 		repo.GetWorkoutLoadExercises(),
 		repo.GetWorkoutLoadCommentUsers(),
 	)
@@ -279,6 +282,7 @@ func (h *workoutHandler) GetWorkout(ctx context.Context, req *connect.Request[ap
 		Msg: &apiv1.GetWorkoutResponse{
 			Workout: parser.Workout(
 				workout,
+				parser.WorkoutLikes(workout, viewerID),
 				parser.WorkoutIntensity(workout.Sets),
 				parser.WorkoutExerciseSets(workout.Sets, personalBests),
 				parser.WorkoutBlocks(groups[workout.ID], workout.Sets, personalBests),
@@ -289,6 +293,7 @@ func (h *workoutHandler) GetWorkout(ctx context.Context, req *connect.Request[ap
 
 func (h *workoutHandler) ListWorkouts(ctx context.Context, req *connect.Request[apiv1.ListWorkoutsRequest]) (*connect.Response[apiv1.ListWorkoutsResponse], error) {
 	log := xcontext.MustExtractLogger(ctx)
+	viewerID := xcontext.MustExtractUserID(ctx)
 
 	userIDs, err := parser.UUIDs(req.Msg.GetUserIds())
 	if err != nil {
@@ -300,6 +305,7 @@ func (h *workoutHandler) ListWorkouts(ctx context.Context, req *connect.Request[
 		ctx,
 		repo.ListWorkoutsLoadSets(),
 		repo.ListWorkoutsLoadUser(),
+		repo.ListWorkoutsLoadLikes(),
 		repo.ListWorkoutsLoadExercises(),
 		repo.ListWorkoutsWithLimit(limit+1),
 		repo.ListWorkoutsWithUserIDs(userIDs...),
@@ -324,7 +330,7 @@ func (h *workoutHandler) ListWorkouts(ctx context.Context, req *connect.Request[
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
-	w := parser.WorkoutSlice(pagination.Items, personalBests)
+	w := parser.WorkoutSlice(pagination.Items, personalBests, viewerID)
 
 	log.Info("Workouts listed")
 	return &connect.Response[apiv1.ListWorkoutsResponse]{
@@ -394,6 +400,63 @@ func (h *workoutHandler) PostComment(ctx context.Context, req *connect.Request[a
 			Comment: parser.WorkoutComment(comment),
 		},
 	}, nil
+}
+
+func (h *workoutHandler) LikeWorkout(ctx context.Context, req *connect.Request[apiv1.LikeWorkoutRequest]) (*connect.Response[apiv1.LikeWorkoutResponse], error) {
+	log := xcontext.MustExtractLogger(ctx)
+	userID := xcontext.MustExtractUserID(ctx)
+
+	workoutID, err := parser.UUID(req.Msg.GetWorkoutId())
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInvalidArgument, nil)
+	}
+
+	created, err := h.repo.CreateWorkoutLike(ctx, repo.CreateWorkoutLikeParams{
+		UserID:    userID,
+		WorkoutID: workoutID,
+	})
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			log.Warn("Workout not found for rep")
+			return nil, connect.NewError(connect.CodeNotFound, nil)
+		}
+
+		log.Error("Create workout like", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
+
+	// A repeated tap changed nothing, so there is nothing to tell anybody about.
+	if created {
+		h.pubSub.Publish(ctx, events.TopicWorkoutLiked, events.WorkoutLiked{
+			ActorID:   userID,
+			WorkoutID: workoutID,
+			EventID:   notification.WorkoutLikeEventID(userID, workoutID),
+		})
+	}
+
+	log.Info("Workout repped")
+	return &connect.Response[apiv1.LikeWorkoutResponse]{}, nil
+}
+
+func (h *workoutHandler) UnlikeWorkout(ctx context.Context, req *connect.Request[apiv1.UnlikeWorkoutRequest]) (*connect.Response[apiv1.UnlikeWorkoutResponse], error) {
+	log := xcontext.MustExtractLogger(ctx)
+	userID := xcontext.MustExtractUserID(ctx)
+
+	workoutID, err := parser.UUID(req.Msg.GetWorkoutId())
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInvalidArgument, nil)
+	}
+
+	if err = h.repo.DeleteWorkoutLike(ctx, repo.DeleteWorkoutLikeParams{
+		UserID:    userID,
+		WorkoutID: workoutID,
+	}); err != nil {
+		log.Error("Delete workout like", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
+
+	log.Info("Workout rep taken back")
+	return &connect.Response[apiv1.UnlikeWorkoutResponse]{}, nil
 }
 
 func (h *workoutHandler) UpdateWorkout(ctx context.Context, req *connect.Request[apiv1.UpdateWorkoutRequest]) (*connect.Response[apiv1.UpdateWorkoutResponse], error) {

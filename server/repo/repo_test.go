@@ -1818,6 +1818,7 @@ func (s *repoSuite) TestDeleteWorkout() {
 				workout := s.factory.NewWorkout(factory.WorkoutID(workoutID))
 				s.factory.NewSet(factory.SetWorkoutID(workoutID))
 				s.factory.NewWorkoutComment(factory.WorkoutCommentWorkoutID(workoutID))
+				s.factory.NewWorkoutLike(factory.WorkoutLikeWorkoutID(workoutID))
 				s.factory.NewNotification(factory.NotificationPayload(notification.Payload{
 					WorkoutID: workoutID,
 				}))
@@ -1838,6 +1839,7 @@ func (s *repoSuite) TestDeleteWorkout() {
 				workout := s.factory.NewWorkout(factory.WorkoutUserID(user.ID))
 				s.factory.NewSet(factory.SetWorkoutID(workout.ID))
 				s.factory.NewWorkoutComment(factory.WorkoutCommentWorkoutID(workout.ID))
+				s.factory.NewWorkoutLike(factory.WorkoutLikeWorkoutID(workout.ID))
 				s.factory.NewNotification(factory.NotificationPayload(notification.Payload{
 					WorkoutID: workout.ID,
 				}))
@@ -1871,12 +1873,92 @@ func (s *repoSuite) TestDeleteWorkout() {
 			s.Require().NoError(err)
 			s.Require().False(exists)
 
+			exists, err = models.WorkoutLikes.Query(models.SelectWhere.WorkoutLikes.WorkoutID.EQ(workout.ID)).
+				Exists(context.Background(), bob.NewDB(s.container.DB))
+			s.Require().NoError(err)
+			s.Require().False(exists)
+
 			exists, err = models.Notifications.Query(sm.Where(psql.Raw("payload ->> 'workoutId' = ?", workout.ID))).
 				Exists(context.Background(), bob.NewDB(s.container.DB))
 			s.Require().NoError(err)
 			s.Require().False(exists)
 		})
 	}
+}
+
+func (s *repoSuite) TestCreateWorkoutLike() {
+	ctx := context.Background()
+	db := bob.NewDB(s.container.DB)
+
+	user := s.factory.NewUser()
+	workout := s.factory.NewWorkout()
+	params := repo.CreateWorkoutLikeParams{UserID: user.ID, WorkoutID: workout.ID}
+
+	created, err := s.repo.CreateWorkoutLike(ctx, params)
+	s.Require().NoError(err)
+	s.Require().True(created)
+
+	// A second tap is the same rep, not another one.
+	created, err = s.repo.CreateWorkoutLike(ctx, params)
+	s.Require().NoError(err)
+	s.Require().False(created)
+
+	count, err := models.WorkoutLikes.Query(
+		models.SelectWhere.WorkoutLikes.WorkoutID.EQ(workout.ID),
+	).Count(ctx, db)
+	s.Require().NoError(err)
+	s.Require().Equal(int64(1), count)
+}
+
+func (s *repoSuite) TestCreateWorkoutLikeOfAWorkoutThatIsGone() {
+	_, err := s.repo.CreateWorkoutLike(context.Background(), repo.CreateWorkoutLikeParams{
+		UserID:    s.factory.NewUser().ID,
+		WorkoutID: uuid.Must(uuid.NewV4()),
+	})
+	s.Require().ErrorIs(err, sql.ErrNoRows)
+}
+
+func (s *repoSuite) TestDeleteWorkoutLike() {
+	ctx := context.Background()
+	db := bob.NewDB(s.container.DB)
+
+	like := s.factory.NewWorkoutLike()
+	params := repo.DeleteWorkoutLikeParams{UserID: like.UserID, WorkoutID: like.WorkoutID}
+
+	s.Require().NoError(s.repo.DeleteWorkoutLike(ctx, params))
+
+	exists, err := models.WorkoutLikes.Query(models.SelectWhere.WorkoutLikes.ID.EQ(like.ID)).Exists(ctx, db)
+	s.Require().NoError(err)
+	s.Require().False(exists)
+
+	// Taking back a rep that is not there changes nothing.
+	s.Require().NoError(s.repo.DeleteWorkoutLike(ctx, params))
+}
+
+func (s *repoSuite) TestWorkoutReadsLoadLikes() {
+	ctx := context.Background()
+
+	workout := s.factory.NewWorkout()
+	liker := s.factory.NewUser()
+	s.factory.NewWorkoutLike(
+		factory.WorkoutLikeWorkoutID(workout.ID),
+		factory.WorkoutLikeUserID(liker.ID),
+	)
+
+	read, err := s.repo.GetWorkout(ctx, repo.GetWorkoutWithID(workout.ID), repo.GetWorkoutLoadLikes())
+	s.Require().NoError(err)
+	s.Require().Len(read.Likes, 1)
+	s.Require().True(read.LikedBy(liker.ID))
+
+	listed, err := s.repo.ListWorkouts(
+		ctx,
+		repo.ListWorkoutsWithIDs([]uuid.UUID{workout.ID}),
+		repo.ListWorkoutsLoadLikes(),
+	)
+	s.Require().NoError(err)
+	s.Require().Len(listed, 1)
+	s.Require().True(listed[0].LikedBy(liker.ID))
+	s.Require().False(listed[0].LikedBy(workout.UserID))
 }
 
 func (s *repoSuite) TestDeleteUser() {
@@ -1897,6 +1979,17 @@ func (s *repoSuite) TestDeleteUser() {
 	comment := s.factory.NewWorkoutComment(
 		factory.WorkoutCommentUserID(other.ID),
 		factory.WorkoutCommentWorkoutID(workout.ID),
+	)
+
+	// A rep dies with either party: the one left on the account's workout, and
+	// the one the account left on somebody else's.
+	likeReceived := s.factory.NewWorkoutLike(
+		factory.WorkoutLikeUserID(other.ID),
+		factory.WorkoutLikeWorkoutID(workout.ID),
+	)
+	likeGiven := s.factory.NewWorkoutLike(
+		factory.WorkoutLikeUserID(user.ID),
+		factory.WorkoutLikeWorkoutID(s.factory.NewWorkout(factory.WorkoutUserID(other.ID)).ID),
 	)
 
 	plan, err := s.repo.CreatePlan(ctx, repo.CreatePlanParams{
@@ -1946,6 +2039,12 @@ func (s *repoSuite) TestDeleteUser() {
 		}},
 		{"comment", func() (bool, error) {
 			return models.WorkoutComments.Query(models.SelectWhere.WorkoutComments.ID.EQ(comment.ID)).Exists(ctx, db)
+		}},
+		{"rep received", func() (bool, error) {
+			return models.WorkoutLikes.Query(models.SelectWhere.WorkoutLikes.ID.EQ(likeReceived.ID)).Exists(ctx, db)
+		}},
+		{"rep given", func() (bool, error) {
+			return models.WorkoutLikes.Query(models.SelectWhere.WorkoutLikes.ID.EQ(likeGiven.ID)).Exists(ctx, db)
 		}},
 		{"own notification", func() (bool, error) {
 			return models.Notifications.Query(models.SelectWhere.Notifications.ID.EQ(own.ID)).Exists(ctx, db)

@@ -999,6 +999,14 @@ func ListWorkoutsLoadComments() ListWorkoutsOpt {
 	}
 }
 
+func ListWorkoutsLoadLikes() ListWorkoutsOpt {
+	return func() ([]bob.Mod[*dialect.SelectQuery], error) {
+		return []bob.Mod[*dialect.SelectQuery]{
+			models.SelectThenLoad.Workout.WorkoutLikes(),
+		}, nil
+	}
+}
+
 func ListWorkoutsLoadSets() ListWorkoutsOpt {
 	return func() ([]bob.Mod[*dialect.SelectQuery], error) {
 		return []bob.Mod[*dialect.SelectQuery]{
@@ -1185,6 +1193,12 @@ func GetWorkoutLoadUser() GetWorkoutOpt {
 func GetWorkoutLoadComments() GetWorkoutOpt {
 	return func() bob.Mod[*dialect.SelectQuery] {
 		return models.SelectThenLoad.Workout.WorkoutComments()
+	}
+}
+
+func GetWorkoutLoadLikes() GetWorkoutOpt {
+	return func() bob.Mod[*dialect.SelectQuery] {
+		return models.SelectThenLoad.Workout.WorkoutLikes()
 	}
 }
 
@@ -1663,6 +1677,57 @@ func (r *Repo) CreateWorkoutComment(ctx context.Context, p CreateWorkoutCommentP
 	}
 
 	return comment, nil
+}
+
+type CreateWorkoutLikeParams struct {
+	UserID    uuid.UUID
+	WorkoutID uuid.UUID
+}
+
+// CreateWorkoutLike records that the athlete repped the workout and reports
+// whether this call is what recorded it. A rep already there conflicts and
+// changes nothing, so repeating one is answered with false rather than an
+// error. A workout no row answers to is sql.ErrNoRows.
+func (r *Repo) CreateWorkoutLike(ctx context.Context, p CreateWorkoutLikeParams) (bool, error) {
+	rows, err := models.WorkoutLikes.Insert(
+		&models.WorkoutLikeSetter{
+			UserID:    omit.From(p.UserID),
+			WorkoutID: omit.From(p.WorkoutID),
+		},
+		im.OnConflict().DoNothing(),
+	).Exec(ctx, r.bobExec())
+	if err != nil {
+		return false, fmt.Errorf("workout like insert: %w", translateWorkoutLikeError(err))
+	}
+
+	return rows > 0, nil
+}
+
+// The workout's foreign key is whether the session being repped exists at all.
+func translateWorkoutLikeError(err error) error {
+	if foreignKeyViolation(err, "workout_likes_workout_id_fkey") {
+		return sql.ErrNoRows
+	}
+
+	return err
+}
+
+type DeleteWorkoutLikeParams struct {
+	UserID    uuid.UUID
+	WorkoutID uuid.UUID
+}
+
+// DeleteWorkoutLike takes a rep back. Taking back one that was never there is
+// not an error: both directions of the rep are idempotent.
+func (r *Repo) DeleteWorkoutLike(ctx context.Context, p DeleteWorkoutLikeParams) error {
+	if _, err := models.WorkoutLikes.Delete(
+		models.DeleteWhere.WorkoutLikes.UserID.EQ(p.UserID),
+		models.DeleteWhere.WorkoutLikes.WorkoutID.EQ(p.WorkoutID),
+	).Exec(ctx, r.bobExec()); err != nil {
+		return fmt.Errorf("workout like delete: %w", err)
+	}
+
+	return nil
 }
 
 type StoreTraceParams struct {

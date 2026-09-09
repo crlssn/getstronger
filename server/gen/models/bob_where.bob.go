@@ -35,6 +35,7 @@ func Where[Q psql.Filterable]() struct {
 	WorkoutComments       workoutCommentWhere[Q]
 	WorkoutGroupExercises workoutGroupExerciseWhere[Q]
 	WorkoutGroups         workoutGroupWhere[Q]
+	WorkoutLikes          workoutLikeWhere[Q]
 	Workouts              workoutWhere[Q]
 } {
 	return struct {
@@ -56,6 +57,7 @@ func Where[Q psql.Filterable]() struct {
 		WorkoutComments       workoutCommentWhere[Q]
 		WorkoutGroupExercises workoutGroupExerciseWhere[Q]
 		WorkoutGroups         workoutGroupWhere[Q]
+		WorkoutLikes          workoutLikeWhere[Q]
 		Workouts              workoutWhere[Q]
 	}{
 		Auths:                 buildAuthWhere[Q](Auths.Columns),
@@ -76,6 +78,7 @@ func Where[Q psql.Filterable]() struct {
 		WorkoutComments:       buildWorkoutCommentWhere[Q](WorkoutComments.Columns),
 		WorkoutGroupExercises: buildWorkoutGroupExerciseWhere[Q](WorkoutGroupExercises.Columns),
 		WorkoutGroups:         buildWorkoutGroupWhere[Q](WorkoutGroups.Columns),
+		WorkoutLikes:          buildWorkoutLikeWhere[Q](WorkoutLikes.Columns),
 		Workouts:              buildWorkoutWhere[Q](Workouts.Columns),
 	}
 }

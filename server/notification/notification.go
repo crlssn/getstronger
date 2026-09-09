@@ -25,6 +25,7 @@ type Type = enums.NotificationType
 const (
 	TypeFollow         = enums.NotificationTypeFollow
 	TypeWorkoutComment = enums.NotificationTypeWorkoutcomment
+	TypeWorkoutLike    = enums.NotificationTypeWorkoutlike
 )
 
 // Payload carries whatever the reader needs to look up to render the
@@ -66,6 +67,19 @@ func named(id uuid.UUID) *uuid.UUID {
 	}
 
 	return &id
+}
+
+// likeNamespace names the workout-like event space, so an id derived here can
+// never collide with one derived for anything else.
+const likeNamespace = "6f1a2b3c-4d5e-5f60-8a7b-9c0d1e2f3a4b"
+
+// WorkoutLikeEventID names the event of one athlete having repped one workout.
+//
+// It is derived rather than minted, because notifications dedupe on
+// (user_id, eventId): a stable id means un-repping and repping again cannot
+// tell the workout's owner about it twice.
+func WorkoutLikeEventID(actorID, workoutID uuid.UUID) uuid.UUID {
+	return uuid.NewV5(uuid.Must(uuid.FromString(likeNamespace)), actorID.String()+workoutID.String())
 }
 
 // CommentAudience is who hears about a new comment on a workout: the athlete

@@ -262,6 +262,15 @@ func WorkoutBlocks(
 	}
 }
 
+// WorkoutLikes states how many athletes have repped the workout and whether
+// the one reading it is among them.
+func WorkoutLikes(workout *training.Workout, viewerID uuid.UUID) WorkoutOpt {
+	return func(w *apiv1.Workout) {
+		w.LikeCount = safe.Int32FromInt(len(workout.Likes))
+		w.LikedByViewer = workout.LikedBy(viewerID)
+	}
+}
+
 // WorkoutIntensity reports the workout's tonnage; the API calls it intensity.
 func WorkoutIntensity(sets []*training.Set) WorkoutOpt {
 	return func(w *apiv1.Workout) {
@@ -281,6 +290,8 @@ func Workout(workout *training.Workout, opts ...WorkoutOpt) *apiv1.Workout {
 		ExerciseSets:  nil,
 		Groups:        nil,
 		Intensity:     0,
+		LikeCount:     0,
+		LikedByViewer: false,
 		Note:          workout.Note,
 		RoutineId:     optionalID(workout.RoutineID),
 	}
@@ -300,10 +311,12 @@ func Workout(workout *training.Workout, opts ...WorkoutOpt) *apiv1.Workout {
 	return w
 }
 
-func WorkoutSlice(workouts []*training.Workout, personalBests []*training.Set) []*apiv1.Workout {
+// WorkoutSlice renders a list of workouts for one athlete: viewerID is who is
+// reading them, which is what makes each workout's rep theirs or not.
+func WorkoutSlice(workouts []*training.Workout, personalBests []*training.Set, viewerID uuid.UUID) []*apiv1.Workout {
 	workoutSlice := make([]*apiv1.Workout, 0, len(workouts))
 	for _, workout := range workouts {
-		var workoutOpts []WorkoutOpt
+		workoutOpts := []WorkoutOpt{WorkoutLikes(workout, viewerID)}
 		if workout.Sets != nil {
 			workoutOpts = append(
 				workoutOpts,
@@ -522,26 +535,51 @@ func NotificationActor(nType notification.Type, actor *account.User) Notificatio
 			}
 
 			n.GetType().(*apiv1.Notification_WorkoutComment_).WorkoutComment.Actor = User(actor) //nolint:forcetypeassert
+		case notification.TypeWorkoutLike:
+			if _, ok := n.GetType().(*apiv1.Notification_WorkoutLike_); !ok {
+				n.Type = &apiv1.Notification_WorkoutLike_{
+					WorkoutLike: &apiv1.Notification_WorkoutLike{
+						Actor:   nil,
+						Workout: nil,
+					},
+				}
+			}
+
+			n.GetType().(*apiv1.Notification_WorkoutLike_).WorkoutLike.Actor = User(actor) //nolint:forcetypeassert
 		}
 	}
 }
 
 func NotificationWorkout(nType notification.Type, workout *training.Workout) NotificationOpt {
 	return func(n *apiv1.Notification) {
-		if nType != notification.TypeWorkoutComment || workout == nil {
+		if workout == nil {
 			return
 		}
 
-		if _, ok := n.GetType().(*apiv1.Notification_WorkoutComment_); !ok {
-			n.Type = &apiv1.Notification_WorkoutComment_{
-				WorkoutComment: &apiv1.Notification_WorkoutComment{
-					Actor:   nil,
-					Workout: nil,
-				},
+		switch nType {
+		case notification.TypeWorkoutComment:
+			if _, ok := n.GetType().(*apiv1.Notification_WorkoutComment_); !ok {
+				n.Type = &apiv1.Notification_WorkoutComment_{
+					WorkoutComment: &apiv1.Notification_WorkoutComment{
+						Actor:   nil,
+						Workout: nil,
+					},
+				}
 			}
-		}
 
-		n.Type.(*apiv1.Notification_WorkoutComment_).WorkoutComment.Workout = Workout(workout) //nolint:forcetypeassert
+			n.Type.(*apiv1.Notification_WorkoutComment_).WorkoutComment.Workout = Workout(workout) //nolint:forcetypeassert
+		case notification.TypeWorkoutLike:
+			if _, ok := n.GetType().(*apiv1.Notification_WorkoutLike_); !ok {
+				n.Type = &apiv1.Notification_WorkoutLike_{
+					WorkoutLike: &apiv1.Notification_WorkoutLike{
+						Actor:   nil,
+						Workout: nil,
+					},
+				}
+			}
+
+			n.Type.(*apiv1.Notification_WorkoutLike_).WorkoutLike.Workout = Workout(workout) //nolint:forcetypeassert
+		}
 	}
 }
 
@@ -588,7 +626,7 @@ func NotificationSlice(
 					NotificationActor(n.Type, actor),
 				))
 			}
-		case notification.TypeWorkoutComment:
+		case notification.TypeWorkoutComment, notification.TypeWorkoutLike:
 			if actorExists && workoutExists {
 				nSlice = append(nSlice, Notification(
 					n,
@@ -602,9 +640,9 @@ func NotificationSlice(
 	return nSlice
 }
 
-func FeedItemSlice(workouts []*training.Workout, personalBests []*training.Set) []*apiv1.FeedItem {
+func FeedItemSlice(workouts []*training.Workout, personalBests []*training.Set, viewerID uuid.UUID) []*apiv1.FeedItem {
 	items := make([]*apiv1.FeedItem, 0, len(workouts))
-	for i, workout := range WorkoutSlice(workouts, personalBests) {
+	for i, workout := range WorkoutSlice(workouts, personalBests, viewerID) {
 		items = append(items, &apiv1.FeedItem{
 			Type: &apiv1.FeedItem_Workout{
 				Workout: workout,

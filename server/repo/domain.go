@@ -115,6 +115,9 @@ func workoutFromRow(row *models.Workout) *training.Workout {
 		// link would convert the workout again, and its comments, without end.
 		workout.Comments = fromRows(row.R.WorkoutComments, workoutCommentWithoutWorkout)
 	}
+	if row.R.WorkoutLikes != nil {
+		workout.Likes = fromRows(row.R.WorkoutLikes, workoutLikeFromRow)
+	}
 	if row.R.Sets != nil {
 		workout.Sets = setsFromRows(row.R.Sets)
 	}
@@ -124,6 +127,15 @@ func workoutFromRow(row *models.Workout) *training.Workout {
 
 func workoutsFromRows(rows models.WorkoutSlice) []*training.Workout {
 	return fromRows(rows, workoutFromRow)
+}
+
+func workoutLikeFromRow(row *models.WorkoutLike) *training.WorkoutLike {
+	return &training.WorkoutLike{
+		ID:        row.ID,
+		UserID:    row.UserID,
+		WorkoutID: row.WorkoutID,
+		CreatedAt: row.CreatedAt,
+	}
 }
 
 func setFromRow(row *models.Set) *training.Set {

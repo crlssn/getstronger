@@ -133,6 +133,37 @@ func (s *notificationSuite) TestGetUnreadNotificationCount() {
 	s.Equal(int64(1), res.Msg.GetCount())
 }
 
+// A rep reaches the owner's list as its own type, naming who repped and which
+// session they repped.
+func (s *notificationSuite) TestListNotificationsRendersARep() {
+	owner := s.testFactory.NewUser()
+	liker := s.testFactory.NewUser()
+	workout := s.testFactory.NewWorkout(factory.WorkoutUserID(owner.ID))
+	s.testFactory.NewNotification(
+		factory.NotificationUserID(owner.ID),
+		factory.NotificationType(notification.TypeWorkoutLike),
+		factory.NotificationPayload(notification.Payload{
+			ActorID:   liker.ID,
+			EventID:   notification.WorkoutLikeEventID(liker.ID, workout.ID),
+			WorkoutID: workout.ID,
+		}),
+	)
+
+	ctx := xcontext.WithUserID(context.Background(), owner.ID)
+	ctx = xcontext.WithLogger(ctx, zap.NewExample())
+	res, err := s.handler.ListNotifications(ctx, connect.NewRequest(&apiv1.ListNotificationsRequest{
+		Pagination: &apiv1.PaginationRequest{PageLimit: 100},
+	}))
+	s.Require().NoError(err)
+	s.Require().Len(res.Msg.GetNotifications(), 1)
+
+	repped := res.Msg.GetNotifications()[0]
+	s.Require().Equal(liker.ID.String(), repped.GetWorkoutLike().GetActor().GetId())
+	s.Require().Equal(workout.ID.String(), repped.GetWorkoutLike().GetWorkout().GetId())
+	s.Require().Nil(repped.GetWorkoutComment())
+	s.Require().Nil(repped.GetUserFollowed())
+}
+
 func (s *notificationSuite) TestListNotifications() {
 	type expected struct {
 		err error

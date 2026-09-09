@@ -128,6 +128,73 @@ func TestWorkoutCommentPosted_HandlePayload(t *testing.T) {
 	})
 }
 
+func TestWorkoutLiked_HandlePayload(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	c := container.NewContainer(ctx)
+	f := factory.NewFactory(c.DB)
+	handler := handlers.NewWorkoutLiked(zap.NewExample(), repo.New(c.DB))
+
+	t.Run("ok_the_owner_is_told_once", func(t *testing.T) {
+		t.Parallel()
+		owner := f.NewUser()
+		liker := f.NewUser()
+		workout := f.NewWorkout(factory.WorkoutUserID(owner.ID))
+		payload := events.WorkoutLiked{
+			ActorID:   liker.ID,
+			WorkoutID: workout.ID,
+			EventID:   notification.WorkoutLikeEventID(liker.ID, workout.ID),
+		}
+
+		// Un-repping and repping again replays the same event, which the
+		// derived id is what makes harmless.
+		handler.HandlePayload(payload)
+		handler.HandlePayload(payload)
+
+		count, err := models.Notifications.Query(
+			models.SelectWhere.Notifications.UserID.EQ(owner.ID),
+		).Count(ctx, bob.NewDB(c.DB))
+		require.NoError(t, err)
+		require.Equal(t, 1, int(count))
+
+		exists, err := models.Notifications.Query(
+			models.SelectWhere.Notifications.UserID.EQ(liker.ID),
+		).Exists(ctx, bob.NewDB(c.DB))
+		require.NoError(t, err)
+		require.False(t, exists)
+	})
+
+	t.Run("ok_repping_your_own_workout_tells_nobody", func(t *testing.T) {
+		t.Parallel()
+		owner := f.NewUser()
+		workout := f.NewWorkout(factory.WorkoutUserID(owner.ID))
+
+		handler.HandlePayload(events.WorkoutLiked{
+			ActorID:   owner.ID,
+			WorkoutID: workout.ID,
+			EventID:   notification.WorkoutLikeEventID(owner.ID, workout.ID),
+		})
+
+		exists, err := models.Notifications.Query(
+			models.SelectWhere.Notifications.UserID.EQ(owner.ID),
+		).Exists(ctx, bob.NewDB(c.DB))
+		require.NoError(t, err)
+		require.False(t, exists)
+	})
+
+	t.Run("ok_invalid_payload", func(t *testing.T) {
+		t.Parallel()
+		handler.HandlePayload("invalid_payload")
+	})
+
+	t.Cleanup(func() {
+		if err := c.Terminate(ctx); err != nil {
+			t.Fatal(fmt.Errorf("terminate container: %w", err))
+		}
+	})
+}
+
 func TestFollowedUser_HandlePayload(t *testing.T) {
 	t.Parallel()
 
@@ -227,6 +294,36 @@ func TestHandlersSurviveAFailingStore(t *testing.T) {
 			})
 	})
 
+	t.Run("workout_liked_unreadable_workout", func(t *testing.T) {
+		t.Parallel()
+		workouts := handlers.NewMockLikedWorkout(controller)
+		workouts.EXPECT().GetWorkout(gomock.Any(), gomock.Any()).Return(nil, errStore)
+
+		handlers.NewWorkoutLiked(zap.NewExample(), workouts).
+			HandlePayload(events.WorkoutLiked{
+				ActorID:   uuid.Must(uuid.NewV4()),
+				WorkoutID: uuid.Must(uuid.NewV4()),
+				EventID:   uuid.Must(uuid.NewV4()),
+			})
+	})
+
+	t.Run("workout_liked_unwritable_notification", func(t *testing.T) {
+		t.Parallel()
+		workoutID := uuid.Must(uuid.NewV4())
+
+		workouts := handlers.NewMockLikedWorkout(controller)
+		workouts.EXPECT().GetWorkout(gomock.Any(), gomock.Any()).
+			Return(&training.Workout{ID: workoutID, UserID: uuid.Must(uuid.NewV4())}, nil)
+		workouts.EXPECT().CreateNotification(gomock.Any(), gomock.Any()).Return(errStore)
+
+		handlers.NewWorkoutLiked(zap.NewExample(), workouts).
+			HandlePayload(events.WorkoutLiked{
+				ActorID:   uuid.Must(uuid.NewV4()),
+				WorkoutID: workoutID,
+				EventID:   uuid.Must(uuid.NewV4()),
+			})
+	})
+
 	t.Run("workout_comment_unwritable_notification", func(t *testing.T) {
 		t.Parallel()
 		commenter := uuid.Must(uuid.NewV4())
@@ -274,5 +371,17 @@ func TestHandlersDropAnEventWithoutAnID(t *testing.T) {
 
 		handlers.NewWorkoutCommentPosted(zap.NewExample(), comments).
 			HandlePayload(events.WorkoutCommentPosted{CommentID: uuid.Must(uuid.NewV4())})
+	})
+
+	t.Run("workout_liked", func(t *testing.T) {
+		t.Parallel()
+		workouts := handlers.NewMockLikedWorkout(controller)
+		workouts.EXPECT().GetWorkout(gomock.Any(), gomock.Any()).Times(0)
+
+		handlers.NewWorkoutLiked(zap.NewExample(), workouts).
+			HandlePayload(events.WorkoutLiked{
+				ActorID:   uuid.Must(uuid.NewV4()),
+				WorkoutID: uuid.Must(uuid.NewV4()),
+			})
 	})
 }

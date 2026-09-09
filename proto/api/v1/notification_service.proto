@@ -39,6 +39,10 @@ message Notification {
     User actor = 1;
     Workout workout = 2;
   }
+  message WorkoutLike {
+    User actor = 1;
+    Workout workout = 2;
+  }
 
   string id = 1;
   // DEBT: This should be a timestamp but the client is not able to parse it.
@@ -46,6 +50,7 @@ message Notification {
   oneof type {
     UserFollowed user_followed = 3;
     WorkoutComment workout_comment = 4;
+    WorkoutLike workout_like = 6;
   }
   bool read = 5;
 }

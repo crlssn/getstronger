@@ -16,6 +16,7 @@ type RegistryParams struct {
 	FollowedUser         *FollowedUser
 	RequestTraced        *RequestTraced
 	WorkoutCommentPosted *WorkoutCommentPosted
+	WorkoutLiked         *WorkoutLiked
 }
 
 func NewRegistry(p RegistryParams) *Registry {
@@ -24,6 +25,7 @@ func NewRegistry(p RegistryParams) *Registry {
 			events.TopicFollowedUser:         p.FollowedUser,
 			events.TopicRequestTraced:        p.RequestTraced,
 			events.TopicWorkoutCommentPosted: p.WorkoutCommentPosted,
+			events.TopicWorkoutLiked:         p.WorkoutLiked,
 		},
 	}
 }

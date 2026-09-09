@@ -44,6 +44,7 @@ func (h *feedHandler) ListFeedItems(ctx context.Context, req *connect.Request[ap
 		repo.ListWorkoutsLoadSets(),
 		repo.ListWorkoutsLoadUser(),
 		repo.ListWorkoutsLoadComments(),
+		repo.ListWorkoutsLoadLikes(),
 		repo.ListWorkoutsLoadExercises(),
 		repo.ListWorkoutsWithLimit(limit + 1),
 		repo.ListWorkoutsWithPageToken(req.Msg.GetPagination().GetPageToken()),
@@ -86,7 +87,7 @@ func (h *feedHandler) ListFeedItems(ctx context.Context, req *connect.Request[ap
 
 	return &connect.Response[apiv1.ListFeedItemsResponse]{
 		Msg: &apiv1.ListFeedItemsResponse{
-			Items: parser.FeedItemSlice(paginated.Items, personalBests),
+			Items: parser.FeedItemSlice(paginated.Items, personalBests, userID),
 			Pagination: &apiv1.PaginationResponse{
 				NextPageToken: paginated.NextPageToken,
 			},

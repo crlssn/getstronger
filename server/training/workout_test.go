@@ -36,6 +36,19 @@ func TestWorkoutName(t *testing.T) {
 	require.Equal(t, training.QuickWorkoutName, training.WorkoutName("", ""))
 }
 
+func TestWorkoutLikedBy(t *testing.T) {
+	t.Parallel()
+
+	athlete, other := uuid.Must(uuid.NewV4()), uuid.Must(uuid.NewV4())
+	workout := &training.Workout{
+		Likes: []*training.WorkoutLike{{UserID: other}},
+	}
+
+	require.False(t, workout.LikedBy(athlete))
+	require.True(t, workout.LikedBy(other))
+	require.False(t, (&training.Workout{}).LikedBy(athlete))
+}
+
 func TestTotalVolume(t *testing.T) {
 	t.Parallel()
 

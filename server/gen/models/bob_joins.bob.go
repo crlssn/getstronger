@@ -45,6 +45,7 @@ type joins[Q dialect.Joinable] struct {
 	WorkoutComments       joinSet[workoutCommentJoins[Q]]
 	WorkoutGroupExercises joinSet[workoutGroupExerciseJoins[Q]]
 	WorkoutGroups         joinSet[workoutGroupJoins[Q]]
+	WorkoutLikes          joinSet[workoutLikeJoins[Q]]
 	Workouts              joinSet[workoutJoins[Q]]
 }
 
@@ -73,6 +74,7 @@ func getJoins[Q dialect.Joinable]() joins[Q] {
 		WorkoutComments:       buildJoinSet[workoutCommentJoins[Q]](WorkoutComments.Columns, buildWorkoutCommentJoins),
 		WorkoutGroupExercises: buildJoinSet[workoutGroupExerciseJoins[Q]](WorkoutGroupExercises.Columns, buildWorkoutGroupExerciseJoins),
 		WorkoutGroups:         buildJoinSet[workoutGroupJoins[Q]](WorkoutGroups.Columns, buildWorkoutGroupJoins),
+		WorkoutLikes:          buildJoinSet[workoutLikeJoins[Q]](WorkoutLikes.Columns, buildWorkoutLikeJoins),
 		Workouts:              buildJoinSet[workoutJoins[Q]](Workouts.Columns, buildWorkoutJoins),
 	}
 }

@@ -19,6 +19,13 @@ type NotificationStore interface {
 	CreateNotification(ctx context.Context, p repo.CreateNotificationParams) error
 }
 
+// LikedWorkout reads back the workout an event refers to, so that its owner is
+// who gets told about the rep.
+type LikedWorkout interface {
+	NotificationStore
+	GetWorkout(ctx context.Context, opts ...repo.GetWorkoutOpt) (*training.Workout, error)
+}
+
 // CommentThread reads back the comment an event refers to, together with the
 // conversation it joined, so that the audience can be worked out.
 type CommentThread interface {

@@ -18,6 +18,7 @@ func bindStore() fx.Option {
 		func(r *repo.Repo) EventStore { return r },
 		func(r *repo.Repo) handlers.TraceStore { return r },
 		func(r *repo.Repo) handlers.CommentThread { return r },
+		func(r *repo.Repo) handlers.LikedWorkout { return r },
 		func(r *repo.Repo) handlers.NotificationStore { return r },
 	)
 }
@@ -31,6 +32,7 @@ func Module() fx.Option {
 			handlers.NewFollowedUser,
 			handlers.NewRequestTraced,
 			handlers.NewWorkoutCommentPosted,
+			handlers.NewWorkoutLiked,
 		),
 		fx.Invoke(
 			func(lc fx.Lifecycle, pubSub *PubSub, registry *handlers.Registry) {

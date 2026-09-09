@@ -353,3 +353,37 @@ func (s *Saga) GetWorkout(ctx context.Context, f func(*connect.Response[apiv1.Ge
 
 	return s
 }
+
+func (s *Saga) LikeWorkout(ctx context.Context, f func(*connect.Response[apiv1.LikeWorkoutResponse], error)) *Saga {
+	workout, err := models.Workouts.Query().One(ctx, bob.NewDB(s.db))
+	if err != nil {
+		f(nil, fmt.Errorf("load workout: %w", err))
+		return s
+	}
+
+	client := apiv1connect.NewWorkoutServiceClient(s.client(), s.baseURL)
+	f(client.LikeWorkout(ctx, &connect.Request[apiv1.LikeWorkoutRequest]{
+		Msg: &apiv1.LikeWorkoutRequest{
+			WorkoutId: workout.ID.String(),
+		},
+	}))
+
+	return s
+}
+
+func (s *Saga) UnlikeWorkout(ctx context.Context, f func(*connect.Response[apiv1.UnlikeWorkoutResponse], error)) *Saga {
+	workout, err := models.Workouts.Query().One(ctx, bob.NewDB(s.db))
+	if err != nil {
+		f(nil, fmt.Errorf("load workout: %w", err))
+		return s
+	}
+
+	client := apiv1connect.NewWorkoutServiceClient(s.client(), s.baseURL)
+	f(client.UnlikeWorkout(ctx, &connect.Request[apiv1.UnlikeWorkoutRequest]{
+		Msg: &apiv1.UnlikeWorkoutRequest{
+			WorkoutId: workout.ID.String(),
+		},
+	}))
+
+	return s
+}

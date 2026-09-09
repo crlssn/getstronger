@@ -2,6 +2,7 @@ package training
 
 import (
 	"errors"
+	"slices"
 	"time"
 
 	"github.com/gofrs/uuid/v5"
@@ -133,7 +134,17 @@ type Workout struct {
 
 	User     *account.User
 	Comments []*WorkoutComment
+	Likes    []*WorkoutLike
 	Sets     []*Set
+}
+
+// LikedBy reports whether the athlete has repped the workout. It reads the
+// likes the workout was loaded with, so a read that did not ask for them
+// answers no.
+func (w *Workout) LikedBy(userID uuid.UUID) bool {
+	return slices.ContainsFunc(w.Likes, func(like *WorkoutLike) bool {
+		return like.UserID == userID
+	})
 }
 
 // Set is one set of one exercise within a workout. Weight is stored in
@@ -160,6 +171,16 @@ type Set struct {
 
 	// Exercise is the exercise the set is of, when the read loaded it.
 	Exercise *Exercise
+}
+
+// WorkoutLike is one athlete acknowledging another's session. The schema and
+// the API call it a like; the copy calls it a rep, because reps already mean
+// the repetitions in a set.
+type WorkoutLike struct {
+	ID        uuid.UUID
+	UserID    uuid.UUID
+	WorkoutID uuid.UUID
+	CreatedAt time.Time
 }
 
 // WorkoutComment is something somebody said about a workout.
