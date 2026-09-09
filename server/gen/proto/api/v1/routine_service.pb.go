@@ -24,9 +24,11 @@ const (
 )
 
 type CreateRoutineRequest struct {
-	state       protoimpl.MessageState `protogen:"open.v1"`
-	Name        string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	ExerciseIds []string               `protobuf:"bytes,2,rep,name=exercise_ids,json=exerciseIds,proto3" json:"exercise_ids,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Name  string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	// A hundred is more exercises than a routine is ever trained with, and far
+	// below the bind parameters the insert spends one of per id.
+	ExerciseIds []string `protobuf:"bytes,2,rep,name=exercise_ids,json=exerciseIds,proto3" json:"exercise_ids,omitempty"`
 	// Optional. When set, it describes how exercise_ids are grouped; when empty,
 	// the routine gets a single straight-sets group holding every exercise.
 	Groups        []*RoutineGroup `protobuf:"bytes,3,rep,name=groups,proto3" json:"groups,omitempty"`
@@ -1848,10 +1850,10 @@ var File_api_v1_routine_service_proto protoreflect.FileDescriptor
 
 const file_api_v1_routine_service_proto_rawDesc = "" +
 	"\n" +
-	"\x1capi/v1/routine_service.proto\x12\x06api.v1\x1a\x13api/v1/shared.proto\x1a\x1capi/v1/workout_service.proto\x1a\x1bbuf/validate/validate.proto\"\x95\x01\n" +
+	"\x1capi/v1/routine_service.proto\x12\x06api.v1\x1a\x13api/v1/shared.proto\x1a\x1capi/v1/workout_service.proto\x1a\x1bbuf/validate/validate.proto\"\x97\x01\n" +
 	"\x14CreateRoutineRequest\x12\x1b\n" +
-	"\x04name\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x04name\x122\n" +
-	"\fexercise_ids\x18\x02 \x03(\tB\x0f\xbaH\f\x92\x01\t\b\x01\"\x05r\x03\xb0\x01\x01R\vexerciseIds\x12,\n" +
+	"\x04name\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x04name\x124\n" +
+	"\fexercise_ids\x18\x02 \x03(\tB\x11\xbaH\x0e\x92\x01\v\b\x01\x10d\"\x05r\x03\xb0\x01\x01R\vexerciseIds\x12,\n" +
 	"\x06groups\x18\x03 \x03(\v2\x14.api.v1.RoutineGroupR\x06groups\"'\n" +
 	"\x15CreateRoutineResponse\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\"-\n" +
@@ -1881,11 +1883,11 @@ const file_api_v1_routine_service_proto_rawDesc = "" +
 	"routine_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\troutineId\x12)\n" +
 	"\vexercise_id\x18\x02 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\n" +
 	"exerciseId\"\x15\n" +
-	"\x13AddExerciseResponse\"y\n" +
+	"\x13AddExerciseResponse\"{\n" +
 	"\x1aUpdateExerciseOrderRequest\x12'\n" +
 	"\n" +
-	"routine_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\troutineId\x122\n" +
-	"\fexercise_ids\x18\x02 \x03(\tB\x0f\xbaH\f\x92\x01\t\b\x01\"\x05r\x03\xb0\x01\x01R\vexerciseIds\"\x1d\n" +
+	"routine_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\troutineId\x124\n" +
+	"\fexercise_ids\x18\x02 \x03(\tB\x11\xbaH\x0e\x92\x01\v\b\x01\x10d\"\x05r\x03\xb0\x01\x01R\vexerciseIds\"\x1d\n" +
 	"\x1bUpdateExerciseOrderResponse\"T\n" +
 	"\x13GetDashboardRequest\x12=\n" +
 	"\x14preferred_routine_id\x18\x01 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\xb0\x01\x01R\x12preferredRoutineId\"\xc7\x03\n" +
@@ -1921,10 +1923,10 @@ const file_api_v1_routine_service_proto_rawDesc = "" +
 	"\bexercise\x18\x01 \x01(\v2\x10.api.v1.ExerciseR\bexercise\x12-\n" +
 	"\frest_seconds\x18\x02 \x01(\x05B\n" +
 	"\xbaH\a\x1a\x05\x18\x90\x1c(\x00R\vrestSeconds\x12C\n" +
-	"\x17target_duration_seconds\x18\x03 \x01(\x05B\v\xbaH\b\x1a\x06\x18\x80\xa3\x05(\x00R\x15targetDurationSeconds\"d\n" +
+	"\x17target_duration_seconds\x18\x03 \x01(\x05B\v\xbaH\b\x1a\x06\x18\x80\xa3\x05(\x00R\x15targetDurationSeconds\"f\n" +
 	"\x11CreatePlanRequest\x12\x1b\n" +
-	"\x04name\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x04name\x122\n" +
-	"\vroutine_ids\x18\x02 \x03(\tB\x11\xbaH\x0e\x92\x01\v\b\x01\x18\x01\"\x05r\x03\xb0\x01\x01R\n" +
+	"\x04name\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x04name\x124\n" +
+	"\vroutine_ids\x18\x02 \x03(\tB\x13\xbaH\x10\x92\x01\r\b\x01\x10d\x18\x01\"\x05r\x03\xb0\x01\x01R\n" +
 	"routineIds\"6\n" +
 	"\x12CreatePlanResponse\x12 \n" +
 	"\x04plan\x18\x01 \x01(\v2\f.api.v1.PlanR\x04plan\"*\n" +
@@ -1934,11 +1936,11 @@ const file_api_v1_routine_service_proto_rawDesc = "" +
 	"\x04plan\x18\x01 \x01(\v2\f.api.v1.PlanR\x04plan\"\x12\n" +
 	"\x10ListPlansRequest\"7\n" +
 	"\x11ListPlansResponse\x12\"\n" +
-	"\x05plans\x18\x01 \x03(\v2\f.api.v1.PlanR\x05plans\"~\n" +
+	"\x05plans\x18\x01 \x03(\v2\f.api.v1.PlanR\x05plans\"\x80\x01\n" +
 	"\x11UpdatePlanRequest\x12\x18\n" +
 	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x02id\x12\x1b\n" +
-	"\x04name\x18\x02 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x04name\x122\n" +
-	"\vroutine_ids\x18\x03 \x03(\tB\x11\xbaH\x0e\x92\x01\v\b\x01\x18\x01\"\x05r\x03\xb0\x01\x01R\n" +
+	"\x04name\x18\x02 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x04name\x124\n" +
+	"\vroutine_ids\x18\x03 \x03(\tB\x13\xbaH\x10\x92\x01\r\b\x01\x10d\x18\x01\"\x05r\x03\xb0\x01\x01R\n" +
 	"routineIds\"6\n" +
 	"\x12UpdatePlanResponse\x12 \n" +
 	"\x04plan\x18\x01 \x01(\v2\f.api.v1.PlanR\x04plan\"-\n" +

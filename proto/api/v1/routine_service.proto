@@ -28,7 +28,9 @@ service RoutineService {
 
 message CreateRoutineRequest {
   string name = 1 [(buf.validate.field).string.min_len = 1];
-  repeated string exercise_ids = 2 [(buf.validate.field).repeated = { min_items: 1, items: { string: { uuid: true }}}];
+  // A hundred is more exercises than a routine is ever trained with, and far
+  // below the bind parameters the insert spends one of per id.
+  repeated string exercise_ids = 2 [(buf.validate.field).repeated = { min_items: 1, max_items: 100, items: { string: { uuid: true }}}];
   // Optional. When set, it describes how exercise_ids are grouped; when empty,
   // the routine gets a single straight-sets group holding every exercise.
   repeated RoutineGroup groups = 3;
@@ -73,7 +75,7 @@ message AddExerciseResponse {}
 
 message UpdateExerciseOrderRequest {
   string routine_id = 1 [(buf.validate.field).string.uuid = true];
-  repeated string exercise_ids = 2 [(buf.validate.field).repeated = { min_items: 1, items: { string: { uuid: true }}}];
+  repeated string exercise_ids = 2 [(buf.validate.field).repeated = { min_items: 1, max_items: 100, items: { string: { uuid: true }}}];
 }
 message UpdateExerciseOrderResponse {}
 
@@ -153,7 +155,7 @@ message RoutineExercise {
 
 message CreatePlanRequest {
   string name = 1 [(buf.validate.field).string.min_len = 1];
-  repeated string routine_ids = 2 [(buf.validate.field).repeated = {min_items: 1, unique: true, items: {string: {uuid: true}}}];
+  repeated string routine_ids = 2 [(buf.validate.field).repeated = {min_items: 1, max_items: 100, unique: true, items: {string: {uuid: true}}}];
 }
 message CreatePlanResponse {
   Plan plan = 1;
@@ -174,7 +176,7 @@ message ListPlansResponse {
 message UpdatePlanRequest {
   string id = 1 [(buf.validate.field).string.uuid = true];
   string name = 2 [(buf.validate.field).string.min_len = 1];
-  repeated string routine_ids = 3 [(buf.validate.field).repeated = {min_items: 1, unique: true, items: {string: {uuid: true}}}];
+  repeated string routine_ids = 3 [(buf.validate.field).repeated = {min_items: 1, max_items: 100, unique: true, items: {string: {uuid: true}}}];
 }
 message UpdatePlanResponse {
   Plan plan = 1;

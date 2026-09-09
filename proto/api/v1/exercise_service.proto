@@ -72,7 +72,7 @@ message DeleteExerciseResponse {}
 
 message ListExercisesRequest {
   string name = 1;
-  repeated string exercise_ids = 2 [(buf.validate.field).repeated.items.string.uuid = true];
+  repeated string exercise_ids = 2 [(buf.validate.field).repeated = { max_items: 100, items: { string: { uuid: true }}}];
   PaginationRequest pagination = 3 [(buf.validate.field).required = true];
 }
 message ListExercisesResponse {
@@ -81,7 +81,7 @@ message ListExercisesResponse {
 }
 
 message GetPreviousWorkoutSetsRequest {
-  repeated string exercise_ids = 1 [(buf.validate.field).repeated.items.string.uuid = true];
+  repeated string exercise_ids = 1 [(buf.validate.field).repeated = { max_items: 100, items: { string: { uuid: true }}}];
 }
 message GetPreviousWorkoutSetsResponse {
   repeated ExerciseSets exercise_sets = 1;

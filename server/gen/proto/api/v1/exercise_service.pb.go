@@ -819,11 +819,10 @@ const file_api_v1_exercise_service_proto_rawDesc = "" +
 	"\bexercise\x18\x01 \x01(\v2\x10.api.v1.ExerciseR\bexercise\"1\n" +
 	"\x15DeleteExerciseRequest\x12\x18\n" +
 	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x02id\"\x18\n" +
-	"\x16DeleteExerciseResponse\"\x9f\x01\n" +
+	"\x16DeleteExerciseResponse\"\xa1\x01\n" +
 	"\x14ListExercisesRequest\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name\x120\n" +
-	"\fexercise_ids\x18\x02 \x03(\tB\r\xbaH\n" +
-	"\x92\x01\a\"\x05r\x03\xb0\x01\x01R\vexerciseIds\x12A\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x122\n" +
+	"\fexercise_ids\x18\x02 \x03(\tB\x0f\xbaH\f\x92\x01\t\x10d\"\x05r\x03\xb0\x01\x01R\vexerciseIds\x12A\n" +
 	"\n" +
 	"pagination\x18\x03 \x01(\v2\x19.api.v1.PaginationRequestB\x06\xbaH\x03\xc8\x01\x01R\n" +
 	"pagination\"\x83\x01\n" +
@@ -831,10 +830,9 @@ const file_api_v1_exercise_service_proto_rawDesc = "" +
 	"\texercises\x18\x01 \x03(\v2\x10.api.v1.ExerciseR\texercises\x12:\n" +
 	"\n" +
 	"pagination\x18\x02 \x01(\v2\x1a.api.v1.PaginationResponseR\n" +
-	"pagination\"Q\n" +
-	"\x1dGetPreviousWorkoutSetsRequest\x120\n" +
-	"\fexercise_ids\x18\x01 \x03(\tB\r\xbaH\n" +
-	"\x92\x01\a\"\x05r\x03\xb0\x01\x01R\vexerciseIds\"[\n" +
+	"pagination\"S\n" +
+	"\x1dGetPreviousWorkoutSetsRequest\x122\n" +
+	"\fexercise_ids\x18\x01 \x03(\tB\x0f\xbaH\f\x92\x01\t\x10d\"\x05r\x03\xb0\x01\x01R\vexerciseIds\"[\n" +
 	"\x1eGetPreviousWorkoutSetsResponse\x129\n" +
 	"\rexercise_sets\x18\x01 \x03(\v2\x14.api.v1.ExerciseSetsR\fexerciseSets\"<\n" +
 	"\x17GetPersonalBestsRequest\x12!\n" +

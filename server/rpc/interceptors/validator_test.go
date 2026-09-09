@@ -277,31 +277,103 @@ func TestValidatorAllowsAnOmittedOptionalID(t *testing.T) {
 	}
 }
 
-// ListSets turns its id lists into an IN clause, so the schema bounds them the
-// way the page limit above them is bounded.
+// Every id list becomes an IN clause: one bind parameter per id, and Postgres
+// refuses the query above 65,535 of them, so the schema bounds each list the
+// way the page limit above it is bounded rather than answering a malformed
+// request with an internal error.
 func TestValidatorRejectsAnUnboundedIDList(t *testing.T) {
 	t.Parallel()
 	validator, err := protovalidate.New()
 	require.NoError(t, err)
 
-	ids := make([]string, 101)
+	for name, req := range idListRequests(101) {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			reached := false
+			next := func(_ context.Context, _ connect.AnyRequest) (connect.AnyResponse, error) {
+				reached = true
+				return connect.NewResponse(&apiv1.ListWorkoutsResponse{}), nil
+			}
+			interceptor := newValidator(zap.NewNop(), validator)
+
+			_, err := interceptor.WrapUnary(next)(context.Background(), req)
+			require.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
+			require.False(t, reached)
+		})
+	}
+}
+
+// A list of exactly the ceiling still reaches the handler.
+func TestValidatorAllowsAFullIDList(t *testing.T) {
+	t.Parallel()
+	validator, err := protovalidate.New()
+	require.NoError(t, err)
+
+	for name, req := range idListRequests(100) {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			called := false
+			next := func(_ context.Context, _ connect.AnyRequest) (connect.AnyResponse, error) {
+				called = true
+				return connect.NewResponse(&apiv1.ListWorkoutsResponse{}), nil
+			}
+			interceptor := newValidator(zap.NewNop(), validator)
+
+			_, err := interceptor.WrapUnary(next)(context.Background(), req)
+			require.NoError(t, err)
+			require.True(t, called)
+		})
+	}
+}
+
+// One request per bounded id list, each carrying n distinct ids.
+func idListRequests(n int) map[string]connect.AnyRequest {
+	ids := make([]string, n)
 	for i := range ids {
 		ids[i] = uuid.Must(uuid.NewV4()).String()
 	}
 
-	reached := false
-	next := func(_ context.Context, _ connect.AnyRequest) (connect.AnyResponse, error) {
-		reached = true
-		return connect.NewResponse(&apiv1.ListSetsResponse{}), nil
+	page := &apiv1.PaginationRequest{PageLimit: 10}
+	return map[string]connect.AnyRequest{
+		"list sets by user": connect.NewRequest(&apiv1.ListSetsRequest{
+			UserIds:    ids,
+			Pagination: page,
+		}),
+		"list sets by exercise": connect.NewRequest(&apiv1.ListSetsRequest{
+			ExerciseIds: ids,
+			Pagination:  page,
+		}),
+		"list workouts": connect.NewRequest(&apiv1.ListWorkoutsRequest{
+			UserIds:    ids,
+			Pagination: page,
+		}),
+		"list exercises": connect.NewRequest(&apiv1.ListExercisesRequest{
+			ExerciseIds: ids,
+			Pagination:  page,
+		}),
+		"previous workout sets": connect.NewRequest(&apiv1.GetPreviousWorkoutSetsRequest{
+			ExerciseIds: ids,
+		}),
+		"create routine": connect.NewRequest(&apiv1.CreateRoutineRequest{
+			Name:        "Push",
+			ExerciseIds: ids,
+		}),
+		"update exercise order": connect.NewRequest(&apiv1.UpdateExerciseOrderRequest{
+			RoutineId:   uuid.Must(uuid.NewV4()).String(),
+			ExerciseIds: ids,
+		}),
+		"create plan": connect.NewRequest(&apiv1.CreatePlanRequest{
+			Name:       "Base",
+			RoutineIds: ids,
+		}),
+		"update plan": connect.NewRequest(&apiv1.UpdatePlanRequest{
+			Id:         uuid.Must(uuid.NewV4()).String(),
+			Name:       "Base",
+			RoutineIds: ids,
+		}),
 	}
-	interceptor := newValidator(zap.NewNop(), validator)
-
-	_, err = interceptor.WrapUnary(next)(context.Background(), connect.NewRequest(&apiv1.ListSetsRequest{
-		ExerciseIds: ids,
-		Pagination:  &apiv1.PaginationRequest{PageLimit: 10},
-	}))
-	require.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
-	require.False(t, reached)
 }
 
 // The idempotency key is optional, but one that is sent has to be a UUID.
