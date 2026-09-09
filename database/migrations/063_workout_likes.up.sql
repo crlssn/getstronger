@@ -18,5 +18,10 @@ CREATE TABLE public.workout_likes
 -- unique constraint already indexes user_id as its leading column.
 CREATE INDEX ON public.workout_likes (workout_id);
 
+-- Both enums are read by name and never ordered by, so where a new value lands
+-- in the enum carries no meaning. Pinning it after a neighbour would only tie
+-- this migration to whichever value happens to be last today.
+-- squawk-ignore require-enum-value-ordering
 ALTER TYPE public.notification_type ADD VALUE IF NOT EXISTS 'WorkoutLike';
+-- squawk-ignore require-enum-value-ordering
 ALTER TYPE public.event_topic ADD VALUE IF NOT EXISTS 'WorkoutLiked';
