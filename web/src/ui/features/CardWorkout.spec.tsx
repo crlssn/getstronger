@@ -278,12 +278,36 @@ describe('CardWorkout', () => {
       expect(lines[1].style.stroke).toBe('var(--color-route-2)')
     })
 
+    // The shape says more about the session than the author's initials do, and
+    // the handle beside it already names the author.
+    test('gives the route the tile the initials would have held', () => {
+      render(<CardWorkout compact workout={recorded()} />)
+
+      expect(screen.queryByText('AL')).not.toBeInTheDocument()
+    })
+
     // The tile is the avatar's own 44px, so a feed of lifts is the height it
     // has always been.
     test('draws no tile for a session that recorded nothing', () => {
       const { container } = render(<CardWorkout compact workout={withSets()} />)
 
       expect(container.querySelector('polyline')).toBeNull()
+      expect(screen.getByText('AL')).toBeInTheDocument()
+    })
+
+    // Every fix rejected leaves nothing to draw, and a row with no tile at all
+    // sits its copy where no other row's does.
+    test('keeps the initials when a recorded session has no shape to show', () => {
+      const empty = recorded()
+      empty.recordingJson = JSON.stringify({
+        ...JSON.parse(empty.recordingJson),
+        points: [],
+      })
+
+      const { container } = render(<CardWorkout compact workout={empty} />)
+
+      expect(container.querySelector('polyline')).toBeNull()
+      expect(screen.getByText('AL')).toBeInTheDocument()
     })
 
     // A row said "0 kg" for every run and would now say "0 km" for every

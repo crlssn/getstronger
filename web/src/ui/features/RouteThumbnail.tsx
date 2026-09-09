@@ -1,3 +1,5 @@
+import type { ReactNode } from 'react'
+
 import { useMemo } from 'react'
 
 import { fitRoute, routeIntervals, routeRuns, routeStride, thinRun } from '@/utils/routeShape'
@@ -10,6 +12,12 @@ const inset = 6
 // What 44px can show. An hour recorded is a fix every five seconds.
 const maxPoints = 40
 
+interface Props {
+  recording?: Recording
+  /** What stands in the tile when there is no route: the row's slot is filled either way. */
+  fallback?: ReactNode
+}
+
 /**
  * The shape of a recorded route, small enough to sit in a feed row.
  *
@@ -17,8 +25,10 @@ const maxPoints = 40
  * instance apiece would fetch tiles and start a worker to fill 44 pixels. The
  * workout the row opens carries the real map.
  */
-export const RouteThumbnail = ({ recording }: { recording: Recording }) => {
+export const RouteThumbnail = ({ recording, fallback = null }: Props) => {
   const lines = useMemo(() => {
+    if (!recording) return []
+
     const { routes, colorToken } = routeIntervals(recording)
     const drawn = routes.map((route) => ({ route, runs: routeRuns(route.segments) }))
     const stride = routeStride(
@@ -47,7 +57,7 @@ export const RouteThumbnail = ({ recording }: { recording: Recording }) => {
 
   // A session whose fixes were all rejected has no shape to show, and an empty
   // tile beside the numbers says less than no tile at all.
-  if (!lines.length) return null
+  if (!lines.length) return fallback
 
   return (
     <span className={styles.thumbnail}>

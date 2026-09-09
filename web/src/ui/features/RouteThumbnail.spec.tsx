@@ -99,4 +99,29 @@ describe('RouteThumbnail', () => {
 
     expect(container).toBeEmptyDOMElement()
   })
+
+  // The tile leads its row, so a caller that cannot leave the slot empty hands
+  // over what stands there instead.
+  test('stands its fallback in the tile when there is no shape', () => {
+    const { container } = renderWithProviders(
+      <RouteThumbnail recording={recording({ points: [] })} fallback={<span>AL</span>} />,
+    )
+
+    expect(container).toHaveTextContent('AL')
+  })
+
+  test('stands its fallback in the tile when nothing was recorded at all', () => {
+    const { container } = renderWithProviders(<RouteThumbnail fallback={<span>AL</span>} />)
+
+    expect(container).toHaveTextContent('AL')
+  })
+
+  test('draws the route rather than the fallback when there is one', () => {
+    const { container } = renderWithProviders(
+      <RouteThumbnail recording={recording()} fallback={<span>AL</span>} />,
+    )
+
+    expect(drawn(container)).toHaveLength(3)
+    expect(container).not.toHaveTextContent('AL')
+  })
 })

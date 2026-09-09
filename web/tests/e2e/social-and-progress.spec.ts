@@ -75,9 +75,15 @@ test.describe('social feed and discovery', () => {
       .evaluateAll((lines) => lines.map((line) => getComputedStyle(line).stroke))
     expect(new Set(strokes).size).toBe(2)
 
-    // A session with nothing recorded is the row it has always been.
+    // The shape stands where the author's initials would: the handle beside it
+    // already says whose session it is.
+    await expect(recorded.getByText('AM')).toHaveCount(0)
+
+    // A session with nothing recorded is the row it has always been, initials
+    // and all.
     const lifted = page.getByRole('listitem').filter({ hasText: '@janedoe' }).first()
     await expect(lifted.locator('polyline')).toHaveCount(0)
+    await expect(lifted.getByText('JD')).toBeVisible()
     expect(tiles).toEqual([])
 
     // And the thumbnail's own session is the one carrying the full map.

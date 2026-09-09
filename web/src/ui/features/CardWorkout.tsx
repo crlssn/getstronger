@@ -218,12 +218,20 @@ export const CardWorkout = ({ workout, compact, unseen = false }: Props) => {
         />
 
         <div className={styles.feedRow}>
-          {/* Decorative: the handle beside it is the link to the profile, and
-              two links to the same place is one too many for a screen reader.
-              The brand's own initials stand in for a name we were not given. */}
-          <span className={styles.avatar} aria-hidden="true">
-            {initials(workout.user?.name) || 'GS'}
-          </span>
+          {/* A run is recognised by its shape long before it is read as its
+              numbers, so the route takes the tile and the initials fall back
+              to the sessions that have no shape to show. Both are decorative:
+              the handle beside them is the link to the profile, and two links
+              to the same place is one too many for a screen reader. The
+              brand's own initials stand in for a name we were not given. */}
+          <RouteThumbnail
+            recording={recording}
+            fallback={
+              <span className={styles.avatar} aria-hidden="true">
+                {initials(workout.user?.name) || 'GS'}
+              </span>
+            }
+          />
 
           <div className={styles.feedCopy}>
             {/* The tint says nothing to a screen reader, so the row says it in
@@ -261,10 +269,6 @@ export const CardWorkout = ({ workout, compact, unseen = false }: Props) => {
           </div>
 
           {unseen && <AppUnreadDot />}
-
-          {/* A run is recognised by its shape long before it is read as its
-              numbers, and the map that carries the shape is a page away. */}
-          {recording && <RouteThumbnail recording={recording} />}
 
           {/* Every card opens the workout, including your own: editing and
               deleting live in the nav bar once it is open. */}
