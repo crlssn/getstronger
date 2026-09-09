@@ -97,6 +97,17 @@ describe('RecordSession', () => {
     expect(screen.queryByText(/Round/)).not.toBeInTheDocument()
   })
 
+  // Pace answers "how fast per kilometre" and speed answers "how fast": an
+  // open session is what a cyclist records, and a cyclist reads the second one.
+  it('shows the speed beside the pace, off the same window', async () => {
+    vi.mocked(timedCircuit.read).mockResolvedValue({ recording: recorded() })
+    renderWithProviders(<RecordSession />)
+
+    expect(await screen.findByText('Active time')).toBeVisible()
+    expect(screen.getByText('Pace now').parentElement).toHaveTextContent('7:30/km')
+    expect(screen.getByText('Speed').parentElement).toHaveTextContent('8km/h')
+  })
+
   it('asks what a blank session was and saves it as the chosen exercise', async () => {
     const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
     vi.mocked(timedCircuit.read).mockResolvedValue({ recording: recorded({ endedAt: 1_120_000 }) })

@@ -17,7 +17,7 @@ import { AppCycleButton } from '@/ui/components/AppCycleButton'
 import { AppInlineError } from '@/ui/components/AppInlineError'
 import { AppStat } from '@/ui/components/AppStat'
 import { WorkoutRoute } from '@/ui/features/WorkoutRoute'
-import { distanceIn, paceIn } from '@/utils/exerciseMeasurements'
+import { distanceIn, paceIn, speedIn, type Measured } from '@/utils/exerciseMeasurements'
 import { hasPaceTargets, type Pacing } from '@/utils/pacing'
 import {
   buildTimeline,
@@ -34,6 +34,15 @@ import styles from './TimedCircuitRecorder.module.css'
 
 /** How often the pace on the screen changes, in milliseconds. */
 export const paceRefreshMs = 5000
+
+/** One figure of a finished interval: the number, with its unit set quieter. */
+const IntervalMeasure = ({ measured }: { measured?: Measured }) =>
+  measured ? (
+    <span>
+      {measured.value}
+      <small>{measured.unit}</small>
+    </span>
+  ) : null
 
 /** The decimals the live total keeps, so it moves with the athlete. */
 const liveDistanceDigits = 3
@@ -190,16 +199,18 @@ export const TimedCircuitRecorder = ({
     unit,
     liveDistanceDigits,
   )
-  // The last interval the athlete actually completed, not the rest after it:
-  // resting faster than last time is not a thing anyone is chasing.
-  const last = routes
+  // Every interval the athlete actually completed, newest first, and no rest
+  // among them: resting faster than last time is not a thing anyone is
+  // chasing. Round four is run against rounds one to three, so all of them
+  // stay on the screen.
+  const finished = routes
     .filter(
       (route) =>
         route.phase.exerciseId &&
         route.distanceMeters > 0 &&
         route.durationSeconds >= (route.phase.durationSeconds ?? 0),
     )
-    .at(-1)
+    .reverse()
   const exercises = [
     ...new Set(
       (recording?.phases ?? [])
@@ -213,8 +224,7 @@ export const TimedCircuitRecorder = ({
     off: t(volumeLabelKey.off),
   }
   const paceNow = pace === undefined ? undefined : paceIn(pace, unit)
-  const lastPace = last && paceIn((last.durationSeconds / last.distanceMeters) * 1000, unit)
-  const lastDistance = last && distanceIn(last.distanceMeters / 1000, unit)
+  const speedNow = pace === undefined ? undefined : speedIn(pace, unit)
   return (
     <>
       {!recording ? (
@@ -346,35 +356,61 @@ export const TimedCircuitRecorder = ({
             <AppStat
               className={styles.cell}
               size="xl"
+              label={t('timedCircuit.speedNow')}
+              value={
+                speedNow?.value ?? <span className={styles.dash}>{t('timedCircuit.noPace')}</span>
+              }
+              unit={speedNow?.unit}
+            />
+            {/* The total is the widest of the three: it is the figure a session
+                is remembered by, and the two rates above it are read against
+                each other rather than against it. */}
+            <AppStat
+              className={cn(styles.cell, styles.total)}
+              size="xl"
               label={t('common.distance')}
               value={total.value}
               unit={total.unit}
             />
-            {last && (
-              <div className={styles.last}>
-                <p className={styles.lastName}>
-                  <span
-                    className={styles.dot}
-                    style={{
-                      backgroundColor: `var(${routeToken(exercises.indexOf(last.phase.exerciseId))})`,
-                    }}
-                    aria-hidden="true"
-                  />
-                  {t('timedCircuit.lastInterval', {
-                    name: last.phase.name,
-                    round: last.phase.round,
-                  })}
-                </p>
-                <p className={styles.lastValues}>
-                  <span>
-                    {lastPace?.value}
-                    <small>{lastPace?.unit}</small>
-                  </span>
-                  <span>
-                    {lastDistance?.value}
-                    <small>{lastDistance?.unit}</small>
-                  </span>
-                </p>
+            {finished.length > 0 && (
+              <div className={styles.history}>
+                <p className={styles.historyHeading}>{t('timedCircuit.intervalHistory')}</p>
+                {/* Scrolls within its own height: the controls that end a
+                    session stay under the thumb however many rounds are in. */}
+                <ul className={styles.historyList}>
+                  {finished.map((route) => (
+                    <li key={`${route.phase.stationKey}-${route.phase.round}`}>
+                      <p className={styles.historyName}>
+                        <span
+                          className={styles.dot}
+                          style={{
+                            backgroundColor: `var(${routeToken(exercises.indexOf(route.phase.exerciseId))})`,
+                          }}
+                          aria-hidden="true"
+                        />
+                        {t('timedCircuit.intervalNamed', {
+                          name: route.phase.name,
+                          round: route.phase.round,
+                        })}
+                      </p>
+                      <p className={styles.historyValues}>
+                        <IntervalMeasure
+                          measured={paceIn(
+                            (route.durationSeconds / route.distanceMeters) * 1000,
+                            unit,
+                          )}
+                        />
+                        <IntervalMeasure
+                          measured={speedIn(
+                            (route.durationSeconds / route.distanceMeters) * 1000,
+                            unit,
+                          )}
+                        />
+                        <IntervalMeasure measured={distanceIn(route.distanceMeters / 1000, unit)} />
+                      </p>
+                    </li>
+                  ))}
+                </ul>
               </div>
             )}
           </div>

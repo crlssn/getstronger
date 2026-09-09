@@ -285,6 +285,18 @@ export const usableFix = (point: RoutePoint) =>
 const standingSpeed = 0.3
 
 /**
+ * The ground the trailing window holds before a live pace is a number, in
+ * metres.
+ *
+ * Two fixes seconds apart, taken while the athlete is still turning out of the
+ * drive, are enough to divide by — and the figure that comes out is wrong by a
+ * wide margin and then jumps, on the screen it is looked at hardest. Twenty
+ * metres is a few seconds of running, well above the wander of a standing
+ * phone, and short enough that the dash does not linger.
+ */
+export const paceFloorMeters = 20
+
+/**
  * How far the athlete went between two fixes, in metres.
  *
  * A receiver that measured a speed at both ends is believed over where its
@@ -330,10 +342,16 @@ const accepted = (recording: Recording, a: RoutePoint, b: RoutePoint) => {
  *
  * An interval's average says how the interval went; a runner mid-interval is
  * asking how they are going now, which is a short trailing window. Nothing
- * until the window holds two accepted fixes: one fix is a position, not a
- * speed, and a dash is honest where a number invented from one fix is not.
+ * until the window has covered `floorMeters`: a dash is honest where a number
+ * divided out of the first few metres is not. A caller judging a reading
+ * rather than showing it passes a floor of its own.
  */
-export const currentPace = (recording: Recording, now: number, windowSeconds = 15) => {
+export const currentPace = (
+  recording: Recording,
+  now: number,
+  windowSeconds = 15,
+  floorMeters = paceFloorMeters,
+) => {
   const since = now - windowSeconds * 1000
   let meters = 0
   let seconds = 0
@@ -347,7 +365,7 @@ export const currentPace = (recording: Recording, now: number, windowSeconds = 1
     meters += edgeMeters(a, b)
     seconds += (b.timestamp - a.timestamp) / 1000
   }
-  return meters > 0 ? (seconds / meters) * 1000 : undefined
+  return meters > 0 && meters >= floorMeters ? (seconds / meters) * 1000 : undefined
 }
 
 /** One interval as it was actually run: how long it took, and how far it went. */
