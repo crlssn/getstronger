@@ -1288,9 +1288,9 @@ describe('StartWorkout', () => {
       await renderWorkout()
 
       await user.click(screen.getByRole('button', { name: 'Start live session' }))
-      // Nothing native has been asked for yet: the screen explains what
-      // location is for and leaves the ordinary form one tap away.
-      expect(screen.getByText(/Allow location access/)).toBeInTheDocument()
+      // The recorder opens on the session it is about to run, with nothing
+      // asked of the phone yet and the ordinary form one tap away.
+      expect(screen.getByRole('button', { name: 'Start' })).toBeInTheDocument()
       expect(timedCircuit.start).not.toHaveBeenCalled()
 
       await user.click(screen.getByRole('button', { name: 'Log manually' }))
@@ -1319,7 +1319,7 @@ describe('StartWorkout', () => {
       await renderWorkout()
 
       await user.click(screen.getByRole('button', { name: 'Start live session' }))
-      await user.click(screen.getByRole('button', { name: 'Start live session' }))
+      await user.click(screen.getByRole('button', { name: 'Start' }))
 
       expect(timedCircuit.start).toHaveBeenCalledWith(
         expect.objectContaining({

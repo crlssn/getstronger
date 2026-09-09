@@ -80,7 +80,10 @@ describe('RecordSession', () => {
     const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
     renderWithProviders(<RecordSession />)
 
-    await user.click(await screen.findByRole('button', { name: 'Start recording' }))
+    // No page in front of the session: the clock is on the screen before the
+    // first tap, at nothing, and the tap that starts it is on that screen.
+    expect(await screen.findByText('Active time')).toBeVisible()
+    await user.click(screen.getByRole('button', { name: 'Start' }))
     expect(timedCircuit.start).toHaveBeenCalledWith(
       expect.objectContaining({
         phases: [expect.not.objectContaining({ durationSeconds: expect.anything() })],
@@ -164,7 +167,7 @@ describe('RecordSession', () => {
     vi.mocked(timedCircuit.start).mockRejectedValue(new Error('LOCATION_DENIED'))
     renderWithProviders(<RecordSession />)
 
-    await user.click(await screen.findByRole('button', { name: 'Start recording' }))
+    await user.click(await screen.findByRole('button', { name: 'Start' }))
     expect(screen.getByRole('alert')).toHaveTextContent('Location access is needed')
   })
 })

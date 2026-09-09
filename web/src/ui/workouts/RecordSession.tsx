@@ -306,49 +306,31 @@ export const RecordSession = () => {
     void save(exercise)
   }, [ended, exercise, save])
 
-  if (!recording) {
-    return (
-      <section className={styles.intro}>
-        <AppPageHeader eyebrow={t('record.eyebrow')} title={title} lead={t('record.permission')} />
-        {error && <AppInlineError>{error}</AppInlineError>}
-        <AppButton
-          type="button"
-          colour="primary"
-          size="lg"
-          disabled={busy}
-          onClick={() => void start()}
-        >
-          {t('record.start')}
-        </AppButton>
-        <AppButton type="link" colour="ghost" to="/home">
-          {t('common.cancel')}
-        </AppButton>
-      </section>
-    )
-  }
-
   return (
     <section className={styles.screen}>
       <AppPageHeader
         eyebrow={t('record.eyebrow')}
         title={title}
         action={
-          /* The pill says GPS; the live region says what about it. */
-          <p role="status" className={cn(styles.gps, gps && !openPause && styles.tracking)}>
-            <span className={styles.dot} aria-hidden="true" />
-            <span aria-hidden="true">{t('timedCircuit.gps')}</span>
-            <span className="sr-only">
-              {t(
-                openPause
-                  ? openPause.auto
-                    ? 'timedCircuit.pausedAuto'
-                    : 'timedCircuit.paused'
-                  : gps
-                    ? 'timedCircuit.gpsGood'
-                    : 'timedCircuit.gpsPoor',
-              )}
-            </span>
-          </p>
+          /* The pill says GPS; the live region says what about it. It waits
+             for the session: nothing is being tracked before it. */
+          recording && (
+            <p role="status" className={cn(styles.gps, gps && !openPause && styles.tracking)}>
+              <span className={styles.dot} aria-hidden="true" />
+              <span aria-hidden="true">{t('timedCircuit.gps')}</span>
+              <span className="sr-only">
+                {t(
+                  openPause
+                    ? openPause.auto
+                      ? 'timedCircuit.pausedAuto'
+                      : 'timedCircuit.paused'
+                    : gps
+                      ? 'timedCircuit.gpsGood'
+                      : 'timedCircuit.gpsPoor',
+                )}
+              </span>
+            </p>
+          )
         }
       />
 
@@ -374,13 +356,15 @@ export const RecordSession = () => {
                 })
               : t('record.openEnded')}
           </span>
-          <span>
-            {t('record.startedAt', {
-              time: DateTime.fromMillis(recording.startedAt)
-                .setLocale(dateLocale())
-                .toLocaleString(DateTime.TIME_SIMPLE),
-            })}
-          </span>
+          {recording && (
+            <span>
+              {t('record.startedAt', {
+                time: DateTime.fromMillis(recording.startedAt)
+                  .setLocale(dateLocale())
+                  .toLocaleString(DateTime.TIME_SIMPLE),
+              })}
+            </span>
+          )}
         </div>
       </div>
 
@@ -432,34 +416,49 @@ export const RecordSession = () => {
         </AppButton>
       )}
 
+      {/* One control in the same place throughout: it starts the session,
+          then holds it and lets it go again. */}
       <div className={styles.controls}>
         <AppButton
           type="button"
           colour="primary"
           size="lg"
           disabled={busy || ended}
-          onClick={() => void command(openPause ? 'resume' : 'pause')}
+          onClick={() => void (recording ? command(openPause ? 'resume' : 'pause') : start())}
         >
-          {t(openPause ? 'timedCircuit.resume' : 'timedCircuit.pause')}
+          {t(
+            !recording
+              ? 'timedCircuit.begin'
+              : openPause
+                ? 'timedCircuit.resume'
+                : 'timedCircuit.pause',
+          )}
         </AppButton>
-        <div className={styles.secondaryControls}>
-          <AppButton
-            type="button"
-            colour="secondary"
-            disabled={busy || saving || ended}
-            onClick={() => void command('finish')}
-          >
-            {t('timedCircuit.finish')}
+        {recording ? (
+          <div className={styles.secondaryControls}>
+            <AppButton
+              type="button"
+              colour="secondary"
+              disabled={busy || saving || ended}
+              onClick={() => void command('finish')}
+            >
+              {t('timedCircuit.finish')}
+            </AppButton>
+            <AppButton
+              type="button"
+              colour="destructive"
+              disabled={busy || saving}
+              onClick={() => void discard()}
+            >
+              {t('timedCircuit.cancel')}
+            </AppButton>
+          </div>
+        ) : (
+          /* Nothing to end or discard yet, so the way out is the way back. */
+          <AppButton type="link" colour="ghost" to="/home">
+            {t('common.cancel')}
           </AppButton>
-          <AppButton
-            type="button"
-            colour="destructive"
-            disabled={busy || saving}
-            onClick={() => void discard()}
-          >
-            {t('timedCircuit.cancel')}
-          </AppButton>
-        </div>
+        )}
       </div>
 
       {ended && !exercise && (

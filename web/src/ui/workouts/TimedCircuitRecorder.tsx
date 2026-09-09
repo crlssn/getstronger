@@ -157,14 +157,27 @@ export const TimedCircuitRecorder = ({
     })
     if (confirmed) await action('clear')
   }
-  const paused = recording?.pauses.some((pause) => !pause.endedAt)
-  const timeline = useMemo(() => (recording ? buildTimeline(recording, now) : []), [recording, now])
+  // Before the first tap there is nothing recorded, and the screen still has
+  // to show the session it is about to run: a recording that starts now has
+  // the first interval at its full length and every figure blank, which is
+  // exactly that screen.
+  const shown: Recording = useMemo(
+    () =>
+      recording ?? {
+        version: 1,
+        startedAt: now,
+        phases,
+        pauses: [],
+        points: [],
+        interrupted: false,
+      },
+    [recording, now, phases],
+  )
+  const paused = shown.pauses.some((pause) => !pause.endedAt)
+  const timeline = useMemo(() => buildTimeline(shown, now), [shown, now])
   // Every number below is measured from the same edges the saved route is, so
   // the total the athlete watched climb is the total the workout keeps.
-  const routes = useMemo(
-    () => (recording ? measureRoute(recording, timeline) : []),
-    [recording, timeline],
-  )
+  const routes = useMemo(() => measureRoute(shown, timeline), [shown, timeline])
   // Every interval of a circuit is held against the clock; an open one belongs
   // to a session with no set length, which this screen never runs.
   const index = timeline.findIndex(
@@ -172,29 +185,27 @@ export const TimedCircuitRecorder = ({
   )
   const current = timeline[index]
   const next = timeline[index + 1]
-  const latest = recording?.points.at(-1)
+  const latest = shown.points.at(-1)
   const gps = Boolean(latest && latest.accuracy <= 30 && now - latest.timestamp < 15000)
-  const held = recording?.pauses.at(-1)
+  const held = shown.pauses.at(-1)
   const elapsed = timeline.reduce((sum, interval) => sum + interval.durationSeconds, 0)
   const progress = current ? current.durationSeconds / (current.phase.durationSeconds ?? 0) : 0
   // A circuit counts every block, so the total is the station's own rounds; an
   // interval session counts the block the routine repeats, and nothing else.
-  const intervals = recording ? isIntervalRecording(recording) : false
+  const intervals = isIntervalRecording(shown)
   const counted = !intervals || current?.phase.role === 'repeat'
-  const rounds =
-    recording && intervals
-      ? recordedRounds(recording)
-      : Math.max(
-          ...(recording?.phases ?? [])
-            .filter((phase) => phase.stationKey === current?.phase.stationKey)
-            .map((phase) => phase.round),
-          1,
-        )
+  const rounds = intervals
+    ? recordedRounds(shown)
+    : Math.max(
+        ...shown.phases
+          .filter((phase) => phase.stationKey === current?.phase.stationKey)
+          .map((phase) => phase.round),
+        1,
+      )
   // Read at the last refresh rather than at every poll: a window that moves a
   // second at a time takes a new fix on every poll, and a figure that changes
   // every second is not one a runner can act on.
-  const pace =
-    recording && !paused ? currentPace(recording, now - (now % paceRefreshMs)) : undefined
+  const pace = paused ? undefined : currentPace(shown, now - (now % paceRefreshMs))
   // Every decimal, and every fix: a total that turns over once every ten
   // metres reads as a stalled GPS at a walk.
   const total = distanceIn(
@@ -222,11 +233,7 @@ export const TimedCircuitRecorder = ({
     )
     .reverse()
   const exercises = [
-    ...new Set(
-      (recording?.phases ?? [])
-        .filter((phase) => phase.exerciseId)
-        .map((phase) => phase.exerciseId),
-    ),
+    ...new Set(shown.phases.filter((phase) => phase.exerciseId).map((phase) => phase.exerciseId)),
   ]
   const volumeLabels: Record<AnnouncementVolume, string> = {
     full: t(volumeLabelKey.full),
@@ -237,24 +244,7 @@ export const TimedCircuitRecorder = ({
   const speedNow = pace === undefined ? undefined : speedIn(pace, unit)
   return (
     <>
-      {!recording ? (
-        <section className={styles.intro}>
-          <h1>{t('timedCircuit.title')}</h1>
-          <p>{t('timedCircuit.permission')}</p>
-          <AppButton
-            type="button"
-            colour="primary"
-            disabled={busy}
-            onClick={() => void action('start')}
-          >
-            {t('timedCircuit.start')}
-          </AppButton>
-          {error && <AppInlineError>{error}</AppInlineError>}
-          <AppButton type="button" colour="ghost" disabled={busy} onClick={onCancel}>
-            {t('timedCircuit.manual')}
-          </AppButton>
-        </section>
-      ) : recording.endedAt ? (
+      {recording?.endedAt ? (
         <section className={styles.review}>
           <WorkoutRoute recording={recording} />
           {error && <AppInlineError>{error}</AppInlineError>}
@@ -295,22 +285,25 @@ export const TimedCircuitRecorder = ({
               >
                 {volumeLabels[volume]}
               </AppCycleButton>
-              {/* The pill says GPS; the live region says what about it. */}
-              <p role="status" className={cn(styles.gps, gps && !paused && styles.tracking)}>
-                <span className={styles.dot} aria-hidden="true" />
-                <span aria-hidden="true">{t('timedCircuit.gps')}</span>
-                <span className="sr-only">
-                  {t(
-                    paused
-                      ? held?.auto
-                        ? 'timedCircuit.pausedAuto'
-                        : 'timedCircuit.paused'
-                      : gps
-                        ? 'timedCircuit.gpsGood'
-                        : 'timedCircuit.gpsPoor',
-                  )}
-                </span>
-              </p>
+              {/* The pill says GPS; the live region says what about it. It
+                  waits for the session: nothing is being tracked before it. */}
+              {recording && (
+                <p role="status" className={cn(styles.gps, gps && !paused && styles.tracking)}>
+                  <span className={styles.dot} aria-hidden="true" />
+                  <span aria-hidden="true">{t('timedCircuit.gps')}</span>
+                  <span className="sr-only">
+                    {t(
+                      paused
+                        ? held?.auto
+                          ? 'timedCircuit.pausedAuto'
+                          : 'timedCircuit.paused'
+                        : gps
+                          ? 'timedCircuit.gpsGood'
+                          : 'timedCircuit.gpsPoor',
+                    )}
+                  </span>
+                </p>
+              )}
             </div>
           </header>
 
@@ -463,34 +456,50 @@ export const TimedCircuitRecorder = ({
 
           {error && <AppInlineError>{error}</AppInlineError>}
 
+          {/* One control in the same place throughout: it starts the session,
+              then holds it and lets it go again. */}
           <div className={styles.controls}>
             <AppButton
               type="button"
               colour="primary"
               size="lg"
               disabled={busy}
-              onClick={() => void action(paused ? 'resume' : 'pause')}
+              onClick={() => void action(!recording ? 'start' : paused ? 'resume' : 'pause')}
             >
-              {t(paused ? 'timedCircuit.resume' : 'timedCircuit.pause')}
+              {t(
+                !recording
+                  ? 'timedCircuit.begin'
+                  : paused
+                    ? 'timedCircuit.resume'
+                    : 'timedCircuit.pause',
+              )}
             </AppButton>
-            <div className={styles.exits}>
-              <AppButton
-                type="button"
-                colour="secondary"
-                disabled={busy}
-                onClick={() => void action('finish')}
-              >
-                {t('timedCircuit.finish')}
+            {recording ? (
+              <div className={styles.exits}>
+                <AppButton
+                  type="button"
+                  colour="secondary"
+                  disabled={busy}
+                  onClick={() => void action('finish')}
+                >
+                  {t('timedCircuit.finish')}
+                </AppButton>
+                <AppButton
+                  type="button"
+                  colour="destructive"
+                  disabled={busy}
+                  onClick={() => void discard()}
+                >
+                  {t('timedCircuit.cancel')}
+                </AppButton>
+              </div>
+            ) : (
+              /* Nothing to end or discard yet; what the athlete may still want
+                 is the ordinary form, which is what this session replaces. */
+              <AppButton type="button" colour="ghost" disabled={busy} onClick={onCancel}>
+                {t('timedCircuit.manual')}
               </AppButton>
-              <AppButton
-                type="button"
-                colour="destructive"
-                disabled={busy}
-                onClick={() => void discard()}
-              >
-                {t('timedCircuit.cancel')}
-              </AppButton>
-            </div>
+            )}
           </div>
         </section>
       )}
