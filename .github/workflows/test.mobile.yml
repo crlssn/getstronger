@@ -1,6 +1,7 @@
-# Catches Android Gradle breakage on pull requests: parse errors in the build
-# scripts and drift from the dependency lockfiles. No Android SDK or signing is
-# needed — the build is only configured and resolved, never executed.
+# Catches native breakage on pull requests: Android Gradle parse errors and
+# drift from the dependency lockfiles, and the iOS logic that is unit-tested.
+# No Android SDK or signing is needed — the build is only configured and
+# resolved, never executed.
 name: test mobile
 
 on:
@@ -84,3 +85,18 @@ jobs:
             echo 'Dependency resolution failed: see the FAILED entries above.'
             exit 1
           fi
+
+  # The iOS app keeps its announcement voice ranking in a package free of
+  # Capacitor and of AVFoundation, so testing it needs nothing but Swift.
+  ios:
+    if: github.event.pull_request.draft == false
+    runs-on: macos-26
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Run the iOS unit tests
+        working-directory: mobile/ios/App/AnnouncementVoice
+        run: swift test
