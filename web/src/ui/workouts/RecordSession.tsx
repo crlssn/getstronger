@@ -153,8 +153,10 @@ export const RecordSession = () => {
         // so it obeys the level the recording screen sets.
         volume: speechVolume(useAnnouncementsStore.getState().volume),
         // The one open interval never reaches a boundary, so nothing here can
-        // sound; the recorder is told the athlete's lead all the same.
+        // be said; the recorder is told the athlete's lead all the same.
         cueLeadSeconds,
+        cuePhrase: t('timedCircuit.cueSeconds', { count: cueLeadSeconds }),
+        completedPhrase: t('timedCircuit.completed'),
         autoPause,
       })
       const result = await timedCircuit.read({ key })

@@ -49,8 +49,17 @@ export const en = {
     paceNow: 'Pace now',
     speedNow: 'Speed',
     noPace: '—',
+    // Two distances side by side, so each label is one word: the unit says
+    // the rest.
+    intervalDistance: 'Interval',
+    totalDistance: 'Session',
     intervalHistory: 'Completed intervals',
     intervalNamed: '{name} {round}',
+    // What the recorder says: a bare count, because "10 seconds" is all a
+    // runner has time to hear; and the ending, once the last interval runs out.
+    cueSeconds_one: '{count} second',
+    cueSeconds_other: '{count} seconds',
+    completed: 'Workout completed',
     pacedAgainstPrevious: 'Tones compare each interval with your last session',
     pacedAgainstBest: 'Tones compare each interval with your best session',
     pause: 'Pause',
@@ -793,9 +802,9 @@ export const en = {
     appearanceDark: 'Dark',
     intervalCue: 'Interval cue',
     intervalCueIntro:
-      'The tone gives you time to change pace without looking at the phone. It is kept on this device, and an interval shorter than twice the lead runs out unannounced.',
+      'The seconds left are called out, so you can change pace without looking at the phone. It is kept on this device, and an interval shorter than twice the lead runs out unannounced.',
     intervalCueOff: 'Off',
-    intervalCueOffBody: 'Intervals end without a sound',
+    intervalCueOffBody: 'Intervals end without a warning',
     // How far ahead of the end, not how long the tone lasts — a bare "10
     // seconds" reads as the second of those.
     intervalCueLead_one: '{count} second before the end',
@@ -803,7 +812,7 @@ export const en = {
     announcements: 'Voice announcements',
     announcementsIntro:
       'How loudly a recording calls each interval. It is kept on this device, and the recording screen changes it mid-session.',
-    announcementsOffBody: 'The interval cue still sounds',
+    announcementsOffBody: 'The interval cue is still called out',
     account: 'Account',
     accountBody: 'Your details, password and deletion',
     accountIntro: 'Who you are on this account, and how to leave it.',
@@ -979,8 +988,13 @@ export const sv = {
     paceNow: 'Tempo nu',
     speedNow: 'Hastighet',
     noPace: '—',
+    intervalDistance: 'Intervall',
+    totalDistance: 'Pass',
     intervalHistory: 'Avklarade intervaller',
     intervalNamed: '{name} {round}',
+    cueSeconds_one: '{count} sekund',
+    cueSeconds_other: '{count} sekunder',
+    completed: 'Passet är klart',
     pacedAgainstPrevious: 'Ljudsignaler jämför varje intervall med ditt senaste pass',
     pacedAgainstBest: 'Ljudsignaler jämför varje intervall med ditt bästa pass',
     pause: 'Pausa',
@@ -1724,15 +1738,15 @@ export const sv = {
     appearanceDark: 'Mörkt',
     intervalCue: 'Intervallsignal',
     intervalCueIntro:
-      'Tonen ger dig tid att byta tempo utan att titta på telefonen. Den sparas bara på den här enheten, och ett intervall som är kortare än dubbla förvarningen tar slut utan ljud.',
+      'Sekunderna som är kvar läses upp, så att du kan byta tempo utan att titta på telefonen. Det sparas bara på den här enheten, och ett intervall som är kortare än dubbla förvarningen tar slut utan förvarning.',
     intervalCueOff: 'Av',
-    intervalCueOffBody: 'Intervall tar slut utan ljud',
+    intervalCueOffBody: 'Intervall tar slut utan förvarning',
     intervalCueLead_one: '{count} sekund innan slutet',
     intervalCueLead_other: '{count} sekunder innan slutet',
     announcements: 'Röstbesked',
     announcementsIntro:
       'Hur högt en inspelning ropar ut varje intervall. Det sparas bara på den här enheten, och inspelningsskärmen ändrar det under passet.',
-    announcementsOffBody: 'Intervallsignalen hörs ändå',
+    announcementsOffBody: 'Intervallsignalen läses ändå upp',
     account: 'Konto',
     accountBody: 'Dina uppgifter, lösenord och borttagning',
     accountIntro: 'Vem du är på det här kontot, och hur du lämnar det.',

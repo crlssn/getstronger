@@ -89,7 +89,15 @@ describe('TimedCircuitRecorder', () => {
 
     await user.click(screen.getByRole('button', { name: 'Start live session' }))
 
-    expect(timedCircuit.start).toHaveBeenCalledWith(expect.objectContaining({ cueLeadSeconds: 20 }))
+    // The recorder speaks the cue and the ending, so it is handed both in the
+    // athlete's language rather than asked to translate.
+    expect(timedCircuit.start).toHaveBeenCalledWith(
+      expect.objectContaining({
+        cueLeadSeconds: 20,
+        cuePhrase: '20 seconds',
+        completedPhrase: 'Workout completed',
+      }),
+    )
   })
 
   it('restores native progress and sends pause, resume, and early finish to native', async () => {
@@ -173,7 +181,11 @@ describe('TimedCircuitRecorder', () => {
     }
   }
 
-  it('shows the pace and speed now, the total distance, and the interval that finished', async () => {
+  // The stats come before the finished intervals, whose column titles share
+  // two of the words.
+  const stat = (label: string) => screen.getAllByText(label)[0].parentElement
+
+  it('shows the pace and speed now, both distances, and the interval that finished', async () => {
     vi.mocked(timedCircuit.read).mockResolvedValue({ recording: running() })
     renderWithProviders(
       <TimedCircuitRecorder
@@ -185,11 +197,19 @@ describe('TimedCircuitRecorder', () => {
       />,
     )
     await screen.findByRole('heading', { name: 'Run' })
-    expect(screen.getByText('Pace now').parentElement).toHaveTextContent('4:10/km')
+    expect(stat('Pace now')).toHaveTextContent('4:10/km')
     // The same window as the pace, read the way a cyclist reads it.
-    expect(screen.getByText('Speed').parentElement).toHaveTextContent('14.4km/h')
-    expect(screen.getByText('Distance').parentElement).toHaveTextContent('1.300km')
+    expect(stat('Speed')).toHaveTextContent('14.4km/h')
+    // How far this interval has come beside how far the session has, so a
+    // runner chasing 400 m of hard running need not subtract.
+    expect(stat('Interval')).toHaveTextContent('400m')
+    expect(stat('Session')).toHaveTextContent('1.300km')
     // The interval that finished, named and measured: what there is to beat.
+    // The columns are titled, so three figures in a row read as three things.
+    const titles = screen.getByText('Completed intervals').parentElement
+    expect(titles).toHaveTextContent('Pace')
+    expect(titles).toHaveTextContent('Speed')
+    expect(titles).toHaveTextContent('Distance')
     const [finished] = screen.getAllByRole('listitem')
     expect(finished).toHaveTextContent('Walk 1')
     expect(finished).toHaveTextContent('5:33/km')
@@ -321,7 +341,7 @@ describe('TimedCircuitRecorder', () => {
     await screen.findByRole('heading', { name: 'Run' })
     expect(screen.getByText('Pace now').parentElement).toHaveTextContent('—')
     // The two are read as one figure, so they are absent as one figure too.
-    expect(screen.getByText('Speed').parentElement).toHaveTextContent('—')
+    expect(stat('Speed')).toHaveTextContent('—')
     expect(screen.getByRole('status')).toHaveTextContent('Waiting for accurate GPS')
 
     const paused = running()
@@ -332,9 +352,9 @@ describe('TimedCircuitRecorder', () => {
     expect(await screen.findByRole('button', { name: /^Resume$/ })).toBeVisible()
     // Standing still is not a pace, but the ground already covered is a
     // distance: only the numbers that mean "now" give up their value.
-    expect(screen.getByText('Pace now').parentElement).toHaveTextContent('—')
-    expect(screen.getByText('Speed').parentElement).toHaveTextContent('—')
-    expect(screen.getByText('Distance').parentElement).toHaveTextContent('1.280km')
+    expect(stat('Pace now')).toHaveTextContent('—')
+    expect(stat('Speed')).toHaveTextContent('—')
+    expect(stat('Session')).toHaveTextContent('1.280km')
   })
 
   // Discard is half a button wide beside End session, and a recorded run is

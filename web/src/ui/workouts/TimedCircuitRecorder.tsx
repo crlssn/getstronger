@@ -36,13 +36,12 @@ import styles from './TimedCircuitRecorder.module.css'
 export const paceRefreshMs = 5000
 
 /** One figure of a finished interval: the number, with its unit set quieter. */
-const IntervalMeasure = ({ measured }: { measured?: Measured }) =>
-  measured ? (
-    <span>
-      {measured.value}
-      <small>{measured.unit}</small>
-    </span>
-  ) : null
+const IntervalMeasure = ({ measured }: { measured?: Measured }) => (
+  <span className={styles.historyValue}>
+    {measured?.value}
+    {measured && <small>{measured.unit}</small>}
+  </span>
+)
 
 /** The decimals the live total keeps, so it moves with the athlete. */
 const liveDistanceDigits = 3
@@ -112,6 +111,10 @@ export const TimedCircuitRecorder = ({
           locale: i18n.language,
           volume: speechVolume(volume),
           cueLeadSeconds,
+          // Spoken by the recorder, so it is handed the words rather than
+          // asked to translate.
+          cuePhrase: t('timedCircuit.cueSeconds', { count: cueLeadSeconds }),
+          completedPhrase: t('timedCircuit.completed'),
           pacing,
           autoPause,
         })
@@ -196,6 +199,13 @@ export const TimedCircuitRecorder = ({
   // metres reads as a stalled GPS at a walk.
   const total = distanceIn(
     routes.reduce((sum, route) => sum + route.distanceMeters, 0) / 1000,
+    unit,
+    liveDistanceDigits,
+  )
+  // How far this interval has come, beside the total: a runner chasing 400 m
+  // of hard running should not have to subtract.
+  const intervalDistance = distanceIn(
+    (routes[index]?.distanceMeters ?? 0) / 1000,
     unit,
     liveDistanceDigits,
   )
@@ -344,42 +354,64 @@ export const TimedCircuitRecorder = ({
           </div>
 
           <div className={styles.numbers}>
-            <AppStat
-              className={cn(styles.cell, styles.divided)}
-              size="xl"
-              label={t('timedCircuit.paceNow')}
-              value={
-                paceNow?.value ?? <span className={styles.dash}>{t('timedCircuit.noPace')}</span>
-              }
-              unit={paceNow?.unit}
-            />
-            <AppStat
-              className={styles.cell}
-              size="xl"
-              label={t('timedCircuit.speedNow')}
-              value={
-                speedNow?.value ?? <span className={styles.dash}>{t('timedCircuit.noPace')}</span>
-              }
-              unit={speedNow?.unit}
-            />
-            {/* The total is the widest of the three: it is the figure a session
-                is remembered by, and the two rates above it are read against
-                each other rather than against it. */}
-            <AppStat
-              className={cn(styles.cell, styles.total)}
-              size="xl"
-              label={t('common.distance')}
-              value={total.value}
-              unit={total.unit}
-            />
+            <div className={styles.rates}>
+              <AppStat
+                className={cn(styles.cell, styles.divided)}
+                size="xl"
+                label={t('timedCircuit.paceNow')}
+                value={
+                  paceNow?.value ?? <span className={styles.dash}>{t('timedCircuit.noPace')}</span>
+                }
+                unit={paceNow?.unit}
+              />
+              <AppStat
+                className={styles.cell}
+                size="xl"
+                label={t('timedCircuit.speedNow')}
+                value={
+                  speedNow?.value ?? <span className={styles.dash}>{t('timedCircuit.noPace')}</span>
+                }
+                unit={speedNow?.unit}
+              />
+            </div>
+            {/* The two distances under the two rates: this interval's beside
+                the session's, the second being the figure a session is
+                remembered by. */}
+            <div className={styles.distances}>
+              <AppStat
+                className={cn(styles.cell, styles.divided)}
+                size="xl"
+                label={t('timedCircuit.intervalDistance')}
+                value={intervalDistance.value}
+                unit={intervalDistance.unit}
+              />
+              <AppStat
+                className={styles.cell}
+                size="xl"
+                label={t('timedCircuit.totalDistance')}
+                value={total.value}
+                unit={total.unit}
+              />
+            </div>
             {finished.length > 0 && (
               <div className={styles.history}>
-                <p className={styles.historyHeading}>{t('timedCircuit.intervalHistory')}</p>
-                {/* Scrolls within its own height: the controls that end a
-                    session stay under the thumb however many rounds are in. */}
+                {/* The column titles share the heading's row, aligned over
+                    the figures they name. */}
+                <div className={cn(styles.historyRow, styles.historyTitles)}>
+                  <p>{t('timedCircuit.intervalHistory')}</p>
+                  <span>{t('timedCircuit.pace')}</span>
+                  <span>{t('timedCircuit.speedNow')}</span>
+                  <span>{t('common.distance')}</span>
+                </div>
+                {/* Scrolls within its own height, and it is the only thing on
+                    the screen that does: the controls that end a session stay
+                    under the thumb however many rounds are in. */}
                 <ul className={styles.historyList}>
                   {finished.map((route) => (
-                    <li key={`${route.phase.stationKey}-${route.phase.round}`}>
+                    <li
+                      key={`${route.phase.stationKey}-${route.phase.round}`}
+                      className={styles.historyRow}
+                    >
                       <p className={styles.historyName}>
                         <span
                           className={styles.dot}
@@ -393,21 +425,19 @@ export const TimedCircuitRecorder = ({
                           round: route.phase.round,
                         })}
                       </p>
-                      <p className={styles.historyValues}>
-                        <IntervalMeasure
-                          measured={paceIn(
-                            (route.durationSeconds / route.distanceMeters) * 1000,
-                            unit,
-                          )}
-                        />
-                        <IntervalMeasure
-                          measured={speedIn(
-                            (route.durationSeconds / route.distanceMeters) * 1000,
-                            unit,
-                          )}
-                        />
-                        <IntervalMeasure measured={distanceIn(route.distanceMeters / 1000, unit)} />
-                      </p>
+                      <IntervalMeasure
+                        measured={paceIn(
+                          (route.durationSeconds / route.distanceMeters) * 1000,
+                          unit,
+                        )}
+                      />
+                      <IntervalMeasure
+                        measured={speedIn(
+                          (route.durationSeconds / route.distanceMeters) * 1000,
+                          unit,
+                        )}
+                      />
+                      <IntervalMeasure measured={distanceIn(route.distanceMeters / 1000, unit)} />
                     </li>
                   ))}
                 </ul>

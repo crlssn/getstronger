@@ -12,15 +12,14 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.media.AudioAttributes;
 import android.media.AudioFormat;
-import android.media.AudioManager;
 import android.media.AudioTrack;
-import android.media.ToneGenerator;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
 import android.os.PowerManager;
 import android.speech.tts.TextToSpeech;
+import android.speech.tts.UtteranceProgressListener;
 import android.util.AtomicFile;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -34,10 +33,14 @@ import java.util.Locale;
 /** The foreground service owns the clock, speech and private recording file. */
 public class TimedCircuitService extends Service implements LocationListener {
     private static final String CHANNEL = "timed-circuit";
-    private static final int TONE_VOLUME = 100;
-    private static final int TONE_MS = 200;
-    /** How loud a pace note is against a full-volume announcement. */
-    private static final double PACE_TONE_VOLUME = 0.2;
+    /**
+     * How loud a pace note is against a full-volume announcement: a fifth was
+     * lost under a footfall on a busy road.
+     */
+    private static final double PACE_TONE_VOLUME = 0.6;
+    /** How long the ending is given to be said before the service goes anyway. */
+    private static final long COMPLETION_MS = 10000;
+    private static final String COMPLETION_ID = "completed";
     // Auto-pause, mirroring web/src/utils/movement.ts: under half a slow walk
     // for the dwell holds the recording, over that again lets it go. The gap
     // between the two keeps a pace either side of one line from fluttering it,
@@ -88,11 +91,14 @@ public class TimedCircuitService extends Service implements LocationListener {
     private LocationManager locations;
     private PowerManager.WakeLock wakeLock;
     private TextToSpeech speech;
-    private ToneGenerator tones;
     private boolean speechReady;
     private int spoken = -1;
-    /** The interval already warned about, so the tone sounds once per interval. */
+    /** The interval already warned about, so the cue is said once per interval. */
     private int cued = -1;
+    /** Whether the service is staying up only to finish saying the ending. */
+    private boolean completing;
+    private boolean stopped;
+    private final Runnable stopper = this::stopRecording;
     private long checkpoint;
     // The session this one is paced against, as the web app settled it: a
     // target for each interval, and the three numbers that say when a
@@ -145,6 +151,8 @@ public class TimedCircuitService extends Service implements LocationListener {
         saved = new JSONObject().put("key", options.getString("key")).put("locale", options.optString("locale", "en"))
             .put("volume", level(options.optDouble("volume", 1)))
             .put("cueLeadSeconds", options.optInt("cueLeadSeconds", 10))
+            .put("cuePhrase", options.optString("cuePhrase", ""))
+            .put("completedPhrase", options.optString("completedPhrase", ""))
             .put("autoPause", options.optBoolean("autoPause"))
             .put("recording", data).put("checkpoint", now);
         if (options.optJSONObject("pacing") != null) saved.put("pacing", options.getJSONObject("pacing"));
@@ -222,16 +230,18 @@ public class TimedCircuitService extends Service implements LocationListener {
             wakeLock.acquire(86400000L);
             locations = getSystemService(LocationManager.class);
             locations.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000, 0, this, Looper.getMainLooper());
-            // The tone that warns an interval is about to end. A generator the
-            // platform owns needs no asset of ours, and a device that refuses
-            // one records on in silence.
-            try { tones = new ToneGenerator(AudioManager.STREAM_MUSIC, TONE_VOLUME); }
-            catch (Exception ignored) { tones = null; }
             readPacing(saved.optJSONObject("pacing"));
             speech = new TextToSpeech(this, status -> {
                 if (status == TextToSpeech.SUCCESS) {
                     speechReady = true;
                     speech.setLanguage(Locale.forLanguageTag(saved.optString("locale", "en")));
+                    // The ending is the last thing said, and the service waits
+                    // for it: shut down under an utterance, it cuts the word off.
+                    speech.setOnUtteranceProgressListener(new UtteranceProgressListener() {
+                        @Override public void onStart(String id) {}
+                        @Override public void onDone(String id) { if (COMPLETION_ID.equals(id)) handler.post(stopper); }
+                        @Override public void onError(String id) { if (COMPLETION_ID.equals(id)) handler.post(stopper); }
+                    });
                 } else { fail(); }
             });
             handler.post(ticker);
@@ -244,7 +254,7 @@ public class TimedCircuitService extends Service implements LocationListener {
             .setContentTitle(getString(R.string.app_name)).setContentText(text).setContentIntent(open).setOngoing(true).build();
     }
     private void tick() throws Exception {
-        if (saved == null || active == null) return;
+        if (saved == null || active == null || completing) return;
         JSONObject data = saved.getJSONObject("recording");
         if (data.has("endedAt")) return;
         long now = System.currentTimeMillis();
@@ -268,13 +278,16 @@ public class TimedCircuitService extends Service implements LocationListener {
                     if (spoken >= 0 && index > spoken + 1) data.put("interrupted", true);
                     spoken = index;
                     String instruction = phase.getString("instruction");
-                    if (announce(instruction, index) == TextToSpeech.ERROR) data.put("interrupted", true);
+                    if (announce(instruction, "phase-" + index, TextToSpeech.QUEUE_FLUSH, volume()) == TextToSpeech.ERROR) data.put("interrupted", true);
                     getSystemService(NotificationManager.class).notify(1382, notification(instruction));
                 }
                 long lead = saved.optInt("cueLeadSeconds", 10) * 1000L;
-                if (cued != index && cues(phase, lead) && elapsed >= boundary - lead) {
+                if (cued != index && cues(phase, lead) && elapsed >= boundary - lead && speechReady) {
                     cued = index;
-                    if (tones != null) tones.startTone(ToneGenerator.TONE_PROP_BEEP, TONE_MS);
+                    // Queued behind the instruction rather than over it, and
+                    // its own setting: with the announcements off it is said
+                    // at full volume instead of not at all.
+                    announce(saved.optString("cuePhrase", ""), "cue-" + index, TextToSpeech.QUEUE_ADD, volume() > 0 ? volume() : 1);
                 }
                 judge(index, (elapsed - opened) / 1000.0, now);
                 if (now - checkpoint > 1000) { persist(this); checkpoint = now; }
@@ -283,15 +296,26 @@ public class TimedCircuitService extends Service implements LocationListener {
         }
         close(data, now - (elapsed - boundary));
         persist(this);
-        stopRecording();
+        // The prescription ran out on its own, which is the one ending worth
+        // announcing; the service stays up until it has been said.
+        String completed = saved.optString("completedPhrase", "");
+        if (completed.isEmpty() || volume() == 0 || !speechReady
+            || announce(completed, COMPLETION_ID, TextToSpeech.QUEUE_ADD, volume()) != TextToSpeech.SUCCESS) {
+            stopRecording();
+            return;
+        }
+        completing = true;
+        handler.postDelayed(stopper, COMPLETION_MS);
     }
-    /** Turned all the way down speaks nothing: a silent utterance still ducks whatever is playing. */
-    private int announce(String instruction, int index) {
-        double volume = level(saved.optDouble("volume", 1));
-        if (volume == 0) return TextToSpeech.SUCCESS;
+    private double volume() {
+        return level(saved.optDouble("volume", 1));
+    }
+    /** Turned all the way down speaks nothing: a silent utterance still takes audio focus for nothing. */
+    private int announce(String phrase, String id, int queue, double volume) {
+        if (volume == 0 || phrase.isEmpty()) return TextToSpeech.SUCCESS;
         Bundle params = new Bundle();
         params.putFloat(TextToSpeech.Engine.KEY_PARAM_VOLUME, (float) volume);
-        return speech.speak(instruction, TextToSpeech.QUEUE_FLUSH, params, "phase-" + index);
+        return speech.speak(phrase, queue, params, id);
     }
     /**
      * Whether an interval is long enough to be worth warning about.
@@ -318,15 +342,15 @@ public class TimedCircuitService extends Service implements LocationListener {
         paceWindow = pacing.optDouble("windowSeconds", 0);
         if (paceTargets.length == 0) return;
         // Higher for ahead and lower for behind, generated rather than
-        // shipped: the same two notes the browser recorder sounds. Both sit
-        // clear of the cue, so three sounds in one run are three sounds.
+        // shipped: the same two notes the browser recorder sounds. The cue is
+        // spoken, so a note is never mistaken for it.
         aheadTone = note(1320);
         behindTone = note(440);
     }
 
     private AudioTrack note(double hertz) {
         int rate = 44100;
-        int frames = (int) (rate * 0.18);
+        int frames = (int) (rate * 0.3);
         short[] samples = new short[frames];
         for (int frame = 0; frame < frames; frame++) {
             // Faded at both ends: a square edge on a sine is heard as a click.
@@ -334,8 +358,10 @@ public class TimedCircuitService extends Service implements LocationListener {
             samples[frame] = (short) (Math.sin(2 * Math.PI * hertz * frame / rate) * Short.MAX_VALUE * fade);
         }
         AudioTrack track = new AudioTrack.Builder()
+            // Media rather than a system sound: the note follows the volume
+            // the announcements play at, not the one the ringer is set to.
             .setAudioAttributes(new AudioAttributes.Builder()
-                .setUsage(AudioAttributes.USAGE_ASSISTANCE_SONIFICATION)
+                .setUsage(AudioAttributes.USAGE_MEDIA)
                 .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION).build())
             .setAudioFormat(new AudioFormat.Builder()
                 .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
@@ -625,10 +651,13 @@ public class TimedCircuitService extends Service implements LocationListener {
         stopRecording();
     }
     private void stopRecording() {
+        // Once: the ending's listener and its fallback both arrive here.
+        if (stopped) return;
+        stopped = true;
         handler.removeCallbacks(ticker);
+        handler.removeCallbacks(stopper);
         if (locations != null) locations.removeUpdates(this);
         if (speech != null) { speech.stop(); speech.shutdown(); speech = null; }
-        if (tones != null) { tones.release(); tones = null; }
         if (aheadTone != null) { aheadTone.release(); aheadTone = null; }
         if (behindTone != null) { behindTone.release(); behindTone = null; }
         if (wakeLock != null && wakeLock.isHeld()) wakeLock.release();

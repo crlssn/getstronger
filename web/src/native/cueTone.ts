@@ -1,22 +1,31 @@
 /**
- * The notes a browser recording sounds: the warning that an interval is about
- * to end, and the two that say how the interval is going against the session
- * it is paced against.
+ * What a browser recording says and sounds: the seconds left before an
+ * interval ends, the ending itself, and the two notes that say how the
+ * interval is going against the session it is paced against.
  *
- * The phones sound their own — a locked screen is the whole point of the
- * native plugin — so this is only what the stand-in recorder plays. One
- * context serves the tab: browsers cap how many a page may open, and a
- * session is a few hundred beeps long.
+ * The phones speak and sound their own — a locked screen is the whole point
+ * of the native plugin — so this is only what the stand-in recorder plays.
+ * One audio context serves the tab: browsers cap how many a page may open,
+ * and a session is a few hundred beeps long.
  */
 
-const cueHz = 880
 const seconds = 0.2
 const peak = 0.3
 
 let context: AudioContext | undefined
 
-/** The warning before an interval ends. */
-export const playCue = (): void => playTone(cueHz)
+/** Says a phrase in the page's voice; a browser without one says nothing. */
+export const say = (phrase: string, volume: number): void => {
+  try {
+    if (!('speechSynthesis' in window) || volume <= 0) return
+    const utterance = new SpeechSynthesisUtterance(phrase)
+    utterance.volume = Math.min(volume, 1)
+    window.speechSynthesis.speak(utterance)
+  } catch {
+    // A tab that cannot speak still records; the words are the one thing it
+    // goes without.
+  }
+}
 
 export const playTone = (frequencyHz: number, level = peak): void => {
   try {
