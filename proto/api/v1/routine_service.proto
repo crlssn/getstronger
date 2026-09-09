@@ -27,7 +27,10 @@ service RoutineService {
 }
 
 message CreateRoutineRequest {
-  string name = 1 [(buf.validate.field).string.min_len = 1];
+  string name = 1 [(buf.validate.field).string = {
+    min_len: 1
+    max_len: 100
+  }];
   // A hundred is more exercises than a routine is ever trained with, and far
   // below the bind parameters the insert spends one of per id.
   repeated string exercise_ids = 2 [(buf.validate.field).repeated = { min_items: 1, max_items: 100, items: { string: { uuid: true }}}];
@@ -59,7 +62,7 @@ message DeleteRoutineRequest {
 message DeleteRoutineResponse {}
 
 message ListRoutinesRequest {
-  string name = 1;
+  string name = 1 [(buf.validate.field).string.max_len = 100];
   PaginationRequest pagination = 2 [(buf.validate.field).required = true];
 }
 message ListRoutinesResponse {
@@ -107,7 +110,10 @@ message GetDashboardResponse {
 
 message Routine {
   string id = 1 [(buf.validate.field).string.uuid = true];
-  string name = 2 [(buf.validate.field).string.min_len = 1];
+  string name = 2 [(buf.validate.field).string = {
+    min_len: 1
+    max_len: 100
+  }];
   // Every exercise of the routine, in the order they are trained. Groups
   // partition this same list; a client that does not care how the routine is
   // grouped can keep reading only this field.
@@ -154,7 +160,10 @@ message RoutineExercise {
 }
 
 message CreatePlanRequest {
-  string name = 1 [(buf.validate.field).string.min_len = 1];
+  string name = 1 [(buf.validate.field).string = {
+    min_len: 1
+    max_len: 100
+  }];
   repeated string routine_ids = 2 [(buf.validate.field).repeated = {min_items: 1, max_items: 100, unique: true, items: {string: {uuid: true}}}];
 }
 message CreatePlanResponse {
@@ -175,7 +184,10 @@ message ListPlansResponse {
 
 message UpdatePlanRequest {
   string id = 1 [(buf.validate.field).string.uuid = true];
-  string name = 2 [(buf.validate.field).string.min_len = 1];
+  string name = 2 [(buf.validate.field).string = {
+    min_len: 1
+    max_len: 100
+  }];
   repeated string routine_ids = 3 [(buf.validate.field).repeated = {min_items: 1, max_items: 100, unique: true, items: {string: {uuid: true}}}];
 }
 message UpdatePlanResponse {
@@ -206,7 +218,10 @@ message SkipPlanRoutineResponse {
 
 message Plan {
   string id = 1 [(buf.validate.field).string.uuid = true];
-  string name = 2 [(buf.validate.field).string.min_len = 1];
+  string name = 2 [(buf.validate.field).string = {
+    min_len: 1
+    max_len: 100
+  }];
   repeated Routine routines = 3 [(buf.validate.field).repeated.min_items = 1];
   int32 current_position = 4 [(buf.validate.field).int32.gte = 0];
   bool active = 5;

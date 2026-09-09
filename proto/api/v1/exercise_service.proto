@@ -26,7 +26,10 @@ service ExerciseService {
 }
 
 message CreateExerciseRequest {
-  string name = 1 [(buf.validate.field).string.min_len = 1];
+  string name = 1 [(buf.validate.field).string = {
+    min_len: 1
+    max_len: 100
+  }];
   repeated string tags = 2 [(buf.validate.field).repeated = {
     max_items: 10
     unique: true
@@ -71,7 +74,7 @@ message DeleteExerciseRequest {
 message DeleteExerciseResponse {}
 
 message ListExercisesRequest {
-  string name = 1;
+  string name = 1 [(buf.validate.field).string.max_len = 100];
   repeated string exercise_ids = 2 [(buf.validate.field).repeated = { max_items: 100, items: { string: { uuid: true }}}];
   PaginationRequest pagination = 3 [(buf.validate.field).required = true];
 }

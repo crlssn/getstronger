@@ -817,12 +817,12 @@ var File_api_v1_auth_service_proto protoreflect.FileDescriptor
 
 const file_api_v1_auth_service_proto_rawDesc = "" +
 	"\n" +
-	"\x19api/v1/auth_service.proto\x12\x06api.v1\x1a\x14api/v1/options.proto\x1a\x1bbuf/validate/validate.proto\"\xab\x02\n" +
+	"\x19api/v1/auth_service.proto\x12\x06api.v1\x1a\x14api/v1/options.proto\x1a\x1bbuf/validate/validate.proto\"\xad\x02\n" +
 	"\rSignupRequest\x12\x1d\n" +
 	"\x05email\x18\x01 \x01(\tB\a\xbaH\x04r\x02`\x01R\x05email\x12%\n" +
 	"\bpassword\x18\x02 \x01(\tB\t\xbaH\x06r\x04\x10\x06(HR\bpassword\x123\n" +
-	"\x15password_confirmation\x18\x03 \x01(\tR\x14passwordConfirmation\x12\x1b\n" +
-	"\x04name\x18\b \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x04name\x127\n" +
+	"\x15password_confirmation\x18\x03 \x01(\tR\x14passwordConfirmation\x12\x1d\n" +
+	"\x04name\x18\b \x01(\tB\t\xbaH\x06r\x04\x10\x01\x18dR\x04name\x127\n" +
 	"\busername\x18\t \x01(\tB\x1b\xbaH\x18r\x16\x10\x03\x18\x1e2\x10^[A-Za-z0-9_.]+$R\busernameJ\x04\b\x04\x10\x05J\x04\b\x05\x10\x06J\x04\b\x06\x10\aJ\x04\b\a\x10\bR\n" +
 	"first_nameR\tlast_nameR\vweight_unitR\rdistance_unit\"\x10\n" +
 	"\x0eSignupResponse\"R\n" +
