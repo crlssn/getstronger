@@ -3,19 +3,30 @@
 // brand. Run `npm run assets` to rebuild the sources and regenerate the
 // platform icons and splash screens.
 //
-// The splash reproduces the login header: the barbell tile next to the
-// wordmark and slogan. Text renders with the system font stack the app itself
-// uses, so regenerate on macOS for faithful output.
-import { mkdir, readFile } from 'node:fs/promises'
+// The splash is not drawn here at all: it is a photograph of the boot splash
+// in web/index.html, taken with the motion turned off, so the launch screen
+// and the animation the app hands over to cannot drift apart. That needs a
+// browser, and the only one in the repo is web's Playwright — the mobile
+// package has none of its own.
+import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import sharp from 'sharp'
 
 const TILE = '#25282d' // The brand tile behind the barbell; the web theme-color.
-const SURFACE = '#ffffff' // The login header surface the splash mimics.
-const TITLE = '#25282d'
-const SLOGAN = '#64748b'
 
 const BARBELL = new URL('../../web/src/assets/barbell.svg', import.meta.url)
+const INDEX = new URL('../../web/index.html', import.meta.url)
+const PLAYWRIGHT = new URL('../../web/node_modules/playwright/index.mjs', import.meta.url)
+const FONT = new URL(
+  '../../web/node_modules/@fontsource-variable/plus-jakarta-sans/files/plus-jakarta-sans-latin-wght-normal.woff2',
+  import.meta.url,
+)
 const OUT = new URL('../assets/', import.meta.url)
+
+// The square the platform tooling slices every launch image out of. Phones
+// aspect-fill it, which crops to roughly the middle 46% of the width, so the
+// lockup is drawn at 40% and survives the crop on the narrowest of them.
+const SPLASH = 1366
+const LOCKUP = Math.round(SPLASH * 0.4)
 
 const barbellSvg = (await readFile(BARBELL, 'utf8')).replaceAll('currentColor', '#ffffff')
 const barbell = (size) =>
@@ -24,33 +35,44 @@ const barbell = (size) =>
 const canvas = (size, background) =>
   sharp({ create: { width: size, height: size, channels: 4, background } })
 
-// The rounded brand tile with the barbell inside, like the login header mark.
-const tile = async (size, radius) => {
-  const shape = `<svg width="${size}" height="${size}"><rect width="${size}" height="${size}" rx="${radius}" fill="${TILE}"/></svg>`
-  return sharp(Buffer.from(shape))
-    .composite([{ input: await barbell(Math.round(size * 0.72)) }])
-    .png()
-    .toBuffer()
-}
-
-// The login-header lockup: tile, wordmark, slogan, with the two text lines
-// vertically centred on the tile. Sized to survive the centre crop that
-// aspect-fill performs on tall phone screens.
+// The boot splash, parked. Reduced motion is emulated rather than overridden:
+// the splash already answers it with the bar fully loaded on the last word,
+// which is the one still frame the design states for itself. index.html is
+// loaded whole, so the palette script picks the emulated scheme up and themes
+// the splash the way it does on a real cold start; the app's own script tag
+// resolves to nothing and is never missed.
 //
-// Helvetica Neue ships no 600 cut and pango substitutes Regular for it, so
-// Medium (500) stands in for the web's semibold "Get".
-const lockup = async () => {
-  const text = `<svg width="800" height="260">
-    <text x="0" y="108" font-family="Helvetica Neue, Arial, sans-serif" font-size="96" fill="${TITLE}"><tspan font-weight="500">Get</tspan><tspan font-weight="700">Stronger</tspan></text>
-    <text x="4" y="208" font-family="Helvetica Neue, Arial, sans-serif" font-size="64" font-weight="700" fill="${SLOGAN}">Lift it. Log it. Beat it.</text>
-  </svg>`
-  return sharp({ create: { width: 1100, height: 260, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } } })
-    .composite([
-      { input: await tile(240, 56), left: 0, top: 10 },
-      { input: Buffer.from(text), left: 280, top: 0 },
-    ])
-    .png()
-    .toBuffer()
+// The typeface is injected because index.html declares no @font-face — on a
+// real boot the face arrives with the app bundle, a beat after the splash.
+const splash = async (colorScheme) => {
+  const { chromium } = await import(PLAYWRIGHT)
+  const face = `@font-face {
+    font-family: 'Plus Jakarta Sans Variable';
+    src: url(data:font/woff2;base64,${(await readFile(FONT)).toString('base64')}) format('woff2');
+    font-weight: 200 800;
+  }
+  /* 20rem on a phone, and a share of the launch square here. */
+  #boot-splash .boot-lockup { width: ${LOCKUP}px; }`
+
+  const browser = await chromium.launch()
+  try {
+    const page = await browser.newPage({
+      viewport: { width: SPLASH, height: SPLASH },
+      deviceScaleFactor: 2,
+      colorScheme,
+      reducedMotion: 'reduce',
+    })
+    await page.setContent(await readFile(INDEX, 'utf8'))
+    await page.addStyleTag({ content: face })
+    // The splash still fades in on its delay with the motion off, so that a
+    // boot which beats it never flashes it.
+    await page.waitForFunction(
+      () => getComputedStyle(document.getElementById('boot-splash')).opacity === '1',
+    )
+    return await page.screenshot()
+  } finally {
+    await browser.close()
+  }
 }
 
 await mkdir(OUT, { recursive: true })
@@ -70,10 +92,9 @@ await write(
 )
 await write(canvas(1024, TILE), 'icon-background.png')
 
-// Splash: the login header lockup centred on its surface, identical in light
-// and dark because the app renders a light UI in both.
-const splash = canvas(2732, SURFACE).composite([{ input: await lockup() }])
-await write(splash.clone(), 'splash.png')
-await write(splash.clone(), 'splash-dark.png')
+// Splash: one per palette, because the launch screen hands over to a splash
+// that has already read the reader's.
+await writeFile(new URL('splash.png', OUT), await splash('light'))
+await writeFile(new URL('splash-dark.png', OUT), await splash('dark'))
 
 console.log('asset sources written to mobile/assets/')

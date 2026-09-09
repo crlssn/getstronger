@@ -7,18 +7,20 @@ const config: CapacitorConfig = {
   appName: 'GetStronger',
   webDir: '../web/dist',
   plugins: {
-    // The launch value only, matching the white splash below. The page paints
-    // the band the clock sits on, so once the app is up the palette owns the
-    // style instead; see web/src/native/statusBar.ts.
+    // The launch value only, matching the splash's light canvas below. The
+    // page paints the band the clock sits on, so once the app is up the
+    // palette owns the style instead; see web/src/native/statusBar.ts.
     StatusBar: {
       style: 'LIGHT',
     },
-    // The app hides the splash itself once Vue has mounted; see
-    // web/src/native/platform.ts.
+    // The app takes the launch screen down itself, the moment the boot splash
+    // has faded in over it; see web/src/native/launchScreen.ts.
     SplashScreen: {
       launchAutoHide: false,
-      // The splash reproduces the login header on its light surface.
-      backgroundColor: '#ffffff',
+      // --color-canvas, the paper the launch image and the boot splash are
+      // both drawn on. One value where the token has two: the palettes are in
+      // the images themselves, and this only shows around them.
+      backgroundColor: '#f2f1ed',
     },
     // Without the plugin, WKWebView pans the whole page to reveal a focused
     // input, shoving the sticky workout header under the status bar while

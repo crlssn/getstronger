@@ -99,10 +99,10 @@ const shows = (name: string) => {
 describe('boot splash', () => {
   const document = new DOMParser().parseFromString(html, 'text/html')
 
-  // Each plate is a group — a moulded body, its hairline and the lit face —
-  // and the body is the piece that says where the plate seats.
+  // A plate is one solid rect, and it is the piece that says where the plate
+  // seats.
   const plateBodies = (side: 'l' | 'r') =>
-    [...document.querySelectorAll(`#boot-splash .boot-plate-${side} .boot-rubber`)].map((rect) => {
+    [...document.querySelectorAll(`#boot-splash .boot-plate-${side} rect`)].map((rect) => {
       const from = parseFloat(rect.getAttribute('x') ?? '')
       return { from, to: from + parseFloat(rect.getAttribute('width') ?? '') }
     })
@@ -119,14 +119,15 @@ describe('boot splash', () => {
     expect(document.querySelectorAll('#boot-splash .boot-plate-r')).toHaveLength(plates.length)
   })
 
-  // Rubber plates are stacked flush on a real bar, so each overlaps the one
-  // before it rather than floating a sliver of daylight away from it.
-  it('stacks every plate flush against its neighbour', () => {
+  // The plates carry no edge of their own, so the only thing telling a stack
+  // of three from one slab is the canvas showing between them — the same hair
+  // at every seam.
+  it('sets every plate the same hair off its neighbour', () => {
     for (const side of ['l', 'r'] as const) {
       const bodies = plateBodies(side).sort((a, b) => a.from - b.from)
-      const overlaps = bodies.slice(1).map((body, at) => bodies[at].to - body.from)
-      expect(overlaps[0]).toBeGreaterThan(0)
-      for (const overlap of overlaps) expect(overlap).toBe(overlaps[0])
+      const gaps = bodies.slice(1).map((body, at) => body.from - bodies[at].to)
+      expect(gaps[0]).toBeGreaterThan(0)
+      for (const gap of gaps) expect(gap).toBe(gaps[0])
     }
   })
 
@@ -196,29 +197,46 @@ describe('boot splash', () => {
   })
 
   it('restates the theme it cannot wait for', () => {
-    expect(declarationsFor('#boot-splash')).toContain(`background: ${token('color-canvas')}`)
-    expect(declarationsFor('#boot-splash .boot-lockup')).toContain(`color: ${token('color-text')}`)
-    expect(declarationsFor("[data-theme='dark'] #boot-splash")).toContain(
-      `background: ${token('color-canvas', 'dark')}`,
-    )
-    expect(declarationsFor("[data-theme='dark'] #boot-splash .boot-lockup")).toContain(
-      `color: ${token('color-text', 'dark')}`,
-    )
+    const scopes = {
+      light: { splash: '#boot-splash', within: '#boot-splash ' },
+      dark: {
+        splash: "[data-theme='dark'] #boot-splash",
+        within: "[data-theme='dark'] #boot-splash ",
+      },
+    } as const
+    for (const palette of ['light', 'dark'] as const) {
+      const { splash, within } = scopes[palette]
+      expect(declarationsFor(splash)).toContain(`background: ${token('color-canvas', palette)}`)
+      // The rig is drawn in these two, which the SVG reaches for by name.
+      for (const ink of ['color-ink', 'color-ink-muted'])
+        expect(declarationsFor(splash)).toContain(`--${ink}: ${token(ink, palette)}`)
+      expect(declarationsFor(`${within}.boot-lockup`)).toContain(
+        `color: ${token('color-text', palette)}`,
+      )
+      expect(declarationsFor(`${within}.boot-slogan`)).toContain(
+        `color: ${token('color-text-muted', palette)}`,
+      )
+    }
   })
 
-  // Chrome on the bar, rubber on the plates: two stacks of stops that the dark
-  // palette re-values rather than redraws.
-  it('turns the bar in chrome and moulds the plates in rubber', () => {
-    expect(declarationsFor('#boot-splash .boot-steel')).toContain('fill: url(#boot-steel)')
-    expect(declarationsFor('#boot-splash .boot-rubber')).toContain('fill: url(#boot-rubber)')
-    for (const material of ['steel', 'rubber']) {
-      const stack = [
-        ...declarationsFor('#boot-splash').matchAll(new RegExp(`--boot-${material}-\\w+:`, 'g')),
-      ].map(([stop]) => stop)
-      expect(stack).toHaveLength(6)
-      for (const stop of stack)
-        expect(declarationsFor("[data-theme='dark'] #boot-splash")).toContain(stop)
+  // Flat ink on canvas, the way the rest of the app is drawn: every piece
+  // takes a token straight, so one palette swap turns the whole rig over.
+  it('draws the rig in nothing but ink', () => {
+    const rig = [...document.querySelectorAll('#boot-splash .boot-rig rect')]
+    expect(rig.length).toBeGreaterThan(0)
+    for (const piece of rig) {
+      expect(piece.getAttribute('fill')).toMatch(/^var\(--color-ink(-muted)?\)$/)
+      expect(piece.getAttribute('stroke')).toBeNull()
     }
+    // No gradient to mix, and so nothing for a palette to leave behind.
+    expect(document.querySelector('#boot-splash defs')).toBeNull()
+  })
+
+  // The slogan is an eyebrow, and takes the tracking the type scale gives one.
+  it('tracks the slogan the way the type scale tracks an eyebrow', () => {
+    expect(declarationsFor('#boot-splash .boot-slogan')).toContain(
+      `letter-spacing: ${token('text-eyebrow--letter-spacing')}`,
+    )
   })
 
   // The splash cannot import from src, so it restates the lockup by hand.
