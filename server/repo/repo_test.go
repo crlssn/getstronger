@@ -2521,7 +2521,8 @@ func (s *repoSuite) TestListPageTokensTreatEmptyAsUnset() {
 	workout := s.factory.NewWorkout(factory.WorkoutUserID(user.ID))
 	notification := s.factory.NewNotification(factory.NotificationUserID(user.ID))
 
-	exercises, err := s.repo.ListExercises(ctx,
+	exercises, err := s.repo.ListExercises(
+		ctx,
 		repo.ListExercisesWithUserID(user.ID),
 		repo.ListExercisesWithPageToken(empty),
 	)
@@ -2529,7 +2530,8 @@ func (s *repoSuite) TestListPageTokensTreatEmptyAsUnset() {
 	s.Require().Len(exercises, 1)
 	s.Require().Equal(exercise.ID, exercises[0].ID)
 
-	routines, err := s.repo.ListRoutines(ctx,
+	routines, err := s.repo.ListRoutines(
+		ctx,
 		repo.ListRoutinesWithUserID(user.ID),
 		repo.ListRoutinesWithPageToken(empty),
 	)
@@ -2537,7 +2539,8 @@ func (s *repoSuite) TestListPageTokensTreatEmptyAsUnset() {
 	s.Require().Len(routines, 1)
 	s.Require().Equal(routine.ID, routines[0].ID)
 
-	workouts, err := s.repo.ListWorkouts(ctx,
+	workouts, err := s.repo.ListWorkouts(
+		ctx,
 		repo.ListWorkoutsWithUserIDs(user.ID),
 		repo.ListWorkoutsWithPageToken(empty),
 	)
@@ -2545,7 +2548,8 @@ func (s *repoSuite) TestListPageTokensTreatEmptyAsUnset() {
 	s.Require().Len(workouts, 1)
 	s.Require().Equal(workout.ID, workouts[0].ID)
 
-	notifications, err := s.repo.ListNotifications(ctx,
+	notifications, err := s.repo.ListNotifications(
+		ctx,
 		repo.ListNotificationsWithUserID(user.ID),
 		repo.ListNotificationsWithPageToken(empty),
 	)
