@@ -162,8 +162,32 @@ Two constraints shape it:
 Changing the script — or the allowed domains — invalidates the snapshot, so the
 next session rebuilds it. The cache also expires on its own after about a week.
 
+## Reading another session's run log
+
+A session here cannot. The routines' logs are readable in the web UI and by
+nothing this sandbox has. Observed in run `cse_0197dyrqyJWSHfPSJJVgdbor`:
+
+- **`RemoteTrigger` is not available.** `ToolSearch` with
+  `select:RemoteTrigger` answers `No matching deferred tools found`, and so do
+  keyword searches for a run-log tool.
+- **The `Claude_Code_Remote` connector has no log reader.** It lists routines
+  with `list_triggers` and returns a session's *record* with `get_session` —
+  title, status, branches, token and cost totals — and stops there. No
+  transcript, no tool calls, no output. It has no `list_runs`, `get_run_log` or
+  `list_events`, and `ListMcpResourcesTool` reports it serves no resources
+  either.
+- **`list_sessions` does not even enumerate the runs.** Trigger-fired sessions
+  are absent from its listing, and the `tags` filter that would select them is
+  documented as refused for an in-session caller.
+
+What is reachable is the shape of a run, not its contents: `list_triggers`
+carries each routine's `last_run` — status, timestamps, session id — and
+`get_session` adds that session's cost, context usage and any
+`post_turn_summary`. Anything needing the log itself has to be read by a person.
+
 ## Verifying a change
 
 Trigger the routine by hand rather than waiting four hours, and read the run
-log: the environment lines at the top say whether the setup script ran, and
-`ls /root/go/bin` plus `mise ls` say what actually landed.
+log **in the web UI**, not from a session here: the environment lines at the top
+say whether the setup script ran, and `ls /root/go/bin` plus `mise ls` say what
+actually landed.
