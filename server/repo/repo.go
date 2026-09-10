@@ -487,19 +487,7 @@ type ListExercisesOpt func() ([]bob.Mod[*dialect.SelectQuery], error)
 
 func ListExercisesWithPageToken(pageToken []byte) ListExercisesOpt {
 	return func() ([]bob.Mod[*dialect.SelectQuery], error) {
-		ordered := newestFirst(models.Exercises.Columns.CreatedAt, models.Exercises.Columns.ID)
-		if pageToken == nil {
-			return ordered, nil
-		}
-
-		var pt PageToken
-		if err := json.Unmarshal(pageToken, &pt); err != nil {
-			return nil, fmt.Errorf("page token unmarshal: %w", err)
-		}
-
-		return append([]bob.Mod[*dialect.SelectQuery]{
-			pageTokenBoundary(models.Exercises.Columns.CreatedAt, models.Exercises.Columns.ID, pt),
-		}, ordered...), nil
+		return pageTokenMods(models.Exercises.Columns.CreatedAt, models.Exercises.Columns.ID, pageToken)
 	}
 }
 
@@ -737,6 +725,27 @@ func pageTokenBoundary(createdAt, id bob.Expression, pt PageToken) bob.Mod[*dial
 		LT(psql.Group(psql.Arg(pt.CreatedAt), psql.Arg(pt.ID))))
 }
 
+// pageTokenMods is what every newest-first list does with a page token: order
+// the whole set, and cut it off at the token's place when there is one. An
+// empty token is no token — a zero-length bytes field is elided by both
+// codecs, so a first page reaches here as nil, and a caller holding []byte{}
+// is asking for the same thing rather than for a cursor to parse.
+func pageTokenMods(createdAt, id bob.Expression, token []byte) ([]bob.Mod[*dialect.SelectQuery], error) {
+	ordered := newestFirst(createdAt, id)
+	if len(token) == 0 {
+		return ordered, nil
+	}
+
+	var pt PageToken
+	if err := json.Unmarshal(token, &pt); err != nil {
+		return nil, fmt.Errorf("page token unmarshal: %w", err)
+	}
+
+	return append([]bob.Mod[*dialect.SelectQuery]{
+		pageTokenBoundary(createdAt, id, pt),
+	}, ordered...), nil
+}
+
 // stableExerciseOrder orders a routine's exercise load by the position recorded on the
 // relationship table, which the load's join makes available to ORDER BY. Positions may have gaps
 // after removals; only their relative order matters. The exercise ID keeps the sort total in case
@@ -797,19 +806,7 @@ type ListRoutineOpt func() ([]bob.Mod[*dialect.SelectQuery], error)
 
 func ListRoutinesWithPageToken(pageToken []byte) ListRoutineOpt {
 	return func() ([]bob.Mod[*dialect.SelectQuery], error) {
-		ordered := newestFirst(models.Routines.Columns.CreatedAt, models.Routines.Columns.ID)
-		if pageToken == nil {
-			return ordered, nil
-		}
-
-		var pt PageToken
-		if err := json.Unmarshal(pageToken, &pt); err != nil {
-			return nil, fmt.Errorf("page token unmarshal: %w", err)
-		}
-
-		return append([]bob.Mod[*dialect.SelectQuery]{
-			pageTokenBoundary(models.Routines.Columns.CreatedAt, models.Routines.Columns.ID, pt),
-		}, ordered...), nil
+		return pageTokenMods(models.Routines.Columns.CreatedAt, models.Routines.Columns.ID, pageToken)
 	}
 }
 
@@ -1025,19 +1022,7 @@ func ListWorkoutsWithLimit(size int) ListWorkoutsOpt {
 
 func ListWorkoutsWithPageToken(token []byte) ListWorkoutsOpt {
 	return func() ([]bob.Mod[*dialect.SelectQuery], error) {
-		ordered := newestFirst(models.Workouts.Columns.CreatedAt, models.Workouts.Columns.ID)
-		if token == nil {
-			return ordered, nil
-		}
-
-		var pt PageToken
-		if err := json.Unmarshal(token, &pt); err != nil {
-			return nil, fmt.Errorf("page token unmarshal: %w", err)
-		}
-
-		return append([]bob.Mod[*dialect.SelectQuery]{
-			pageTokenBoundary(models.Workouts.Columns.CreatedAt, models.Workouts.Columns.ID, pt),
-		}, ordered...), nil
+		return pageTokenMods(models.Workouts.Columns.CreatedAt, models.Workouts.Columns.ID, token)
 	}
 }
 
@@ -1757,19 +1742,7 @@ func ListNotificationsWithUserID(userID uuid.UUID) ListNotificationsOpt {
 
 func ListNotificationsWithPageToken(token []byte) ListNotificationsOpt {
 	return func() ([]bob.Mod[*dialect.SelectQuery], error) {
-		ordered := newestFirst(models.Notifications.Columns.CreatedAt, models.Notifications.Columns.ID)
-		if len(token) == 0 {
-			return ordered, nil
-		}
-
-		var pageToken PageToken
-		if err := json.Unmarshal(token, &pageToken); err != nil {
-			return nil, fmt.Errorf("page token unmarshal: %w", err)
-		}
-
-		return append([]bob.Mod[*dialect.SelectQuery]{
-			pageTokenBoundary(models.Notifications.Columns.CreatedAt, models.Notifications.Columns.ID, pageToken),
-		}, ordered...), nil
+		return pageTokenMods(models.Notifications.Columns.CreatedAt, models.Notifications.Columns.ID, token)
 	}
 }
 
