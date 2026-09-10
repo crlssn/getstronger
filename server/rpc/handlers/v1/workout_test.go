@@ -893,6 +893,19 @@ func (s *workoutSuite) TestLikeWorkout() {
 		s.Require().Nil(res)
 		s.Require().Equal(connect.NewError(connect.CodeInvalidArgument, nil).Error(), err.Error())
 	})
+
+	// Not found is reserved for the workout. A rep nobody can be the author of
+	// is the account being broken, which the athlete cannot act on.
+	s.Run("err_rep_from_an_account_that_is_gone", func() {
+		ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
+		ctx = xcontext.WithUserID(ctx, uuid.Must(uuid.NewV4()))
+
+		res, err := s.handler.LikeWorkout(ctx, connect.NewRequest(&apiv1.LikeWorkoutRequest{
+			WorkoutId: s.factory.NewWorkout().ID.String(),
+		}))
+		s.Require().Nil(res)
+		s.Require().Equal(connect.NewError(connect.CodeInternal, nil).Error(), err.Error())
+	})
 }
 
 func (s *workoutSuite) TestUnlikeWorkout() {
@@ -922,6 +935,17 @@ func (s *workoutSuite) TestUnlikeWorkout() {
 			WorkoutId: s.factory.NewWorkout().ID.String(),
 		}))
 		s.Require().NoError(err)
+	})
+
+	s.Run("err_malformed_workout_id", func() {
+		ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
+		ctx = xcontext.WithUserID(ctx, s.factory.NewUser().ID)
+
+		res, err := s.handler.UnlikeWorkout(ctx, connect.NewRequest(&apiv1.UnlikeWorkoutRequest{
+			WorkoutId: "not-a-uuid",
+		}))
+		s.Require().Nil(res)
+		s.Require().Equal(connect.NewError(connect.CodeInvalidArgument, nil).Error(), err.Error())
 	})
 }
 

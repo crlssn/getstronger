@@ -623,6 +623,35 @@ func TestNotification(t *testing.T) {
 	require.Nil(t, parsed.GetWorkoutComment())
 }
 
+// Each opt builds the type it needs, so a rep notification comes out whole
+// whichever opt runs first.
+func TestNotificationWorkoutLike(t *testing.T) {
+	t.Parallel()
+
+	record := newNotification(notification.TypeWorkoutLike, notification.Payload{})
+	actor := newUser()
+	workout := newWorkout()
+
+	parsed := parser.Notification(record, parser.NotificationWorkout(record.Type, workout))
+	require.Nil(t, parsed.GetWorkoutLike().GetActor())
+	require.Equal(t, workout.ID.String(), parsed.GetWorkoutLike().GetWorkout().GetId())
+
+	parsed = parser.Notification(record, parser.NotificationActor(record.Type, actor))
+	require.Nil(t, parsed.GetWorkoutLike().GetWorkout())
+	require.Equal(t, actor.ID.String(), parsed.GetWorkoutLike().GetActor().GetId())
+
+	parsed = parser.Notification(
+		record,
+		parser.NotificationWorkout(record.Type, workout),
+		parser.NotificationActor(record.Type, actor),
+	)
+	require.Equal(t, actor.ID.String(), parsed.GetWorkoutLike().GetActor().GetId())
+	require.Equal(t, workout.ID.String(), parsed.GetWorkoutLike().GetWorkout().GetId())
+
+	require.Nil(t, parsed.GetWorkoutComment())
+	require.Nil(t, parsed.GetUserFollowed())
+}
+
 // requireNotifiedWorkout checks the workout a comment notification carries:
 // the session and its athlete, and none of the detail the notification does
 // not show.
