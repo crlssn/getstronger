@@ -2,20 +2,15 @@ package migrations_test
 
 import (
 	"context"
-	"database/sql"
-	"fmt"
 	"io"
-	"os"
-	"path/filepath"
 	"testing"
-	"time"
 
 	_ "github.com/jackc/pgx/v5/stdlib" // Register pgx driver
 	"github.com/stretchr/testify/require"
-	"github.com/testcontainers/testcontainers-go"
-	"github.com/testcontainers/testcontainers-go/modules/postgres"
-	"github.com/testcontainers/testcontainers-go/wait"
 )
+
+// The fixture's name places it after migration 042 and before 043.
+const fixtureName043 = "042_zz_email_fixture.sql"
 
 // Addresses predating the migration were stored however they were typed.
 const fixture043 = `
@@ -36,7 +31,7 @@ func TestMigration043LowercasesEmails(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
 
-	db := runMigration043(t, fixture043)
+	db := runMigration(t, "043", fixtureName043, fixture043)
 
 	emailOf := func(authID string) string {
 		var email string
@@ -60,7 +55,7 @@ func TestMigration043StopsOnCaseVariantDuplicates(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
 
-	container, err := startMigration043(t, fixture043Colliding)
+	container, err := startMigration(t, "043", fixtureName043, fixture043Colliding)
 	require.Error(t, err)
 
 	// The start error only says the container exited; what refused it is in
@@ -73,57 +68,4 @@ func TestMigration043StopsOnCaseVariantDuplicates(t *testing.T) {
 	output, err := io.ReadAll(logs)
 	require.NoError(t, err)
 	require.Contains(t, string(output), "auth rows hold case-variant duplicates of: carol@example.com")
-}
-
-func runMigration043(t *testing.T, fixture string) *sql.DB {
-	t.Helper()
-
-	container, err := startMigration043(t, fixture)
-	require.NoError(t, err)
-
-	connection, err := container.ConnectionString(context.Background(), "sslmode=disable")
-	require.NoError(t, err)
-
-	db, err := sql.Open("pgx", connection)
-	require.NoError(t, err)
-	t.Cleanup(func() { require.NoError(t, db.Close()) })
-
-	return db
-}
-
-// startMigration043 boots a database whose init runs the fixture after
-// migration 042 and before 043, so that 043 meets it as it would production
-// data. It returns the start error rather than asserting on it, because a
-// migration that refuses to run is one of the things under test.
-func startMigration043(t *testing.T, fixture string) (*postgres.PostgresContainer, error) {
-	t.Helper()
-	ctx := context.Background()
-
-	fixturePath := filepath.Join(t.TempDir(), "042_zz_email_fixture.sql")
-	require.NoError(t, os.WriteFile(fixturePath, []byte(fixture), 0o600))
-
-	scripts := migrationsThrough(t, "043")
-	require.NotEmpty(t, scripts)
-	scripts = append(scripts[:len(scripts)-1], fixturePath, scripts[len(scripts)-1])
-
-	container, err := postgres.Run(
-		ctx, "postgres:16.4-alpine",
-		postgres.WithInitScripts(scripts...),
-		postgres.WithDatabase("test-db"),
-		postgres.WithUsername("postgres"),
-		postgres.WithPassword("postgres"),
-		testcontainers.WithWaitStrategy(
-			wait.ForLog("database system is ready to accept connections").
-				WithOccurrence(2).WithStartupTimeout(time.Minute),
-		),
-	)
-	if container != nil {
-		t.Cleanup(func() { require.NoError(t, container.Terminate(ctx)) })
-	}
-
-	if err != nil {
-		return container, fmt.Errorf("run postgres: %w", err)
-	}
-
-	return container, nil
 }

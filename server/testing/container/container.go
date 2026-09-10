@@ -22,13 +22,14 @@ type Container struct {
 }
 
 const (
-	// Ten packages start their own Postgres, and `go test ./...` builds them in
-	// parallel, so a single run can ask one Docker daemon for ten containers at
-	// once — more when other worktrees are doing the same. This is a startup
-	// deadline rather than a test assertion: nothing is served by failing fast,
-	// and at ten seconds a loaded daemon failed a run that had nothing wrong
-	// with it.
-	startTimeout = 2 * time.Minute
+	// StartTimeout is how long any test container in this repository waits for
+	// Postgres to come up. Ten packages start their own, and `go test ./...`
+	// builds them in parallel, so a single run can ask one Docker daemon for ten
+	// containers at once — more when other worktrees are doing the same. This is
+	// a startup deadline rather than a test assertion: nothing is served by
+	// failing fast, and at ten seconds a loaded daemon failed a run that had
+	// nothing wrong with it.
+	StartTimeout = 2 * time.Minute
 	occurrence   = 2
 )
 
@@ -41,7 +42,7 @@ func NewContainer(ctx context.Context) *Container {
 		postgres.WithPassword("postgres"),
 		testcontainers.WithWaitStrategy(
 			wait.ForLog("database system is ready to accept connections").
-				WithOccurrence(occurrence).WithStartupTimeout(startTimeout),
+				WithOccurrence(occurrence).WithStartupTimeout(StartTimeout),
 		),
 	)
 	if err != nil {
