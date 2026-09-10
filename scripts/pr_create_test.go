@@ -278,6 +278,50 @@ func TestPRCreateRefusesToDispatchForABranchThatIsNotOnTheRemote(t *testing.T) {
 	require.Contains(t, result.stderr, "push it first")
 }
 
+// The workflow fallback exists for the cloud sandbox, and the cloud sandbox is
+// the one place with no gh to dispatch it — so 'gh: command not found', chased
+// by a message implying a dispatch was attempted, is the one failure this path
+// must never produce.
+func TestPRCreateExplainsItselfWhereGhIsMissing(t *testing.T) {
+	t.Parallel()
+
+	dir := t.TempDir()
+	bin := filepath.Join(dir, "bin")
+	require.NoError(t, os.Mkdir(bin, 0o755))
+
+	// A PATH with no gh anywhere on it. dirname is the only system tool the
+	// script reaches before the check, and git is stubbed as everywhere else.
+	dirname, err := exec.LookPath("dirname")
+	require.NoError(t, err)
+	require.NoError(t, os.Symlink(dirname, filepath.Join(bin, "dirname")))
+	require.NoError(t, os.WriteFile(filepath.Join(bin, "git"), []byte(stubGit), 0o755))
+
+	_, keyPath := writeKey(t)
+	script, err := filepath.Abs("pr_create.sh")
+	require.NoError(t, err)
+
+	cmd := exec.CommandContext(t.Context(), "bash", script, "fix: something", bodyFile(t))
+	// No GH_APP_ID, so no token is minted and the workflow fallback is taken.
+	cmd.Env = []string{
+		"PATH=" + bin,
+		"HOME=" + dir,
+		"GIT_LOG=" + filepath.Join(dir, "git.log"),
+		"GH_APP_INSTALLATION_ID=" + testInstallationID,
+		"GH_APP_PRIVATE_KEY=" + keyPath,
+	}
+
+	var stdout, stderr strings.Builder
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+
+	require.Error(t, cmd.Run(), "there is no way to open the pull request here")
+	require.NotContains(t, stderr.String(), "command not found",
+		"the shell's error is not an explanation")
+	require.Contains(t, stderr.String(), "gh is not installed")
+	require.Contains(t, stderr.String(), "pr.open.yml",
+		"the message names the workflow to dispatch by hand")
+}
+
 func TestPRCreateRefusesBadArguments(t *testing.T) {
 	t.Parallel()
 

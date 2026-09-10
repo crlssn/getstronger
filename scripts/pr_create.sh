@@ -55,6 +55,12 @@ open_through_workflow() {
   branch=$(git rev-parse --abbrev-ref HEAD)
   git ls-remote --exit-code --heads origin "$branch" >/dev/null 2>&1 ||
     fail "no branch named $branch on origin, so push it first"
+
+  # The cloud sandbox is both where this fallback is needed and the one place
+  # with no gh to dispatch it, so say that rather than let the shell say it.
+  command -v gh >/dev/null 2>&1 ||
+    fail "gh is not installed here, so nothing can dispatch the workflow. Run pr.open.yml on $branch another way — the GitHub MCP tools can — passing title, body and base as its inputs."
+
   gh workflow run pr.open.yml --ref "$branch" \
     -f "title=$TITLE" -F "body=@$BODY_FILE" -f "base=${base:-main}" >/dev/null ||
     fail "could not dispatch the pr open workflow on $branch"
