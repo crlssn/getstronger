@@ -945,12 +945,12 @@ export const en = {
 
 export const sv = {
   record: {
-    title: 'Registrera ett pass',
+    title: 'Starta ett pass med GPS',
     entryMeta: 'Ingen bestämd längd · du avslutar själv',
-    eyebrow: 'Registrerar',
+    eyebrow: 'Pågår',
     session: 'Pass',
-    instruction: 'Registrerar {name}',
-    start: 'Starta registrering',
+    instruction: '{name} pågår',
+    start: 'Starta passet',
     permission:
       'Tillåt platsåtkomst så att rutt, distans och tempo mäts medan du rör dig. Passet pågår tills du avslutar det.',
     openEnded: 'Pågår tills du avslutar',
@@ -961,7 +961,7 @@ export const sv = {
     recent: 'Nyligen',
     saveAs: 'Spara som {name}',
     emptyLibrary: 'Ingen övning i ditt bibliotek mäts i distans och tid ännu.',
-    locationDenied: 'Platsåtkomst behövs för att registrera en rutt. Tillåt den och försök igen.',
+    locationDenied: 'Platsåtkomst behövs för att mäta din rutt. Tillåt den och försök igen.',
     saveFailed: 'Passet kunde inte sparas. Försök igen.',
     exerciseBody: 'Rutt, distans och tempo för {name} mäts medan du rör dig.',
   },
@@ -972,12 +972,12 @@ export const sv = {
     rest: 'Vila',
     round: 'Varv {round} av {total}',
     permission:
-      'Tillåt platsåtkomst för att registrera din rutt och intervallernas distans även när telefonen är låst. Du kan också logga passet manuellt.',
+      'Tillåt platsåtkomst för att mäta din rutt och intervallernas distans även när telefonen är låst. Du kan också logga passet manuellt.',
     failed:
-      'Registreringen kunde inte fortsätta. Kontrollera platsbehörigheten och ledigt lagringsutrymme. Du kan fortfarande logga passet manuellt.',
-    paused: 'Pausat — rörelse registreras inte',
+      'GPS-mätningen kunde inte fortsätta. Kontrollera platsbehörigheten och ledigt lagringsutrymme. Du kan fortfarande logga passet manuellt.',
+    paused: 'Pausat — rörelse räknas inte',
     pausedLabel: 'Pausat',
-    pausedAuto: 'Pausat för att du stannade — rörelse registreras inte',
+    pausedAuto: 'Pausat för att du stannade — rörelse räknas inte',
     pausedAutoLabel: 'Autopausat',
     pausedFor: 'Pausat i {time}',
     gps: 'GPS',
@@ -1007,11 +1007,11 @@ export const sv = {
     resume: 'Fortsätt',
     finish: 'Avsluta passet',
     cancel: 'Kasta',
-    discardTitle: 'Kasta registreringen?',
+    discardTitle: 'Kasta passet?',
     discardBody:
-      'Rutten och distansen som registrerats hittills går förlorade. Du kan fortsätta logga passet för hand.',
-    discardConfirm: 'Kasta registreringen',
-    discardKeep: 'Behåll registreringen',
+      'Rutten och distansen som mätts hittills går förlorade. Du kan fortsätta logga passet för hand.',
+    discardConfirm: 'Kasta passet',
+    discardKeep: 'Behåll passet',
     manual: 'Logga manuellt',
     route: 'Passets rutt',
     map: 'Ruttkarta',
@@ -1019,11 +1019,11 @@ export const sv = {
     mapTwoFingers: 'Använd två fingrar för att flytta kartan',
     mapScrollMac: 'Använd ⌘ + skrolla för att zooma kartan',
     mapScrollWindows: 'Använd Ctrl + skrolla för att zooma kartan',
-    noRoute: 'Ingen tillförlitlig rutt registrerades.',
+    noRoute: 'Ingen tillförlitlig rutt sparades.',
     incomplete:
-      'Registreringen är ofullständig. Distansen räknar bara sträckor med godkänd GPS-signal; luckor och rörelse under paus räknas inte.',
+      'Rutten är ofullständig. Distansen räknar bara sträckor med godkänd GPS-signal; luckor och rörelse under paus räknas inte.',
     activeTime: 'Aktiv tid',
-    recordedDistance: 'Registrerad distans',
+    recordedDistance: 'Uppmätt distans',
     rounds_one: '{count} varv',
     rounds_other: '{count} varv',
     roundsHeading: 'Varv',
@@ -1689,7 +1689,7 @@ export const sv = {
     autofillSetsUpdateFailed: 'Det gick inte att uppdatera förifyllningen. Försök igen.',
     autoPause: 'Pausa när jag står still',
     autoPauseBody:
-      'Pausar registreringen när du stannar, till exempel vid ett övergångsställe, och fortsätter när du rör dig igen',
+      'Pausar passet när du stannar, till exempel vid ett övergångsställe, och fortsätter när du rör dig igen',
     autoPauseUpdated: 'Autopaus uppdaterad',
     autoPauseUpdateFailed: 'Det gick inte att uppdatera autopausen. Försök igen.',
     editProfile: 'Redigera profil',
@@ -1819,7 +1819,7 @@ export const sv = {
     collectAccount:
       'Ditt konto: e-postadress, namn, användarnamn och lösenord (hashat, aldrig läsbart).',
     collectTraining:
-      'Din träning: träningspass, set, pass, planer, övningar, anteckningar, kommentarer, vilka du följer och, för ett livepass som registrerats med din telefon, GPS-rutten det följde.',
+      'Din träning: träningspass, set, pass, planer, övningar, anteckningar, kommentarer, vilka du följer och, för ett livepass med GPS på din telefon, rutten det följde.',
     collectUsage:
       'Hur appen används: öppnade sidor och fel som uppstår, kopplat till ditt konto-id så att ett fel går att spåra till en verklig session.',
     useTitle: 'Varför vi lagrar det',
@@ -1829,7 +1829,7 @@ export const sv = {
     shareFollowers:
       'Andra medlemmar ser det din offentliga profil visar: ditt namn, användarnamn, träningspass och personliga rekord.',
     shareProcessors:
-      'Tre leverantörer behandlar uppgifter åt oss: Scaleway driver servrarna och databasen i Frankrike, PostHog tar emot användnings- och felhändelser inom EU, och OpenFreeMap levererar kartan bakom en registrerad rutt, vilket ger dem en ungefärlig bild av var du tränade.',
+      'Tre leverantörer behandlar uppgifter åt oss: Scaleway driver servrarna och databasen i Frankrike, PostHog tar emot användnings- och felhändelser inom EU, och OpenFreeMap levererar kartan bakom en sparad rutt, vilket ger dem en ungefärlig bild av var du tränade.',
     retentionTitle: 'Hur länge vi sparar det',
     retentionBody:
       'Tills du tar bort ditt konto. Då raderas kontot och allt det äger ur databasen direkt; säkerhetskopior försvinner inom 30 dagar.',
@@ -1852,7 +1852,7 @@ export const sv = {
     profile: 'Profil',
     workout: 'Träna',
     quickWorkout: 'Snabbpass',
-    record: 'Registrera ett pass',
+    record: 'Pass med GPS',
     editWorkout: 'Redigera träningspass',
     training: 'Träning',
     newPlan: 'Ny plan',
