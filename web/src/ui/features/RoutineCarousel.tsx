@@ -1,13 +1,11 @@
 import type { CarouselSlide } from '@/ui/components/AppCarousel'
 import type { Plan, Routine } from '@/proto/api/v1/routine_service_pb'
 
-import { PlayIcon } from '@heroicons/react/24/outline'
 import { useTranslation } from 'react-i18next'
-import { Link } from 'react-router-dom'
 
-import { cn } from '@/ui/cn'
 import { AppButton } from '@/ui/components/AppButton'
 import { AppCarousel } from '@/ui/components/AppCarousel'
+import { RoutineStartCard } from '@/ui/features/RoutineStartCard'
 import { estimatedSessionMinutes } from '@/utils/sessionEstimate'
 import styles from './RoutineCarousel.module.css'
 
@@ -62,14 +60,9 @@ export const RoutineCarousel = ({
     key: routine.id,
     label: routine.name,
     content: (
-      <Link
-        aria-label={t('home.startNamedRoutine', { name: routine.name })}
-        className={cn(styles.card, !planned && styles.alternative)}
-        to={`/workouts/routine/${routine.id}${planned && activePlan ? `?plan_id=${activePlan.id}` : ''}`}
-        onClick={() => !planned && onSwitch(routine.id)}
-      >
-        <div className={styles.copy}>
-          <p className={styles.eyebrow}>
+      <RoutineStartCard
+        eyebrow={
+          <>
             {planned ? t('home.upNext') : t('home.orSwitchTo')}
             {planned && activePlan && (
               <>
@@ -77,16 +70,15 @@ export const RoutineCarousel = ({
                 {activePlan.currentPosition + 1} {t('common.of')} {activePlan.routines.length}
               </>
             )}
-          </p>
-          <h2>{routine.name}</h2>
-          {/* What it is, how much of it, how long: one line, where three lines
-              spread the card down the screen. */}
-          <p className={styles.meta}>{meta(routine, planned ? activePlan : undefined)}</p>
-        </div>
-        <span aria-hidden="true" className={styles.play}>
-          <PlayIcon />
-        </span>
-      </Link>
+          </>
+        }
+        label={t('home.startNamedRoutine', { name: routine.name })}
+        meta={meta(routine, planned ? activePlan : undefined)}
+        name={routine.name}
+        stepped={!planned}
+        to={`/workouts/routine/${routine.id}${planned && activePlan ? `?plan_id=${activePlan.id}` : ''}`}
+        onClick={() => !planned && onSwitch(routine.id)}
+      />
     ),
   })
 
