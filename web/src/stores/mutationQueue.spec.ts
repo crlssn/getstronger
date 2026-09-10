@@ -66,6 +66,63 @@ describe('useMutationQueueStore', () => {
     expect(createWorkout).toHaveBeenCalledTimes(2)
   })
 
+  // Two call sites can start a flush while one is in flight: the mount effect
+  // in AppOfflineBanner, which <StrictMode> runs twice, and onReconnect.
+  test('does not replay an entry a flush already in flight is sending', async () => {
+    store().enqueue(WorkoutService.method.createWorkout, request('routine-1'))
+    // The executor runs synchronously, so this is assigned before it is called.
+    let land = (): void => {}
+    createWorkout.mockReturnValue(
+      new Promise((resolve) => {
+        land = () => {
+          resolve({ workoutId: 'w1' })
+        }
+      }) as never,
+    )
+
+    const first = store().flush()
+    const second = store().flush()
+    await Promise.resolve()
+
+    // The entry is still in flight and still queued, so an unguarded second
+    // flush would read it and send it again.
+    expect(createWorkout).toHaveBeenCalledTimes(1)
+
+    land()
+    await Promise.all([first, second])
+
+    expect(createWorkout).toHaveBeenCalledTimes(1)
+    expect(store().pending).toHaveLength(0)
+  })
+
+  // A queue persisted by an older build can name a method this one no longer
+  // registers. Dropping it silently loses the workout it was holding.
+  test('drops a queued method it has no replayer for, and says so', async () => {
+    useMutationQueueStore.setState({
+      pending: [
+        {
+          method: 'api.v1.WorkoutService.Retired',
+          request: '{}',
+          queuedAt: new Date().toISOString(),
+        },
+        ...store().pending,
+      ],
+    })
+    store().enqueue(WorkoutService.method.createWorkout, request('routine-1'))
+    createWorkout.mockResolvedValue({ workoutId: 'w1' } as never)
+    const logged = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+    await store().flush()
+
+    expect(store().pending).toHaveLength(0)
+    expect(createWorkout).toHaveBeenCalledTimes(1)
+    expect(logged).toHaveBeenCalledWith(
+      'dropping queued mutation with no replayer',
+      'api.v1.WorkoutService.Retired',
+    )
+    logged.mockRestore()
+  })
+
   test('refuses to queue a method without a registered replay', () => {
     expect(() =>
       store().enqueue(
