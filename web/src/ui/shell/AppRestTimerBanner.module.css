@@ -41,9 +41,10 @@
 }
 
 /* The one place green is left on this surface, meaning what green means: this
-   is running right now. */
+   is running right now. The inverse step, because the bar's surface inverts
+   under it and the ordinary green would follow it out of contrast. */
 .restProgress span {
-  @apply block h-full rounded-pill bg-success transition-[width] duration-1000 ease-linear;
+  @apply block h-full rounded-pill bg-success-inverse transition-[width] duration-1000 ease-linear;
 }
 
 /* The last ten seconds, said with the fill rather than with the whole screen. */

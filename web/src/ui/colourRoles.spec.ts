@@ -122,6 +122,26 @@ describe('the colour roles', () => {
     expect(spenders('black')).toEqual([])
   })
 
+  // The same rule, in the one place a raw white is spent by saying nothing:
+  // Tailwind's --tw-ring-offset-color defaults to #fff, so a ring offset with
+  // no colour draws a white gap around every focused control on dark paper.
+  test('a ring offset names the colour it is drawn in', () => {
+    const srcRoot = join(uiRoot, '..')
+    const offenders = [...modules(uiRoot), join(srcRoot, 'assets', 'main.css')]
+      .flatMap((path) =>
+        [...readFileSync(path, 'utf8').matchAll(/@apply([^;]+);/g)]
+          .filter(
+            ([, declaration]) =>
+              /ring-offset-[1-9]/.test(declaration) &&
+              !/ring-offset-(?![\d.]+\b)[a-z][\w-]*/.test(declaration),
+          )
+          .map(() => path.slice(srcRoot.length + 1)),
+      )
+      .sort()
+
+    expect(offenders).toEqual([])
+  })
+
   // Every role has a value in both palettes: a token the dark block misses
   // falls through to its light value and hides on the dark canvas.
   test('the dark palette redefines every colour the light one names', () => {

@@ -1,7 +1,7 @@
 @reference '../../assets/base.css';
 
 .sheetBackdrop {
-  @apply fixed inset-0 z-50 flex items-end justify-center bg-ink-strong/40 sm:items-center sm:p-6;
+  @apply fixed inset-0 z-50 flex items-end justify-center bg-scrim sm:items-center sm:p-6;
   animation: backdrop-in 200ms ease-out;
 }
 

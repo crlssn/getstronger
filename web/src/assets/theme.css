@@ -58,6 +58,10 @@
    * and a badge colour that is its own value rather than danger's. There is
    * no amber and no blue. */
   --color-success: #2e7d5b;
+  /* The same green on an inverse fill — the rest bar's countdown. It is the
+   * one value that clears the graphics floor on both inverse surfaces, so it
+   * is deliberately the same in either palette while success itself steps up. */
+  --color-success-inverse: #2e7d5b;
   /* Success text sitting on the success surface: #2e7d5b reads 4.26:1 on
    * that tint and fails AA, so text there takes this darker step. */
   --color-success-strong: #2a7354;
@@ -118,6 +122,10 @@
   --shadow-card: 0 1px 3px rgb(26 25 23 / 0.06), 0 8px 24px rgb(26 25 23 / 0.05);
   --shadow-raised: 0 4px 12px rgb(26 25 23 / 0.1);
   --shadow-overlay: 0 16px 40px rgb(26 25 23 / 0.18);
+  /* The dim a sheet or a dialog lays over the page. Its own value rather than
+   * an alpha off the ink family, which inverts: ink-strong at 40% dimmed the
+   * light palette and washed the dark one out in white. */
+  --color-scrim: rgb(12 11 10 / 0.4);
 
   /* The typeface. Plus Jakarta Sans is the app's own rather than whatever the
    * device offers: the design is drawn in it, and a system stack renders the
@@ -195,6 +203,9 @@
   --color-text-inverse-muted: rgb(12 11 10 / 0.72);
 
   --color-success: #7cc9a4;
+  /* Held at the light palette's value: the inverse surface it is drawn on has
+   * itself inverted, so stepping this up would take it to 1.6:1. */
+  --color-success-inverse: #2e7d5b;
   --color-success-strong: #8ed3b1;
   --color-success-surface: #20312a;
   --color-danger: #e8887f;
@@ -224,4 +235,7 @@
   --shadow-card: 0 1px 3px rgb(0 0 0 / 0.4), 0 8px 24px rgb(0 0 0 / 0.35);
   --shadow-raised: 0 4px 12px rgb(0 0 0 / 0.5);
   --shadow-overlay: 0 16px 40px rgb(0 0 0 / 0.65);
+  /* Heavier than the light palette's: the sheet above it is only a step
+   * lighter than the canvas, so a 40% dim barely separates the two. */
+  --color-scrim: rgb(0 0 0 / 0.65);
 }
