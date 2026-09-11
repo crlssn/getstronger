@@ -262,7 +262,12 @@ const record = (position: GeolocationPosition) => {
   }
   fixes = [...fixes, point].slice(-maxFixes)
   autoPause(timestamp)
-  if (held(recording)) return
+  // A hold the detector opened stops the clock, not the route: it may have
+  // read a creep as a standstill, and ground it never recorded is ground
+  // nothing can give back. A hold the athlete opened drops its fixes, because
+  // they may have gone home with the recording still open.
+  const open = held(recording)
+  if (open && !open.auto) return
   if (recording.points.length >= maxPoints) {
     recording.interrupted = true
     end(now())

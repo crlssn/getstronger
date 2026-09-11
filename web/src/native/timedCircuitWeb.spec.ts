@@ -351,11 +351,29 @@ describe('the browser recorder', () => {
     watchers[0].success(fix(1_007_000, 0.001, 5))
     const { recording } = await TimedCircuitWeb.read({ key: 'athlete' })
     expect(recording?.pauses).toEqual([{ startedAt: 1_001_000, endedAt: 1_007_000, auto: true }])
-    // The standstill is not part of the route: the fixes it held through are
-    // read for movement and dropped.
+    // The hold stops the clock, not the route: the fixes it held through are
+    // read for movement and kept, so the line never breaks.
     expect(recording?.points.map((point) => point.timestamp)).toEqual([
-      1_000_000, 1_001_000, 1_002_000, 1_007_000,
+      1_000_000, 1_001_000, 1_002_000, 1_003_000, 1_004_000, 1_005_000, 1_006_000, 1_007_000,
     ])
+  })
+
+  it('keeps the ground covered under a hold the detector would not let go of', async () => {
+    const started = open(true)
+    watchers[0].success(fix(1_000_000, 0, 5))
+    await started
+
+    rideThenStop()
+    // A creep too slow to release the hold: the detector keeps holding, and
+    // the metres are the athlete's all the same.
+    for (let second = 7; second <= 12; second += 1) {
+      vi.setSystemTime(1_000_000 + second * 1000)
+      watchers[0].success(fix(1_000_000 + second * 1000, (second - 6) * 0.7 * metreDegrees, 0.7))
+    }
+    const { recording } = await TimedCircuitWeb.read({ key: 'athlete' })
+    expect(recording?.pauses).toEqual([{ startedAt: 1_001_000, auto: true }])
+    expect(recording?.points.at(-1)?.timestamp).toBe(1_012_000)
+    expect(recording?.points).toHaveLength(13)
   })
 
   it('holds nothing by itself when the athlete never asked it to', async () => {
