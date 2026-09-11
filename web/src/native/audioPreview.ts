@@ -3,24 +3,39 @@
  *
  * Every one of these settings is heard on a run and nowhere else, so a picker
  * that only reads back a word asks the athlete to remember what it means until
- * the next session. Each row plays its own answer instead, in the browser's
- * voice: the phones speak their own on a locked screen, and this is close
- * enough to choose by.
+ * the next session. Each row plays its own answer instead.
+ *
+ * The answer goes through the recorder rather than through the page, because
+ * the recorder is what knows which voice a run is announced in. A WebView is
+ * handed a different set of voices from the app around it — on iOS, an empty
+ * one — so an example the page said itself was never the voice being chosen.
  */
 
-import { hush, paceToneHertz, paceToneVolume, playTone, say } from '@/native/cueTone'
+import { paceToneHertz, paceToneVolume, playTone } from '@/native/cueTone'
+import { timedCircuit } from '@/native/timedCircuit'
+import { i18n } from '@/i18n'
 import { speechVolume, type AnnouncementVolume } from '@/stores/announcements'
 import type { PaceReferenceChoice } from '@/utils/pacing'
 
-/** Long enough for the first note to finish before the second answers it. */
-const betweenNotesMs = 450
+/** Long enough for the word to be out before the note it names sounds. */
+const afterWordMs = 900
+
+/** And long enough for that pair to land before the other one answers it. */
+const betweenPairsMs = 1700
+
+/** Says a phrase in the voice a run is announced in, and drops anything before it. */
+const speak = (phrase: string, volume: number) => {
+  void timedCircuit.speak({ phrase, volume, locale: i18n.language }).catch(() => {
+    // A device that will not speak still has the setting; the example is the
+    // one thing it goes without.
+  })
+}
 
 /** Says the sample at the level just chosen; off is demonstrated by silence. */
 export const previewAnnouncement = (phrase: string, volume: AnnouncementVolume): void => {
-  hush()
   const level = speechVolume(volume)
   if (level <= 0) return
-  say(phrase, level)
+  speak(phrase, level)
 }
 
 /**
@@ -34,9 +49,8 @@ export const previewIntervalCue = (
   leadSeconds: number,
   volume: AnnouncementVolume,
 ): void => {
-  hush()
   if (leadSeconds <= 0) return
-  say(phrase, speechVolume(volume) || 1)
+  speak(phrase, speechVolume(volume) || 1)
 }
 
 /**
@@ -50,20 +64,33 @@ export const previewHalfway = (
   enabled: boolean,
   volume: AnnouncementVolume,
 ): void => {
-  hush()
   if (!enabled) return
-  say(phrase, speechVolume(volume) || 1)
+  speak(phrase, speechVolume(volume) || 1)
 }
 
 /**
- * Sounds both notes, ahead then behind, so the pair is heard as a pair.
+ * Says what each note means and then sounds it, faster first.
  *
- * They follow the announcement volume, as they do on a run: with the
- * announcements off there is nothing to hear, which is the honest example.
+ * A beep says nothing on its own, and the pair is the whole point: which way
+ * round they go is what an athlete has to know before the first one arrives
+ * mid-run. So the example names them rather than leaving two tones to be
+ * worked out.
+ *
+ * On a run the notes follow the announcement volume and go quiet with it. The
+ * example does not: one nobody can hear reads as a broken feature rather than
+ * as a turned-down one.
  */
-export const previewPaceTones = (choice: PaceReferenceChoice, volume: AnnouncementVolume): void => {
-  const level = paceToneVolume * speechVolume(volume)
-  if (choice === 'off' || level <= 0) return
-  playTone(paceToneHertz.ahead, level)
-  setTimeout(() => playTone(paceToneHertz.behind, level), betweenNotesMs)
+export const previewPaceTones = (
+  choice: PaceReferenceChoice,
+  volume: AnnouncementVolume,
+  faster: string,
+  slower: string,
+): void => {
+  if (choice === 'off') return
+  const spoken = speechVolume(volume) || 1
+  const level = paceToneVolume * spoken
+  speak(faster, spoken)
+  setTimeout(() => playTone(paceToneHertz.ahead, level), afterWordMs)
+  setTimeout(() => speak(slower, spoken), betweenPairsMs)
+  setTimeout(() => playTone(paceToneHertz.behind, level), betweenPairsMs + afterWordMs)
 }

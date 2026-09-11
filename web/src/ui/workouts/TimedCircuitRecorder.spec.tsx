@@ -50,6 +50,7 @@ describe('TimedCircuitRecorder', () => {
         phases={[phase]}
         onComplete={vi.fn()}
         onCancel={cancel}
+        onDiscard={vi.fn()}
       />,
     )
     expect(timedCircuit.start).not.toHaveBeenCalled()
@@ -85,6 +86,7 @@ describe('TimedCircuitRecorder', () => {
         phases={[phase]}
         onComplete={vi.fn()}
         onCancel={vi.fn()}
+        onDiscard={vi.fn()}
       />,
     )
 
@@ -134,6 +136,7 @@ describe('TimedCircuitRecorder', () => {
         phases={[phase]}
         onComplete={complete}
         onCancel={vi.fn()}
+        onDiscard={vi.fn()}
       />,
     )
     await screen.findByRole('heading', { name: 'Walk' })
@@ -195,6 +198,7 @@ describe('TimedCircuitRecorder', () => {
         phases={[phase]}
         onComplete={vi.fn()}
         onCancel={vi.fn()}
+        onDiscard={vi.fn()}
       />,
     )
     await screen.findByRole('heading', { name: 'Run' })
@@ -256,6 +260,7 @@ describe('TimedCircuitRecorder', () => {
         phases={rounds.phases}
         onComplete={vi.fn()}
         onCancel={vi.fn()}
+        onDiscard={vi.fn()}
       />,
     )
 
@@ -280,6 +285,7 @@ describe('TimedCircuitRecorder', () => {
         phases={[phase]}
         onComplete={vi.fn()}
         onCancel={vi.fn()}
+        onDiscard={vi.fn()}
       />,
     )
     await screen.findByRole('heading', { name: 'Run' })
@@ -294,6 +300,7 @@ describe('TimedCircuitRecorder', () => {
         phases={[phase]}
         onComplete={vi.fn()}
         onCancel={vi.fn()}
+        onDiscard={vi.fn()}
       />,
     )
     expect(screen.queryByText(/Tones compare each interval/)).not.toBeInTheDocument()
@@ -318,6 +325,7 @@ describe('TimedCircuitRecorder', () => {
         phases={[phase]}
         onComplete={vi.fn()}
         onCancel={vi.fn()}
+        onDiscard={vi.fn()}
       />,
     )
     await screen.findByRole('heading', { name: 'Run' })
@@ -337,6 +345,7 @@ describe('TimedCircuitRecorder', () => {
         phases={[phase]}
         onComplete={vi.fn()}
         onCancel={vi.fn()}
+        onDiscard={vi.fn()}
       />,
     )
     await screen.findByRole('heading', { name: 'Run' })
@@ -360,9 +369,10 @@ describe('TimedCircuitRecorder', () => {
 
   // Discard is half a button wide beside End session, and a recorded run is
   // not recoverable, so the tap is a question rather than an outcome.
-  it('asks before discarding a recording', async () => {
+  it('asks before discarding a recording, and then leaves rather than offering the form', async () => {
     const user = userEvent.setup()
     const cancel = vi.fn()
+    const discard = vi.fn()
     vi.mocked(timedCircuit.read).mockResolvedValue({ recording: running() })
     renderWithProviders(
       <TimedCircuitRecorder
@@ -371,6 +381,7 @@ describe('TimedCircuitRecorder', () => {
         phases={[phase]}
         onComplete={vi.fn()}
         onCancel={cancel}
+        onDiscard={discard}
       />,
     )
     await screen.findByRole('heading', { name: 'Run' })
@@ -382,8 +393,10 @@ describe('TimedCircuitRecorder', () => {
     await user.click(screen.getByRole('button', { name: 'Discard' }))
     await waitFor(() => expect(useConfirmationStore.getState().confirmation).not.toBeNull())
     useConfirmationStore.getState().accept()
-    await waitFor(() => expect(cancel).toHaveBeenCalledOnce())
+    await waitFor(() => expect(discard).toHaveBeenCalledOnce())
     expect(timedCircuit.clear).toHaveBeenCalledWith({ key: 'athlete:routine' })
+    // The form is what Fill in manually is for, and this was not it.
+    expect(cancel).not.toHaveBeenCalled()
   })
 
   // A warm-up is worked once, before the count, so announcing it as a round of
@@ -410,6 +423,7 @@ describe('TimedCircuitRecorder', () => {
         phases={intervals.phases}
         onComplete={vi.fn()}
         onCancel={vi.fn()}
+        onDiscard={vi.fn()}
       />,
     )
 
@@ -430,6 +444,7 @@ describe('TimedCircuitRecorder', () => {
         phases={[phase]}
         onComplete={vi.fn()}
         onCancel={vi.fn()}
+        onDiscard={vi.fn()}
       />,
     )
     await screen.findByRole('heading', { name: 'Run' })
@@ -461,6 +476,7 @@ describe('TimedCircuitRecorder', () => {
         phases={[phase]}
         onComplete={vi.fn()}
         onCancel={vi.fn()}
+        onDiscard={vi.fn()}
       />,
     )
 
@@ -492,6 +508,7 @@ describe('TimedCircuitRecorder', () => {
         phases={intervals.phases}
         onComplete={vi.fn()}
         onCancel={vi.fn()}
+        onDiscard={vi.fn()}
       />,
     )
 
@@ -523,7 +540,8 @@ describe('TimedCircuitRecorder', () => {
         phases={[phase]}
         saved={finished}
         onComplete={vi.fn()}
-        onCancel={cancel}
+        onCancel={vi.fn()}
+        onDiscard={cancel}
         onSave={save}
       />,
     )

@@ -35,7 +35,7 @@ private let wanderSpeed = 3.0
 public class TimedCircuitPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManagerDelegate, AVSpeechSynthesizerDelegate {
     public let identifier = "TimedCircuitPlugin"
     public let jsName = "TimedCircuit"
-    public let pluginMethods = ["start", "read", "pause", "resume", "finish", "clear", "setVolume"]
+    public let pluginMethods = ["start", "read", "pause", "resume", "finish", "clear", "setVolume", "speak"]
         .compactMap { CAPPluginMethod(name: $0, returnType: CAPPluginReturnPromise) }
     private let location = CLLocationManager()
     private let speech = AVSpeechSynthesizer()
@@ -704,6 +704,29 @@ public class TimedCircuitPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManagerD
             call.resolve()
         }
     }
+    /// Says one phrase in the best voice the phone has, outside any recording.
+    ///
+    /// The settings screens play an example of what a run will sound like, and
+    /// the voice is the whole point of the example — so it is said here rather
+    /// than by the page, which WebKit hands no voices at all.
+    @objc func speak(_ call: CAPPluginCall) {
+        DispatchQueue.main.async {
+            let phrase = call.getString("phrase") ?? ""
+            let level = min(max(call.getDouble("volume") ?? 1, 0), 1)
+            guard !phrase.isEmpty, level > 0 else { call.resolve(); return }
+            // Mid-recording the session has the floor: the example queues
+            // behind whatever is being said rather than cutting it off, and
+            // the language the session was started in stands. Otherwise the
+            // last example is dropped, so a second tap replaces the first.
+            if self.recording == nil || self.recording?["endedAt"] != nil {
+                self.locale = call.getString("locale") ?? self.locale
+                self.speech.stopSpeaking(at: .immediate)
+            }
+            self.speak(phrase, at: level)
+            call.resolve()
+        }
+    }
+
     @objc func clear(_ call: CAPPluginCall) {
         DispatchQueue.main.async {
             guard call.getString("key") == self.key else { call.resolve(); return }

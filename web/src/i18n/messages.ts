@@ -824,6 +824,10 @@ export const en = {
       'A note in your ear when an interval pulls ahead of or falls behind one of your own sessions of the routine. It is kept on this device.',
     paceTonesOff: 'Off',
     paceTonesOffBody: 'Recorded without a comparison',
+    // Said before each note in the example, because two tones on their own do
+    // not say which way round they go.
+    paceTonesFaster: 'Faster',
+    paceTonesSlower: 'Slower',
     paceTonesPrevious: 'Last session',
     paceTonesPreviousBody: 'Against your most recent recording',
     paceTonesBest: 'Best session',
@@ -1767,6 +1771,8 @@ export const sv = {
       'En ton i örat när ett intervall är snabbare eller långsammare än ett tidigare pass med samma upplägg. Det sparas bara på den här enheten.',
     paceTonesOff: 'Av',
     paceTonesOffBody: 'Ingen jämförelse under passet',
+    paceTonesFaster: 'Snabbare',
+    paceTonesSlower: 'Långsammare',
     paceTonesPrevious: 'Senaste passet',
     paceTonesPreviousBody: 'Jämför med ditt senaste pass',
     paceTonesBest: 'Bästa passet',

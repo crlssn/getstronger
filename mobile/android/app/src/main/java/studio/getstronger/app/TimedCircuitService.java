@@ -254,7 +254,9 @@ public class TimedCircuitService extends Service implements LocationListener {
             speech = new TextToSpeech(this, status -> {
                 if (status == TextToSpeech.SUCCESS) {
                     speechReady = true;
-                    speech.setLanguage(Locale.forLanguageTag(saved.optString("locale", "en")));
+                    // The language alone leaves the engine free to answer with
+                    // its flattest voice, which is what it used to announce in.
+                    AnnouncementVoice.choose(speech, saved.optString("locale", "en"));
                     // The ending is the last thing said, and the service waits
                     // for it: shut down under an utterance, it cuts the word off.
                     speech.setOnUtteranceProgressListener(new UtteranceProgressListener() {
@@ -351,7 +353,7 @@ public class TimedCircuitService extends Service implements LocationListener {
         params.putFloat(TextToSpeech.Engine.KEY_PARAM_VOLUME, (float) volume);
         speaking++;
         duck();
-        int result = speech.speak(phrase, queue, params, id);
+        int result = speech.speak(AnnouncementVoice.phrase(phrase), queue, params, id);
         if (result == TextToSpeech.ERROR) said();
         return result;
     }

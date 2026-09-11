@@ -1233,6 +1233,13 @@ export const StartWorkout = () => {
             }
             setGuided(false)
           }}
+          // Leaving, not changing your mind about how to log it: handing back
+          // the routine's empty form reads as the app asking the athlete to
+          // type up the session it has just thrown away.
+          onDiscard={() => {
+            useWorkoutStore.getState().removeWorkout(routineID)
+            void navigate('/workout')
+          }}
           // Handed to the recorder rather than rendered under it: the review
           // screen owns the order the two exits are read in.
           onSave={workout?.recording ? () => void onFinishWorkout() : undefined}

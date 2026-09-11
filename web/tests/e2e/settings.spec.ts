@@ -144,7 +144,9 @@ test.describe('settings', () => {
 
   // A level, a lead and a pair of notes are all things that only exist when
   // heard, so each row answers in the voice it is choosing between. The
-  // synthesiser is stubbed because a browser in CI has no voice to speak with.
+  // synthesiser is stubbed because a browser in CI has no voice to speak with;
+  // each phrase reaches it closed off with a full stop, which is what makes a
+  // synthesiser fall away at the end rather than clip the last word.
   test('plays an example of the sound setting just chosen', async ({ page }) => {
     type Spied = Window & { spokenExamples?: string[] }
     await page.addInitScript(() => {
@@ -159,13 +161,21 @@ test.describe('settings', () => {
 
     await page.goto('/settings/announcements')
     await page.getByRole('button', { name: 'Low' }).click()
-    await expect.poll(spoken).toEqual(['Run for 2 minutes'])
+    await expect.poll(spoken).toEqual(['Run for 2 minutes.'])
 
     await page.goto('/settings/interval-cue')
     await page.getByRole('button', { name: '5 seconds before the end', exact: true }).click()
-    await expect.poll(spoken).toEqual(['5 seconds'])
+    await expect.poll(spoken).toEqual(['5 seconds.'])
+
+    // Two tones say nothing about which way round they go, so the example
+    // names each one before sounding it.
+    await page.goto('/settings/pace-tones')
+    await page.getByRole('button', { name: /Last session/ }).click()
+    await expect.poll(spoken).toEqual(['Faster.', 'Slower.'])
 
     // Put the device's defaults back for the tests after this one.
+    await page.goto('/settings/pace-tones')
+    await page.getByRole('button', { name: /Off/ }).click()
     await page.goto('/settings/announcements')
     await page.getByRole('button', { name: 'Full' }).click()
     await page.goto('/settings/interval-cue')
@@ -192,7 +202,7 @@ test.describe('settings', () => {
     await call.click()
     await expect
       .poll(() => page.evaluate(() => (window as Spied).spokenExamples ?? []))
-      .toEqual(['Half way. Pace 5:00 per kilometre'])
+      .toEqual(['Half way. Pace 5:00 per kilometre.'])
 
     // Kept on the device, so a reload is what proves it landed.
     await page.reload()
