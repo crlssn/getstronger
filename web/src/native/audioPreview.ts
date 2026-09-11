@@ -3,12 +3,16 @@
  *
  * Every one of these settings is heard on a run and nowhere else, so a picker
  * that only reads back a word asks the athlete to remember what it means until
- * the next session. Each row plays its own answer instead, in the browser's
- * voice: the phones speak their own on a locked screen, and this is close
- * enough to choose by.
+ * the next session. Each row plays its own answer instead.
+ *
+ * The answer goes through the recorder rather than through the page, because
+ * the recorder is what knows which voice a run is announced in. A WebView is
+ * handed a different set of voices from the app around it — on iOS, an empty
+ * one — so an example the page said itself was never the voice being chosen.
  */
 
-import { hush, paceToneHertz, paceToneVolume, playTone, say } from '@/native/cueTone'
+import { paceToneHertz, paceToneVolume, playTone } from '@/native/cueTone'
+import { timedCircuit } from '@/native/timedCircuit'
 import { i18n } from '@/i18n'
 import { speechVolume, type AnnouncementVolume } from '@/stores/announcements'
 import type { PaceReferenceChoice } from '@/utils/pacing'
@@ -19,12 +23,19 @@ const afterWordMs = 900
 /** And long enough for that pair to land before the other one answers it. */
 const betweenPairsMs = 1700
 
+/** Says a phrase in the voice a run is announced in, and drops anything before it. */
+const speak = (phrase: string, volume: number) => {
+  void timedCircuit.speak({ phrase, volume, locale: i18n.language }).catch(() => {
+    // A device that will not speak still has the setting; the example is the
+    // one thing it goes without.
+  })
+}
+
 /** Says the sample at the level just chosen; off is demonstrated by silence. */
 export const previewAnnouncement = (phrase: string, volume: AnnouncementVolume): void => {
-  hush()
   const level = speechVolume(volume)
   if (level <= 0) return
-  say(phrase, level, i18n.language)
+  speak(phrase, level)
 }
 
 /**
@@ -38,9 +49,8 @@ export const previewIntervalCue = (
   leadSeconds: number,
   volume: AnnouncementVolume,
 ): void => {
-  hush()
   if (leadSeconds <= 0) return
-  say(phrase, speechVolume(volume) || 1, i18n.language)
+  speak(phrase, speechVolume(volume) || 1)
 }
 
 /**
@@ -54,9 +64,8 @@ export const previewHalfway = (
   enabled: boolean,
   volume: AnnouncementVolume,
 ): void => {
-  hush()
   if (!enabled) return
-  say(phrase, speechVolume(volume) || 1, i18n.language)
+  speak(phrase, speechVolume(volume) || 1)
 }
 
 /**
@@ -77,12 +86,11 @@ export const previewPaceTones = (
   faster: string,
   slower: string,
 ): void => {
-  hush()
   if (choice === 'off') return
   const spoken = speechVolume(volume) || 1
   const level = paceToneVolume * spoken
-  say(faster, spoken, i18n.language)
+  speak(faster, spoken)
   setTimeout(() => playTone(paceToneHertz.ahead, level), afterWordMs)
-  setTimeout(() => say(slower, spoken, i18n.language), betweenPairsMs)
+  setTimeout(() => speak(slower, spoken), betweenPairsMs)
   setTimeout(() => playTone(paceToneHertz.behind, level), betweenPairsMs + afterWordMs)
 }

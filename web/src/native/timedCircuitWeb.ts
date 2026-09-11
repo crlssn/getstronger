@@ -11,7 +11,7 @@ import {
   type RoutePoint,
 } from '@/utils/timedCircuit'
 
-import { paceToneHertz, paceToneVolume, playTone, say } from '@/native/cueTone'
+import { hush, paceToneHertz, paceToneVolume, playTone, say } from '@/native/cueTone'
 import { callsHalfway, halfwaySaid } from '@/utils/halfwayCue'
 import { cuesInterval } from '@/utils/intervalCue'
 
@@ -455,6 +455,19 @@ export const TimedCircuitWeb = {
   setVolume(options: { key: string; volume: number }): Promise<void> {
     load()
     if (saved?.key === options.key) saved.volume = Math.min(Math.max(options.volume, 0), 1)
+    return Promise.resolve()
+  },
+
+  /**
+   * Says one phrase, outside any recording, in the best voice the browser has.
+   *
+   * The phones rank the voices installed on them; this ranks the ones the page
+   * is offered. Whatever is being said is dropped first, so a second tap
+   * replaces the first rather than queueing behind it.
+   */
+  speak(options: { phrase: string; volume: number; locale: string }): Promise<void> {
+    hush()
+    say(options.phrase, options.volume, options.locale)
     return Promise.resolve()
   },
 

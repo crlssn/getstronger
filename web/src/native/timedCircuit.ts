@@ -34,6 +34,15 @@ interface TimedCircuitPlugin {
   clear(options: { key: string }): Promise<void>
   /** How loudly the phases are announced, 0 to 1; 0 speaks nothing at all. */
   setVolume(options: { key: string; volume: number }): Promise<void>
+  /**
+   * Says one phrase in the best voice the device has, outside any recording.
+   *
+   * The settings screens play an example of what a run will sound like, and
+   * only the recorder knew which voice that is: a WebView is handed none of
+   * the voices the phone has installed — iOS offers the web API an empty list
+   * — so an example said by the page was never the voice being chosen.
+   */
+  speak(options: { phrase: string; volume: number; locale: string }): Promise<void>
 }
 
 // The phone's plugin owns a recording outside the WebView, which is what a
