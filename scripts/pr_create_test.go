@@ -212,6 +212,8 @@ func TestPRCreateAsksForScreenshotsWhenTheBranchChangesTheUI(t *testing.T) {
 	require.Contains(t, result.stdout, "mise run pr:screenshots 999 --append")
 	require.Contains(t, result.stdout, "gh workflow run pr.screenshots.yml -f number=999",
 		"and the dispatch, for the sandbox that has no database to photograph")
+	require.Contains(t, result.stdout, "'screenshots' label",
+		"and the label, which is the same run without a command to run")
 }
 
 // A diff cannot tell that a page's appearance moved, so the reminder is only

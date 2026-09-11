@@ -118,5 +118,7 @@ Without a database to photograph — a cloud routine's sandbox — dispatch the
 capture instead, and a runner does both:
 
   gh workflow run pr.screenshots.yml -f number=$number
+
+Adding the 'screenshots' label to the pull request starts the same run.
 REMINDER
 fi

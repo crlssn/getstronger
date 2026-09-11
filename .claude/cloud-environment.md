@@ -31,6 +31,21 @@ suites run here: `go test ./...` came back clean over 36 packages in run
   `bun.lock` — `lockfileVersion: 2` against `web/bun.lock`'s 3 — so the setup
   script installs the pinned 1.4.0 from npm.
 
+## Screenshots for a pull request
+
+Nothing here can photograph the app: no browsers, no allowlist entry for
+Playwright's downloads, and — by the rule below about this environment's
+variables — no Scaleway key to publish the images with.
+
+So a branch that changes what a page looks like asks CI for them instead. Add
+the `screenshots` label to the pull request and `pr.screenshots.yml`
+photographs the branch it targets and then the branch itself on a runner, and
+appends the before/after block to the body. The label comes off when the run
+finishes, so labelling it again asks for another set after a further push.
+
+There is no `gh` here, so the label goes on through the GitHub MCP tools rather
+than `gh pr edit --add-label`.
+
 ## What the network allows
 
 The environment runs **Custom** access with the defaults kept, plus:
