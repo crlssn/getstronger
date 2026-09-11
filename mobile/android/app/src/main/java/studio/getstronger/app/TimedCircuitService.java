@@ -40,6 +40,15 @@ public class TimedCircuitService extends Service implements LocationListener {
      * lost under a footfall on a busy road.
      */
     private static final double PACE_TONE_VOLUME = 0.6;
+    /**
+     * The shortest interval with a midpoint worth naming, in seconds, and the
+     * ground a pace holds behind before it is a number, in metres. Both mirror
+     * {@code web/src/utils/halfwayCue.ts} and {@code paceFloorMeters}.
+     */
+    private static final double HALFWAY_FLOOR_SECONDS = 60;
+    private static final double PACE_FLOOR_METRES = 20;
+    /** The token the halfway phrase leaves for the pace measured over the interval. */
+    private static final String PACE_PLACEHOLDER = "{pace}";
     /** How long the ending is given to be said before the service goes anyway. */
     private static final long COMPLETION_MS = 10000;
     private static final String COMPLETION_ID = "completed";
@@ -101,6 +110,8 @@ public class TimedCircuitService extends Service implements LocationListener {
     private int spoken = -1;
     /** The interval already warned about, so the cue is said once per interval. */
     private int cued = -1;
+    /** The interval already called halfway, so the call is made once per interval. */
+    private int halved = -1;
     /** Whether the service is staying up only to finish saying the ending. */
     private boolean completing;
     private boolean stopped;
@@ -158,6 +169,8 @@ public class TimedCircuitService extends Service implements LocationListener {
             .put("volume", level(options.optDouble("volume", 1)))
             .put("cueLeadSeconds", options.optInt("cueLeadSeconds", 10))
             .put("cuePhrase", options.optString("cuePhrase", ""))
+            .put("halfwayPhrase", options.optString("halfwayPhrase", ""))
+            .put("distanceUnit", options.optString("distanceUnit", "km"))
             .put("completedPhrase", options.optString("completedPhrase", ""))
             .put("autoPause", options.optBoolean("autoPause"))
             .put("recording", data).put("checkpoint", now);
@@ -228,6 +241,7 @@ public class TimedCircuitService extends Service implements LocationListener {
             if (saved == null || saved.getJSONObject("recording").has("endedAt")) { stopSelf(); return START_NOT_STICKY; }
             active = this;
             fixes.clear();
+            halved = -1;
             resetFilter();
             NotificationManager notifications = getSystemService(NotificationManager.class);
             notifications.createNotificationChannel(new NotificationChannel(CHANNEL, getString(R.string.app_name), NotificationManager.IMPORTANCE_LOW));
@@ -307,7 +321,9 @@ public class TimedCircuitService extends Service implements LocationListener {
                     // at full volume instead of not at all.
                     announce(saved.optString("cuePhrase", ""), "cue-" + index, TextToSpeech.QUEUE_ADD, volume() > 0 ? volume() : 1);
                 }
-                judge(index, (elapsed - opened) / 1000.0, now);
+                double phaseSeconds = (elapsed - opened) / 1000.0;
+                callHalfway(index, phase, phaseSeconds, now);
+                judge(index, phaseSeconds, now);
                 if (now - checkpoint > 1000) { persist(this); checkpoint = now; }
                 return;
             }
@@ -520,14 +536,18 @@ public class TimedCircuitService extends Service implements LocationListener {
     }
 
     /**
-     * Pace over the trailing window in seconds per kilometre, or nothing: one
+     * Pace over a trailing window in seconds per kilometre, or nothing: one
      * fix is a position rather than a speed.
+     *
+     * The pace tones judge over the window their reference session set; the
+     * halfway call asks for the interval so far, with the same floor the live
+     * screen holds a pace back for.
      */
-    private double currentPace(long time) throws Exception {
+    private double currentPace(long time, double window, double floorMetres) throws Exception {
         JSONObject data = saved.getJSONObject("recording");
         List<JSONObject> points = smoothedPoints(data.getJSONArray("points"));
         JSONArray pauses = data.getJSONArray("pauses");
-        double since = time - paceWindow * 1000;
+        double since = time - window * 1000;
         double covered = 0;
         double seconds = 0;
         for (int index = 1; index < points.size(); index++) {
@@ -540,7 +560,39 @@ public class TimedCircuitService extends Service implements LocationListener {
             covered += edgeMetres(a, b);
             seconds += (closed - a.getLong("timestamp")) / 1000.0;
         }
-        return covered > 0 ? (seconds / covered) * 1000 : 0;
+        return covered > 0 && covered >= floorMetres ? (seconds / covered) * 1000 : 0;
+    }
+
+    /**
+     * Calls the midpoint of a worked interval with the pace held over it.
+     *
+     * A rest is named by the recording but is not worked, and an open interval
+     * has no end to halve, so neither is called. The call is made once whether
+     * or not a pace came back: one arriving at four fifths of an interval is
+     * not a call at its midpoint. Like the interval cue it is a setting of its
+     * own, so muted announcements do not silence it.
+     */
+    private void callHalfway(int index, JSONObject phase, double seconds, long time) throws Exception {
+        String phrase = saved.optString("halfwayPhrase", "");
+        if (halved == index || phrase.isEmpty() || !speechReady) return;
+        if (phase.optString("exerciseId", "").isEmpty() || phase.isNull("durationSeconds")) return;
+        double duration = phase.getLong("durationSeconds");
+        if (duration < HALFWAY_FLOOR_SECONDS || seconds < duration / 2) return;
+        halved = index;
+        double pace = currentPace(time, seconds, PACE_FLOOR_METRES);
+        if (pace <= 0) return;
+        double volume = volume() > 0 ? volume() : 1;
+        announce(phrase.replace(PACE_PLACEHOLDER, spokenPace(pace)), "halfway-" + index, TextToSpeech.QUEUE_ADD, volume);
+    }
+
+    /**
+     * A pace as mm:ss in the athlete's unit, mirroring {@code paceIn} in the
+     * web app: seconds per kilometre is what every recorder measures.
+     */
+    private String spokenPace(double secondsPerKilometre) {
+        boolean miles = "mi".equals(saved.optString("distanceUnit", "km"));
+        long perUnit = Math.round(miles ? secondsPerKilometre * 1.609344 : secondsPerKilometre);
+        return String.format(Locale.US, "%d:%02d", perUnit / 60, perUnit % 60);
     }
 
     /**
@@ -559,7 +611,7 @@ public class TimedCircuitService extends Service implements LocationListener {
         if (index >= paceTargets.length) return;
         double target = paceTargets[index];
         if (target <= 0 || seconds < paceWindow) return;
-        double pace = currentPace(time);
+        double pace = currentPace(time, paceWindow, 0);
         if (pace <= 0) return;
 
         String zone = pace < target - paceTolerance ? "ahead" : pace > target + paceTolerance ? "behind" : "holding";

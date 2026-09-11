@@ -40,6 +40,22 @@ export const previewIntervalCue = (
 }
 
 /**
+ * Says the half-way call at an example pace, and nothing while it is off.
+ *
+ * Like the interval cue it is a setting of its own, so muted announcements do
+ * not silence it and the example is as loud as the call itself will be.
+ */
+export const previewHalfway = (
+  phrase: string,
+  enabled: boolean,
+  volume: AnnouncementVolume,
+): void => {
+  hush()
+  if (!enabled) return
+  say(phrase, speechVolume(volume) || 1)
+}
+
+/**
  * Sounds both notes, ahead then behind, so the pair is heard as a pair.
  *
  * They follow the announcement volume, as they do on a run: with the
