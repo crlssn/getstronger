@@ -79,6 +79,26 @@ allowlist says, and `mise run lint:backend` stays out of reach here. Moving
 them to mise's `go:` backend would fix that at the cost of compiling them on
 every developer's machine, which is not obviously the better trade.
 
+Until they install, they take every other mise command with them. `mise exec`
+and `mise run` install the whole of `mise.toml` before running anything, so one
+unfetchable tool fails whatever was actually asked for:
+
+```
+mise ERROR Failed to install tools: aqua:bufbuild/buf@1.50.0, aqua:golangci/golangci-lint@2.13.2, aqua:mvdan/gofumpt@0.10.0
+```
+
+Those 403s come from `api.github.com`, which mise reads to resolve a release
+tag, and they clear — mise's own warning names the rate limit, and the release
+downloads themselves are fine. In run `cse_011PMsjt61PQBxXA6GmaqcYS` every mise
+command failed that way for the first twenty-five minutes, then all three
+installed in five seconds and nothing failed again. So treat it as a window to
+survive, not a wall: retry before concluding a tool is out of reach.
+
+`mise which <tool>` is unaffected either way. It resolves an installed tool to
+its path and installs nothing, so it never fails for a tool it was not asked
+about. Anything needing a pinned binary should resolve it that way and run it
+directly, which is what `scripts/claude_format_hook.sh` does.
+
 ## Environment variables
 
 The **Environment variables** field carries these two:

@@ -30,13 +30,41 @@ file=$(printf '%s' "$payload" | jq -r '.tool_input.file_path // empty' 2>/dev/nu
 rel=${file#"$root"/}
 [[ "$rel" != "$file" ]] || exit 0
 
+# 'mise exec' installs every tool in mise.toml before it runs one, so a tool
+# nobody asked for being unreachable takes the formatters with it. 'mise which'
+# resolves the pinned binary without installing anything, and PATH answers for
+# whatever mise has not got.
+resolve() {
+  local binary
+
+  binary=$(mise which "$1" 2>/dev/null) && [ -n "$binary" ] && {
+    printf '%s' "$binary"
+    return 0
+  }
+
+  binary=$(command -v "$1" 2>/dev/null) && [ -n "$binary" ] && {
+    printf '%s' "$binary"
+    return 0
+  }
+
+  return 1
+}
+
 # Exit code 2 is what puts the formatter's complaint in front of Claude, so a
-# file it just wrote and cannot parse gets fixed in the same turn.
+# file it just wrote and cannot parse gets fixed in the same turn. A formatter
+# that is not installed says nothing about the file, so it never blocks: a
+# sandbox that cannot fetch one would otherwise refuse every edit.
 run() {
-  local name=$1 output
+  local name=$1 binary output
   shift
 
-  if ! output=$(mise exec -- "$@" 2>&1); then
+  if ! binary=$(resolve "$1"); then
+    printf '%s is not installed here, so %s was left unformatted.\n' "$name" "$rel" >&2
+    return 0
+  fi
+  shift
+
+  if ! output=$("$binary" "$@" 2>&1); then
     printf '%s failed on %s:\n%s\n' "$name" "$rel" "$output" >&2
     exit 2
   fi
@@ -57,6 +85,8 @@ web/*)
   case "$file" in
   *.ts | *.tsx | *.js | *.jsx | *.mjs | *.cjs | *.vue | *.css | *.scss | *.html | *.json | *.md | *.yml | *.yaml)
     cd "$root/web" || exit 0
+    # A local install rather than a mise tool, so resolve() finds it on the
+    # second try — and says so plainly when node_modules is not there yet.
     run Prettier ./node_modules/.bin/prettier --write "${rel#web/}"
     ;;
   esac
