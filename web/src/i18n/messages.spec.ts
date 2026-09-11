@@ -150,19 +150,19 @@ describe('messages', () => {
 
   // The recording feature was "Guided circuit", a gym word for the routine's
   // group mode rather than for a run out on the road. It is "Live session"
-  // everywhere it is named — heading, start button, privacy policy — and the
-  // group mode alone keeps "Circuit".
+  // everywhere it is named — the button that starts one, the privacy policy —
+  // and the group mode alone keeps "Circuit". The screen itself is titled by
+  // the interval being run, so it names nothing.
   it.each([
-    ['en', 'Live session', 'live session', 'Circuit'],
-    ['sv', 'Livepass', 'livepass', 'Cirkel'],
-  ] as const)('names the recording feature a live session in %s', (locale, title, noun, group) => {
+    ['en', 'live session', 'Circuit'],
+    ['sv', 'livepass', 'Cirkel'],
+  ] as const)('names the recording feature a live session in %s', (locale, noun, group) => {
     const messages = { en, sv }[locale]
     const guided = flattenEntries(messages as unknown as Messages)
       .filter(([, value]) => /guided circuit|guidat cirkelpass/i.test(value))
       .map(([key, value]) => `${key}: ${value}`)
 
     expect(guided, guided.join('\n')).toEqual([])
-    expect(messages.timedCircuit.title).toBe(title)
     expect(messages.timedCircuit.start.toLocaleLowerCase()).toContain(noun)
     expect(messages.privacy.collectTraining).toContain(noun)
     expect(messages.routine.form.groups.circuit).toBe(group)

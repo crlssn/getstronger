@@ -87,10 +87,12 @@
   @apply mt-1 text-title font-extrabold text-text;
 }
 
-/* One card per month, spaced by the container so the last one still sits
-   clear of the status row below it. */
+/* One card per month, spaced by the container. A gap rather than the stack's
+   margins: the cards cancel their own below, and a margin the container sets
+   on them would be cancelled with it — which is how the months came to sit
+   edge to edge. */
 .historyMonths {
-  @apply space-y-4;
+  @apply flex flex-col gap-4;
 }
 
 /* AppList is the card and AppListRow the row. */

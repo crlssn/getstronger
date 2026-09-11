@@ -218,17 +218,3 @@
 .review {
   @apply space-y-4;
 }
-
-/* Before there is anything to record: prose and one button, with none of the
-   layout the recording needs. */
-.intro {
-  @apply space-y-4;
-}
-
-.intro h1 {
-  @apply text-title font-extrabold text-text;
-}
-
-.intro p {
-  @apply text-body text-text-muted;
-}

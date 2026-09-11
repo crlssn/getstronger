@@ -7,10 +7,6 @@
   @apply flex min-h-[calc(100dvh-9rem)] flex-col gap-3.5;
 }
 
-.intro {
-  @apply flex flex-col gap-4;
-}
-
 /* The pill says GPS and the dot says whether fixes are arriving; the sentence
    behind it is left to a screen reader. */
 .gps {

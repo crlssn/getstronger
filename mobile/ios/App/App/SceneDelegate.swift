@@ -29,21 +29,25 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 /// The bridge view controller, plus the plugins this app defines itself.
 class AppBridgeViewController: CAPBridgeViewController {
     override func capacitorDidLoad() {
+        bridge?.registerPluginInstance(CanvasPlugin())
         bridge?.registerPluginInstance(SwipeBackPlugin())
         bridge?.registerPluginInstance(TimedCircuitPlugin())
     }
 }
 
-private extension UIColor {
-    /// The app's canvas, mirroring `--color-canvas` in web/src/assets/theme.css.
+extension UIColor {
+    /// The app's canvas in each palette, mirroring `--color-canvas` in
+    /// web/src/assets/theme.css.
+    static let appCanvasLight = UIColor(red: 242 / 255, green: 241 / 255, blue: 237 / 255, alpha: 1)
+    static let appCanvasDark = UIColor(red: 22 / 255, green: 21 / 255, blue: 18 / 255, alpha: 1)
+
+    /// The canvas the device asks for.
     ///
     /// A fallback: the Keyboard plugin repaints the window from the page's own
     /// background, but that read is asynchronous and sometimes misses a
     /// keyboard. This one follows the device, not the palette picked in
-    /// Settings, so the plugin still owns the exact answer.
+    /// Settings, so CanvasPlugin still owns the exact answer.
     static let appCanvas = UIColor { traits in
-        traits.userInterfaceStyle == .dark
-            ? UIColor(red: 22 / 255, green: 21 / 255, blue: 18 / 255, alpha: 1)
-            : UIColor(red: 242 / 255, green: 241 / 255, blue: 237 / 255, alpha: 1)
+        traits.userInterfaceStyle == .dark ? .appCanvasDark : .appCanvasLight
     }
 }

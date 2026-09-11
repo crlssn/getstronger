@@ -5,9 +5,6 @@ export const en = {
     eyebrow: 'Recording',
     session: 'Session',
     instruction: 'Recording {name}',
-    start: 'Start recording',
-    permission:
-      'Allow location access so your route, distance and pace are measured while you move. The session runs until you end it.',
     openEnded: 'Runs until you end it',
     startedAt: 'Started {time}',
     average: 'Average',
@@ -21,13 +18,10 @@ export const en = {
     exerciseBody: '{name}, measured as you go.',
   },
   timedCircuit: {
-    title: 'Live session',
     start: 'Start live session',
     instruction: '{name} for {duration}',
     rest: 'Rest',
     round: 'Round {round} of {total}',
-    permission:
-      'Allow location access to record your route and interval distances while your phone is locked. You can also log this workout manually.',
     failed:
       'Recording could not continue. Check location permission and available device storage. Ordinary workout logging is still available.',
     paused: 'Paused — movement is not recorded',
@@ -53,7 +47,9 @@ export const en = {
     // the rest.
     intervalDistance: 'Interval',
     totalDistance: 'Session',
-    intervalHistory: 'Completed intervals',
+    // A column title over the interval names, so one word: what the rows are
+    // is plain from them, and two wrapped onto a second line.
+    intervalHistory: 'Completed',
     intervalNamed: '{name} {round}',
     // What the recorder says: a bare count, because "10 seconds" is all a
     // runner has time to hear; and the ending, once the last interval runs out.
@@ -62,6 +58,9 @@ export const en = {
     completed: 'Workout completed',
     pacedAgainstPrevious: 'Tones compare each interval with your last session',
     pacedAgainstBest: 'Tones compare each interval with your best session',
+    // The live screen's own control, in the place Pause and Resume take: one
+    // word, because the screen it sits on says what is being started.
+    begin: 'Start',
     pause: 'Pause',
     resume: 'Resume',
     finish: 'End session',
@@ -71,7 +70,7 @@ export const en = {
       'The route and the distances recorded so far are lost. You can carry on logging this workout by hand.',
     discardConfirm: 'Discard recording',
     discardKeep: 'Keep recording',
-    manual: 'Log manually',
+    manual: 'Fill in manually',
     route: 'Workout route',
     map: 'Route map',
     mapCredit: 'Map: OpenFreeMap · © OpenMapTiles · Data from OpenStreetMap',
@@ -950,9 +949,6 @@ export const sv = {
     eyebrow: 'Pågår',
     session: 'Pass',
     instruction: '{name} pågår',
-    start: 'Starta passet',
-    permission:
-      'Tillåt platsåtkomst så att rutt, distans och tempo mäts medan du rör dig. Passet pågår tills du avslutar det.',
     openEnded: 'Pågår tills du avslutar',
     startedAt: 'Startade {time}',
     average: 'Snitt',
@@ -966,13 +962,10 @@ export const sv = {
     exerciseBody: 'Rutt, distans och tempo för {name} mäts medan du rör dig.',
   },
   timedCircuit: {
-    title: 'Livepass',
     start: 'Starta livepass',
     instruction: '{name} i {duration}',
     rest: 'Vila',
     round: 'Varv {round} av {total}',
-    permission:
-      'Tillåt platsåtkomst för att mäta din rutt och intervallernas distans även när telefonen är låst. Du kan också logga passet manuellt.',
     failed:
       'GPS-mätningen kunde inte fortsätta. Kontrollera platsbehörigheten och ledigt lagringsutrymme. Du kan fortfarande logga passet manuellt.',
     paused: 'Pausat — rörelse räknas inte',
@@ -996,13 +989,14 @@ export const sv = {
     noPace: '—',
     intervalDistance: 'Intervall',
     totalDistance: 'Pass',
-    intervalHistory: 'Avklarade intervaller',
+    intervalHistory: 'Avklarade',
     intervalNamed: '{name} {round}',
     cueSeconds_one: '{count} sekund',
     cueSeconds_other: '{count} sekunder',
     completed: 'Passet är klart',
     pacedAgainstPrevious: 'Tempoljuden jämför varje intervall med ditt senaste pass',
     pacedAgainstBest: 'Tempoljuden jämför varje intervall med ditt bästa pass',
+    begin: 'Starta',
     pause: 'Pausa',
     resume: 'Fortsätt',
     finish: 'Avsluta passet',
@@ -1012,7 +1006,7 @@ export const sv = {
       'Rutten och distansen som mätts hittills går förlorade. Du kan fortsätta logga passet för hand.',
     discardConfirm: 'Kasta passet',
     discardKeep: 'Behåll passet',
-    manual: 'Logga manuellt',
+    manual: 'Fyll i manuellt',
     route: 'Passets rutt',
     map: 'Ruttkarta',
     mapCredit: 'Karta: OpenFreeMap · © OpenMapTiles · Data från OpenStreetMap',

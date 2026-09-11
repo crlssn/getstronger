@@ -156,6 +156,27 @@ describe('ListRoutines', () => {
     expect(screen.queryByRole('menuitem', { name: 'Set as up next' })).not.toBeInTheDocument()
   })
 
+  // What is up next is offered the way the home screen offers it: one card,
+  // the whole of it the way into the session.
+  test('offers the routine that is up next as the home screen does', async () => {
+    useDashboardStore.setState({ preferredRoutineId: 'push' })
+    render()
+
+    const card = (await screen.findByRole('heading', { name: 'Push day', level: 3 })).closest(
+      'article',
+    )!
+    expect(within(card).getByRole('link', { name: 'Start Push day' })).toHaveAttribute(
+      'href',
+      '/workouts/routine/push',
+    )
+    // The two things the card no longer has room for stay under it.
+    expect(within(card).getByRole('link', { name: 'View' })).toHaveAttribute(
+      'href',
+      '/routines/push',
+    )
+    expect(within(card).getByRole('button', { name: 'Routine actions' })).toBeInTheDocument()
+  })
+
   test('makes a routine up next from its menu', async () => {
     const selectRoutine = vi
       .spyOn(useDashboardStore.getState(), 'selectRoutine')

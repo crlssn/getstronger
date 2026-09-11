@@ -67,7 +67,9 @@ test.describe('a session with no set length', () => {
 
     await page.getByRole('link', { name: /Record a session/ }).click()
     await expect(page).toHaveURL(/\/record$/)
-    await page.getByRole('button', { name: 'Start recording' }).click()
+    // The session opens on the screen it is run on, with nothing to confirm.
+    await expect(page.getByText('Active time')).toBeVisible()
+    await page.getByRole('button', { name: 'Start', exact: true }).click()
 
     // No countdown and no round: the clock counts up and says why.
     await expect(page.getByText('Active time')).toBeVisible()
@@ -122,7 +124,7 @@ test.describe('a session with no set length', () => {
     await page.getByRole('button', { name: '20 seconds before the end' }).click()
 
     await page.goto('/record')
-    await page.getByRole('button', { name: 'Start recording' }).click()
+    await page.getByRole('button', { name: 'Start', exact: true }).click()
     await expect(page.getByText('Active time')).toBeVisible()
 
     const saved = await page.evaluate(() => localStorage.getItem('getstronger:timed-circuit'))
@@ -143,7 +145,7 @@ test.describe('a session with no set length', () => {
     await expect(page).toHaveURL(/\/record\?exercise=[0-9a-f-]+$/)
     // The exercise came with it, so the screen is already named for it.
     await expect(page.getByRole('heading', { name: 'Run', exact: true })).toBeVisible()
-    await page.getByRole('button', { name: 'Start recording' }).click()
+    await page.getByRole('button', { name: 'Start', exact: true }).click()
     await walkTheRoute(page)
 
     await page.getByRole('button', { name: 'End session' }).click()
@@ -163,7 +165,7 @@ test.describe('a session with no set length', () => {
     await expect(page.getByRole('status')).toContainText('Auto-pause updated')
 
     await page.goto('/record')
-    await page.getByRole('button', { name: 'Start recording' }).click()
+    await page.getByRole('button', { name: 'Start', exact: true }).click()
     await walkTheRoute(page)
     await expect(page.getByText('Auto-paused')).toHaveCount(0)
 

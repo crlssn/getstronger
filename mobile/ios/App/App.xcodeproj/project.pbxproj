@@ -17,6 +17,7 @@
 		504EC3121FED79650016851F /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 504EC3101FED79650016851F /* LaunchScreen.storyboard */; };
 		50B271D11FEDC1A000F3C39B /* public in Resources */ = {isa = PBXBuildFile; fileRef = 50B271D01FEDC1A000F3C39B /* public */; };
 		9582B6832FE993A70072D4E8 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9582B6822FE993A50072D4E8 /* SceneDelegate.swift */; };
+		95C4A1312FEA10000072D4E8 /* CanvasPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = 95C4A1302FEA10000072D4E8 /* CanvasPlugin.swift */; };
 		95C4A1112FEA10000072D4E8 /* SwipeBackPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = 95C4A1102FEA10000072D4E8 /* SwipeBackPlugin.swift */; };
 		95C4A1212FEA10000072D4E8 /* AnnouncementVoice.swift in Sources */ = {isa = PBXBuildFile; fileRef = 95C4A1202FEA10000072D4E8 /* AnnouncementVoice.swift */; };
 		95A1F0012FE9A4010072D4E8 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 95A1F0002FE9A4010072D4E8 /* PrivacyInfo.xcprivacy */; };
@@ -34,6 +35,7 @@
 		504EC3131FED79650016851F /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		50B271D01FEDC1A000F3C39B /* public */ = {isa = PBXFileReference; lastKnownFileType = folder; path = public; sourceTree = "<group>"; };
 		9582B6822FE993A50072D4E8 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
+		95C4A1302FEA10000072D4E8 /* CanvasPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CanvasPlugin.swift; sourceTree = "<group>"; };
 		95C4A1102FEA10000072D4E8 /* SwipeBackPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwipeBackPlugin.swift; sourceTree = "<group>"; };
 		95C4A1202FEA10000072D4E8 /* AnnouncementVoice.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AnnouncementVoice.swift; path = "AnnouncementVoice/Sources/AnnouncementVoice/AnnouncementVoice.swift"; sourceTree = SOURCE_ROOT; };
 		95A1F0002FE9A4010072D4E8 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
@@ -73,6 +75,7 @@
 			isa = PBXGroup;
 			children = (
 				9582B6822FE993A50072D4E8 /* SceneDelegate.swift */,
+				95C4A1302FEA10000072D4E8 /* CanvasPlugin.swift */,
 				95C4A1102FEA10000072D4E8 /* SwipeBackPlugin.swift */,
 				95C4A1202FEA10000072D4E8 /* AnnouncementVoice.swift */,
 				138200002FEA10000072D4E8 /* TimedCircuitPlugin.swift */,
@@ -173,6 +176,7 @@
 			files = (
 				504EC3081FED79650016851F /* AppDelegate.swift in Sources */,
 				9582B6832FE993A70072D4E8 /* SceneDelegate.swift in Sources */,
+				95C4A1312FEA10000072D4E8 /* CanvasPlugin.swift in Sources */,
 				95C4A1112FEA10000072D4E8 /* SwipeBackPlugin.swift in Sources */,
 				95C4A1212FEA10000072D4E8 /* AnnouncementVoice.swift in Sources */,
 				138200012FEA10000072D4E8 /* TimedCircuitPlugin.swift in Sources */,

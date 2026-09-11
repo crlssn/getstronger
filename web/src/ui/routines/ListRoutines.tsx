@@ -18,16 +18,15 @@ import { AppSearchField } from '@/ui/components/AppSearchField'
 import { AppSkeleton } from '@/ui/components/AppSkeleton'
 import { DropdownButton } from '@/ui/components/DropdownButton'
 import { ExerciseTags } from '@/ui/exercises/ExerciseTags'
+import { RoutineStartCard } from '@/ui/features/RoutineStartCard'
 import { TrainingTabs } from '@/ui/features/TrainingTabs'
 import { groupByRoutineActivity } from '@/utils/activityGroups'
 import { appendPage } from '@/utils/appendPage'
 import { formatDateTime } from '@/utils/datetime'
+import { estimatedSessionMinutes } from '@/utils/sessionEstimate'
 import { usePagination } from '@/utils/usePagination'
 import styles from './ListRoutines.module.css'
 
-// Matches the estimate on the home screen's up-next card.
-const minutesPerExercise = 8
-const minimumEstimatedMinutes = 30
 // Enough to recognise the routine; past that the row is a wall of names.
 const maxNamedExercises = 3
 
@@ -99,6 +98,20 @@ export const ListRoutines = () => {
         ]),
   ]
 
+  const routineMinutes = (routine: Routine) => estimatedSessionMinutes(routine.exercises.length)
+
+  // What it is, how long it takes and when it was last trained: one line on
+  // the up-next card, where the rows below it spread the same facts over three
+  // spans.
+  const routineMeta = (routine: Routine) =>
+    [
+      t('home.exerciseCount', { count: routine.exercises.length }),
+      t('home.aboutMinutes', { count: routineMinutes(routine) }),
+      formatDateTime(lastPerformedIn(routineLastPerformed, routine.id)),
+    ]
+      .filter(Boolean)
+      .join(' · ')
+
   const exerciseSummary = (routine: Routine) => {
     const names = routine.exercises.slice(0, maxNamedExercises).map((exercise) => exercise.name)
     if (!names.length) return t('routine.noExercises')
@@ -130,77 +143,115 @@ export const ListRoutines = () => {
       ) : failed && routines.length === 0 ? (
         <AppErrorState onRetry={() => void fetchRoutines()} />
       ) : filtered.length > 0 ? (
-        groups.map((group) => (
-          <section key={group.bucket} className={styles.routineGroup}>
-            <h2 className={styles.groupHeading}>{t(group.labelKey)}</h2>
-            <div className={styles.routineGrid}>
-              {group.items.map((routine) => {
-                const tags = routineTags(routine)
-                const performed = formatDateTime(lastPerformedIn(routineLastPerformed, routine.id))
+        groups.map((group) => {
+          // The one session the screen is really offering leads its group on
+          // the canvas; the rest of the group follows in the card they share.
+          const upNext = group.items.find((routine) => routine.id === preferredRoutineId)
+          const rest = group.items.filter((routine) => routine !== upNext)
 
-                return (
-                  <article key={routine.id} className={styles.routineCard}>
-                    <div className={styles.routineHeading}>
-                      <Link to={`/routines/${routine.id}`}>
-                        {routine.id === preferredRoutineId && (
-                          <span className={styles.upNext}>{t('home.upNext')}</span>
-                        )}
-                        <h3>{routine.name}</h3>
-                        {tags.length > 0 ? (
-                          <ExerciseTags compact tags={tags} />
-                        ) : (
-                          <p className={styles.routineExercises}>{exerciseSummary(routine)}</p>
-                        )}
-                        <p className={styles.routineMeta}>
-                          <span>
-                            {t('home.exerciseCount', { count: routine.exercises.length })}
-                          </span>
-                          <span>
-                            {t('home.aboutMinutes', {
-                              count: Math.max(
-                                minimumEstimatedMinutes,
-                                routine.exercises.length * minutesPerExercise,
-                              ),
-                            })}
-                          </span>
-                          {performed && <span>{performed}</span>}
-                        </p>
-                      </Link>
-                      <ChevronRightIcon aria-hidden="true" />
-                    </div>
+          return (
+            <section key={group.bucket} className={styles.routineGroup}>
+              <h2 className={styles.groupHeading}>{t(group.labelKey)}</h2>
 
-                    <div className={styles.routineActions}>
-                      <AppButton
-                        type="link"
-                        colour="primary"
-                        size="sm"
-                        width="auto"
-                        to={`/workouts/routine/${routine.id}`}
-                      >
-                        <PlayIcon className="size-5" aria-hidden="true" /> {t('routine.list.start')}
-                      </AppButton>
-                      <AppButton
-                        type="link"
-                        colour="secondary"
-                        size="sm"
-                        width="auto"
-                        to={`/routines/${routine.id}`}
-                      >
-                        {t('routine.list.view')}
-                      </AppButton>
-                      <div className={styles.routineMenu}>
-                        <DropdownButton
-                          items={routineActions(routine)}
-                          label={t('routine.list.actionsAria')}
-                        />
-                      </div>
+              {upNext && (
+                <article className={styles.upNextCard}>
+                  {/* Offered the way the home screen offers it: one card, the
+                      whole of it the way into the session. */}
+                  <RoutineStartCard
+                    eyebrow={t('home.upNext')}
+                    headingLevel={3}
+                    label={t('home.startNamedRoutine', { name: upNext.name })}
+                    meta={routineMeta(upNext)}
+                    name={upNext.name}
+                    to={`/workouts/routine/${upNext.id}`}
+                  />
+                  {/* The two the card itself has no room for, under it. */}
+                  <div className={styles.routineActions}>
+                    <AppButton
+                      type="link"
+                      colour="secondary"
+                      size="sm"
+                      width="auto"
+                      to={`/routines/${upNext.id}`}
+                    >
+                      {t('routine.list.view')}
+                    </AppButton>
+                    <div className={styles.routineMenu}>
+                      <DropdownButton
+                        items={routineActions(upNext)}
+                        label={t('routine.list.actionsAria')}
+                      />
                     </div>
-                  </article>
-                )
-              })}
-            </div>
-          </section>
-        ))
+                  </div>
+                </article>
+              )}
+
+              {rest.length > 0 && (
+                <div className={styles.routineGrid}>
+                  {rest.map((routine) => {
+                    const tags = routineTags(routine)
+                    const performed = formatDateTime(
+                      lastPerformedIn(routineLastPerformed, routine.id),
+                    )
+
+                    return (
+                      <article key={routine.id} className={styles.routineCard}>
+                        <div className={styles.routineHeading}>
+                          <Link to={`/routines/${routine.id}`}>
+                            <h3>{routine.name}</h3>
+                            {tags.length > 0 ? (
+                              <ExerciseTags compact tags={tags} />
+                            ) : (
+                              <p className={styles.routineExercises}>{exerciseSummary(routine)}</p>
+                            )}
+                            <p className={styles.routineMeta}>
+                              <span>
+                                {t('home.exerciseCount', { count: routine.exercises.length })}
+                              </span>
+                              <span>
+                                {t('home.aboutMinutes', { count: routineMinutes(routine) })}
+                              </span>
+                              {performed && <span>{performed}</span>}
+                            </p>
+                          </Link>
+                          <ChevronRightIcon aria-hidden="true" />
+                        </div>
+
+                        <div className={styles.routineActions}>
+                          <AppButton
+                            type="link"
+                            colour="primary"
+                            size="sm"
+                            width="auto"
+                            to={`/workouts/routine/${routine.id}`}
+                          >
+                            <PlayIcon className="size-5" aria-hidden="true" />{' '}
+                            {t('routine.list.start')}
+                          </AppButton>
+                          <AppButton
+                            type="link"
+                            colour="secondary"
+                            size="sm"
+                            width="auto"
+                            to={`/routines/${routine.id}`}
+                          >
+                            {t('routine.list.view')}
+                          </AppButton>
+                          <div className={styles.routineMenu}>
+                            <DropdownButton
+                              items={routineActions(routine)}
+                              label={t('routine.list.actionsAria')}
+                            />
+                          </div>
+                        </div>
+                      </article>
+                    )
+                  })}
+                </div>
+              )}
+            </section>
+          )
+        })
       ) : (
         <AppEmptyState
           action={search ? 'none' : { label: t('training.newRoutine'), to: '/routines/create' }}

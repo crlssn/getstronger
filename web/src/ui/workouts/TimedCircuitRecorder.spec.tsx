@@ -53,9 +53,10 @@ describe('TimedCircuitRecorder', () => {
       />,
     )
     expect(timedCircuit.start).not.toHaveBeenCalled()
-    // The feature is a live session, not a "guided circuit": the group mode
-    // is what a circuit is, and this is a run with its route recorded.
-    expect(screen.getByRole('heading', { name: 'Live session' })).toBeVisible()
+    // No page in front of the session: the screen it is run on is the screen
+    // it is started from, showing the first interval at its full length.
+    expect(screen.getByRole('heading', { name: 'Walk' })).toBeVisible()
+    expect(screen.getByText('2:00')).toBeVisible()
     await user.click(screen.getByRole('button', { name: 'Start live session' }))
     // The comparison travels with the prescription: the phone owns it from
     // there, screen locked and WebView asleep.
@@ -67,7 +68,7 @@ describe('TimedCircuitRecorder', () => {
       }),
     )
     expect(screen.getByRole('alert')).toHaveTextContent('Check location permission')
-    await user.click(screen.getByRole('button', { name: 'Log manually' }))
+    await user.click(screen.getByRole('button', { name: 'Fill in manually' }))
     expect(cancel).toHaveBeenCalledOnce()
   })
 
@@ -206,7 +207,7 @@ describe('TimedCircuitRecorder', () => {
     expect(stat('Session')).toHaveTextContent('1.300km')
     // The interval that finished, named and measured: what there is to beat.
     // The columns are titled, so three figures in a row read as three things.
-    const titles = screen.getByText('Completed intervals').parentElement
+    const titles = screen.getByText('Completed').parentElement
     expect(titles).toHaveTextContent('Pace')
     expect(titles).toHaveTextContent('Speed')
     expect(titles).toHaveTextContent('Distance')

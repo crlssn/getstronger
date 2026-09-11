@@ -290,6 +290,9 @@ export const StartWorkout = () => {
   const [now, setNow] = useState(() => Date.now())
   const [submitting, setSubmitting] = useState(false)
   const [guided, setGuided] = useState(false)
+  // The athlete asked for the form. The live session stays a tap away in the
+  // dock, but the screen stops opening on it.
+  const [declinedLive, setDeclinedLive] = useState(false)
   const [finishError, setFinishError] = useState('')
   const [blockedMessage, setBlockedMessage] = useState('')
   const [finishDialogOpen, setFinishDialogOpen] = useState(false)
@@ -1204,7 +1207,14 @@ export const StartWorkout = () => {
     </div>
   )
 
-  if (Capacitor.isNativePlatform() && (guided || workout?.recording)) {
+  // A routine held against the clock is run live: its rounds are minutes
+  // rather than reps, so the screen it opens on is the one counting them down.
+  // Read as the screen renders rather than set once, so the session takes over
+  // the moment the routine lands rather than a frame after the form. A session
+  // already part-logged by hand is left where the athlete put it.
+  const liveByDefault = !declinedLive && phases.length > 0 && (!workout || !hasLoggedSet(workout))
+
+  if (Capacitor.isNativePlatform() && (guided || liveByDefault || workout?.recording)) {
     return (
       <div className="space-y-5">
         <TimedCircuitRecorder
@@ -1214,6 +1224,7 @@ export const StartWorkout = () => {
           saved={workout?.recording}
           onComplete={recordingComplete}
           onCancel={() => {
+            setDeclinedLive(true)
             if (workout?.recording) {
               const store = useWorkoutStore.getState()
               store.removeWorkout(routineID)

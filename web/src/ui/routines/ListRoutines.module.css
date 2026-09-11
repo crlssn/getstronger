@@ -52,8 +52,10 @@
   @apply mx-1 content-['·'];
 }
 
-.upNext {
-  @apply mb-2 inline-flex rounded-full bg-ink-tint px-2.5 py-1 text-xs font-semibold text-ink-strong;
+/* The card that is up next brings its own paper, so the article around it
+   only spaces it from the two actions underneath. */
+.upNextCard {
+  @apply flex flex-col gap-2;
 }
 
 .routineActions {
