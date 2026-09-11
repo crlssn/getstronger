@@ -653,3 +653,16 @@ gh variable set SCW_SCREENSHOTS_BUCKET_NAME --body getstronger.screenshots
 The bucket itself stays private: only the objects the task uploads are readable, and only for thirty days.
 
 `SCW_SCREENSHOTS_BUCKET_NAME` is a repository variable rather than a value written into the task, so nothing publishes to a bucket it was not pointed at. Locally it comes from `.env`, which `.env.example` fills in: the bucket is not a secret and is the same for everyone. The two credentials beside it are — `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`, the `getstronger-deploy` API key from step 7, which already carries the Object Storage permission sets the upload needs. Without them the task fails and uploads nothing, so `mise run worktree:env` carries just those two from the main checkout's `.env` into a new worktree's, by name. Nothing else crosses: a cloud `DB_HOST` added to the main file would point a worktree's backend at production.
+
+### Capturing them in CI
+
+Both commands above want a photographed set, which wants a seeded database, and the upload wants credentials. Where none of that is to hand — a cloud routine's sandbox — dispatch the capture instead of asking a reviewer to run it:
+
+```bash
+gh workflow run pr.screenshots.yml -f number=1209
+gh workflow run pr.screenshots.yml -f number=1209 -f path=web/screenshots/<ref>/active
+```
+
+`pr.screenshots.yml` resolves both branches from the number, checks the head out, brings up Postgres, seeds it, and photographs the branch the pull request targets before photographing the branch itself and comparing the two — the same pair GitHub shows the diff of, so a stacked pull request is read against the one below it. It finishes by running `scripts/pr_screenshots.sh <number> --append`, so a second dispatch replaces the block rather than leaving a reviewer two sets, and `path` is passed through to the same guard that refuses anything outside `web/screenshots/`. A comparison that found nothing says so and leaves the body alone; a capture that fails names the page it failed on and stops before anything is published.
+
+The key it uploads with is a repository secret, as `deploy.yml`'s is, and the bucket name a repository variable. Neither is added to a deployment environment, whose variables anyone who can use that environment can read — and the bucket is world-readable by design, for GitHub's image proxy to fetch from.

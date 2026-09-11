@@ -113,5 +113,10 @@ This branch changes what a page looks like. Publish its before/after evidence
 into the body, or the reviewer on GitHub gets words:
 
   mise run pr:screenshots $number --append
+
+Without a database to photograph — a cloud routine's sandbox — dispatch the
+capture instead, and a runner does both:
+
+  gh workflow run pr.screenshots.yml -f number=$number
 REMINDER
 fi
