@@ -41,8 +41,21 @@ const circuitName = 'Screenshot Circuit'
 const intervalName = 'Screenshot Intervals'
 const planName = 'Screenshot Plan'
 
+// A new routine opens on the starting shapes, each of them a list of blocks.
+const startRoutine = async (page: Page, shape: 'Blank' | 'Circuit' | 'Intervals') => {
+  const sheet = page.getByRole('dialog')
+  await sheet.getByRole('button', { name: new RegExp(`^${shape} —`) }).click()
+  await expect(sheet).toBeHidden()
+}
+
+// A settings sheet edits as it goes, so "Done" only closes it.
+const closeSheet = async (page: Page) => {
+  await page.getByRole('button', { name: 'Done', exact: true }).click()
+  await expect(page.getByRole('dialog')).toBeHidden()
+}
+
 // The builder picks exercises through the same sheet the session uses; each
-// group has its own button, and the first one is the block being filled.
+// block has its own button, and the first one is the block being filled.
 const pickExercise = async (page: Page, optionIndex = 0, groupIndex = 0) => {
   await page.getByRole('button', { name: 'Add exercise' }).nth(groupIndex).click()
   const sheet = page.getByRole('dialog')
@@ -178,8 +191,17 @@ export const flows: Flow[] = [
     personas: ['active'],
     steps: [
       {
+        // What a new routine opens on: three starting shapes, each of them a
+        // list of blocks the builder forgets the origin of.
         act: async (page) => {
           await page.goto('/routines/create')
+          await expect(page.getByRole('dialog')).toBeVisible()
+        },
+        name: 'start',
+      },
+      {
+        act: async (page) => {
+          await startRoutine(page, 'Blank')
           await page.getByLabel('Routine name').fill(routineName)
           await pickExercise(page, 0)
           await pickExercise(page, 1)
@@ -189,20 +211,17 @@ export const flows: Flow[] = [
         name: 'filled',
       },
       {
-        // The switch is the whole answer for a routine that wants a rest timer
-        // and does not care how long, so the folded-away state is one the
-        // builder is seen in as often as the open one.
+        // What an exercise prescribes, which is a sheet behind the value on its
+        // row rather than a column of steppers down the list.
         act: async (page) => {
-          await page.getByRole('switch', { name: 'Rest timers' }).click()
-          await expect(page.getByLabel(/^Rest between sets of/).first()).toBeHidden()
+          await page.getByRole('button', { name: /^Exercise settings:/ }).first().click()
+          await expect(page.getByRole('dialog')).toBeVisible()
         },
-        name: 'rest-off',
+        name: 'exercise-settings',
       },
       {
         act: async (page) => {
-          // Saved with its timers back on, so the routine below is the one the
-          // rest of this flow photographs.
-          await page.getByRole('switch', { name: 'Rest timers' }).click()
+          await closeSheet(page)
           await page.getByRole('button', { name: 'Create routine' }).click()
           await expect(page).toHaveURL(/\/routines$/)
           await page.getByLabel('Search routines').fill(routineName)
@@ -239,27 +258,28 @@ export const flows: Flow[] = [
       await acceptConfirmation(page)
       await expect(page).toHaveURL(/\/routines$/)
     },
-    component: 'src/ui/routines/RoutineGroupsEditor.tsx',
-    // The advanced half of the builder, where exercises are grouped and a group
-    // is turned into a circuit. Folded away until it is asked for, so it is only
-    // ever seen by walking to it.
+    component: 'src/ui/routines/RoutineBlockSection.tsx',
+    // A routine of more than one block, one of them a circuit: what the header
+    // of a block says about it, and how two of them read down the page.
     name: 'circuit',
     personas: ['active'],
     steps: [
       {
         act: async (page) => {
           await page.goto('/routines/create')
+          await startRoutine(page, 'Circuit')
           await page.getByLabel('Routine name').fill(circuitName)
           circuitExercises = [await pickExercise(page, 0), await pickExercise(page, 1)]
 
-          await page.getByRole('button', { name: 'Groups', exact: true }).click()
-          await page.getByRole('button', { name: 'Circuit', exact: true }).click()
-          await stepRest(page, 'Rest after each exercise in group A', 'Subtract')
-          await stepRest(page, 'Rest after each round in group A', 'Add')
+          await page.getByRole('button', { name: 'Block settings: Block A', exact: true }).click()
+          await stepRest(page, 'Rest after each exercise', 'Add')
+          await stepRest(page, 'Rest after each round', 'Add')
+          await closeSheet(page)
 
-          // Two groups, since that is where the row runs out of width: the
-          // exercise name shares it with the rest, the bin and the handle.
-          await page.getByRole('button', { name: 'New group' }).click()
+          // Two blocks, since that is where the row runs out of width: the
+          // exercise name shares it with the prescription, the bin and the
+          // handle.
+          await page.getByRole('button', { name: 'Add block' }).click()
           await pickExercise(page, 0, 1)
         },
         name: 'grouped',
@@ -340,38 +360,47 @@ export const flows: Flow[] = [
       await acceptConfirmation(page)
       await expect(page).toHaveURL(/\/routines$/)
     },
-    component: 'src/ui/routines/RoutineIntervalsEditor.tsx',
-    // The third shape of the builder: a warm-up, one block with a round count,
-    // and a cool-down. Nothing else in the set photographs it.
+    component: 'src/ui/routines/RoutineBlockSheet.tsx',
+    // The Intervals starting shape — a warm-up, one block with a round count, a
+    // cool-down — and the sheet that block's settings live in. Nothing else in
+    // the set photographs either.
     name: 'intervals',
     personas: ['active'],
     steps: [
       {
         act: async (page) => {
           await page.goto('/routines/create')
+          await startRoutine(page, 'Intervals')
           await page.getByLabel('Routine name').fill(intervalName)
-          await page.getByRole('button', { name: 'Intervals', exact: true }).click()
 
           // A longer first walk, then a block of two worked five times: the
           // shape a walk-run session has, and the one it could not be built in.
           await pickExercise(page, 0, 0)
           await pickExercise(page, 1, 1)
           await pickExercise(page, 2, 1)
+          await page.getByRole('button', { name: 'Block settings: Repeat', exact: true }).click()
           for (const _ of [1, 2]) {
             await page.getByRole('button', { name: 'Add a round to Rounds' }).click()
           }
-          await expect(page.getByText('Announced as Round n of 5')).toBeVisible()
+          await expect(page.getByText('Worked through 5 times')).toBeVisible()
         },
-        name: 'built',
+        name: 'block-settings',
       },
       {
-        // Every round in full, which is the other thing the switch says and
-        // what the count below it answers to.
+        // Every round in full, which is the other thing the switch says.
         act: async (page) => {
           await page.getByRole('switch', { name: 'Skip last exercise on final round' }).click()
           await expect(page.getByText('Every round runs in full')).toBeVisible()
         },
         name: 'no-skip',
+      },
+      {
+        // The three blocks as the page reads them, once the sheet is closed.
+        act: async (page) => {
+          await closeSheet(page)
+          await expect(page.getByText('One set of each, 5 times through')).toBeVisible()
+        },
+        name: 'built',
       },
     ],
   },
