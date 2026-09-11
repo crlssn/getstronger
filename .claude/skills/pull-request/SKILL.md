@@ -36,8 +36,11 @@ is subtle.
   and that is the reviewer's call. New tests need no such note. A UI change puts
   its before/after screenshots in the body with
   `mise run pr:screenshots <number> --append`, once the pull request is open and
-  its number known. The review happens on GitHub, so a chat reply alone leaves
-  the reviewer nothing to look at.
+  its number known — photographed here, not asked of a runner half an hour
+  later. Where nothing can photograph, which is a cloud session and only a
+  cloud session, the `screenshots` label on the pull request asks CI for the
+  same images. The review happens on GitHub, so a chat reply alone leaves the
+  reviewer nothing to look at.
 - **Notes for the reviewer**: at most three bullets, and only what the reviewer
   genuinely needs — breaking changes, migration or deploy ordering, deliberately
   deferred work, where to start reading a large diff. Delete the section rather

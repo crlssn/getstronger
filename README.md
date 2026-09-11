@@ -656,13 +656,16 @@ The bucket itself stays private: only the objects the task uploads are readable,
 
 ### Capturing them in CI
 
-Both commands above want a photographed set, which wants a seeded database, and the upload wants credentials. Where none of that is to hand — a cloud routine's sandbox — dispatch the capture instead of asking a reviewer to run it:
+Both commands above want a photographed set, which wants a seeded database, and the upload wants credentials. A machine that has them photographs the pages itself: that run is six minutes, and a runner is half an hour. Where none of it is to hand — a cloud session — ask CI for the images instead. Label the pull request `screenshots`, or dispatch the workflow by number when a `path` is wanted too:
 
 ```bash
+gh pr edit 1209 --add-label screenshots
 gh workflow run pr.screenshots.yml -f number=1209
 gh workflow run pr.screenshots.yml -f number=1209 -f path=web/screenshots/<ref>/active
 ```
 
-`pr.screenshots.yml` resolves both branches from the number, checks the head out, brings up Postgres, seeds it, and photographs the branch the pull request targets before photographing the branch itself and comparing the two — the same pair GitHub shows the diff of, so a stacked pull request is read against the one below it. It finishes by running `scripts/pr_screenshots.sh <number> --append`, so a second dispatch replaces the block rather than leaving a reviewer two sets, and `path` is passed through to the same guard that refuses anything outside `web/screenshots/`. A comparison that found nothing says so and leaves the body alone; a capture that fails names the page it failed on and stops before anything is published.
+The label is a button rather than a state, as `deploy:beta` is: the run takes it off again when it finishes, so labelling the pull request once more photographs it again after a further push. A capture costs half an hour of runner time and rewrites the body, which is why it is asked for rather than run on every push.
+
+`pr.screenshots.yml` resolves both branches from the number, checks the head out, brings up Postgres, seeds it, and photographs the branch the pull request targets before photographing the branch itself and comparing the two — the same pair GitHub shows the diff of, so a stacked pull request is read against the one below it. It finishes by running `scripts/pr_screenshots.sh <number> --append`, so a second run replaces the block rather than leaving a reviewer two sets, and `path` is passed through to the same guard that refuses anything outside `web/screenshots/`. A comparison that found nothing says so and leaves the body alone; a capture that fails names the page it failed on and stops before anything is published.
 
 The key it uploads with is a repository secret, as `deploy.yml`'s is, and the bucket name a repository variable. Neither is added to a deployment environment, whose variables anyone who can use that environment can read — and the bucket is world-readable by design, for GitHub's image proxy to fetch from.

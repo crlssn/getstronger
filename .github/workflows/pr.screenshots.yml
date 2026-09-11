@@ -7,6 +7,13 @@
 name: pr screenshots
 
 on:
+  # The label is the button a person reaches for, as 'deploy:beta' is on
+  # deploy.yml: a capture costs half an hour of runner time and rewrites the
+  # body, which is not something every push to a branch should do. The job
+  # takes the label off again, so labelling asks for another set.
+  pull_request:
+    types:
+      - labeled
   workflow_dispatch:
     inputs:
       number:
@@ -21,13 +28,14 @@ on:
 # One run per pull request. Both would append to the same body, and the later
 # one replaces the block wholesale anyway, so the earlier is worth nothing.
 concurrency:
-  group: ${{ github.workflow }}-${{ inputs.number }}
+  group: ${{ github.workflow }}-${{ inputs.number || github.event.pull_request.number }}
   cancel-in-progress: true
 
 permissions: {}
 
 jobs:
   screenshots:
+    if: github.event_name == 'workflow_dispatch' || github.event.label.name == 'screenshots'
     runs-on: ubuntu-latest
     # Two full captures of every page, each with a Go build and a Vite server
     # behind it.
@@ -48,6 +56,8 @@ jobs:
       ENV: local
       JWT_ACCESS_TOKEN_KEY: screenshots-access-key
       JWT_REFRESH_TOKEN_KEY: screenshots-refresh-key
+      # The pull request to photograph, whichever way this run was asked for.
+      NUMBER: ${{ inputs.number || github.event.pull_request.number }}
 
     services:
       postgres:
@@ -75,7 +85,6 @@ jobs:
         env:
           GH_REPO: ${{ github.repository }}
           GH_TOKEN: ${{ github.token }}
-          NUMBER: ${{ inputs.number }}
         run: |
           case "$NUMBER" in
             '' | *[!0-9]*)
@@ -183,7 +192,6 @@ jobs:
           BASE: ${{ steps.pr.outputs.base }}
           GH_REPO: ${{ github.repository }}
           GH_TOKEN: ${{ github.token }}
-          NUMBER: ${{ inputs.number }}
           PUBLISH_PATH: ${{ inputs.path }}
           SCW_REGION: ${{ vars.SCW_REGION }}
           SCW_SCREENSHOTS_BUCKET_NAME: ${{ vars.SCW_SCREENSHOTS_BUCKET_NAME }}
@@ -201,3 +209,24 @@ jobs:
           arguments=("$NUMBER")
           [ -z "$PUBLISH_PATH" ] || arguments+=(--path "$PUBLISH_PATH")
           ./scripts/pr_screenshots.sh "${arguments[@]}" --append
+
+  # The label is a button, not a state: taking it off again is what lets a
+  # second push be photographed by labelling the pull request once more. It
+  # comes off whether the capture worked or not, so a failed run is retried the
+  # same way.
+  cleanup:
+    needs: screenshots
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    if: always() && github.event_name == 'pull_request' && github.event.label.name == 'screenshots'
+
+    permissions:
+      pull-requests: write
+
+    steps:
+      - name: Remove the screenshots label
+        env:
+          GH_REPO: ${{ github.repository }}
+          GH_TOKEN: ${{ github.token }}
+          NUMBER: ${{ github.event.pull_request.number }}
+        run: gh pr edit "$NUMBER" --remove-label screenshots

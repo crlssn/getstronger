@@ -106,17 +106,27 @@ esac
 moved="$(git diff --name-only "origin/${base:-main}...HEAD" 2>/dev/null |
   grep -E '^web/src/.*\.(tsx|css)$' | grep -v '\.spec\.tsx$')"
 
-if [ -n "$moved" ]; then
+[ -n "$moved" ] || exit 0
+
+# A cloud session has no browser to photograph with and no key to publish with,
+# so there the images can only come from a runner. Anywhere else they are six
+# minutes away, and a capture on the machine that made the change beats one on
+# a runner half an hour later. The variable is set in cloud sessions only; see
+# .claude/cloud-environment.md.
+if [ -n "${CLAUDE_CODE_REMOTE_SESSION_ID:-}" ]; then
   cat <<REMINDER
 
-This branch changes what a page looks like. Publish its before/after evidence
-into the body, or the reviewer on GitHub gets words:
+This branch changes what a page looks like, and nothing here can photograph it.
+Add the 'screenshots' label to #$number and a runner does it, appending the
+before/after images to the body. There is no gh here, so use the GitHub tools.
+REMINDER
+  exit 0
+fi
+
+cat <<REMINDER
+
+This branch changes what a page looks like. Photograph it and publish the
+before/after evidence into the body, or the reviewer on GitHub gets words:
 
   mise run pr:screenshots $number --append
-
-Without a database to photograph — a cloud routine's sandbox — dispatch the
-capture instead, and a runner does both:
-
-  gh workflow run pr.screenshots.yml -f number=$number
 REMINDER
-fi
