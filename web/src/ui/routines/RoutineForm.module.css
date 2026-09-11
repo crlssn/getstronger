@@ -8,17 +8,26 @@
   @apply mb-5;
 }
 
-/* No card: the switch is the whole of this section, and a box around one
-   control is a box around nothing. The line under it is what each half means,
-   which the two words alone never said. */
-.structure {
-  @apply w-full;
+/* One block after another, evenly: a routine is read as a list of them, and a
+   gap that varies reads as a grouping nobody asked for. */
+.blocks {
+  @apply mb-4 flex flex-col gap-4;
 }
 
-.structure > * {
+.addBlock {
+  @apply mb-4 w-full;
+}
+
+/* What the routine adds up to. Tabular, because the two figures change as the
+   routine is built and a shifting number is a number nobody reads. */
+.summary {
+  @apply mb-4 flex justify-between gap-3 px-1 text-body tabular-nums text-text-muted;
+}
+
+.tracking {
+  @apply mb-4 w-full;
+}
+
+.tracking > * {
   @apply flex-1;
-}
-
-.structureHint {
-  @apply mb-5 mt-2 px-1 text-meta font-medium text-text-subtle;
 }

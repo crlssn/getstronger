@@ -3,7 +3,7 @@ import type { RoutineExercise, RoutineGroup } from '@/proto/api/v1/routine_servi
 import type { DistanceUnit, Exercise, WeightUnit } from '@/proto/api/v1/shared_pb'
 
 import { RoutineGroupMode, RoutineGroupRole } from '@/proto/api/v1/shared_pb'
-import type { DraftGroup, GroupRole } from '@/utils/routineGroups'
+import type { ExerciseTracking, DraftGroup, GroupRole } from '@/utils/routineGroups'
 
 import { create } from '@bufbuild/protobuf'
 import { Code, ConnectError } from '@connectrpc/connect'
@@ -66,6 +66,7 @@ import {
   type ListRoutinesResponse,
   PauseActivePlanRequestSchema,
   type PauseActivePlanResponse,
+  RoutineExerciseTracking,
   SetActivePlanRequestSchema,
   type SetActivePlanResponse,
   SkipPlanRoutineRequestSchema,
@@ -375,6 +376,14 @@ const roleMessages: Record<GroupRole, RoutineGroupRole> = {
   cooldown: RoutineGroupRole.COOLDOWN,
 }
 
+// How the block counts an occurrence's work, and so which of the three
+// prescriptions below it the server reads.
+const trackingMessages: Record<ExerciseTracking, RoutineExerciseTracking> = {
+  sets: RoutineExerciseTracking.SETS,
+  timed: RoutineExerciseTracking.TIMED,
+  distance: RoutineExerciseTracking.DISTANCE,
+}
+
 const routineGroupMessages = (groups: readonly DraftGroup[] | undefined): RoutineGroup[] =>
   (groups ?? []).map(
     (group) =>
@@ -385,12 +394,16 @@ const routineGroupMessages = (groups: readonly DraftGroup[] | undefined): Routin
         rounds: group.rounds,
         role: roleMessages[group.role],
         skipLastOnFinalRound: group.skipLastOnFinalRound,
+        title: group.title,
         exercises: group.entries.map(
           (entry) =>
             ({
               exercise: { id: entry.exerciseId } as Exercise,
               restSeconds: entry.restSeconds,
-              targetDurationSeconds: entry.targetDurationSeconds ?? 0,
+              targetDurationSeconds: entry.targetDurationSeconds,
+              tracking: trackingMessages[entry.tracking],
+              sets: entry.sets,
+              targetDistanceMeters: entry.targetDistanceMeters,
             }) as RoutineExercise,
         ),
       }) as RoutineGroup,

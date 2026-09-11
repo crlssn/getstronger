@@ -1,4 +1,5 @@
 import type { Exercise } from '@/proto/api/v1/shared_pb'
+import type { ReactNode } from 'react'
 
 import { PlusIcon } from '@heroicons/react/24/outline'
 import { useCallback, useEffect, useState } from 'react'
@@ -20,8 +21,13 @@ import styles from './ExercisePickerSheet.module.css'
 interface Props {
   /** Exercises already in the session, which are not offered again. */
   excluded?: readonly string[]
-  /** Said above the title: which session, or which group, is being added to. */
+  /** Said above the title: which session, or which block, is being added to. */
   eyebrow?: string
+  /**
+   * Asked before the search field: anything the caller needs answered about the
+   * exercise before it is picked, such as how a routine will count its work.
+   */
+  header?: ReactNode
   onAdd: (exercise: Exercise) => void
   onClose: () => void
 }
@@ -34,7 +40,13 @@ interface Props {
  * again: the list is short enough for that, and it keeps the field responsive
  * between keystrokes.
  */
-export const ExercisePickerSheet = ({ excluded = [], eyebrow, onAdd, onClose }: Props) => {
+export const ExercisePickerSheet = ({
+  excluded = [],
+  eyebrow,
+  header,
+  onAdd,
+  onClose,
+}: Props) => {
   const { t } = useTranslation()
 
   const [options, setOptions] = useState<Exercise[]>([])
@@ -84,6 +96,8 @@ export const ExercisePickerSheet = ({ excluded = [], eyebrow, onAdd, onClose }: 
       closeLabel={t('workout.closeExercisePicker')}
       onClose={onClose}
     >
+      {header}
+
       <AppSearchField
         className="mb-4"
         label={t('exercise.search')}

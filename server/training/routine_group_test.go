@@ -330,29 +330,29 @@ func TestNormalizeRoutineGroupRoles(t *testing.T) {
 			},
 		},
 		{
-			// The warm-up is worked once, so it has no final round to end
-			// early: only the block the count repeats does.
-			name: "only the repeating block keeps the skip",
+			// A warm-up is worked once through, so it has no final round to end
+			// early — whether it is named one or given the role.
+			name: "only a block worked round after round keeps the skip",
 			groups: []training.RoutineGroupDraft{
-				{Mode: training.RoutineGroupModeCircuit, Rounds: 1, Role: training.RoutineGroupRoleWarmup, SkipLastOnFinalRound: true, Exercises: exercises("a")},
+				{Mode: training.RoutineGroupModeStraight, Role: training.RoutineGroupRoleWarmup, SkipLastOnFinalRound: true, Exercises: exercises("a")},
 				{Mode: training.RoutineGroupModeCircuit, Rounds: 5, Role: training.RoutineGroupRoleRepeat, SkipLastOnFinalRound: true, Exercises: exercises("b")},
 			},
 			ordered: []string{"a", "b"},
 			expected: []training.RoutineGroupDraft{
-				{Mode: training.RoutineGroupModeCircuit, Rounds: 1, Role: training.RoutineGroupRoleWarmup, Exercises: exercises("a")},
+				{Mode: training.RoutineGroupModeStraight, Role: training.RoutineGroupRoleWarmup, Exercises: exercises("a")},
 				{Mode: training.RoutineGroupModeCircuit, Rounds: 5, Role: training.RoutineGroupRoleRepeat, SkipLastOnFinalRound: true, Exercises: exercises("b")},
 			},
 		},
 		{
-			// Every gym circuit saved before intervals existed, and every one
-			// saved since: no role, and nothing to skip.
-			name: "a group with no role is not part of an interval routine",
+			// A gym circuit ends its final round early for the same reason a
+			// walk-run does: nobody comes for the last station.
+			name: "a circuit outside an interval routine keeps the skip",
 			groups: []training.RoutineGroupDraft{
 				{Mode: training.RoutineGroupModeCircuit, Rounds: 3, SkipLastOnFinalRound: true, Exercises: exercises("a")},
 			},
 			ordered: []string{"a"},
 			expected: []training.RoutineGroupDraft{
-				{Mode: training.RoutineGroupModeCircuit, Rounds: 3, Exercises: exercises("a")},
+				{Mode: training.RoutineGroupModeCircuit, Rounds: 3, SkipLastOnFinalRound: true, Exercises: exercises("a")},
 			},
 		},
 		{
@@ -495,6 +495,67 @@ func TestNormalizeRoutineGroupPrescriptions(t *testing.T) {
 							ExerciseID:           exerciseID("c"),
 							Tracking:             training.RoutineExerciseTrackingDistance,
 							TargetDistanceMeters: 0,
+						},
+					},
+				},
+			},
+		},
+		{
+			// The row is what every reader has, so it says one thing: a run
+			// measured by distance that kept a leftover thirty seconds would be
+			// guided as a thirty-second run.
+			name: "only the prescription an occurrence is tracked by is saved",
+			groups: []training.RoutineGroupDraft{
+				{
+					Mode: training.RoutineGroupModeCircuit,
+					Exercises: []training.RoutineExerciseDraft{
+						{
+							ExerciseID:            exerciseID("a"),
+							Tracking:              training.RoutineExerciseTrackingDistance,
+							TargetDistanceMeters:  1000,
+							TargetDurationSeconds: 30,
+							Sets:                  3,
+							RestSeconds:           new(int32(60)),
+						},
+						{
+							ExerciseID:            exerciseID("b"),
+							Tracking:              training.RoutineExerciseTrackingTimed,
+							TargetDurationSeconds: 45,
+							TargetDistanceMeters:  1000,
+							Sets:                  3,
+							RestSeconds:           new(int32(60)),
+						},
+						{
+							ExerciseID:            exerciseID("c"),
+							Tracking:              training.RoutineExerciseTrackingSets,
+							Sets:                  4,
+							RestSeconds:           new(int32(60)),
+							TargetDurationSeconds: 30,
+							TargetDistanceMeters:  1000,
+						},
+					},
+				},
+			},
+			ordered: []string{"a", "b", "c"},
+			expected: []training.RoutineGroupDraft{
+				{
+					Mode: training.RoutineGroupModeCircuit,
+					Exercises: []training.RoutineExerciseDraft{
+						{
+							ExerciseID:           exerciseID("a"),
+							Tracking:             training.RoutineExerciseTrackingDistance,
+							TargetDistanceMeters: 1000,
+						},
+						{
+							ExerciseID:            exerciseID("b"),
+							Tracking:              training.RoutineExerciseTrackingTimed,
+							TargetDurationSeconds: 45,
+						},
+						{
+							ExerciseID:  exerciseID("c"),
+							Tracking:    training.RoutineExerciseTrackingSets,
+							Sets:        4,
+							RestSeconds: new(int32(60)),
 						},
 					},
 				},

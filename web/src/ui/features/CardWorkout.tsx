@@ -88,7 +88,7 @@ export const CardWorkout = ({ workout, compact, unseen = false }: Props) => {
   const recording = useMemo(() => parseRecording(workout.recordingJson), [workout.recordingJson])
 
   // One straight block is the plain session every workout used to be, so it is
-  // shown as one rather than wearing a badge saying "Group A".
+  // shown as one rather than wearing a badge saying "Block A".
   const grouped =
     workout.groups.length > 1 ||
     workout.groups.some((group) => group.mode === RoutineGroupMode.CIRCUIT)
@@ -340,7 +340,7 @@ export const CardWorkout = ({ workout, compact, unseen = false }: Props) => {
                     </span>
                     <div>
                       <strong>
-                        {t('routine.form.groups.groupName', { letter: groupLetter(groupIndex) })}
+                        {t('routine.form.blocks.blockName', { letter: groupLetter(groupIndex) })}
                       </strong>
                       <small>{blockSummary(group)}</small>
                     </div>

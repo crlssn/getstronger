@@ -1,0 +1,26 @@
+@reference '../../assets/base.css';
+
+/* Every routine sheet is a column of questions: the choice at the top, the
+ * settings that choice asks for under it. */
+.sheetBody {
+  @apply flex flex-col gap-4;
+}
+
+.segmented {
+  @apply w-full;
+}
+
+.segmented > * {
+  @apply flex-1;
+}
+
+/* What the choice above means, which the two or three words alone never said. */
+.lead {
+  @apply mt-2 px-1 text-meta font-medium text-text-subtle;
+}
+
+/* Ruled rows rather than boxes: the sheet is already a panel, and a box inside
+   one is a box around nothing. */
+.rows {
+  @apply flex flex-col divide-y divide-border border-t border-border;
+}

@@ -1,502 +1,481 @@
-import type { DraftGroup } from '@/utils/routineGroups'
+import type { DraftGroup, IntervalRole } from '@/utils/routineGroups'
 
 import { create } from '@bufbuild/protobuf'
 import { describe, expect, it } from 'vitest'
 
-import { RoutineGroupSchema } from '@/proto/api/v1/routine_service_pb'
 import {
-  ExerciseMetric,
-  ExerciseSchema,
-  RoutineGroupMode,
-  RoutineGroupRole,
-} from '@/proto/api/v1/shared_pb'
+  RoutineExerciseTracking,
+  RoutineGroupSchema,
+} from '@/proto/api/v1/routine_service_pb'
+import { ExerciseSchema, RoutineGroupMode, RoutineGroupRole } from '@/proto/api/v1/shared_pb'
 import {
   addExerciseToGroup,
   addGroup,
-  clearIntervalRoles,
-  collapseToSingleGroup,
+  defaultDistanceMeters,
+  defaultHoldSeconds,
   defaultRestSeconds,
   defaultRoundRestSeconds,
   defaultRounds,
+  defaultSets,
+  distanceStepMeters,
   draftGroupsFromRoutine,
   groupExerciseIds,
-  intervalCount,
-  intervalGroups,
+  groupLetter,
   intervalPartOf,
-  intervalSeconds,
-  isGrouped,
-  isIntervals,
+  moveEntry,
+  newBlock,
+  plannedIntervals,
+  plannedSeconds,
   removeEntry,
-  newOccurrenceRestSeconds,
   removeGroup,
   reorderEntry,
-  routineShape,
   saveableGroups,
-  setEntryRest,
   singleStraightGroup,
-  toIntervalGroups,
+  startingBlocks,
+  withEntry,
+  withGroup,
 } from '@/utils/routineGroups'
 
 const exercise = (id: string) => create(ExerciseSchema, { id, name: id })
 
-// One exercise where a group trains it, and the rest it takes there.
-const trains = (id: string, restSeconds = defaultRestSeconds) => ({
-  exercise: exercise(id),
-  restSeconds,
-})
-
-const entryKey = (groups: readonly DraftGroup[], groupIndex: number, position: number) =>
-  groups[groupIndex].entries[position].key
-
-/** One straight group and one circuit, each holding the exercises named. */
-const twoGroups = (first: string[], second: string[]) => {
-  const groups = addGroup(singleStraightGroup(first))
-  return second.reduce(
-    (current, exerciseId) => addExerciseToGroup(current, groups[1].id, exercise(exerciseId)),
-    groups,
-  )
+/** The names the Intervals shape gives its three parts. */
+const intervalTitles: Record<IntervalRole, string> = {
+  warmup: 'Warm-up',
+  repeat: 'Repeat',
+  cooldown: 'Cool-down',
 }
 
+const entryKey = (groups: readonly DraftGroup[], block: number, position: number) =>
+  groups[block].entries[position].key
+
+/** Adds each exercise to the block at `index`, tracked however it is counted. */
+const fill = (
+  groups: readonly DraftGroup[],
+  index: number,
+  ids: string[],
+  tracking: 'sets' | 'timed' | 'distance' = 'sets',
+) =>
+  ids.reduce(
+    (current, id) => addExerciseToGroup(current, current[index].id, exercise(id), tracking),
+    [...groups],
+  )
+
 describe('singleStraightGroup', () => {
-  it('retains prescribed durations when circuit rests are disabled', () => {
-    const groups = draftGroupsFromRoutine(
-      [
-        create(RoutineGroupSchema, {
-          mode: RoutineGroupMode.CIRCUIT,
-          rounds: 6,
-          exercises: [{ exercise: exercise('walk'), targetDurationSeconds: 120 }],
-        }),
-      ],
-      ['walk'],
-    )
-    expect(saveableGroups(groups)[0].entries[0].targetDurationSeconds).toBe(120)
-  })
-  it('holds every exercise in one straight-sets group', () => {
+  it('is one straight block holding the exercises in order', () => {
     const groups = singleStraightGroup(['a', 'b'])
 
     expect(groups).toHaveLength(1)
-    expect(groups[0]?.mode).toBe('straight')
+    expect(groups[0].mode).toBe('straight')
+    expect(groups[0].title).toBe('')
     expect(groupExerciseIds(groups)).toEqual(['a', 'b'])
   })
 
-  it('starts empty when a routine is being built from nothing', () => {
-    expect(groupExerciseIds(singleStraightGroup())).toEqual([])
-  })
-
-  // Only a routine saved before grouping arrives as bare IDs, and it never
-  // recorded what each of them rests for either.
-  it('rests every exercise for the default', () => {
-    expect(singleStraightGroup(['a'])[0]?.entries[0]?.restSeconds).toBe(defaultRestSeconds)
+  it('prescribes every exercise in sets, which is what a plain routine is', () => {
+    expect(singleStraightGroup(['a'])[0].entries[0]).toMatchObject({
+      tracking: 'sets',
+      sets: defaultSets,
+      restSeconds: defaultRestSeconds,
+    })
   })
 })
 
-describe('newOccurrenceRestSeconds', () => {
-  it('is the default for a conventional lift', () => {
-    expect(
-      newOccurrenceRestSeconds(
-        create(ExerciseSchema, { metrics: [ExerciseMetric.WEIGHT, ExerciseMetric.REPS] }),
-      ),
-    ).toBe(defaultRestSeconds)
+describe('startingBlocks', () => {
+  it('lays a blank routine out as one straight block', () => {
+    const blocks = startingBlocks('blank', intervalTitles)
+
+    expect(blocks).toHaveLength(1)
+    expect(blocks[0].mode).toBe('straight')
+    expect(blocks[0].entries).toHaveLength(0)
   })
 
-  // Held against the clock, so it is one continuous effort rather than a set to
-  // recover from: a plank picked into a routine starts with no timer.
-  it('is no rest at all for an exercise measured by time', () => {
-    expect(
-      newOccurrenceRestSeconds(create(ExerciseSchema, { metrics: [ExerciseMetric.TIME] })),
-    ).toBe(0)
-    expect(
-      newOccurrenceRestSeconds(
-        create(ExerciseSchema, { metrics: [ExerciseMetric.DISTANCE, ExerciseMetric.TIME] }),
-      ),
-    ).toBe(0)
-  })
-})
+  it('lays a circuit out as one block that goes round', () => {
+    const blocks = startingBlocks('circuit', intervalTitles)
 
-describe('collapseToSingleGroup', () => {
-  it('keeps the exercises in order and the rest each of them takes', () => {
-    const grouped = twoGroups(['a'], ['b'])
-    const withRest = setEntryRest(grouped, entryKey(grouped, 1, 0), 15)
-
-    const collapsed = collapseToSingleGroup(withRest)
-    expect(collapsed).toHaveLength(1)
-    expect(collapsed[0]?.mode).toBe('straight')
-    expect(collapsed[0]?.entries.map((entry) => entry.restSeconds)).toEqual([
-      defaultRestSeconds,
-      15,
-    ])
+    expect(blocks).toHaveLength(1)
+    expect(blocks[0].mode).toBe('circuit')
+    expect(blocks[0].rounds).toBe(defaultRounds)
   })
 
-  // Two groups can each train it; one block trains it once.
-  it('trains an exercise once however many groups named it', () => {
-    expect(groupExerciseIds(collapseToSingleGroup(twoGroups(['a', 'b'], ['a'])))).toEqual([
-      'a',
-      'b',
-    ])
+  it('names the three parts of an interval routine and gives them their roles', () => {
+    const blocks = startingBlocks('intervals', intervalTitles)
+
+    expect(blocks.map((block) => block.title)).toEqual(['Warm-up', 'Repeat', 'Cool-down'])
+    // The editor never shows a role, but a live session reads one to number its
+    // intervals, so the shape writes both.
+    expect(blocks.map((block) => block.role)).toEqual(['warmup', 'repeat', 'cooldown'])
+  })
+
+  it('repeats the middle part alone, and ends it an exercise early', () => {
+    const blocks = startingBlocks('intervals', intervalTitles)
+    const repeat = intervalPartOf(blocks, 'repeat')
+
+    expect(repeat?.mode).toBe('circuit')
+    expect(repeat?.rounds).toBe(defaultRounds)
+    expect(repeat?.skipLastOnFinalRound).toBe(true)
+    // A warm-up and a cool-down are worked once through, which is a straight
+    // block rather than a circuit that goes round once.
+    expect(intervalPartOf(blocks, 'warmup')?.mode).toBe('straight')
+    expect(intervalPartOf(blocks, 'cooldown')?.skipLastOnFinalRound).toBe(false)
   })
 })
 
 describe('draftGroupsFromRoutine', () => {
-  it('reads the groups a routine came back with, keeping their settings', () => {
+  it('reads a routine saved before grouping as one straight block', () => {
+    expect(groupExerciseIds(draftGroupsFromRoutine([], ['a', 'b']))).toEqual(['a', 'b'])
+  })
+
+  it('keeps what each block is called and how it runs', () => {
     const groups = draftGroupsFromRoutine(
       [
         create(RoutineGroupSchema, {
-          id: 'group-1',
+          title: 'Warm-up',
           mode: RoutineGroupMode.STRAIGHT,
-          exercises: [trains('a', 180)],
-        }),
-        create(RoutineGroupSchema, {
-          id: 'group-2',
-          mode: RoutineGroupMode.CIRCUIT,
-          restBetweenExercisesSeconds: 15,
-          restBetweenRoundsSeconds: 90,
-          rounds: 3,
-          exercises: [trains('a'), trains('b')],
-        }),
-      ],
-      ['a', 'a', 'b'],
-    )
-
-    expect(groups).toHaveLength(2)
-    expect(groups[1]).toMatchObject({
-      mode: 'circuit',
-      restBetweenExercisesSeconds: 15,
-      restBetweenRoundsSeconds: 90,
-      rounds: 3,
-    })
-    // The same exercise in two groups is two entries, each with its own key.
-    expect(groupExerciseIds(groups)).toEqual(['a', 'a', 'b'])
-    expect(entryKey(groups, 0, 0)).not.toBe(entryKey(groups, 1, 0))
-    // The rest the routine gave each occurrence comes back with it.
-    expect(groups[0]?.entries[0]?.restSeconds).toBe(180)
-    expect(groups[1]?.entries[0]?.restSeconds).toBe(defaultRestSeconds)
-  })
-
-  it('falls back to one straight group for a routine saved before grouping', () => {
-    const groups = draftGroupsFromRoutine([], ['a', 'b'])
-
-    expect(groups).toHaveLength(1)
-    expect(groups[0]?.mode).toBe('straight')
-    expect(groupExerciseIds(groups)).toEqual(['a', 'b'])
-  })
-})
-
-describe('addExerciseToGroup', () => {
-  it('appends to the group it names and leaves the others alone', () => {
-    const groups = twoGroups(['a'], ['b'])
-
-    expect(groupExerciseIds(groups)).toEqual(['a', 'b'])
-    expect(groups[1]?.entries).toHaveLength(1)
-  })
-
-  // A plank rests for nothing wherever a routine picks it up, and a lift for
-  // the default, so the field opens on the right answer rather than on a guess.
-  it('starts the occurrence at the rest a new one of that exercise takes', () => {
-    const plank = create(ExerciseSchema, { id: 'plank', metrics: [ExerciseMetric.TIME] })
-    const groups = addExerciseToGroup(singleStraightGroup(), '', plank)
-    const withPlank = addExerciseToGroup(groups, groups[0].id, plank)
-
-    expect(withPlank[0]?.entries[0]?.restSeconds).toBe(0)
-  })
-
-  it('lets the same exercise be trained in two groups', () => {
-    const groups = twoGroups(['a'], ['a'])
-
-    expect(groupExerciseIds(groups)).toEqual(['a', 'a'])
-    expect(entryKey(groups, 0, 0)).not.toBe(entryKey(groups, 1, 0))
-  })
-
-  // A group is a block of distinct work: twice in one round is a repeat nobody
-  // asked for.
-  it('will not hold the same exercise twice in one group', () => {
-    const groups = addExerciseToGroup(singleStraightGroup(['a']), '', exercise('a'))
-    const again = addExerciseToGroup(groups, groups[0].id, exercise('a'))
-
-    expect(groupExerciseIds(again)).toEqual(['a'])
-  })
-})
-
-describe('removeEntry', () => {
-  it('removes one occurrence and keeps the other', () => {
-    const groups = twoGroups(['a'], ['a'])
-    const remaining = removeEntry(groups, entryKey(groups, 0, 0))
-
-    expect(groupExerciseIds(remaining)).toEqual(['a'])
-    expect(remaining[0]?.entries).toEqual([])
-  })
-})
-
-describe('reorderEntry', () => {
-  const groups = singleStraightGroup(['a', 'b', 'c'])
-  const groupId = groups[0].id
-
-  it('puts the exercise where it was dropped', () => {
-    expect(groupExerciseIds(reorderEntry(groups, groupId, 2, 0))).toEqual(['c', 'a', 'b'])
-    expect(groupExerciseIds(reorderEntry(groups, groupId, 0, 2))).toEqual(['b', 'c', 'a'])
-  })
-
-  it('leaves the order alone when it lands where it started', () => {
-    expect(reorderEntry(groups, groupId, 1, 1)).toEqual(groups)
-  })
-
-  it('ignores a position no exercise is at', () => {
-    expect(reorderEntry(groups, groupId, 0, 9)).toEqual(groups)
-    expect(reorderEntry(groups, groupId, -1, 0)).toEqual(groups)
-  })
-
-  // Every group is dragged on its own, so a position only means anything
-  // inside the group it was reported for.
-  it('leaves the other groups alone', () => {
-    const two = twoGroups(['a', 'b'], ['c'])
-
-    expect(groupExerciseIds(reorderEntry(two, two[0].id, 1, 0))).toEqual(['b', 'a', 'c'])
-    expect(reorderEntry(two, 'missing', 1, 0)).toEqual(two)
-  })
-})
-
-describe('addGroup', () => {
-  it('appends an empty circuit, since that is what a second group is for', () => {
-    const groups = addGroup(singleStraightGroup(['a']))
-
-    expect(groups).toHaveLength(2)
-    expect(groups[1]).toMatchObject({
-      mode: 'circuit',
-      entries: [],
-      restBetweenRoundsSeconds: defaultRoundRestSeconds,
-      rounds: defaultRounds,
-    })
-    expect(groups[1]?.id).not.toBe(groups[0]?.id)
-  })
-})
-
-describe('removeGroup', () => {
-  it('hands the exercises to the group before it', () => {
-    const groups = twoGroups(['a'], ['b'])
-    const remaining = removeGroup(groups, groups[1].id)
-
-    expect(remaining).toHaveLength(1)
-    expect(groupExerciseIds(remaining)).toEqual(['a', 'b'])
-  })
-
-  it('hands them to the group after it when the first one goes', () => {
-    const groups = twoGroups(['a'], ['b'])
-
-    expect(groupExerciseIds(removeGroup(groups, groups[0].id))).toEqual(['b', 'a'])
-  })
-
-  it('refuses to remove the only group', () => {
-    const groups = singleStraightGroup(['a'])
-
-    expect(removeGroup(groups, groups[0].id)).toEqual(groups)
-  })
-
-  it('does not hand a neighbour an exercise it already trains', () => {
-    const groups = twoGroups(['a'], ['a', 'b'])
-
-    expect(groupExerciseIds(removeGroup(groups, groups[1].id))).toEqual(['a', 'b'])
-  })
-})
-
-describe('saveableGroups', () => {
-  it('drops the empty ones and pulls the settings into range', () => {
-    const groups = addGroup(singleStraightGroup(['a']))
-    const saved = saveableGroups([
-      { ...groups[0], restBetweenRoundsSeconds: 90 },
-      { ...groups[1], restBetweenExercisesSeconds: 99999 },
-    ])
-
-    expect(saved).toHaveLength(1)
-    // Straight sets rest for as long as the exercise says, whatever a stale
-    // circuit setting is still carrying.
-    expect(saved[0]?.restBetweenRoundsSeconds).toBe(0)
-  })
-
-  it('pulls the rests of a circuit back into the range the API takes', () => {
-    const groups = addGroup(singleStraightGroup(['a']))
-    const circuit = { ...groups[1], entries: groups[0].entries, restBetweenRoundsSeconds: 99999 }
-
-    expect(saveableGroups([circuit])[0]?.restBetweenRoundsSeconds).toBe(3600)
-  })
-
-  // A straight block is worked once through, so a round count on one is a
-  // setting the draft is holding rather than one the routine trains with.
-  it('drops the round count of a straight group', () => {
-    const groups = singleStraightGroup(['a']).map((group) => ({ ...group, rounds: 3 }))
-
-    expect(saveableGroups(groups)[0]?.rounds).toBe(0)
-  })
-
-  it('pulls the round count of a circuit back into the range the API takes', () => {
-    const groups = addGroup(singleStraightGroup(['a']))
-    const entries = groups[0].entries
-
-    expect(saveableGroups([{ ...groups[1], entries, rounds: 999 }])[0]?.rounds).toBe(99)
-    expect(saveableGroups([{ ...groups[1], entries, rounds: -1 }])[0]?.rounds).toBe(0)
-  })
-
-  it("keeps a straight group's per-exercise rests, pulled into range", () => {
-    const groups = singleStraightGroup(['a', 'b'])
-    const withRests = setEntryRest(
-      setEntryRest(groups, entryKey(groups, 0, 0), 99999),
-      entryKey(groups, 0, 1),
-      0,
-    )
-
-    expect(saveableGroups(withRests)[0]?.entries.map((entry) => entry.restSeconds)).toEqual([
-      3600, 0,
-    ])
-  })
-
-  // A circuit rests between exercises and between rounds, so a set rest has
-  // nowhere to go there — it travels anyway, so switching back restores it.
-  it("keeps a circuit's per-exercise rests, which it has nowhere to take", () => {
-    const groups = singleStraightGroup(['a'])
-    const withRest = setEntryRest(groups, entryKey(groups, 0, 0), 180)
-    const asCircuit = withRest.map((group) => ({ ...group, mode: 'circuit' as const }))
-
-    expect(saveableGroups(asCircuit)[0]?.entries[0]?.restSeconds).toBe(180)
-  })
-})
-
-describe('isGrouped', () => {
-  it('is false for the single straight group every routine starts with', () => {
-    expect(isGrouped(singleStraightGroup(['a', 'b']))).toBe(false)
-  })
-
-  it('is true once there is a second group or a circuit', () => {
-    expect(isGrouped(addGroup(singleStraightGroup(['a'])))).toBe(true)
-    expect(isGrouped([{ ...singleStraightGroup(['a'])[0], mode: 'circuit' }])).toBe(true)
-  })
-})
-
-/** The walk-run of the ticket, as the form holds it: a walk, then run and walk. */
-const walkRun = () => {
-  const groups = intervalGroups()
-  const withBlock = ['run', 'walk'].reduce(
-    (current, id) => addExerciseToGroup(current, groups[1].id, exercise(id)),
-    groups,
-  )
-  return addExerciseToGroup(withBlock, groups[0].id, exercise('walk'))
-}
-
-/** Every entry a target, which is what a guided interval needs. */
-const timed = (groups: readonly DraftGroup[], seconds: number) =>
-  groups.map((group) => ({
-    ...group,
-    entries: group.entries.map((entry) => ({ ...entry, targetDurationSeconds: seconds })),
-  }))
-
-describe('intervalGroups', () => {
-  it('is a warm-up, a repeating block and a cool-down, in that order', () => {
-    expect(intervalGroups().map((group) => group.role)).toEqual(['warmup', 'repeat', 'cooldown'])
-  })
-
-  it('works the warm-up and cool-down once and the block for the default rounds', () => {
-    const [warmup, repeat, cooldown] = intervalGroups()
-    expect(warmup.rounds).toBe(1)
-    expect(cooldown.rounds).toBe(1)
-    expect(repeat.rounds).toBe(defaultRounds)
-  })
-
-  it('drops the last exercise of the block on its final round', () => {
-    expect(intervalPartOf(intervalGroups(), 'repeat')?.skipLastOnFinalRound).toBe(true)
-  })
-
-  it('rests nowhere, since the easy interval is the rest', () => {
-    expect(intervalGroups().every((group) => !group.restTimers)).toBe(true)
-  })
-})
-
-describe('routineShape', () => {
-  it('is intervals as soon as one part says where it sits', () => {
-    expect(isIntervals(intervalGroups())).toBe(true)
-    expect(routineShape(intervalGroups())).toBe('intervals')
-  })
-
-  it('is groups for a gym circuit and simple for one plain block', () => {
-    expect(routineShape(twoGroups(['a'], ['b']))).toBe('groups')
-    expect(routineShape(singleStraightGroup(['a']))).toBe('simple')
-  })
-})
-
-describe('toIntervalGroups', () => {
-  it('hands the exercises of a plain routine to the repeating block', () => {
-    const groups = toIntervalGroups(singleStraightGroup(['a', 'b']))
-
-    expect(groups.map((group) => group.role)).toEqual(['warmup', 'repeat', 'cooldown'])
-    expect(groups[1].entries.map((entry) => entry.exerciseId)).toEqual(['a', 'b'])
-    expect(groups[0].entries).toEqual([])
-  })
-
-  it('trains an exercise once however many groups named it', () => {
-    expect(groupExerciseIds(toIntervalGroups(twoGroups(['a'], ['a', 'b'])))).toEqual(['a', 'b'])
-  })
-
-  it('leaves a routine already built as intervals alone', () => {
-    const groups = walkRun()
-    expect(groupExerciseIds(toIntervalGroups(groups))).toEqual(groupExerciseIds(groups))
-  })
-})
-
-describe('clearIntervalRoles', () => {
-  it('keeps the blocks and drops the shape', () => {
-    const groups = clearIntervalRoles(walkRun())
-
-    expect(isIntervals(groups)).toBe(false)
-    expect(groups.every((group) => !group.skipLastOnFinalRound)).toBe(true)
-    expect(groupExerciseIds(groups)).toEqual(groupExerciseIds(walkRun()))
-  })
-})
-
-describe('the planned session', () => {
-  it('counts the warm-up once, the block once a round, and the exercise it drops', () => {
-    const groups = timed(walkRun(), 60)
-
-    // A warm-up walk, then five rounds of run and walk less the final walk.
-    expect(intervalCount(groups)).toBe(1 + defaultRounds * 2 - 1)
-    expect(intervalSeconds(groups)).toBe(60 * (1 + defaultRounds * 2 - 1))
-  })
-
-  it('runs every round in full once the skip is off', () => {
-    const groups = timed(walkRun(), 60).map((group) => ({
-      ...group,
-      skipLastOnFinalRound: false,
-    }))
-
-    expect(intervalCount(groups)).toBe(1 + defaultRounds * 2)
-  })
-})
-
-describe('saving an interval routine', () => {
-  it('works every part at least once', () => {
-    const groups = saveableGroups(timed(walkRun(), 60).map((group) => ({ ...group, rounds: 0 })))
-
-    expect(groups.every((group) => group.rounds >= 1)).toBe(true)
-  })
-
-  it('reads its parts back in order, filling in the one it did not save', () => {
-    const groups = draftGroupsFromRoutine(
-      [
-        create(RoutineGroupSchema, {
-          mode: RoutineGroupMode.CIRCUIT,
-          rounds: 1,
           role: RoutineGroupRole.WARMUP,
-          exercises: [trains('walk', 0)],
+          exercises: [{ exercise: exercise('a') }],
         }),
         create(RoutineGroupSchema, {
           mode: RoutineGroupMode.CIRCUIT,
           rounds: 5,
-          role: RoutineGroupRole.REPEAT,
+          restBetweenRoundsSeconds: 45,
           skipLastOnFinalRound: true,
-          exercises: [trains('run', 0), trains('walk', 0)],
+          exercises: [{ exercise: exercise('b') }],
         }),
       ],
-      [],
+      ['a', 'b'],
     )
 
-    expect(groups.map((group) => group.role)).toEqual(['warmup', 'repeat', 'cooldown'])
-    expect(groups[1].skipLastOnFinalRound).toBe(true)
-    expect(groups[1].rounds).toBe(5)
-    expect(groups[2].entries).toEqual([])
+    expect(groups[0]).toMatchObject({ title: 'Warm-up', mode: 'straight', role: 'warmup' })
+    expect(groups[1]).toMatchObject({
+      title: '',
+      mode: 'circuit',
+      rounds: 5,
+      restBetweenRoundsSeconds: 45,
+      skipLastOnFinalRound: true,
+    })
+  })
+
+  it('reads how each occurrence is counted', () => {
+    const groups = draftGroupsFromRoutine(
+      [
+        create(RoutineGroupSchema, {
+          exercises: [
+            {
+              exercise: exercise('a'),
+              tracking: RoutineExerciseTracking.DISTANCE,
+              targetDistanceMeters: 800,
+            },
+            {
+              exercise: exercise('b'),
+              tracking: RoutineExerciseTracking.SETS,
+              sets: 5,
+              restSeconds: 120,
+            },
+          ],
+        }),
+      ],
+      ['a', 'b'],
+    )
+
+    expect(groups[0].entries[0]).toMatchObject({ tracking: 'distance', targetDistanceMeters: 800 })
+    expect(groups[0].entries[1]).toMatchObject({ tracking: 'sets', sets: 5, restSeconds: 120 })
+  })
+
+  it('reads an occurrence saved before tracking the way it was read then', () => {
+    const groups = draftGroupsFromRoutine(
+      [
+        create(RoutineGroupSchema, {
+          exercises: [
+            { exercise: exercise('a'), targetDurationSeconds: 45 },
+            { exercise: exercise('b'), restSeconds: 90 },
+          ],
+        }),
+      ],
+      ['a', 'b'],
+    )
+
+    expect(groups[0].entries[0]).toMatchObject({ tracking: 'timed', targetDurationSeconds: 45 })
+    expect(groups[0].entries[1]).toMatchObject({ tracking: 'sets', restSeconds: 90 })
+  })
+
+  it('offers a length rather than a zero for the prescriptions it was not saved with', () => {
+    const groups = draftGroupsFromRoutine(
+      [
+        create(RoutineGroupSchema, {
+          exercises: [
+            {
+              exercise: exercise('a'),
+              tracking: RoutineExerciseTracking.SETS,
+              sets: 4,
+              restSeconds: 30,
+            },
+          ],
+        }),
+      ],
+      ['a'],
+    )
+
+    // Switching this occurrence to timed or to distance hands back a length to
+    // start from, which is what a new one would take.
+    expect(groups[0].entries[0]).toMatchObject({
+      targetDurationSeconds: defaultHoldSeconds,
+      targetDistanceMeters: defaultDistanceMeters,
+    })
+  })
+})
+
+describe('addExerciseToGroup', () => {
+  it('adds the exercise to the named block, tracked as asked', () => {
+    const groups = fill(startingBlocks('blank', intervalTitles), 0, ['a'], 'timed')
+
+    expect(groups[0].entries[0]).toMatchObject({
+      exerciseId: 'a',
+      tracking: 'timed',
+      targetDurationSeconds: defaultHoldSeconds,
+    })
+  })
+
+  it('will not train the same exercise twice inside one block', () => {
+    const once = fill(startingBlocks('blank', intervalTitles), 0, ['a'])
+
+    expect(groupExerciseIds(fill(once, 0, ['a']))).toEqual(['a'])
+  })
+
+  it('lets two blocks train the same exercise', () => {
+    const blocks = fill(addGroup(startingBlocks('blank', intervalTitles)), 0, ['a'])
+
+    expect(groupExerciseIds(fill(blocks, 1, ['a']))).toEqual(['a', 'a'])
+  })
+})
+
+describe('removeEntry', () => {
+  it('removes one occurrence and leaves the other one alone', () => {
+    const blocks = fill(fill(addGroup(startingBlocks('blank', intervalTitles)), 0, ['a']), 1, ['a'])
+
+    expect(groupExerciseIds(removeEntry(blocks, entryKey(blocks, 0, 0)))).toEqual(['a'])
+  })
+})
+
+describe('reorderEntry', () => {
+  const blocks = () => fill(startingBlocks('blank', intervalTitles), 0, ['a', 'b', 'c'])
+
+  it('puts the exercise where it was dropped', () => {
+    const current = blocks()
+    expect(groupExerciseIds(reorderEntry(current, current[0].id, 0, 2))).toEqual(['b', 'c', 'a'])
+  })
+
+  it('leaves the order alone when the row did not move', () => {
+    const current = blocks()
+    expect(groupExerciseIds(reorderEntry(current, current[0].id, 1, 1))).toEqual(['a', 'b', 'c'])
+  })
+
+  it('ignores a position the block does not have', () => {
+    const current = blocks()
+    expect(groupExerciseIds(reorderEntry(current, current[0].id, 0, 9))).toEqual(['a', 'b', 'c'])
+  })
+})
+
+describe('moveEntry', () => {
+  const twoBlocks = () =>
+    fill(fill(addGroup(startingBlocks('blank', intervalTitles)), 0, ['a', 'b']), 1, ['c'])
+
+  it('hands a row from one block to another', () => {
+    const blocks = twoBlocks()
+    const moved = moveEntry(blocks, blocks[0].id, 0, blocks[1].id, 1)
+
+    expect(moved[0].entries.map((entry) => entry.exerciseId)).toEqual(['b'])
+    expect(moved[1].entries.map((entry) => entry.exerciseId)).toEqual(['c', 'a'])
+  })
+
+  it('keeps the prescription the row was dragged with', () => {
+    const blocks = fill(fill(addGroup(startingBlocks('blank', intervalTitles)), 0, ['a'], 'distance'), 1, [])
+    const moved = moveEntry(blocks, blocks[0].id, 0, blocks[1].id, 0)
+
+    expect(moved[1].entries[0]).toMatchObject({ tracking: 'distance' })
+  })
+
+  it('sends a row back where a block already trains that exercise', () => {
+    const blocks = fill(fill(addGroup(startingBlocks('blank', intervalTitles)), 0, ['a']), 1, ['a'])
+    const moved = moveEntry(blocks, blocks[0].id, 0, blocks[1].id, 0)
+
+    expect(groupExerciseIds(moved)).toEqual(['a', 'a'])
+  })
+})
+
+describe('withGroup and withEntry', () => {
+  it('changes one block and leaves the others', () => {
+    const blocks = addGroup(startingBlocks('blank', intervalTitles))
+    const named = withGroup(blocks, blocks[0].id, { title: 'Warm-up' })
+
+    expect(named.map((block) => block.title)).toEqual(['Warm-up', ''])
+  })
+
+  it('changes one occurrence and leaves every other one', () => {
+    const blocks = fill(startingBlocks('blank', intervalTitles), 0, ['a', 'b'])
+    const changed = withEntry(blocks, entryKey(blocks, 0, 1), { sets: 8 })
+
+    expect(changed[0].entries.map((entry) => entry.sets)).toEqual([defaultSets, 8])
+  })
+})
+
+describe('addGroup and removeGroup', () => {
+  it('appends an empty straight block', () => {
+    const blocks = addGroup(startingBlocks('blank', intervalTitles))
+
+    expect(blocks).toHaveLength(2)
+    expect(blocks[1]).toMatchObject({ mode: 'straight', title: '', entries: [] })
+  })
+
+  it('hands a removed block\u2019s exercises to its neighbour', () => {
+    const blocks = fill(fill(addGroup(startingBlocks('blank', intervalTitles)), 0, ['a']), 1, ['b'])
+
+    expect(groupExerciseIds(removeGroup(blocks, blocks[1].id))).toEqual(['a', 'b'])
+  })
+
+  it('drops the ones the neighbour already trains, which it cannot hold twice', () => {
+    const blocks = fill(fill(addGroup(startingBlocks('blank', intervalTitles)), 0, ['a']), 1, ['a'])
+
+    expect(groupExerciseIds(removeGroup(blocks, blocks[1].id))).toEqual(['a'])
+  })
+
+  it('never removes the last block, which is the routine', () => {
+    const blocks = startingBlocks('blank', intervalTitles)
+
+    expect(removeGroup(blocks, blocks[0].id)).toHaveLength(1)
+  })
+})
+
+describe('groupLetter', () => {
+  it('names blocks A, B, C', () => {
+    expect([0, 1, 2].map(groupLetter)).toEqual(['A', 'B', 'C'])
+  })
+})
+
+describe('distanceStepMeters', () => {
+  it('steps a hundred metres below a kilometre and half of one above it', () => {
+    expect(distanceStepMeters(800)).toBe(100)
+    expect(distanceStepMeters(1000)).toBe(500)
+  })
+})
+
+describe('the planned session', () => {
+  it('counts a straight block as its sets and the rests between them', () => {
+    const blocks = fill(startingBlocks('blank', intervalTitles), 0, ['a'])
+    const straight = withEntry(blocks, entryKey(blocks, 0, 0), { sets: 3, restSeconds: 60 })
+
+    // Three working sets and the two rests between them.
+    expect(plannedSeconds(straight)).toBe(3 * 40 + 2 * 60)
+    expect(plannedIntervals(straight)).toBe(3)
+  })
+
+  it('counts a circuit as one set of each, once a round', () => {
+    const blocks = fill(startingBlocks('circuit', intervalTitles), 0, ['a', 'b'], 'timed')
+    const timed = withGroup(blocks, blocks[0].id, {
+      rounds: 2,
+      restBetweenRoundsSeconds: 30,
+      entries: blocks[0].entries.map((entry) => ({ ...entry, targetDurationSeconds: 20 })),
+    })
+
+    // Two twenty-second stations, twice round, with one round rest between.
+    expect(plannedSeconds(timed)).toBe(2 * (20 + 20) + 30)
+    expect(plannedIntervals(timed)).toBe(4)
+  })
+
+  it('drops the interval a final round ends early', () => {
+    const blocks = fill(startingBlocks('circuit', intervalTitles), 0, ['a', 'b'], 'timed')
+    const skipping = withGroup(blocks, blocks[0].id, { rounds: 2, skipLastOnFinalRound: true })
+
+    expect(plannedIntervals(skipping)).toBe(3)
+  })
+
+  it('reads a prescribed distance as the time a steady run covers it in', () => {
+    const blocks = fill(startingBlocks('blank', intervalTitles), 0, ['a'], 'distance')
+
+    // A kilometre at six minutes a kilometre.
+    expect(plannedSeconds(blocks)).toBe(360)
+    expect(plannedIntervals(blocks)).toBe(1)
+  })
+
+  it('plans nothing for a routine with no exercises', () => {
+    expect(plannedSeconds(startingBlocks('intervals', intervalTitles))).toBe(0)
+    expect(plannedIntervals(startingBlocks('intervals', intervalTitles))).toBe(0)
+  })
+})
+
+describe('saveableGroups', () => {
+  it('drops the blocks holding nothing', () => {
+    const blocks = fill(startingBlocks('intervals', intervalTitles), 1, ['a'], 'timed')
+
+    expect(saveableGroups(blocks)).toHaveLength(1)
+  })
+
+  it('trims the name and keeps the role the shape wrote', () => {
+    const blocks = fill(startingBlocks('blank', intervalTitles), 0, ['a'])
+    const named = withGroup(blocks, blocks[0].id, { title: '  Warm-up  ', role: 'warmup' })
+
+    expect(saveableGroups(named)[0]).toMatchObject({ title: 'Warm-up', role: 'warmup' })
+  })
+
+  it('gives a straight block no round to close and none to count', () => {
+    const blocks = fill(startingBlocks('circuit', intervalTitles), 0, ['a'])
+    const straight = withGroup(blocks, blocks[0].id, { mode: 'straight' })
+
+    expect(saveableGroups(straight)[0]).toMatchObject({
+      rounds: 0,
+      restBetweenRoundsSeconds: 0,
+      skipLastOnFinalRound: false,
+    })
+  })
+
+  it('keeps an open-ended circuit open-ended', () => {
+    const blocks = fill(startingBlocks('circuit', intervalTitles), 0, ['a'])
+    const open = withGroup(blocks, blocks[0].id, { rounds: 0 })
+
+    expect(saveableGroups(open)[0].rounds).toBe(0)
+  })
+
+  it('works a part of an interval routine at least once', () => {
+    const blocks = fill(startingBlocks('intervals', intervalTitles), 1, ['a'], 'timed')
+    const repeat = blocks.find((block) => block.role === 'repeat')!
+    const open = withGroup(blocks, repeat.id, { rounds: 0 })
+
+    expect(saveableGroups(open)[0].rounds).toBe(1)
+  })
+
+  it('pulls a prescription outside the supported range back into it', () => {
+    const blocks = fill(startingBlocks('blank', intervalTitles), 0, ['a'])
+    const wild = withGroup(blocks, blocks[0].id, {
+      restBetweenExercisesSeconds: 99999,
+      entries: [{ ...blocks[0].entries[0], sets: 99 }],
+    })
+
+    expect(saveableGroups(wild)[0].restBetweenExercisesSeconds).toBe(3600)
+    expect(saveableGroups(wild)[0].entries[0].sets).toBe(20)
+  })
+
+  it('saves only the prescription an occurrence is tracked by', () => {
+    const blocks = fill(startingBlocks('blank', intervalTitles), 0, ['a'], 'distance')
+    const saved = saveableGroups(blocks)[0].entries[0]
+
+    // The draft holds all three so switching between them costs nothing. The
+    // row must say one thing: a run measured by distance that kept a leftover
+    // thirty seconds would be guided as a thirty-second run.
+    expect(saved).toMatchObject({
+      tracking: 'distance',
+      targetDistanceMeters: defaultDistanceMeters,
+      targetDurationSeconds: 0,
+      sets: 0,
+      restSeconds: 0,
+    })
+  })
+})
+
+describe('newBlock', () => {
+  it('arrives straight, resting nowhere, ready to go round if asked', () => {
+    expect(newBlock()).toMatchObject({
+      mode: 'straight',
+      restBetweenExercisesSeconds: 0,
+      restBetweenRoundsSeconds: defaultRoundRestSeconds,
+      rounds: defaultRounds,
+    })
   })
 })
