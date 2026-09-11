@@ -2,17 +2,10 @@ package migrations_test
 
 import (
 	"context"
-	"database/sql"
-	"os"
-	"path/filepath"
 	"testing"
-	"time"
 
 	_ "github.com/jackc/pgx/v5/stdlib" // Register pgx driver
 	"github.com/stretchr/testify/require"
-	"github.com/testcontainers/testcontainers-go"
-	"github.com/testcontainers/testcontainers-go/modules/postgres"
-	"github.com/testcontainers/testcontainers-go/wait"
 )
 
 // The fixture covers the shapes of pre-migration data the backfill must
@@ -36,35 +29,7 @@ func TestMigration038BackfillsUsernames(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
 
-	// The fixture is named so the container's init runs it after migration 037
-	// and before 038, which then backfills it like it would production data.
-	fixturePath := filepath.Join(t.TempDir(), "037_zz_username_fixture.sql")
-	require.NoError(t, os.WriteFile(fixturePath, []byte(fixture038), 0o600))
-
-	scripts := migrationsThrough(t, "038")
-	require.NotEmpty(t, scripts)
-	scripts = append(scripts[:len(scripts)-1], fixturePath, scripts[len(scripts)-1])
-
-	container, err := postgres.Run(
-		ctx, "postgres:16.4-alpine",
-		postgres.WithInitScripts(scripts...),
-		postgres.WithDatabase("test-db"),
-		postgres.WithUsername("postgres"),
-		postgres.WithPassword("postgres"),
-		testcontainers.WithWaitStrategy(
-			wait.ForLog("database system is ready to accept connections").
-				WithOccurrence(2).WithStartupTimeout(time.Minute),
-		),
-	)
-	require.NoError(t, err)
-	t.Cleanup(func() { require.NoError(t, container.Terminate(ctx)) })
-
-	connection, err := container.ConnectionString(ctx, "sslmode=disable")
-	require.NoError(t, err)
-
-	db, err := sql.Open("pgx", connection)
-	require.NoError(t, err)
-	t.Cleanup(func() { require.NoError(t, db.Close()) })
+	db := runMigration(t, "038", "037_zz_username_fixture.sql", fixture038)
 
 	usernameOf := func(userID string) string {
 		var username string
@@ -83,7 +48,7 @@ func TestMigration038BackfillsUsernames(t *testing.T) {
 	require.Equal(t, "obrien", usernameOf("bbbbbbbb-0000-4000-8000-000000000204"))
 
 	// The column rejects a duplicate regardless of case.
-	_, err = db.ExecContext(ctx, `
+	_, err := db.ExecContext(ctx, `
 		INSERT INTO public.auth (id, email, password)
 		VALUES ('aaaaaaaa-0000-4000-8000-000000000205', 'username-five@getstronger.test', ''::bytea)`)
 	require.NoError(t, err)

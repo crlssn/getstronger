@@ -2,17 +2,10 @@ package migrations_test
 
 import (
 	"context"
-	"database/sql"
-	"os"
-	"path/filepath"
 	"testing"
-	"time"
 
 	_ "github.com/jackc/pgx/v5/stdlib" // Register pgx driver
 	"github.com/stretchr/testify/require"
-	"github.com/testcontainers/testcontainers-go"
-	"github.com/testcontainers/testcontainers-go/modules/postgres"
-	"github.com/testcontainers/testcontainers-go/wait"
 )
 
 // The fixture recreates the states a hard-deleted routine left behind: a plan
@@ -64,32 +57,7 @@ func TestMigration050RepairsPlanPositions(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
 
-	fixturePath := filepath.Join(t.TempDir(), "049_zz_plan_positions_fixture.sql")
-	require.NoError(t, os.WriteFile(fixturePath, []byte(fixture050), 0o600))
-
-	scripts := migrationsThrough(t, "050")
-	scripts = append(scripts[:len(scripts)-1], fixturePath, scripts[len(scripts)-1])
-
-	container, err := postgres.Run(
-		ctx, "postgres:16.4-alpine",
-		postgres.WithInitScripts(scripts...),
-		postgres.WithDatabase("test-db"),
-		postgres.WithUsername("postgres"),
-		postgres.WithPassword("postgres"),
-		testcontainers.WithWaitStrategy(
-			wait.ForLog("database system is ready to accept connections").
-				WithOccurrence(2).WithStartupTimeout(time.Minute),
-		),
-	)
-	require.NoError(t, err)
-	t.Cleanup(func() { require.NoError(t, container.Terminate(ctx)) })
-
-	connection, err := container.ConnectionString(ctx, "sslmode=disable")
-	require.NoError(t, err)
-
-	db, err := sql.Open("pgx", connection)
-	require.NoError(t, err)
-	t.Cleanup(func() { require.NoError(t, db.Close()) })
+	db := runMigration(t, "050", "049_zz_plan_positions_fixture.sql", fixture050)
 
 	positionsOf := func(planID string) []int {
 		rows, err := db.QueryContext(ctx,
