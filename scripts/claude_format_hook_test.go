@@ -4,6 +4,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 
@@ -11,17 +12,43 @@ import (
 )
 
 // The hook is a shell script, so it is exercised the way Claude Code runs it:
-// with the tool payload on stdin and a stub `mise` on PATH that records the
-// working directory and the formatter it was asked for.
+// with the tool payload on stdin, a stub `mise` on PATH that resolves a pinned
+// formatter to a path, and stub formatters that record where they ran.
 
-const stubFormatterMise = `#!/bin/sh
-echo "$PWD|$*" >> "$MISE_FORMAT_LOG"
-if [ -n "$MISE_FORMAT_FAIL" ]; then
+// 'mise which' is the one mise call that answers without first installing
+// every tool in mise.toml. It resolves what is in MISE_TOOLS and nothing else.
+const stubResolverMise = `#!/bin/sh
+[ "$1" = "which" ] || exit 1
+case " ${MISE_UNRESOLVABLE:-} " in
+*" $2 "*) exit 1 ;;
+esac
+[ -x "$MISE_TOOLS/$2" ] || exit 1
+echo "$MISE_TOOLS/$2"
+`
+
+const stubFormatter = `#!/bin/sh
+echo "$PWD|$(basename "$0") $*" >> "$MISE_FORMAT_LOG"
+if [ -n "${MISE_FORMAT_FAIL:-}" ]; then
   echo "expected ';' but found '}'" >&2
   exit 1
 fi
 exit 0
 `
+
+// formatters is every binary the hook reaches for, stubbed in both the place
+// mise resolves and the PATH the fallback reads.
+func formatters() []string {
+	return []string{"goimports", "gofumpt"}
+}
+
+type formatOptions struct {
+	// unresolvable names formatters mise refuses to resolve, as the three
+	// GitHub-released tools in mise.toml are from the cloud sandbox.
+	unresolvable []string
+	// missing names formatters that exist nowhere — not in mise, not on PATH.
+	missing []string
+	env     []string
+}
 
 type formatResult struct {
 	calls    []string
@@ -32,13 +59,48 @@ type formatResult struct {
 func TestHookFormatsGoFilesWithGoimportsThenGofumpt(t *testing.T) {
 	root := newTree(t, "server/rpc/handler.go")
 
-	result := runFormatHook(t, root, payload("Edit", filepath.Join(root, "server/rpc/handler.go")))
+	result := runFormatHook(t, root, payload("Edit", filepath.Join(root, "server/rpc/handler.go")), formatOptions{})
 
 	require.Equal(t, 0, result.exitCode, result.output)
 	require.Equal(t, []string{
-		root + "|exec -- goimports -w " + filepath.Join(root, "server/rpc/handler.go"),
-		root + "|exec -- gofumpt -w " + filepath.Join(root, "server/rpc/handler.go"),
+		root + "|goimports -w " + filepath.Join(root, "server/rpc/handler.go"),
+		root + "|gofumpt -w " + filepath.Join(root, "server/rpc/handler.go"),
 	}, result.calls)
+}
+
+// mise installs every tool in mise.toml before it will run one, so a single
+// unreachable tool takes the formatters down with it — which is the cloud
+// sandbox's permanent state, where three of them cannot be fetched at all. The
+// pinned binary is what the hook wants; a binary of the same name is better
+// than refusing the edit.
+func TestHookFallsBackToPathWhenMiseCannotResolveTheFormatter(t *testing.T) {
+	root := newTree(t, "server/rpc/handler.go")
+
+	result := runFormatHook(t, root, payload("Edit", filepath.Join(root, "server/rpc/handler.go")), formatOptions{
+		unresolvable: formatters(),
+	})
+
+	require.Equal(t, 0, result.exitCode, result.output)
+	require.Equal(t, []string{
+		root + "|goimports -w " + filepath.Join(root, "server/rpc/handler.go"),
+		root + "|gofumpt -w " + filepath.Join(root, "server/rpc/handler.go"),
+	}, result.calls, "both still ran, from PATH")
+}
+
+// A formatter that cannot be found is not the edit's fault. Blocking on one is
+// how every Go edit in the cloud sandbox came back as a failed tool call.
+func TestHookDoesNotBlockAnEditWhenAFormatterIsMissingEverywhere(t *testing.T) {
+	root := newTree(t, "server/rpc/handler.go")
+
+	result := runFormatHook(t, root, payload("Edit", filepath.Join(root, "server/rpc/handler.go")), formatOptions{
+		missing: []string{"gofumpt"},
+	})
+
+	require.Equal(t, 0, result.exitCode, result.output)
+	require.Equal(t, []string{
+		root + "|goimports -w " + filepath.Join(root, "server/rpc/handler.go"),
+	}, result.calls, "the formatter that is here still runs")
+	require.Contains(t, result.output, "gofumpt", "and the one that is not is named")
 }
 
 func TestHookFormatsWebFilesWithPrettierFromTheWebDirectory(t *testing.T) {
@@ -52,12 +114,12 @@ func TestHookFormatsWebFilesWithPrettierFromTheWebDirectory(t *testing.T) {
 		t.Run(file, func(t *testing.T) {
 			root := newTree(t, file)
 
-			result := runFormatHook(t, root, payload("Write", filepath.Join(root, file)))
+			result := runFormatHook(t, root, payload("Write", filepath.Join(root, file)), formatOptions{})
 
 			require.Equal(t, 0, result.exitCode, result.output)
 			rel := strings.TrimPrefix(file, "web/")
 			require.Equal(t, []string{
-				filepath.Join(root, "web") + "|exec -- ./node_modules/.bin/prettier --write " + rel,
+				filepath.Join(root, "web") + "|prettier --write " + rel,
 			}, result.calls)
 		})
 	}
@@ -78,7 +140,7 @@ func TestHookIgnoresFilesNoFormatterOwns(t *testing.T) {
 		t.Run(file, func(t *testing.T) {
 			root := newTree(t, file)
 
-			result := runFormatHook(t, root, payload("Edit", filepath.Join(root, file)))
+			result := runFormatHook(t, root, payload("Edit", filepath.Join(root, file)), formatOptions{})
 
 			require.Equal(t, 0, result.exitCode, result.output)
 			require.Empty(t, result.calls)
@@ -91,7 +153,7 @@ func TestHookIgnoresFilesOutsideTheWorktree(t *testing.T) {
 	outside := filepath.Join(t.TempDir(), "elsewhere.go")
 	require.NoError(t, os.WriteFile(outside, nil, 0o644))
 
-	result := runFormatHook(t, root, payload("Edit", outside))
+	result := runFormatHook(t, root, payload("Edit", outside), formatOptions{})
 
 	require.Equal(t, 0, result.exitCode, result.output)
 	require.Empty(t, result.calls)
@@ -106,7 +168,7 @@ func TestHookIgnoresPayloadsItCannotAct(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			root := newTree(t)
 
-			result := runFormatHook(t, root, body)
+			result := runFormatHook(t, root, body, formatOptions{})
 
 			require.Equal(t, 0, result.exitCode, result.output)
 			require.Empty(t, result.calls)
@@ -119,22 +181,45 @@ func TestHookIgnoresPayloadsItCannotAct(t *testing.T) {
 func TestHookIgnoresMissingFiles(t *testing.T) {
 	root := newTree(t)
 
-	result := runFormatHook(t, root, payload("Edit", filepath.Join(root, "server/gone.go")))
+	result := runFormatHook(t, root, payload("Edit", filepath.Join(root, "server/gone.go")), formatOptions{})
 
 	require.Equal(t, 0, result.exitCode, result.output)
 	require.Empty(t, result.calls)
 }
 
 // Exit code 2 is what puts the formatter's complaint in front of Claude, so a
-// file it just wrote and cannot parse gets fixed in the same turn.
+// file it just wrote and cannot parse gets fixed in the same turn. This is the
+// one verdict that still blocks an edit.
 func TestHookReportsFormatterFailuresToClaude(t *testing.T) {
 	root := newTree(t, "server/rpc/handler.go")
 
-	result := runFormatHook(t, root, payload("Edit", filepath.Join(root, "server/rpc/handler.go")), "MISE_FORMAT_FAIL=1")
+	result := runFormatHook(t, root, payload("Edit", filepath.Join(root, "server/rpc/handler.go")), formatOptions{
+		env: []string{"MISE_FORMAT_FAIL=1"},
+	})
 
 	require.Equal(t, 2, result.exitCode, result.output)
 	require.Contains(t, result.output, "server/rpc/handler.go")
 	require.Contains(t, result.output, "expected ';' but found '}'")
+}
+
+// utilities is a PATH holding the system commands the hook and its stubs call
+// and nothing else. The caller's PATH cannot be one of them: a machine with
+// gofumpt installed — this one, and the CI runner — answers a test that left
+// it out on purpose, and "missing everywhere" then means "missing from the
+// stubs".
+func utilities(t *testing.T) string {
+	t.Helper()
+
+	dir := filepath.Join(t.TempDir(), "utilities")
+	require.NoError(t, os.MkdirAll(dir, 0o755))
+
+	for _, name := range []string{"basename", "cat", "dirname", "jq"} {
+		path, err := exec.LookPath(name)
+		require.NoError(t, err, "the hook needs %s", name)
+		require.NoError(t, os.Symlink(path, filepath.Join(dir, name)))
+	}
+
+	return dir
 }
 
 func payload(tool, path string) string {
@@ -160,20 +245,42 @@ func newTree(t *testing.T, files ...string) string {
 		require.NoError(t, os.WriteFile(path, nil, 0o644))
 	}
 
+	// Prettier is a local install rather than a mise tool, so it is stubbed
+	// where the hook looks for it: web/'s own node_modules.
+	prettier := filepath.Join(root, "web/node_modules/.bin/prettier")
+	require.NoError(t, os.MkdirAll(filepath.Dir(prettier), 0o755))
+	require.NoError(t, os.WriteFile(prettier, []byte(stubFormatter), 0o755))
+
 	return root
 }
 
-func runFormatHook(t *testing.T, root, stdin string, env ...string) formatResult {
+func runFormatHook(t *testing.T, root, stdin string, opts formatOptions) formatResult {
 	t.Helper()
 
 	bin := t.TempDir()
+	tools := t.TempDir()
 	log := filepath.Join(bin, "formatters.log")
-	require.NoError(t, os.WriteFile(filepath.Join(bin, "mise"), []byte(stubFormatterMise), 0o755))
+	require.NoError(t, os.WriteFile(filepath.Join(bin, "mise"), []byte(stubResolverMise), 0o755))
+
+	for _, tool := range formatters() {
+		if slices.Contains(opts.missing, tool) {
+			continue
+		}
+		// The same stub in both places, so a test says which route ran it by
+		// which one it left available rather than by the call it logged.
+		require.NoError(t, os.WriteFile(filepath.Join(tools, tool), []byte(stubFormatter), 0o755))
+		require.NoError(t, os.WriteFile(filepath.Join(bin, tool), []byte(stubFormatter), 0o755))
+	}
 
 	cmd := exec.CommandContext(t.Context(), filepath.Join(root, "scripts/claude_format_hook.sh"))
 	cmd.Dir = root
 	cmd.Stdin = strings.NewReader(stdin)
-	cmd.Env = append(append(isolatedEnv(bin), "MISE_FORMAT_LOG="+log), env...)
+	cmd.Env = append([]string{
+		"PATH=" + bin + string(os.PathListSeparator) + utilities(t),
+		"MISE_FORMAT_LOG=" + log,
+		"MISE_TOOLS=" + tools,
+		"MISE_UNRESOLVABLE=" + strings.Join(opts.unresolvable, " "),
+	}, opts.env...)
 	out, err := cmd.CombinedOutput()
 
 	exitCode := 0
