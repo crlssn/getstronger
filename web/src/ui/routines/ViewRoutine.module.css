@@ -130,3 +130,9 @@
 .deleteRoutine {
   @apply border-danger/30;
 }
+
+/* What the routine asks for, above what last happened: the plan reads first,
+   and in the ink the history is not. */
+.prescription {
+  @apply font-semibold text-text-muted;
+}

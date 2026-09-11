@@ -481,7 +481,7 @@ describe('CardWorkout', () => {
     test('reads a grouped session in its blocks', () => {
       render(<CardWorkout compact={false} workout={withBlocks()} />)
 
-      expect(screen.getByText('Group A')).toBeInTheDocument()
+      expect(screen.getByText('Block A')).toBeInTheDocument()
       expect(screen.getByText('Straight sets')).toBeInTheDocument()
       // What the session actually did, not what it was prescribed.
       expect(screen.getByText('Circuit · 2 rounds')).toBeInTheDocument()
@@ -498,7 +498,7 @@ describe('CardWorkout', () => {
     test('reads an ungrouped session as the flat list it always was', () => {
       render(<CardWorkout compact={false} workout={withSets()} />)
 
-      expect(screen.queryByText('Group A')).not.toBeInTheDocument()
+      expect(screen.queryByText('Block A')).not.toBeInTheDocument()
       expect(screen.getByRole('table', { name: /Bench press/ })).toBeInTheDocument()
     })
 

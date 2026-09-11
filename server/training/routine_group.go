@@ -223,21 +223,12 @@ func normalizeRoutineGroup(group RoutineGroupDraft, exercises []RoutineExerciseD
 		normalized.Role = ""
 	}
 
-	// Only the block a round count repeats has a final round to end early.
-	normalized.SkipLastOnFinalRound = group.SkipLastOnFinalRound && normalized.Role == RoutineGroupRoleRepeat
+	// Only a block worked round after round has a final round to end early. A
+	// straight block is worked once through, so it has none.
+	normalized.SkipLastOnFinalRound = group.SkipLastOnFinalRound && normalized.Mode == RoutineGroupModeCircuit
 
 	for index, exercise := range normalized.Exercises {
-		normalized.Exercises[index].TargetDurationSeconds = clampInt32(exercise.TargetDurationSeconds, routineGroupMaxTargetDurationSeconds)
-		normalized.Exercises[index].Tracking = occurrenceTracking(exercise)
-		normalized.Exercises[index].Sets = clampInt32(exercise.Sets, routineGroupMaxSets)
-		normalized.Exercises[index].TargetDistanceMeters = clampInt32(exercise.TargetDistanceMeters, routineGroupMaxDistanceMeters)
-
-		if exercise.RestSeconds == nil {
-			continue
-		}
-
-		rest := clampInt32(*exercise.RestSeconds, routineGroupMaxRestSeconds)
-		normalized.Exercises[index].RestSeconds = &rest
+		normalized.Exercises[index] = normalizeRoutineExercise(exercise)
 	}
 
 	// Every block pauses on the way to the next exercise, so both kinds carry
@@ -250,6 +241,35 @@ func normalizeRoutineGroup(group RoutineGroupDraft, exercises []RoutineExerciseD
 	if normalized.Mode == RoutineGroupModeCircuit {
 		normalized.RestBetweenRoundsSeconds = clampInt32(group.RestBetweenRoundsSeconds, routineGroupMaxRestSeconds)
 		normalized.Rounds = clampInt32(group.Rounds, routineGroupMaxRounds)
+	}
+
+	return normalized
+}
+
+// normalizeRoutineExercise is what one occurrence is worth saving as: the
+// prescription it is tracked by, and nothing else.
+//
+// The two it is not tracked by are cleared rather than carried. A run measured
+// by the distance it covers that also held a leftover thirty seconds would be
+// guided as a thirty-second run by every reader that trusts the field, and the
+// row is what every reader has.
+func normalizeRoutineExercise(exercise RoutineExerciseDraft) RoutineExerciseDraft {
+	normalized := RoutineExerciseDraft{
+		ExerciseID: exercise.ExerciseID,
+		Tracking:   occurrenceTracking(exercise),
+	}
+
+	switch normalized.Tracking {
+	case RoutineExerciseTrackingTimed:
+		normalized.TargetDurationSeconds = clampInt32(exercise.TargetDurationSeconds, routineGroupMaxTargetDurationSeconds)
+	case RoutineExerciseTrackingDistance:
+		normalized.TargetDistanceMeters = clampInt32(exercise.TargetDistanceMeters, routineGroupMaxDistanceMeters)
+	default:
+		normalized.Sets = clampInt32(exercise.Sets, routineGroupMaxSets)
+		if exercise.RestSeconds != nil {
+			rest := clampInt32(*exercise.RestSeconds, routineGroupMaxRestSeconds)
+			normalized.RestSeconds = &rest
+		}
 	}
 
 	return normalized

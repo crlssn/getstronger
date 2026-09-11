@@ -1,37 +1,48 @@
 import type { RoutineGroup } from '@/proto/api/v1/routine_service_pb'
 import type { Exercise } from '@/proto/api/v1/shared_pb'
-import type { DraftGroup, RoutineShape } from '@/utils/routineGroups'
+import type { DraftEntry, DraftGroup, ExerciseTracking, IntervalRole, StartingShape } from '@/utils/routineGroups'
 
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { usePreferencesStore } from '@/stores/preferences'
 import { AppButton } from '@/ui/components/AppButton'
 import { AppFormFooter } from '@/ui/components/AppFormFooter'
 import { AppInput } from '@/ui/components/AppInput'
 import { AppSegmented } from '@/ui/components/AppSegmented'
-import { RoutineGroupsEditor } from '@/ui/routines/RoutineGroupsEditor'
-import { RoutineIntervalsEditor } from '@/ui/routines/RoutineIntervalsEditor'
+import { RoutineBlockSection } from '@/ui/routines/RoutineBlockSection'
+import { RoutineBlockSheet } from '@/ui/routines/RoutineBlockSheet'
+import { RoutineExerciseSheet } from '@/ui/routines/RoutineExerciseSheet'
+import { RoutineStartSheet } from '@/ui/routines/RoutineStartSheet'
 import { intervalPartTitle } from '@/ui/routines/intervalParts'
 import { ExercisePickerSheet } from '@/ui/workouts/ExercisePickerSheet'
 import {
   addExerciseToGroup,
-  clearIntervalRoles,
+  addGroup,
   draftGroupsFromRoutine,
   groupExerciseIds,
   groupLetter,
-  collapseToSingleGroup,
-  routineShape,
+  intervalRoles,
+  plannedIntervals,
+  plannedSeconds,
+  removeEntry,
+  removeGroup,
   saveableGroups,
-  toIntervalGroups,
+  startingBlocks,
+  withEntry,
+  withGroup,
 } from '@/utils/routineGroups'
+import { trackingOptions } from '@/utils/routinePrescription'
 import styles from './RoutineForm.module.css'
 
-/** What each shape does to the form, in a line under the choice. */
-const shapeHints: Record<RoutineShape, string> = {
-  simple: 'routine.form.groups.simpleHint',
-  groups: 'routine.form.groups.groupsHint',
-  intervals: 'routine.form.groups.intervalsHint',
-}
+/** Which sheet is open, and what it is open about. */
+type Sheet =
+  | { kind: 'start' }
+  | { kind: 'block'; id: string }
+  | { kind: 'entry'; key: string }
+  | { kind: 'add'; id: string; tracking: ExerciseTracking }
+
+const secondsPerMinute = 60
 
 interface Props {
   submitLabel: string
@@ -43,15 +54,21 @@ interface Props {
   /** The routine's exercises, which is where the form reads their names from. */
   initialExercises?: Exercise[]
   initialGroups?: RoutineGroup[]
+  /** Whether to open on the starting shapes, which only a new routine does. */
+  startable?: boolean
 }
 
 /**
  * The fields a routine is made of, shared by creating one and editing one.
  *
- * Exercises are picked into the group that will train them rather than ticked
- * off a list of the whole library: a routine is built in the order it is
- * trained, and the same exercise may be picked twice — a bench press in the
- * warm-up and a bench press in the circuit are two different pieces of work.
+ * A routine is an ordered list of blocks, and a block is an ordered list of
+ * exercises that may repeat. There is no mode: a plain session is one straight
+ * block, a circuit is one block that goes round, and an interval session is a
+ * warm-up, a repeating block and a cool-down — three shapes of the same thing,
+ * so none of them is a fork in the screen.
+ *
+ * Everything a block or an exercise is set up with lives in a sheet behind the
+ * value on its row. The list stays a list, which is what it is here to build.
  *
  * The caller mounts it only once it has the routine to edit, so the initial
  * values are read once and owned here from then on.
@@ -64,20 +81,18 @@ export const RoutineForm = ({
   initialName = '',
   initialExercises,
   initialGroups,
+  startable = false,
 }: Props) => {
   const { t } = useTranslation()
-
-  const initial = draftGroupsFromRoutine(
-    initialGroups ?? [],
-    (initialExercises ?? []).map((exercise) => exercise.id),
-  )
+  const distanceUnit = usePreferencesStore((state) => state.distanceUnit)
 
   const [name, setName] = useState(initialName)
-  const [groups, setGroups] = useState<DraftGroup[]>(() => initial)
-  // The shape decides what the rest of the screen is: a routine that is one
-  // plain block never has to meet the other two, and one that is already
-  // grouped or built as intervals opens on the shape it was saved in.
-  const [shape, setShape] = useState<RoutineShape>(() => routineShape(initial))
+  const [groups, setGroups] = useState<DraftGroup[]>(() =>
+    draftGroupsFromRoutine(
+      initialGroups ?? [],
+      (initialExercises ?? []).map((exercise) => exercise.id),
+    ),
+  )
   // Every exercise the form has seen: the ones the routine came with, and the
   // ones picked since. Its name is what labels the row.
   const [library, setLibrary] = useState<Record<string, Exercise>>(() =>
@@ -90,8 +105,9 @@ export const RoutineForm = ({
       ].map((exercise) => [exercise.id, exercise]),
     ),
   )
-  // The group the picker is adding to, so the sheet's choice knows where it goes.
-  const [pickerGroupId, setPickerGroupId] = useState('')
+  const [sheet, setSheet] = useState<Sheet | null>(startable ? { kind: 'start' } : null)
+
+  const closeSheet = () => setSheet(null)
 
   const exerciseIds = groupExerciseIds(groups)
   const needsName = name.trim().length === 0
@@ -109,20 +125,22 @@ export const RoutineForm = ({
       ? t('routine.form.needsExercise')
       : undefined
 
-  // Every change of shape keeps the exercises, in order, and drops whatever the
-  // new shape cannot express: a single block has no structure, and a grouped
-  // routine has no warm-up and no round count outside its blocks.
-  const setRoutineShape = (chosen: RoutineShape) => {
-    setShape(chosen)
-    if (chosen === 'simple') setGroups(collapseToSingleGroup(groups))
-    else if (chosen === 'intervals') setGroups(toIntervalGroups(groups))
-    else setGroups(clearIntervalRoles(groups))
+  const nameOf = (exerciseId: string) => library[exerciseId]?.name ?? exerciseId
+  const titleOf = (group: DraftGroup, index: number) =>
+    group.title || t('routine.form.blocks.blockName', { letter: groupLetter(index) })
+
+  const start = (shape: StartingShape) => {
+    const titles = Object.fromEntries(
+      intervalRoles.map((role) => [role, t(intervalPartTitle[role])]),
+    ) as Record<IntervalRole, string>
+    setGroups(startingBlocks(shape, titles))
+    closeSheet()
   }
 
-  const addExercise = (exercise: Exercise) => {
+  const addExercise = (exercise: Exercise, groupId: string, tracking: ExerciseTracking) => {
     setLibrary((current) => ({ ...current, [exercise.id]: exercise }))
-    setGroups((current) => addExerciseToGroup(current, pickerGroupId, exercise))
-    setPickerGroupId('')
+    setGroups((current) => addExerciseToGroup(current, groupId, exercise, tracking))
+    closeSheet()
   }
 
   const submit = () => {
@@ -130,15 +148,23 @@ export const RoutineForm = ({
     onSave(name.trim(), groupExerciseIds(saved), saved)
   }
 
-  const pickerGroup = groups.find((group) => group.id === pickerGroupId)
-  const pickerGroupIndex = groups.findIndex((group) => group.id === pickerGroupId)
-  // The sheet says which block it is filling, so a routine with three of them
-  // never leaves the athlete guessing where the exercise is about to land.
-  const pickerEyebrow = pickerGroup?.role
-    ? t(intervalPartTitle[pickerGroup.role])
-    : shape === 'groups' && pickerGroupIndex >= 0
-      ? t('routine.form.groups.groupName', { letter: groupLetter(pickerGroupIndex) })
-      : t('routine.form.eyebrow')
+  const minutes = Math.max(Math.round(plannedSeconds(groups) / secondsPerMinute), 1)
+  const intervals = plannedIntervals(groups)
+
+  const openBlock = sheet?.kind === 'block' ? groups.find((group) => group.id === sheet.id) : undefined
+  const openBlockIndex = openBlock ? groups.indexOf(openBlock) : -1
+
+  const entryBlock =
+    sheet?.kind === 'entry'
+      ? groups.find((group) => group.entries.some((entry) => entry.key === sheet.key))
+      : undefined
+  const openEntry: DraftEntry | undefined =
+    sheet?.kind === 'entry'
+      ? entryBlock?.entries.find((entry) => entry.key === sheet.key)
+      : undefined
+
+  const addBlock = sheet?.kind === 'add' ? groups.find((group) => group.id === sheet.id) : undefined
+  const addBlockIndex = addBlock ? groups.indexOf(addBlock) : -1
 
   return (
     <form
@@ -162,38 +188,51 @@ export const RoutineForm = ({
         onChange={(event) => setName(event.target.value)}
       />
 
-      {/* The question that decides the shape of everything below it, so it is
-          asked before any of it — and answered in a line, because three words
-          on their own say nothing about what each does to the form. */}
-      <AppSegmented<RoutineShape>
-        className={styles.structure}
-        label={t('routine.form.groups.section')}
-        options={[
-          { label: t('routine.form.groups.shapeSimple'), value: 'simple' },
-          { label: t('routine.form.groups.shapeGroups'), value: 'groups' },
-          { label: t('routine.form.groups.shapeIntervals'), value: 'intervals' },
-        ]}
-        value={shape}
-        onChange={setRoutineShape}
-      />
-      <p className={styles.structureHint}>{t(shapeHints[shape])}</p>
+      <div className={styles.blocks}>
+        {groups.map((group, index) => (
+          <RoutineBlockSection
+            key={group.id}
+            groups={groups}
+            group={group}
+            title={titleOf(group, index)}
+            letter={groupLetter(index)}
+            nameOf={nameOf}
+            distanceUnit={distanceUnit}
+            onChange={setGroups}
+            onOpenBlock={() => setSheet({ kind: 'block', id: group.id })}
+            onOpenEntry={(key) => setSheet({ kind: 'entry', key })}
+            onAddExercise={() =>
+              setSheet({
+                kind: 'add',
+                id: group.id,
+                // A circuit rotates through stations held against the clock,
+                // so that is what an exercise added to one is by default.
+                tracking: group.mode === 'circuit' ? 'timed' : 'sets',
+              })
+            }
+          />
+        ))}
+      </div>
 
-      {shape === 'intervals' ? (
-        <RoutineIntervalsEditor
-          groups={groups}
-          nameOf={(exerciseId) => library[exerciseId]?.name ?? exerciseId}
-          onChange={setGroups}
-          onAddExercise={setPickerGroupId}
-        />
-      ) : (
-        <RoutineGroupsEditor
-          groups={groups}
-          grouped={shape === 'groups'}
-          nameOf={(exerciseId) => library[exerciseId]?.name ?? exerciseId}
-          onChange={setGroups}
-          onAddExercise={setPickerGroupId}
-        />
-      )}
+      <AppButton
+        type="button"
+        colour="secondary"
+        className={styles.addBlock}
+        onClick={() => setGroups(addGroup(groups))}
+      >
+        {t('routine.form.blocks.addBlock')}
+      </AppButton>
+
+      {/* What the routine adds up to, which is the one thing the list of blocks
+          cannot say by being read. */}
+      <p className={styles.summary}>
+        <span>
+          {intervals
+            ? t('routine.form.blocks.planned', { count: minutes })
+            : t('routine.form.blocks.plannedNone')}
+        </span>
+        <span>{intervals ? t('routine.form.blocks.intervals', { count: intervals }) : ''}</span>
+      </p>
 
       {/* Pinned rather than parked at the end of the scroll, where a routine
           with ten exercises hid it. */}
@@ -203,18 +242,56 @@ export const RoutineForm = ({
         </AppButton>
       </AppFormFooter>
 
-      {pickerGroupId && (
+      {sheet?.kind === 'start' && <RoutineStartSheet onPick={start} onClose={closeSheet} />}
+
+      {openBlock && (
+        <RoutineBlockSheet
+          group={openBlock}
+          title={titleOf(openBlock, openBlockIndex)}
+          letter={groupLetter(openBlockIndex)}
+          // The last block is the routine, so removing it is not on offer.
+          removable={groups.length > 1}
+          onChange={(changes) => setGroups(withGroup(groups, openBlock.id, changes))}
+          onRemove={() => {
+            setGroups(removeGroup(groups, openBlock.id))
+            closeSheet()
+          }}
+          onClose={closeSheet}
+        />
+      )}
+
+      {openEntry && entryBlock && (
+        <RoutineExerciseSheet
+          entry={openEntry}
+          name={nameOf(openEntry.exerciseId)}
+          eyebrow={titleOf(entryBlock, groups.indexOf(entryBlock))}
+          distanceUnit={distanceUnit}
+          onChange={(changes) => setGroups(withEntry(groups, openEntry.key, changes))}
+          onRemove={() => {
+            setGroups(removeEntry(groups, openEntry.key))
+            closeSheet()
+          }}
+          onClose={closeSheet}
+        />
+      )}
+
+      {sheet?.kind === 'add' && addBlock && (
         <ExercisePickerSheet
           // The block trains each exercise once, so what it already holds is
           // not offered again — another block still can.
-          excluded={
-            groups
-              .find((group) => group.id === pickerGroupId)
-              ?.entries.map((entry) => entry.exerciseId) ?? []
+          excluded={addBlock.entries.map((entry) => entry.exerciseId)}
+          eyebrow={titleOf(addBlock, addBlockIndex)}
+          header={
+            <AppSegmented<ExerciseTracking>
+              className={styles.tracking}
+              label={t('routine.form.blocks.trackedAs')}
+              options={trackingOptions(t)}
+              value={sheet.tracking}
+              onChange={(tracking) => setSheet({ ...sheet, tracking })}
+            />
           }
-          eyebrow={pickerEyebrow}
-          onAdd={addExercise}
-          onClose={() => setPickerGroupId('')}
+          onAdd={(exercise) => addExercise(exercise, addBlock.id, sheet.tracking)}
+          onClose={closeSheet}
         />
       )}
     </form>

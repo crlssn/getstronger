@@ -277,25 +277,39 @@ describe('ListRoutines', () => {
     expect(await screen.findByRole('heading', { name: 'Pull day', level: 3 })).toBeInTheDocument()
   })
 })
-
 describe('CreateRoutine', () => {
   const render = () => renderWithProviders(<CreateRoutine />, { route: '/routines/create' })
 
+  // A new routine opens on the starting shapes. Each is a list of blocks, and
+  // nothing afterwards remembers which one was picked.
+  const startFrom = async (shape: RegExp) => {
+    const sheet = await screen.findByRole('dialog')
+    await userEvent.click(within(sheet).getByRole('button', { name: shape }))
+  }
+
   // Exercises are picked into the block that trains them, through the same
-  // sheet the session uses.
-  const addExercise = async (name: RegExp, groupIndex = 0) => {
+  // sheet the session uses, and counted the way the sheet is set to.
+  const addExercise = async (name: RegExp, blockIndex = 0, tracking?: RegExp) => {
     const buttons = await screen.findAllByRole('button', { name: 'Add exercise' })
-    await userEvent.click(buttons[groupIndex])
+    await userEvent.click(buttons[blockIndex])
 
     const sheet = screen.getByRole('dialog')
+    if (tracking) await userEvent.click(within(sheet).getByRole('button', { name: tracking }))
     await userEvent.click(within(sheet).getByRole('button', { name }))
   }
+
+  const openBlock = (title: string) =>
+    userEvent.click(screen.getByRole('button', { name: `Block settings: ${title}` }))
+
+  const openExercise = (name: string) =>
+    userEvent.click(screen.getByRole('button', { name: `Exercise settings: ${name}` }))
 
   // A routine with no name or no exercises is not a routine yet.
   test('will not save until it has a name and an exercise', async () => {
     render()
+    await startFrom(/^Blank/)
 
-    const save = await screen.findByRole('button', { name: 'Create routine' })
+    const save = screen.getByRole('button', { name: 'Create routine' })
     expect(save).toBeDisabled()
 
     await userEvent.type(screen.getByLabelText('Routine name'), 'Upper body')
@@ -309,8 +323,9 @@ describe('CreateRoutine', () => {
   // the form's two requirements is the one holding it shut.
   test('names what the save is still waiting for', async () => {
     render()
+    await startFrom(/^Blank/)
 
-    const save = await screen.findByRole('button', { name: 'Create routine' })
+    const save = screen.getByRole('button', { name: 'Create routine' })
     expect(screen.getByText('Add a name and one exercise')).toBeVisible()
 
     await userEvent.type(screen.getByLabelText('Routine name'), 'Upper body')
@@ -323,8 +338,9 @@ describe('CreateRoutine', () => {
 
   test('saves the name and the exercises that were picked', async () => {
     render()
+    await startFrom(/^Blank/)
 
-    await userEvent.type(await screen.findByLabelText('Routine name'), '  Upper body  ')
+    await userEvent.type(screen.getByLabelText('Routine name'), '  Upper body  ')
     await addExercise(/Bench press/)
     await addExercise(/^Row/)
     await userEvent.click(screen.getByRole('button', { name: 'Create routine' }))
@@ -340,10 +356,22 @@ describe('CreateRoutine', () => {
     expect(useToastStore.getState().toast).not.toBeNull()
   })
 
-  test('adds what is picked, and takes it away again', async () => {
+  // Closing the sheet without choosing leaves the blank block the form opened
+  // on, so the choice is never one the screen waits for.
+  test('starts blank when the starting shapes are dismissed', async () => {
     render()
 
-    await screen.findByLabelText('Routine name')
+    const sheet = await screen.findByRole('dialog')
+    await userEvent.click(within(sheet).getByRole('button', { name: 'Close' }))
+
+    expect(screen.getByText('Block A')).toBeInTheDocument()
+    expect(screen.getByText('No exercises here yet.')).toBeInTheDocument()
+  })
+
+  test('adds what is picked, and takes it away again', async () => {
+    render()
+    await startFrom(/^Blank/)
+
     expect(screen.getByText('No exercises here yet.')).toBeInTheDocument()
 
     await addExercise(/Bench press/)
@@ -357,8 +385,8 @@ describe('CreateRoutine', () => {
   // handle and the order it produces is tested against reorderEntry.
   test('offers a handle to drag an exercise into place', async () => {
     render()
+    await startFrom(/^Blank/)
 
-    await userEvent.type(await screen.findByLabelText('Routine name'), 'Upper body')
     await addExercise(/Bench press/)
     await addExercise(/^Row/)
 
@@ -367,17 +395,24 @@ describe('CreateRoutine', () => {
     expect(screen.queryByRole('button', { name: 'Move Row up' })).not.toBeInTheDocument()
   })
 
-  // The grouping controls are the advanced half of the screen: a routine that
-  // is one plain block never has to meet them.
-  test('saves a circuit when the exercises are put in groups', async () => {
+  // Everything a block is set up with is behind the one chip beside its name,
+  // so the list of exercises stays a list of exercises.
+  test('names a block and turns it into a circuit from its settings', async () => {
     render()
+    await startFrom(/^Blank/)
 
-    await userEvent.type(await screen.findByLabelText('Routine name'), 'Full body')
+    await userEvent.type(screen.getByLabelText('Routine name'), 'Full body')
     await addExercise(/Bench press/)
     await addExercise(/^Row/)
 
-    await userEvent.click(screen.getByRole('button', { name: 'Groups' }))
+    await openBlock('Block A')
+    await userEvent.type(screen.getByLabelText('Block name'), 'Main set')
     await userEvent.click(screen.getByRole('button', { name: 'Circuit' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Done' }))
+
+    // The name and the round count are what the header says about the block.
+    expect(screen.getByText('Main set')).toBeInTheDocument()
+    expect(screen.getByText('One set of each, 3 times through')).toBeInTheDocument()
 
     await userEvent.click(screen.getByRole('button', { name: 'Create routine' }))
 
@@ -387,12 +422,10 @@ describe('CreateRoutine', () => {
         ['bench', 'row'],
         [
           expect.objectContaining({
+            title: 'Main set',
             mode: 'circuit',
+            rounds: 3,
             restBetweenRoundsSeconds: 90,
-            entries: [
-              expect.objectContaining({ exerciseId: 'bench' }),
-              expect.objectContaining({ exerciseId: 'row' }),
-            ],
           }),
         ],
       ),
@@ -401,22 +434,20 @@ describe('CreateRoutine', () => {
 
   test('sets the rest a circuit takes between exercises and between rounds', async () => {
     render()
+    await startFrom(/^Circuit/)
 
-    await userEvent.type(await screen.findByLabelText('Routine name'), 'Full body')
+    await userEvent.type(screen.getByLabelText('Routine name'), 'Full body')
     await addExercise(/Bench press/)
-    await addExercise(/Row/)
-    await userEvent.click(screen.getByRole('button', { name: 'Groups' }))
-    await userEvent.click(screen.getByRole('button', { name: 'Circuit' }))
+    await addExercise(/^Row/)
 
+    await openBlock('Block A')
     await userEvent.click(
-      screen.getByRole('button', {
-        name: 'Subtract 30 seconds from Rest after each exercise in group A',
-      }),
+      screen.getByRole('button', { name: 'Add 30 seconds to Rest after each exercise' }),
     )
     await userEvent.click(
-      screen.getByRole('button', { name: 'Add 30 seconds to Rest after each round in group A' }),
+      screen.getByRole('button', { name: 'Add 30 seconds to Rest after each round' }),
     )
-
+    await userEvent.click(screen.getByRole('button', { name: 'Done' }))
     await userEvent.click(screen.getByRole('button', { name: 'Create routine' }))
 
     await waitFor(() =>
@@ -425,7 +456,7 @@ describe('CreateRoutine', () => {
         ['bench', 'row'],
         [
           expect.objectContaining({
-            restBetweenExercisesSeconds: 60,
+            restBetweenExercisesSeconds: 30,
             restBetweenRoundsSeconds: 120,
           }),
         ],
@@ -433,13 +464,13 @@ describe('CreateRoutine', () => {
     )
   })
 
-  test('picks into the group the button belongs to', async () => {
+  test('picks into the block the button belongs to', async () => {
     render()
+    await startFrom(/^Blank/)
 
-    await userEvent.type(await screen.findByLabelText('Routine name'), 'Full body')
+    await userEvent.type(screen.getByLabelText('Routine name'), 'Full body')
     await addExercise(/Bench press/)
-    await userEvent.click(screen.getByRole('button', { name: 'Groups' }))
-    await userEvent.click(screen.getByRole('button', { name: 'New group' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Add block' }))
     await addExercise(/^Row/, 1)
 
     await userEvent.click(screen.getByRole('button', { name: 'Create routine' }))
@@ -458,13 +489,13 @@ describe('CreateRoutine', () => {
 
   // A bench press in the warm-up and a bench press in the circuit are two
   // different pieces of work.
-  test('lets the same exercise be picked into two groups', async () => {
+  test('lets the same exercise be picked into two blocks', async () => {
     render()
+    await startFrom(/^Blank/)
 
-    await userEvent.type(await screen.findByLabelText('Routine name'), 'Full body')
+    await userEvent.type(screen.getByLabelText('Routine name'), 'Full body')
     await addExercise(/Bench press/)
-    await userEvent.click(screen.getByRole('button', { name: 'Groups' }))
-    await userEvent.click(screen.getByRole('button', { name: 'New group' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Add block' }))
     await addExercise(/Bench press/, 1)
 
     await userEvent.click(screen.getByRole('button', { name: 'Create routine' }))
@@ -480,8 +511,9 @@ describe('CreateRoutine', () => {
 
   // The sheet stops offering what the block already trains, so the same
   // exercise cannot land in it twice.
-  test('does not offer an exercise the group already trains', async () => {
+  test('does not offer an exercise the block already trains', async () => {
     render()
+    await startFrom(/^Blank/)
 
     await addExercise(/Bench press/)
     await userEvent.click(screen.getAllByRole('button', { name: 'Add exercise' })[0])
@@ -491,16 +523,17 @@ describe('CreateRoutine', () => {
     expect(within(sheet).getByRole('button', { name: /^Row/ })).toBeInTheDocument()
   })
 
-  test('folds a removed group back into the one before it', async () => {
+  test('folds a removed block back into the one before it', async () => {
     render()
+    await startFrom(/^Blank/)
 
-    await userEvent.type(await screen.findByLabelText('Routine name'), 'Full body')
+    await userEvent.type(screen.getByLabelText('Routine name'), 'Full body')
     await addExercise(/Bench press/)
-
-    await userEvent.click(screen.getByRole('button', { name: 'Groups' }))
-    await userEvent.click(screen.getByRole('button', { name: 'New group' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Add block' }))
     await addExercise(/^Row/, 1)
-    await userEvent.click(screen.getByRole('button', { name: 'Remove group B' }))
+
+    await openBlock('Block B')
+    await userEvent.click(screen.getByRole('button', { name: 'Remove block' }))
 
     await userEvent.click(screen.getByRole('button', { name: 'Create routine' }))
 
@@ -513,103 +546,38 @@ describe('CreateRoutine', () => {
     )
   })
 
-  // Most routines want a rest timer and do not care how long, so the switch is
-  // the whole answer and the lengths stay folded away behind it.
-  test('folds the rest lengths away until the switch asks for them', async () => {
+  // The last block is the routine, so there is nothing to remove it down to.
+  test('does not offer to remove the only block', async () => {
     render()
+    await startFrom(/^Blank/)
 
-    await userEvent.type(await screen.findByLabelText('Routine name'), 'Heavy day')
     await addExercise(/Bench press/)
-    await addExercise(/Row/)
+    await openBlock('Block A')
 
-    expect(screen.getByRole('switch', { name: 'Rest timers' })).toBeChecked()
-    expect(screen.getByLabelText('Rest between sets of Bench press: 1:30')).toBeVisible()
-
-    await userEvent.click(screen.getByRole('switch', { name: 'Rest timers' }))
-
-    expect(
-      screen.queryByLabelText('Rest between sets of Bench press: 1:30'),
-    ).not.toBeInTheDocument()
-    expect(screen.queryByLabelText('Rest after each exercise')).not.toBeInTheDocument()
-    // Off is an answer rather than a folded-away setting, so the line says what
-    // the routine trains with instead of quoting lengths it is not using.
-    expect(screen.getByText('No rest between sets and exercises')).toBeVisible()
-  })
-
-  // No timer is no rest: the lengths the form is holding are what the switch
-  // would hand back, not what this routine trains with.
-  test('saves no rest anywhere when the timer is switched off', async () => {
-    render()
-
-    await userEvent.type(await screen.findByLabelText('Routine name'), 'Heavy day')
-    await addExercise(/Bench press/)
-    await addExercise(/Row/)
-    await userEvent.click(screen.getByRole('switch', { name: 'Rest timers' }))
-    await userEvent.click(screen.getByRole('button', { name: 'Create routine' }))
-
-    await waitFor(() => expect(mocked.createRoutine).toHaveBeenCalled())
-    const [, , groups] = mocked.createRoutine.mock.calls[0]
-    expect(groups?.[0]?.restBetweenExercisesSeconds).toBe(0)
-    expect(groups?.[0]?.entries.map((entry) => entry.restSeconds)).toEqual([0, 0])
-  })
-
-  // A plain routine pauses on the way to the next lift too, so it is asked how
-  // long for without having to be turned into a circuit first.
-  test('sets the rest between exercises on a routine that is one plain block', async () => {
-    render()
-
-    await userEvent.type(await screen.findByLabelText('Routine name'), 'Heavy day')
-    await addExercise(/Bench press/)
-
-    // A rest between exercises means nothing until there are two of them.
-    expect(screen.queryByLabelText('Rest after each exercise')).not.toBeInTheDocument()
-    await addExercise(/Row/)
-
-    const betweenExercises = screen.getByRole('spinbutton', { name: 'Rest after each exercise' })
-    expect(betweenExercises).toHaveTextContent('1:30')
-
-    await userEvent.click(
-      screen.getByRole('button', { name: 'Add 30 seconds to Rest after each exercise' }),
-    )
-    expect(betweenExercises).toHaveTextContent('2:00')
-
-    await userEvent.click(screen.getByRole('button', { name: 'Create routine' }))
-
-    await waitFor(() =>
-      expect(mocked.createRoutine).toHaveBeenCalledWith(
-        'Heavy day',
-        ['bench', 'row'],
-        [expect.objectContaining({ mode: 'straight', restBetweenExercisesSeconds: 120 })],
-      ),
-    )
+    expect(screen.queryByRole('button', { name: 'Remove block' })).not.toBeInTheDocument()
   })
 
   // Rest between sets used to be the exercise library's only, so the same lift
   // rested the same length in every routine that trained it.
   test('gives an exercise a rest of its own in this routine', async () => {
     render()
+    await startFrom(/^Blank/)
 
-    await userEvent.type(await screen.findByLabelText('Routine name'), 'Heavy day')
+    await userEvent.type(screen.getByLabelText('Routine name'), 'Heavy day')
     await addExercise(/Bench press/)
 
     // A length read off a clock, not a second count — and a real value from the
     // moment it is picked rather than a placeholder for one written down
     // somewhere else.
-    const chip = screen.getByLabelText('Rest between sets of Bench press: 1:30')
-    expect(chip).toHaveTextContent('1:30')
-
-    // The stepper is a detour the row folds away until it is asked for.
     expect(
-      screen.queryByRole('spinbutton', { name: 'Rest between sets of Bench press' }),
-    ).not.toBeInTheDocument()
+      screen.getByRole('button', { name: 'Exercise settings: Bench press' }),
+    ).toHaveTextContent('1:30 rest')
 
-    await userEvent.click(chip)
-    const stepper = screen.getByRole('button', {
-      name: 'Add 30 seconds to Rest between sets of Bench press',
-    })
+    await openExercise('Bench press')
+    const stepper = screen.getByRole('button', { name: 'Add 30 seconds to Rest between sets' })
     await userEvent.click(stepper)
     await userEvent.click(stepper)
-    await userEvent.click(stepper)
+    await userEvent.click(screen.getByRole('button', { name: 'Done' }))
     await userEvent.click(screen.getByRole('button', { name: 'Create routine' }))
 
     await waitFor(() =>
@@ -618,96 +586,103 @@ describe('CreateRoutine', () => {
         ['bench'],
         [
           expect.objectContaining({
-            entries: [expect.objectContaining({ exerciseId: 'bench', restSeconds: 180 })],
+            entries: [expect.objectContaining({ exerciseId: 'bench', restSeconds: 150 })],
           }),
         ],
       ),
     )
   })
 
-  // Held against the clock, so it is one continuous effort rather than a set to
-  // recover from: the field opens on no rest rather than on a minute and a half.
-  test('starts a time-measured exercise at no rest', async () => {
+  test('prescribes how many sets an exercise is counted in', async () => {
     render()
+    await startFrom(/^Blank/)
 
-    await userEvent.type(await screen.findByLabelText('Routine name'), 'Cardio day')
-    await addExercise(/Row/)
-
-    expect(screen.getByLabelText('Rest between sets of Row: 0:00')).toBeInTheDocument()
-
-    await userEvent.click(screen.getByRole('button', { name: 'Create routine' }))
-
-    await waitFor(() => expect(mocked.createRoutine).toHaveBeenCalled())
-    const [, , groups] = mocked.createRoutine.mock.calls[0]
-    expect(groups?.[0]?.entries[0]?.restSeconds).toBe(0)
-  })
-
-  // A circuit rests between exercises and between rounds, so a set rest has
-  // nowhere to go and no control to set it with.
-  test('offers no per-exercise rest in a circuit', async () => {
-    render()
-
-    await userEvent.type(await screen.findByLabelText('Routine name'), 'Full body')
+    await userEvent.type(screen.getByLabelText('Routine name'), 'Heavy day')
     await addExercise(/Bench press/)
-    expect(screen.getByLabelText('Rest between sets of Bench press: 1:30')).toBeInTheDocument()
 
-    await userEvent.click(screen.getByRole('button', { name: 'Groups' }))
-    await userEvent.click(screen.getByRole('button', { name: 'Circuit' }))
+    await openExercise('Bench press')
+    await userEvent.click(screen.getByRole('button', { name: 'Add a set to Sets' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Done' }))
 
     expect(
-      screen.queryByLabelText('Rest between sets of Bench press: 1:30'),
-    ).not.toBeInTheDocument()
-  })
-
-  test('drops the structure again when grouping is turned back off', async () => {
-    render()
-
-    await userEvent.type(await screen.findByLabelText('Routine name'), 'Full body')
-    await addExercise(/Bench press/)
-
-    await userEvent.click(screen.getByRole('button', { name: 'Groups' }))
-    await userEvent.click(screen.getByRole('button', { name: 'Circuit' }))
-    await userEvent.click(screen.getByRole('button', { name: 'Standard' }))
-
-    expect(screen.queryByRole('group', { name: 'How group A runs' })).not.toBeInTheDocument()
+      screen.getByRole('button', { name: 'Exercise settings: Bench press' }),
+    ).toHaveTextContent('4 sets')
 
     await userEvent.click(screen.getByRole('button', { name: 'Create routine' }))
 
     await waitFor(() =>
       expect(mocked.createRoutine).toHaveBeenCalledWith(
-        'Full body',
+        'Heavy day',
         ['bench'],
-        [expect.objectContaining({ mode: 'straight', restBetweenRoundsSeconds: 0 })],
+        [expect.objectContaining({ entries: [expect.objectContaining({ sets: 4 })] })],
       ),
     )
   })
 
-  // The walk-run of the ticket, built as one routine: a longer first walk, then
-  // a block of run and walk repeated, and no second group anywhere.
+  // Counted in sets, held against a clock, or covered however long it takes:
+  // one of the three, and only that one is saved.
+  test('prescribes a distance, and saves nothing it is not tracked by', async () => {
+    render()
+    await startFrom(/^Blank/)
+
+    await userEvent.type(screen.getByLabelText('Routine name'), 'Easy miles')
+    await addExercise(/^Row/, 0, /^Distance$/)
+
+    expect(screen.getByRole('button', { name: 'Exercise settings: Row' })).toHaveTextContent('1 km')
+
+    await openExercise('Row')
+    await userEvent.click(screen.getByRole('button', { name: 'Longer distance' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Done' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Create routine' }))
+
+    await waitFor(() => expect(mocked.createRoutine).toHaveBeenCalled())
+    const [, , groups] = mocked.createRoutine.mock.calls[0]
+    expect(groups?.[0]?.entries[0]).toMatchObject({
+      tracking: 'distance',
+      targetDistanceMeters: 1500,
+      targetDurationSeconds: 0,
+      sets: 0,
+    })
+  })
+
+  // A circuit rotates through stations held against the clock, so that is what
+  // an exercise added to one is unless the sheet is told otherwise.
+  test('adds an exercise to a circuit as timed', async () => {
+    render()
+    await startFrom(/^Circuit/)
+
+    await userEvent.type(screen.getByLabelText('Routine name'), 'Full body')
+    await addExercise(/Bench press/)
+
+    expect(
+      screen.getByRole('button', { name: 'Exercise settings: Bench press' }),
+    ).toHaveTextContent('Timed')
+  })
+
+  // The walk-run of the ticket, built as one routine: a warm-up, a block of run
+  // and walk repeated, and a cool-down after it.
   describe('intervals', () => {
     const buildWalkRun = async () => {
-      await userEvent.type(await screen.findByLabelText('Routine name'), 'Walk-run')
-      await userEvent.click(screen.getByRole('button', { name: 'Intervals' }))
-      // Warm-up, repeating block, cool-down — three parts, one button each.
-      await addExercise(/^Row/, 0)
+      await startFrom(/^Intervals/)
+      await userEvent.type(screen.getByLabelText('Routine name'), 'Walk-run')
+      await addExercise(/^Row/, 0, /^Timed$/)
       await addExercise(/Bench press/, 1)
       await addExercise(/^Row/, 1)
     }
 
     test('is a warm-up, a repeating block and a cool-down', async () => {
       render()
-      await userEvent.type(await screen.findByLabelText('Routine name'), 'Walk-run')
-      await userEvent.click(screen.getByRole('button', { name: 'Intervals' }))
+      await startFrom(/^Intervals/)
 
       expect(screen.getByText('Warm-up')).toBeInTheDocument()
       expect(screen.getByText('Repeat')).toBeInTheDocument()
       expect(screen.getByText('Cool-down')).toBeInTheDocument()
       expect(screen.getAllByRole('button', { name: 'Add exercise' })).toHaveLength(3)
-      // The blocks a grouped routine is built from are not on this screen.
-      expect(screen.queryByRole('button', { name: 'New group' })).not.toBeInTheDocument()
     })
 
-    test('saves the whole session as one routine, without a second group', async () => {
+    // The editor never shows a role, but a live session reads one to number its
+    // intervals and to end the repeating block an exercise early.
+    test('saves the whole session as one routine, roles and all', async () => {
       render()
       await buildWalkRun()
 
@@ -718,9 +693,11 @@ describe('CreateRoutine', () => {
           'Walk-run',
           ['row', 'bench', 'row'],
           [
-            expect.objectContaining({ role: 'warmup', rounds: 1 }),
+            expect.objectContaining({ title: 'Warm-up', role: 'warmup', mode: 'straight' }),
             expect.objectContaining({
+              title: 'Repeat',
               role: 'repeat',
+              mode: 'circuit',
               rounds: 3,
               skipLastOnFinalRound: true,
             }),
@@ -729,52 +706,45 @@ describe('CreateRoutine', () => {
       )
     })
 
-    test('counts the rounds, the intervals and the minutes as the stepper moves', async () => {
+    test('counts the rounds and the intervals as the stepper moves', async () => {
       render()
       await buildWalkRun()
 
       // A warm-up and three rounds of two, less the exercise the last one drops.
       expect(screen.getByText('6 intervals')).toBeInTheDocument()
-      // Nothing is timed yet, and "0 min" would be a claim about a session
-      // rather than the absence of one.
-      expect(screen.getByText('No times set yet')).toBeInTheDocument()
-      expect(screen.getByText('Bench press and Row, 3 times through')).toBeInTheDocument()
 
+      await openBlock('Repeat')
       await userEvent.click(screen.getByRole('button', { name: 'Add a round to Rounds' }))
+      await userEvent.click(screen.getByRole('button', { name: 'Done' }))
 
       expect(screen.getByText('8 intervals')).toBeInTheDocument()
-      expect(screen.getByText('Announced as Round n of 4')).toBeInTheDocument()
+      expect(screen.getByText('One set of each, 4 times through')).toBeInTheDocument()
     })
 
     test('runs every round in full once the skip is turned off', async () => {
       render()
       await buildWalkRun()
 
+      await openBlock('Repeat')
       await userEvent.click(
         screen.getByRole('switch', { name: 'Skip last exercise on final round' }),
       )
-
       expect(screen.getByText('Every round runs in full')).toBeInTheDocument()
+      await userEvent.click(screen.getByRole('button', { name: 'Done' }))
+
       expect(screen.getByText('7 intervals')).toBeInTheDocument()
     })
 
-    test('keeps the exercises when the shape changes back to groups', async () => {
+    // An empty part is not part of the routine: a walk-run with no cool-down
+    // saves two blocks, not three.
+    test('drops the parts left holding nothing', async () => {
       render()
       await buildWalkRun()
 
-      await userEvent.click(screen.getByRole('button', { name: 'Groups' }))
       await userEvent.click(screen.getByRole('button', { name: 'Create routine' }))
 
-      await waitFor(() =>
-        expect(mocked.createRoutine).toHaveBeenCalledWith(
-          'Walk-run',
-          ['row', 'bench', 'row'],
-          [
-            expect.objectContaining({ role: '', skipLastOnFinalRound: false }),
-            expect.objectContaining({ role: '', skipLastOnFinalRound: false }),
-          ],
-        ),
-      )
+      await waitFor(() => expect(mocked.createRoutine).toHaveBeenCalled())
+      expect(mocked.createRoutine.mock.calls[0][2]).toHaveLength(2)
     })
   })
 })
@@ -838,14 +808,24 @@ describe('EditRoutine', () => {
     expect(await screen.findByDisplayValue('Push day')).toBeInTheDocument()
   })
 
-  test('opens on the grouping controls when the routine is already grouped', async () => {
+  // An existing routine has the blocks it was built with, so it is never asked
+  // what to start from.
+  test('opens on the blocks the routine was saved with', async () => {
     mocked.getRoutine.mockResolvedValue(
       create(GetRoutineResponseSchema, {
         routine: {
           ...push,
           groups: [
-            { mode: RoutineGroupMode.STRAIGHT, exercises: [{ exercise: { id: 'bench' } }] },
-            { mode: RoutineGroupMode.CIRCUIT, exercises: [{ exercise: { id: 'dips' } }] },
+            {
+              title: 'Warm-up',
+              mode: RoutineGroupMode.STRAIGHT,
+              exercises: [{ exercise: { id: 'bench' } }],
+            },
+            {
+              mode: RoutineGroupMode.CIRCUIT,
+              rounds: 4,
+              exercises: [{ exercise: { id: 'dips' } }],
+            },
           ],
         },
       }),
@@ -853,11 +833,11 @@ describe('EditRoutine', () => {
 
     render()
 
-    expect(await screen.findByRole('button', { name: 'Groups' })).toHaveAttribute(
-      'aria-pressed',
-      'true',
-    )
-    expect(screen.getByRole('group', { name: 'How group B runs' })).toBeInTheDocument()
+    expect(await screen.findByText('Warm-up')).toBeInTheDocument()
+    // The second block was left unnamed, so it reads by its position.
+    expect(screen.getByText('Block B')).toBeInTheDocument()
+    expect(screen.getByText('One set of each, 4 times through')).toBeInTheDocument()
+    expect(screen.queryByText('Start from')).not.toBeInTheDocument()
   })
 
   // Effects run twice under StrictMode, so two loads are in flight at once and

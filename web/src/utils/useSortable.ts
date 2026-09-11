@@ -3,9 +3,23 @@ import type { Options } from 'sortablejs'
 import { useEffect, useRef } from 'react'
 import Sortable from 'sortablejs'
 
-interface Config extends Omit<Options, 'onUpdate'> {
-  /** Called with the moved item's old and new positions. */
+interface Config extends Omit<Options, 'onUpdate' | 'onEnd'> {
+  /** Called with the moved item's old and new positions inside this list. */
   onReorder: (from: number, to: number) => void
+  /**
+   * Called when a row is dropped into another list, with both lists and the
+   * positions it left and landed in. Only lists sharing a SortableJS `group`
+   * can hand rows to each other, so a caller that sets none never sees this.
+   */
+  onMoveBetween?: (move: MoveBetween) => void
+}
+
+/** One row's move out of one list and into another. */
+interface MoveBetween {
+  from: HTMLElement
+  fromIndex: number
+  to: HTMLElement
+  toIndex: number
 }
 
 /**
@@ -25,16 +39,18 @@ interface Config extends Omit<Options, 'onUpdate'> {
  * controls on a row that has little width to spare.
  */
 export const useSortable = <T extends HTMLElement>(
-  { onReorder, ...options }: Config,
+  { onReorder, onMoveBetween, ...options }: Config,
   enabled = true,
 ): React.RefObject<T | null> => {
   const list = useRef<T>(null)
   const handler = useRef(onReorder)
+  const mover = useRef(onMoveBetween)
 
   // No dependency array: this runs after every render, so the ref always holds
   // the latest callback.
   useEffect(() => {
     handler.current = onReorder
+    mover.current = onMoveBetween
   })
 
   const config = useRef(options)
@@ -46,6 +62,22 @@ export const useSortable = <T extends HTMLElement>(
     const sortable = Sortable.create(element, {
       ...config.current,
       onUpdate: (event) => handler.current(event.oldIndex ?? 0, event.newIndex ?? 0),
+      onEnd: (event) => {
+        if (event.from === event.to) return
+
+        // SortableJS has already re-parented the row. React is about to render
+        // both lists from state and would look for the row where it no longer
+        // is, so it goes back first and the re-render puts it where it belongs.
+        const fromIndex = event.oldIndex ?? 0
+        event.from.insertBefore(event.item, event.from.children[fromIndex] ?? null)
+
+        mover.current?.({
+          from: event.from,
+          fromIndex,
+          to: event.to,
+          toIndex: event.newIndex ?? 0,
+        })
+      },
     })
 
     // Dragging is a pointer gesture, so without this the handle is a control
