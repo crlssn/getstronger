@@ -1008,10 +1008,13 @@ test.describe('plan lifecycle', () => {
   // screens used to read it as "gone" and send the reader back to the list.
   test('offers a retry when a plan does not load', async ({ page }) => {
     test.info().annotations.push(allowRuntimeErrors)
-    let refused = false
+
+    // Refused until the retry rather than once: the dev server runs the app
+    // under StrictMode, where the screen's load effect fires twice, and a
+    // single refusal is spent by the first of the two.
+    let refusing = true
     await page.route('**/api.v1.RoutineService/GetPlan', async (route) => {
-      if (!refused) {
-        refused = true
+      if (refusing) {
         await route.fulfill({ status: 500, contentType: 'application/json', body: '{}' })
         return
       }
@@ -1027,6 +1030,7 @@ test.describe('plan lifecycle', () => {
     await expect(failure).toBeVisible()
     await expect(page).toHaveURL(/\/plans\/[0-9a-f-]{36}$/)
 
+    refusing = false
     await failure.getByRole('button', { name: 'Try again' }).click()
     await expect(page.getByRole('heading', { name: 'Delete plan' })).toBeVisible()
   })
