@@ -49,6 +49,7 @@ type RoutineGroupTemplate struct {
 	Rounds                      func() int32
 	Role                        func() null.Val[enums.RoutineGroupRole]
 	SkipLastOnFinalRound        func() bool
+	Title                       func() string
 
 	r routineGroupR
 	f *Factory
@@ -148,6 +149,10 @@ func (o RoutineGroupTemplate) BuildSetter() *models.RoutineGroupSetter {
 		val := o.SkipLastOnFinalRound()
 		m.SkipLastOnFinalRound = omit.From(val)
 	}
+	if o.Title != nil {
+		val := o.Title()
+		m.Title = omit.From(val)
+	}
 
 	return m
 }
@@ -199,6 +204,9 @@ func (o RoutineGroupTemplate) Build() *models.RoutineGroup {
 	}
 	if o.SkipLastOnFinalRound != nil {
 		m.SkipLastOnFinalRound = o.SkipLastOnFinalRound()
+	}
+	if o.Title != nil {
+		m.Title = o.Title()
 	}
 
 	o.setModelRels(m)
@@ -405,6 +413,7 @@ func (m routineGroupMods) RandomizeAllColumns(f *faker.Faker) RoutineGroupMod {
 		RoutineGroupMods.RandomRounds(f),
 		RoutineGroupMods.RandomRole(f),
 		RoutineGroupMods.RandomSkipLastOnFinalRound(f),
+		RoutineGroupMods.RandomTitle(f),
 	}
 }
 
@@ -736,6 +745,37 @@ func (m routineGroupMods) RandomSkipLastOnFinalRound(f *faker.Faker) RoutineGrou
 	return RoutineGroupModFunc(func(_ context.Context, o *RoutineGroupTemplate) {
 		o.SkipLastOnFinalRound = func() bool {
 			return random_bool(f)
+		}
+	})
+}
+
+// Set the model columns to this value
+func (m routineGroupMods) Title(val string) RoutineGroupMod {
+	return RoutineGroupModFunc(func(_ context.Context, o *RoutineGroupTemplate) {
+		o.Title = func() string { return val }
+	})
+}
+
+// Set the Column from the function
+func (m routineGroupMods) TitleFunc(f func() string) RoutineGroupMod {
+	return RoutineGroupModFunc(func(_ context.Context, o *RoutineGroupTemplate) {
+		o.Title = f
+	})
+}
+
+// Clear any values for the column
+func (m routineGroupMods) UnsetTitle() RoutineGroupMod {
+	return RoutineGroupModFunc(func(_ context.Context, o *RoutineGroupTemplate) {
+		o.Title = nil
+	})
+}
+
+// Generates a random value for the column using the given faker
+// if faker is nil, a default faker is used
+func (m routineGroupMods) RandomTitle(f *faker.Faker) RoutineGroupMod {
+	return RoutineGroupModFunc(func(_ context.Context, o *RoutineGroupTemplate) {
+		o.Title = func() string {
+			return random_string(f)
 		}
 	})
 }

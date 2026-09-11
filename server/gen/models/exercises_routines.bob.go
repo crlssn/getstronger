@@ -9,6 +9,7 @@ import (
 	"io"
 
 	"github.com/aarondl/opt/omit"
+	enums "github.com/crlssn/getstronger/server/gen/models/enums"
 	"github.com/gofrs/uuid/v5"
 	"github.com/stephenafamo/bob"
 	"github.com/stephenafamo/bob/dialect/psql"
@@ -25,13 +26,16 @@ import (
 
 // ExercisesRoutine is an object representing the database table.
 type ExercisesRoutine struct {
-	RoutineID             uuid.UUID `db:"routine_id" `
-	ExerciseID            uuid.UUID `db:"exercise_id" `
-	Position              int32     `db:"position" `
-	GroupID               uuid.UUID `db:"group_id" `
-	ID                    uuid.UUID `db:"id,pk" `
-	RestSeconds           int32     `db:"rest_seconds" `
-	TargetDurationSeconds int32     `db:"target_duration_seconds" `
+	RoutineID             uuid.UUID                     `db:"routine_id" `
+	ExerciseID            uuid.UUID                     `db:"exercise_id" `
+	Position              int32                         `db:"position" `
+	GroupID               uuid.UUID                     `db:"group_id" `
+	ID                    uuid.UUID                     `db:"id,pk" `
+	RestSeconds           int32                         `db:"rest_seconds" `
+	TargetDurationSeconds int32                         `db:"target_duration_seconds" `
+	Tracking              enums.RoutineExerciseTracking `db:"tracking" `
+	Sets                  int32                         `db:"sets" `
+	TargetDistanceMeters  int32                         `db:"target_distance_meters" `
 
 	R exercisesRoutineR `db:"-" `
 }
@@ -66,7 +70,7 @@ type exercisesRoutineRLoaded struct {
 
 func buildExercisesRoutineColumns(tableName string) exercisesRoutineColumns {
 	columnsExpr := expr.NewColumnsExpr(
-		"routine_id", "exercise_id", "position", "group_id", "id", "rest_seconds", "target_duration_seconds",
+		"routine_id", "exercise_id", "position", "group_id", "id", "rest_seconds", "target_duration_seconds", "tracking", "sets", "target_distance_meters",
 	)
 
 	if tableName != "" {
@@ -83,6 +87,9 @@ func buildExercisesRoutineColumns(tableName string) exercisesRoutineColumns {
 		ID:                    buildExercisesRoutineColumn(tableName, "id"),
 		RestSeconds:           buildExercisesRoutineColumn(tableName, "rest_seconds"),
 		TargetDurationSeconds: buildExercisesRoutineColumn(tableName, "target_duration_seconds"),
+		Tracking:              buildExercisesRoutineColumn(tableName, "tracking"),
+		Sets:                  buildExercisesRoutineColumn(tableName, "sets"),
+		TargetDistanceMeters:  buildExercisesRoutineColumn(tableName, "target_distance_meters"),
 	}
 }
 
@@ -96,6 +103,9 @@ type exercisesRoutineColumns struct {
 	ID                    exercisesRoutineColumn
 	RestSeconds           exercisesRoutineColumn
 	TargetDurationSeconds exercisesRoutineColumn
+	Tracking              exercisesRoutineColumn
+	Sets                  exercisesRoutineColumn
+	TargetDistanceMeters  exercisesRoutineColumn
 }
 
 // Alias returns the current table alias for the columns set.
@@ -141,17 +151,20 @@ func (c exercisesRoutineColumn) ShouldOmitParens() bool {
 // All values are optional, and do not have to be set
 // Generated columns are not included
 type ExercisesRoutineSetter struct {
-	RoutineID             omit.Val[uuid.UUID] `db:"routine_id" `
-	ExerciseID            omit.Val[uuid.UUID] `db:"exercise_id" `
-	Position              omit.Val[int32]     `db:"position" `
-	GroupID               omit.Val[uuid.UUID] `db:"group_id" `
-	ID                    omit.Val[uuid.UUID] `db:"id,pk" `
-	RestSeconds           omit.Val[int32]     `db:"rest_seconds" `
-	TargetDurationSeconds omit.Val[int32]     `db:"target_duration_seconds" `
+	RoutineID             omit.Val[uuid.UUID]                     `db:"routine_id" `
+	ExerciseID            omit.Val[uuid.UUID]                     `db:"exercise_id" `
+	Position              omit.Val[int32]                         `db:"position" `
+	GroupID               omit.Val[uuid.UUID]                     `db:"group_id" `
+	ID                    omit.Val[uuid.UUID]                     `db:"id,pk" `
+	RestSeconds           omit.Val[int32]                         `db:"rest_seconds" `
+	TargetDurationSeconds omit.Val[int32]                         `db:"target_duration_seconds" `
+	Tracking              omit.Val[enums.RoutineExerciseTracking] `db:"tracking" `
+	Sets                  omit.Val[int32]                         `db:"sets" `
+	TargetDistanceMeters  omit.Val[int32]                         `db:"target_distance_meters" `
 }
 
 func (s ExercisesRoutineSetter) SetColumns() []string {
-	vals := make([]string, 0, 7)
+	vals := make([]string, 0, 10)
 	if s.RoutineID.IsValue() {
 		vals = append(vals, "routine_id")
 	}
@@ -172,6 +185,15 @@ func (s ExercisesRoutineSetter) SetColumns() []string {
 	}
 	if s.TargetDurationSeconds.IsValue() {
 		vals = append(vals, "target_duration_seconds")
+	}
+	if s.Tracking.IsValue() {
+		vals = append(vals, "tracking")
+	}
+	if s.Sets.IsValue() {
+		vals = append(vals, "sets")
+	}
+	if s.TargetDistanceMeters.IsValue() {
+		vals = append(vals, "target_distance_meters")
 	}
 	return vals
 }
@@ -197,6 +219,15 @@ func (s ExercisesRoutineSetter) Overwrite(t *ExercisesRoutine) {
 	}
 	if s.TargetDurationSeconds.IsValue() {
 		t.TargetDurationSeconds = s.TargetDurationSeconds.MustGet()
+	}
+	if s.Tracking.IsValue() {
+		t.Tracking = s.Tracking.MustGet()
+	}
+	if s.Sets.IsValue() {
+		t.Sets = s.Sets.MustGet()
+	}
+	if s.TargetDistanceMeters.IsValue() {
+		t.TargetDistanceMeters = s.TargetDistanceMeters.MustGet()
 	}
 }
 
@@ -241,6 +272,21 @@ func (s *ExercisesRoutineSetter) Apply(q *dialect.InsertQuery) {
 				return psql.Raw("DEFAULT").WriteSQL(ctx, w, d, start)
 			}
 			return psql.Arg(s.TargetDurationSeconds.MustGet()).WriteSQL(ctx, w, d, start)
+		}), bob.ExpressionFunc(func(ctx context.Context, w io.StringWriter, d bob.Dialect, start int) ([]any, error) {
+			if s.Tracking.IsUnset() {
+				return psql.Raw("DEFAULT").WriteSQL(ctx, w, d, start)
+			}
+			return psql.Arg(s.Tracking.MustGet()).WriteSQL(ctx, w, d, start)
+		}), bob.ExpressionFunc(func(ctx context.Context, w io.StringWriter, d bob.Dialect, start int) ([]any, error) {
+			if s.Sets.IsUnset() {
+				return psql.Raw("DEFAULT").WriteSQL(ctx, w, d, start)
+			}
+			return psql.Arg(s.Sets.MustGet()).WriteSQL(ctx, w, d, start)
+		}), bob.ExpressionFunc(func(ctx context.Context, w io.StringWriter, d bob.Dialect, start int) ([]any, error) {
+			if s.TargetDistanceMeters.IsUnset() {
+				return psql.Raw("DEFAULT").WriteSQL(ctx, w, d, start)
+			}
+			return psql.Arg(s.TargetDistanceMeters.MustGet()).WriteSQL(ctx, w, d, start)
 		}))
 }
 
@@ -249,7 +295,7 @@ func (s ExercisesRoutineSetter) UpdateMod() bob.Mod[*dialect.UpdateQuery] {
 }
 
 func (s ExercisesRoutineSetter) Expressions(prefix ...string) []bob.Expression {
-	exprs := make([]bob.Expression, 0, 7)
+	exprs := make([]bob.Expression, 0, 10)
 
 	if s.RoutineID.IsValue() {
 		exprs = append(exprs, expr.Join{Sep: " = ", Exprs: []bob.Expression{
@@ -300,6 +346,27 @@ func (s ExercisesRoutineSetter) Expressions(prefix ...string) []bob.Expression {
 		}})
 	}
 
+	if s.Tracking.IsValue() {
+		exprs = append(exprs, expr.Join{Sep: " = ", Exprs: []bob.Expression{
+			psql.Quote(append(prefix, "tracking")...),
+			psql.Arg(s.Tracking),
+		}})
+	}
+
+	if s.Sets.IsValue() {
+		exprs = append(exprs, expr.Join{Sep: " = ", Exprs: []bob.Expression{
+			psql.Quote(append(prefix, "sets")...),
+			psql.Arg(s.Sets),
+		}})
+	}
+
+	if s.TargetDistanceMeters.IsValue() {
+		exprs = append(exprs, expr.Join{Sep: " = ", Exprs: []bob.Expression{
+			psql.Quote(append(prefix, "target_distance_meters")...),
+			psql.Arg(s.TargetDistanceMeters),
+		}})
+	}
+
 	return exprs
 }
 
@@ -310,7 +377,7 @@ func exercisesRoutineScanMapper(ctx context.Context, cols []string) (scan.Before
 		idx int
 		dst func(o *ExercisesRoutine) any
 	}
-	targets := make([]target, 0, 7)
+	targets := make([]target, 0, 10)
 	for i, col := range cols {
 		switch col {
 		case "routine_id":
@@ -327,6 +394,12 @@ func exercisesRoutineScanMapper(ctx context.Context, cols []string) (scan.Before
 			targets = append(targets, target{i, func(o *ExercisesRoutine) any { return &o.RestSeconds }})
 		case "target_duration_seconds":
 			targets = append(targets, target{i, func(o *ExercisesRoutine) any { return &o.TargetDurationSeconds }})
+		case "tracking":
+			targets = append(targets, target{i, func(o *ExercisesRoutine) any { return &o.Tracking }})
+		case "sets":
+			targets = append(targets, target{i, func(o *ExercisesRoutine) any { return &o.Sets }})
+		case "target_distance_meters":
+			targets = append(targets, target{i, func(o *ExercisesRoutine) any { return &o.TargetDistanceMeters }})
 		}
 	}
 
@@ -851,6 +924,9 @@ type exercisesRoutineWhere[Q psql.Filterable] struct {
 	ID                    psql.WhereMod[Q, uuid.UUID]
 	RestSeconds           psql.WhereMod[Q, int32]
 	TargetDurationSeconds psql.WhereMod[Q, int32]
+	Tracking              psql.WhereMod[Q, enums.RoutineExerciseTracking]
+	Sets                  psql.WhereMod[Q, int32]
+	TargetDistanceMeters  psql.WhereMod[Q, int32]
 	R                     exercisesRoutineWhereR[Q]
 }
 
@@ -868,6 +944,9 @@ func buildExercisesRoutineWhere[Q psql.Filterable](cols exercisesRoutineColumns)
 		ID:                    psql.Where[Q, uuid.UUID](cols.ID.Expression),
 		RestSeconds:           psql.Where[Q, int32](cols.RestSeconds.Expression),
 		TargetDurationSeconds: psql.Where[Q, int32](cols.TargetDurationSeconds.Expression),
+		Tracking:              psql.Where[Q, enums.RoutineExerciseTracking](cols.Tracking.Expression),
+		Sets:                  psql.Where[Q, int32](cols.Sets.Expression),
+		TargetDistanceMeters:  psql.Where[Q, int32](cols.TargetDistanceMeters.Expression),
 		R:                     exercisesRoutineWhereR[Q]{cols: cols},
 	}
 }

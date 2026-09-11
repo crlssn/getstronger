@@ -45,6 +45,13 @@ var RoutineGroupErrors = &routineGroupErrors{
 		columns: []string{"rounds"},
 		s:       "routine_groups_rounds_check",
 	},
+
+	ErrCheckRoutineGroupsTitleCheck: &CheckConstraintError{
+		schema:  "",
+		table:   "routine_groups",
+		columns: []string{"title"},
+		s:       "routine_groups_title_check",
+	},
 }
 
 type routineGroupErrors struct {
@@ -59,4 +66,6 @@ type routineGroupErrors struct {
 	ErrCheckRoutineGroupsRestBetweenRoundsSecondsCheck *CheckConstraintError
 
 	ErrCheckRoutineGroupsRoundsCheck *CheckConstraintError
+
+	ErrCheckRoutineGroupsTitleCheck *CheckConstraintError
 }
