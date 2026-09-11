@@ -958,6 +958,7 @@ test.describe('plan lifecycle', () => {
 
     for (const name of [firstRoutine, secondRoutine]) {
       await page.goto('/routines/create')
+      await startRoutine(page, 'Blank')
       await page.getByLabel('Routine name').fill(name)
       await addRoutineExercise(page)
       await page.getByRole('button', { name: 'Create routine' }).click()

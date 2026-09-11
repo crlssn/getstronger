@@ -135,8 +135,21 @@ func (f *Factory) AddTimedRoutineExercise(
 			bobfactory.ExercisesRoutineMods.WithExistingGroupRoutineGroup(routineGroupWithoutRelationships(group)),
 			bobfactory.ExercisesRoutineMods.Position(position),
 			bobfactory.ExercisesRoutineMods.TargetDurationSeconds(targetDurationSeconds),
+			// How the work is counted, which the column cannot default to: a
+			// held exercise is one the clock ends, and every other one is
+			// counted in sets.
+			bobfactory.ExercisesRoutineMods.Tracking(routineExerciseTracking(targetDurationSeconds)),
 		).MustCreate(ctx, f.exec)
 	}
+}
+
+// routineExerciseTracking is how a seeded occurrence's work is counted.
+func routineExerciseTracking(targetDurationSeconds int32) enums.RoutineExerciseTracking {
+	if targetDurationSeconds > 0 {
+		return enums.RoutineExerciseTrackingTimed
+	}
+
+	return enums.RoutineExerciseTrackingSets
 }
 
 type RoutineGroupOpt func(group *models.RoutineGroupSetter)
@@ -153,6 +166,13 @@ func RoutineGroupCircuit(restBetweenExercisesSeconds, restBetweenRoundsSeconds i
 func RoutineGroupRounds(rounds int32) RoutineGroupOpt {
 	return func(group *models.RoutineGroupSetter) {
 		group.Rounds = omit.From(rounds)
+	}
+}
+
+// RoutineGroupTitle is what the athlete named the block.
+func RoutineGroupTitle(title string) RoutineGroupOpt {
+	return func(group *models.RoutineGroupSetter) {
+		group.Title = omit.From(title)
 	}
 }
 

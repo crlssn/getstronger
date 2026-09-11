@@ -73,6 +73,15 @@ export const prescriptionOf = (
 }
 
 /**
+ * Whether a saved occurrence prescribes anything at all.
+ *
+ * A routine saved before it could prescribe says nothing, and a screen that
+ * only reads what the routine says must not put a default in its mouth.
+ */
+export const prescribes = (entry: RoutineExercise): boolean =>
+  entry.sets > 0 || entry.targetDurationSeconds > 0 || entry.targetDistanceMeters > 0
+
+/**
  * A saved occurrence read as a prescription. The values a routine saved before
  * it could prescribe never wrote fall back to what a new occurrence takes, so a
  * row reads as a prescription rather than as a row of zeros.

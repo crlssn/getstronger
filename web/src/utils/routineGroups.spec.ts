@@ -380,11 +380,18 @@ describe('the planned session', () => {
     expect(plannedIntervals(timed)).toBe(4)
   })
 
-  it('drops the interval a final round ends early', () => {
+  it('drops the interval a final round ends early, and the time it took', () => {
     const blocks = fill(startingBlocks('circuit', intervalTitles), 0, ['a', 'b'], 'timed')
-    const skipping = withGroup(blocks, blocks[0].id, { rounds: 2, skipLastOnFinalRound: true })
+    const skipping = withGroup(blocks, blocks[0].id, {
+      rounds: 2,
+      restBetweenRoundsSeconds: 0,
+      skipLastOnFinalRound: true,
+      entries: blocks[0].entries.map((entry) => ({ ...entry, targetDurationSeconds: 20 })),
+    })
 
     expect(plannedIntervals(skipping)).toBe(3)
+    // Three twenty-second stations rather than four.
+    expect(plannedSeconds(skipping)).toBe(60)
   })
 
   it('reads a prescribed distance as the time a steady run covers it in', () => {

@@ -35,7 +35,7 @@ import { AppSkeleton } from '@/ui/components/AppSkeleton'
 import { ExerciseTags } from '@/ui/exercises/ExerciseTags'
 import { formatExerciseSet } from '@/utils/exerciseMeasurements'
 import { groupLetter, groupRole } from '@/utils/routineGroups'
-import { prescribedFromRoutine, prescriptionOf } from '@/utils/routinePrescription'
+import { prescribedFromRoutine, prescribes, prescriptionOf } from '@/utils/routinePrescription'
 import { intervalPartBadge, intervalPartNote, intervalPartTitle } from '@/ui/routines/intervalParts'
 import { useSortable } from '@/utils/useSortable'
 import styles from './ViewRoutine.module.css'
@@ -173,9 +173,12 @@ export const ViewRoutine = () => {
     const summary = lastSession(exercise.id)
     // What the routine asks for, said before what last happened: one is the
     // plan and the other is the history, and the plan is why this row is here.
-    const prescription = prescribed
-      ? prescriptionOf(prescribedFromRoutine(prescribed), t, distanceUnit)
-      : undefined
+    // A routine saved before it could prescribe says nothing, and nothing is
+    // what the row then shows.
+    const prescription =
+      prescribed && prescribes(prescribed)
+        ? prescriptionOf(prescribedFromRoutine(prescribed), t, distanceUnit)
+        : undefined
 
     return (
       <li key={key || exercise.id} data-id={exercise.id}>
