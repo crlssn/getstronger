@@ -12,12 +12,14 @@ import {
 import { useConfirmationStore } from '@/stores/confirmation'
 import { usePreferencesStore } from '@/stores/preferences'
 import { cn } from '@/ui/cn'
+import { distanceUnitLabel } from '@/utils/distanceUnits'
 import { AppButton } from '@/ui/components/AppButton'
 import { AppCycleButton } from '@/ui/components/AppCycleButton'
 import { AppInlineError } from '@/ui/components/AppInlineError'
 import { AppStat } from '@/ui/components/AppStat'
 import { WorkoutRoute } from '@/ui/features/WorkoutRoute'
 import { distanceIn, paceIn, speedIn, type Measured } from '@/utils/exerciseMeasurements'
+import { halfwayPhrase } from '@/utils/halfwayCue'
 import { hasPaceTargets, type Pacing } from '@/utils/pacing'
 import {
   buildTimeline,
@@ -54,6 +56,11 @@ interface Props {
   saved?: Recording
   onComplete: (recording: Recording) => void
   onCancel: () => void
+  /** Keeps the finished recording, where there is one to keep. */
+  onSave?: () => void
+  /** Whether that save is in flight, and what it said if it failed. */
+  saving?: boolean
+  saveError?: string
 }
 
 export const TimedCircuitRecorder = ({
@@ -63,12 +70,16 @@ export const TimedCircuitRecorder = ({
   saved,
   onComplete,
   onCancel,
+  onSave,
+  saving = false,
+  saveError = '',
 }: Props) => {
   const { t, i18n } = useTranslation()
   const unit = usePreferencesStore((state) => state.distanceUnit)
   const autoPause = usePreferencesStore((state) => state.autoPause)
   const volume = useAnnouncementsStore((state) => state.volume)
   const cueLeadSeconds = usePreferencesStore((state) => state.intervalCueLeadSeconds)
+  const halfwayCue = usePreferencesStore((state) => state.halfwayCue)
   const paceReference = usePreferencesStore((state) => state.paceReference)
   const [recording, setRecording] = useState(saved)
   const [error, setError] = useState('')
@@ -114,6 +125,10 @@ export const TimedCircuitRecorder = ({
           // Spoken by the recorder, so it is handed the words rather than
           // asked to translate.
           cuePhrase: t('timedCircuit.cueSeconds', { count: cueLeadSeconds }),
+          // The pace is only known while the interval is being run, so the
+          // recorder is handed the phrase with the hole still in it.
+          halfwayPhrase: halfwayCue ? halfwayPhrase(t, unit) : '',
+          distanceUnit: distanceUnitLabel(unit),
           completedPhrase: t('timedCircuit.completed'),
           pacing,
           autoPause,
@@ -248,10 +263,20 @@ export const TimedCircuitRecorder = ({
         <section className={styles.review}>
           <WorkoutRoute recording={recording} />
           {error && <AppInlineError>{error}</AppInlineError>}
+          {saveError && <AppInlineError>{saveError}</AppInlineError>}
+          {/* Keeping the run is what the athlete came back for, so it leads
+              and throwing it away follows, in the quietest button there is:
+              the two used to sit the other way round, with the exit wearing
+              the louder colour of the pair. */}
+          {onSave && (
+            <AppButton type="button" colour="primary" disabled={busy || saving} onClick={onSave}>
+              {t('common.save')}
+            </AppButton>
+          )}
           <AppButton
             type="button"
-            colour="destructive"
-            disabled={busy}
+            colour="ghost"
+            disabled={busy || saving}
             onClick={() => void discard()}
           >
             {t('timedCircuit.cancel')}

@@ -14,6 +14,13 @@ interface TimedCircuitPlugin {
     cueLeadSeconds: number
     /** The warning, spoken: the seconds left, already in the athlete's language. */
     cuePhrase: string
+    /**
+     * Said at the midpoint of an interval, with `{pace}` left for the recorder
+     * to fill in from what it has measured. Empty says nothing.
+     */
+    halfwayPhrase: string
+    /** The unit that pace is per, `km` or `mi`. */
+    distanceUnit: string
     /** Said once the last interval runs out; ending a session by hand says nothing. */
     completedPhrase: string
     pacing?: Pacing

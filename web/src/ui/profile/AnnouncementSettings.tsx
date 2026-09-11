@@ -1,7 +1,13 @@
 import { CheckIcon } from '@heroicons/react/24/outline'
 import { useTranslation } from 'react-i18next'
 
-import { announcementVolumes, useAnnouncementsStore, volumeLabelKey } from '@/stores/announcements'
+import { previewAnnouncement } from '@/native/audioPreview'
+import {
+  announcementVolumes,
+  useAnnouncementsStore,
+  volumeLabelKey,
+  type AnnouncementVolume,
+} from '@/stores/announcements'
 import { AppOptionRow } from '@/ui/components/AppOptionRow'
 import styles from './AnnouncementSettings.module.css'
 
@@ -11,6 +17,13 @@ export const AnnouncementSettings = () => {
 
   const chosen = useAnnouncementsStore((state) => state.volume)
   const setVolume = useAnnouncementsStore((state) => state.setVolume)
+
+  // Chosen and heard in one tap: the level only ever means something out on a
+  // run, so the row answers in the voice it is choosing between.
+  const choose = (volume: AnnouncementVolume) => {
+    setVolume(volume)
+    previewAnnouncement(t('settings.announcementsExample'), volume)
+  }
 
   const tick = (selected: boolean) => (
     <span className={styles.tick}>{selected && <CheckIcon aria-hidden="true" />}</span>
@@ -26,7 +39,7 @@ export const AnnouncementSettings = () => {
             key={volume}
             selected={chosen === volume}
             trailing={tick(chosen === volume)}
-            onClick={() => setVolume(volume)}
+            onClick={() => choose(volume)}
           >
             <strong>{t(volumeLabelKey[volume])}</strong>
             {/* Off is the announcements alone: the cue before an interval ends

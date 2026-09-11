@@ -142,6 +142,69 @@ test.describe('settings', () => {
     await expect(settings(page).getByRole('link', { name: /Interval cue/ })).toContainText('Off')
   })
 
+  // A level, a lead and a pair of notes are all things that only exist when
+  // heard, so each row answers in the voice it is choosing between. The
+  // synthesiser is stubbed because a browser in CI has no voice to speak with.
+  test('plays an example of the sound setting just chosen', async ({ page }) => {
+    type Spied = Window & { spokenExamples?: string[] }
+    await page.addInitScript(() => {
+      const spoken: string[] = []
+      ;(window as Spied).spokenExamples = spoken
+      window.speechSynthesis.speak = (utterance: SpeechSynthesisUtterance) => {
+        spoken.push(utterance.text)
+      }
+    })
+    // Reset by every navigation, because the script runs again on each one.
+    const spoken = () => page.evaluate(() => (window as Spied).spokenExamples ?? [])
+
+    await page.goto('/settings/announcements')
+    await page.getByRole('button', { name: 'Low' }).click()
+    await expect.poll(spoken).toEqual(['Run for 2 minutes'])
+
+    await page.goto('/settings/interval-cue')
+    await page.getByRole('button', { name: '5 seconds before the end', exact: true }).click()
+    await expect.poll(spoken).toEqual(['5 seconds'])
+
+    // Put the device's defaults back for the tests after this one.
+    await page.goto('/settings/announcements')
+    await page.getByRole('button', { name: 'Full' }).click()
+    await page.goto('/settings/interval-cue')
+    await page.getByRole('button', { name: '10 seconds before the end' }).click()
+  })
+
+  // The one preference on the profile the account knows nothing about. The
+  // recorder half of this is native-only, so what a browser can pin is the
+  // switch, what it says when it is turned on, and that it survives a reload.
+  test('turns the half-way call on, says it, and keeps it', async ({ page }) => {
+    type Spied = Window & { spokenExamples?: string[] }
+    await page.addInitScript(() => {
+      const spoken: string[] = []
+      ;(window as Spied).spokenExamples = spoken
+      window.speechSynthesis.speak = (utterance: SpeechSynthesisUtterance) => {
+        spoken.push(utterance.text)
+      }
+    })
+
+    await page.goto('/profile')
+    const call = page.getByRole('switch', { name: 'Call the half-way point' })
+    await expect(call).toHaveAttribute('aria-checked', 'false')
+
+    await call.click()
+    await expect
+      .poll(() => page.evaluate(() => (window as Spied).spokenExamples ?? []))
+      .toEqual(['Half way. Pace 5:00 per kilometre'])
+
+    // Kept on the device, so a reload is what proves it landed.
+    await page.reload()
+    await expect(page.getByRole('switch', { name: 'Call the half-way point' })).toHaveAttribute(
+      'aria-checked',
+      'true',
+    )
+
+    // Put the device's default back for the tests after this one.
+    await page.getByRole('switch', { name: 'Call the half-way point' }).click()
+  })
+
   // The tones a recording plays are compared against one of the athlete's own
   // sessions, or against none: three choices, so a screen of its own. Kept on
   // the device with the appearance and the language rather than on the account.

@@ -12,6 +12,14 @@ vi.mock('@/http/requests', async (importOriginal) => ({
   updateUserAutoPause: vi.fn(),
 }))
 
+vi.mock('@/native/audioPreview', () => ({
+  previewAnnouncement: vi.fn(),
+  previewIntervalCue: vi.fn(),
+  previewPaceTones: vi.fn(),
+  previewHalfway: vi.fn(),
+}))
+
+import { previewHalfway } from '@/native/audioPreview'
 import * as requests from '@/http/requests'
 import { GetDashboardResponseSchema } from '@/proto/api/v1/routine_service_pb'
 import { DistanceUnit, WeightUnit } from '@/proto/api/v1/shared_pb'
@@ -299,6 +307,18 @@ describe('ProfileView', () => {
 
     await waitFor(() => expect(mocked.updateUserAutoPause).toHaveBeenCalledWith(true))
     expect(usePreferencesStore.getState().autoPause).toBe(true)
+  })
+
+  // The one preference on this tab the account knows nothing about: it is the
+  // device's, like the interval cue, and turning it on says what it will say.
+  test('switches the half-way call on, and says it once', async () => {
+    render()
+
+    await loaded()
+    await userEvent.click(screen.getByRole('switch', { name: 'Call the half-way point' }))
+
+    expect(usePreferencesStore.getState().halfwayCue).toBe(true)
+    expect(previewHalfway).toHaveBeenCalledWith('Half way. Pace 5:00 per kilometre', true, 'full')
   })
 
   // The tab asks the account what the preferences are as it opens, and it

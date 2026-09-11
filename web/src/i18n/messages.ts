@@ -55,6 +55,11 @@ export const en = {
     // runner has time to hear; and the ending, once the last interval runs out.
     cueSeconds_one: '{count} second',
     cueSeconds_other: '{count} seconds',
+    // Said at the midpoint of an interval, with the pace held over it so far.
+    // The recorder measuring the pace is the one that fills {pace} in, so the
+    // unit it is per belongs to the phrase rather than being added after it.
+    halfwayKilometre: 'Half way. Pace {pace} per kilometre',
+    halfwayMile: 'Half way. Pace {pace} per mile',
     completed: 'Workout completed',
     pacedAgainstPrevious: 'Tones compare each interval with your last session',
     pacedAgainstBest: 'Tones compare each interval with your best session',
@@ -748,6 +753,8 @@ export const en = {
     autoPauseBody: 'Holds a recording at crossings and lets go when you move off again',
     autoPauseUpdated: 'Auto-pause updated',
     autoPauseUpdateFailed: 'Could not update auto-pause. Please try again.',
+    halfwayCue: 'Call the half-way point',
+    halfwayCueBody: 'Says the pace you are holding halfway through each interval',
     editProfile: 'Edit profile',
     profileUpdated: 'Profile updated',
     follow: 'Follow {name}',
@@ -809,6 +816,9 @@ export const en = {
     announcementsIntro:
       'How loudly a recording calls each interval. It is kept on this device, and the recording screen changes it mid-session.',
     announcementsOffBody: 'The interval cue is still called out',
+    // Played the moment a level is chosen: an interval instruction is what a
+    // recording says most often, so it is what the level is judged on.
+    announcementsExample: 'Run for 2 minutes',
     paceTones: 'Pace tones',
     paceTonesIntro:
       'A note in your ear when an interval pulls ahead of or falls behind one of your own sessions of the routine. It is kept on this device.',
@@ -994,6 +1004,8 @@ export const sv = {
     intervalNamed: '{name} {round}',
     cueSeconds_one: '{count} sekund',
     cueSeconds_other: '{count} sekunder',
+    halfwayKilometre: 'Halvvägs. Tempo {pace} per kilometer',
+    halfwayMile: 'Halvvägs. Tempo {pace} per mile',
     completed: 'Passet är klart',
     pacedAgainstPrevious: 'Tempoljuden jämför varje intervall med ditt senaste pass',
     pacedAgainstBest: 'Tempoljuden jämför varje intervall med ditt bästa pass',
@@ -1688,6 +1700,8 @@ export const sv = {
       'Pausar passet när du stannar, till exempel vid ett övergångsställe, och fortsätter när du rör dig igen',
     autoPauseUpdated: 'Autopaus uppdaterad',
     autoPauseUpdateFailed: 'Det gick inte att uppdatera autopausen. Försök igen.',
+    halfwayCue: 'Säg till halvvägs',
+    halfwayCueBody: 'Läser upp tempot du håller halvvägs genom varje intervall',
     editProfile: 'Redigera profil',
     profileUpdated: 'Profilen uppdaterad',
     follow: 'Följ {name}',
@@ -1747,6 +1761,7 @@ export const sv = {
     announcementsIntro:
       'Hur högt varje intervall läses upp under ett livepass. Det sparas bara på den här enheten och kan ändras direkt på skärmen under passet.',
     announcementsOffBody: 'Intervallsignalen läses ändå upp',
+    announcementsExample: 'Spring i 2 minuter',
     paceTones: 'Tempoljud',
     paceTonesIntro:
       'En ton i örat när ett intervall är snabbare eller långsammare än ett tidigare pass med samma upplägg. Det sparas bara på den här enheten.',

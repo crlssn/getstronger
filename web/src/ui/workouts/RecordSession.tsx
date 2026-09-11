@@ -31,7 +31,7 @@ import { AppInlineError } from '@/ui/components/AppInlineError'
 import { AppPageHeader } from '@/ui/components/AppPageHeader'
 import { AppStat } from '@/ui/components/AppStat'
 import { RecordExerciseSheet } from '@/ui/workouts/RecordExerciseSheet'
-import { convertDistance } from '@/utils/distanceUnits'
+import { convertDistance, distanceUnitLabel } from '@/utils/distanceUnits'
 import { distanceIn, paceIn, speedIn } from '@/utils/exerciseMeasurements'
 import { DistanceUnit } from '@/proto/api/v1/shared_pb'
 import {
@@ -156,6 +156,10 @@ export const RecordSession = () => {
         // be said; the recorder is told the athlete's lead all the same.
         cueLeadSeconds,
         cuePhrase: t('timedCircuit.cueSeconds', { count: cueLeadSeconds }),
+        // Nor a midpoint: an interval with no end has none to find, so there
+        // is no phrase to hand over.
+        halfwayPhrase: '',
+        distanceUnit: distanceUnitLabel(distanceUnit),
         completedPhrase: t('timedCircuit.completed'),
         autoPause,
       })

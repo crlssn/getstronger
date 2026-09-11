@@ -48,6 +48,8 @@ public class TimedCircuitPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManagerD
     private var locale = "en"
     private var volume = 1.0
     private var audible = false
+    /// Whether whatever else is playing is currently held down for a word.
+    private var ducking = false
     private var autoPauses = false
     private var fixes: [Fix] = []
     /// The route as `smoothedPoints` has read it so far, and the filter's state.
@@ -66,6 +68,17 @@ public class TimedCircuitPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManagerD
     private var completedPhrase = ""
     /// The interval already warned about, so the cue is said once per interval.
     private var cued = -1
+    /// Said at an interval's midpoint, `{pace}` left for the pace measured over
+    /// it; empty says nothing. Mirrors `web/src/utils/halfwayCue.ts`.
+    private var halfwayPhrase = ""
+    /// The unit the spoken pace is per, as the web app reads it: `km` or `mi`.
+    private var paceUnit = "km"
+    /// The interval already called halfway, so the call is made once per interval.
+    private var halved = -1
+    /// The shortest interval with a midpoint worth naming, in seconds.
+    private let halfwayFloor = 60.0
+    /// The ground the pace holds behind before it is a number, in metres.
+    private let paceFloorMetres = 20.0
     // The session this one is paced against, as the web app settled it: a
     // target for each interval, and the three numbers that say when a
     // difference is worth hearing. Empty targets are a recording with nothing
@@ -155,6 +168,8 @@ public class TimedCircuitPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManagerD
         volume = min(max(call.getDouble("volume") ?? 1, 0), 1)
         cueLead = Double(call.getInt("cueLeadSeconds") ?? 10)
         cuePhrase = call.getString("cuePhrase") ?? ""
+        halfwayPhrase = call.getString("halfwayPhrase") ?? ""
+        paceUnit = call.getString("distanceUnit") ?? "km"
         completedPhrase = call.getString("completedPhrase") ?? ""
         readPacing(call.getObject("pacing"))
         autoPauses = call.getBool("autoPause") ?? false
@@ -169,6 +184,7 @@ public class TimedCircuitPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManagerD
         } catch { recording = nil; call.reject("Recording could not start", nil, error); return }
         spoken = -1
         cued = -1
+        halved = -1
         // After the session is active: an engine started before it has nothing
         // to play into.
         prepareTones()
@@ -187,6 +203,7 @@ public class TimedCircuitPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManagerD
         utterance.voice = announcementVoice()
         utterance.volume = Float(level)
         utterance.rate = announcementRate
+        duck(true)
         speech.speak(utterance)
     }
 
@@ -205,7 +222,9 @@ public class TimedCircuitPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManagerD
     }
 
     private func releaseAudioIfDone() {
-        guard recording == nil || recording?["endedAt"] != nil, !speech.isSpeaking else { return }
+        guard !speech.isSpeaking else { return }
+        duck(false)
+        guard recording == nil || recording?["endedAt"] != nil else { return }
         closeAudio()
     }
 
@@ -238,8 +257,8 @@ public class TimedCircuitPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManagerD
     /// the session open.
     private var needsAudio: Bool { volume > 0 || cueLead > 0 }
 
-    /// Mixed over whatever is playing and never ducking it: a runner's music
-    /// is theirs, and a word said over it is heard without it dropping away.
+    /// Mixed over whatever is playing: a runner's music is theirs, and the
+    /// notes are short enough to be heard over it.
     private func openAudio() throws {
         guard !audible else { return }
         try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default, options: [.mixWithOthers])
@@ -247,9 +266,32 @@ public class TimedCircuitPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManagerD
         audible = true
     }
 
+    /// Holds whatever else is playing down while a word is said, and lets it
+    /// back up after it.
+    ///
+    /// Mixing alone lost a cue under a chorus. How far the other audio drops
+    /// is the system's to decide — roughly a fifth of where it was — because
+    /// `duckOthers` is the whole of the API: there is no level to ask for.
+    private func duck(_ ducked: Bool) {
+        guard audible, ducked != ducking else { return }
+        let options: AVAudioSession.CategoryOptions =
+            ducked ? [.mixWithOthers, .duckOthers] : [.mixWithOthers]
+        do {
+            try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default, options: options)
+            // Re-activated so the option is applied to a session that is
+            // already running rather than to the next one.
+            try AVAudioSession.sharedInstance().setActive(true)
+            ducking = ducked
+        } catch {
+            // Whatever is playing carries on at its own volume, and the
+            // announcement is still said over it.
+        }
+    }
+
     private func closeAudio() {
         guard audible else { return }
         audible = false
+        ducking = false
         try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
     }
 
@@ -398,9 +440,13 @@ public class TimedCircuitPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManagerD
 
     /// Pace over the trailing window in seconds per kilometre, or nothing:
     /// one fix is a position rather than a speed.
-    private func currentPace(at time: Double) -> Double? {
+    ///
+    /// The window defaults to the one the pace tones judge over; the halfway
+    /// call asks for the interval so far instead, with the same floor the live
+    /// screen holds a pace back for.
+    private func currentPace(at time: Double, window: Double? = nil, floorMetres: Double = 0) -> Double? {
         let points = smoothedPoints()
-        let since = time - paceWindow * 1000
+        let since = time - (window ?? paceWindow) * 1000
         var metresRun = 0.0
         var seconds = 0.0
         for index in 1..<max(points.count, 1) {
@@ -412,7 +458,7 @@ public class TimedCircuitPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManagerD
             metresRun += edgeMetres(a, b)
             seconds += (closed - (a["timestamp"] as? Double ?? closed)) / 1000
         }
-        return metresRun > 0 ? (seconds / metresRun) * 1000 : nil
+        return metresRun > 0 && metresRun >= floorMetres ? (seconds / metresRun) * 1000 : nil
     }
 
     /// Sounds the crossing where this interval leaves the band the reference
@@ -443,6 +489,33 @@ public class TimedCircuitPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManagerD
         play(tone: zone)
     }
 
+    /// Calls the midpoint of a worked interval with the pace held over it.
+    ///
+    /// A rest is named by the recording but is not worked, and an open
+    /// interval has no end to halve, so neither is called. The call is made
+    /// once whether or not a pace came back: one arriving at four fifths of an
+    /// interval is not a call at its midpoint.
+    private func callHalfway(interval index: Int, of phase: [String: Any], seconds: Double, at time: Double) {
+        guard halved != index, !halfwayPhrase.isEmpty else { return }
+        let exercise = phase["exerciseId"] as? String ?? ""
+        let duration = phase["durationSeconds"] as? Double ?? 0
+        guard !exercise.isEmpty, duration >= halfwayFloor, seconds >= duration / 2 else { return }
+        halved = index
+        guard let pace = currentPace(at: time, window: seconds, floorMetres: paceFloorMetres) else { return }
+        speak(halfwaySaid(pace), at: cueVolume)
+    }
+
+    /// The phrase with the pace filled in, in the athlete's unit, as mm:ss.
+    ///
+    /// Mirrors `halfwaySaid` and `paceIn` in the web app: seconds per
+    /// kilometre is what every recorder measures, and the unit the athlete
+    /// reads is what it is said in.
+    private func halfwaySaid(_ secondsPerKilometre: Double) -> String {
+        let perUnit = Int((paceUnit == "mi" ? secondsPerKilometre * 1.609344 : secondsPerKilometre).rounded())
+        let said = String(format: "%d:%02d", perUnit / 60, perUnit % 60)
+        return halfwayPhrase.replacingOccurrences(of: "{pace}", with: said)
+    }
+
     private func tick() {
         guard let data = recording, data["endedAt"] == nil else { return }
         let time = now
@@ -467,7 +540,9 @@ public class TimedCircuitPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManagerD
                     cued = index
                     speak(cuePhrase, at: cueVolume)
                 }
-                judge(interval: index, seconds: (elapsed - opened) / 1000, at: time)
+                let phaseSeconds = (elapsed - opened) / 1000
+                callHalfway(interval: index, of: phase, seconds: phaseSeconds, at: time)
+                judge(interval: index, seconds: phaseSeconds, at: time)
                 if time - lastCheckpoint > 1000 { checkpoint() }
                 return
             }

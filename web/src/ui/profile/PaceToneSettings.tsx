@@ -1,6 +1,8 @@
 import { CheckIcon } from '@heroicons/react/24/outline'
 import { useTranslation } from 'react-i18next'
 
+import { previewPaceTones } from '@/native/audioPreview'
+import { useAnnouncementsStore } from '@/stores/announcements'
 import { usePreferencesStore } from '@/stores/preferences'
 import { AppOptionRow } from '@/ui/components/AppOptionRow'
 import { paceReferenceChoices, paceToneLabelKey, type PaceReferenceChoice } from '@/utils/pacing'
@@ -19,6 +21,13 @@ export const PaceToneSettings = () => {
 
   const chosen = usePreferencesStore((state) => state.paceReference)
   const setPaceReference = usePreferencesStore((state) => state.setPaceReference)
+  const volume = useAnnouncementsStore((state) => state.volume)
+
+  // Two notes no sentence describes: picking a comparison sounds the pair.
+  const choose = (choice: PaceReferenceChoice) => {
+    setPaceReference(choice)
+    previewPaceTones(choice, volume)
+  }
 
   const tick = (selected: boolean) => (
     <span className={styles.tick}>{selected && <CheckIcon aria-hidden="true" />}</span>
@@ -34,7 +43,7 @@ export const PaceToneSettings = () => {
             key={choice}
             selected={chosen === choice}
             trailing={tick(chosen === choice)}
-            onClick={() => setPaceReference(choice)}
+            onClick={() => choose(choice)}
           >
             <strong>{t(paceToneLabelKey[choice])}</strong>
             <small>{t(paceToneBodyKey[choice])}</small>

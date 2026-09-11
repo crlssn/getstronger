@@ -7,6 +7,7 @@ import { Link } from 'react-router-dom'
 
 import { getCurrentUser, updateUserAutofillSets, updateUserAutoPause } from '@/http/requests'
 import { localeNames } from '@/i18n'
+import { previewHalfway } from '@/native/audioPreview'
 import { useAnnouncementsStore, volumeLabelKey } from '@/stores/announcements'
 import { useAuthStore } from '@/stores/auth'
 import { useDashboardStore } from '@/stores/dashboard'
@@ -24,6 +25,7 @@ import { AppSkeleton } from '@/ui/components/AppSkeleton'
 import { AppSwitch } from '@/ui/components/AppSwitch'
 import { distanceUnitLabel } from '@/utils/distanceUnits'
 import { formatDistanceIn } from '@/utils/exerciseMeasurements'
+import { examplePaceSeconds, halfwayPhrase, halfwaySaid } from '@/utils/halfwayCue'
 import { handle, initials } from '@/utils/names'
 import { formatNumber } from '@/utils/numbers'
 import { weightUnitLabel } from '@/utils/weightUnits'
@@ -44,6 +46,7 @@ export const ProfileView = () => {
   const autofillSets = usePreferencesStore((state) => state.autofillSets)
   const autoPause = usePreferencesStore((state) => state.autoPause)
   const cueLead = usePreferencesStore((state) => state.intervalCueLeadSeconds)
+  const halfwayCue = usePreferencesStore((state) => state.halfwayCue)
   const volume = useAnnouncementsStore((state) => state.volume)
   const paceReference = usePreferencesStore((state) => state.paceReference)
   const locale = useLocaleStore(selectLocale)
@@ -294,6 +297,31 @@ export const ProfileView = () => {
                       },
                     )
                   }
+                />
+              }
+            />
+          </li>
+
+          {/* The device's alone, like the interval cue, so no save to fail —
+              and like every other sound setting, turning it on says what it
+              will say. The pace in the example is a round one nobody will
+              mistake for a measurement. */}
+          <li>
+            <AppPreferenceRow
+              title={t('profile.halfwayCue')}
+              body={t('profile.halfwayCueBody')}
+              control={
+                <AppSwitch
+                  checked={halfwayCue}
+                  label={t('profile.halfwayCue')}
+                  onChange={(enabled) => {
+                    usePreferencesStore.getState().setHalfwayCue(enabled)
+                    previewHalfway(
+                      halfwaySaid(halfwayPhrase(t, distanceUnit), examplePaceSeconds, distanceUnit),
+                      enabled,
+                      volume,
+                    )
+                  }}
                 />
               }
             />
