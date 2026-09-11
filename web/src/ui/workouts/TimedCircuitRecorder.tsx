@@ -54,6 +54,11 @@ interface Props {
   saved?: Recording
   onComplete: (recording: Recording) => void
   onCancel: () => void
+  /** Keeps the finished recording, where there is one to keep. */
+  onSave?: () => void
+  /** Whether that save is in flight, and what it said if it failed. */
+  saving?: boolean
+  saveError?: string
 }
 
 export const TimedCircuitRecorder = ({
@@ -63,6 +68,9 @@ export const TimedCircuitRecorder = ({
   saved,
   onComplete,
   onCancel,
+  onSave,
+  saving = false,
+  saveError = '',
 }: Props) => {
   const { t, i18n } = useTranslation()
   const unit = usePreferencesStore((state) => state.distanceUnit)
@@ -248,10 +256,20 @@ export const TimedCircuitRecorder = ({
         <section className={styles.review}>
           <WorkoutRoute recording={recording} />
           {error && <AppInlineError>{error}</AppInlineError>}
+          {saveError && <AppInlineError>{saveError}</AppInlineError>}
+          {/* Keeping the run is what the athlete came back for, so it leads
+              and throwing it away follows, in the quietest button there is:
+              the two used to sit the other way round, with the exit wearing
+              the louder colour of the pair. */}
+          {onSave && (
+            <AppButton type="button" colour="primary" disabled={busy || saving} onClick={onSave}>
+              {t('common.save')}
+            </AppButton>
+          )}
           <AppButton
             type="button"
-            colour="destructive"
-            disabled={busy}
+            colour="ghost"
+            disabled={busy || saving}
             onClick={() => void discard()}
           >
             {t('timedCircuit.cancel')}

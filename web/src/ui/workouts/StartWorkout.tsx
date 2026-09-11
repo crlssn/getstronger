@@ -1233,18 +1233,12 @@ export const StartWorkout = () => {
             }
             setGuided(false)
           }}
+          // Handed to the recorder rather than rendered under it: the review
+          // screen owns the order the two exits are read in.
+          onSave={workout?.recording ? () => void onFinishWorkout() : undefined}
+          saving={submitting}
+          saveError={finishError}
         />
-        {workout?.recording && (
-          <AppButton
-            type="button"
-            colour="primary"
-            disabled={submitting}
-            onClick={() => void onFinishWorkout()}
-          >
-            {t('common.save')}
-          </AppButton>
-        )}
-        {finishError && <p role="alert">{finishError}</p>}
       </div>
     )
   }

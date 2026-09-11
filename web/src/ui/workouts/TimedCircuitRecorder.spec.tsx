@@ -498,4 +498,46 @@ describe('TimedCircuitRecorder', () => {
     await screen.findByRole('heading', { name: 'Run' })
     expect(screen.getByText('Round 1 of 2')).toBeVisible()
   })
+
+  // Saving is what the athlete came here to do, so it leads; discarding is
+  // the exit beside it, quiet enough not to be reached for by mistake.
+  it('leads the finished recording with saving and keeps discarding behind a question', async () => {
+    const user = userEvent.setup()
+    const cancel = vi.fn()
+    const save = vi.fn()
+    const finished: Recording = {
+      version: 1,
+      startedAt: Date.now() - 120000,
+      endedAt: Date.now(),
+      phases: [phase],
+      pauses: [],
+      points: [],
+      interrupted: false,
+    }
+    vi.mocked(timedCircuit.read).mockResolvedValue({ recording: finished })
+
+    renderWithProviders(
+      <TimedCircuitRecorder
+        recordingKey="athlete:routine"
+        pacing={pacingFor([phase])}
+        phases={[phase]}
+        saved={finished}
+        onComplete={vi.fn()}
+        onCancel={cancel}
+        onSave={save}
+      />,
+    )
+
+    await screen.findByRole('heading', { name: 'Workout route' })
+    expect(screen.getAllByRole('button').map((button) => button.textContent)).toEqual([
+      'Save',
+      'Discard',
+    ])
+
+    await user.click(screen.getByRole('button', { name: 'Discard' }))
+    await waitFor(() => expect(useConfirmationStore.getState().confirmation).not.toBeNull())
+    useConfirmationStore.getState().accept()
+    await waitFor(() => expect(cancel).toHaveBeenCalledOnce())
+    expect(save).not.toHaveBeenCalled()
+  })
 })
