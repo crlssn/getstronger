@@ -1,0 +1,203 @@
+# Photographs a pull request and publishes its before/after evidence into the
+# body. The capture needs a seeded database and the publish needs Scaleway
+# credentials, so until now a change that moved a page arrived described in
+# words unless the maintainer ran 'mise run pr:screenshots' on their own
+# machine. The credentials are repository secrets, as deploy.yml's already are,
+# rather than variables on an environment anyone using it can read.
+name: pr screenshots
+
+on:
+  workflow_dispatch:
+    inputs:
+      number:
+        description: Pull request the screenshots belong to
+        required: true
+        type: string
+      path:
+        description: Directory to publish, defaulting to the pages this run found had moved; anything outside web/screenshots is refused
+        required: false
+        type: string
+
+# One run per pull request. Both would append to the same body, and the later
+# one replaces the block wholesale anyway, so the earlier is worth nothing.
+concurrency:
+  group: ${{ github.workflow }}-${{ inputs.number }}
+  cancel-in-progress: true
+
+permissions: {}
+
+jobs:
+  screenshots:
+    runs-on: ubuntu-latest
+    # Two full captures of every page, each with a Go build and a Vite server
+    # behind it.
+    timeout-minutes: 90
+
+    permissions:
+      contents: read
+      pull-requests: write
+
+    env:
+      DB_HOST: localhost
+      DB_NAME: postgres
+      DB_PASSWORD: root
+      DB_PORT: 5432
+      DB_SSL_MODE: disable
+      DB_USER: root
+      EMAIL_PROVIDER: local
+      ENV: local
+      JWT_ACCESS_TOKEN_KEY: screenshots-access-key
+      JWT_REFRESH_TOKEN_KEY: screenshots-refresh-key
+
+    services:
+      postgres:
+        image: postgres:16.4
+        env:
+          POSTGRES_DB: postgres
+          POSTGRES_HOST_AUTH_METHOD: trust
+          POSTGRES_USER: root
+        # The job runs on the host rather than in a container, so the service is
+        # reached through a published port rather than by its name.
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U root -d postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      # A number is all a reviewer has. Both branches come out of it, so a
+      # stacked pull request is compared with the one below it rather than with
+      # main, which is the same pair its diff on GitHub shows.
+      - name: Resolve the pull request
+        id: pr
+        env:
+          GH_REPO: ${{ github.repository }}
+          GH_TOKEN: ${{ github.token }}
+          NUMBER: ${{ inputs.number }}
+        run: |
+          case "$NUMBER" in
+            '' | *[!0-9]*)
+              echo "::error::'$NUMBER' is not a pull request number"
+              exit 1
+              ;;
+          esac
+
+          pull="$(gh pr view "$NUMBER" --json baseRefName,headRefName,isCrossRepository)"
+          if [ "$(jq -r '.isCrossRepository' <<< "$pull")" = true ]; then
+            echo "::error::#$NUMBER is from a fork, whose branch this workflow cannot check out"
+            exit 1
+          fi
+
+          jq -r '"base=\(.baseRefName)", "head=\(.headRefName)"' <<< "$pull" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout code
+        uses: actions/checkout@v7
+        with:
+          # Every branch, not just the head: the before column is photographed
+          # on the branch the pull request targets.
+          fetch-depth: 0
+          ref: ${{ steps.pr.outputs.head }}
+
+      - name: Set up Go
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: '24.19.0'
+
+      # Bun installs the dependencies; the scripts themselves still run on Node.
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: '1.4.0'
+
+      - name: Install web dependencies
+        working-directory: web
+        run: bun install --frozen-lockfile
+
+      # test.e2e.yml runs its shards inside the official Playwright image, which
+      # already carries the browsers and saves four runners a download. One job
+      # photographing at one viewport needs one browser, and the image would
+      # cost this job the aws and gh binaries the publish step below runs.
+      - name: Install Chromium
+        working-directory: web
+        run: npx playwright install --with-deps chromium
+
+      - name: Install database migration tool
+        run: |
+          go install -tags postgres github.com/golang-migrate/migrate/v4/cmd/migrate@v4.19.1
+          echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
+
+      - name: Create server environment
+        run: touch .env
+
+      - name: Migrate database
+        run: >-
+          migrate -path database/migrations/
+          -database "postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=${DB_SSL_MODE}"
+          -verbose up
+
+      # 'mise run screenshots' seeds before it photographs. The personas and
+      # their password are the defaults the capture expects.
+      - name: Seed database
+        run: go run ./server/testing/factory/seed
+
+      # The before column, and the snapshot of the seeded data the run below
+      # puts back: the flows photograph themselves creating an exercise, a
+      # routine, a plan and a workout, so without the restore every list they
+      # touched would differ from its baseline.
+      - name: Photograph the base branch
+        env:
+          SCREENSHOT_REF: ${{ steps.pr.outputs.base }}
+          SCREENSHOT_SNAPSHOT: capture
+        run: |
+          git switch --detach "origin/$SCREENSHOT_REF"
+          cd web && npm run screenshots
+
+      # Every page again under the branch, compared with the set above pixel by
+      # pixel. A page that fails here fails the job by its name, and the publish
+      # step never runs, so a reviewer never gets half a set.
+      - name: Photograph the branch and compare
+        env:
+          BRANCH: ${{ steps.pr.outputs.head }}
+          SCREENSHOT_AGAINST: ${{ steps.pr.outputs.base }}
+          SCREENSHOT_DIFF: '1'
+          SCREENSHOT_KEEP: '1'
+          SCREENSHOT_SNAPSHOT: restore
+        run: |
+          git switch "$BRANCH"
+          cd web && npm run screenshots
+
+      # The guard on what may reach a world-readable bucket is the script's, so
+      # --path is passed through to be refused there rather than checked twice.
+      - name: Publish the screenshots to the pull request
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.SCW_ACCESS_KEY_ID }}
+          AWS_DEFAULT_REGION: ${{ vars.SCW_REGION }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.SCW_SECRET_KEY }}
+          BASE: ${{ steps.pr.outputs.base }}
+          GH_REPO: ${{ github.repository }}
+          GH_TOKEN: ${{ github.token }}
+          NUMBER: ${{ inputs.number }}
+          PUBLISH_PATH: ${{ inputs.path }}
+          SCW_REGION: ${{ vars.SCW_REGION }}
+          SCW_SCREENSHOTS_BUCKET_NAME: ${{ vars.SCW_SCREENSHOTS_BUCKET_NAME }}
+        run: |
+          # A comparison that found nothing is an answer, not a failure: say so
+          # and leave the body alone. The index is written even when it is
+          # empty, and the directory holding it is named the one way both the
+          # capture and the publish agree on.
+          changes="web/screenshots/$(./scripts/screenshots_ref.sh)/changes/pages.tsv"
+          if [ -z "$PUBLISH_PATH" ] && [ ! -s "$changes" ]; then
+            echo "::notice::No page moved against ${BASE}, so there is nothing to publish."
+            exit 0
+          fi
+
+          arguments=("$NUMBER")
+          [ -z "$PUBLISH_PATH" ] || arguments+=(--path "$PUBLISH_PATH")
+          ./scripts/pr_screenshots.sh "${arguments[@]}" --append

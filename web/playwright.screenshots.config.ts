@@ -41,7 +41,7 @@ export default defineConfig({
   use: { baseURL },
   webServer: [
     {
-      command: 'mise run app:backend',
+      command: process.env.CI ? 'go run ./server/cmd/main.go' : 'mise run app:backend',
       cwd: repositoryRoot,
       env: {
         ...localAuthRatePolicy,
