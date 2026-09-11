@@ -9,18 +9,22 @@
  */
 
 import { hush, paceToneHertz, paceToneVolume, playTone, say } from '@/native/cueTone'
+import { i18n } from '@/i18n'
 import { speechVolume, type AnnouncementVolume } from '@/stores/announcements'
 import type { PaceReferenceChoice } from '@/utils/pacing'
 
-/** Long enough for the first note to finish before the second answers it. */
-const betweenNotesMs = 450
+/** Long enough for the word to be out before the note it names sounds. */
+const afterWordMs = 900
+
+/** And long enough for that pair to land before the other one answers it. */
+const betweenPairsMs = 1700
 
 /** Says the sample at the level just chosen; off is demonstrated by silence. */
 export const previewAnnouncement = (phrase: string, volume: AnnouncementVolume): void => {
   hush()
   const level = speechVolume(volume)
   if (level <= 0) return
-  say(phrase, level)
+  say(phrase, level, i18n.language)
 }
 
 /**
@@ -36,7 +40,7 @@ export const previewIntervalCue = (
 ): void => {
   hush()
   if (leadSeconds <= 0) return
-  say(phrase, speechVolume(volume) || 1)
+  say(phrase, speechVolume(volume) || 1, i18n.language)
 }
 
 /**
@@ -52,18 +56,33 @@ export const previewHalfway = (
 ): void => {
   hush()
   if (!enabled) return
-  say(phrase, speechVolume(volume) || 1)
+  say(phrase, speechVolume(volume) || 1, i18n.language)
 }
 
 /**
- * Sounds both notes, ahead then behind, so the pair is heard as a pair.
+ * Says what each note means and then sounds it, faster first.
  *
- * They follow the announcement volume, as they do on a run: with the
- * announcements off there is nothing to hear, which is the honest example.
+ * A beep says nothing on its own, and the pair is the whole point: which way
+ * round they go is what an athlete has to know before the first one arrives
+ * mid-run. So the example names them rather than leaving two tones to be
+ * worked out.
+ *
+ * On a run the notes follow the announcement volume and go quiet with it. The
+ * example does not: one nobody can hear reads as a broken feature rather than
+ * as a turned-down one.
  */
-export const previewPaceTones = (choice: PaceReferenceChoice, volume: AnnouncementVolume): void => {
-  const level = paceToneVolume * speechVolume(volume)
-  if (choice === 'off' || level <= 0) return
-  playTone(paceToneHertz.ahead, level)
-  setTimeout(() => playTone(paceToneHertz.behind, level), betweenNotesMs)
+export const previewPaceTones = (
+  choice: PaceReferenceChoice,
+  volume: AnnouncementVolume,
+  faster: string,
+  slower: string,
+): void => {
+  hush()
+  if (choice === 'off') return
+  const spoken = speechVolume(volume) || 1
+  const level = paceToneVolume * spoken
+  say(faster, spoken, i18n.language)
+  setTimeout(() => playTone(paceToneHertz.ahead, level), afterWordMs)
+  setTimeout(() => say(slower, spoken, i18n.language), betweenPairsMs)
+  setTimeout(() => playTone(paceToneHertz.behind, level), betweenPairsMs + afterWordMs)
 }

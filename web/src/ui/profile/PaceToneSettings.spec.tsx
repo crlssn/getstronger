@@ -60,6 +60,6 @@ describe('PaceToneSettings', () => {
 
     await user.click(screen.getByRole('button', { name: /Last session/ }))
 
-    expect(previewPaceTones).toHaveBeenCalledWith('previous', 'full')
+    expect(previewPaceTones).toHaveBeenCalledWith('previous', 'full', 'Faster', 'Slower')
   })
 })

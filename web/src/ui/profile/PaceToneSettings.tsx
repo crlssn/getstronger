@@ -23,10 +23,11 @@ export const PaceToneSettings = () => {
   const setPaceReference = usePreferencesStore((state) => state.setPaceReference)
   const volume = useAnnouncementsStore((state) => state.volume)
 
-  // Two notes no sentence describes: picking a comparison sounds the pair.
+  // Two notes nobody can describe in a row's worth of words: picking a
+  // comparison names each one and sounds it.
   const choose = (choice: PaceReferenceChoice) => {
     setPaceReference(choice)
-    previewPaceTones(choice, volume)
+    previewPaceTones(choice, volume, t('settings.paceTonesFaster'), t('settings.paceTonesSlower'))
   }
 
   const tick = (selected: boolean) => (

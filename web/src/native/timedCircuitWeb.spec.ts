@@ -273,7 +273,7 @@ describe('the browser recorder', () => {
 
     await runTo(50)
     expect(say).toHaveBeenCalledTimes(1)
-    expect(say).toHaveBeenCalledWith('10 seconds', 1)
+    expect(say).toHaveBeenCalledWith('10 seconds', 1, 'en')
 
     // The rest of the interval is not a second warning.
     await runTo(59)
@@ -297,7 +297,7 @@ describe('the browser recorder', () => {
 
     stride(60, 240)
     await step(60)
-    expect(say).toHaveBeenCalledExactlyOnceWith('Half way. Pace 4:15 per kilometre', 1)
+    expect(say).toHaveBeenCalledExactlyOnceWith('Half way. Pace 4:15 per kilometre', 1, 'en')
 
     // Once per interval: the rest of it is not a second call.
     await runTo(119)
@@ -327,17 +327,17 @@ describe('the browser recorder', () => {
 
     await runTo(50)
 
-    expect(say).toHaveBeenCalledWith('10 seconds', 1)
+    expect(say).toHaveBeenCalledWith('10 seconds', 1, 'en')
   })
 
   it('says the workout is complete once the last interval runs out', async () => {
     await circuit([interval('Hard', 60), interval('Easy', 60)], 10, 0.5)
 
     await runTo(119)
-    expect(say).not.toHaveBeenCalledWith('Workout completed', expect.anything())
+    expect(say).not.toHaveBeenCalledWith('Workout completed', expect.anything(), expect.anything())
 
     await step(120)
-    expect(say).toHaveBeenCalledWith('Workout completed', 0.5)
+    expect(say).toHaveBeenCalledWith('Workout completed', 0.5, 'en')
     expect(say).toHaveBeenCalledTimes(3)
   })
 

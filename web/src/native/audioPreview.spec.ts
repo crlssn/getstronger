@@ -2,7 +2,7 @@
 
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
-import { hush, paceToneHertz, paceToneVolume, playTone, say } from '@/native/cueTone'
+import { hush, paceToneHertz, playTone, say } from '@/native/cueTone'
 import { previewAnnouncement, previewIntervalCue, previewPaceTones } from './audioPreview'
 
 vi.mock('@/native/cueTone', async (original) => ({
@@ -26,7 +26,7 @@ describe('previewAnnouncement', () => {
     previewAnnouncement('Run for 2 minutes', 'low')
 
     expect(hush).toHaveBeenCalled()
-    expect(say).toHaveBeenCalledWith('Run for 2 minutes', 0.4)
+    expect(say).toHaveBeenCalledWith('Run for 2 minutes', 0.4, 'en')
   })
 
   // Silence is the example: turning the announcements off and hearing one
@@ -44,7 +44,7 @@ describe('previewIntervalCue', () => {
   test('says the cue over muted announcements', () => {
     previewIntervalCue('10 seconds', 10, 'off')
 
-    expect(say).toHaveBeenCalledWith('10 seconds', 1)
+    expect(say).toHaveBeenCalledWith('10 seconds', 1, 'en')
   })
 
   test('says nothing at no lead, which is the cue turned off', () => {
@@ -55,19 +55,35 @@ describe('previewIntervalCue', () => {
 })
 
 describe('previewPaceTones', () => {
-  test('sounds both notes, one after the other, at the announcement volume', () => {
-    previewPaceTones('previous', 'full')
+  // A beep says nothing on its own: an example that names each note is the
+  // only one that teaches which way round they go.
+  test('names each note and sounds it, faster first', () => {
+    previewPaceTones('previous', 'full', 'Faster', 'Slower')
 
-    expect(playTone).toHaveBeenCalledExactlyOnceWith(paceToneHertz.ahead, paceToneVolume)
+    expect(say).toHaveBeenCalledExactlyOnceWith('Faster', 1, 'en')
     vi.runAllTimers()
-    expect(playTone).toHaveBeenLastCalledWith(paceToneHertz.behind, paceToneVolume)
+    expect(vi.mocked(playTone).mock.calls.map(([hertz]) => hertz)).toEqual([
+      paceToneHertz.ahead,
+      paceToneHertz.behind,
+    ])
+    expect(say).toHaveBeenLastCalledWith('Slower', 1, 'en')
   })
 
-  test('sounds nothing for no comparison, and nothing with the announcements off', () => {
-    previewPaceTones('off', 'full')
-    previewPaceTones('best', 'off')
+  // The notes follow the announcement volume on a run, but an example nobody
+  // can hear says the feature is broken rather than that it is turned down.
+  test('is heard even with the announcements turned off', () => {
+    previewPaceTones('best', 'off', 'Faster', 'Slower')
+    vi.runAllTimers()
+
+    expect(playTone).toHaveBeenCalledTimes(2)
+    expect(say).toHaveBeenCalledWith('Faster', 1, 'en')
+  })
+
+  test('sounds nothing for no comparison at all', () => {
+    previewPaceTones('off', 'full', 'Faster', 'Slower')
     vi.runAllTimers()
 
     expect(playTone).not.toHaveBeenCalled()
+    expect(say).not.toHaveBeenCalled()
   })
 })

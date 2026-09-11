@@ -34,6 +34,7 @@ describe('playTone', () => {
     vi.stubGlobal(
       'AudioContext',
       class {
+        state = 'running'
         currentTime = 4
         resume = resume
         destination = {}
@@ -48,8 +49,50 @@ describe('playTone', () => {
     expect(oscillator.start).toHaveBeenCalledWith(4)
     expect(oscillator.stop).toHaveBeenCalledWith(4.2)
     expect(gain.gain.linearRampToValueAtTime).toHaveBeenCalledWith(0, 4.2)
-    // Autoplay policy suspends a context opened before the first gesture.
-    expect(resume).toHaveBeenCalled()
+    // A context already awake is not woken again: resuming is what the test
+    // below covers, and it is the suspended case that has to wait for it.
+    expect(resume).not.toHaveBeenCalled()
+  })
+
+  // Autoplay policy hands back a suspended context, whose clock does not move
+  // until it resumes — so a note scheduled against it is already in the past
+  // by the time there is anything to hear it on, and is never heard at all.
+  test('waits for a suspended context to resume before scheduling the note', async () => {
+    const oscillator = tone()
+    const gain = volume()
+    let resumed = () => {}
+    const context = {
+      state: 'suspended',
+      currentTime: 0,
+      resume: vi.fn(
+        () =>
+          new Promise<void>((settle) => {
+            resumed = () => {
+              context.state = 'running'
+              context.currentTime = 9
+              settle()
+            }
+          }),
+      ),
+      destination: {},
+      createOscillator: () => oscillator,
+      createGain: () => gain,
+    }
+    vi.stubGlobal(
+      'AudioContext',
+      class {
+        constructor() {
+          return context
+        }
+      },
+    )
+
+    ;(await load()).playTone(1320)
+    expect(oscillator.start).not.toHaveBeenCalled()
+
+    resumed()
+    await vi.waitFor(() => expect(oscillator.start).toHaveBeenCalledWith(9))
+    expect(oscillator.stop).toHaveBeenCalledWith(9.2)
   })
 
   // A browser that will not open an audio context is still recording, and the
@@ -72,30 +115,35 @@ describe('playTone', () => {
 describe('say', () => {
   test('speaks the phrase at the volume it is given', async () => {
     const speak = vi.fn()
-    vi.stubGlobal('speechSynthesis', { speak })
+    vi.stubGlobal('speechSynthesis', { speak, getVoices: () => [] })
     vi.stubGlobal(
       'SpeechSynthesisUtterance',
       class {
         volume = 1
+        lang = ''
         constructor(public text: string) {}
       },
     )
 
-    ;(await load()).say('10 seconds', 0.5)
+    ;(await load()).say('10 seconds', 0.5, 'en')
 
-    expect(speak).toHaveBeenCalledWith(expect.objectContaining({ text: '10 seconds', volume: 0.5 }))
+    // Closed off with a full stop, so the synthesiser falls away at the end of
+    // it rather than clipping the last word.
+    expect(speak).toHaveBeenCalledWith(
+      expect.objectContaining({ text: '10 seconds.', volume: 0.5, lang: 'en-GB' }),
+    )
   })
 
   test('says nothing at no volume, and nothing where the browser cannot speak', async () => {
     const speak = vi.fn()
-    vi.stubGlobal('speechSynthesis', { speak })
+    vi.stubGlobal('speechSynthesis', { speak, getVoices: () => [] })
     vi.stubGlobal('SpeechSynthesisUtterance', class {})
     const { say } = await load()
 
-    say('Workout completed', 0)
+    say('Workout completed', 0, 'en')
     expect(speak).not.toHaveBeenCalled()
 
     vi.unstubAllGlobals()
-    expect(() => say('Workout completed', 1)).not.toThrow()
+    expect(() => say('Workout completed', 1, 'en')).not.toThrow()
   })
 })

@@ -9,6 +9,7 @@
  * and a session is a few hundred beeps long.
  */
 
+import { announcementPhrase, announcementLocale, bestVoice } from '@/native/announcementVoice'
 import type { PaceTone } from '@/utils/pacing'
 
 const seconds = 0.2
@@ -25,12 +26,24 @@ export const paceToneVolume = 0.3
 
 let context: AudioContext | undefined
 
-/** Says a phrase in the page's voice; a browser without one says nothing. */
-export const say = (phrase: string, volume: number): void => {
+/**
+ * Says a phrase in the best voice the browser has; one without any says nothing.
+ *
+ * The language is always set and the voice only where one beats what the
+ * browser would have chosen: left to itself it reads a Swedish cue out in the
+ * page's own language, in the flattest voice it ships.
+ */
+export const say = (phrase: string, volume: number, locale: string): void => {
   try {
     if (!('speechSynthesis' in window) || volume <= 0) return
-    const utterance = new SpeechSynthesisUtterance(phrase)
+    const utterance = new SpeechSynthesisUtterance(announcementPhrase(phrase))
     utterance.volume = Math.min(volume, 1)
+    utterance.lang = announcementLocale(locale)
+    // Chrome fills this list asynchronously and answers with none until it
+    // has: the first cue of a session is then said in the default voice, and
+    // every one after it in the chosen one.
+    const voice = bestVoice(locale, window.speechSynthesis.getVoices())
+    if (voice) utterance.voice = voice
     window.speechSynthesis.speak(utterance)
   } catch {
     // A tab that cannot speak still records; the words are the one thing it
@@ -50,20 +63,26 @@ export const hush = (): void => {
 export const playTone = (frequencyHz: number, level = peak): void => {
   try {
     context ??= new AudioContext()
-    // Autoplay policy suspends a context opened before the first gesture;
-    // starting a recording is one, so this wakes it rather than failing.
-    void context.resume()
-    const at = context.currentTime
-    const oscillator = context.createOscillator()
-    const gain = context.createGain()
-    oscillator.frequency.value = frequencyHz
-    // Ramped rather than switched, so the tone does not click at either end.
-    gain.gain.setValueAtTime(0, at)
-    gain.gain.linearRampToValueAtTime(level, at + 0.01)
-    gain.gain.linearRampToValueAtTime(0, at + seconds)
-    oscillator.connect(gain).connect(context.destination)
-    oscillator.start(at)
-    oscillator.stop(at + seconds)
+    const sound = context
+    const schedule = () => {
+      const at = sound.currentTime
+      const oscillator = sound.createOscillator()
+      const gain = sound.createGain()
+      oscillator.frequency.value = frequencyHz
+      // Ramped rather than switched, so the tone does not click at either end.
+      gain.gain.setValueAtTime(0, at)
+      gain.gain.linearRampToValueAtTime(level, at + 0.01)
+      gain.gain.linearRampToValueAtTime(0, at + seconds)
+      oscillator.connect(gain).connect(sound.destination)
+      oscillator.start(at)
+      oscillator.stop(at + seconds)
+    }
+    // Autoplay policy suspends a context opened before the first gesture, and
+    // a suspended clock does not move: a note scheduled against it is already
+    // in the past by the time there is anything to play it, so it is never
+    // heard. Waking it first is what makes the first note of a tab audible.
+    if (sound.state === 'suspended') void sound.resume().then(schedule, () => schedule())
+    else schedule()
   } catch {
     // A tab that will not give up an audio context still records; the notes
     // are the one thing it goes without.

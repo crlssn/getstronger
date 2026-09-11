@@ -45,6 +45,8 @@ interface Saved {
   recording: Recording
   /** Seconds of warning before an interval ends; 0 says nothing. */
   cueLeadSeconds: number
+  /** The language the phrases are in, so the best voice for it says them. */
+  locale: string
   /** The warning, spoken: the seconds left, in the athlete's language. */
   cuePhrase: string
   /** Said at an interval's midpoint, `{pace}` left for the pace; empty says nothing. */
@@ -215,7 +217,7 @@ const tick = () => {
         cued = index
         // The cue is its own setting, so the announcements being off does not
         // silence it: it is said at full volume instead.
-        say(saved.cuePhrase, cueVolume())
+        say(saved.cuePhrase, cueVolume(), saved.locale)
       }
       const phaseSeconds = (elapsed - opened) / 1000
       if (halved !== index && phaseSeconds >= phase.durationSeconds / 2 && callsHalfway(phase)) {
@@ -226,7 +228,7 @@ const tick = () => {
           ? currentPace(saved.recording, at, phaseSeconds, paceFloorMeters)
           : undefined
         if (pace !== undefined)
-          say(halfwaySaid(saved.halfwayPhrase, pace, spokenUnit()), cueVolume())
+          say(halfwaySaid(saved.halfwayPhrase, pace, spokenUnit()), cueVolume(), saved.locale)
       }
       judge(index, phaseSeconds, at)
       if (at - saved.checkpoint > 1000) persist()
@@ -234,7 +236,7 @@ const tick = () => {
     }
   }
   end(at - (elapsed - boundary))
-  say(saved.completedPhrase, saved.volume)
+  say(saved.completedPhrase, saved.volume, saved.locale)
 }
 
 /**
@@ -313,6 +315,7 @@ const valid = (phases: Phase[]) =>
 const begin = (
   key: string,
   phases: Phase[],
+  locale: string,
   cueLeadSeconds: number,
   cuePhrase: string,
   halfwayPhrase: string,
@@ -329,6 +332,7 @@ const begin = (
     fixes = []
     saved = {
       key,
+      locale,
       volume,
       pacing,
       recording: {
@@ -410,6 +414,7 @@ export const TimedCircuitWeb = {
     await begin(
       options.key,
       options.phases,
+      options.locale,
       options.cueLeadSeconds,
       options.cuePhrase,
       options.halfwayPhrase ?? '',
