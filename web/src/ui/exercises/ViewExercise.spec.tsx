@@ -11,6 +11,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 vi.mock('@/http/requests', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/http/requests')>()),
+  consumeRequestNotFound: vi.fn(),
   getExercise: vi.fn(),
   listSets: vi.fn(),
   deleteExercise: vi.fn(),
@@ -35,6 +36,7 @@ import { renderWithProviders } from '@/ui/testing'
 import { ViewExercise } from './ViewExercise'
 
 const mocked = {
+  consumeRequestNotFound: vi.mocked(requests.consumeRequestNotFound),
   getExercise: vi.mocked(requests.getExercise),
   listSets: vi.mocked(requests.listSets),
   deleteExercise: vi.mocked(requests.deleteExercise),
@@ -90,6 +92,7 @@ const render = () =>
 describe('ViewExercise', () => {
   beforeEach(() => {
     Object.values(mocked).forEach((mock) => mock.mockReset())
+    mocked.consumeRequestNotFound.mockReturnValue(false)
     mocked.getExercise.mockResolvedValue(exercise())
     mocked.listSets.mockResolvedValue(setsPage([]))
     mocked.deleteExercise.mockResolvedValue(create(DeleteExerciseResponseSchema, {}))
@@ -143,6 +146,7 @@ describe('ViewExercise', () => {
 
   test('offers a way back when the exercise is gone', async () => {
     mocked.getExercise.mockResolvedValue(undefined)
+    mocked.consumeRequestNotFound.mockReturnValue(true)
     render()
 
     expect(await screen.findByText('Exercise unavailable')).toBeInTheDocument()
@@ -150,6 +154,21 @@ describe('ViewExercise', () => {
       'href',
       '/exercises',
     )
+  })
+
+  // The exercise library gets this right one screen up: a load that failed is
+  // a state with a way out of it, not the end of the road.
+  test('offers a retry when the exercise does not load', async () => {
+    mocked.getExercise.mockResolvedValue(undefined)
+    render()
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Something went wrong')
+    expect(screen.queryByText('Exercise unavailable')).not.toBeInTheDocument()
+
+    mocked.getExercise.mockResolvedValue(exercise())
+    await userEvent.click(screen.getByRole('button', { name: 'Try again' }))
+
+    expect(await screen.findByText('Chest')).toBeInTheDocument()
   })
 
   describe('ownership', () => {

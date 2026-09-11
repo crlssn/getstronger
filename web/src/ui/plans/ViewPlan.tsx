@@ -1,17 +1,19 @@
 import type { Plan } from '@/proto/api/v1/routine_service_pb'
 
 import { PencilIcon, TrashIcon } from '@heroicons/react/24/outline'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useParams } from 'react-router-dom'
 
-import { consumeRequestError, getPlan } from '@/http/requests'
+import { consumeRequestError, consumeRequestNotFound, getPlan } from '@/http/requests'
 import { useConfirmationStore } from '@/stores/confirmation'
 import { useDashboardStore } from '@/stores/dashboard'
 import { usePageTitleStore } from '@/stores/pageTitle'
 import { usePlanStore } from '@/stores/plans'
 import { cn } from '@/ui/cn'
 import { AppButton } from '@/ui/components/AppButton'
+import { AppEmptyState } from '@/ui/components/AppEmptyState'
+import { AppErrorState } from '@/ui/components/AppErrorState'
 import { AppInlineError } from '@/ui/components/AppInlineError'
 import { AppSkeleton } from '@/ui/components/AppSkeleton'
 import styles from './ViewPlan.module.css'
@@ -23,20 +25,34 @@ export const ViewPlan = () => {
   const { id = '' } = useParams()
 
   const [plan, setPlan] = useState<Plan>()
+  const [loading, setLoading] = useState(true)
+  const [failed, setFailed] = useState(false)
   const [actionError, setActionError] = useState<string>()
 
-  useEffect(() => {
-    const load = async () => {
-      const response = await getPlan(id)
-      if (!response?.plan) {
-        await navigate('/plans', { replace: true })
-        return
-      }
-      setPlan(response.plan)
-      usePageTitleStore.getState().setPageTitle(response.plan.name)
+  const load = useCallback(async () => {
+    const response = await getPlan(id)
+
+    // A refusal, a server error and an unreachable backend all answer with
+    // void, and only the first of the three means the plan is gone.
+    if (!response?.plan) {
+      setFailed(!consumeRequestNotFound())
+      setPlan(undefined)
+      setLoading(false)
+      return
     }
-    void load()
-  }, [id, navigate])
+
+    setFailed(false)
+    setPlan(response.plan)
+    usePageTitleStore.getState().setPageTitle(response.plan.name)
+    setLoading(false)
+  }, [id])
+
+  useEffect(() => {
+    const initialLoad = async () => {
+      await load()
+    }
+    void initialLoad()
+  }, [load])
 
   const activate = async () => {
     const confirmed = await useConfirmationStore.getState().confirm({
@@ -92,7 +108,17 @@ export const ViewPlan = () => {
     setActionError(consumeRequestError() ?? t('common.somethingWentWrong'))
   }
 
-  if (!plan) return <AppSkeleton />
+  if (loading) return <AppSkeleton />
+  if (failed) return <AppErrorState onRetry={() => void load()} />
+  if (!plan) {
+    return (
+      <AppEmptyState
+        title={t('training.planView.unavailable')}
+        body={t('training.planView.unavailableBody')}
+        action={{ label: t('training.planView.viewPlans'), to: '/plans' }}
+      />
+    )
+  }
 
   const isCurrent = (index: number) => plan.active && index === plan.currentPosition
 

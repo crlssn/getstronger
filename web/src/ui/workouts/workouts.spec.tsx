@@ -11,6 +11,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
 vi.mock('@/http/requests', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/http/requests')>()),
+  consumeRequestNotFound: vi.fn(),
   getWorkout: vi.fn(),
   updateWorkout: vi.fn(),
   listWorkouts: vi.fn(),
@@ -37,6 +38,7 @@ import { ViewWorkout } from './ViewWorkout'
 import { WorkoutView } from './WorkoutView'
 
 const mocked = {
+  consumeRequestNotFound: vi.mocked(requests.consumeRequestNotFound),
   getWorkout: vi.mocked(requests.getWorkout),
   updateWorkout: vi.mocked(requests.updateWorkout),
   listWorkouts: vi.mocked(requests.listWorkouts),
@@ -89,6 +91,7 @@ const withSets = () =>
 
 beforeEach(() => {
   Object.values(mocked).forEach((mock) => mock.mockReset())
+  mocked.consumeRequestNotFound.mockReturnValue(false)
   mocked.getWorkout.mockResolvedValue(create(GetWorkoutResponseSchema, { workout: workout() }))
   mocked.updateWorkout.mockResolvedValue(create(UpdateWorkoutResponseSchema, {}))
   mocked.listWorkouts.mockResolvedValue(create(ListWorkoutsResponseSchema, {}))
@@ -119,10 +122,26 @@ describe('ViewWorkout', () => {
 
   test('offers a way back when the workout is gone', async () => {
     mocked.getWorkout.mockResolvedValue(undefined)
+    mocked.consumeRequestNotFound.mockReturnValue(true)
     render()
 
     expect(await screen.findByText('Workout unavailable')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'View workouts' })).toHaveAttribute('href', '/workout')
+  })
+
+  // Only the backend saying not-found means gone. A 500 used to read as one,
+  // and the way back was the only thing on offer.
+  test('offers a retry when the workout does not load', async () => {
+    mocked.getWorkout.mockResolvedValue(undefined)
+    render()
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Something went wrong')
+    expect(screen.queryByText('Workout unavailable')).not.toBeInTheDocument()
+
+    mocked.getWorkout.mockResolvedValue(create(GetWorkoutResponseSchema, { workout: withSets() }))
+    await userEvent.click(screen.getByRole('button', { name: 'Try again' }))
+
+    expect(await screen.findByRole('table', { name: /Bench press/ })).toBeInTheDocument()
   })
 })
 

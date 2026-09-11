@@ -8,6 +8,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 vi.mock('@/http/requests', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/http/requests')>()),
+  consumeRequestNotFound: vi.fn(),
   createExercise: vi.fn(),
   updateExercise: vi.fn(),
   getExercise: vi.fn(),
@@ -29,6 +30,7 @@ import { CreateExercise } from './CreateExercise'
 import { UpdateExercise } from './UpdateExercise'
 
 const mocked = {
+  consumeRequestNotFound: vi.mocked(requests.consumeRequestNotFound),
   createExercise: vi.mocked(requests.createExercise),
   updateExercise: vi.mocked(requests.updateExercise),
   getExercise: vi.mocked(requests.getExercise),
@@ -67,6 +69,7 @@ const submit = (name: string) => screen.getByRole('button', { name })
 beforeEach(() => {
   lowerKeyboard()
   Object.values(mocked).forEach((mock) => mock.mockReset())
+  mocked.consumeRequestNotFound.mockReturnValue(false)
   mocked.listExerciseTags.mockResolvedValue(['Chest', 'Push'])
   mocked.createExercise.mockResolvedValue(create(CreateExerciseResponseSchema, {}))
   mocked.updateExercise.mockResolvedValue(create(UpdateExerciseResponseSchema, {}))
@@ -268,9 +271,25 @@ describe('UpdateExercise', () => {
 
   test('offers a way back when the exercise is gone', async () => {
     mocked.getExercise.mockResolvedValue(undefined)
+    mocked.consumeRequestNotFound.mockReturnValue(true)
     render(<UpdateExercise />, '/exercises/exercise-1/edit')
 
     expect(await screen.findByText('Exercise unavailable')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Exercises' })).toHaveAttribute('href', '/exercises')
+  })
+
+  // The way back was all a failed load offered, so the edit was lost to a
+  // hiccup the reader could have ridden out with one press.
+  test('offers a retry when the exercise does not load', async () => {
+    mocked.getExercise.mockResolvedValue(undefined)
+    render(<UpdateExercise />, '/exercises/exercise-1/edit')
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Something went wrong')
+    expect(screen.queryByText('Exercise unavailable')).not.toBeInTheDocument()
+
+    mocked.getExercise.mockResolvedValue(existing())
+    await userEvent.click(screen.getByRole('button', { name: 'Try again' }))
+
+    expect(await screen.findByDisplayValue('Bench press')).toBeInTheDocument()
   })
 })

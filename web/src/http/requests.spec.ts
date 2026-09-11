@@ -32,8 +32,10 @@ import { useConnectionStore } from '@/stores/connection'
 import { useEmailVerificationStore } from '@/stores/emailVerification'
 import {
   consumeRequestError,
+  consumeRequestNotFound,
   createWorkout as createAWorkout,
   getCurrentUser,
+  getUser as fetchUser,
   login as logIn,
   markNotificationAsRead,
   resendVerificationEmail as resend,
@@ -178,6 +180,39 @@ describe('shared error handling', () => {
     } finally {
       await i18n.changeLanguage(previous)
     }
+  })
+
+  // A detail screen hides the thing it asked for, so it needs the one
+  // distinction the message cannot carry: gone, or never arrived.
+  it('marks a refusal that says the thing is not there', async () => {
+    getUser.mockRejectedValue(new ConnectError('no such plan', Code.NotFound))
+
+    await fetchUser('user-2')
+
+    expect(consumeRequestNotFound()).toBe(true)
+    // Consuming is a read-once: the next caller must not inherit it.
+    expect(consumeRequestNotFound()).toBe(false)
+  })
+
+  it.each([
+    ['a server error', Code.Internal],
+    ['an unreachable backend', Code.Unavailable],
+  ])('does not read %s as the thing being gone', async (_, code) => {
+    getUser.mockRejectedValue(new ConnectError('transport', code))
+
+    await fetchUser('user-2')
+
+    expect(consumeRequestNotFound()).toBe(false)
+  })
+
+  it('clears a previous not-found once a request succeeds', async () => {
+    getUser.mockRejectedValue(new ConnectError('no such user', Code.NotFound))
+    await fetchUser('user-2')
+
+    getUser.mockResolvedValue({ user: { id: 'user-2' } })
+    await fetchUser('user-2')
+
+    expect(consumeRequestNotFound()).toBe(false)
   })
 
   it('records an application error for the caller to render inline', async () => {

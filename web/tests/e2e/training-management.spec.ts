@@ -2,6 +2,7 @@ import type { Locator } from '@playwright/test'
 
 import {
   acceptConfirmDialog,
+  allowRuntimeErrors,
   expect,
   expectAccessible,
   logIn,
@@ -987,5 +988,46 @@ test.describe('plan lifecycle', () => {
     await page.getByRole('button', { name: 'Delete', exact: true }).click()
     await acceptConfirmDialog(page, 'Delete plan')
     await expect(page).toHaveURL(/\/plans$/)
+  })
+
+  // Not-found is the one answer that means the plan is gone, and it is an
+  // answer: the screen says so and stays where it is, rather than replacing
+  // the history entry that would have taken the athlete back.
+  test('says a plan nobody has is gone, without leaving the screen', async ({ page }) => {
+    test.info().annotations.push(allowRuntimeErrors)
+    const missing = '/plans/8eb869b2-b5b8-405f-a744-0dab20a4f406'
+
+    await page.goto(missing)
+
+    await expect(page.getByRole('heading', { name: 'Plan unavailable' })).toBeVisible()
+    await expect(page.getByRole('link', { name: 'View plans' })).toBeVisible()
+    await expect(page).toHaveURL(new RegExp(`${missing}$`))
+  })
+
+  // A server error says nothing about whether the plan exists. Both plan
+  // screens used to read it as "gone" and send the reader back to the list.
+  test('offers a retry when a plan does not load', async ({ page }) => {
+    test.info().annotations.push(allowRuntimeErrors)
+    let refused = false
+    await page.route('**/api.v1.RoutineService/GetPlan', async (route) => {
+      if (!refused) {
+        refused = true
+        await route.fulfill({ status: 500, contentType: 'application/json', body: '{}' })
+        return
+      }
+      await route.continue()
+    })
+
+    await page.goto('/plans')
+    // Whichever plan the seed left behind: the active one is linked as "View
+    // plan", a paused one under its own name, and either is a real plan.
+    await page.locator('a[href^="/plans/"]:not([href="/plans/create"])').first().click()
+
+    const failure = page.getByRole('alert').filter({ hasText: 'Something went wrong' })
+    await expect(failure).toBeVisible()
+    await expect(page).toHaveURL(/\/plans\/[0-9a-f-]{36}$/)
+
+    await failure.getByRole('button', { name: 'Try again' }).click()
+    await expect(page.getByRole('heading', { name: 'Delete plan' })).toBeVisible()
   })
 })

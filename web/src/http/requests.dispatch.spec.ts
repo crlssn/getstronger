@@ -136,10 +136,11 @@ describe('request dispatch', () => {
       .map(([name]) => name)
 
     // listExerciseTags composes listExercises rather than calling a client of
-    // its own, so it is covered by its own case below instead; and
-    // consumeRequestError hands out the recorded failure, it requests nothing.
+    // its own, so it is covered by its own case below instead; and the two
+    // consumers hand out what the last failure recorded, they request nothing.
+    const recorders = ['consumeRequestError', 'consumeRequestNotFound']
     const untested = exported.filter(
-      (name) => name !== 'listExerciseTags' && name !== 'consumeRequestError',
+      (name) => name !== 'listExerciseTags' && !recorders.includes(name),
     )
 
     expect(untested).toHaveLength(cases.length)
