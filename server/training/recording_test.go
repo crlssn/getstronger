@@ -48,6 +48,18 @@ func TestRecordingValidation(t *testing.T) {
 		"unknown role":      strings.Replace(interval, `"role":"warmup"`, `"role":"sprint"`, 1),
 		"negative speed":    strings.Replace(held, `"speed":0`, `"speed":-1`, 1),
 		"oversized":         strings.Repeat(" ", 5000001),
+		// The caps on a phase are what bound the cost of storing one workout.
+		"round below one":  strings.Replace(valid, `"round":1`, `"round":0`, 1),
+		"round above cap":  strings.Replace(valid, `"round":1`, `"round":100`, 1),
+		"long name":        strings.Replace(valid, `"name":"Walk"`, `"name":"`+strings.Repeat("a", 1001)+`"`, 1),
+		"long instruction": strings.Replace(valid, `"instruction":"Walk"`, `"instruction":"`+strings.Repeat("a", 2001)+`"`, 1),
+		"long exercise id": strings.Replace(valid, `"exerciseId":"a"`, `"exerciseId":"`+strings.Repeat("a", 37)+`"`, 1),
+		"long station key": strings.Replace(valid, `"stationKey":"a"`, `"stationKey":"`+strings.Repeat("a", 51)+`"`, 1),
+		// A second pause opening before the first closed, two fixes claiming one
+		// instant, and a fix whose receiver reported a negative radius.
+		"pauses out of order": strings.Replace(valid, `"pauses":[]`, `"pauses":[{"startedAt":3000,"endedAt":4000},{"startedAt":2000,"endedAt":2500}]`, 1),
+		"repeated GPS fix":    strings.Replace(valid, `"points":[`, `"points":[{"timestamp":2000,"latitude":51,"longitude":0,"accuracy":3},`, 1),
+		"negative accuracy":   strings.Replace(valid, `"accuracy":3`, `"accuracy":-1`, 1),
 	} {
 		t.Run(name, func(t *testing.T) {
 			if err := training.ValidateRecording(raw, period); err == nil {
