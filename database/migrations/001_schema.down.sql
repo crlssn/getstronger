@@ -23,6 +23,7 @@ DROP TYPE IF EXISTS public.event_topic;
 DROP TYPE IF EXISTS public.routine_group_mode;
 DROP TYPE IF EXISTS public.notification_type;
 DROP TYPE IF EXISTS public.routine_group_role;
+DROP TYPE IF EXISTS public.routine_exercise_tracking;
 DROP FUNCTION IF EXISTS public.exercises_refresh_personal_bests();
 DROP FUNCTION IF EXISTS public.sets_refresh_personal_bests();
 DROP FUNCTION IF EXISTS public.sets_promote_personal_bests();

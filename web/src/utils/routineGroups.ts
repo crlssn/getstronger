@@ -202,7 +202,9 @@ export const startingBlocks = (shape: StartingShape, titles: Record<IntervalRole
           role,
           mode: role === 'repeat' ? 'circuit' : 'straight',
           rounds: role === 'repeat' ? defaultRounds : singleRound,
-          restBetweenRoundsSeconds: role === 'repeat' ? defaultRoundRestSeconds : 0,
+          // An interval routine rests nowhere: the easy interval is the rest,
+          // and a timer between rounds would be a fourth thing to work through.
+          restBetweenRoundsSeconds: 0,
           // A walk-run that ends on a walk ends on the part nobody came for, so
           // a new repeating block drops it and the athlete turns that off.
           skipLastOnFinalRound: role === 'repeat',
@@ -350,9 +352,14 @@ export const draftGroupsFromRoutine = (
     title: group.title,
     mode: group.mode === RoutineGroupMode.CIRCUIT ? 'circuit' : 'straight',
     restBetweenExercisesSeconds: group.restBetweenExercisesSeconds,
-    // A straight block has no round to close, so the length it shows once made
-    // a circuit is the one a new circuit takes rather than a zero.
-    restBetweenRoundsSeconds: savedOr(group.restBetweenRoundsSeconds, defaultRoundRestSeconds),
+    // A circuit's own answer, zero included: resting nowhere between rounds is
+    // what an interval routine says. A straight block has no round to close, so
+    // the length it would show once made a circuit is a new circuit's rather
+    // than the zero it stores.
+    restBetweenRoundsSeconds:
+      group.mode === RoutineGroupMode.CIRCUIT
+        ? group.restBetweenRoundsSeconds
+        : defaultRoundRestSeconds,
     rounds: group.rounds,
     role: groupRole(group.role),
     skipLastOnFinalRound: group.skipLastOnFinalRound,

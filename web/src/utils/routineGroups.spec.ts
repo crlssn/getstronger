@@ -102,6 +102,15 @@ describe('startingBlocks', () => {
     expect(blocks.map((block) => block.role)).toEqual(['warmup', 'repeat', 'cooldown'])
   })
 
+  // The easy interval is the rest, so a timer between rounds would be a fourth
+  // thing to work through.
+  it('rests nowhere in an interval routine', () => {
+    for (const block of startingBlocks('intervals', intervalTitles)) {
+      expect(block.restBetweenExercisesSeconds).toBe(0)
+      expect(block.restBetweenRoundsSeconds).toBe(0)
+    }
+  })
+
   it('repeats the middle part alone, and ends it an exercise early', () => {
     const blocks = startingBlocks('intervals', intervalTitles)
     const repeat = intervalPartOf(blocks, 'repeat')
@@ -192,6 +201,31 @@ describe('draftGroupsFromRoutine', () => {
 
     expect(groups[0].entries[0]).toMatchObject({ tracking: 'timed', targetDurationSeconds: 45 })
     expect(groups[0].entries[1]).toMatchObject({ tracking: 'sets', restSeconds: 90 })
+  })
+
+  // A circuit that rests nowhere between rounds means it, and reopening the
+  // routine must not hand that block a minute and a half it never asked for.
+  it("keeps a circuit's own answer of no rest between rounds", () => {
+    const groups = draftGroupsFromRoutine(
+      [
+        create(RoutineGroupSchema, {
+          mode: RoutineGroupMode.CIRCUIT,
+          rounds: 5,
+          restBetweenRoundsSeconds: 0,
+          exercises: [{ exercise: exercise('a') }],
+        }),
+        create(RoutineGroupSchema, {
+          mode: RoutineGroupMode.STRAIGHT,
+          exercises: [{ exercise: exercise('b') }],
+        }),
+      ],
+      ['a', 'b'],
+    )
+
+    expect(groups[0].restBetweenRoundsSeconds).toBe(0)
+    // A straight block stores no round rest at all, so what it would show once
+    // made a circuit is a new circuit's length rather than that zero.
+    expect(groups[1].restBetweenRoundsSeconds).toBe(defaultRoundRestSeconds)
   })
 
   it('offers a length rather than a zero for the prescriptions it was not saved with', () => {
