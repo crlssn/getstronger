@@ -917,7 +917,8 @@ export const en = {
     rightsTitle: 'Your choices',
     rightsEdit: 'Change your name, username and preferences at any time under Me.',
     rightsDelete:
-      'Delete your account under Me → Delete account. There is no waiting period and no way back.',
+      'Delete your account under Me → Account → Delete account. There is no waiting period and no way back.',
+    rightsDeleteLink: 'How to delete your account',
     rightsContact: 'Ask for a copy of your data, or anything else about this policy, at {email}.',
     storageTitle: 'Cookies and on-device storage',
     storageBody:
@@ -925,6 +926,35 @@ export const en = {
     changesTitle: 'Changes',
     changesBody:
       'If this policy changes, the date above changes with it. Material changes are announced in the app.',
+  },
+  deletion: {
+    heading: 'Delete your account',
+    updated: 'Last updated 11 September 2026.',
+    intro:
+      'Deleting your {brand} account erases the account and everything logged on it. This page is how to ask for that, what goes, and what is left behind.',
+    appTitle: 'Delete it from the app',
+    appBody:
+      'Open Me → Account → Delete account and type your password to confirm. There is no waiting period and nothing to confirm by email: the account is gone when the sheet closes.',
+    emailTitle: 'If you cannot open the app',
+    emailBody:
+      'Write to {email} from the address the account is under and ask for it to be deleted. The app does not need to be installed, and we reply once it is done.',
+    deletedTitle: 'What is deleted',
+    deletedAccount: 'The account itself: email address, name, username and password.',
+    deletedTraining:
+      'Everything you logged: workouts, sets, routines, plans, your own exercises, notes and recorded routes.',
+    deletedSocial:
+      'Everything social: your comments, who follows you, who you follow, and your notifications.',
+    deletedBody:
+      'All of it leaves the database in one step, immediately and permanently. There is no way back and nothing to restore.',
+    keptTitle: 'What is kept, and for how long',
+    keptBackups: 'Database backups hold a copy for up to 30 days, and are then overwritten.',
+    keptAnalytics:
+      'Usage and error events sit at PostHog under your account id, and deleting from inside the app does not reach them. Ask at the address above and they go too.',
+    keptDevice:
+      'Nothing stays on your phone: deleting the account clears the drafts, cached pages and preferences the app kept there.',
+    policyBody:
+      'What is stored while the account exists, and who else sees it, is in the privacy policy.',
+    policyLink: 'Read the privacy policy',
   },
   pages: {
     home: 'Home',
@@ -960,6 +990,7 @@ export const en = {
     paceTones: 'Pace tones',
     account: 'Account',
     privacy: 'Privacy policy',
+    deleteAccount: 'Delete your account',
     notFound: 'Not found',
   },
   date: { justNow: 'Just now' },
@@ -1866,7 +1897,8 @@ export const sv = {
     rightsTitle: 'Dina val',
     rightsEdit: 'Ändra namn, användarnamn och inställningar när du vill under Jag.',
     rightsDelete:
-      'Ta bort ditt konto under Jag → Ta bort konto. Ingen väntetid, och ingen väg tillbaka.',
+      'Ta bort ditt konto under Jag → Konto → Ta bort konto. Ingen väntetid, och ingen väg tillbaka.',
+    rightsDeleteLink: 'Så tar du bort ditt konto',
     rightsContact: 'Be om en kopia av dina uppgifter, eller fråga om policyn, på {email}.',
     storageTitle: 'Kakor och lagring på enheten',
     storageBody:
@@ -1874,6 +1906,36 @@ export const sv = {
     changesTitle: 'Ändringar',
     changesBody:
       'Om policyn ändras uppdateras datumet ovan. Väsentliga ändringar meddelas i appen.',
+  },
+  deletion: {
+    heading: 'Ta bort ditt konto',
+    updated: 'Senast uppdaterad 11 september 2026.',
+    intro:
+      'Att ta bort ditt {brand}-konto raderar kontot och allt du loggat på det. Här står hur du ber om det, vad som försvinner och vad som blir kvar.',
+    appTitle: 'Ta bort det i appen',
+    appBody:
+      'Öppna Jag → Konto → Ta bort konto och skriv ditt lösenord för att bekräfta. Ingen väntetid och inget att bekräfta via mejl: kontot är borta när rutan stängs.',
+    emailTitle: 'Om du inte kan öppna appen',
+    emailBody:
+      'Skriv till {email} från adressen kontot ligger på och be om att det tas bort. Appen behöver inte vara installerad, och vi svarar när det är gjort.',
+    deletedTitle: 'Vad som tas bort',
+    deletedAccount: 'Själva kontot: e-postadress, namn, användarnamn och lösenord.',
+    deletedTraining:
+      'Allt du loggat: träningspass, set, pass, planer, egna övningar, anteckningar och sparade rutter.',
+    deletedSocial:
+      'Allt socialt: dina kommentarer, vilka som följer dig, vilka du följer och dina aviseringar.',
+    deletedBody:
+      'Allt lämnar databasen i ett steg, direkt och permanent. Det finns ingen väg tillbaka och inget att återställa.',
+    keptTitle: 'Vad som blir kvar, och hur länge',
+    keptBackups:
+      'Säkerhetskopior av databasen har en kopia i upp till 30 dagar och skrivs sedan över.',
+    keptAnalytics:
+      'Användnings- och felhändelser ligger hos PostHog under ditt konto-id, och borttagningen inne i appen når inte dem. Be på adressen ovan så försvinner de också.',
+    keptDevice:
+      'Inget blir kvar i telefonen: att ta bort kontot rensar utkast, sparade sidor och inställningar som appen lagt där.',
+    policyBody:
+      'Vad som lagras medan kontot finns, och vem mer som ser det, står i integritetspolicyn.',
+    policyLink: 'Läs integritetspolicyn',
   },
   pages: {
     home: 'Hem',
@@ -1909,6 +1971,7 @@ export const sv = {
     paceTones: 'Tempoljud',
     account: 'Konto',
     privacy: 'Integritetspolicy',
+    deleteAccount: 'Ta bort ditt konto',
     notFound: 'Sidan hittades inte',
   },
   date: { justNow: 'Nyss' },

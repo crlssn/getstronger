@@ -2,7 +2,9 @@ import { useTranslation } from 'react-i18next'
 
 import { brandName } from '@/brand'
 import { useAuthStore } from '@/stores/auth'
-import styles from './PrivacyPolicy.module.css'
+import { AppButton } from '@/ui/components/AppButton'
+import styles from './PolicyPage.module.css'
+import { privacyEmail } from './policyContact'
 
 /**
  * The privacy policy, on a public route.
@@ -12,17 +14,13 @@ import styles from './PrivacyPolicy.module.css'
  * page says — so it has to keep pace with what the app actually collects.
  */
 
-// The mailbox the policy points people at. Not a catalogue string: an address
-// is the same in every locale, and a translator must not be able to alter it.
-const privacyEmail = 'privacy@getstronger.studio'
-
 export const PrivacyPolicy = () => {
   const { t } = useTranslation()
 
   const authenticated = useAuthStore((state) => Boolean(state.accessToken))
 
   return (
-    <article className={styles.policy}>
+    <article className={styles.page}>
       {/* Signed in, the nav bar above already titles the page; a second
           heading right under it read as a stutter. Guests have no bar. */}
       <header>
@@ -68,6 +66,9 @@ export const PrivacyPolicy = () => {
           <li>{t('privacy.rightsDelete')}</li>
           <li>{t('privacy.rightsContact', { email: privacyEmail })}</li>
         </ul>
+        <AppButton type="link" to="/delete-account" colour="secondary" size="sm" width="auto">
+          {t('privacy.rightsDeleteLink')}
+        </AppButton>
       </section>
 
       <section className={styles.section}>

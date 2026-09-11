@@ -260,6 +260,23 @@ test.describe('guest authentication and routing', () => {
     await expectAccessible(page)
   })
 
+  // Google's Data safety form and App Store Connect both want a deletion URL
+  // that answers for someone who has already uninstalled the app — so it has
+  // to open with no session, and the policy has to lead to it.
+  test('opens the account deletion page without signing in @smoke', async ({ page }) => {
+    await page.goto('/delete-account')
+
+    await expect(page).toHaveURL(/\/delete-account$/)
+    await expect(page.getByRole('heading', { level: 1, name: 'Delete your account' })).toBeVisible()
+    await expect(page.getByRole('heading', { level: 2, name: 'What is deleted' })).toBeVisible()
+    await expect(page.getByText('privacy@getstronger.studio')).toBeVisible()
+    await expectAccessible(page)
+
+    await page.goto('/privacy')
+    await page.getByRole('link', { name: 'How to delete your account' }).click()
+    await expect(page).toHaveURL(/\/delete-account$/)
+  })
+
   test('shows the not-found route', async ({ page }) => {
     await page.goto('/this-route-does-not-exist')
     await expect(page.getByRole('heading', { name: 'Page not found' })).toBeVisible()

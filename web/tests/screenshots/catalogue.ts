@@ -92,6 +92,11 @@ export const guestPages: PageEntry[] = [
     route: () => '/verify-email?token=screenshot-token',
   },
   { component: 'src/ui/PrivacyPolicy.tsx', name: 'privacy', route: () => '/privacy' },
+  {
+    component: 'src/ui/AccountDeletion.tsx',
+    name: 'delete-account',
+    route: () => '/delete-account',
+  },
   { component: 'src/ui/NotFound.tsx', name: 'not-found', route: () => '/screenshots-has-no-page' },
 ]
 

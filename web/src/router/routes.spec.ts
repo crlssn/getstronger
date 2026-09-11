@@ -91,6 +91,7 @@ describe('routes', () => {
     ['quick-workout', 'auth'],
     ['landing', 'landing'],
     ['privacy', 'public'],
+    ['delete-account', 'public'],
     ['not-found', 'public'],
   ])('%s is reachable by %s', (name, access) => {
     expect(byName(name)?.access).toBe(access)
@@ -106,6 +107,7 @@ describe('routes', () => {
 
     expect(open).toEqual(
       [
+        'delete-account',
         'forgot-password',
         'landing',
         'login',
