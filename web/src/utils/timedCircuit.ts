@@ -382,13 +382,33 @@ const accepted = (a: RoutePoint, b: RoutePoint) => {
 const overlapsPause = (pause: Pause, from: number, to: number) =>
   from < (pause.endedAt ?? Infinity) && to > pause.startedAt
 
-/** How much of `from` to `to` the recording was held for. */
-const pausedMs = (recording: Recording, from: number, to: number) =>
-  recording.pauses.reduce(
-    (sum, pause) =>
-      sum + Math.max(0, Math.min(pause.endedAt ?? Infinity, to) - Math.max(pause.startedAt, from)),
-    0,
-  )
+/**
+ * An interval's windows, run on through the holds the detector opened.
+ *
+ * A window stops at every pause, but the recorder keeps recording under a hold
+ * it opened itself, so the ground covered and the line drawn under one belong
+ * to the interval it interrupted. Durations are measured from the windows
+ * these grow out of, so a hold costs the clock exactly what it always did.
+ */
+const measuredWindows = (recording: Recording, windows: Interval['windows']) => {
+  const held = recording.pauses.filter((pause) => pause.auto)
+  const reach = (from: number) => {
+    let end = from
+    // Chains, so two holds either side of a single fix both fold in.
+    for (;;) {
+      const next = held.find((pause) => pause.startedAt <= end && (pause.endedAt ?? Infinity) > end)
+      if (!next) return end
+      end = next.endedAt ?? Infinity
+    }
+  }
+  return windows.reduce<Interval['windows']>((merged, window) => {
+    const grown = { start: window.start, end: reach(window.end) }
+    const last = merged.at(-1)
+    if (last && grown.start <= last.end) last.end = Math.max(last.end, grown.end)
+    else merged.push(grown)
+    return merged
+  }, [])
+}
 
 /**
  * Pace over the last few seconds, in seconds per kilometre, or nothing.
@@ -443,6 +463,7 @@ export const measureRoute = (recording: Recording, intervals: Interval[]) => {
     segments: [] as [RoutePoint, RoutePoint][],
     incomplete: recording.interrupted,
   }))
+  const measured = intervals.map((interval) => measuredWindows(recording, interval.windows))
   const points = smoothRoute(recording.points)
   for (let index = 1; index < points.length; index += 1) {
     const a = points[index - 1]
@@ -453,12 +474,13 @@ export const measureRoute = (recording: Recording, intervals: Interval[]) => {
       !recording.pauses.some(
         (pause) => !pause.auto && overlapsPause(pause, a.timestamp, b.timestamp),
       )
-    const activeMs = b.timestamp - a.timestamp - pausedMs(recording, a.timestamp, b.timestamp)
-    const activeBefore = (timestamp: number) =>
-      (timestamp - a.timestamp - pausedMs(recording, a.timestamp, timestamp)) / activeMs
-    routes.forEach((route) => {
+    // An edge that counts spans no pause the athlete held, and the measured
+    // windows run through the ones the detector held, so what is left to
+    // divide the ground by is the clock.
+    const spanMs = b.timestamp - a.timestamp
+    routes.forEach((route, position) => {
       if (!route.phase.exerciseId) return
-      route.windows.forEach((window) => {
+      measured[position].forEach((window) => {
         const start = Math.max(window.start, a.timestamp)
         const end = Math.min(window.end, b.timestamp)
         if (end <= start) return
@@ -466,11 +488,11 @@ export const measureRoute = (recording: Recording, intervals: Interval[]) => {
           route.incomplete = true
           return
         }
-        if (activeMs <= 0) return
-        route.distanceMeters += (meters * (end - start)) / activeMs
+        if (spanMs <= 0) return
+        route.distanceMeters += (meters * (end - start)) / spanMs
         route.segments.push([
-          along(a, b, activeBefore(start), start),
-          along(a, b, activeBefore(end), end),
+          along(a, b, (start - a.timestamp) / spanMs, start),
+          along(a, b, (end - a.timestamp) / spanMs, end),
         ])
       })
     })

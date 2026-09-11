@@ -506,7 +506,10 @@ public class TimedCircuitPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManagerD
             self.fixes = Array(self.fixes.suffix(maxFixes))
             autoPause(at: timestamp)
             let pauses = recording?["pauses"] as? [[String: Any]] ?? []
-            if let last = pauses.last, last["endedAt"] == nil { continue }
+            // A hold the detector opened stops the clock, not the route: it may
+            // have read a creep as a standstill. A hold the athlete opened drops
+            // its fixes, because they may have gone home with it still open.
+            if let last = pauses.last, last["endedAt"] == nil, last["auto"] == nil { continue }
             if points.count >= 90000 { recording?["interrupted"] = true; end(at: now); return }
             var point: [String: Any] = ["timestamp": timestamp, "latitude": fix.coordinate.latitude,
                                         "longitude": fix.coordinate.longitude, "accuracy": fix.horizontalAccuracy]

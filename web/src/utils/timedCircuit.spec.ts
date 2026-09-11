@@ -178,9 +178,9 @@ describe('recorded timeline', () => {
 
   // The detector holds a recording where the athlete stopped and lets it go
   // once they are moving again, so the edge across its pause is the standing
-  // plus the first strides out of it: ground that belongs to the active time
-  // on either side, not to the pause.
-  it('credits the active time either side of an auto-pause with the edge across it', () => {
+  // plus the first strides out of it: ground that belongs to the interval the
+  // hold interrupted, laid down in one piece.
+  it('credits the edge across an auto-pause and lays it down unbroken', () => {
     const data = recording()
     data.phases = [{ ...data.phases[0], durationSeconds: 10 }]
     data.pauses = [{ startedAt: 5000, endedAt: 10000, auto: true }]
@@ -193,12 +193,39 @@ describe('recorded timeline', () => {
     const [walk] = measureRoute(data, buildTimeline(data, 361000))
     expect(walk.distanceMeters).toBeCloseTo(10, 5)
     expect(walk.incomplete).toBe(false)
-    // Placed along the chord by active time, so the two halves meet.
-    const [before, after] = walk.segments.filter(
-      ([, b]) => b.timestamp === 5000 || b.timestamp === 11000,
+    // One segment carries the whole chord, from the last fix before the hold
+    // to the first after it, rather than stopping at the pause and resuming.
+    const across = walk.segments.find(([, b]) => b.timestamp === 11000)
+    expect(across?.[0].timestamp).toBe(4000)
+    expect(across?.[1].latitude).toBeCloseTo(10 / metersPerDegree, 10)
+  })
+
+  // The recorder keeps recording through a hold it opened itself, so the route
+  // runs on under it. A hold that read a creep as a standstill must not cost
+  // the athlete that ground, and must not break the line drawn through it.
+  it('credits the ground covered under an auto-pause and draws it unbroken', () => {
+    const data = recording()
+    data.phases = [{ ...data.phases[0], durationSeconds: 10 }]
+    // Backdated behind the last fix before it, as the detector records it.
+    data.pauses = [{ startedAt: 4500, endedAt: 11000, auto: true }]
+    data.points = [
+      ...[1000, 2000, 3000, 4000].map((timestamp) => fix(timestamp, 0)),
+      // Twenty metres crept under the hold, five at a time.
+      ...[6000, 8000, 10000].map((timestamp) => fix(timestamp, (timestamp - 4000) / 300)),
+      ...[11000, 12000].map((timestamp) => fix(timestamp, 20 + (timestamp - 11000) / 100)),
+    ]
+    const [walk] = measureRoute(data, buildTimeline(data, 361000))
+    // Twenty metres under the hold and ten after it.
+    expect(walk.distanceMeters).toBeCloseTo(30, 5)
+    expect(walk.incomplete).toBe(false)
+    // The hold stops the clock: the interval spans 16.5 seconds of wall clock
+    // and takes only the 10 the athlete was not held for.
+    expect(walk.durationSeconds).toBeCloseTo(10, 5)
+    // One unbroken run: every segment starts where the last one ended.
+    const breaks = walk.segments.filter(
+      ([a], index) => index > 0 && a.timestamp !== walk.segments[index - 1][1].timestamp,
     )
-    expect(before[1].latitude).toBeCloseTo(5 / metersPerDegree, 10)
-    expect(after[0].latitude).toBeCloseTo(before[1].latitude, 10)
+    expect(breaks).toEqual([])
   })
 
   it('drops an implausible jump and reads the interval as incomplete', () => {

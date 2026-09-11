@@ -542,7 +542,11 @@ public class TimedCircuitService extends Service implements LocationListener {
             if (fixes.size() > MAX_FIXES) fixes.remove(0);
             autoPause(timestamp);
             JSONArray pauses = data.getJSONArray("pauses");
-            if (pauses.length() > 0 && !pauses.getJSONObject(pauses.length() - 1).has("endedAt")) return;
+            // A hold the detector opened stops the clock, not the route: it may
+            // have read a creep as a standstill. A hold the athlete opened drops
+            // its fixes, because they may have gone home with it still open.
+            JSONObject open = pauses.length() > 0 ? pauses.getJSONObject(pauses.length() - 1) : null;
+            if (open != null && !open.has("endedAt") && !open.has("auto")) return;
             if (points.length() >= 90000) { fail(); return; }
             JSONObject point = new JSONObject().put("timestamp", timestamp).put("latitude", location.getLatitude())
                 .put("longitude", location.getLongitude()).put("accuracy", accuracy);

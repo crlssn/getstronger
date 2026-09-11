@@ -51,6 +51,38 @@ const standStill = async (page: Parameters<typeof logIn>[0]) => {
   }
 }
 
+// A creep the detector will not let go of: under 2 km/h it reads as standing,
+// and between the two speeds it leaves the hold where it is. The ground is the
+// athlete's all the same, so a recorder that dropped these fixes would hand
+// back a session that never covered it.
+const creepDegrees = 0.0000079
+const creepMs = 1000
+const creeps = 20
+
+// A real error circle rather than the perfect fixes the harness gives by
+// default, so the route is smoothed the way a phone's is.
+const fixAccuracy = 5
+
+const creepOn = async (page: Parameters<typeof logIn>[0], from: number) => {
+  for (let step = 1; step <= creeps; step += 1) {
+    await page.waitForTimeout(creepMs)
+    await page.context().setGeolocation({
+      latitude: 59.3326,
+      longitude: from + step * creepDegrees,
+      accuracy: fixAccuracy,
+    })
+  }
+}
+
+/** The ground the recording screen says has been covered, in metres. */
+const sessionMetres = async (page: Parameters<typeof logIn>[0]) => {
+  const reading = await page.getByText('Distance', { exact: true }).locator('..').textContent()
+  const shown = /([\d\s.,]+)\s*(k?m)$/.exec(reading?.trim() ?? '')
+  if (!shown) throw new Error(`No distance in "${reading}"`)
+  const figure = Number(shown[1].replace(/[^\d.]/g, ''))
+  return shown[2] === 'km' ? figure * 1000 : figure
+}
+
 // The map's tiles come from the internet, which a test must not depend on.
 // Withholding them is the offline case, and the route falls back to its bare
 // shape — which is what these assertions read.
@@ -152,6 +184,41 @@ test.describe('a session with no set length', () => {
     await expect(page.getByRole('dialog', { name: 'What was this?' })).toHaveCount(0)
     await expect(page).toHaveURL(/\/workouts\/[0-9a-f-]+$/)
     await expect(page.getByRole('heading', { name: 'Run', exact: true })).toBeVisible()
+  })
+
+  // The detector can read a creep as a standstill, and once it holds it needs
+  // 3 km/h to let go — so a slow enough stretch stays held for its whole
+  // length. The clock is right to stop; the route is not, and metres the
+  // recorder never wrote down are metres nothing can give back.
+  test('keeps the ground it covers while it holds itself @mutation', async ({ page }) => {
+    await withoutTiles(page)
+    await logIn(page)
+
+    await page.goto('/profile')
+    await page.getByRole('switch', { name: 'Pause while I stand still' }).click()
+    await expect(page.getByRole('status')).toContainText('Auto-pause updated')
+
+    await page.goto('/record')
+    await page.getByRole('button', { name: 'Start', exact: true }).click()
+    await walkTheRoute(page)
+    await standStill(page)
+    await expect(page.getByText('Auto-paused')).toBeVisible()
+
+    // Creeping on from where the standstill left the athlete, too slowly for
+    // the detector to let go: the hold stands through all of it.
+    const held = await sessionMetres(page)
+    await creepOn(page, startLongitude)
+    await expect(page.getByText('Auto-paused')).toBeVisible()
+
+    // The ground under the hold is on the clock that stopped, not lost with it.
+    const crept = await sessionMetres(page)
+    expect(crept).toBeGreaterThan(held + 5)
+
+    // The switch is the account's, not the session's, and it outlives both:
+    // put it back, or the next test toggles it off instead of on.
+    await page.goto('/profile')
+    await page.getByRole('switch', { name: 'Pause while I stand still' }).click()
+    await expect(page.getByRole('status')).toContainText('Auto-pause updated')
   })
 
   test('holds itself at a standstill once the athlete asks it to @mutation', async ({ page }) => {
