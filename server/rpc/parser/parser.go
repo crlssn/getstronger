@@ -155,6 +155,7 @@ func RoutineGroupSlice(groups []*training.RoutineGroup) []*apiv1.RoutineGroup {
 			Rounds:                      group.Rounds,
 			Role:                        RoutineGroupRoleToProto(group.Role),
 			SkipLastOnFinalRound:        group.SkipLastOnFinalRound,
+			Title:                       group.Title,
 			Exercises:                   RoutineExerciseSlice(group.Exercises),
 		})
 	}
@@ -171,6 +172,9 @@ func RoutineExerciseSlice(exercises []training.RoutineExercise) []*apiv1.Routine
 			Exercise:              Exercise(exercise.Exercise),
 			RestSeconds:           exercise.RestSeconds,
 			TargetDurationSeconds: exercise.TargetDurationSeconds,
+			Tracking:              RoutineExerciseTrackingToProto(exercise.Tracking),
+			Sets:                  exercise.Sets,
+			TargetDistanceMeters:  exercise.TargetDistanceMeters,
 		})
 	}
 
@@ -209,6 +213,37 @@ func RoutineGroupRoleFromProto(role apiv1.RoutineGroupRole) training.RoutineGrou
 	case apiv1.RoutineGroupRole_ROUTINE_GROUP_ROLE_COOLDOWN:
 		return training.RoutineGroupRoleCooldown
 	case apiv1.RoutineGroupRole_ROUTINE_GROUP_ROLE_UNSPECIFIED:
+		return ""
+	default:
+		return ""
+	}
+}
+
+// RoutineExerciseTrackingToProto states how an occurrence's work is counted.
+// Unspecified is one saved before a routine could say, which the reader takes
+// as timed where it holds a target duration and as sets everywhere else.
+func RoutineExerciseTrackingToProto(tracking training.RoutineExerciseTracking) apiv1.RoutineExerciseTracking {
+	switch tracking {
+	case training.RoutineExerciseTrackingSets:
+		return apiv1.RoutineExerciseTracking_ROUTINE_EXERCISE_TRACKING_SETS
+	case training.RoutineExerciseTrackingTimed:
+		return apiv1.RoutineExerciseTracking_ROUTINE_EXERCISE_TRACKING_TIMED
+	case training.RoutineExerciseTrackingDistance:
+		return apiv1.RoutineExerciseTracking_ROUTINE_EXERCISE_TRACKING_DISTANCE
+	default:
+		return apiv1.RoutineExerciseTracking_ROUTINE_EXERCISE_TRACKING_UNSPECIFIED
+	}
+}
+
+func RoutineExerciseTrackingFromProto(tracking apiv1.RoutineExerciseTracking) training.RoutineExerciseTracking {
+	switch tracking {
+	case apiv1.RoutineExerciseTracking_ROUTINE_EXERCISE_TRACKING_SETS:
+		return training.RoutineExerciseTrackingSets
+	case apiv1.RoutineExerciseTracking_ROUTINE_EXERCISE_TRACKING_TIMED:
+		return training.RoutineExerciseTrackingTimed
+	case apiv1.RoutineExerciseTracking_ROUTINE_EXERCISE_TRACKING_DISTANCE:
+		return training.RoutineExerciseTrackingDistance
+	case apiv1.RoutineExerciseTracking_ROUTINE_EXERCISE_TRACKING_UNSPECIFIED:
 		return ""
 	default:
 		return ""

@@ -1,6 +1,7 @@
 package training_test
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/gofrs/uuid/v5"
@@ -201,11 +202,11 @@ func TestNormalizeRoutineGroupSettings(t *testing.T) {
 					Mode: training.RoutineGroupModeStraight,
 					Exercises: []training.RoutineExerciseDraft{
 						// Set, so the routine says how long to rest.
-						{ExerciseID: exerciseID("a"), RestSeconds: new(int32(180))},
+						{ExerciseID: exerciseID("a"), RestSeconds: new(int32(180)), Tracking: training.RoutineExerciseTrackingSets},
 						// Unset, so the rest a new occurrence starts at answers.
-						{ExerciseID: exerciseID("b")},
+						{ExerciseID: exerciseID("b"), Tracking: training.RoutineExerciseTrackingSets},
 						// Zero is an answer of its own: no timer here.
-						{ExerciseID: exerciseID("c"), RestSeconds: new(int32(0))},
+						{ExerciseID: exerciseID("c"), RestSeconds: new(int32(0)), Tracking: training.RoutineExerciseTrackingSets},
 					},
 				},
 			},
@@ -226,8 +227,8 @@ func TestNormalizeRoutineGroupSettings(t *testing.T) {
 				{
 					Mode: training.RoutineGroupModeStraight,
 					Exercises: []training.RoutineExerciseDraft{
-						{ExerciseID: exerciseID("a"), RestSeconds: new(int32(0))},
-						{ExerciseID: exerciseID("b"), RestSeconds: new(int32(3600))},
+						{ExerciseID: exerciseID("a"), RestSeconds: new(int32(0)), Tracking: training.RoutineExerciseTrackingSets},
+						{ExerciseID: exerciseID("b"), RestSeconds: new(int32(3600)), Tracking: training.RoutineExerciseTrackingSets},
 					},
 				},
 			},
@@ -253,7 +254,7 @@ func TestNormalizeRoutineGroupSettings(t *testing.T) {
 					Mode:                     training.RoutineGroupModeCircuit,
 					RestBetweenRoundsSeconds: 120,
 					Exercises: []training.RoutineExerciseDraft{
-						{ExerciseID: exerciseID("a"), RestSeconds: new(int32(180))},
+						{ExerciseID: exerciseID("a"), RestSeconds: new(int32(180)), Tracking: training.RoutineExerciseTrackingSets},
 					},
 				},
 			},
@@ -372,7 +373,12 @@ func TestNormalizeRoutineGroupRoles(t *testing.T) {
 func exercises(names ...string) []training.RoutineExerciseDraft {
 	drafts := make([]training.RoutineExerciseDraft, 0, len(names))
 	for _, name := range names {
-		drafts = append(drafts, training.RoutineExerciseDraft{ExerciseID: exerciseID(name)})
+		drafts = append(drafts, training.RoutineExerciseDraft{
+			ExerciseID: exerciseID(name),
+			// Counted in sets unless a case says otherwise, which is what a
+			// save that names a group says about every occurrence in it.
+			Tracking: training.RoutineExerciseTrackingSets,
+		})
 	}
 
 	return drafts
@@ -391,4 +397,148 @@ func exerciseIDs(names ...string) []uuid.UUID {
 	}
 
 	return ids
+}
+
+// What a block prescribes: how its exercises are counted, and what it is called.
+func TestNormalizeRoutineGroupPrescriptions(t *testing.T) {
+	t.Parallel()
+
+	runNormalizeCases(t, []normalizeCase{
+		{
+			// Every routine saved before tracking existed said how long a round
+			// held an exercise and nothing else, so that is the answer it gave.
+			name: "an occurrence saved before tracking reads as timed where it holds a duration",
+			groups: []training.RoutineGroupDraft{
+				{
+					Mode: training.RoutineGroupModeCircuit,
+					Exercises: []training.RoutineExerciseDraft{
+						{ExerciseID: exerciseID("a"), TargetDurationSeconds: 45},
+						{ExerciseID: exerciseID("b")},
+					},
+				},
+			},
+			ordered: []string{"a", "b"},
+			expected: []training.RoutineGroupDraft{
+				{
+					Mode: training.RoutineGroupModeCircuit,
+					Exercises: []training.RoutineExerciseDraft{
+						{
+							ExerciseID:            exerciseID("a"),
+							TargetDurationSeconds: 45,
+							Tracking:              training.RoutineExerciseTrackingTimed,
+						},
+						{ExerciseID: exerciseID("b"), Tracking: training.RoutineExerciseTrackingSets},
+					},
+				},
+			},
+		},
+		{
+			name: "a tracking the schema does not know is read the same way",
+			groups: []training.RoutineGroupDraft{
+				{
+					Mode: training.RoutineGroupModeStraight,
+					Exercises: []training.RoutineExerciseDraft{
+						{ExerciseID: exerciseID("a"), Tracking: "sideways"},
+					},
+				},
+			},
+			ordered: []string{"a"},
+			expected: []training.RoutineGroupDraft{
+				{
+					Mode: training.RoutineGroupModeStraight,
+					Exercises: []training.RoutineExerciseDraft{
+						{ExerciseID: exerciseID("a"), Tracking: training.RoutineExerciseTrackingSets},
+					},
+				},
+			},
+		},
+		{
+			name: "a prescription outside the supported range is pulled back into it",
+			groups: []training.RoutineGroupDraft{
+				{
+					Mode: training.RoutineGroupModeStraight,
+					Exercises: []training.RoutineExerciseDraft{
+						{
+							ExerciseID: exerciseID("a"),
+							Tracking:   training.RoutineExerciseTrackingSets,
+							Sets:       99,
+						},
+						{
+							ExerciseID:           exerciseID("b"),
+							Tracking:             training.RoutineExerciseTrackingDistance,
+							TargetDistanceMeters: 999999,
+						},
+						{
+							ExerciseID:           exerciseID("c"),
+							Tracking:             training.RoutineExerciseTrackingDistance,
+							TargetDistanceMeters: -100,
+						},
+					},
+				},
+			},
+			ordered: []string{"a", "b", "c"},
+			expected: []training.RoutineGroupDraft{
+				{
+					Mode: training.RoutineGroupModeStraight,
+					Exercises: []training.RoutineExerciseDraft{
+						{
+							ExerciseID: exerciseID("a"),
+							Tracking:   training.RoutineExerciseTrackingSets,
+							Sets:       20,
+						},
+						{
+							ExerciseID:           exerciseID("b"),
+							Tracking:             training.RoutineExerciseTrackingDistance,
+							TargetDistanceMeters: 50000,
+						},
+						{
+							ExerciseID:           exerciseID("c"),
+							Tracking:             training.RoutineExerciseTrackingDistance,
+							TargetDistanceMeters: 0,
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "a block keeps the name it was given",
+			groups: []training.RoutineGroupDraft{
+				{Mode: training.RoutineGroupModeStraight, Title: "Warm-up", Exercises: exercises("a")},
+			},
+			ordered: []string{"a"},
+			expected: []training.RoutineGroupDraft{
+				{Mode: training.RoutineGroupModeStraight, Title: "Warm-up", Exercises: exercises("a")},
+			},
+		},
+		{
+			// Counted in runes, so a name in a script the column stores as more
+			// than one byte a character is not cut where the athlete did not.
+			name: "a name longer than the column takes is trimmed to it",
+			groups: []training.RoutineGroupDraft{
+				{
+					Mode:      training.RoutineGroupModeStraight,
+					Title:     strings.Repeat("ö", 80),
+					Exercises: exercises("a"),
+				},
+			},
+			ordered: []string{"a"},
+			expected: []training.RoutineGroupDraft{
+				{
+					Mode:      training.RoutineGroupModeStraight,
+					Title:     strings.Repeat("ö", 60),
+					Exercises: exercises("a"),
+				},
+			},
+		},
+		{
+			name: "surrounding space is not part of the name",
+			groups: []training.RoutineGroupDraft{
+				{Mode: training.RoutineGroupModeStraight, Title: "  Repeat\n", Exercises: exercises("a")},
+			},
+			ordered: []string{"a"},
+			expected: []training.RoutineGroupDraft{
+				{Mode: training.RoutineGroupModeStraight, Title: "Repeat", Exercises: exercises("a")},
+			},
+		},
+	})
 }
