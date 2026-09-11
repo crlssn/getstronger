@@ -17,12 +17,15 @@ interface PreferencesState {
   autoPause: boolean
   /** Seconds of warning before an interval ends; 0 sounds nothing. */
   intervalCueLeadSeconds: number
+  /** Whether an interval is called at its midpoint, with the pace held so far. */
+  halfwayCue: boolean
   paceReference: PaceReferenceChoice
   setWeightUnit: (unit?: WeightUnit) => void
   setDistanceUnit: (unit?: DistanceUnit) => void
   setAutofillSets: (enabled?: boolean) => void
   setAutoPause: (enabled?: boolean) => void
   setIntervalCueLeadSeconds: (seconds?: number) => void
+  setHalfwayCue: (enabled?: boolean) => void
   setPaceReference: (reference: PaceReferenceChoice) => void
   reset: () => void
 }
@@ -37,6 +40,9 @@ const defaults = {
   // a surprise to anyone who did not ask a recording to hold itself.
   autoPause: false,
   intervalCueLeadSeconds: defaultCueLead,
+  // Off unless the account asked for it: a voice halfway through an interval
+  // nobody asked to have halved is a surprise mid-run.
+  halfwayCue: false,
   // Which session a recording is paced against. Off unless the account asked
   // for it: a note in the ear nobody asked for is a surprise mid-run.
   paceReference: 'off' as PaceReferenceChoice,
@@ -59,6 +65,7 @@ export const usePreferencesStore = create<PreferencesState>()(
       setAutoPause: (enabled) => set({ autoPause: enabled ?? false }),
       setIntervalCueLeadSeconds: (seconds) =>
         set({ intervalCueLeadSeconds: normalizeCueLead(seconds) }),
+      setHalfwayCue: (enabled) => set({ halfwayCue: enabled ?? false }),
       setPaceReference: (reference) => set({ paceReference: reference }),
 
       reset: () => set(defaults),
@@ -72,6 +79,7 @@ export const usePreferencesStore = create<PreferencesState>()(
         autofillSets,
         autoPause,
         intervalCueLeadSeconds,
+        halfwayCue,
         paceReference,
       }) => ({
         weightUnit,
@@ -79,6 +87,7 @@ export const usePreferencesStore = create<PreferencesState>()(
         autofillSets,
         autoPause,
         intervalCueLeadSeconds,
+        halfwayCue,
         paceReference,
       }),
     },

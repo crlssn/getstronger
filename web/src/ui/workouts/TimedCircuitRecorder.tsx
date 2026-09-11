@@ -12,12 +12,14 @@ import {
 import { useConfirmationStore } from '@/stores/confirmation'
 import { usePreferencesStore } from '@/stores/preferences'
 import { cn } from '@/ui/cn'
+import { distanceUnitLabel } from '@/utils/distanceUnits'
 import { AppButton } from '@/ui/components/AppButton'
 import { AppCycleButton } from '@/ui/components/AppCycleButton'
 import { AppInlineError } from '@/ui/components/AppInlineError'
 import { AppStat } from '@/ui/components/AppStat'
 import { WorkoutRoute } from '@/ui/features/WorkoutRoute'
 import { distanceIn, paceIn, speedIn, type Measured } from '@/utils/exerciseMeasurements'
+import { halfwayPhrase } from '@/utils/halfwayCue'
 import { hasPaceTargets, type Pacing } from '@/utils/pacing'
 import {
   buildTimeline,
@@ -77,6 +79,7 @@ export const TimedCircuitRecorder = ({
   const autoPause = usePreferencesStore((state) => state.autoPause)
   const volume = useAnnouncementsStore((state) => state.volume)
   const cueLeadSeconds = usePreferencesStore((state) => state.intervalCueLeadSeconds)
+  const halfwayCue = usePreferencesStore((state) => state.halfwayCue)
   const paceReference = usePreferencesStore((state) => state.paceReference)
   const [recording, setRecording] = useState(saved)
   const [error, setError] = useState('')
@@ -122,6 +125,10 @@ export const TimedCircuitRecorder = ({
           // Spoken by the recorder, so it is handed the words rather than
           // asked to translate.
           cuePhrase: t('timedCircuit.cueSeconds', { count: cueLeadSeconds }),
+          // The pace is only known while the interval is being run, so the
+          // recorder is handed the phrase with the hole still in it.
+          halfwayPhrase: halfwayCue ? halfwayPhrase(t, unit) : '',
+          distanceUnit: distanceUnitLabel(unit),
           completedPhrase: t('timedCircuit.completed'),
           pacing,
           autoPause,

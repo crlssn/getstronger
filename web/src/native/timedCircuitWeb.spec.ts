@@ -111,7 +111,12 @@ describe('the browser recorder', () => {
     instruction: name,
   })
 
-  const circuit = async (phases: Phase[], cueLeadSeconds: number, volume = 1) => {
+  const circuit = async (
+    phases: Phase[],
+    cueLeadSeconds: number,
+    volume = 1,
+    halfwayPhrase = '',
+  ) => {
     const started = TimedCircuitWeb.start({
       key: 'athlete',
       phases,
@@ -119,6 +124,8 @@ describe('the browser recorder', () => {
       volume,
       cueLeadSeconds,
       cuePhrase: `${cueLeadSeconds} seconds`,
+      halfwayPhrase,
+      distanceUnit: 'km',
       completedPhrase: 'Workout completed',
     })
     // The latest watcher: a second circuit in one test watches afresh.
@@ -274,6 +281,43 @@ describe('the browser recorder', () => {
 
     await runTo(110)
     expect(say).toHaveBeenCalledTimes(2)
+  })
+
+  // Inside an interval a recording said nothing between the instruction and
+  // the warning that it was ending, so a five-minute rep gave a runner no way
+  // to know whether the pace they were holding was the one they meant.
+  it('calls the midpoint of a worked interval with the pace held over it', async () => {
+    const phrase = 'Half way. Pace {pace} per kilometre'
+    await circuit([interval('Hard', 120), interval('Easy', 120)], 0, 1, phrase)
+
+    // Four metres a second, which the smoothing reads back a few seconds a
+    // kilometre slower over the first minute of a standing start.
+    for (let second = 1; second <= 59; second += 1) stride(second, second * 4)
+    expect(say).not.toHaveBeenCalled()
+
+    stride(60, 240)
+    await step(60)
+    expect(say).toHaveBeenCalledExactlyOnceWith('Half way. Pace 4:15 per kilometre', 1)
+
+    // Once per interval: the rest of it is not a second call.
+    await runTo(119)
+    expect(say).toHaveBeenCalledTimes(1)
+  })
+
+  // A rest is named by the recording but not worked, an open interval has no
+  // end to halve, and a pace nothing has measured yet is no pace to give.
+  it('says nothing halfway through a rest, a short interval, or an unmeasured one', async () => {
+    const phrase = 'Half way. Pace {pace} per kilometre'
+    const rest = { ...interval('Rest', 120), exerciseId: '' }
+    await circuit([rest, interval('Sprint', 30), interval('Hard', 120)], 0, 1, phrase)
+
+    // Through the rest and the short interval with no fixes at all.
+    await runTo(155)
+    expect(say).not.toHaveBeenCalled()
+
+    // And through the midpoint of an interval nothing has measured a pace over.
+    await runTo(210)
+    expect(say).not.toHaveBeenCalled()
   })
 
   // The cue is its own setting, so the announcements being off does not take
