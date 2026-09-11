@@ -191,6 +191,12 @@ test.describe('a session with no set length', () => {
   // length. The clock is right to stop; the route is not, and metres the
   // recorder never wrote down are metres nothing can give back.
   test('keeps the ground it covers while it holds itself @mutation', async ({ page }) => {
+    // Every wait below is a product threshold rather than padding: six strides
+    // an accepted fix apart, a standstill longer than the two-second dwell, and
+    // a creep slow enough to stay under 2 km/h for the five metres the
+    // assertion needs. That is 36 seconds of scripted clock, which the file's
+    // 45-second budget leaves nothing over.
+    test.slow()
     await withoutTiles(page)
     await logIn(page)
 
