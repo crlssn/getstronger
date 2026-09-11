@@ -2507,6 +2507,57 @@ func (s *repoSuite) TestListPageTokens() {
 	})
 }
 
+// An empty token is no token: it is what a client sends when it is asking for
+// the first page, and both codecs elide a zero-length bytes field on the way
+// in, so an option that compares against nil alone reads one as a cursor and
+// fails to unmarshal it.
+func (s *repoSuite) TestListPageTokensTreatEmptyAsUnset() {
+	ctx := context.Background()
+	user := s.factory.NewUser()
+	empty := []byte{}
+
+	exercise := s.factory.NewExercise(factory.ExerciseUserID(user.ID))
+	routine := s.factory.NewRoutine(factory.RoutineUserID(user.ID))
+	workout := s.factory.NewWorkout(factory.WorkoutUserID(user.ID))
+	notification := s.factory.NewNotification(factory.NotificationUserID(user.ID))
+
+	exercises, err := s.repo.ListExercises(
+		ctx,
+		repo.ListExercisesWithUserID(user.ID),
+		repo.ListExercisesWithPageToken(empty),
+	)
+	s.Require().NoError(err)
+	s.Require().Len(exercises, 1)
+	s.Require().Equal(exercise.ID, exercises[0].ID)
+
+	routines, err := s.repo.ListRoutines(
+		ctx,
+		repo.ListRoutinesWithUserID(user.ID),
+		repo.ListRoutinesWithPageToken(empty),
+	)
+	s.Require().NoError(err)
+	s.Require().Len(routines, 1)
+	s.Require().Equal(routine.ID, routines[0].ID)
+
+	workouts, err := s.repo.ListWorkouts(
+		ctx,
+		repo.ListWorkoutsWithUserIDs(user.ID),
+		repo.ListWorkoutsWithPageToken(empty),
+	)
+	s.Require().NoError(err)
+	s.Require().Len(workouts, 1)
+	s.Require().Equal(workout.ID, workouts[0].ID)
+
+	notifications, err := s.repo.ListNotifications(
+		ctx,
+		repo.ListNotificationsWithUserID(user.ID),
+		repo.ListNotificationsWithPageToken(empty),
+	)
+	s.Require().NoError(err)
+	s.Require().Len(notifications, 1)
+	s.Require().Equal(notification.ID, notifications[0].ID)
+}
+
 // A page whose last item cannot be turned into a cursor is an error, not a page
 // without a next token: the client would otherwise stop at a partial list.
 func (s *repoSuite) TestPaginateSliceReportsAnUnmarshalableCursor() {
