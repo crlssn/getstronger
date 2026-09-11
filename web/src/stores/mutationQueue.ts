@@ -96,7 +96,10 @@ export const useMutationQueueStore = create<MutationQueueState>()(
 
             const replayer = replayers[entry.method]
             try {
+              // A queue persisted by an older build can name a method this one
+              // no longer registers; dropping it silently loses the workout.
               if (replayer) await replayer.replay(entry.request)
+              else console.error('dropping queued mutation with no replayer', entry.method)
             } catch (error) {
               // Still unreachable: keep everything for the next reconnect. Any
               // other failure means the backend saw and rejected this request,
