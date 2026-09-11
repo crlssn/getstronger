@@ -167,19 +167,43 @@ test.describe('settings', () => {
     await page.getByRole('button', { name: '5 seconds before the end', exact: true }).click()
     await expect.poll(spoken).toEqual(['5 seconds.'])
 
-    // Two tones say nothing about which way round they go, so the example
-    // names each one before sounding it.
-    await page.goto('/settings/pace-tones')
-    await page.getByRole('button', { name: /Last session/ }).click()
-    await expect.poll(spoken).toEqual(['Faster.', 'Slower.'])
-
     // Put the device's defaults back for the tests after this one.
-    await page.goto('/settings/pace-tones')
-    await page.getByRole('button', { name: /Off/ }).click()
     await page.goto('/settings/announcements')
     await page.getByRole('button', { name: 'Full' }).click()
     await page.goto('/settings/interval-cue')
     await page.getByRole('button', { name: '10 seconds before the end' }).click()
+  })
+
+  // A note is the one thing a row of copy cannot describe, so each is offered
+  // under its own name below the choice rather than spoken as a word.
+  test('sounds each pace note from a button of its own', async ({ page }) => {
+    type Sounded = Window & { sounded?: number[] }
+    await page.addInitScript(() => {
+      const sounded: number[] = []
+      ;(window as Sounded).sounded = sounded
+      const Native = window.AudioContext
+      window.AudioContext = class extends Native {
+        createOscillator() {
+          const oscillator = super.createOscillator()
+          const start = oscillator.start.bind(oscillator)
+          oscillator.start = (at?: number) => {
+            sounded.push(oscillator.frequency.value)
+            start(at)
+          }
+          return oscillator
+        }
+      }
+    })
+
+    await page.goto('/settings/pace-tones')
+    const example = page.getByRole('group', { name: 'Audio example' })
+    await example.getByRole('button', { name: 'Faster' }).click()
+    await expect.poll(() => page.evaluate(() => (window as Sounded).sounded ?? [])).toEqual([1320])
+
+    await example.getByRole('button', { name: 'Slower' }).click()
+    await expect
+      .poll(() => page.evaluate(() => (window as Sounded).sounded ?? []))
+      .toEqual([1320, 440])
   })
 
   // The one preference on the profile the account knows nothing about. The
@@ -202,7 +226,7 @@ test.describe('settings', () => {
     await call.click()
     await expect
       .poll(() => page.evaluate(() => (window as Spied).spokenExamples ?? []))
-      .toEqual(['Half way. Pace 5:00 per kilometre.'])
+      .toEqual(['Half way. 5 minutes per kilometre.'])
 
     // Kept on the device, so a reload is what proves it landed.
     await page.reload()

@@ -318,7 +318,7 @@ describe('ProfileView', () => {
     await userEvent.click(screen.getByRole('switch', { name: 'Call the half-way point' }))
 
     expect(usePreferencesStore.getState().halfwayCue).toBe(true)
-    expect(previewHalfway).toHaveBeenCalledWith('Half way. Pace 5:00 per kilometre', true, 'full')
+    expect(previewHalfway).toHaveBeenCalledWith('Half way. 5 minutes per kilometre', true, 'full')
   })
 
   // The tab asks the account what the preferences are as it opens, and it

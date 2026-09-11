@@ -1,4 +1,5 @@
 import { registerPlugin } from '@capacitor/core'
+import type { PaceWords } from '@/utils/halfwayCue'
 import type { Pacing } from '@/utils/pacing'
 import type { Phase, Recording } from '@/utils/timedCircuit'
 
@@ -21,6 +22,8 @@ interface TimedCircuitPlugin {
     halfwayPhrase: string
     /** The unit that pace is per, `km` or `mi`. */
     distanceUnit: string
+    /** The bare words that pace is spelled out with, in the athlete's language. */
+    paceWords: PaceWords
     /** Said once the last interval runs out; ending a session by hand says nothing. */
     completedPhrase: string
     pacing?: Pacing

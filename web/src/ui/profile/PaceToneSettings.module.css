@@ -22,3 +22,17 @@
 .tick svg {
   @apply size-5;
 }
+
+/* The example, under the choice: a heading the size of the intro above it, so
+   it reads as a label on the pair of buttons rather than a second setting. */
+.example {
+  @apply space-y-2 px-1;
+}
+
+.example h2 {
+  @apply text-meta text-text-muted;
+}
+
+.notes {
+  @apply grid grid-cols-2 gap-2;
+}

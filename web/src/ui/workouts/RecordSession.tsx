@@ -32,6 +32,7 @@ import { AppPageHeader } from '@/ui/components/AppPageHeader'
 import { AppStat } from '@/ui/components/AppStat'
 import { RecordExerciseSheet } from '@/ui/workouts/RecordExerciseSheet'
 import { convertDistance, distanceUnitLabel } from '@/utils/distanceUnits'
+import { paceWords } from '@/utils/halfwayCue'
 import { distanceIn, paceIn, speedIn } from '@/utils/exerciseMeasurements'
 import { DistanceUnit } from '@/proto/api/v1/shared_pb'
 import {
@@ -160,6 +161,7 @@ export const RecordSession = () => {
         // is no phrase to hand over.
         halfwayPhrase: '',
         distanceUnit: distanceUnitLabel(distanceUnit),
+        paceWords: paceWords(t),
         completedPhrase: t('timedCircuit.completed'),
         autoPause,
       })

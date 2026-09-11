@@ -73,6 +73,8 @@ public class TimedCircuitPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManagerD
     private var halfwayPhrase = ""
     /// The unit the spoken pace is per, as the web app reads it: `km` or `mi`.
     private var paceUnit = "km"
+    /// The bare words a pace is spelled out with, in the athlete's language.
+    private var paceWords: [String: String] = [:]
     /// The interval already called halfway, so the call is made once per interval.
     private var halved = -1
     /// The shortest interval with a midpoint worth naming, in seconds.
@@ -170,6 +172,7 @@ public class TimedCircuitPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManagerD
         cuePhrase = call.getString("cuePhrase") ?? ""
         halfwayPhrase = call.getString("halfwayPhrase") ?? ""
         paceUnit = call.getString("distanceUnit") ?? "km"
+        paceWords = (call.getObject("paceWords") as? [String: String]) ?? [:]
         completedPhrase = call.getString("completedPhrase") ?? ""
         readPacing(call.getObject("pacing"))
         autoPauses = call.getBool("autoPause") ?? false
@@ -505,16 +508,26 @@ public class TimedCircuitPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManagerD
         speak(halfwaySaid(pace), at: cueVolume)
     }
 
-    /// The phrase with the pace filled in, in the athlete's unit, as mm:ss.
+    /// The phrase with the pace filled in, spelled out in the athlete's unit.
     ///
-    /// Mirrors `halfwaySaid` and `paceIn` in the web app: seconds per
-    /// kilometre is what every recorder measures, and the unit the athlete
-    /// reads is what it is said in.
+    /// Mirrors `spokenPace` in `web/src/utils/halfwayCue.ts`. Not "5:30": a
+    /// synthesiser reads a colon as a time and said a round pace back as
+    /// "five o'clock". The words come from the web app, which is the only
+    /// side of this with a message catalogue.
     private func halfwaySaid(_ secondsPerKilometre: Double) -> String {
         let perUnit = Int((paceUnit == "mi" ? secondsPerKilometre * 1.609344 : secondsPerKilometre).rounded())
-        let said = String(format: "%d:%02d", perUnit / 60, perUnit % 60)
-        return halfwayPhrase.replacingOccurrences(of: "{pace}", with: said)
+        let minutes = perUnit / 60, seconds = perUnit % 60
+        var said: [String] = []
+        if minutes > 0 { said.append("\(minutes) \(word(minutes == 1 ? "minute" : "minutes"))") }
+        if seconds > 0 { said.append("\(seconds) \(word(seconds == 1 ? "second" : "seconds"))") }
+        // A pace that rounds to nothing is nobody's, but "0 minutes" read out
+        // is worse than a figure that says what it is.
+        let pace = said.isEmpty ? "0 \(word("seconds"))" : said.joined(separator: " ")
+        return halfwayPhrase.replacingOccurrences(of: "{pace}", with: pace)
     }
+
+    /// One of those words, falling back to the English the app is written in.
+    private func word(_ key: String) -> String { paceWords[key] ?? key }
 
     private func tick() {
         guard let data = recording, data["endedAt"] == nil else { return }

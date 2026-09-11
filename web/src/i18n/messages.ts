@@ -58,8 +58,15 @@ export const en = {
     // Said at the midpoint of an interval, with the pace held over it so far.
     // The recorder measuring the pace is the one that fills {pace} in, so the
     // unit it is per belongs to the phrase rather than being added after it.
-    halfwayKilometre: 'Half way. Pace {pace} per kilometre',
-    halfwayMile: 'Half way. Pace {pace} per mile',
+    halfwayKilometre: 'Half way. {pace} per kilometre',
+    halfwayMile: 'Half way. {pace} per mile',
+    // The bare words the pace in that phrase is built from. A pace is a
+    // duration and is spelled out like one: a synthesiser reads "5:00" as a
+    // time and says it back as "five o'clock".
+    paceMinute: 'minute',
+    paceMinutes: 'minutes',
+    paceSecond: 'second',
+    paceSeconds: 'seconds',
     completed: 'Workout completed',
     pacedAgainstPrevious: 'Tones compare each interval with your last session',
     pacedAgainstBest: 'Tones compare each interval with your best session',
@@ -826,6 +833,7 @@ export const en = {
     paceTonesOffBody: 'Recorded without a comparison',
     // Said before each note in the example, because two tones on their own do
     // not say which way round they go.
+    paceTonesExample: 'Audio example',
     paceTonesFaster: 'Faster',
     paceTonesSlower: 'Slower',
     paceTonesPrevious: 'Last session',
@@ -1008,8 +1016,12 @@ export const sv = {
     intervalNamed: '{name} {round}',
     cueSeconds_one: '{count} sekund',
     cueSeconds_other: '{count} sekunder',
-    halfwayKilometre: 'Halvvägs. Tempo {pace} per kilometer',
-    halfwayMile: 'Halvvägs. Tempo {pace} per mile',
+    halfwayKilometre: 'Halvvägs. {pace} per kilometer',
+    halfwayMile: 'Halvvägs. {pace} per mile',
+    paceMinute: 'minut',
+    paceMinutes: 'minuter',
+    paceSecond: 'sekund',
+    paceSeconds: 'sekunder',
     completed: 'Passet är klart',
     pacedAgainstPrevious: 'Tempoljuden jämför varje intervall med ditt senaste pass',
     pacedAgainstBest: 'Tempoljuden jämför varje intervall med ditt bästa pass',
@@ -1771,6 +1783,7 @@ export const sv = {
       'En ton i örat när ett intervall är snabbare eller långsammare än ett tidigare pass med samma upplägg. Det sparas bara på den här enheten.',
     paceTonesOff: 'Av',
     paceTonesOffBody: 'Ingen jämförelse under passet',
+    paceTonesExample: 'Ljudexempel',
     paceTonesFaster: 'Snabbare',
     paceTonesSlower: 'Långsammare',
     paceTonesPrevious: 'Senaste passet',
