@@ -48,6 +48,8 @@ public class TimedCircuitPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManagerD
     private var locale = "en"
     private var volume = 1.0
     private var audible = false
+    /// Whether whatever else is playing is currently held down for a word.
+    private var ducking = false
     private var autoPauses = false
     private var fixes: [Fix] = []
     /// The route as `smoothedPoints` has read it so far, and the filter's state.
@@ -187,6 +189,7 @@ public class TimedCircuitPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManagerD
         utterance.voice = announcementVoice()
         utterance.volume = Float(level)
         utterance.rate = announcementRate
+        duck(true)
         speech.speak(utterance)
     }
 
@@ -205,7 +208,9 @@ public class TimedCircuitPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManagerD
     }
 
     private func releaseAudioIfDone() {
-        guard recording == nil || recording?["endedAt"] != nil, !speech.isSpeaking else { return }
+        guard !speech.isSpeaking else { return }
+        duck(false)
+        guard recording == nil || recording?["endedAt"] != nil else { return }
         closeAudio()
     }
 
@@ -238,8 +243,8 @@ public class TimedCircuitPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManagerD
     /// the session open.
     private var needsAudio: Bool { volume > 0 || cueLead > 0 }
 
-    /// Mixed over whatever is playing and never ducking it: a runner's music
-    /// is theirs, and a word said over it is heard without it dropping away.
+    /// Mixed over whatever is playing: a runner's music is theirs, and the
+    /// notes are short enough to be heard over it.
     private func openAudio() throws {
         guard !audible else { return }
         try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default, options: [.mixWithOthers])
@@ -247,9 +252,32 @@ public class TimedCircuitPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManagerD
         audible = true
     }
 
+    /// Holds whatever else is playing down while a word is said, and lets it
+    /// back up after it.
+    ///
+    /// Mixing alone lost a cue under a chorus. How far the other audio drops
+    /// is the system's to decide — roughly a fifth of where it was — because
+    /// `duckOthers` is the whole of the API: there is no level to ask for.
+    private func duck(_ ducked: Bool) {
+        guard audible, ducked != ducking else { return }
+        let options: AVAudioSession.CategoryOptions =
+            ducked ? [.mixWithOthers, .duckOthers] : [.mixWithOthers]
+        do {
+            try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default, options: options)
+            // Re-activated so the option is applied to a session that is
+            // already running rather than to the next one.
+            try AVAudioSession.sharedInstance().setActive(true)
+            ducking = ducked
+        } catch {
+            // Whatever is playing carries on at its own volume, and the
+            // announcement is still said over it.
+        }
+    }
+
     private func closeAudio() {
         guard audible else { return }
         audible = false
+        ducking = false
         try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
     }
 

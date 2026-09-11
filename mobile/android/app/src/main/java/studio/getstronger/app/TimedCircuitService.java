@@ -11,7 +11,9 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.media.AudioAttributes;
+import android.media.AudioFocusRequest;
 import android.media.AudioFormat;
+import android.media.AudioManager;
 import android.media.AudioTrack;
 import android.os.Bundle;
 import android.os.Handler;
@@ -92,6 +94,10 @@ public class TimedCircuitService extends Service implements LocationListener {
     private PowerManager.WakeLock wakeLock;
     private TextToSpeech speech;
     private boolean speechReady;
+    /** The focus other audio is held down by while a word is said, or null. */
+    private AudioFocusRequest ducking;
+    /** Announcements still to be said, so the duck lifts after the last of them. */
+    private int speaking;
     private int spoken = -1;
     /** The interval already warned about, so the cue is said once per interval. */
     private int cued = -1;
@@ -239,8 +245,20 @@ public class TimedCircuitService extends Service implements LocationListener {
                     // for it: shut down under an utterance, it cuts the word off.
                     speech.setOnUtteranceProgressListener(new UtteranceProgressListener() {
                         @Override public void onStart(String id) {}
-                        @Override public void onDone(String id) { if (COMPLETION_ID.equals(id)) handler.post(stopper); }
-                        @Override public void onError(String id) { if (COMPLETION_ID.equals(id)) handler.post(stopper); }
+                        @Override public void onDone(String id) { spoken(id); }
+                        @Override public void onError(String id) { spoken(id); }
+                        // A queue flushed by the next instruction drops what
+                        // was pending without ever finishing it, and an
+                        // announcement nobody counts back holds the duck open.
+                        @Override public void onStop(String id, boolean interrupted) { spoken(id); }
+                        // Off the synthesiser's thread: the duck and the
+                        // service's own shutdown are the main thread's.
+                        private void spoken(String id) {
+                            handler.post(() -> {
+                                said();
+                                if (COMPLETION_ID.equals(id)) stopper.run();
+                            });
+                        }
                     });
                 } else { fail(); }
             });
@@ -315,7 +333,38 @@ public class TimedCircuitService extends Service implements LocationListener {
         if (volume == 0 || phrase.isEmpty()) return TextToSpeech.SUCCESS;
         Bundle params = new Bundle();
         params.putFloat(TextToSpeech.Engine.KEY_PARAM_VOLUME, (float) volume);
-        return speech.speak(phrase, queue, params, id);
+        speaking++;
+        duck();
+        int result = speech.speak(phrase, queue, params, id);
+        if (result == TextToSpeech.ERROR) said();
+        return result;
+    }
+    /**
+     * Holds whatever else is playing down while a word is said.
+     *
+     * Playing over the top lost a cue under a chorus. How far the other audio
+     * drops is the system's to decide — around a fifth of where it was — and
+     * transient ducking is the whole of the request: there is no level to ask
+     * for.
+     */
+    private void duck() {
+        if (ducking != null) return;
+        AudioManager audio = getSystemService(AudioManager.class);
+        if (audio == null) return;
+        AudioFocusRequest request = new AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK)
+            .setAudioAttributes(new AudioAttributes.Builder()
+                .setUsage(AudioAttributes.USAGE_ASSISTANCE_NAVIGATION_GUIDANCE)
+                .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH).build())
+            .build();
+        if (audio.requestAudioFocus(request) == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) ducking = request;
+    }
+    /** One announcement done with; the last of them lets the other audio back up. */
+    private void said() {
+        speaking = Math.max(0, speaking - 1);
+        if (speaking > 0) return;
+        AudioManager audio = getSystemService(AudioManager.class);
+        if (audio != null && ducking != null) audio.abandonAudioFocusRequest(ducking);
+        ducking = null;
     }
     /**
      * Whether an interval is long enough to be worth warning about.
@@ -662,6 +711,8 @@ public class TimedCircuitService extends Service implements LocationListener {
         handler.removeCallbacks(stopper);
         if (locations != null) locations.removeUpdates(this);
         if (speech != null) { speech.stop(); speech.shutdown(); speech = null; }
+        speaking = 0;
+        said();
         if (aheadTone != null) { aheadTone.release(); aheadTone = null; }
         if (behindTone != null) { behindTone.release(); behindTone = null; }
         if (wakeLock != null && wakeLock.isHeld()) wakeLock.release();
