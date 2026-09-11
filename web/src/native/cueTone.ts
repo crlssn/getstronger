@@ -9,8 +9,19 @@
  * and a session is a few hundred beeps long.
  */
 
+import type { PaceTone } from '@/utils/pacing'
+
 const seconds = 0.2
 const peak = 0.3
+
+// The two notes, in hertz: the interval is going better than the reference, or
+// worse than it. Higher is better is the one convention nobody has to be
+// taught, and the cue is spoken, so a note is never mistaken for it. The
+// phones sound the same two.
+export const paceToneHertz: Record<PaceTone, number> = { ahead: 1320, behind: 440 }
+
+/** How loud a pace note is at full announcement volume. */
+export const paceToneVolume = 0.3
 
 let context: AudioContext | undefined
 
@@ -24,6 +35,15 @@ export const say = (phrase: string, volume: number): void => {
   } catch {
     // A tab that cannot speak still records; the words are the one thing it
     // goes without.
+  }
+}
+
+/** Stops whatever is being said, so the next phrase replaces it rather than queues. */
+export const hush = (): void => {
+  try {
+    window.speechSynthesis?.cancel()
+  } catch {
+    // Same as not being able to speak at all: there is nothing to stop.
   }
 }
 

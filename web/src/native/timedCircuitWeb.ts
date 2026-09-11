@@ -1,5 +1,5 @@
 import { movementThresholds, readMovement } from '@/utils/movement'
-import { newPaceWatch, watchPace, type Pacing, type PaceTone } from '@/utils/pacing'
+import { newPaceWatch, watchPace, type Pacing } from '@/utils/pacing'
 import {
   currentPace,
   type Pause,
@@ -8,7 +8,7 @@ import {
   type RoutePoint,
 } from '@/utils/timedCircuit'
 
-import { playTone, say } from '@/native/cueTone'
+import { paceToneHertz, paceToneVolume, playTone, say } from '@/native/cueTone'
 import { cuesInterval } from '@/utils/intervalCue'
 
 /**
@@ -35,14 +35,6 @@ const fixTimeoutMs = 30000
 // Enough to read the dwell through at any fix rate a browser offers, and no
 // more: this window is the detector's whole input.
 const maxFixes = 60
-
-// The two notes, in hertz: the interval is going better than the reference, or
-// worse than it. Higher is better is the one convention nobody has to be
-// taught, and the cue is spoken, so a note is never mistaken for it. The
-// phones sound the same two.
-const toneHertz: Record<PaceTone, number> = { ahead: 1320, behind: 440 }
-/** How loud a note is at full volume. */
-const toneVolume = 0.3
 
 interface Saved {
   key: string
@@ -119,7 +111,7 @@ const judge = (phaseIndex: number, phaseSeconds: number, at: number) => {
   }
   const result = watchPace(pace, reading, saved.pacing)
   pace = result.watch
-  if (result.tone) playTone(toneHertz[result.tone], toneVolume * saved.volume)
+  if (result.tone) playTone(paceToneHertz[result.tone], paceToneVolume * saved.volume)
 }
 
 const stopWatching = () => {

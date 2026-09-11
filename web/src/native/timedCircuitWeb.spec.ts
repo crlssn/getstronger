@@ -6,7 +6,11 @@ import { playTone, say } from '@/native/cueTone'
 import { openSessionPhases } from '@/utils/timedCircuit'
 import { TimedCircuitWeb } from './timedCircuitWeb'
 
-vi.mock('@/native/cueTone', () => ({ say: vi.fn(), playTone: vi.fn() }))
+vi.mock('@/native/cueTone', async (original) => ({
+  ...(await original<typeof import('@/native/cueTone')>()),
+  say: vi.fn(),
+  playTone: vi.fn(),
+}))
 
 const fix = (
   timestamp: number,

@@ -809,6 +809,9 @@ export const en = {
     announcementsIntro:
       'How loudly a recording calls each interval. It is kept on this device, and the recording screen changes it mid-session.',
     announcementsOffBody: 'The interval cue is still called out',
+    // Played the moment a level is chosen: an interval instruction is what a
+    // recording says most often, so it is what the level is judged on.
+    announcementsExample: 'Run for 2 minutes',
     paceTones: 'Pace tones',
     paceTonesIntro:
       'A note in your ear when an interval pulls ahead of or falls behind one of your own sessions of the routine. It is kept on this device.',
@@ -1747,6 +1750,7 @@ export const sv = {
     announcementsIntro:
       'Hur högt varje intervall läses upp under ett livepass. Det sparas bara på den här enheten och kan ändras direkt på skärmen under passet.',
     announcementsOffBody: 'Intervallsignalen läses ändå upp',
+    announcementsExample: 'Spring i 2 minuter',
     paceTones: 'Tempoljud',
     paceTonesIntro:
       'En ton i örat när ett intervall är snabbare eller långsammare än ett tidigare pass med samma upplägg. Det sparas bara på den här enheten.',

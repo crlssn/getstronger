@@ -2,19 +2,29 @@
 
 import { screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { beforeEach, describe, expect, test } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 
+import { previewIntervalCue } from '@/native/audioPreview'
+import { useAnnouncementsStore } from '@/stores/announcements'
 import { usePreferencesStore } from '@/stores/preferences'
 import { renderWithProviders } from '@/ui/testing'
 import { defaultCueLead } from '@/utils/intervalCue'
 import { IntervalCueSettings } from './IntervalCueSettings'
+
+vi.mock('@/native/audioPreview', () => ({
+  previewAnnouncement: vi.fn(),
+  previewIntervalCue: vi.fn(),
+  previewPaceTones: vi.fn(),
+}))
 
 const render = () =>
   renderWithProviders(<IntervalCueSettings />, { route: '/settings/interval-cue' })
 
 describe('IntervalCueSettings', () => {
   beforeEach(() => {
+    vi.clearAllMocks()
     window.localStorage.clear()
+    useAnnouncementsStore.setState({ volume: 'full' })
     usePreferencesStore.setState({ intervalCueLeadSeconds: defaultCueLead })
   })
 
@@ -67,5 +77,16 @@ describe('IntervalCueSettings', () => {
     render()
 
     expect(screen.getByText(/this device/i)).toBeInTheDocument()
+  })
+
+  // The words the recording will say, in the lead just chosen: a number of
+  // seconds means nothing until it has been heard once.
+  test('says the cue at the lead just picked', async () => {
+    const user = userEvent.setup()
+    render()
+
+    await user.click(screen.getByRole('button', { name: '5 seconds before the end' }))
+
+    expect(previewIntervalCue).toHaveBeenCalledWith('5 seconds', 5, 'full')
   })
 })
