@@ -17,6 +17,11 @@ on:
         required: true
         default: true
         type: boolean
+      play_upload:
+        description: Publish the Android bundle to Play (off for the first build, which Play wants by hand)
+        required: true
+        default: true
+        type: boolean
 
 concurrency:
   group: release-mobile
@@ -205,7 +210,10 @@ jobs:
         env:
           ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          # A variable, not a secret: the alias names the key rather than
+          # opening it, keytool -list reads it off the keystore anyway, and
+          # masking a word as common as 'upload' punches holes in the log.
+          ANDROID_KEY_ALIAS: ${{ vars.ANDROID_KEY_ALIAS }}
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
           printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.keystore"
@@ -217,7 +225,17 @@ jobs:
             mobile/android/app/build/outputs/bundle/release/app-release.aab \
             "$ANDROID_KEY_ALIAS"
 
+      # Play refuses an API publish until a new app's first bundle has been
+      # uploaded through the Console by hand, so that run needs a way out of CI.
+      - name: Upload the signed bundle
+        uses: actions/upload-artifact@v7
+        with:
+          name: android-release-aab
+          path: mobile/android/app/build/outputs/bundle/release/app-release.aab
+          retention-days: 14
+
       - name: Upload to Play internal testing
+        if: inputs.play_upload
         uses: r0adkll/upload-google-play@e738b9dd8f2476ea806d921b64aacd24f34515a5 # v1.1.5
         with:
           serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
