@@ -49,6 +49,12 @@ const (
 	// WorkoutServicePostCommentProcedure is the fully-qualified name of the WorkoutService's
 	// PostComment RPC.
 	WorkoutServicePostCommentProcedure = "/api.v1.WorkoutService/PostComment"
+	// WorkoutServiceLikeWorkoutProcedure is the fully-qualified name of the WorkoutService's
+	// LikeWorkout RPC.
+	WorkoutServiceLikeWorkoutProcedure = "/api.v1.WorkoutService/LikeWorkout"
+	// WorkoutServiceUnlikeWorkoutProcedure is the fully-qualified name of the WorkoutService's
+	// UnlikeWorkout RPC.
+	WorkoutServiceUnlikeWorkoutProcedure = "/api.v1.WorkoutService/UnlikeWorkout"
 	// WorkoutServiceUpdateWorkoutProcedure is the fully-qualified name of the WorkoutService's
 	// UpdateWorkout RPC.
 	WorkoutServiceUpdateWorkoutProcedure = "/api.v1.WorkoutService/UpdateWorkout"
@@ -64,6 +70,8 @@ type WorkoutServiceClient interface {
 	ListWorkouts(context.Context, *connect.Request[v1.ListWorkoutsRequest]) (*connect.Response[v1.ListWorkoutsResponse], error)
 	DeleteWorkout(context.Context, *connect.Request[v1.DeleteWorkoutRequest]) (*connect.Response[v1.DeleteWorkoutResponse], error)
 	PostComment(context.Context, *connect.Request[v1.PostCommentRequest]) (*connect.Response[v1.PostCommentResponse], error)
+	LikeWorkout(context.Context, *connect.Request[v1.LikeWorkoutRequest]) (*connect.Response[v1.LikeWorkoutResponse], error)
+	UnlikeWorkout(context.Context, *connect.Request[v1.UnlikeWorkoutRequest]) (*connect.Response[v1.UnlikeWorkoutResponse], error)
 	UpdateWorkout(context.Context, *connect.Request[v1.UpdateWorkoutRequest]) (*connect.Response[v1.UpdateWorkoutResponse], error)
 	GetPaceReference(context.Context, *connect.Request[v1.GetPaceReferenceRequest]) (*connect.Response[v1.GetPaceReferenceResponse], error)
 }
@@ -109,6 +117,18 @@ func NewWorkoutServiceClient(httpClient connect.HTTPClient, baseURL string, opts
 			connect.WithSchema(workoutServiceMethods.ByName("PostComment")),
 			connect.WithClientOptions(opts...),
 		),
+		likeWorkout: connect.NewClient[v1.LikeWorkoutRequest, v1.LikeWorkoutResponse](
+			httpClient,
+			baseURL+WorkoutServiceLikeWorkoutProcedure,
+			connect.WithSchema(workoutServiceMethods.ByName("LikeWorkout")),
+			connect.WithClientOptions(opts...),
+		),
+		unlikeWorkout: connect.NewClient[v1.UnlikeWorkoutRequest, v1.UnlikeWorkoutResponse](
+			httpClient,
+			baseURL+WorkoutServiceUnlikeWorkoutProcedure,
+			connect.WithSchema(workoutServiceMethods.ByName("UnlikeWorkout")),
+			connect.WithClientOptions(opts...),
+		),
 		updateWorkout: connect.NewClient[v1.UpdateWorkoutRequest, v1.UpdateWorkoutResponse](
 			httpClient,
 			baseURL+WorkoutServiceUpdateWorkoutProcedure,
@@ -131,6 +151,8 @@ type workoutServiceClient struct {
 	listWorkouts     *connect.Client[v1.ListWorkoutsRequest, v1.ListWorkoutsResponse]
 	deleteWorkout    *connect.Client[v1.DeleteWorkoutRequest, v1.DeleteWorkoutResponse]
 	postComment      *connect.Client[v1.PostCommentRequest, v1.PostCommentResponse]
+	likeWorkout      *connect.Client[v1.LikeWorkoutRequest, v1.LikeWorkoutResponse]
+	unlikeWorkout    *connect.Client[v1.UnlikeWorkoutRequest, v1.UnlikeWorkoutResponse]
 	updateWorkout    *connect.Client[v1.UpdateWorkoutRequest, v1.UpdateWorkoutResponse]
 	getPaceReference *connect.Client[v1.GetPaceReferenceRequest, v1.GetPaceReferenceResponse]
 }
@@ -160,6 +182,16 @@ func (c *workoutServiceClient) PostComment(ctx context.Context, req *connect.Req
 	return c.postComment.CallUnary(ctx, req)
 }
 
+// LikeWorkout calls api.v1.WorkoutService.LikeWorkout.
+func (c *workoutServiceClient) LikeWorkout(ctx context.Context, req *connect.Request[v1.LikeWorkoutRequest]) (*connect.Response[v1.LikeWorkoutResponse], error) {
+	return c.likeWorkout.CallUnary(ctx, req)
+}
+
+// UnlikeWorkout calls api.v1.WorkoutService.UnlikeWorkout.
+func (c *workoutServiceClient) UnlikeWorkout(ctx context.Context, req *connect.Request[v1.UnlikeWorkoutRequest]) (*connect.Response[v1.UnlikeWorkoutResponse], error) {
+	return c.unlikeWorkout.CallUnary(ctx, req)
+}
+
 // UpdateWorkout calls api.v1.WorkoutService.UpdateWorkout.
 func (c *workoutServiceClient) UpdateWorkout(ctx context.Context, req *connect.Request[v1.UpdateWorkoutRequest]) (*connect.Response[v1.UpdateWorkoutResponse], error) {
 	return c.updateWorkout.CallUnary(ctx, req)
@@ -177,6 +209,8 @@ type WorkoutServiceHandler interface {
 	ListWorkouts(context.Context, *connect.Request[v1.ListWorkoutsRequest]) (*connect.Response[v1.ListWorkoutsResponse], error)
 	DeleteWorkout(context.Context, *connect.Request[v1.DeleteWorkoutRequest]) (*connect.Response[v1.DeleteWorkoutResponse], error)
 	PostComment(context.Context, *connect.Request[v1.PostCommentRequest]) (*connect.Response[v1.PostCommentResponse], error)
+	LikeWorkout(context.Context, *connect.Request[v1.LikeWorkoutRequest]) (*connect.Response[v1.LikeWorkoutResponse], error)
+	UnlikeWorkout(context.Context, *connect.Request[v1.UnlikeWorkoutRequest]) (*connect.Response[v1.UnlikeWorkoutResponse], error)
 	UpdateWorkout(context.Context, *connect.Request[v1.UpdateWorkoutRequest]) (*connect.Response[v1.UpdateWorkoutResponse], error)
 	GetPaceReference(context.Context, *connect.Request[v1.GetPaceReferenceRequest]) (*connect.Response[v1.GetPaceReferenceResponse], error)
 }
@@ -218,6 +252,18 @@ func NewWorkoutServiceHandler(svc WorkoutServiceHandler, opts ...connect.Handler
 		connect.WithSchema(workoutServiceMethods.ByName("PostComment")),
 		connect.WithHandlerOptions(opts...),
 	)
+	workoutServiceLikeWorkoutHandler := connect.NewUnaryHandler(
+		WorkoutServiceLikeWorkoutProcedure,
+		svc.LikeWorkout,
+		connect.WithSchema(workoutServiceMethods.ByName("LikeWorkout")),
+		connect.WithHandlerOptions(opts...),
+	)
+	workoutServiceUnlikeWorkoutHandler := connect.NewUnaryHandler(
+		WorkoutServiceUnlikeWorkoutProcedure,
+		svc.UnlikeWorkout,
+		connect.WithSchema(workoutServiceMethods.ByName("UnlikeWorkout")),
+		connect.WithHandlerOptions(opts...),
+	)
 	workoutServiceUpdateWorkoutHandler := connect.NewUnaryHandler(
 		WorkoutServiceUpdateWorkoutProcedure,
 		svc.UpdateWorkout,
@@ -242,6 +288,10 @@ func NewWorkoutServiceHandler(svc WorkoutServiceHandler, opts ...connect.Handler
 			workoutServiceDeleteWorkoutHandler.ServeHTTP(w, r)
 		case WorkoutServicePostCommentProcedure:
 			workoutServicePostCommentHandler.ServeHTTP(w, r)
+		case WorkoutServiceLikeWorkoutProcedure:
+			workoutServiceLikeWorkoutHandler.ServeHTTP(w, r)
+		case WorkoutServiceUnlikeWorkoutProcedure:
+			workoutServiceUnlikeWorkoutHandler.ServeHTTP(w, r)
 		case WorkoutServiceUpdateWorkoutProcedure:
 			workoutServiceUpdateWorkoutHandler.ServeHTTP(w, r)
 		case WorkoutServiceGetPaceReferenceProcedure:
@@ -273,6 +323,14 @@ func (UnimplementedWorkoutServiceHandler) DeleteWorkout(context.Context, *connec
 
 func (UnimplementedWorkoutServiceHandler) PostComment(context.Context, *connect.Request[v1.PostCommentRequest]) (*connect.Response[v1.PostCommentResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.WorkoutService.PostComment is not implemented"))
+}
+
+func (UnimplementedWorkoutServiceHandler) LikeWorkout(context.Context, *connect.Request[v1.LikeWorkoutRequest]) (*connect.Response[v1.LikeWorkoutResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.WorkoutService.LikeWorkout is not implemented"))
+}
+
+func (UnimplementedWorkoutServiceHandler) UnlikeWorkout(context.Context, *connect.Request[v1.UnlikeWorkoutRequest]) (*connect.Response[v1.UnlikeWorkoutResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.WorkoutService.UnlikeWorkout is not implemented"))
 }
 
 func (UnimplementedWorkoutServiceHandler) UpdateWorkout(context.Context, *connect.Request[v1.UpdateWorkoutRequest]) (*connect.Response[v1.UpdateWorkoutResponse], error) {

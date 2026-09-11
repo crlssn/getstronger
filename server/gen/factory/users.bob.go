@@ -66,6 +66,7 @@ type userR struct {
 	Sets            []*userRSetsR
 	Auth            *userRAuthR
 	WorkoutComments []*userRWorkoutCommentsR
+	WorkoutLikes    []*userRWorkoutLikesR
 	Workouts        []*userRWorkoutsR
 }
 
@@ -103,6 +104,10 @@ type userRAuthR struct {
 type userRWorkoutCommentsR struct {
 	number int
 	o      *WorkoutCommentTemplate
+}
+type userRWorkoutLikesR struct {
+	number int
+	o      *WorkoutLikeTemplate
 }
 type userRWorkoutsR struct {
 	number int
@@ -241,6 +246,21 @@ func (t UserTemplate) setModelRels(o *models.User) {
 		}
 		o.R.WorkoutComments = rel
 		o.R.Loaded.WorkoutComments = true
+	}
+
+	if t.r.WorkoutLikes != nil {
+		rel := models.WorkoutLikeSlice{}
+		for _, r := range t.r.WorkoutLikes {
+			related := r.o.BuildMany(r.number)
+			for _, rel := range related {
+				rel.UserID = o.ID // h2
+				rel.R.User = o
+				rel.R.Loaded.User = true
+			}
+			rel = append(rel, related...)
+		}
+		o.R.WorkoutLikes = rel
+		o.R.Loaded.WorkoutLikes = true
 	}
 
 	if t.r.Workouts != nil {
@@ -559,6 +579,26 @@ func (o *UserTemplate) insertOptRels(ctx context.Context, exec bob.Executor, m *
 		}
 	}
 
+	isWorkoutLikesDone, _ := userRelWorkoutLikesCtx.Value(ctx)
+	if !isWorkoutLikesDone && o.r.WorkoutLikes != nil {
+		ctx = userRelWorkoutLikesCtx.WithValue(ctx, true)
+		for _, r := range o.r.WorkoutLikes {
+			if r.o.alreadyPersisted {
+				m.R.WorkoutLikes = append(m.R.WorkoutLikes, r.o.Build())
+			} else {
+				rel9, err := r.o.CreateMany(ctx, exec, r.number)
+				if err != nil {
+					return err
+				}
+
+				err = m.AttachWorkoutLikes(ctx, exec, rel9...)
+				if err != nil {
+					return err
+				}
+			}
+		}
+	}
+
 	isWorkoutsDone, _ := userRelWorkoutsCtx.Value(ctx)
 	if !isWorkoutsDone && o.r.Workouts != nil {
 		ctx = userRelWorkoutsCtx.WithValue(ctx, true)
@@ -566,12 +606,12 @@ func (o *UserTemplate) insertOptRels(ctx context.Context, exec bob.Executor, m *
 			if r.o.alreadyPersisted {
 				m.R.Workouts = append(m.R.Workouts, r.o.Build())
 			} else {
-				rel9, err := r.o.CreateMany(ctx, exec, r.number)
+				rel10, err := r.o.CreateMany(ctx, exec, r.number)
 				if err != nil {
 					return err
 				}
 
-				err = m.AttachWorkouts(ctx, exec, rel9...)
+				err = m.AttachWorkouts(ctx, exec, rel10...)
 				if err != nil {
 					return err
 				}
@@ -648,6 +688,7 @@ func (o *UserTemplate) Create(ctx context.Context, exec bob.Executor) (*models.U
 	newMInCreation["users:routines:routines.routines_user_id_fkey"] = m
 	newMInCreation["users:sets:sets.sets_user_id_fkey"] = m
 	newMInCreation["users:workout_comments:workout_comments.workout_comments_user_id_fkey"] = m
+	newMInCreation["users:workout_likes:workout_likes.workout_likes_user_id_fkey"] = m
 	newMInCreation["users:workouts:workouts.workouts_user_id_fkey"] = m
 
 	ctx = modelsInCreationCtx.WithValue(ctx, newMInCreation)
@@ -1534,6 +1575,54 @@ func (m userMods) AddExistingWorkoutComments(existingModels ...*models.WorkoutCo
 func (m userMods) WithoutWorkoutComments() UserMod {
 	return UserModFunc(func(ctx context.Context, o *UserTemplate) {
 		o.r.WorkoutComments = nil
+	})
+}
+
+func (m userMods) WithWorkoutLikes(number int, related *WorkoutLikeTemplate) UserMod {
+	return UserModFunc(func(ctx context.Context, o *UserTemplate) {
+		o.r.WorkoutLikes = []*userRWorkoutLikesR{{
+			number: number,
+			o:      related,
+		}}
+	})
+}
+
+func (m userMods) WithNewWorkoutLikes(number int, mods ...WorkoutLikeMod) UserMod {
+	return UserModFunc(func(ctx context.Context, o *UserTemplate) {
+		related := o.f.NewWorkoutLikeWithContext(ctx, mods...)
+		m.WithWorkoutLikes(number, related).Apply(ctx, o)
+	})
+}
+
+func (m userMods) AddWorkoutLikes(number int, related *WorkoutLikeTemplate) UserMod {
+	return UserModFunc(func(ctx context.Context, o *UserTemplate) {
+		o.r.WorkoutLikes = append(o.r.WorkoutLikes, &userRWorkoutLikesR{
+			number: number,
+			o:      related,
+		})
+	})
+}
+
+func (m userMods) AddNewWorkoutLikes(number int, mods ...WorkoutLikeMod) UserMod {
+	return UserModFunc(func(ctx context.Context, o *UserTemplate) {
+		related := o.f.NewWorkoutLikeWithContext(ctx, mods...)
+		m.AddWorkoutLikes(number, related).Apply(ctx, o)
+	})
+}
+
+func (m userMods) AddExistingWorkoutLikes(existingModels ...*models.WorkoutLike) UserMod {
+	return UserModFunc(func(ctx context.Context, o *UserTemplate) {
+		for _, em := range existingModels {
+			o.r.WorkoutLikes = append(o.r.WorkoutLikes, &userRWorkoutLikesR{
+				o: o.f.fromExistingWorkoutLike(ctx, em),
+			})
+		}
+	})
+}
+
+func (m userMods) WithoutWorkoutLikes() UserMod {
+	return UserModFunc(func(ctx context.Context, o *UserTemplate) {
+		o.r.WorkoutLikes = nil
 	})
 }
 

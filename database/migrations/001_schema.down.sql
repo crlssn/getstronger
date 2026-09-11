@@ -5,6 +5,7 @@ DROP TABLE IF EXISTS public.notifications CASCADE;
 DROP TABLE IF EXISTS public.auth_rate_limits CASCADE;
 DROP TABLE IF EXISTS public.traces CASCADE;
 DROP TABLE IF EXISTS public.workout_comments CASCADE;
+DROP TABLE IF EXISTS public.workout_likes CASCADE;
 DROP TABLE IF EXISTS public.followers CASCADE;
 DROP TABLE IF EXISTS public.personal_bests CASCADE;
 DROP TABLE IF EXISTS public.sets CASCADE;

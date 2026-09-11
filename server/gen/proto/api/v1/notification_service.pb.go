@@ -288,6 +288,7 @@ type Notification struct {
 	//
 	//	*Notification_UserFollowed_
 	//	*Notification_WorkoutComment_
+	//	*Notification_WorkoutLike_
 	Type          isNotification_Type `protobuf_oneof:"type"`
 	Read          bool                `protobuf:"varint,5,opt,name=read,proto3" json:"read,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -363,6 +364,15 @@ func (x *Notification) GetWorkoutComment() *Notification_WorkoutComment {
 	return nil
 }
 
+func (x *Notification) GetWorkoutLike() *Notification_WorkoutLike {
+	if x != nil {
+		if x, ok := x.Type.(*Notification_WorkoutLike_); ok {
+			return x.WorkoutLike
+		}
+	}
+	return nil
+}
+
 func (x *Notification) GetRead() bool {
 	if x != nil {
 		return x.Read
@@ -382,9 +392,15 @@ type Notification_WorkoutComment_ struct {
 	WorkoutComment *Notification_WorkoutComment `protobuf:"bytes,4,opt,name=workout_comment,json=workoutComment,proto3,oneof"`
 }
 
+type Notification_WorkoutLike_ struct {
+	WorkoutLike *Notification_WorkoutLike `protobuf:"bytes,6,opt,name=workout_like,json=workoutLike,proto3,oneof"`
+}
+
 func (*Notification_UserFollowed_) isNotification_Type() {}
 
 func (*Notification_WorkoutComment_) isNotification_Type() {}
+
+func (*Notification_WorkoutLike_) isNotification_Type() {}
 
 type Notification_UserFollowed struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -482,6 +498,58 @@ func (x *Notification_WorkoutComment) GetWorkout() *Workout {
 	return nil
 }
 
+type Notification_WorkoutLike struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Actor         *User                  `protobuf:"bytes,1,opt,name=actor,proto3" json:"actor,omitempty"`
+	Workout       *Workout               `protobuf:"bytes,2,opt,name=workout,proto3" json:"workout,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Notification_WorkoutLike) Reset() {
+	*x = Notification_WorkoutLike{}
+	mi := &file_api_v1_notification_service_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Notification_WorkoutLike) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Notification_WorkoutLike) ProtoMessage() {}
+
+func (x *Notification_WorkoutLike) ProtoReflect() protoreflect.Message {
+	mi := &file_api_v1_notification_service_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Notification_WorkoutLike.ProtoReflect.Descriptor instead.
+func (*Notification_WorkoutLike) Descriptor() ([]byte, []int) {
+	return file_api_v1_notification_service_proto_rawDescGZIP(), []int{6, 2}
+}
+
+func (x *Notification_WorkoutLike) GetActor() *User {
+	if x != nil {
+		return x.Actor
+	}
+	return nil
+}
+
+func (x *Notification_WorkoutLike) GetWorkout() *Workout {
+	if x != nil {
+		return x.Workout
+	}
+	return nil
+}
+
 var File_api_v1_notification_service_proto protoreflect.FileDescriptor
 
 const file_api_v1_notification_service_proto_rawDesc = "" +
@@ -502,16 +570,20 @@ const file_api_v1_notification_service_proto_rawDesc = "" +
 	"\x1fMarkNotificationsAsReadResponse\"#\n" +
 	"!GetUnreadNotificationCountRequest\":\n" +
 	"\"GetUnreadNotificationCountResponse\x12\x14\n" +
-	"\x05count\x18\x01 \x01(\x03R\x05count\"\x93\x03\n" +
+	"\x05count\x18\x01 \x01(\x03R\x05count\"\xb8\x04\n" +
 	"\fNotification\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12(\n" +
 	"\x10notified_at_unix\x18\x02 \x01(\x03R\x0enotifiedAtUnix\x12H\n" +
 	"\ruser_followed\x18\x03 \x01(\v2!.api.v1.Notification.UserFollowedH\x00R\fuserFollowed\x12N\n" +
-	"\x0fworkout_comment\x18\x04 \x01(\v2#.api.v1.Notification.WorkoutCommentH\x00R\x0eworkoutComment\x12\x12\n" +
+	"\x0fworkout_comment\x18\x04 \x01(\v2#.api.v1.Notification.WorkoutCommentH\x00R\x0eworkoutComment\x12E\n" +
+	"\fworkout_like\x18\x06 \x01(\v2 .api.v1.Notification.WorkoutLikeH\x00R\vworkoutLike\x12\x12\n" +
 	"\x04read\x18\x05 \x01(\bR\x04read\x1a2\n" +
 	"\fUserFollowed\x12\"\n" +
 	"\x05actor\x18\x01 \x01(\v2\f.api.v1.UserR\x05actor\x1a_\n" +
 	"\x0eWorkoutComment\x12\"\n" +
+	"\x05actor\x18\x01 \x01(\v2\f.api.v1.UserR\x05actor\x12)\n" +
+	"\aworkout\x18\x02 \x01(\v2\x0f.api.v1.WorkoutR\aworkout\x1a\\\n" +
+	"\vWorkoutLike\x12\"\n" +
 	"\x05actor\x18\x01 \x01(\v2\f.api.v1.UserR\x05actor\x12)\n" +
 	"\aworkout\x18\x02 \x01(\v2\x0f.api.v1.WorkoutR\aworkoutB\x06\n" +
 	"\x04type2\xd6\x02\n" +
@@ -534,7 +606,7 @@ func file_api_v1_notification_service_proto_rawDescGZIP() []byte {
 	return file_api_v1_notification_service_proto_rawDescData
 }
 
-var file_api_v1_notification_service_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
+var file_api_v1_notification_service_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
 var file_api_v1_notification_service_proto_goTypes = []any{
 	(*ListNotificationsRequest)(nil),           // 0: api.v1.ListNotificationsRequest
 	(*ListNotificationsResponse)(nil),          // 1: api.v1.ListNotificationsResponse
@@ -545,31 +617,35 @@ var file_api_v1_notification_service_proto_goTypes = []any{
 	(*Notification)(nil),                       // 6: api.v1.Notification
 	(*Notification_UserFollowed)(nil),          // 7: api.v1.Notification.UserFollowed
 	(*Notification_WorkoutComment)(nil),        // 8: api.v1.Notification.WorkoutComment
-	(*PaginationRequest)(nil),                  // 9: api.v1.PaginationRequest
-	(*PaginationResponse)(nil),                 // 10: api.v1.PaginationResponse
-	(*User)(nil),                               // 11: api.v1.User
-	(*Workout)(nil),                            // 12: api.v1.Workout
+	(*Notification_WorkoutLike)(nil),           // 9: api.v1.Notification.WorkoutLike
+	(*PaginationRequest)(nil),                  // 10: api.v1.PaginationRequest
+	(*PaginationResponse)(nil),                 // 11: api.v1.PaginationResponse
+	(*User)(nil),                               // 12: api.v1.User
+	(*Workout)(nil),                            // 13: api.v1.Workout
 }
 var file_api_v1_notification_service_proto_depIdxs = []int32{
-	9,  // 0: api.v1.ListNotificationsRequest.pagination:type_name -> api.v1.PaginationRequest
+	10, // 0: api.v1.ListNotificationsRequest.pagination:type_name -> api.v1.PaginationRequest
 	6,  // 1: api.v1.ListNotificationsResponse.notifications:type_name -> api.v1.Notification
-	10, // 2: api.v1.ListNotificationsResponse.pagination:type_name -> api.v1.PaginationResponse
+	11, // 2: api.v1.ListNotificationsResponse.pagination:type_name -> api.v1.PaginationResponse
 	7,  // 3: api.v1.Notification.user_followed:type_name -> api.v1.Notification.UserFollowed
 	8,  // 4: api.v1.Notification.workout_comment:type_name -> api.v1.Notification.WorkoutComment
-	11, // 5: api.v1.Notification.UserFollowed.actor:type_name -> api.v1.User
-	11, // 6: api.v1.Notification.WorkoutComment.actor:type_name -> api.v1.User
-	12, // 7: api.v1.Notification.WorkoutComment.workout:type_name -> api.v1.Workout
-	0,  // 8: api.v1.NotificationService.ListNotifications:input_type -> api.v1.ListNotificationsRequest
-	2,  // 9: api.v1.NotificationService.MarkNotificationsAsRead:input_type -> api.v1.MarkNotificationsAsReadRequest
-	4,  // 10: api.v1.NotificationService.GetUnreadNotificationCount:input_type -> api.v1.GetUnreadNotificationCountRequest
-	1,  // 11: api.v1.NotificationService.ListNotifications:output_type -> api.v1.ListNotificationsResponse
-	3,  // 12: api.v1.NotificationService.MarkNotificationsAsRead:output_type -> api.v1.MarkNotificationsAsReadResponse
-	5,  // 13: api.v1.NotificationService.GetUnreadNotificationCount:output_type -> api.v1.GetUnreadNotificationCountResponse
-	11, // [11:14] is the sub-list for method output_type
-	8,  // [8:11] is the sub-list for method input_type
-	8,  // [8:8] is the sub-list for extension type_name
-	8,  // [8:8] is the sub-list for extension extendee
-	0,  // [0:8] is the sub-list for field type_name
+	9,  // 5: api.v1.Notification.workout_like:type_name -> api.v1.Notification.WorkoutLike
+	12, // 6: api.v1.Notification.UserFollowed.actor:type_name -> api.v1.User
+	12, // 7: api.v1.Notification.WorkoutComment.actor:type_name -> api.v1.User
+	13, // 8: api.v1.Notification.WorkoutComment.workout:type_name -> api.v1.Workout
+	12, // 9: api.v1.Notification.WorkoutLike.actor:type_name -> api.v1.User
+	13, // 10: api.v1.Notification.WorkoutLike.workout:type_name -> api.v1.Workout
+	0,  // 11: api.v1.NotificationService.ListNotifications:input_type -> api.v1.ListNotificationsRequest
+	2,  // 12: api.v1.NotificationService.MarkNotificationsAsRead:input_type -> api.v1.MarkNotificationsAsReadRequest
+	4,  // 13: api.v1.NotificationService.GetUnreadNotificationCount:input_type -> api.v1.GetUnreadNotificationCountRequest
+	1,  // 14: api.v1.NotificationService.ListNotifications:output_type -> api.v1.ListNotificationsResponse
+	3,  // 15: api.v1.NotificationService.MarkNotificationsAsRead:output_type -> api.v1.MarkNotificationsAsReadResponse
+	5,  // 16: api.v1.NotificationService.GetUnreadNotificationCount:output_type -> api.v1.GetUnreadNotificationCountResponse
+	14, // [14:17] is the sub-list for method output_type
+	11, // [11:14] is the sub-list for method input_type
+	11, // [11:11] is the sub-list for extension type_name
+	11, // [11:11] is the sub-list for extension extendee
+	0,  // [0:11] is the sub-list for field type_name
 }
 
 func init() { file_api_v1_notification_service_proto_init() }
@@ -583,6 +659,7 @@ func file_api_v1_notification_service_proto_init() {
 	file_api_v1_notification_service_proto_msgTypes[6].OneofWrappers = []any{
 		(*Notification_UserFollowed_)(nil),
 		(*Notification_WorkoutComment_)(nil),
+		(*Notification_WorkoutLike_)(nil),
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
@@ -590,7 +667,7 @@ func file_api_v1_notification_service_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_api_v1_notification_service_proto_rawDesc), len(file_api_v1_notification_service_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   9,
+			NumMessages:   10,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

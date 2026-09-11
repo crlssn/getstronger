@@ -72,6 +72,9 @@ var _ bob.HookableType = &WorkoutGroupExercise{}
 // Make sure the type WorkoutGroup runs hooks after queries
 var _ bob.HookableType = &WorkoutGroup{}
 
+// Make sure the type WorkoutLike runs hooks after queries
+var _ bob.HookableType = &WorkoutLike{}
+
 // Make sure the type Workout runs hooks after queries
 var _ bob.HookableType = &Workout{}
 

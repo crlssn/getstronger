@@ -824,6 +824,171 @@ func (s *workoutSuite) TestPostComment() {
 	})
 }
 
+func (s *workoutSuite) TestLikeWorkout() {
+	s.Run("ok_a_rep_is_recorded_and_raises_an_event", func() {
+		owner := s.factory.NewUser()
+		liker := s.factory.NewUser()
+		workout := s.factory.NewWorkout(factory.WorkoutUserID(owner.ID))
+
+		ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
+		ctx = xcontext.WithUserID(ctx, liker.ID)
+
+		_, err := s.handler.LikeWorkout(ctx, connect.NewRequest(&apiv1.LikeWorkoutRequest{
+			WorkoutId: workout.ID.String(),
+		}))
+		s.Require().NoError(err)
+
+		count, err := models.WorkoutLikes.Query(
+			models.SelectWhere.WorkoutLikes.WorkoutID.EQ(workout.ID),
+		).Count(context.Background(), bob.NewDB(s.container.DB))
+		s.Require().NoError(err)
+		s.Require().Equal(int64(1), count)
+
+		s.Require().Eventually(func() bool {
+			raised, raisedErr := models.Events.Query(
+				models.SelectWhere.Events.Topic.EQ(events.TopicWorkoutLiked),
+			).Count(context.Background(), bob.NewDB(s.container.DB))
+			return raisedErr == nil && raised > 0
+		}, 5*time.Second, 50*time.Millisecond)
+	})
+
+	s.Run("ok_repping_twice_records_one_rep", func() {
+		liker := s.factory.NewUser()
+		workout := s.factory.NewWorkout()
+
+		ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
+		ctx = xcontext.WithUserID(ctx, liker.ID)
+		request := connect.NewRequest(&apiv1.LikeWorkoutRequest{WorkoutId: workout.ID.String()})
+
+		_, err := s.handler.LikeWorkout(ctx, request)
+		s.Require().NoError(err)
+		_, err = s.handler.LikeWorkout(ctx, connect.NewRequest(request.Msg))
+		s.Require().NoError(err)
+
+		count, err := models.WorkoutLikes.Query(
+			models.SelectWhere.WorkoutLikes.WorkoutID.EQ(workout.ID),
+		).Count(context.Background(), bob.NewDB(s.container.DB))
+		s.Require().NoError(err)
+		s.Require().Equal(int64(1), count)
+	})
+
+	s.Run("err_rep_of_a_workout_that_does_not_exist", func() {
+		ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
+		ctx = xcontext.WithUserID(ctx, s.factory.NewUser().ID)
+
+		res, err := s.handler.LikeWorkout(ctx, connect.NewRequest(&apiv1.LikeWorkoutRequest{
+			WorkoutId: uuid.Must(uuid.NewV4()).String(),
+		}))
+		s.Require().Nil(res)
+		s.Require().Equal(connect.NewError(connect.CodeNotFound, nil).Error(), err.Error())
+	})
+
+	s.Run("err_malformed_workout_id", func() {
+		ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
+		ctx = xcontext.WithUserID(ctx, s.factory.NewUser().ID)
+
+		res, err := s.handler.LikeWorkout(ctx, connect.NewRequest(&apiv1.LikeWorkoutRequest{
+			WorkoutId: "not-a-uuid",
+		}))
+		s.Require().Nil(res)
+		s.Require().Equal(connect.NewError(connect.CodeInvalidArgument, nil).Error(), err.Error())
+	})
+
+	// Not found is reserved for the workout. A rep nobody can be the author of
+	// is the account being broken, which the athlete cannot act on.
+	s.Run("err_rep_from_an_account_that_is_gone", func() {
+		ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
+		ctx = xcontext.WithUserID(ctx, uuid.Must(uuid.NewV4()))
+
+		res, err := s.handler.LikeWorkout(ctx, connect.NewRequest(&apiv1.LikeWorkoutRequest{
+			WorkoutId: s.factory.NewWorkout().ID.String(),
+		}))
+		s.Require().Nil(res)
+		s.Require().Equal(connect.NewError(connect.CodeInternal, nil).Error(), err.Error())
+	})
+}
+
+func (s *workoutSuite) TestUnlikeWorkout() {
+	s.Run("ok_takes_the_rep_back", func() {
+		like := s.factory.NewWorkoutLike()
+
+		ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
+		ctx = xcontext.WithUserID(ctx, like.UserID)
+
+		_, err := s.handler.UnlikeWorkout(ctx, connect.NewRequest(&apiv1.UnlikeWorkoutRequest{
+			WorkoutId: like.WorkoutID.String(),
+		}))
+		s.Require().NoError(err)
+
+		exists, err := models.WorkoutLikes.Query(
+			models.SelectWhere.WorkoutLikes.ID.EQ(like.ID),
+		).Exists(context.Background(), bob.NewDB(s.container.DB))
+		s.Require().NoError(err)
+		s.Require().False(exists)
+	})
+
+	s.Run("ok_taking_back_a_rep_that_was_never_there", func() {
+		ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
+		ctx = xcontext.WithUserID(ctx, s.factory.NewUser().ID)
+
+		_, err := s.handler.UnlikeWorkout(ctx, connect.NewRequest(&apiv1.UnlikeWorkoutRequest{
+			WorkoutId: s.factory.NewWorkout().ID.String(),
+		}))
+		s.Require().NoError(err)
+	})
+
+	s.Run("err_malformed_workout_id", func() {
+		ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
+		ctx = xcontext.WithUserID(ctx, s.factory.NewUser().ID)
+
+		res, err := s.handler.UnlikeWorkout(ctx, connect.NewRequest(&apiv1.UnlikeWorkoutRequest{
+			WorkoutId: "not-a-uuid",
+		}))
+		s.Require().Nil(res)
+		s.Require().Equal(connect.NewError(connect.CodeInvalidArgument, nil).Error(), err.Error())
+	})
+}
+
+// The count is everybody's; liked_by_viewer is only ever the reader's own.
+func (s *workoutSuite) TestWorkoutReadsCarryTheReps() {
+	owner := s.factory.NewUser()
+	viewer := s.factory.NewUser()
+	workout := s.factory.NewWorkout(factory.WorkoutUserID(owner.ID))
+	s.factory.NewWorkoutLike(factory.WorkoutLikeWorkoutID(workout.ID), factory.WorkoutLikeUserID(owner.ID))
+	s.factory.NewWorkoutLike(factory.WorkoutLikeWorkoutID(workout.ID), factory.WorkoutLikeUserID(viewer.ID))
+
+	ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
+
+	read, err := s.handler.GetWorkout(
+		xcontext.WithUserID(ctx, viewer.ID),
+		connect.NewRequest(&apiv1.GetWorkoutRequest{Id: workout.ID.String()}),
+	)
+	s.Require().NoError(err)
+	s.Require().Equal(int32(2), read.Msg.GetWorkout().GetLikeCount())
+	s.Require().True(read.Msg.GetWorkout().GetLikedByViewer())
+
+	stranger := s.factory.NewUser()
+	read, err = s.handler.GetWorkout(
+		xcontext.WithUserID(ctx, stranger.ID),
+		connect.NewRequest(&apiv1.GetWorkoutRequest{Id: workout.ID.String()}),
+	)
+	s.Require().NoError(err)
+	s.Require().Equal(int32(2), read.Msg.GetWorkout().GetLikeCount())
+	s.Require().False(read.Msg.GetWorkout().GetLikedByViewer())
+
+	listed, err := s.handler.ListWorkouts(
+		xcontext.WithUserID(ctx, viewer.ID),
+		connect.NewRequest(&apiv1.ListWorkoutsRequest{
+			UserIds:    []string{owner.ID.String()},
+			Pagination: &apiv1.PaginationRequest{PageLimit: 10},
+		}),
+	)
+	s.Require().NoError(err)
+	s.Require().Len(listed.Msg.GetWorkouts(), 1)
+	s.Require().Equal(int32(2), listed.Msg.GetWorkouts()[0].GetLikeCount())
+	s.Require().True(listed.Msg.GetWorkouts()[0].GetLikedByViewer())
+}
+
 func (s *workoutSuite) TestUpdateWorkout() {
 	startedAt := time.Now().UTC().Truncate(time.Second)
 	finishedAt := startedAt.Add(time.Hour)

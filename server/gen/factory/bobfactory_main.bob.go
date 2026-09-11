@@ -36,6 +36,7 @@ type Factory struct {
 	baseWorkoutCommentMods       WorkoutCommentModSlice
 	baseWorkoutGroupExerciseMods WorkoutGroupExerciseModSlice
 	baseWorkoutGroupMods         WorkoutGroupModSlice
+	baseWorkoutLikeMods          WorkoutLikeModSlice
 	baseWorkoutMods              WorkoutModSlice
 }
 
@@ -786,6 +787,9 @@ func (f *Factory) fromExistingUser(ctx context.Context, m *models.User) *UserTem
 	if len(m.R.WorkoutComments) > 0 {
 		UserMods.AddExistingWorkoutComments(m.R.WorkoutComments...).Apply(ctx, o)
 	}
+	if len(m.R.WorkoutLikes) > 0 {
+		UserMods.AddExistingWorkoutLikes(m.R.WorkoutLikes...).Apply(ctx, o)
+	}
 	if len(m.R.Workouts) > 0 {
 		UserMods.AddExistingWorkouts(m.R.Workouts...).Apply(ctx, o)
 	}
@@ -942,6 +946,53 @@ func (f *Factory) fromExistingWorkoutGroup(ctx context.Context, m *models.Workou
 	return o
 }
 
+func (f *Factory) NewWorkoutLike(mods ...WorkoutLikeMod) *WorkoutLikeTemplate {
+	return f.NewWorkoutLikeWithContext(context.Background(), mods...)
+}
+
+func (f *Factory) NewWorkoutLikeWithContext(ctx context.Context, mods ...WorkoutLikeMod) *WorkoutLikeTemplate {
+	o := &WorkoutLikeTemplate{f: f}
+
+	if f != nil {
+		f.baseWorkoutLikeMods.Apply(ctx, o)
+	}
+
+	WorkoutLikeModSlice(mods).Apply(ctx, o)
+
+	return o
+}
+
+func (f *Factory) FromExistingWorkoutLike(ctx context.Context, m *models.WorkoutLike) *WorkoutLikeTemplate {
+	visited := make(map[uintptr]struct{})
+	ctx = factoryVisitedCtx.WithValue(ctx, visited)
+	return f.fromExistingWorkoutLike(ctx, m)
+}
+
+func (f *Factory) fromExistingWorkoutLike(ctx context.Context, m *models.WorkoutLike) *WorkoutLikeTemplate {
+	o := &WorkoutLikeTemplate{f: f, alreadyPersisted: true}
+
+	o.ID = func() uuid.UUID { return m.ID }
+	o.UserID = func() uuid.UUID { return m.UserID }
+	o.WorkoutID = func() uuid.UUID { return m.WorkoutID }
+	o.CreatedAt = func() time.Time { return m.CreatedAt }
+
+	if visited, ok := factoryVisitedCtx.Value(ctx); ok {
+		ptr := uintptr(unsafe.Pointer(m))
+		if _, seen := visited[ptr]; seen {
+			return o
+		}
+		visited[ptr] = struct{}{}
+	}
+	if m.R.User != nil {
+		WorkoutLikeMods.WithExistingUser(m.R.User).Apply(ctx, o)
+	}
+	if m.R.Workout != nil {
+		WorkoutLikeMods.WithExistingWorkout(m.R.Workout).Apply(ctx, o)
+	}
+
+	return o
+}
+
 func (f *Factory) NewWorkout(mods ...WorkoutMod) *WorkoutTemplate {
 	return f.NewWorkoutWithContext(context.Background(), mods...)
 }
@@ -993,6 +1044,9 @@ func (f *Factory) fromExistingWorkout(ctx context.Context, m *models.Workout) *W
 	}
 	if len(m.R.WorkoutGroups) > 0 {
 		WorkoutMods.AddExistingWorkoutGroups(m.R.WorkoutGroups...).Apply(ctx, o)
+	}
+	if len(m.R.WorkoutLikes) > 0 {
+		WorkoutMods.AddExistingWorkoutLikes(m.R.WorkoutLikes...).Apply(ctx, o)
 	}
 	if m.R.Routine != nil {
 		WorkoutMods.WithExistingRoutine(m.R.Routine).Apply(ctx, o)
@@ -1146,6 +1200,14 @@ func (f *Factory) ClearBaseWorkoutGroupMods() {
 
 func (f *Factory) AddBaseWorkoutGroupMod(mods ...WorkoutGroupMod) {
 	f.baseWorkoutGroupMods = append(f.baseWorkoutGroupMods, mods...)
+}
+
+func (f *Factory) ClearBaseWorkoutLikeMods() {
+	f.baseWorkoutLikeMods = nil
+}
+
+func (f *Factory) AddBaseWorkoutLikeMod(mods ...WorkoutLikeMod) {
+	f.baseWorkoutLikeMods = append(f.baseWorkoutLikeMods, mods...)
 }
 
 func (f *Factory) ClearBaseWorkoutMods() {

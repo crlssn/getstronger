@@ -392,6 +392,29 @@ func TestSeedJaneDoe(t *testing.T) {
 	}
 	require.Equal(t, 2, readCount)
 	require.Equal(t, 2, unreadCount)
+
+	likes, err := models.WorkoutLikes.Query(
+		models.SelectWhere.WorkoutLikes.UserID.EQ(jane.ID),
+	).All(ctx, bob.NewDB(c.DB))
+	require.NoError(t, err)
+	require.Len(t, likes, 3)
+	for _, like := range likes {
+		_, repsAJohnWorkout := johnWorkoutIDs[like.WorkoutID]
+		require.True(t, repsAJohnWorkout)
+	}
+
+	repNotifications, err := models.Notifications.Query(
+		models.SelectWhere.Notifications.UserID.EQ(john.ID),
+		models.SelectWhere.Notifications.Type.EQ(notification.TypeWorkoutLike),
+	).All(ctx, bob.NewDB(c.DB))
+	require.NoError(t, err)
+	require.Len(t, repNotifications, 3)
+	for _, stored := range repNotifications {
+		var payload notification.Payload
+		require.NoError(t, json.Unmarshal(stored.Payload.Val, &payload))
+		require.Equal(t, jane.ID, payload.ActorID)
+		require.Equal(t, notification.WorkoutLikeEventID(jane.ID, payload.WorkoutID), payload.EventID)
+	}
 }
 
 func TestTruncateDatabase(t *testing.T) {

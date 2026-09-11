@@ -22,6 +22,7 @@ var (
 	_ Handler = (*FollowedUser)(nil)
 	_ Handler = (*RequestTraced)(nil)
 	_ Handler = (*WorkoutCommentPosted)(nil)
+	_ Handler = (*WorkoutLiked)(nil)
 )
 
 type RequestTraced struct {
@@ -106,6 +107,53 @@ func (w *WorkoutCommentPosted) HandlePayload(payload any) {
 		}); err != nil {
 			w.log.Error("Create workout comment notification", zap.Error(err))
 		}
+	}
+}
+
+type WorkoutLiked struct {
+	log      *zap.Logger
+	workouts LikedWorkout
+}
+
+func NewWorkoutLiked(log *zap.Logger, workouts LikedWorkout) *WorkoutLiked {
+	return &WorkoutLiked{log, workouts}
+}
+
+func (w *WorkoutLiked) HandlePayload(payload any) {
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+
+	p, ok := payload.(events.WorkoutLiked)
+	if !ok {
+		w.log.Error("Unexpected payload type for workout like event", zap.Any("payload", payload))
+		return
+	}
+	if p.EventID.IsNil() {
+		w.log.Error("Workout like event is missing an ID")
+		return
+	}
+
+	workout, err := w.workouts.GetWorkout(ctx, repo.GetWorkoutWithID(p.WorkoutID))
+	if err != nil {
+		w.log.Error("Get workout for like notification", zap.Error(err))
+		return
+	}
+
+	// Only the owner hears about a rep, and never about their own.
+	if workout.UserID == p.ActorID {
+		return
+	}
+
+	if err = w.workouts.CreateNotification(ctx, repo.CreateNotificationParams{
+		Type:   notification.TypeWorkoutLike,
+		UserID: workout.UserID,
+		Payload: notification.Payload{
+			ActorID:   p.ActorID,
+			EventID:   p.EventID,
+			WorkoutID: p.WorkoutID,
+		},
+	}); err != nil {
+		w.log.Error("Create workout like notification", zap.Error(err))
 	}
 }
 

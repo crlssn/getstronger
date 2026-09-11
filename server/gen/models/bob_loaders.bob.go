@@ -32,6 +32,7 @@ type preloaders struct {
 	WorkoutComment       workoutCommentPreloader
 	WorkoutGroupExercise workoutGroupExercisePreloader
 	WorkoutGroup         workoutGroupPreloader
+	WorkoutLike          workoutLikePreloader
 	Workout              workoutPreloader
 }
 
@@ -52,6 +53,7 @@ func getPreloaders() preloaders {
 		WorkoutComment:       buildWorkoutCommentPreloader(),
 		WorkoutGroupExercise: buildWorkoutGroupExercisePreloader(),
 		WorkoutGroup:         buildWorkoutGroupPreloader(),
+		WorkoutLike:          buildWorkoutLikePreloader(),
 		Workout:              buildWorkoutPreloader(),
 	}
 }
@@ -78,6 +80,7 @@ type thenLoaders[Q orm.Loadable] struct {
 	WorkoutComment       workoutCommentThenLoader[Q]
 	WorkoutGroupExercise workoutGroupExerciseThenLoader[Q]
 	WorkoutGroup         workoutGroupThenLoader[Q]
+	WorkoutLike          workoutLikeThenLoader[Q]
 	Workout              workoutThenLoader[Q]
 }
 
@@ -98,6 +101,7 @@ func getThenLoaders[Q orm.Loadable]() thenLoaders[Q] {
 		WorkoutComment:       buildWorkoutCommentThenLoader[Q](),
 		WorkoutGroupExercise: buildWorkoutGroupExerciseThenLoader[Q](),
 		WorkoutGroup:         buildWorkoutGroupThenLoader[Q](),
+		WorkoutLike:          buildWorkoutLikeThenLoader[Q](),
 		Workout:              buildWorkoutThenLoader[Q](),
 	}
 }

@@ -416,6 +416,7 @@ func seedJaneDoe(exec bob.Executor, f *factory.Factory, active *models.User) *mo
 	}
 
 	seedJaneComments(exec, f, active, jane, now)
+	seedJaneReps(exec, f, active, jane, now)
 	return jane
 }
 
@@ -495,6 +496,54 @@ func seedJaneComments(exec bob.Executor, f *factory.Factory, active, jane *model
 			factory.NotificationCreatedAt(seededComment.createdAt),
 		}
 		if seededComment.read {
+			notificationOpts = append(notificationOpts, factory.NotificationRead())
+		}
+		f.NewNotification(notificationOpts...)
+	}
+}
+
+// seedJaneReps has Jane rep the active persona's recent sessions, so beta shows
+// a workout that has been acknowledged as well as one that has been commented
+// on. One of the three is left unread, so the badge has something to show.
+func seedJaneReps(exec bob.Executor, f *factory.Factory, active, jane *models.User, now time.Time) {
+	activeWorkouts, err := models.Workouts.Query(
+		models.SelectWhere.Workouts.UserID.EQ(active.ID),
+	).All(context.Background(), exec)
+	if err != nil {
+		panic(fmt.Errorf("retrieve active persona workouts for Jane Doe reps: %w", err))
+	}
+
+	repped := []struct {
+		createdAt time.Time
+		read      bool
+	}{
+		{createdAt: now.Add(-14 * time.Minute)},
+		{createdAt: now.Add(-28 * time.Hour), read: true},
+		{createdAt: now.Add(-52 * time.Hour), read: true},
+	}
+
+	for index, rep := range repped {
+		if index >= len(activeWorkouts) {
+			break
+		}
+
+		workout := activeWorkouts[index]
+		f.NewWorkoutLike(
+			factory.WorkoutLikeUserID(jane.ID),
+			factory.WorkoutLikeWorkoutID(workout.ID),
+			factory.WorkoutLikeCreatedAt(rep.createdAt),
+		)
+		notificationOpts := []factory.NotificationOpt{
+			factory.NotificationUserID(active.ID),
+			factory.NotificationType(notification.TypeWorkoutLike),
+			factory.NotificationPayload(notification.Payload{
+				ActorID:   jane.ID,
+				EventID:   notification.WorkoutLikeEventID(jane.ID, workout.ID),
+				WorkoutID: workout.ID,
+			}),
+			factory.NotificationCreatedAt(rep.createdAt),
+		}
+		if rep.read {
 			notificationOpts = append(notificationOpts, factory.NotificationRead())
 		}
 		f.NewNotification(notificationOpts...)

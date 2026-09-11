@@ -13,6 +13,7 @@ const (
 	EventTopicFolloweduser         EventTopic = "FollowedUser"
 	EventTopicRequesttraced        EventTopic = "RequestTraced"
 	EventTopicWorkoutcommentposted EventTopic = "WorkoutCommentPosted"
+	EventTopicWorkoutliked         EventTopic = "WorkoutLiked"
 )
 
 func AllEventTopic() []EventTopic {
@@ -20,6 +21,7 @@ func AllEventTopic() []EventTopic {
 		EventTopicFolloweduser,
 		EventTopicRequesttraced,
 		EventTopicWorkoutcommentposted,
+		EventTopicWorkoutliked,
 	}
 }
 
@@ -33,7 +35,8 @@ func (e EventTopic) Valid() bool {
 	switch e {
 	case EventTopicFolloweduser,
 		EventTopicRequesttraced,
-		EventTopicWorkoutcommentposted:
+		EventTopicWorkoutcommentposted,
+		EventTopicWorkoutliked:
 		return true
 	default:
 		return false
@@ -88,12 +91,14 @@ func (e *EventTopic) Scan(value any) error {
 const (
 	NotificationTypeFollow         NotificationType = "Follow"
 	NotificationTypeWorkoutcomment NotificationType = "WorkoutComment"
+	NotificationTypeWorkoutlike    NotificationType = "WorkoutLike"
 )
 
 func AllNotificationType() []NotificationType {
 	return []NotificationType{
 		NotificationTypeFollow,
 		NotificationTypeWorkoutcomment,
+		NotificationTypeWorkoutlike,
 	}
 }
 
@@ -106,7 +111,8 @@ func (e NotificationType) String() string {
 func (e NotificationType) Valid() bool {
 	switch e {
 	case NotificationTypeFollow,
-		NotificationTypeWorkoutcomment:
+		NotificationTypeWorkoutcomment,
+		NotificationTypeWorkoutlike:
 		return true
 	default:
 		return false

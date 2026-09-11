@@ -684,6 +684,20 @@ func TestUserHasRelationsEmitExists(t *testing.T) {
 		}
 	})
 
+	t.Run("WorkoutLikes", func(t *testing.T) {
+		q := psql.Select(
+			sm.From(Users.NameExpr()),
+			SelectWhere.Users.R.HasWorkoutLikes(),
+		)
+		sql, _, err := bob.Build(ctx, q)
+		if err != nil {
+			t.Fatalf("HasWorkoutLikes: build error: %v", err)
+		}
+		if !strings.Contains(sql, "EXISTS") {
+			t.Errorf("HasWorkoutLikes: expected EXISTS in query, got: %s", sql)
+		}
+	})
+
 	t.Run("Workouts", func(t *testing.T) {
 		q := psql.Select(
 			sm.From(Users.NameExpr()),
@@ -818,6 +832,41 @@ func TestWorkoutGroupHasRelationsEmitExists(t *testing.T) {
 	})
 }
 
+// TestWorkoutLikeHasRelationsEmitExists verifies that every generated
+// Has{Rel} helper produces a correlated EXISTS subquery (semi-join) rather than
+// an INNER JOIN, so the parent rows are never multiplied.
+func TestWorkoutLikeHasRelationsEmitExists(t *testing.T) {
+	ctx := context.Background()
+
+	t.Run("User", func(t *testing.T) {
+		q := psql.Select(
+			sm.From(WorkoutLikes.NameExpr()),
+			SelectWhere.WorkoutLikes.R.HasUser(),
+		)
+		sql, _, err := bob.Build(ctx, q)
+		if err != nil {
+			t.Fatalf("HasUser: build error: %v", err)
+		}
+		if !strings.Contains(sql, "EXISTS") {
+			t.Errorf("HasUser: expected EXISTS in query, got: %s", sql)
+		}
+	})
+
+	t.Run("Workout", func(t *testing.T) {
+		q := psql.Select(
+			sm.From(WorkoutLikes.NameExpr()),
+			SelectWhere.WorkoutLikes.R.HasWorkout(),
+		)
+		sql, _, err := bob.Build(ctx, q)
+		if err != nil {
+			t.Fatalf("HasWorkout: build error: %v", err)
+		}
+		if !strings.Contains(sql, "EXISTS") {
+			t.Errorf("HasWorkout: expected EXISTS in query, got: %s", sql)
+		}
+	})
+}
+
 // TestWorkoutHasRelationsEmitExists verifies that every generated
 // Has{Rel} helper produces a correlated EXISTS subquery (semi-join) rather than
 // an INNER JOIN, so the parent rows are never multiplied.
@@ -863,6 +912,20 @@ func TestWorkoutHasRelationsEmitExists(t *testing.T) {
 		}
 		if !strings.Contains(sql, "EXISTS") {
 			t.Errorf("HasWorkoutGroups: expected EXISTS in query, got: %s", sql)
+		}
+	})
+
+	t.Run("WorkoutLikes", func(t *testing.T) {
+		q := psql.Select(
+			sm.From(Workouts.NameExpr()),
+			SelectWhere.Workouts.R.HasWorkoutLikes(),
+		)
+		sql, _, err := bob.Build(ctx, q)
+		if err != nil {
+			t.Fatalf("HasWorkoutLikes: build error: %v", err)
+		}
+		if !strings.Contains(sql, "EXISTS") {
+			t.Errorf("HasWorkoutLikes: expected EXISTS in query, got: %s", sql)
 		}
 	})
 

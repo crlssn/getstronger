@@ -17,6 +17,7 @@ const (
 	TopicFollowedUser         = enums.EventTopicFolloweduser
 	TopicRequestTraced        = enums.EventTopicRequesttraced
 	TopicWorkoutCommentPosted = enums.EventTopicWorkoutcommentposted
+	TopicWorkoutLiked         = enums.EventTopicWorkoutliked
 )
 
 // RequestTraced reports how long a request took and how it ended.
@@ -29,6 +30,15 @@ type RequestTraced struct {
 // WorkoutCommentPosted reports that somebody commented on a workout.
 type WorkoutCommentPosted struct {
 	CommentID uuid.UUID `json:"commentId"`
+	EventID   uuid.UUID `json:"eventId"`
+}
+
+// WorkoutLiked reports that somebody repped a workout. It names the athlete
+// and the workout rather than the like row, because the row may be gone by the
+// time a subscriber reads the event.
+type WorkoutLiked struct {
+	ActorID   uuid.UUID `json:"actorId"`
+	WorkoutID uuid.UUID `json:"workoutId"`
 	EventID   uuid.UUID `json:"eventId"`
 }
 

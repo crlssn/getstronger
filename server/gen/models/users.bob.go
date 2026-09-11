@@ -68,6 +68,7 @@ type userR struct {
 	Sets            SetSlice            // sets.sets_user_id_fkey
 	Auth            *Auth               // users.users_auth_id_fkey
 	WorkoutComments WorkoutCommentSlice // workout_comments.workout_comments_user_id_fkey
+	WorkoutLikes    WorkoutLikeSlice    // workout_likes.workout_likes_user_id_fkey
 	Workouts        WorkoutSlice        // workouts.workouts_user_id_fkey
 	// Loaded reports whether each relationship has been loaded.
 	// A relationship's bool is set by Load*, Preload, ThenLoad, factory builds,
@@ -86,6 +87,7 @@ type userRLoaded struct {
 	Sets            bool // sets.sets_user_id_fkey
 	Auth            bool // users.users_auth_id_fkey
 	WorkoutComments bool // workout_comments.workout_comments_user_id_fkey
+	WorkoutLikes    bool // workout_likes.workout_likes_user_id_fkey
 	Workouts        bool // workouts.workouts_user_id_fkey
 }
 
@@ -912,6 +914,29 @@ func (os UserSlice) WorkoutComments(mods ...bob.Mod[*dialect.SelectQuery]) Worko
 	)...)
 }
 
+// WorkoutLikes starts a query for related objects on workout_likes
+func (o *User) WorkoutLikes(mods ...bob.Mod[*dialect.SelectQuery]) WorkoutLikesQuery {
+	return WorkoutLikes.Query(append(mods,
+		sm.Where(WorkoutLikes.Columns.UserID.EQ(psql.Arg(o.ID))),
+	)...)
+}
+
+func (os UserSlice) WorkoutLikes(mods ...bob.Mod[*dialect.SelectQuery]) WorkoutLikesQuery {
+	pkID := make(pgtypes.Array[uuid.UUID], 0, len(os))
+
+	for _, o := range os {
+		if o == nil {
+			continue
+		}
+		pkID = append(pkID, o.ID)
+	}
+	PKArgExpr := psql.Any(psql.Cast(psql.Arg(pkID), "uuid[]"))
+
+	return WorkoutLikes.Query(append(mods,
+		sm.Where(WorkoutLikes.Columns.UserID.EQ(PKArgExpr)),
+	)...)
+}
+
 // Workouts starts a query for related objects on workouts
 func (o *User) Workouts(mods ...bob.Mod[*dialect.SelectQuery]) WorkoutsQuery {
 	return Workouts.Query(append(mods,
@@ -1535,6 +1560,76 @@ func (user0 *User) AttachWorkoutComments(ctx context.Context, exec bob.Executor,
 	return nil
 }
 
+func insertUserWorkoutLikes0(ctx context.Context, exec bob.Executor, workoutLikes1 []*WorkoutLikeSetter, user0 *User) (WorkoutLikeSlice, error) {
+	for i := range workoutLikes1 {
+		workoutLikes1[i].UserID = omit.From(user0.ID)
+	}
+
+	ret, err := WorkoutLikes.Insert(bob.ToMods(workoutLikes1...)).All(ctx, exec)
+	if err != nil {
+		return ret, fmt.Errorf("insertUserWorkoutLikes0: %w", err)
+	}
+
+	return ret, nil
+}
+
+func attachUserWorkoutLikes0(ctx context.Context, exec bob.Executor, count int, workoutLikes1 WorkoutLikeSlice, user0 *User) (WorkoutLikeSlice, error) {
+	setter := &WorkoutLikeSetter{
+		UserID: omit.From(user0.ID),
+	}
+
+	err := workoutLikes1.UpdateAll(ctx, exec, *setter)
+	if err != nil {
+		return nil, fmt.Errorf("attachUserWorkoutLikes0: %w", err)
+	}
+
+	return workoutLikes1, nil
+}
+
+func (user0 *User) InsertWorkoutLikes(ctx context.Context, exec bob.Executor, related ...*WorkoutLikeSetter) error {
+	if len(related) == 0 {
+		return nil
+	}
+
+	var err error
+
+	workoutLikes1, err := insertUserWorkoutLikes0(ctx, exec, related, user0)
+	if err != nil {
+		return err
+	}
+
+	user0.R.WorkoutLikes = append(user0.R.WorkoutLikes, workoutLikes1...)
+
+	for _, rel := range workoutLikes1 {
+		rel.R.User = user0
+		rel.R.Loaded.User = true
+	}
+	return nil
+}
+
+func (user0 *User) AttachWorkoutLikes(ctx context.Context, exec bob.Executor, related ...*WorkoutLike) error {
+	if len(related) == 0 {
+		return nil
+	}
+
+	var err error
+	workoutLikes1 := WorkoutLikeSlice(related)
+
+	_, err = attachUserWorkoutLikes0(ctx, exec, len(related), workoutLikes1, user0)
+	if err != nil {
+		return err
+	}
+
+	user0.R.WorkoutLikes = append(user0.R.WorkoutLikes, workoutLikes1...)
+
+	for _, rel := range related {
+		rel.R.User = user0
+		rel.R.Loaded.User = true
+	}
+
+	return nil
+}
+
 func insertUserWorkouts0(ctx context.Context, exec bob.Executor, workouts1 []*WorkoutSetter, user0 *User) (WorkoutSlice, error) {
 	for i := range workouts1 {
 		workouts1[i].UserID = omit.From(user0.ID)
@@ -1757,6 +1852,20 @@ func (w userWhereR[Q]) HasWorkoutComments(filters ...bob.Mod[*dialect.SelectQuer
 		sm.Columns(psql.Raw("1")),
 		sm.From(WorkoutComments.NameExpr()),
 		sm.Where(WorkoutComments.Columns.UserID.EQ(w.cols.ID)),
+	)
+	q.Apply(filters...)
+	return mods.Where[Q]{E: psql.Exists(q)}
+}
+
+// HasWorkoutLikes filters parents that have a matching WorkoutLikes using a
+// correlated EXISTS subquery (semi-join). Unlike an INNER JOIN it does not
+// multiply parent rows, so no DISTINCT is needed. The optional filters are
+// applied to the subquery (i.e. to WorkoutLikes).
+func (w userWhereR[Q]) HasWorkoutLikes(filters ...bob.Mod[*dialect.SelectQuery]) mods.Where[Q] {
+	q := psql.Select(
+		sm.Columns(psql.Raw("1")),
+		sm.From(WorkoutLikes.NameExpr()),
+		sm.Where(WorkoutLikes.Columns.UserID.EQ(w.cols.ID)),
 	)
 	q.Apply(filters...)
 	return mods.Where[Q]{E: psql.Exists(q)}
@@ -2069,6 +2178,22 @@ func (o *User) Preload(name string, retrieved any) error {
 			}
 		}
 		return nil
+	case "WorkoutLikes":
+		rels, ok := retrieved.(WorkoutLikeSlice)
+		if !ok {
+			return fmt.Errorf("user cannot load %T as %q", retrieved, name)
+		}
+
+		o.R.WorkoutLikes = rels
+		o.R.Loaded.WorkoutLikes = true
+
+		for _, rel := range rels {
+			if rel != nil {
+				rel.R.User = o
+				rel.R.Loaded.User = true
+			}
+		}
+		return nil
 	case "Workouts":
 		rels, ok := retrieved.(WorkoutSlice)
 		if !ok {
@@ -2122,6 +2247,7 @@ type userThenLoader[Q orm.Loadable] struct {
 	Sets            func(...bob.Mod[*dialect.SelectQuery]) orm.Loader[Q]
 	Auth            func(...bob.Mod[*dialect.SelectQuery]) orm.Loader[Q]
 	WorkoutComments func(...bob.Mod[*dialect.SelectQuery]) orm.Loader[Q]
+	WorkoutLikes    func(...bob.Mod[*dialect.SelectQuery]) orm.Loader[Q]
 	Workouts        func(...bob.Mod[*dialect.SelectQuery]) orm.Loader[Q]
 }
 
@@ -2152,6 +2278,9 @@ func buildUserThenLoader[Q orm.Loadable]() userThenLoader[Q] {
 	}
 	type WorkoutCommentsLoadInterface interface {
 		LoadWorkoutComments(context.Context, bob.Executor, ...bob.Mod[*dialect.SelectQuery]) error
+	}
+	type WorkoutLikesLoadInterface interface {
+		LoadWorkoutLikes(context.Context, bob.Executor, ...bob.Mod[*dialect.SelectQuery]) error
 	}
 	type WorkoutsLoadInterface interface {
 		LoadWorkouts(context.Context, bob.Executor, ...bob.Mod[*dialect.SelectQuery]) error
@@ -2210,6 +2339,12 @@ func buildUserThenLoader[Q orm.Loadable]() userThenLoader[Q] {
 			"WorkoutComments",
 			func(ctx context.Context, exec bob.Executor, retrieved WorkoutCommentsLoadInterface, mods ...bob.Mod[*dialect.SelectQuery]) error {
 				return retrieved.LoadWorkoutComments(ctx, exec, mods...)
+			},
+		),
+		WorkoutLikes: thenLoadBuilder[Q](
+			"WorkoutLikes",
+			func(ctx context.Context, exec bob.Executor, retrieved WorkoutLikesLoadInterface, mods ...bob.Mod[*dialect.SelectQuery]) error {
+				return retrieved.LoadWorkoutLikes(ctx, exec, mods...)
 			},
 		),
 		Workouts: thenLoadBuilder[Q](
@@ -2919,6 +3054,80 @@ func (os UserSlice) LoadWorkoutComments(ctx context.Context, exec bob.Executor, 
 	return nil
 }
 
+// LoadWorkoutLikes loads the user's WorkoutLikes into the .R struct
+func (o *User) LoadWorkoutLikes(ctx context.Context, exec bob.Executor, mods ...bob.Mod[*dialect.SelectQuery]) error {
+	if o == nil {
+		return nil
+	}
+
+	// Reset the relationship
+	o.R.WorkoutLikes = nil
+	o.R.Loaded.WorkoutLikes = false
+
+	related, err := o.WorkoutLikes(mods...).All(ctx, exec)
+	if err != nil {
+		return err
+	}
+
+	for _, rel := range related {
+		rel.R.User = o
+		rel.R.Loaded.User = true
+	}
+
+	o.R.WorkoutLikes = related
+	o.R.Loaded.WorkoutLikes = true
+	return nil
+}
+
+// LoadWorkoutLikes loads the user's WorkoutLikes into the .R struct
+func (os UserSlice) LoadWorkoutLikes(ctx context.Context, exec bob.Executor, mods ...bob.Mod[*dialect.SelectQuery]) error {
+	if len(os) == 0 {
+		return nil
+	}
+
+	workoutLikes, err := os.WorkoutLikes(mods...).All(ctx, exec)
+	if err != nil {
+		return err
+	}
+
+	for _, o := range os {
+		if o == nil {
+			continue
+		}
+
+		o.R.WorkoutLikes = nil
+		o.R.Loaded.WorkoutLikes = true
+	}
+	// O(N+M) stitch via a map keyed by the join column (key -> []parent; was O(N*M)).
+	userByKey := make(map[uuid.UUID][]*User, len(os))
+	for _, o := range os {
+		if o == nil {
+			continue
+		}
+
+		userByKey[o.ID] = append(userByKey[o.ID], o)
+	}
+
+	for _, rel := range workoutLikes {
+
+		owners, ok := userByKey[rel.UserID]
+		if !ok {
+			continue
+		}
+
+		for _, o := range owners {
+
+			rel.R.User = o
+			rel.R.Loaded.User = true
+
+			o.R.WorkoutLikes = append(o.R.WorkoutLikes, rel)
+
+		}
+	}
+
+	return nil
+}
+
 // LoadWorkouts loads the user's Workouts into the .R struct
 func (o *User) LoadWorkouts(ctx context.Context, exec bob.Executor, mods ...bob.Mod[*dialect.SelectQuery]) error {
 	if o == nil {
@@ -3003,6 +3212,7 @@ type userC struct {
 	Routines        *int64
 	Sets            *int64
 	WorkoutComments *int64
+	WorkoutLikes    *int64
 	Workouts        *int64
 }
 
@@ -3029,6 +3239,8 @@ func (o *User) PreloadCount(name string, count int64) error {
 		o.C.Sets = &count
 	case "WorkoutComments":
 		o.C.WorkoutComments = &count
+	case "WorkoutLikes":
+		o.C.WorkoutLikes = &count
 	case "Workouts":
 		o.C.Workouts = &count
 	}
@@ -3044,6 +3256,7 @@ type userCountPreloader struct {
 	Routines        func(...bob.Mod[*dialect.SelectQuery]) psql.Preloader
 	Sets            func(...bob.Mod[*dialect.SelectQuery]) psql.Preloader
 	WorkoutComments func(...bob.Mod[*dialect.SelectQuery]) psql.Preloader
+	WorkoutLikes    func(...bob.Mod[*dialect.SelectQuery]) psql.Preloader
 	Workouts        func(...bob.Mod[*dialect.SelectQuery]) psql.Preloader
 }
 
@@ -3188,6 +3401,23 @@ func buildUserCountPreloader() userCountPreloader {
 				return psql.Group(psql.Select(subqueryMods...).Expression)
 			})
 		},
+		WorkoutLikes: func(mods ...bob.Mod[*dialect.SelectQuery]) psql.Preloader {
+			return countPreloader[*User]("WorkoutLikes", func(parent string) bob.Expression {
+				// Build a correlated subquery: (SELECT COUNT(*) FROM related WHERE fk = parent.pk)
+				if parent == "" {
+					parent = Users.Alias()
+				}
+
+				subqueryMods := []bob.Mod[*dialect.SelectQuery]{
+					sm.Columns(psql.Raw("count(*)")),
+
+					sm.From(WorkoutLikes.NameAsExpr()),
+					sm.Where(psql.Quote(WorkoutLikes.Alias(), "user_id").EQ(psql.Quote(parent, "id"))),
+				}
+				subqueryMods = append(subqueryMods, mods...)
+				return psql.Group(psql.Select(subqueryMods...).Expression)
+			})
+		},
 		Workouts: func(mods ...bob.Mod[*dialect.SelectQuery]) psql.Preloader {
 			return countPreloader[*User]("Workouts", func(parent string) bob.Expression {
 				// Build a correlated subquery: (SELECT COUNT(*) FROM related WHERE fk = parent.pk)
@@ -3217,6 +3447,7 @@ type userCountThenLoader[Q orm.Loadable] struct {
 	Routines        func(...bob.Mod[*dialect.SelectQuery]) orm.Loader[Q]
 	Sets            func(...bob.Mod[*dialect.SelectQuery]) orm.Loader[Q]
 	WorkoutComments func(...bob.Mod[*dialect.SelectQuery]) orm.Loader[Q]
+	WorkoutLikes    func(...bob.Mod[*dialect.SelectQuery]) orm.Loader[Q]
 	Workouts        func(...bob.Mod[*dialect.SelectQuery]) orm.Loader[Q]
 }
 
@@ -3244,6 +3475,9 @@ func buildUserCountThenLoader[Q orm.Loadable]() userCountThenLoader[Q] {
 	}
 	type WorkoutCommentsCountInterface interface {
 		LoadCountWorkoutComments(context.Context, bob.Executor, ...bob.Mod[*dialect.SelectQuery]) error
+	}
+	type WorkoutLikesCountInterface interface {
+		LoadCountWorkoutLikes(context.Context, bob.Executor, ...bob.Mod[*dialect.SelectQuery]) error
 	}
 	type WorkoutsCountInterface interface {
 		LoadCountWorkouts(context.Context, bob.Executor, ...bob.Mod[*dialect.SelectQuery]) error
@@ -3296,6 +3530,12 @@ func buildUserCountThenLoader[Q orm.Loadable]() userCountThenLoader[Q] {
 			"WorkoutComments",
 			func(ctx context.Context, exec bob.Executor, retrieved WorkoutCommentsCountInterface, mods ...bob.Mod[*dialect.SelectQuery]) error {
 				return retrieved.LoadCountWorkoutComments(ctx, exec, mods...)
+			},
+		),
+		WorkoutLikes: countThenLoadBuilder[Q](
+			"WorkoutLikes",
+			func(ctx context.Context, exec bob.Executor, retrieved WorkoutLikesCountInterface, mods ...bob.Mod[*dialect.SelectQuery]) error {
+				return retrieved.LoadCountWorkoutLikes(ctx, exec, mods...)
 			},
 		),
 		Workouts: countThenLoadBuilder[Q](
@@ -3942,6 +4182,85 @@ func (os UserSlice) LoadCountWorkoutComments(ctx context.Context, exec bob.Execu
 	return nil
 }
 
+// LoadCountWorkoutLikes loads the count of WorkoutLikes into the C struct
+func (o *User) LoadCountWorkoutLikes(ctx context.Context, exec bob.Executor, mods ...bob.Mod[*dialect.SelectQuery]) error {
+	if o == nil {
+		return nil
+	}
+
+	count, err := o.WorkoutLikes(mods...).Count(ctx, exec)
+	if err != nil {
+		return err
+	}
+
+	o.C.WorkoutLikes = &count
+	return nil
+}
+
+// LoadCountWorkoutLikes loads the count of WorkoutLikes for a slice in a single batch query
+func (os UserSlice) LoadCountWorkoutLikes(ctx context.Context, exec bob.Executor, mods ...bob.Mod[*dialect.SelectQuery]) error {
+	if len(os) == 0 {
+		return nil
+	}
+
+	// Build the IN arg expression from parent PKs
+
+	pkID := make(pgtypes.Array[uuid.UUID], 0, len(os))
+	for _, o := range os {
+		if o == nil {
+			continue
+		}
+		pkID = append(pkID, o.ID)
+	}
+	PKArgExpr := psql.Any(psql.Cast(psql.Arg(pkID), "uuid[]"))
+
+	// countResult holds one scanned row from the batch count query.
+	// FK columns are aliased to the parent PK column names for direct map lookup.
+	type countResult struct {
+		ID    uuid.UUID
+		Count int64
+	}
+
+	batchMods := []bob.Mod[*dialect.SelectQuery]{
+		// SELECT fk AS parent_pk, count(*)
+		sm.Columns(
+			WorkoutLikes.Columns.UserID.As("id"),
+			psql.Raw("count(*) as count"),
+		),
+		// Single-hop: FROM related table directly
+		sm.From(WorkoutLikes.NameAsExpr()),
+
+		// WHERE fk IN (parent PKs) — psql single-column FK uses `= ANY(array)` (see PKArgExpr above)
+		sm.Where(WorkoutLikes.Columns.UserID.EQ(PKArgExpr)),
+		// GROUP BY fk columns
+		sm.GroupBy(WorkoutLikes.Columns.UserID),
+	}
+	batchMods = append(batchMods, mods...)
+
+	results, err := bob.All(ctx, exec,
+		psql.Select(batchMods...),
+		scan.StructMapper[countResult](),
+	)
+	if err != nil {
+		return err
+	}
+
+	// Single-column FK: direct map lookup
+	countMap := make(map[uuid.UUID]int64, len(results))
+	for _, r := range results {
+		countMap[r.ID] = r.Count
+	}
+	for _, o := range os {
+		if o == nil {
+			continue
+		}
+		count := countMap[o.ID]
+		o.C.WorkoutLikes = &count
+	}
+
+	return nil
+}
+
 // LoadCountWorkouts loads the count of Workouts into the C struct
 func (o *User) LoadCountWorkouts(ctx context.Context, exec bob.Executor, mods ...bob.Mod[*dialect.SelectQuery]) error {
 	if o == nil {
@@ -4032,6 +4351,7 @@ type userJoins[Q dialect.Joinable] struct {
 	Sets            modAs[Q, setColumns]
 	Auth            modAs[Q, authColumns]
 	WorkoutComments modAs[Q, workoutCommentColumns]
+	WorkoutLikes    modAs[Q, workoutLikeColumns]
 	Workouts        modAs[Q, workoutColumns]
 }
 
@@ -4169,6 +4489,20 @@ func buildUserJoins[Q dialect.Joinable](cols userColumns, typ string) userJoins[
 
 				{
 					mods = append(mods, dialect.Join[Q](typ, WorkoutComments.NameExpr().As(to.Alias())).On(
+						to.UserID.EQ(cols.ID),
+					))
+				}
+
+				return mods
+			},
+		},
+		WorkoutLikes: modAs[Q, workoutLikeColumns]{
+			c: WorkoutLikes.Columns,
+			f: func(to workoutLikeColumns) bob.Mod[Q] {
+				mods := make(mods.QueryMods[Q], 0, 1)
+
+				{
+					mods = append(mods, dialect.Join[Q](typ, WorkoutLikes.NameExpr().As(to.Alias())).On(
 						to.UserID.EQ(cols.ID),
 					))
 				}

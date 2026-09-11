@@ -213,18 +213,24 @@ test.describe('profiles and notifications', () => {
   test('loads seeded notifications and follows their destinations @smoke', async ({ page }) => {
     const meNavigation = page.getByRole('link', { name: /Me$/ })
     // The badge is a bare number beside the label, so the link carries it.
-    await expect(meNavigation).toContainText('2')
+    // Three unread: the two recent comments, plus the rep the seed leaves
+    // unread. The count is every unread notification, whatever its type.
+    await expect(meNavigation).toContainText('3')
     await meNavigation.click()
 
     // The count is in the control's own name now, not only in the red disc
     // beside it — a colour says nothing to a reader who cannot see it.
-    const notificationsLink = page.getByRole('link', { name: 'Notifications, 2 unread' })
+    const notificationsLink = page.getByRole('link', { name: 'Notifications, 3 unread' })
     await expect(notificationsLink).toBeVisible()
     await notificationsLink.click()
     await expect(page).toHaveURL(/\/notifications$/)
     // Each row already carries a screen-reader-only "Unread notification"
     // while it is unread, which is a better handle than the class that styles
     // the dot beside it.
+    //
+    // Four rows against three unread: the seeded reps have no row to render
+    // until #1464 gives them one, so they count towards the badge and show
+    // nothing here.
     const rows = page.getByRole('listitem').filter({ has: page.getByRole('link') })
     await expect(rows).toHaveCount(4)
     await expect(rows.filter({ hasText: 'Unread notification' })).toHaveCount(2)

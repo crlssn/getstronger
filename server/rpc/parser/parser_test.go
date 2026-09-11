@@ -395,14 +395,18 @@ func TestWorkoutSlice(t *testing.T) {
 	t.Run("ok_workouts_with_relationships", func(t *testing.T) {
 		t.Parallel()
 
+		viewer := newID()
 		workout := newWorkout()
 		workout.Sets = []*training.Set{newSet(newExercise(), 60, 5)}
 		workout.Sets[0].WorkoutID = workout.ID
+		workout.Likes = []*training.WorkoutLike{{UserID: viewer}}
 		workouts := []*training.Workout{workout}
 		personalBests := workout.Sets[:1]
 
-		parsed := parser.WorkoutSlice(workouts, personalBests)
+		parsed := parser.WorkoutSlice(workouts, personalBests, viewer)
 		require.Len(t, parsed, len(workouts))
+		require.Equal(t, int32(1), parsed[0].GetLikeCount())
+		require.True(t, parsed[0].GetLikedByViewer())
 
 		for i, workout := range parsed {
 			require.Equal(t, workouts[i].ID.String(), workout.GetId())
@@ -430,12 +434,33 @@ func TestWorkoutSlice(t *testing.T) {
 		workout := newWorkout()
 		workout.User = nil
 
-		parsed := parser.WorkoutSlice([]*training.Workout{workout}, nil)
+		parsed := parser.WorkoutSlice([]*training.Workout{workout}, nil, newID())
 		require.Len(t, parsed, 1)
 		require.Equal(t, workout.ID.String(), parsed[0].GetId())
 		require.Nil(t, parsed[0].GetUser())
 		require.Empty(t, parsed[0].GetExerciseSets())
 	})
+}
+
+func TestWorkoutLikes(t *testing.T) {
+	t.Parallel()
+
+	viewer := newID()
+	workout := newWorkout()
+	workout.Likes = []*training.WorkoutLike{{UserID: newID()}, {UserID: viewer}}
+
+	parsed := parser.Workout(workout, parser.WorkoutLikes(workout, viewer))
+	require.Equal(t, int32(2), parsed.GetLikeCount())
+	require.True(t, parsed.GetLikedByViewer())
+
+	parsed = parser.Workout(workout, parser.WorkoutLikes(workout, newID()))
+	require.Equal(t, int32(2), parsed.GetLikeCount())
+	require.False(t, parsed.GetLikedByViewer())
+
+	// A read that did not ask for the reps says nothing about them.
+	parsed = parser.Workout(newWorkout())
+	require.Zero(t, parsed.GetLikeCount())
+	require.False(t, parsed.GetLikedByViewer())
 }
 
 func TestWorkoutComment(t *testing.T) {
@@ -598,6 +623,35 @@ func TestNotification(t *testing.T) {
 	require.Nil(t, parsed.GetWorkoutComment())
 }
 
+// Each opt builds the type it needs, so a rep notification comes out whole
+// whichever opt runs first.
+func TestNotificationWorkoutLike(t *testing.T) {
+	t.Parallel()
+
+	record := newNotification(notification.TypeWorkoutLike, notification.Payload{})
+	actor := newUser()
+	workout := newWorkout()
+
+	parsed := parser.Notification(record, parser.NotificationWorkout(record.Type, workout))
+	require.Nil(t, parsed.GetWorkoutLike().GetActor())
+	require.Equal(t, workout.ID.String(), parsed.GetWorkoutLike().GetWorkout().GetId())
+
+	parsed = parser.Notification(record, parser.NotificationActor(record.Type, actor))
+	require.Nil(t, parsed.GetWorkoutLike().GetWorkout())
+	require.Equal(t, actor.ID.String(), parsed.GetWorkoutLike().GetActor().GetId())
+
+	parsed = parser.Notification(
+		record,
+		parser.NotificationWorkout(record.Type, workout),
+		parser.NotificationActor(record.Type, actor),
+	)
+	require.Equal(t, actor.ID.String(), parsed.GetWorkoutLike().GetActor().GetId())
+	require.Equal(t, workout.ID.String(), parsed.GetWorkoutLike().GetWorkout().GetId())
+
+	require.Nil(t, parsed.GetWorkoutComment())
+	require.Nil(t, parsed.GetUserFollowed())
+}
+
 // requireNotifiedWorkout checks the workout a comment notification carries:
 // the session and its athlete, and none of the detail the notification does
 // not show.
@@ -638,14 +692,23 @@ func TestNotificationSlice(t *testing.T) {
 			ActorID:   actors[1].ID,
 			WorkoutID: workouts[0].ID,
 		}),
+		newNotification(notification.TypeWorkoutLike, notification.Payload{
+			ActorID:   actors[0].ID,
+			WorkoutID: workouts[0].ID,
+		}),
 		// A notification about someone who can no longer be found is left out.
 		newNotification(notification.TypeFollow, notification.Payload{
 			ActorID: newID(),
 		}),
+		// So is a rep on a workout that is gone.
+		newNotification(notification.TypeWorkoutLike, notification.Payload{
+			ActorID:   actors[0].ID,
+			WorkoutID: newID(),
+		}),
 	}
 
 	parsed := parser.NotificationSlice(notifications, actors, workouts)
-	require.Len(t, parsed, 2)
+	require.Len(t, parsed, 3)
 	for i, record := range parsed {
 		require.Equal(t, notifications[i].ID.String(), record.GetId())
 		require.Equal(t, notifications[i].CreatedAt.Unix(), record.GetNotifiedAtUnix())
@@ -668,6 +731,13 @@ func TestNotificationSlice(t *testing.T) {
 	require.Equal(t, actors[1].Email, commented.GetWorkoutComment().GetActor().GetEmail())
 	require.False(t, commented.GetWorkoutComment().GetActor().GetFollowed())
 	requireNotifiedWorkout(t, workouts[0], commented)
+
+	repped := parsed[2]
+	require.NotNil(t, repped.GetWorkoutLike())
+	require.Equal(t, actors[0].ID.String(), repped.GetWorkoutLike().GetActor().GetId())
+	require.Equal(t, workouts[0].ID.String(), repped.GetWorkoutLike().GetWorkout().GetId())
+	require.Nil(t, repped.GetWorkoutComment())
+	require.Nil(t, repped.GetUserFollowed())
 }
 
 func TestFeedItemSlice(t *testing.T) {
@@ -679,7 +749,7 @@ func TestFeedItemSlice(t *testing.T) {
 	workout.CreatedAt = time.Now().UTC()
 	workouts := []*training.Workout{workout}
 
-	parsed := parser.FeedItemSlice(workouts, nil)
+	parsed := parser.FeedItemSlice(workouts, nil, newID())
 	require.Len(t, parsed, len(workouts))
 
 	feedItem := parsed[0]

@@ -84,6 +84,38 @@ func TestPayloadReadsWhatIsStored(t *testing.T) {
 	require.Equal(t, workout, read.WorkoutID)
 }
 
+func TestWorkoutLikeEventID(t *testing.T) {
+	t.Parallel()
+
+	actor, workout := uuid.Must(uuid.NewV4()), uuid.Must(uuid.NewV4())
+
+	t.Run("is the same every time the same athlete reps the same workout", func(t *testing.T) {
+		t.Parallel()
+		first := notification.WorkoutLikeEventID(actor, workout)
+		require.Equal(t, first, notification.WorkoutLikeEventID(actor, workout))
+	})
+
+	t.Run("differs by actor and by workout", func(t *testing.T) {
+		t.Parallel()
+		other := uuid.Must(uuid.NewV4())
+		require.NotEqual(
+			t,
+			notification.WorkoutLikeEventID(actor, workout),
+			notification.WorkoutLikeEventID(other, workout),
+		)
+		require.NotEqual(
+			t,
+			notification.WorkoutLikeEventID(actor, workout),
+			notification.WorkoutLikeEventID(actor, other),
+		)
+	})
+
+	t.Run("names an event", func(t *testing.T) {
+		t.Parallel()
+		require.False(t, notification.WorkoutLikeEventID(actor, workout).IsNil())
+	})
+}
+
 // A notification is read once its read time is set; nothing else says so.
 func TestNotificationRead(t *testing.T) {
 	t.Parallel()

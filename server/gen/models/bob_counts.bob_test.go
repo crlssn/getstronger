@@ -398,6 +398,9 @@ func TestUserCountStruct(t *testing.T) {
 	// Verify WorkoutComments count field exists and is *int64
 	var _ *int64 = m.C.WorkoutComments
 
+	// Verify WorkoutLikes count field exists and is *int64
+	var _ *int64 = m.C.WorkoutLikes
+
 	// Verify Workouts count field exists and is *int64
 	var _ *int64 = m.C.Workouts
 }
@@ -456,6 +459,12 @@ func TestUserLoadCountMethods(t *testing.T) {
 	// Verify LoadCountWorkoutComments method exists on slice
 	_ = ms.LoadCountWorkoutComments(ctx, nil)
 
+	// Verify LoadCountWorkoutLikes method exists on single model
+	_ = m.LoadCountWorkoutLikes(ctx, nil)
+
+	// Verify LoadCountWorkoutLikes method exists on slice
+	_ = ms.LoadCountWorkoutLikes(ctx, nil)
+
 	// Verify LoadCountWorkouts method exists on single model
 	_ = m.LoadCountWorkouts(ctx, nil)
 
@@ -491,6 +500,9 @@ func TestSelectThenLoadCountUser(t *testing.T) {
 	// Verify WorkoutComments loader exists
 	_ = SelectThenLoadCount.User.WorkoutComments
 
+	// Verify WorkoutLikes loader exists
+	_ = SelectThenLoadCount.User.WorkoutLikes
+
 	// Verify Workouts loader exists
 	_ = SelectThenLoadCount.User.Workouts
 }
@@ -523,6 +535,9 @@ func TestPreloadCountUser(t *testing.T) {
 	// Verify WorkoutComments preloader exists and returns a Preloader
 	_ = PreloadCount.User.WorkoutComments()
 
+	// Verify WorkoutLikes preloader exists and returns a Preloader
+	_ = PreloadCount.User.WorkoutLikes()
+
 	// Verify Workouts preloader exists and returns a Preloader
 	_ = PreloadCount.User.Workouts()
 }
@@ -546,6 +561,8 @@ func TestUserPreloadCountMethod(t *testing.T) {
 	_ = m.PreloadCount("Sets", 0)
 
 	_ = m.PreloadCount("WorkoutComments", 0)
+
+	_ = m.PreloadCount("WorkoutLikes", 0)
 
 	_ = m.PreloadCount("Workouts", 0)
 }
@@ -653,6 +670,9 @@ func TestWorkoutCountStruct(t *testing.T) {
 
 	// Verify WorkoutGroups count field exists and is *int64
 	var _ *int64 = m.C.WorkoutGroups
+
+	// Verify WorkoutLikes count field exists and is *int64
+	var _ *int64 = m.C.WorkoutLikes
 }
 
 // Test that Workout has LoadCount methods for to-many relationships
@@ -678,6 +698,12 @@ func TestWorkoutLoadCountMethods(t *testing.T) {
 
 	// Verify LoadCountWorkoutGroups method exists on slice
 	_ = ms.LoadCountWorkoutGroups(ctx, nil)
+
+	// Verify LoadCountWorkoutLikes method exists on single model
+	_ = m.LoadCountWorkoutLikes(ctx, nil)
+
+	// Verify LoadCountWorkoutLikes method exists on slice
+	_ = ms.LoadCountWorkoutLikes(ctx, nil)
 }
 
 // Test that SelectThenLoadCount has Workout with methods for to-many relationships
@@ -692,6 +718,9 @@ func TestSelectThenLoadCountWorkout(t *testing.T) {
 
 	// Verify WorkoutGroups loader exists
 	_ = SelectThenLoadCount.Workout.WorkoutGroups
+
+	// Verify WorkoutLikes loader exists
+	_ = SelectThenLoadCount.Workout.WorkoutLikes
 }
 
 // Test that PreloadCount has Workout with methods for to-many relationships
@@ -706,6 +735,9 @@ func TestPreloadCountWorkout(t *testing.T) {
 
 	// Verify WorkoutGroups preloader exists and returns a Preloader
 	_ = PreloadCount.Workout.WorkoutGroups()
+
+	// Verify WorkoutLikes preloader exists and returns a Preloader
+	_ = PreloadCount.Workout.WorkoutLikes()
 }
 
 // Test that Workout has PreloadCount method
@@ -717,4 +749,6 @@ func TestWorkoutPreloadCountMethod(t *testing.T) {
 	_ = m.PreloadCount("WorkoutComments", 0)
 
 	_ = m.PreloadCount("WorkoutGroups", 0)
+
+	_ = m.PreloadCount("WorkoutLikes", 0)
 }

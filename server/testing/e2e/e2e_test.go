@@ -115,6 +115,32 @@ func TestE2E(t *testing.T) {
 			require.Len(t, c.Msg.GetItems(), 1)
 			require.Empty(t, c.Msg.GetPagination().GetNextPageToken())
 		}).
+		LikeWorkout(ctx, func(_ *connect.Response[apiv1.LikeWorkoutResponse], err error) {
+			require.NoError(t, err)
+		}).
+		// Repping is idempotent, so the second one leaves the count at one.
+		LikeWorkout(ctx, func(_ *connect.Response[apiv1.LikeWorkoutResponse], err error) {
+			require.NoError(t, err)
+		}).
+		GetWorkout(ctx, func(c *connect.Response[apiv1.GetWorkoutResponse], err error) {
+			require.NoError(t, err)
+			require.Equal(t, int32(1), c.Msg.GetWorkout().GetLikeCount())
+			require.True(t, c.Msg.GetWorkout().GetLikedByViewer())
+		}).
+		ListFeedItems(ctx, func(c *connect.Response[apiv1.ListFeedItemsResponse], err error) {
+			require.NoError(t, err)
+			require.Len(t, c.Msg.GetItems(), 1)
+			require.Equal(t, int32(1), c.Msg.GetItems()[0].GetWorkout().GetLikeCount())
+			require.True(t, c.Msg.GetItems()[0].GetWorkout().GetLikedByViewer())
+		}).
+		UnlikeWorkout(ctx, func(_ *connect.Response[apiv1.UnlikeWorkoutResponse], err error) {
+			require.NoError(t, err)
+		}).
+		GetWorkout(ctx, func(c *connect.Response[apiv1.GetWorkoutResponse], err error) {
+			require.NoError(t, err)
+			require.Zero(t, c.Msg.GetWorkout().GetLikeCount())
+			require.False(t, c.Msg.GetWorkout().GetLikedByViewer())
+		}).
 		Logout(ctx, func(_ *connect.Response[apiv1.LogoutResponse], err error) {
 			require.NoError(t, err)
 		})

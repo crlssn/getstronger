@@ -94,6 +94,64 @@ func (mr *MockNotificationStoreMockRecorder) CreateNotification(ctx, p any) *gom
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateNotification", reflect.TypeOf((*MockNotificationStore)(nil).CreateNotification), ctx, p)
 }
 
+// MockLikedWorkout is a mock of LikedWorkout interface.
+type MockLikedWorkout struct {
+	ctrl     *gomock.Controller
+	recorder *MockLikedWorkoutMockRecorder
+	isgomock struct{}
+}
+
+// MockLikedWorkoutMockRecorder is the mock recorder for MockLikedWorkout.
+type MockLikedWorkoutMockRecorder struct {
+	mock *MockLikedWorkout
+}
+
+// NewMockLikedWorkout creates a new mock instance.
+func NewMockLikedWorkout(ctrl *gomock.Controller) *MockLikedWorkout {
+	mock := &MockLikedWorkout{ctrl: ctrl}
+	mock.recorder = &MockLikedWorkoutMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockLikedWorkout) EXPECT() *MockLikedWorkoutMockRecorder {
+	return m.recorder
+}
+
+// CreateNotification mocks base method.
+func (m *MockLikedWorkout) CreateNotification(ctx context.Context, p repo.CreateNotificationParams) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateNotification", ctx, p)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CreateNotification indicates an expected call of CreateNotification.
+func (mr *MockLikedWorkoutMockRecorder) CreateNotification(ctx, p any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateNotification", reflect.TypeOf((*MockLikedWorkout)(nil).CreateNotification), ctx, p)
+}
+
+// GetWorkout mocks base method.
+func (m *MockLikedWorkout) GetWorkout(ctx context.Context, opts ...repo.GetWorkoutOpt) (*training.Workout, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "GetWorkout", varargs...)
+	ret0, _ := ret[0].(*training.Workout)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetWorkout indicates an expected call of GetWorkout.
+func (mr *MockLikedWorkoutMockRecorder) GetWorkout(ctx any, opts ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetWorkout", reflect.TypeOf((*MockLikedWorkout)(nil).GetWorkout), varargs...)
+}
+
 // MockCommentThread is a mock of CommentThread interface.
 type MockCommentThread struct {
 	ctrl     *gomock.Controller

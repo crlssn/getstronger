@@ -242,3 +242,90 @@ func WorkoutCommentCreatedAt(createdAt time.Time) WorkoutCommentOpt {
 		comment.CreatedAt = omit.From(createdAt.UTC())
 	}
 }
+
+func (f *Factory) NewWorkoutLikeSlice(count int, opts ...WorkoutLikeOpt) models.WorkoutLikeSlice {
+	slice := make(models.WorkoutLikeSlice, 0, count)
+	for range count {
+		slice = append(slice, f.NewWorkoutLike(opts...))
+	}
+
+	return slice
+}
+
+type WorkoutLikeOpt func(like *models.WorkoutLikeSetter)
+
+func (f *Factory) NewWorkoutLike(opts ...WorkoutLikeOpt) *models.WorkoutLike {
+	setter := &models.WorkoutLikeSetter{
+		ID: omit.From(newUUID()),
+	}
+	for _, opt := range opts {
+		opt(setter)
+	}
+
+	ctx := context.Background()
+	var user *models.User
+	if userID, ok := setter.UserID.Get(); ok {
+		user = f.mustUser(userID)
+	} else {
+		user = f.NewUser()
+	}
+
+	var workout *models.Workout
+	if workoutID, ok := setter.WorkoutID.Get(); ok {
+		workout = f.mustWorkout(workoutID)
+	} else {
+		workout = f.NewWorkout()
+	}
+
+	mods := []bobfactory.WorkoutLikeMod{
+		bobfactory.WorkoutLikeMods.WithExistingUser(userWithoutRelationships(user)),
+		bobfactory.WorkoutLikeMods.WithExistingWorkout(workoutWithoutRelationships(workout)),
+	}
+	if value, ok := setter.ID.Get(); ok {
+		mods = append(mods, bobfactory.WorkoutLikeMods.ID(value))
+	}
+	if value, ok := setter.CreatedAt.Get(); ok {
+		mods = append(mods, bobfactory.WorkoutLikeMods.CreatedAt(value))
+	}
+
+	template := f.generated.NewWorkoutLike(mods...)
+	built := template.Build()
+	setter = template.BuildSetter()
+	setter.UserID = omit.From(built.UserID)
+	setter.WorkoutID = omit.From(built.WorkoutID)
+	like, err := models.WorkoutLikes.Insert(
+		setter,
+		im.OnConflict(models.WorkoutLikes.Columns.ID.Name()).
+			DoUpdate(im.SetExcluded(setter.SetColumns()...)),
+	).One(ctx, f.exec)
+	if err != nil {
+		panic(fmt.Errorf("create workout like with Bob factory: %w", err))
+	}
+	like.R = built.R
+
+	return like
+}
+
+func WorkoutLikeID(id any) WorkoutLikeOpt {
+	return func(like *models.WorkoutLikeSetter) {
+		like.ID = omit.From(nativeUUID(id))
+	}
+}
+
+func WorkoutLikeUserID(userID any) WorkoutLikeOpt {
+	return func(like *models.WorkoutLikeSetter) {
+		like.UserID = omit.From(nativeUUID(userID))
+	}
+}
+
+func WorkoutLikeWorkoutID(workoutID any) WorkoutLikeOpt {
+	return func(like *models.WorkoutLikeSetter) {
+		like.WorkoutID = omit.From(nativeUUID(workoutID))
+	}
+}
+
+func WorkoutLikeCreatedAt(createdAt time.Time) WorkoutLikeOpt {
+	return func(like *models.WorkoutLikeSetter) {
+		like.CreatedAt = omit.From(createdAt.UTC())
+	}
+}
