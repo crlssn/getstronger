@@ -57,6 +57,7 @@ func (r *Repo) ListRoutineGroups(ctx context.Context, routineID uuid.UUID) ([]*t
 			Rounds:                      group.Rounds,
 			Role:                        group.Role.GetOrZero(),
 			SkipLastOnFinalRound:        group.SkipLastOnFinalRound,
+			Title:                       group.Title,
 			Exercises:                   make([]training.RoutineExercise, 0, len(links)),
 		}
 		parsed = append(parsed, parsedGroup)
@@ -77,6 +78,9 @@ func (r *Repo) ListRoutineGroups(ctx context.Context, routineID uuid.UUID) ([]*t
 			Exercise:              exercise,
 			RestSeconds:           link.RestSeconds,
 			TargetDurationSeconds: link.TargetDurationSeconds,
+			Tracking:              link.Tracking,
+			Sets:                  link.Sets,
+			TargetDistanceMeters:  link.TargetDistanceMeters,
 		})
 	}
 
@@ -194,6 +198,7 @@ func setRoutineGroups(
 			Rounds:                      omit.From(group.Rounds),
 			Role:                        nullRole(group.Role),
 			SkipLastOnFinalRound:        omit.From(group.SkipLastOnFinalRound),
+			Title:                       omit.From(group.Title),
 		}).One(ctx, exec)
 		if err != nil {
 			return fmt.Errorf("routine group insert: %w", err)
@@ -208,6 +213,9 @@ func setRoutineGroups(
 				Position:              omit.From(safe.Int32FromInt(position)),
 				RestSeconds:           omit.From(occurrenceRest(exercise, newRests)),
 				TargetDurationSeconds: omit.From(exercise.TargetDurationSeconds),
+				Tracking:              omit.From(exercise.Tracking),
+				Sets:                  omit.From(exercise.Sets),
+				TargetDistanceMeters:  omit.From(exercise.TargetDistanceMeters),
 			})
 			position++
 		}
