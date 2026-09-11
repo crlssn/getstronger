@@ -315,13 +315,42 @@ describe('VerifyEmail', () => {
     expect(useToastStore.getState().toast).not.toBeNull()
   })
 
-  // A dead or reused link has to explain itself rather than showing nothing.
-  test('explains a link that did not work', async () => {
+  // The failure copy used to be the first paint, so a valid link read as dead
+  // for the length of the round trip.
+  test('says nothing about the link while the request is in flight', async () => {
+    mocked.verifyEmail.mockReturnValue(new Promise(() => undefined) as never)
+    renderScreen(<VerifyEmail />, '/verify-email?token=abc123')
+
+    await waitFor(() => expect(mocked.verifyEmail).toHaveBeenCalled())
+    expect(screen.getByText('Loading…')).toBeInTheDocument()
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+  })
+
+  // A dead or reused link has to explain itself and offer the way to a new one,
+  // rather than leaving a sentence on an empty canvas.
+  test('offers a new link once one did not work', async () => {
     mocked.verifyEmail.mockResolvedValue(undefined)
     renderScreen(<VerifyEmail />, '/verify-email?token=stale')
 
-    await waitFor(() => expect(mocked.verifyEmail).toHaveBeenCalled())
-    expect(screen.getByText(/verify your email/i)).toBeInTheDocument()
+    expect(await screen.findByRole('alert')).toHaveTextContent(/that link did not work/i)
+    expect(screen.getByRole('link', { name: /send a new link/i })).toHaveAttribute(
+      'href',
+      '/verify-email/pending',
+    )
+    expect(screen.getByRole('link', { name: /back to log in/i })).toBeInTheDocument()
+  })
+
+  // The token is unspent when the request itself failed, so the same link is
+  // still the one to try.
+  test('verifies the same link again on retry', async () => {
+    mocked.verifyEmail.mockResolvedValueOnce(undefined).mockResolvedValueOnce({} as never)
+    renderScreen(<VerifyEmail />, '/verify-email?token=abc123')
+
+    await userEvent.click(await screen.findByRole('button', { name: /try again/i }))
+
+    await waitFor(() => expect(mocked.verifyEmail).toHaveBeenCalledTimes(2))
+    expect(mocked.verifyEmail).toHaveBeenLastCalledWith('abc123')
+    expect(useToastStore.getState().toast).not.toBeNull()
   })
 
   // The token is single-use.

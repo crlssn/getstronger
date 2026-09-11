@@ -84,6 +84,13 @@ export const guestPages: PageEntry[] = [
     name: 'verify-email-pending',
     route: () => '/verify-email/pending',
   },
+  {
+    component: 'src/ui/auth/VerifyEmail.tsx',
+    name: 'verify-email',
+    // A token no backend issued, so the page settles on the state worth
+    // photographing: the one a dead or reused link lands on.
+    route: () => '/verify-email?token=screenshot-token',
+  },
   { component: 'src/ui/PrivacyPolicy.tsx', name: 'privacy', route: () => '/privacy' },
   { component: 'src/ui/NotFound.tsx', name: 'not-found', route: () => '/screenshots-has-no-page' },
 ]

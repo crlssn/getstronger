@@ -53,16 +53,21 @@ test.describe('guest authentication and routing', () => {
   })
 
   // A link the schema turns away and one it lets through to a token nothing
-  // matches read the same to whoever clicked it: the page says the address
-  // could not be verified rather than showing nothing.
+  // matches read the same to whoever clicked it: the page says the link did not
+  // work and offers the way to a new one, rather than showing nothing.
   test('explains a verification link that names no account @smoke', async ({ page }) => {
     test.info().annotations.push(allowRuntimeErrors)
 
     for (const token of ['not-a-token', '00000000-0000-0000-0000-000000000000']) {
       await page.goto(`/verify-email?token=${token}`)
-      await expect(page.getByText('Sorry, we couldn’t verify your email.')).toBeVisible()
+      await expect(page.getByRole('alert')).toContainText('That link did not work')
+      await expect(page.getByRole('button', { name: 'Try again' })).toBeVisible()
       await expect(page).toHaveURL(/\/verify-email/)
     }
+
+    // The only way forward is the one that issues a link that will work.
+    await page.getByRole('link', { name: 'Send a new link' }).click()
+    await expect(page).toHaveURL(/\/verify-email\/pending$/)
   })
 
   test('signs up, resends the verification link, verifies and logs in @mutation', async ({

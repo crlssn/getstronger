@@ -220,7 +220,8 @@ export const en = {
       differentEmail: 'Sign up with a different email',
       backToLogin: 'Back to log in',
       verified: 'Thank you for verifying your email',
-      failed: 'Sorry, we couldn’t verify your email.',
+      failedTitle: 'That link did not work',
+      failedBody: 'It may have expired, or already been used. You can ask for a new one.',
     },
   },
   home: {
@@ -1156,7 +1157,8 @@ export const sv = {
       differentEmail: 'Registrera dig med en annan e-postadress',
       backToLogin: 'Tillbaka till inloggningen',
       verified: 'Tack för att du verifierade din e-postadress',
-      failed: 'Tyvärr kunde vi inte verifiera din e-postadress.',
+      failedTitle: 'Länken fungerade inte',
+      failedBody: 'Den kan ha gått ut eller redan använts. Du kan begära en ny.',
     },
   },
   home: {
