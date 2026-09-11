@@ -17,9 +17,10 @@
   @apply inline-flex min-h-(--size-control-sm) items-center focus-visible:ring-0 focus-visible:ring-offset-0;
 }
 
-/* The ring belongs on the pill, not on the invisible box around it. */
+/* The ring belongs on the pill, not on the invisible box around it. The offset
+   is the card the pills sit on, not the app's canvas. */
 .tagList > button:focus-visible .tag {
-  @apply ring-2 ring-ink-muted ring-offset-2;
+  @apply ring-2 ring-ink-muted ring-offset-2 ring-offset-surface;
 }
 
 .tagList .tag {

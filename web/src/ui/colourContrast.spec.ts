@@ -42,9 +42,14 @@ const pairs: [string, string, number][] = [
   ['text-inverse-muted', 'ink', 4.5],
   ['ink', 'canvas', 4.5],
   ['ink', 'surface', 4.5],
-  // Icons and the focus ring: non-text, so the 3:1 graphics floor.
+  // Icons and the focus ring: non-text, so the 3:1 graphics floor. The ring is
+  // drawn with an offset in the canvas colour, so it is read on both.
   ['ink-muted', 'surface', 3],
+  ['ink-muted', 'canvas', 3],
   ['success', 'surface', 4.5],
+  // The rest bar's countdown fill, on the inverse surface the bar is drawn on.
+  // A graphic, so the 3:1 floor.
+  ['success-inverse', 'surface-inverse', 3],
   ['success-strong', 'success-surface', 4.5],
   ['danger', 'surface', 4.5],
   ['danger', 'canvas', 4.5],
@@ -122,5 +127,17 @@ describe.each([
     expect(tokens[text], text).toBeDefined()
     expect(tokens[fill], fill).toBeDefined()
     expect(contrast(tokens[text], tokens[fill])).toBeGreaterThanOrEqual(minimum)
+  })
+
+  // A scrim dims the page under a sheet. Ink inverts, so a scrim mixed from
+  // the ink family lightens in one palette and washes the page out instead.
+  test('the scrim darkens what it covers', () => {
+    expect(tokens['scrim'], 'scrim').toBeDefined()
+
+    for (const under of ['canvas', 'surface']) {
+      expect(luminance(composite(tokens['scrim'], tokens[under])), under).toBeLessThan(
+        luminance(channels(tokens[under]).rgb),
+      )
+    }
   })
 })
