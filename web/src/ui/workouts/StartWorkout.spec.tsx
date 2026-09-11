@@ -63,6 +63,7 @@ import { useAuthStore } from '@/stores/auth'
 import { useDashboardStore } from '@/stores/dashboard'
 import { useMutationQueueStore } from '@/stores/mutationQueue'
 import { usePreferencesStore } from '@/stores/preferences'
+import { useConfirmationStore } from '@/stores/confirmation'
 import { useWorkoutStore } from '@/stores/workout'
 import { renderWithProviders } from '@/ui/testing'
 import { StartWorkout } from './StartWorkout'
@@ -227,6 +228,7 @@ describe('StartWorkout', () => {
     vi.spyOn(useDashboardStore.getState(), 'load').mockResolvedValue(undefined)
     useAuthStore.setState({ userId: 'user-me' })
     useWorkoutStore.setState({ workouts: {} })
+    useConfirmationStore.setState({ confirmation: null, resolver: null })
     usePreferencesStore.getState().reset()
     useMutationQueueStore.setState({ pending: [] })
   })
@@ -1382,6 +1384,23 @@ describe('StartWorkout', () => {
       expect(request.exerciseSets[0].sets).toHaveLength(2)
       await waitFor(() => expect(timedCircuit.clear).toHaveBeenCalledOnce())
       expect(await screen.findByText('saved workout')).toBeInTheDocument()
+    })
+
+    // Discarding a run is leaving, not changing your mind about how to log it:
+    // it used to hand back the routine's empty form, which reads as the app
+    // asking the athlete to type up the session it just threw away.
+    test('leaves for the workout tab once a recording is discarded', async () => {
+      const user = userEvent.setup()
+      vi.mocked(timedCircuit.read).mockResolvedValue({ recording: finishedRecording() })
+      mountWorkout()
+
+      expect(await screen.findByRole('heading', { name: 'Workout route' })).toBeInTheDocument()
+      await user.click(screen.getByRole('button', { name: 'Discard' }))
+      await waitFor(() => expect(useConfirmationStore.getState().confirmation).not.toBeNull())
+      useConfirmationStore.getState().accept()
+
+      expect(await screen.findByText('workout tab')).toBeInTheDocument()
+      expect(useWorkoutStore.getState().workouts[routineID]).toBeUndefined()
     })
   })
 

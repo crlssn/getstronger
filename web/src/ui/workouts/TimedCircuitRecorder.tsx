@@ -55,7 +55,10 @@ interface Props {
   pacing: Pacing
   saved?: Recording
   onComplete: (recording: Recording) => void
+  /** The athlete would rather log this session by hand than record it. */
   onCancel: () => void
+  /** The recording is gone, and so is the reason to be on this screen. */
+  onDiscard: () => void
   /** Keeps the finished recording, where there is one to keep. */
   onSave?: () => void
   /** Whether that save is in flight, and what it said if it failed. */
@@ -70,6 +73,7 @@ export const TimedCircuitRecorder = ({
   saved,
   onComplete,
   onCancel,
+  onDiscard,
   onSave,
   saving = false,
   saveError = '',
@@ -135,7 +139,7 @@ export const TimedCircuitRecorder = ({
         })
       else await timedCircuit[kind]({ key })
       if (kind === 'clear') {
-        onCancel()
+        onDiscard()
         return
       }
       const result = await timedCircuit.read({ key })
