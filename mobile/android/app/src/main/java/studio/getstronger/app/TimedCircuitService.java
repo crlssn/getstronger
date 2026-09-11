@@ -171,6 +171,8 @@ public class TimedCircuitService extends Service implements LocationListener {
             .put("cuePhrase", options.optString("cuePhrase", ""))
             .put("halfwayPhrase", options.optString("halfwayPhrase", ""))
             .put("distanceUnit", options.optString("distanceUnit", "km"))
+            .put("paceWords", options.optJSONObject("paceWords") == null
+                ? new JSONObject() : options.getJSONObject("paceWords"))
             .put("completedPhrase", options.optString("completedPhrase", ""))
             .put("autoPause", options.optBoolean("autoPause"))
             .put("recording", data).put("checkpoint", now);
@@ -588,13 +590,31 @@ public class TimedCircuitService extends Service implements LocationListener {
     }
 
     /**
-     * A pace as mm:ss in the athlete's unit, mirroring {@code paceIn} in the
-     * web app: seconds per kilometre is what every recorder measures.
+     * A pace spelled out in the athlete's unit, mirroring {@code spokenPace} in
+     * {@code web/src/utils/halfwayCue.ts}.
+     *
+     * Not "5:30": a synthesiser reads a colon as a time and said a round pace
+     * back as "five o'clock". The words come from the web app, which is the
+     * only side of this with a message catalogue.
      */
     private String spokenPace(double secondsPerKilometre) {
         boolean miles = "mi".equals(saved.optString("distanceUnit", "km"));
         long perUnit = Math.round(miles ? secondsPerKilometre * 1.609344 : secondsPerKilometre);
-        return String.format(Locale.US, "%d:%02d", perUnit / 60, perUnit % 60);
+        long minutes = perUnit / 60, seconds = perUnit % 60;
+        StringBuilder said = new StringBuilder();
+        if (minutes > 0) said.append(minutes).append(' ').append(word(minutes == 1 ? "minute" : "minutes"));
+        if (seconds > 0) {
+            if (said.length() > 0) said.append(' ');
+            said.append(seconds).append(' ').append(word(seconds == 1 ? "second" : "seconds"));
+        }
+        // A pace that rounds to nothing is nobody's, but "0 minutes" read out
+        // is worse than a figure that says what it is.
+        return said.length() > 0 ? said.toString() : "0 " + word("seconds");
+    }
+    /** One of those words, falling back to the English the app is written in. */
+    private String word(String key) {
+        JSONObject words = saved.optJSONObject("paceWords");
+        return words == null ? key : words.optString(key, key);
     }
 
     /**

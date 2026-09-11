@@ -15,13 +15,7 @@ import { paceToneHertz, paceToneVolume, playTone } from '@/native/cueTone'
 import { timedCircuit } from '@/native/timedCircuit'
 import { i18n } from '@/i18n'
 import { speechVolume, type AnnouncementVolume } from '@/stores/announcements'
-import type { PaceReferenceChoice } from '@/utils/pacing'
-
-/** Long enough for the word to be out before the note it names sounds. */
-const afterWordMs = 900
-
-/** And long enough for that pair to land before the other one answers it. */
-const betweenPairsMs = 1700
+import type { PaceTone } from '@/utils/pacing'
 
 /** Says a phrase in the voice a run is announced in, and drops anything before it. */
 const speak = (phrase: string, volume: number) => {
@@ -69,28 +63,16 @@ export const previewHalfway = (
 }
 
 /**
- * Says what each note means and then sounds it, faster first.
+ * Sounds one of the two notes, as its own button on the settings screen asks.
  *
- * A beep says nothing on its own, and the pair is the whole point: which way
- * round they go is what an athlete has to know before the first one arrives
- * mid-run. So the example names them rather than leaving two tones to be
- * worked out.
+ * A note is the one thing a row of copy cannot describe, and which way round
+ * the pair goes is what an athlete has to know before the first one arrives
+ * mid-run — so each is offered under its own name and sounded on its own.
  *
  * On a run the notes follow the announcement volume and go quiet with it. The
  * example does not: one nobody can hear reads as a broken feature rather than
  * as a turned-down one.
  */
-export const previewPaceTones = (
-  choice: PaceReferenceChoice,
-  volume: AnnouncementVolume,
-  faster: string,
-  slower: string,
-): void => {
-  if (choice === 'off') return
-  const spoken = speechVolume(volume) || 1
-  const level = paceToneVolume * spoken
-  speak(faster, spoken)
-  setTimeout(() => playTone(paceToneHertz.ahead, level), afterWordMs)
-  setTimeout(() => speak(slower, spoken), betweenPairsMs)
-  setTimeout(() => playTone(paceToneHertz.behind, level), betweenPairsMs + afterWordMs)
+export const previewPaceTone = (tone: PaceTone, volume: AnnouncementVolume): void => {
+  playTone(paceToneHertz[tone], paceToneVolume * (speechVolume(volume) || 1))
 }

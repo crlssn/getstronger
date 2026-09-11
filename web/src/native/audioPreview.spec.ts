@@ -2,9 +2,9 @@
 
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
-import { paceToneHertz, playTone } from '@/native/cueTone'
+import { paceToneHertz, paceToneVolume, playTone } from '@/native/cueTone'
 import { timedCircuit } from '@/native/timedCircuit'
-import { previewAnnouncement, previewIntervalCue, previewPaceTones } from './audioPreview'
+import { previewAnnouncement, previewIntervalCue, previewPaceTone } from './audioPreview'
 
 vi.mock('@/native/cueTone', async (original) => ({
   ...(await original<typeof import('@/native/cueTone')>()),
@@ -65,39 +65,20 @@ describe('previewIntervalCue', () => {
   })
 })
 
-describe('previewPaceTones', () => {
-  // A beep says nothing on its own: an example that names each note is the
-  // only one that teaches which way round they go.
-  test('names each note and sounds it, faster first', () => {
-    previewPaceTones('previous', 'full', 'Faster', 'Slower')
+describe('previewPaceTone', () => {
+  test('sounds the note it is asked for', () => {
+    previewPaceTone('ahead', 'full')
+    expect(playTone).toHaveBeenCalledExactlyOnceWith(paceToneHertz.ahead, paceToneVolume)
 
-    expect(spoken()).toEqual([['Faster', 1]])
-    vi.runAllTimers()
-    expect(vi.mocked(playTone).mock.calls.map(([hertz]) => hertz)).toEqual([
-      paceToneHertz.ahead,
-      paceToneHertz.behind,
-    ])
-    expect(spoken()).toEqual([
-      ['Faster', 1],
-      ['Slower', 1],
-    ])
+    previewPaceTone('behind', 'full')
+    expect(playTone).toHaveBeenLastCalledWith(paceToneHertz.behind, paceToneVolume)
   })
 
   // The notes follow the announcement volume on a run, but an example nobody
   // can hear says the feature is broken rather than that it is turned down.
   test('is heard even with the announcements turned off', () => {
-    previewPaceTones('best', 'off', 'Faster', 'Slower')
-    vi.runAllTimers()
+    previewPaceTone('ahead', 'off')
 
-    expect(playTone).toHaveBeenCalledTimes(2)
-    expect(spoken()).toContainEqual(['Faster', 1])
-  })
-
-  test('sounds nothing for no comparison at all', () => {
-    previewPaceTones('off', 'full', 'Faster', 'Slower')
-    vi.runAllTimers()
-
-    expect(playTone).not.toHaveBeenCalled()
-    expect(timedCircuit.speak).not.toHaveBeenCalled()
+    expect(playTone).toHaveBeenCalledExactlyOnceWith(paceToneHertz.ahead, paceToneVolume)
   })
 })

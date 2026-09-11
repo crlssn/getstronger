@@ -19,7 +19,7 @@ import { AppInlineError } from '@/ui/components/AppInlineError'
 import { AppStat } from '@/ui/components/AppStat'
 import { WorkoutRoute } from '@/ui/features/WorkoutRoute'
 import { distanceIn, paceIn, speedIn, type Measured } from '@/utils/exerciseMeasurements'
-import { halfwayPhrase } from '@/utils/halfwayCue'
+import { halfwayPhrase, paceWords } from '@/utils/halfwayCue'
 import { hasPaceTargets, type Pacing } from '@/utils/pacing'
 import {
   buildTimeline,
@@ -133,6 +133,7 @@ export const TimedCircuitRecorder = ({
           // recorder is handed the phrase with the hole still in it.
           halfwayPhrase: halfwayCue ? halfwayPhrase(t, unit) : '',
           distanceUnit: distanceUnitLabel(unit),
+          paceWords: paceWords(t),
           completedPhrase: t('timedCircuit.completed'),
           pacing,
           autoPause,

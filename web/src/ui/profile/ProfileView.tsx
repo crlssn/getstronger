@@ -25,7 +25,7 @@ import { AppSkeleton } from '@/ui/components/AppSkeleton'
 import { AppSwitch } from '@/ui/components/AppSwitch'
 import { distanceUnitLabel } from '@/utils/distanceUnits'
 import { formatDistanceIn } from '@/utils/exerciseMeasurements'
-import { examplePaceSeconds, halfwayPhrase, halfwaySaid } from '@/utils/halfwayCue'
+import { examplePaceSeconds, halfwayPhrase, halfwaySaid, paceWords } from '@/utils/halfwayCue'
 import { handle, initials } from '@/utils/names'
 import { formatNumber } from '@/utils/numbers'
 import { weightUnitLabel } from '@/utils/weightUnits'
@@ -317,7 +317,12 @@ export const ProfileView = () => {
                   onChange={(enabled) => {
                     usePreferencesStore.getState().setHalfwayCue(enabled)
                     previewHalfway(
-                      halfwaySaid(halfwayPhrase(t, distanceUnit), examplePaceSeconds, distanceUnit),
+                      halfwaySaid(
+                        halfwayPhrase(t, distanceUnit),
+                        examplePaceSeconds,
+                        paceWords(t),
+                        distanceUnit,
+                      ),
                       enabled,
                       volume,
                     )

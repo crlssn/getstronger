@@ -126,6 +126,7 @@ describe('the browser recorder', () => {
       cuePhrase: `${cueLeadSeconds} seconds`,
       halfwayPhrase,
       distanceUnit: 'km',
+      paceWords: { minute: 'minute', minutes: 'minutes', second: 'second', seconds: 'seconds' },
       completedPhrase: 'Workout completed',
     })
     // The latest watcher: a second circuit in one test watches afresh.
@@ -287,7 +288,7 @@ describe('the browser recorder', () => {
   // the warning that it was ending, so a five-minute rep gave a runner no way
   // to know whether the pace they were holding was the one they meant.
   it('calls the midpoint of a worked interval with the pace held over it', async () => {
-    const phrase = 'Half way. Pace {pace} per kilometre'
+    const phrase = 'Half way. {pace} per kilometre'
     await circuit([interval('Hard', 120), interval('Easy', 120)], 0, 1, phrase)
 
     // Four metres a second, which the smoothing reads back a few seconds a
@@ -297,7 +298,11 @@ describe('the browser recorder', () => {
 
     stride(60, 240)
     await step(60)
-    expect(say).toHaveBeenCalledExactlyOnceWith('Half way. Pace 4:15 per kilometre', 1, 'en')
+    expect(say).toHaveBeenCalledExactlyOnceWith(
+      'Half way. 4 minutes 15 seconds per kilometre',
+      1,
+      'en',
+    )
 
     // Once per interval: the rest of it is not a second call.
     await runTo(119)
@@ -307,7 +312,7 @@ describe('the browser recorder', () => {
   // A rest is named by the recording but not worked, an open interval has no
   // end to halve, and a pace nothing has measured yet is no pace to give.
   it('says nothing halfway through a rest, a short interval, or an unmeasured one', async () => {
-    const phrase = 'Half way. Pace {pace} per kilometre'
+    const phrase = 'Half way. {pace} per kilometre'
     const rest = { ...interval('Rest', 120), exerciseId: '' }
     await circuit([rest, interval('Sprint', 30), interval('Hard', 120)], 0, 1, phrase)
 

@@ -12,7 +12,7 @@ import {
 } from '@/utils/timedCircuit'
 
 import { hush, paceToneHertz, paceToneVolume, playTone, say } from '@/native/cueTone'
-import { callsHalfway, halfwaySaid } from '@/utils/halfwayCue'
+import { callsHalfway, halfwaySaid, type PaceWords } from '@/utils/halfwayCue'
 import { cuesInterval } from '@/utils/intervalCue'
 
 /**
@@ -53,6 +53,8 @@ interface Saved {
   halfwayPhrase: string
   /** The unit the spoken pace is per, `km` or `mi`. */
   distanceUnit: string
+  /** The bare words that pace is spelled out with. */
+  paceWords: PaceWords
   /** Said once the last interval runs out, and not when the athlete ends it. */
   completedPhrase: string
   checkpoint: number
@@ -78,6 +80,14 @@ let pace = newPaceWatch()
 // arriving while the recording is held — otherwise nothing could tell it the
 // athlete had set off again.
 let fixes: RoutePoint[] = []
+
+/** What a recorder started without them says a pace in: English, as the app does. */
+const defaultPaceWords: PaceWords = {
+  minute: 'minute',
+  minutes: 'minutes',
+  second: 'second',
+  seconds: 'seconds',
+}
 
 const now = () => Math.round(Date.now())
 
@@ -228,7 +238,11 @@ const tick = () => {
           ? currentPace(saved.recording, at, phaseSeconds, paceFloorMeters)
           : undefined
         if (pace !== undefined)
-          say(halfwaySaid(saved.halfwayPhrase, pace, spokenUnit()), cueVolume(), saved.locale)
+          say(
+            halfwaySaid(saved.halfwayPhrase, pace, saved.paceWords, spokenUnit()),
+            cueVolume(),
+            saved.locale,
+          )
       }
       judge(index, phaseSeconds, at)
       if (at - saved.checkpoint > 1000) persist()
@@ -320,6 +334,7 @@ const begin = (
   cuePhrase: string,
   halfwayPhrase: string,
   distanceUnit: string,
+  paceWords: PaceWords,
   completedPhrase: string,
   volume: number,
   autoPauses: boolean,
@@ -347,6 +362,7 @@ const begin = (
       cuePhrase,
       halfwayPhrase,
       distanceUnit,
+      paceWords,
       completedPhrase,
       checkpoint: now(),
       autoPause: autoPauses,
@@ -404,6 +420,7 @@ export const TimedCircuitWeb = {
     cuePhrase: string
     halfwayPhrase?: string
     distanceUnit?: string
+    paceWords?: PaceWords
     completedPhrase: string
     pacing?: Pacing
     autoPause?: boolean
@@ -419,6 +436,7 @@ export const TimedCircuitWeb = {
       options.cuePhrase,
       options.halfwayPhrase ?? '',
       options.distanceUnit ?? 'km',
+      options.paceWords ?? defaultPaceWords,
       options.completedPhrase,
       options.volume,
       options.autoPause ?? false,

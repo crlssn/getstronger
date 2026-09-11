@@ -17,9 +17,22 @@ import type { TFunction } from 'i18next'
 
 import { DistanceUnit } from '@/proto/api/v1/shared_pb'
 
-import { normalizeDistanceUnit } from '@/utils/distanceUnits'
-import { paceIn } from '@/utils/exerciseMeasurements'
+import { kilometersPerMile, normalizeDistanceUnit } from '@/utils/distanceUnits'
 import type { Phase } from '@/utils/timedCircuit'
+
+/**
+ * The bare words a spoken pace is built from, in the athlete's language.
+ *
+ * Handed to the recorders rather than looked up by them: the phones have no
+ * message catalogue, and a pace read out in the wrong language is worse than
+ * none. @public
+ */
+export interface PaceWords {
+  minute: string
+  minutes: string
+  second: string
+  seconds: string
+}
 
 /**
  * The token every recorder replaces with the pace it measured.
@@ -71,9 +84,48 @@ export const halfwayPhrase = (t: TFunction, unit?: DistanceUnit): string =>
     { pace: pacePlaceholder },
   )
 
-/** The phrase as it is said: the pace filled in, in the athlete's unit. */
+/**
+ * A pace spelled out, in the athlete's unit: "5 minutes 30 seconds".
+ *
+ * Not "5:30". A synthesiser reads a colon as a time and says "five thirty" at
+ * best and "five o'clock" at worst, which is what a round pace came out as.
+ * The app already spells durations out for the same reason — see
+ * `spokenDuration` — and the phones build this same string from the same
+ * words, in `TimedCircuitPlugin.swift` and `TimedCircuitService.java`.
+ */
+export const spokenPace = (
+  secondsPerKilometer: number,
+  words: PaceWords,
+  unit?: DistanceUnit,
+): string => {
+  const perUnit = Math.round(
+    normalizeDistanceUnit(unit) === DistanceUnit.MILES
+      ? secondsPerKilometer * kilometersPerMile
+      : secondsPerKilometer,
+  )
+  const minutes = Math.floor(perUnit / 60)
+  const seconds = perUnit % 60
+  const said = [
+    ...(minutes > 0 ? [`${minutes} ${minutes === 1 ? words.minute : words.minutes}`] : []),
+    ...(seconds > 0 ? [`${seconds} ${seconds === 1 ? words.second : words.seconds}`] : []),
+  ]
+  // A pace that rounds to nothing is nobody's, but "0 minutes" read out is
+  // worse than a figure that says what it is.
+  return said.length > 0 ? said.join(' ') : `0 ${words.seconds}`
+}
+
+/** The words a recorder is handed, so it says a pace in the athlete's language. */
+export const paceWords = (t: TFunction): PaceWords => ({
+  minute: t('timedCircuit.paceMinute'),
+  minutes: t('timedCircuit.paceMinutes'),
+  second: t('timedCircuit.paceSecond'),
+  seconds: t('timedCircuit.paceSeconds'),
+})
+
+/** The phrase as it is said: the pace spelled out, in the athlete's unit. */
 export const halfwaySaid = (
   phrase: string,
   secondsPerKilometer: number,
+  words: PaceWords,
   unit?: DistanceUnit,
-): string => phrase.replace(pacePlaceholder, paceIn(secondsPerKilometer, unit).value)
+): string => phrase.replace(pacePlaceholder, spokenPace(secondsPerKilometer, words, unit))
