@@ -3,10 +3,7 @@ import type { DraftGroup, IntervalRole } from '@/utils/routineGroups'
 import { create } from '@bufbuild/protobuf'
 import { describe, expect, it } from 'vitest'
 
-import {
-  RoutineExerciseTracking,
-  RoutineGroupSchema,
-} from '@/proto/api/v1/routine_service_pb'
+import { RoutineExerciseTracking, RoutineGroupSchema } from '@/proto/api/v1/routine_service_pb'
 import { ExerciseSchema, RoutineGroupMode, RoutineGroupRole } from '@/proto/api/v1/shared_pb'
 import {
   addExerciseToGroup,
@@ -287,7 +284,11 @@ describe('moveEntry', () => {
   })
 
   it('keeps the prescription the row was dragged with', () => {
-    const blocks = fill(fill(addGroup(startingBlocks('blank', intervalTitles)), 0, ['a'], 'distance'), 1, [])
+    const blocks = fill(
+      fill(addGroup(startingBlocks('blank', intervalTitles)), 0, ['a'], 'distance'),
+      1,
+      [],
+    )
     const moved = moveEntry(blocks, blocks[0].id, 0, blocks[1].id, 0)
 
     expect(moved[1].entries[0]).toMatchObject({ tracking: 'distance' })

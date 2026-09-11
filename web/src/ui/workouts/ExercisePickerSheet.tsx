@@ -35,13 +35,7 @@ interface Props {
  * `useExerciseLibrary`; what this sheet adds is leaving out what is already in
  * the session.
  */
-export const ExercisePickerSheet = ({
-  excluded = [],
-  eyebrow,
-  header,
-  onAdd,
-  onClose,
-}: Props) => {
+export const ExercisePickerSheet = ({ excluded = [], eyebrow, header, onAdd, onClose }: Props) => {
   const { t } = useTranslation()
   const {
     options,

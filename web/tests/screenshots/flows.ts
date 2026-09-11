@@ -214,7 +214,10 @@ export const flows: Flow[] = [
         // What an exercise prescribes, which is a sheet behind the value on its
         // row rather than a column of steppers down the list.
         act: async (page) => {
-          await page.getByRole('button', { name: /^Exercise settings:/ }).first().click()
+          await page
+            .getByRole('button', { name: /^Exercise settings:/ })
+            .first()
+            .click()
           await expect(page.getByRole('dialog')).toBeVisible()
         },
         name: 'exercise-settings',

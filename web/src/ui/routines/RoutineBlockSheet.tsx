@@ -93,9 +93,7 @@ export const RoutineBlockSheet = ({
             onChange={(mode) => onChange({ mode })}
           />
           <p className={styles.lead}>
-            {circuit
-              ? t('routine.form.blocks.circuitLead')
-              : t('routine.form.blocks.straightLead')}
+            {circuit ? t('routine.form.blocks.circuitLead') : t('routine.form.blocks.straightLead')}
           </p>
         </div>
 
