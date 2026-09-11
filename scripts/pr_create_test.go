@@ -69,7 +69,8 @@ func runPRCreate(t *testing.T, args []string, env map[string]string) prResult {
 	for _, entry := range os.Environ() {
 		name, _, _ := strings.Cut(entry, "=")
 		switch name {
-		case "GH_APP_ID", "GH_APP_INSTALLATION_ID", "GH_APP_PRIVATE_KEY", "GH_TOKEN", "PATH":
+		case "GH_APP_ID", "GH_APP_INSTALLATION_ID", "GH_APP_PRIVATE_KEY", "GH_TOKEN", "PATH",
+			"CLAUDE_CODE_REMOTE_SESSION_ID":
 			continue
 		}
 		cmd.Env = append(cmd.Env, entry)
@@ -210,10 +211,30 @@ func TestPRCreateAsksForScreenshotsWhenTheBranchChangesTheUI(t *testing.T) {
 	require.Contains(t, result.stdout, "https://github.com/crlssn/getstronger/pull/999",
 		"the pull request's URL still reaches whoever ran this")
 	require.Contains(t, result.stdout, "mise run pr:screenshots 999 --append")
-	require.Contains(t, result.stdout, "gh workflow run pr.screenshots.yml -f number=999",
-		"and the dispatch, for the sandbox that has no database to photograph")
-	require.Contains(t, result.stdout, "'screenshots' label",
-		"and the label, which is the same run without a command to run")
+	require.NotContains(t, result.stdout, "screenshots' label",
+		"and not the label: a machine with a database photographs the pages itself")
+}
+
+// A cloud session has no browser to photograph with and no key to publish
+// with, so the images can only come from a runner. See
+// .claude/cloud-environment.md.
+func TestPRCreateAsksForTheLabelWhereNothingCanPhotograph(t *testing.T) {
+	t.Parallel()
+
+	_, keyPath := writeKey(t)
+
+	result := runPRCreate(t, []string{"feat: a rounds control", bodyFile(t)}, map[string]string{
+		"CLAUDE_CODE_REMOTE_SESSION_ID": "cse_01TestSession",
+		"GH_APP_ID":                     testAppID,
+		"GH_APP_INSTALLATION_ID":        testInstallationID,
+		"GH_APP_PRIVATE_KEY":            keyPath,
+		"GIT_DIFF":                      "web/src/pages/RoutineBuilder.tsx\n",
+	})
+
+	require.Equal(t, 0, result.exitCode, result.stderr)
+	require.Contains(t, result.stdout, "screenshots' label")
+	require.NotContains(t, result.stdout, "mise run pr:screenshots",
+		"which would fail here, and reads as the thing to try first")
 }
 
 // A diff cannot tell that a page's appearance moved, so the reminder is only

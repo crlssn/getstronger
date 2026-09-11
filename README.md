@@ -656,7 +656,7 @@ The bucket itself stays private: only the objects the task uploads are readable,
 
 ### Capturing them in CI
 
-Both commands above want a photographed set, which wants a seeded database, and the upload wants credentials. Where none of that is to hand — a cloud routine's sandbox — ask CI for the images instead. Label the pull request `screenshots`, or dispatch the workflow by number when a `path` is wanted too:
+Both commands above want a photographed set, which wants a seeded database, and the upload wants credentials. A machine that has them photographs the pages itself: that run is six minutes, and a runner is half an hour. Where none of it is to hand — a cloud session — ask CI for the images instead. Label the pull request `screenshots`, or dispatch the workflow by number when a `path` is wanted too:
 
 ```bash
 gh pr edit 1209 --add-label screenshots
