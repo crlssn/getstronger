@@ -102,6 +102,12 @@ var _ sql.Scanner = (*pq.StringArray)(nil)
 // Make sure the type pq.StringArray satisfies database/sql/driver.Valuer
 var _ driver.Valuer = *new(pq.StringArray)
 
+// Make sure the type enums.RoutineExerciseTracking satisfies database/sql.Scanner
+var _ sql.Scanner = (*enums.RoutineExerciseTracking)(nil)
+
+// Make sure the type enums.RoutineExerciseTracking satisfies database/sql/driver.Valuer
+var _ driver.Valuer = *new(enums.RoutineExerciseTracking)
+
 // Make sure the type enums.NotificationType satisfies database/sql.Scanner
 var _ sql.Scanner = (*enums.NotificationType)(nil)
 

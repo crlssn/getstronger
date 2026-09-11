@@ -118,6 +118,40 @@ func TestCheckConstraintErrors(t *testing.T) {
 			t.Fatal("expected ErrCheckExercisesRoutinesRestSecondsValid.Is not to match different constraint")
 		}
 	})
+	t.Run("ExercisesRoutine_ErrCheckExercisesRoutinesSetsCheck", func(t *testing.T) {
+		matchingErr := newCheckErr("23514", "exercises_routines_sets_check")
+		if !errors.Is(ExercisesRoutineErrors.ErrCheckExercisesRoutinesSetsCheck, matchingErr) {
+			t.Fatalf("expected ErrCheckExercisesRoutinesSetsCheck to match constraint %q", "exercises_routines_sets_check")
+		}
+		if !ExercisesRoutineErrors.ErrCheckExercisesRoutinesSetsCheck.Is(matchingErr) {
+			t.Fatalf("expected ErrCheckExercisesRoutinesSetsCheck.Is to match constraint %q", "exercises_routines_sets_check")
+		}
+
+		nonMatchingErr := newCheckErr("23514", "other_constraint")
+		if errors.Is(ExercisesRoutineErrors.ErrCheckExercisesRoutinesSetsCheck, nonMatchingErr) {
+			t.Fatal("expected ErrCheckExercisesRoutinesSetsCheck not to match different constraint")
+		}
+		if ExercisesRoutineErrors.ErrCheckExercisesRoutinesSetsCheck.Is(nonMatchingErr) {
+			t.Fatal("expected ErrCheckExercisesRoutinesSetsCheck.Is not to match different constraint")
+		}
+	})
+	t.Run("ExercisesRoutine_ErrCheckExercisesRoutinesTargetDistanceMetersCheck", func(t *testing.T) {
+		matchingErr := newCheckErr("23514", "exercises_routines_target_distance_meters_check")
+		if !errors.Is(ExercisesRoutineErrors.ErrCheckExercisesRoutinesTargetDistanceMetersCheck, matchingErr) {
+			t.Fatalf("expected ErrCheckExercisesRoutinesTargetDistanceMetersCheck to match constraint %q", "exercises_routines_target_distance_meters_check")
+		}
+		if !ExercisesRoutineErrors.ErrCheckExercisesRoutinesTargetDistanceMetersCheck.Is(matchingErr) {
+			t.Fatalf("expected ErrCheckExercisesRoutinesTargetDistanceMetersCheck.Is to match constraint %q", "exercises_routines_target_distance_meters_check")
+		}
+
+		nonMatchingErr := newCheckErr("23514", "other_constraint")
+		if errors.Is(ExercisesRoutineErrors.ErrCheckExercisesRoutinesTargetDistanceMetersCheck, nonMatchingErr) {
+			t.Fatal("expected ErrCheckExercisesRoutinesTargetDistanceMetersCheck not to match different constraint")
+		}
+		if ExercisesRoutineErrors.ErrCheckExercisesRoutinesTargetDistanceMetersCheck.Is(nonMatchingErr) {
+			t.Fatal("expected ErrCheckExercisesRoutinesTargetDistanceMetersCheck.Is not to match different constraint")
+		}
+	})
 	t.Run("ExercisesRoutine_ErrCheckExercisesRoutinesTargetDurationSecondsCheck", func(t *testing.T) {
 		matchingErr := newCheckErr("23514", "exercises_routines_target_duration_seconds_check")
 		if !errors.Is(ExercisesRoutineErrors.ErrCheckExercisesRoutinesTargetDurationSecondsCheck, matchingErr) {
@@ -238,6 +272,23 @@ func TestCheckConstraintErrors(t *testing.T) {
 		}
 		if RoutineGroupErrors.ErrCheckRoutineGroupsRoundsCheck.Is(nonMatchingErr) {
 			t.Fatal("expected ErrCheckRoutineGroupsRoundsCheck.Is not to match different constraint")
+		}
+	})
+	t.Run("RoutineGroup_ErrCheckRoutineGroupsTitleCheck", func(t *testing.T) {
+		matchingErr := newCheckErr("23514", "routine_groups_title_check")
+		if !errors.Is(RoutineGroupErrors.ErrCheckRoutineGroupsTitleCheck, matchingErr) {
+			t.Fatalf("expected ErrCheckRoutineGroupsTitleCheck to match constraint %q", "routine_groups_title_check")
+		}
+		if !RoutineGroupErrors.ErrCheckRoutineGroupsTitleCheck.Is(matchingErr) {
+			t.Fatalf("expected ErrCheckRoutineGroupsTitleCheck.Is to match constraint %q", "routine_groups_title_check")
+		}
+
+		nonMatchingErr := newCheckErr("23514", "other_constraint")
+		if errors.Is(RoutineGroupErrors.ErrCheckRoutineGroupsTitleCheck, nonMatchingErr) {
+			t.Fatal("expected ErrCheckRoutineGroupsTitleCheck not to match different constraint")
+		}
+		if RoutineGroupErrors.ErrCheckRoutineGroupsTitleCheck.Is(nonMatchingErr) {
+			t.Fatal("expected ErrCheckRoutineGroupsTitleCheck.Is not to match different constraint")
 		}
 	})
 
