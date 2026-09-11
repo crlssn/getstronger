@@ -5,7 +5,10 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
 const bridge = vi.hoisted(() => ({ platform: 'ios', setTheme: vi.fn() }))
 
 vi.mock('@capacitor/core', () => ({
-  Capacitor: { getPlatform: () => bridge.platform },
+  Capacitor: {
+    getPlatform: () => bridge.platform,
+    isNativePlatform: () => bridge.platform !== 'web',
+  },
   registerPlugin: () => ({ setTheme: bridge.setTheme }),
 }))
 
@@ -25,17 +28,23 @@ describe('paintCanvas', () => {
     await vi.waitFor(() => expect(bridge.setTheme).toHaveBeenCalledWith({ theme: 'light' }))
   })
 
-  // The gesture is WKWebView's; Android and the browser paint nothing behind
-  // the page for the app to get wrong.
-  test('leaves every other platform alone', async () => {
-    for (const platform of ['android', 'web']) {
-      bridge.platform = platform
+  test('hands it to Android too, for the strips the system bars sit on', async () => {
+    bridge.platform = 'android'
 
-      paintCanvas('dark')
-      await Promise.resolve()
+    paintCanvas('dark')
 
-      expect(bridge.setTheme).not.toHaveBeenCalled()
-    }
+    await vi.waitFor(() => expect(bridge.setTheme).toHaveBeenCalledWith({ theme: 'dark' }))
+  })
+
+  // A browser paints its own window, and there is nothing behind the page for
+  // the app to get wrong.
+  test('leaves the browser alone', async () => {
+    bridge.platform = 'web'
+
+    paintCanvas('dark')
+    await Promise.resolve()
+
+    expect(bridge.setTheme).not.toHaveBeenCalled()
   })
 
   test('carries on when the plugin refuses', async () => {

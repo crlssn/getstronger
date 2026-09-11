@@ -1,8 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <!-- The paper the boot splash is drawn on, which theme.css calls
-         color-canvas. The launch screen paints it so that the splash fading in
-         over it changes nothing but the bar. values-night mirrors it. -->
-    <color name="splash_canvas">#f2f1ed</color>
+    <!-- The paper the app is drawn on, which theme.css calls color-canvas. The
+         launch screen paints it so that the boot splash fading in over it
+         changes nothing but the bar, and the window keeps painting it under
+         the system bars so the app runs to every edge of the screen.
+         values-night mirrors it; CanvasPlugin overrules both once the app is
+         up and can say which palette the reader actually picked. -->
+    <color name="app_canvas">#f2f1ed</color>
 </resources>
