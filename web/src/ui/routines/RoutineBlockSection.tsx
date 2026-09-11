@@ -68,6 +68,9 @@ export const RoutineBlockSection = ({
   const list = useSortable<HTMLOListElement>({
     group: sortableGroup,
     handle: `.${styles.dragHandle}`,
+    // The empty state is a row of the list so the block can be dropped into,
+    // not a row of the routine: it has nothing to drag.
+    filter: `.${styles.empty}`,
     ghostClass: styles.sortableGhost,
     dragClass: styles.sortableDrag,
     animation: 150,
@@ -121,9 +124,11 @@ export const RoutineBlockSection = ({
       </header>
 
       <AppCard className={styles.card}>
-        {group.entries.length ? (
-          <ol ref={list} className={styles.exercises} data-group-id={group.id}>
-            {group.entries.map((entry, position) => {
+        {/* The list is rendered even while the block holds nothing: an empty
+            block is where a row dragged out of a full one is going. */}
+        <ol ref={list} className={styles.exercises} data-group-id={group.id}>
+          {group.entries.length ? (
+            group.entries.map((entry, position) => {
               const name = nameOf(entry.exerciseId)
               const chip = prescriptionOf(entry, t, distanceUnit)
 
@@ -157,13 +162,13 @@ export const RoutineBlockSection = ({
                   />
                 </li>
               )
-            })}
-          </ol>
-        ) : (
-          <div className={styles.empty}>
-            <AppEmptyInline>{t('routine.form.blocks.empty')}</AppEmptyInline>
-          </div>
-        )}
+            })
+          ) : (
+            <li className={styles.empty}>
+              <AppEmptyInline>{t('routine.form.blocks.empty')}</AppEmptyInline>
+            </li>
+          )}
+        </ol>
 
         <div className={styles.actions}>
           <AppButton type="button" colour="ghost" size="sm" onClick={onAddExercise}>

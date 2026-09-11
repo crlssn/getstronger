@@ -272,8 +272,16 @@ export const plannedSeconds = (groups: readonly DraftGroup[]): number =>
     const perRound =
       group.entries.reduce((sum, entry) => sum + entrySeconds(entry, group), 0) +
       group.restBetweenExercisesSeconds * (group.entries.length - 1)
+    // A final round that ends an exercise early does not work it, and does not
+    // take the pause on the way to it either.
+    const dropped = skipsLast(group)
+      ? entrySeconds(group.entries[group.entries.length - 1], group) +
+        group.restBetweenExercisesSeconds
+      : 0
 
-    return seconds + perRound * rounds + group.restBetweenRoundsSeconds * (rounds - 1)
+    return (
+      seconds + perRound * rounds + group.restBetweenRoundsSeconds * (rounds - 1) - dropped
+    )
   }, 0)
 
 /**
