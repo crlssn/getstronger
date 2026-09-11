@@ -202,6 +202,26 @@ func TestHookReportsFormatterFailuresToClaude(t *testing.T) {
 	require.Contains(t, result.output, "expected ';' but found '}'")
 }
 
+// utilities is a PATH holding the system commands the hook and its stubs call
+// and nothing else. The caller's PATH cannot be one of them: a machine with
+// gofumpt installed — this one, and the CI runner — answers a test that left
+// it out on purpose, and "missing everywhere" then means "missing from the
+// stubs".
+func utilities(t *testing.T) string {
+	t.Helper()
+
+	dir := filepath.Join(t.TempDir(), "utilities")
+	require.NoError(t, os.MkdirAll(dir, 0o755))
+
+	for _, name := range []string{"basename", "cat", "dirname", "jq"} {
+		path, err := exec.LookPath(name)
+		require.NoError(t, err, "the hook needs %s", name)
+		require.NoError(t, os.Symlink(path, filepath.Join(dir, name)))
+	}
+
+	return dir
+}
+
 func payload(tool, path string) string {
 	return `{"tool_name":"` + tool + `","tool_input":{"file_path":"` + path + `"}}`
 }
@@ -255,12 +275,12 @@ func runFormatHook(t *testing.T, root, stdin string, opts formatOptions) formatR
 	cmd := exec.CommandContext(t.Context(), filepath.Join(root, "scripts/claude_format_hook.sh"))
 	cmd.Dir = root
 	cmd.Stdin = strings.NewReader(stdin)
-	cmd.Env = append(append(
-		isolatedEnv(bin),
-		"MISE_FORMAT_LOG="+log,
-		"MISE_TOOLS="+tools,
-		"MISE_UNRESOLVABLE="+strings.Join(opts.unresolvable, " "),
-	), opts.env...)
+	cmd.Env = append([]string{
+		"PATH=" + bin + string(os.PathListSeparator) + utilities(t),
+		"MISE_FORMAT_LOG=" + log,
+		"MISE_TOOLS=" + tools,
+		"MISE_UNRESOLVABLE=" + strings.Join(opts.unresolvable, " "),
+	}, opts.env...)
 	out, err := cmd.CombinedOutput()
 
 	exitCode := 0
