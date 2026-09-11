@@ -37,7 +37,9 @@ exit 0
 
 // formatters is every binary the hook reaches for, stubbed in both the place
 // mise resolves and the PATH the fallback reads.
-var formatters = []string{"goimports", "gofumpt"}
+func formatters() []string {
+	return []string{"goimports", "gofumpt"}
+}
 
 type formatOptions struct {
 	// unresolvable names formatters mise refuses to resolve, as the three
@@ -75,7 +77,7 @@ func TestHookFallsBackToPathWhenMiseCannotResolveTheFormatter(t *testing.T) {
 	root := newTree(t, "server/rpc/handler.go")
 
 	result := runFormatHook(t, root, payload("Edit", filepath.Join(root, "server/rpc/handler.go")), formatOptions{
-		unresolvable: formatters,
+		unresolvable: formatters(),
 	})
 
 	require.Equal(t, 0, result.exitCode, result.output)
@@ -240,7 +242,7 @@ func runFormatHook(t *testing.T, root, stdin string, opts formatOptions) formatR
 	log := filepath.Join(bin, "formatters.log")
 	require.NoError(t, os.WriteFile(filepath.Join(bin, "mise"), []byte(stubResolverMise), 0o755))
 
-	for _, tool := range formatters {
+	for _, tool := range formatters() {
 		if slices.Contains(opts.missing, tool) {
 			continue
 		}
