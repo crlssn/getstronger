@@ -40,13 +40,7 @@ interface Props {
  * again: the list is short enough for that, and it keeps the field responsive
  * between keystrokes.
  */
-export const ExercisePickerSheet = ({
-  excluded = [],
-  eyebrow,
-  header,
-  onAdd,
-  onClose,
-}: Props) => {
+export const ExercisePickerSheet = ({ excluded = [], eyebrow, header, onAdd, onClose }: Props) => {
   const { t } = useTranslation()
 
   const [options, setOptions] = useState<Exercise[]>([])

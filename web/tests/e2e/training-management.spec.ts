@@ -575,26 +575,23 @@ test.describe('routine lifecycle', () => {
       await expect(blockChip(page, 'Cool-down')).toBeVisible()
 
       // A five-minute walk to warm up, then a minute's run and two minutes'
-      // walk, five times through. The same walk is trained in two blocks, so
-      // each row's own chip is what opens the one being set.
-      const setHold = async (exercise: string, halfMinutes: number, value: string) => {
-        await exerciseChip(page, exercise).first().click()
-        await stepRest(page, 'Held for', 'Add', halfMinutes)
+      // walk, five times through. A timed exercise arrives held for half a
+      // minute, so the steps are what it takes to get from there. The same walk
+      // is trained in two blocks, so each row's own chip opens the one being
+      // set.
+      const setHold = async (chip: Locator, steps: number, value: string) => {
+        await chip.click()
+        await stepRest(page, 'Held for', 'Add', steps)
         await closeSheet(page)
-        await expect(exerciseChip(page, exercise).first()).toContainText(value)
+        await expect(chip).toContainText(value)
       }
 
       await addRoutineExercise(page, walk, 0, 'Timed')
-      await setHold(walk, 10, '5:00')
+      await setHold(exerciseChip(page, walk).first(), 9, '5:00')
       await addRoutineExercise(page, run, 1, 'Timed')
       await addRoutineExercise(page, walk, 1, 'Timed')
-
-      await exerciseChip(page, run).click()
-      await stepRest(page, 'Held for', 'Add', 2)
-      await closeSheet(page)
-      await exerciseChip(page, walk).last().click()
-      await stepRest(page, 'Held for', 'Add', 4)
-      await closeSheet(page)
+      await setHold(exerciseChip(page, run), 1, '1:00')
+      await setHold(exerciseChip(page, walk).last(), 3, '2:00')
 
       await blockChip(page, 'Repeat').click()
       await stepRounds(page, 'Add', 2)

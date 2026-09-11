@@ -279,9 +279,7 @@ export const plannedSeconds = (groups: readonly DraftGroup[]): number =>
         group.restBetweenExercisesSeconds
       : 0
 
-    return (
-      seconds + perRound * rounds + group.restBetweenRoundsSeconds * (rounds - 1) - dropped
-    )
+    return seconds + perRound * rounds + group.restBetweenRoundsSeconds * (rounds - 1) - dropped
   }, 0)
 
 /**
@@ -547,7 +545,9 @@ const clampGroup = (group: DraftGroup): DraftGroup => {
     restBetweenExercisesSeconds: clamp(group.restBetweenExercisesSeconds, 0, maximumRestSeconds),
     // A straight block is worked once through, so it has no round to close and
     // none to count.
-    restBetweenRoundsSeconds: circuit ? clamp(group.restBetweenRoundsSeconds, 0, maximumRestSeconds) : 0,
+    restBetweenRoundsSeconds: circuit
+      ? clamp(group.restBetweenRoundsSeconds, 0, maximumRestSeconds)
+      : 0,
     // A part of an interval routine is worked at least once: an open-ended
     // warm-up is a session with no shape.
     rounds: circuit

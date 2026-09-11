@@ -1,6 +1,12 @@
 import type { RoutineGroup } from '@/proto/api/v1/routine_service_pb'
 import type { Exercise } from '@/proto/api/v1/shared_pb'
-import type { DraftEntry, DraftGroup, ExerciseTracking, IntervalRole, StartingShape } from '@/utils/routineGroups'
+import type {
+  DraftEntry,
+  DraftGroup,
+  ExerciseTracking,
+  IntervalRole,
+  StartingShape,
+} from '@/utils/routineGroups'
 
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -151,7 +157,8 @@ export const RoutineForm = ({
   const minutes = Math.max(Math.round(plannedSeconds(groups) / secondsPerMinute), 1)
   const intervals = plannedIntervals(groups)
 
-  const openBlock = sheet?.kind === 'block' ? groups.find((group) => group.id === sheet.id) : undefined
+  const openBlock =
+    sheet?.kind === 'block' ? groups.find((group) => group.id === sheet.id) : undefined
   const openBlockIndex = openBlock ? groups.indexOf(openBlock) : -1
 
   const entryBlock =
