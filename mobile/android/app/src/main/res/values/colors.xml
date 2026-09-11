@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- The paper the boot splash is drawn on, which theme.css calls
+         color-canvas. The launch screen paints it so that the splash fading in
+         over it changes nothing but the bar. values-night mirrors it. -->
+    <color name="splash_canvas">#f2f1ed</color>
+</resources>

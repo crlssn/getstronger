@@ -16,7 +16,15 @@
     </style>
 
 
+    <!-- The launch screen. Android draws this one itself, from the two
+         attributes below, and has ignored the android:background the Capacitor
+         template points @drawable/splash at since Android 12. The canvas and
+         the bar are the boot splash's own, so the splash fading in over this
+         only adds the words to it — which it has to, because the system clips
+         the mark to a circle no lockup fits inside. -->
     <style name="AppTheme.NoActionBarLaunch" parent="Theme.SplashScreen">
-        <item name="android:background">@drawable/splash</item>
+        <item name="windowSplashScreenBackground">@color/splash_canvas</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/splash_mark</item>
+        <item name="postSplashScreenTheme">@style/AppTheme.NoActionBar</item>
     </style>
 </resources>
