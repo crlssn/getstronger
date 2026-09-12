@@ -6,6 +6,18 @@ Verify with `mise run test:backend`, `mise run lint:backend`, and
 `mise run vet:go`. Restart this worktree's backend after verification so the
 running app uses the new code.
 
+## Test packages
+
+Every test file declares the external package — `package foo_test`, never
+`package foo`. A test written from outside can only reach what the rest of the
+tree can reach, so it tests the API instead of the implementation, and a helper
+that has to be exported to test it was probably in the wrong place.
+
+A test that genuinely needs an unexported identifier names itself
+`*_internal_test.go`. The suffix is the exception, declared where a reader sees
+it rather than buried in the package clause, and `testpackage` skips those
+files. Generated code under `server/gen/` is exempt: bobgen writes it.
+
 ## Finding coverage gaps
 
 `mise run test:backend:coverage [packages]` runs the tests under
