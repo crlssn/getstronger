@@ -1,0 +1,26 @@
+@reference '../../assets/base.css';
+
+/* Pill-shaped and no smaller than the tap floor: the control is a target
+ * before it is a figure, and it sits alone rather than in a row of buttons. */
+.reaction {
+  @apply inline-flex min-h-(--size-control-sm) shrink-0 items-center gap-2 rounded-pill text-meta font-bold transition;
+  padding: 0 0.875rem;
+}
+
+.reaction svg {
+  @apply size-5;
+}
+
+/* Filled while this reader is one of the count, a quiet bordered surface while
+ * they are not — the same two steps the rest of the system toggles between. */
+.on {
+  @apply bg-ink text-text-inverse;
+}
+
+.off {
+  @apply border border-ink-border bg-surface text-text-muted;
+}
+
+.reaction:disabled {
+  @apply cursor-not-allowed opacity-40;
+}

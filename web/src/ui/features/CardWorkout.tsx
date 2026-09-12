@@ -1,12 +1,23 @@
 import type { Workout, WorkoutComment, WorkoutGroup } from '@/proto/api/v1/workout_service_pb'
 import type { DropdownItem } from '@/types/dropdown'
 
-import { CheckIcon, ChevronRightIcon, TrophyIcon } from '@heroicons/react/24/outline'
+import {
+  CheckIcon,
+  ChevronRightIcon,
+  HandThumbUpIcon,
+  TrophyIcon,
+} from '@heroicons/react/24/outline'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useNavigate } from 'react-router-dom'
 
-import { consumeRequestError, deleteWorkout, postWorkoutComment } from '@/http/requests'
+import {
+  consumeRequestError,
+  deleteWorkout,
+  likeWorkout,
+  postWorkoutComment,
+  unlikeWorkout,
+} from '@/http/requests'
 import { RoutineGroupMode } from '@/proto/api/v1/shared_pb'
 import { useToastStore } from '@/stores/toasts'
 import { useAuthStore } from '@/stores/auth'
@@ -15,6 +26,7 @@ import { AppChip } from '@/ui/components/AppChip'
 import { AppStat } from '@/ui/components/AppStat'
 import { AppEmptyInline } from '@/ui/components/AppEmptyInline'
 import { AppButton } from '@/ui/components/AppButton'
+import { AppReactionButton } from '@/ui/components/AppReactionButton'
 import { AppTextarea } from '@/ui/components/AppTextarea'
 import { AppUnreadDot } from '@/ui/components/AppUnreadDot'
 import { PageNavAction } from '@/ui/components/PageNavAction'
@@ -63,6 +75,9 @@ export const CardWorkout = ({ workout, compact, unseen = false }: Props) => {
   const [commentInput, setCommentInput] = useState('')
   const [commentError, setCommentError] = useState<string>()
   const [actionError, setActionError] = useState<string>()
+  const [repped, setRepped] = useState(workout.likedByViewer)
+  const [repCount, setRepCount] = useState(workout.likeCount)
+  const [repError, setRepError] = useState<string>()
   // One exercise open at a time: the list is there so the session reads as its
   // exercises, and two tables at once is what it was built to stop. Keyed
   // rather than indexed, because a grouped session may train one exercise in
@@ -130,6 +145,23 @@ export const CardWorkout = ({ workout, compact, unseen = false }: Props) => {
     { href: `/workouts/${workout.id}/edit`, title: t('workout.card.editWorkout') },
     { destructive: true, func: onDeleteWorkout, title: t('workout.card.deleteWorkout') },
   ]
+
+  // Moved here first, then on the server: a rep is the lightest thing on the
+  // screen and a spinner on it would cost more than the rep is worth. A
+  // request that does not land puts the count back where it was.
+  const toggleRep = async () => {
+    const repping = !repped
+    setRepped(repping)
+    setRepCount((count) => Math.max(0, count + (repping ? 1 : -1)))
+    setRepError(undefined)
+
+    const response = repping ? await likeWorkout(workout.id) : await unlikeWorkout(workout.id)
+    if (response) return
+
+    setRepped(!repping)
+    setRepCount((count) => Math.max(0, count + (repping ? -1 : 1)))
+    setRepError(consumeRequestError() ?? t('common.somethingWentWrong'))
+  }
 
   const postComment = async (event: React.FormEvent) => {
     event.preventDefault()
@@ -315,6 +347,20 @@ export const CardWorkout = ({ workout, compact, unseen = false }: Props) => {
         {metricGrid}
         {note}
       </section>
+
+      {/* Under the session, above what anyone wrote about it: repping is the
+          lighter of the two ways to answer a workout, so it is the one met
+          first. */}
+      <div className={styles.repRow}>
+        <AppReactionButton
+          icon={HandThumbUpIcon}
+          label={t(repped ? 'workout.card.unrep' : 'workout.card.rep', { count: repCount })}
+          count={repCount}
+          pressed={repped}
+          onClick={() => void toggleRep()}
+        />
+        {repError && <AppInlineError>{repError}</AppInlineError>}
+      </div>
 
       <section className={styles.detailSection}>
         <header className={styles.sectionHeading}>
