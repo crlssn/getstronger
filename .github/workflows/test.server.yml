@@ -30,7 +30,7 @@ concurrency:
 jobs:
   server:
     if: github.event.pull_request.draft == false
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.RUNNER_LINUX || 'ubuntu-latest' }}
     timeout-minutes: 20
 
     steps:
