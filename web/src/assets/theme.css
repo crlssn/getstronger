@@ -20,6 +20,11 @@
   --color-ink-tint: #e4e2da;
   --color-ink-surface: #f0eee8;
   --color-ink-border: #dedcd4;
+  /* The groove a bar runs in when it is cut into an ink fill — the interval
+   * countdown. An alpha off the far end of the ramp rather than a grey, so it
+   * keeps the fill's own warmth and stays a groove when ink inverts;
+   * --color-surface-track is the same job on a card and cannot serve here. */
+  --color-ink-track: rgb(255 255 255 / 0.18);
 
   /* Surface. The canvas is ink-warm: the one neutral family everywhere. */
   --color-canvas: #f2f1ed;
@@ -185,6 +190,9 @@
   --color-ink-tint: #34322c;
   --color-ink-surface: #2a2823;
   --color-ink-border: #3b382f;
+  /* Ink is the light thing now, so the groove is cut the other way: 26% of the
+   * near-black reads 1.80:1 on it, the light palette's own groove. */
+  --color-ink-track: rgb(12 11 10 / 0.26);
 
   /* The canvas darkens past the cards, so elevation still reads as lightness
    * even where a shadow barely shows. */
