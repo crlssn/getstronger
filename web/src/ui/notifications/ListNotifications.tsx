@@ -13,6 +13,7 @@ import { AppSkeleton } from '@/ui/components/AppSkeleton'
 import { PageNavAction } from '@/ui/components/PageNavAction'
 import { NotificationUserFollow } from '@/ui/features/NotificationUserFollow'
 import { NotificationWorkoutComment } from '@/ui/features/NotificationWorkoutComment'
+import { NotificationWorkoutLike } from '@/ui/features/NotificationWorkoutLike'
 import { appendPage } from '@/utils/appendPage'
 import { usePagination } from '@/utils/usePagination'
 
@@ -126,6 +127,15 @@ export const ListNotifications = () => {
                   actor={notification.type.value.actor}
                   read={notification.read}
                   timestamp={notification.notifiedAtUnix}
+                  onOpen={() => markAsRead(notification)}
+                />
+              )}
+              {notification.type.case === 'workoutLike' && (
+                <NotificationWorkoutLike
+                  actor={notification.type.value.actor}
+                  read={notification.read}
+                  timestamp={notification.notifiedAtUnix}
+                  workout={notification.type.value.workout}
                   onOpen={() => markAsRead(notification)}
                 />
               )}

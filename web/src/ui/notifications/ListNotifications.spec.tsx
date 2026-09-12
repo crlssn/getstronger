@@ -59,6 +59,19 @@ const comment = (id: string, ownerId: string): NotificationInit => ({
   },
 })
 
+const rep = (id: string): NotificationInit => ({
+  id,
+  read: false,
+  notifiedAtUnix: 1_755_000_000n,
+  type: {
+    case: 'workoutLike' as const,
+    value: {
+      actor: { id: 'u2', username: 'alex' },
+      workout: { id: 'w1', name: 'Leg day', user: { id: 'me', username: 'sam' } },
+    },
+  },
+})
+
 const render = () => renderWithProviders(<ListNotifications />, { route: '/notifications' })
 
 // The mark-all button portals into the nav bar's action slot, which only a
@@ -128,6 +141,17 @@ describe('ListNotifications', () => {
 
     const row = await screen.findByRole('link')
     expect(row).toHaveTextContent(expected)
+    expect(row).toHaveAttribute('href', '/workouts/w1')
+  })
+
+  // Only the owner is ever repped, so the row needs one sentence where the
+  // comment row needs three.
+  test('names who repped your workout, and links to it', async () => {
+    mocked.listNotifications.mockResolvedValue(page([rep('n1')]))
+    render()
+
+    const row = await screen.findByRole('link')
+    expect(row).toHaveTextContent('@alex repped your Leg day workout')
     expect(row).toHaveAttribute('href', '/workouts/w1')
   })
 

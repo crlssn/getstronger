@@ -1,5 +1,6 @@
 import {
   allowRuntimeErrors,
+  boxOf,
   expect,
   logIn,
   logInAs,
@@ -228,13 +229,13 @@ test.describe('profiles and notifications', () => {
     // while it is unread, which is a better handle than the class that styles
     // the dot beside it.
     //
-    // Four rows against three unread: the seeded reps have no row to render
-    // until #1464 gives them one, so they count towards the badge and show
-    // nothing here.
+    // Seven rows: four comments and three reps, of which one comment pair and
+    // one rep are unread.
     const rows = page.getByRole('listitem').filter({ has: page.getByRole('link') })
-    await expect(rows).toHaveCount(4)
-    await expect(rows.filter({ hasText: 'Unread notification' })).toHaveCount(2)
-    await expect(rows.filter({ hasNotText: 'Unread notification' })).toHaveCount(2)
+    await expect(rows).toHaveCount(7)
+    await expect(rows.filter({ hasText: 'Unread notification' })).toHaveCount(3)
+    await expect(rows.filter({ hasNotText: 'Unread notification' })).toHaveCount(4)
+    await expect(rows.filter({ hasText: 'repped your' })).toHaveCount(3)
 
     await page.getByRole('button', { name: 'Mark all read' }).click()
     await expect(rows.filter({ hasText: 'Unread notification' })).toHaveCount(0)
@@ -245,11 +246,75 @@ test.describe('profiles and notifications', () => {
     const notificationText = await janeNotification.innerText()
     await janeNotification.click()
 
-    if (notificationText.includes('commented')) {
+    // What happened decides where the row leads: a comment and a rep are both
+    // about a workout, a follow is about the person.
+    if (notificationText.includes('commented') || notificationText.includes('repped')) {
       await expect(page).toHaveURL(/\/workouts\/[0-9a-f-]+$/)
     } else {
       await expect(page).toHaveURL(/\/users\/[0-9a-f-]+$/)
     }
+  })
+
+  // The whole of the feature in one pass: the tap, the count the server kept,
+  // and the row it puts in front of the athlete who trained.
+  test('reps another athlete’s workout and tells them so @mutation', async ({ page }) => {
+    // Sam has no history and follows nobody, so the session is reached through
+    // its owner's profile rather than through a feed.
+    await logInAs(page, newUserEmail, seedPassword)
+    await page.getByRole('button', { name: 'Search', exact: true }).click()
+    await page
+      .getByRole('searchbox', { name: 'Search people, routines, plans, exercises', exact: true })
+      .fill('Alex Morgan')
+    await page
+      .getByRole('region', { name: 'Search' })
+      .getByRole('link', { name: /Alex Morgan/ })
+      .click()
+
+    await page
+      .getByRole('navigation', { name: 'Profile sections' })
+      .getByRole('link', { name: 'Workouts', exact: true })
+      .click()
+    await page
+      .getByRole('link', { name: /View .* workout details/ })
+      .first()
+      .click()
+    const workout = page.url()
+
+    const rep = page.getByRole('button', { name: /^Rep this workout/ })
+    await expect(rep).toHaveAttribute('aria-pressed', 'false')
+    const before = Number(await rep.innerText())
+
+    // An icon and a two-character count shrink to well under a thumb unless
+    // the control carries the floor itself.
+    const box = await boxOf(rep)
+    expect(box.height).toBeGreaterThanOrEqual(44)
+    expect(box.width).toBeGreaterThanOrEqual(44)
+
+    await rep.click()
+    const repped = page.getByRole('button', { name: /^Remove your rep/ })
+    await expect(repped).toHaveAttribute('aria-pressed', 'true')
+    await expect(repped).toHaveText(String(before + 1))
+
+    // Reloading reads the count back off the server rather than off the tap.
+    await page.goto(workout)
+    await expect(page.getByRole('button', { name: /^Remove your rep/ })).toHaveText(
+      String(before + 1),
+    )
+
+    // The session's owner is told, and the row leads back to the workout. The
+    // notification is written off an event rather than inside the request, so
+    // the page is asked again rather than once.
+    await logIn(page)
+    const notification = page.getByRole('listitem').filter({ hasText: '@sam repped your' }).first()
+    await expect
+      .poll(async () => {
+        await page.goto('/notifications')
+        return notification.count()
+      })
+      .toBe(1)
+
+    await notification.getByRole('link').click()
+    await expect(page).toHaveURL(workout)
   })
 
   test('toggles following and exposes every public profile section @mutation', async ({ page }) => {
