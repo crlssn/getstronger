@@ -57,7 +57,8 @@ func TestHandlerOptionsCapWhatAHandlerReads(t *testing.T) {
 				served    atomic.Bool
 				wireBytes atomic.Int64
 			)
-			handler := connect.NewUnaryHandler(createWorkoutProcedure,
+			handler := connect.NewUnaryHandler(
+				createWorkoutProcedure,
 				func(context.Context, *connect.Request[apiv1.CreateWorkoutRequest]) (*connect.Response[apiv1.CreateWorkoutResponse], error) {
 					served.Store(true)
 					return connect.NewResponse(&apiv1.CreateWorkoutResponse{}), nil
