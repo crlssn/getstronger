@@ -21,7 +21,9 @@ on:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  # True on main as well: when several pull requests merge at once, only the
+  # last commit's run answers the question anyone is asking.
+  cancel-in-progress: true
 
 permissions:
   contents: read
@@ -35,7 +37,7 @@ jobs:
   # exact version, or the image tag below will not resolve.
   version:
     if: github.event_name == 'push' || github.event.pull_request.draft == false
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.RUNNER_LINUX || 'ubuntu-latest' }}
     timeout-minutes: 5
 
     outputs:
@@ -52,21 +54,27 @@ jobs:
         id: playwright
         run: echo "version=$(node -p "require('./web/package.json').devDependencies['@playwright/test']")" >> "$GITHUB_OUTPUT"
 
-  # One runner per shard, each with a database and a stack of its own, so the
-  # suite's wall-clock falls with the number of runners rather than with the
-  # number of tests. Playwright decides what goes where; because the config
-  # keeps `fullyParallel` off, it splits by spec file and project, which is the
-  # unit that resets the seeded data. See web/CLAUDE.md.
+  # One runner per shard, each with a database and a stack of its own.
+  # Playwright decides what goes where; because the config keeps
+  # `fullyParallel` off, it splits by spec file and project, which is the unit
+  # that resets the seeded data. See web/CLAUDE.md.
   browser:
     needs: version
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
+    runs-on: ${{ vars.RUNNER_LINUX || 'ubuntu-latest' }}
+    # Half the shards means twice the specs each, on a machine that may be
+    # slower than a hosted runner. Generous, because a timeout here reads as a
+    # test failure and is not one.
+    timeout-minutes: 45
     strategy:
       # A shard that fails says nothing about the others, and cancelling them
       # would hide the rest of the failures from the same push.
       fail-fast: false
+      # Two, because a shard only shortens the run when it gets a machine of
+      # its own, and the self-hosted pool has fewer machines than that. A third
+      # would queue behind the first two having paid the image pull and
+      # toolchain setup again. Raise it alongside the pool.
       matrix:
-        shard: [1, 2, 3, 4]
+        shard: [1, 2]
     container:
       image: mcr.microsoft.com/playwright:v${{ needs.version.outputs.playwright }}-noble
       options: --user 1001
@@ -176,4 +184,5 @@ jobs:
           if-no-files-found: ignore
           name: playwright-report-${{ matrix.shard }}
           path: web/playwright-report/
-          retention-days: 14
+          # A report is read while its pull request is open, or not at all.
+          retention-days: 3
