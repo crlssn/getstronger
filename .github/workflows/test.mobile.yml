@@ -28,7 +28,7 @@ concurrency:
 jobs:
   android:
     if: github.event.pull_request.draft == false
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.RUNNER_LINUX || 'ubuntu-latest' }}
     timeout-minutes: 15
 
     steps:
@@ -90,7 +90,7 @@ jobs:
   # Capacitor and of AVFoundation, so testing it needs nothing but Swift.
   ios:
     if: github.event.pull_request.draft == false
-    runs-on: macos-26
+    runs-on: ${{ vars.RUNNER_MACOS || 'macos-26' }}
     timeout-minutes: 10
 
     steps:
