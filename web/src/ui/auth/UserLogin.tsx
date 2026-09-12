@@ -12,6 +12,8 @@ import { AppInlineError } from '@/ui/components/AppInlineError'
 import { AppInput } from '@/ui/components/AppInput'
 import { AppPasswordInput } from '@/ui/components/AppPasswordInput'
 
+import styles from './auth.module.css'
+
 export const UserLogin = () => {
   const { t } = useTranslation()
   const navigate = useNavigate()
@@ -46,14 +48,14 @@ export const UserLogin = () => {
   }
 
   return (
-    <section className="auth-view">
-      <header className="auth-intro">
-        <p className="auth-eyebrow">{t('auth.welcomeBack')}</p>
+    <section className={styles.view}>
+      <header className={styles.intro}>
+        <p className={styles.eyebrow}>{t('auth.welcomeBack')}</p>
         <h1>{t('auth.loginTitle', { brand: brandName })}</h1>
         <p>{t('auth.loginSubtitle')}</p>
       </header>
 
-      <form className="auth-form" method="POST" onSubmit={(event) => void onSubmit(event)}>
+      <form className={styles.form} method="POST" onSubmit={(event) => void onSubmit(event)}>
         <AppInput
           id="email"
           name="email"
@@ -94,9 +96,9 @@ export const UserLogin = () => {
         </AppButton>
       </form>
 
-      <p className="auth-footer">
+      <p className={styles.footer}>
         {t('auth.newMember', { brand: brandName })}{' '}
-        <Link to="/signup" className="auth-link">
+        <Link to="/signup" className={styles.link}>
           {t('auth.createAccount')}
         </Link>
       </p>
