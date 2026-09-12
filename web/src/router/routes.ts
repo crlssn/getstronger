@@ -216,6 +216,15 @@ export const routes: AppRoute[] = [
   // and the profile links to the same page from inside one.
   { name: 'privacy', path: '/privacy', access: 'public', titleKey: 'pages.privacy' },
 
+  // Public for a stricter reason than the policy: the store questionnaires ask
+  // for a deletion URL that opens with the app uninstalled and nobody signed in.
+  {
+    name: 'delete-account',
+    path: '/delete-account',
+    access: 'public',
+    titleKey: 'pages.deleteAccount',
+  },
+
   // TODO: Create a landing page.
   { name: 'landing', path: '/', access: 'landing' },
   { name: 'not-found', path: '*', access: 'public', titleKey: 'pages.notFound' },

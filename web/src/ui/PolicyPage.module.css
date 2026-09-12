@@ -1,14 +1,18 @@
 @reference '../assets/base.css';
 
-.policy {
+/* The two public policy pages — the privacy policy and the account deletion
+   page a store questionnaire links to — are one shape: a stack of titled
+   cards, read once by a stranger. */
+
+.page {
   @apply mx-auto max-w-3xl space-y-5 pb-8;
 }
 
-.policy header h1 {
+.page header h1 {
   @apply px-1 text-display font-bold text-text;
 }
 
-.policy header p {
+.page header p {
   @apply mt-1 px-1 text-sm text-text-subtle;
 }
 

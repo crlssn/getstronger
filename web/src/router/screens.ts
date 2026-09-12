@@ -114,6 +114,9 @@ export const screens: Partial<Record<string, ScreenLoader>> = {
   }),
 
   privacy: async () => ({ Component: (await import('@/ui/PrivacyPolicy')).PrivacyPolicy }),
+  'delete-account': async () => ({
+    Component: (await import('@/ui/AccountDeletion')).AccountDeletion,
+  }),
 
   'not-found': async () => ({ Component: (await import('@/ui/NotFound')).NotFound }),
 }
