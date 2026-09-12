@@ -198,7 +198,7 @@ The `release-mobile` workflow (manual trigger) builds the web bundle against the
 
 #### Privacy declarations
 
-Apple's nutrition labels and Google's Data safety form are filled in from the same facts, and the three places that state them must agree: the policy page (`web/src/ui/PrivacyPolicy.tsx`), the iOS privacy manifest (`mobile/ios/App/App/PrivacyInfo.xcprivacy`), and the store consoles. As shipped the app collects email address, name, username, user id, fitness data, product interaction and crash data; all of it is linked to the account, none of it is used for tracking or advertising, and PostHog is the only third party that receives usage events. `ITSAppUsesNonExemptEncryption` is declared `false` in `Info.plist`, so TestFlight uploads skip the manual compliance question.
+Apple's nutrition labels and Google's Data safety form are filled in from the same facts, and the three places that state them must agree: the policy page (`web/src/ui/PrivacyPolicy.tsx`), the iOS privacy manifest (`mobile/ios/App/App/PrivacyInfo.xcprivacy`), and the store consoles. As shipped the app collects email address, name, username, user id, fitness data, product interaction and crash data; all of it is linked to the account, none of it is used for tracking or advertising, and PostHog is the only destination for usage events — which reach it through the managed reverse proxy (step 7), fronted by Cloudflare, a PostHog [subprocessor](https://posthog.com/subprocessors). Both belong in the declarations. `ITSAppUsesNonExemptEncryption` is declared `false` in `Info.plist`, so TestFlight uploads skip the manual compliance question.
 
 Account deletion is a store requirement rather than a nicety, and it is two requirements. Both stores refuse an app that lets people create an account without letting them delete it from inside the app: that control lives under Me → Account → Delete account, and erases the account and everything it owns. Google's Data safety form and App Store Connect then ask separately for a deletion URL that opens with nobody signed in and the app uninstalled — `https://www.getstronger.studio/delete-account` (`web/src/ui/AccountDeletion.tsx`), which says how to ask, what goes, and what is kept. A privacy policy URL does not answer that question and gets bounced.
 
@@ -392,6 +392,19 @@ Secrets:   SCW_ACCESS_KEY_ID, SCW_SECRET_KEY
 Set `DB_MIGRATION_USER` and `DB_MIGRATION_PASSWORD` to the migration IAM application's ID and secret key; the workflow uses the migration identity only in the database and seed jobs. The runtime identity is configured directly on the Serverless Container, not in GitHub. `SCW_CONTAINER_ID` is the Serverless Container's UUID, shown on its **Overview** tab in the console. If beta runs in its own Scaleway Project, put that Project's `SCW_ACCESS_KEY_ID` and `SCW_SECRET_KEY` on the `beta` environment; environment secrets take precedence over repository ones.
 
 The Object Storage API key's access key goes in `SCW_ACCESS_KEY_ID` and its secret key goes in `SCW_SECRET_KEY`. See [Using IAM API keys with Object Storage](https://www.scaleway.com/en/docs/iam/api-cli/using-api-key-object-storage/) for the preferred-Project behavior.
+
+#### Analytics and the reverse proxy
+
+`VITE_POSTHOG_HOST` is a PostHog [managed reverse proxy](https://posthog.com/docs/advanced/proxy/managed-reverse-proxy) on our own domain, `https://e.getstronger.studio`, rather than `https://eu.i.posthog.com`. Ad blockers keep lists of PostHog's domains and drop the requests; a first-party subdomain they have not catalogued recovers most of what they take. PostHog issues and renews the certificate, and the proxy is free on Cloud.
+
+Set it up once, from [organization proxy settings](https://eu.posthog.com/settings/organization-proxy):
+
+1. **New managed proxy**, domain `e.getstronger.studio`. Avoid a name like `analytics` or `posthog`: blockers match on those too.
+2. Add the CNAME it hands back at the DNS provider, pointing `e` at the `…proxy-eu.posthog.com` target. Leave the provider's own proxying off — Cloudflare's orange cloud blocks certificate issuance.
+3. Wait for the status to reach **live**, usually a few minutes. The same page diagnoses a proxy that stalls short of it, CAA records and port 80 included.
+4. Set `VITE_POSTHOG_HOST` on the `production` environment to `https://e.getstronger.studio`, then redeploy the web app and confirm in the Network tab that events leave for that host.
+
+`ui_host` is pinned to `https://eu.posthog.com` in `web/src/posthog.ts`, because the proxy serves ingestion and nothing else: without it every link the SDK builds points at a 404.
 
 #### Cutting a release
 
