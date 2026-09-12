@@ -121,8 +121,11 @@
   @apply mt-2 text-sm leading-6 text-text-muted;
 }
 
+/* Contained, because a list scrolled past its end otherwise carries the
+   gesture on into the page the sheet is covering. */
 .sheetContent {
   @apply mt-4 min-h-0 flex-1 overflow-y-auto;
+  overscroll-behavior: contain;
 }
 
 .sheetActions {
