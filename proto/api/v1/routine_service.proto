@@ -145,6 +145,22 @@ message RoutineGroup {
   // Whether the repeating block drops its last exercise on its final round, so
   // a walk-run does not end the session with a walk. Ignored outside it.
   bool skip_last_on_final_round = 10;
+  // What the athlete named this block. Empty is a block that reads by its
+  // position instead — "Block A", "Block B" — which is every block saved
+  // before one could be named.
+  string title = 11 [(buf.validate.field).string.max_len = 60];
+}
+
+// How the work of one occurrence is counted: in sets recovered between, against
+// a clock that ends it, or by a distance covered however long it takes.
+//
+// Unspecified is every occurrence saved before a routine said, which the server
+// reads as sets unless the occurrence carries a target duration.
+enum RoutineExerciseTracking {
+  ROUTINE_EXERCISE_TRACKING_UNSPECIFIED = 0;
+  ROUTINE_EXERCISE_TRACKING_SETS = 1;
+  ROUTINE_EXERCISE_TRACKING_TIMED = 2;
+  ROUTINE_EXERCISE_TRACKING_DISTANCE = 3;
 }
 
 // One exercise where a routine trains it. The same exercise in another group,
@@ -157,6 +173,16 @@ message RoutineExercise {
   int32 rest_seconds = 2 [(buf.validate.field).int32 = {gte: 0, lte: 3600}];
   // Active time prescribed for each circuit round; zero means manual logging.
   int32 target_duration_seconds = 3 [(buf.validate.field).int32 = {gte: 0, lte: 86400}];
+  // How this occurrence's work is counted. The three below are read one apiece:
+  // sets reads sets and rest_seconds, timed reads target_duration_seconds,
+  // distance reads target_distance_meters.
+  RoutineExerciseTracking tracking = 4 [(buf.validate.field).enum.defined_only = true];
+  // How many sets are prescribed; 0 is a routine that does not say, which is
+  // every routine saved before one could.
+  int32 sets = 5 [(buf.validate.field).int32 = {gte: 0, lte: 20}];
+  // Metres prescribed for this occurrence, which ends when they are covered
+  // rather than when a clock runs out.
+  int32 target_distance_meters = 6 [(buf.validate.field).int32 = {gte: 0, lte: 50000}];
 }
 
 message CreatePlanRequest {

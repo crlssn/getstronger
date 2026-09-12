@@ -241,9 +241,9 @@ describe('ViewRoutine', () => {
     test('shows each group and how it runs', async () => {
       render()
 
-      expect(await screen.findByText('Group A')).toBeInTheDocument()
+      expect(await screen.findByText('Block A')).toBeInTheDocument()
       expect(screen.getByText('Straight sets')).toBeInTheDocument()
-      expect(screen.getByText('Group B')).toBeInTheDocument()
+      expect(screen.getByText('Block B')).toBeInTheDocument()
       expect(screen.getByText('Circuit')).toBeInTheDocument()
       expect(
         screen.getByText('Rest 15s between exercises · Rest 90s between rounds'),

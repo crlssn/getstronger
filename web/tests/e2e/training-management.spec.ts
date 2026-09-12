@@ -57,14 +57,30 @@ const stepRounds = async (page: Parameters<typeof logIn>[0], by: 'Add' | 'Subtra
   }
 }
 
-// The rest a routine gives an exercise reads as a chip on its row, and the
-// chip is what unfolds the stepper.
-const restChip = (page: Parameters<typeof logIn>[0], name: string, value: string) =>
-  page.getByRole('button', { name: `Rest between sets of ${name}: ${value}`, exact: true })
+// Everything a block or an exercise is set up with lives behind the chip on its
+// row, which names what it opens so one row's can be told from another's.
+const blockChip = (page: Parameters<typeof logIn>[0], title: string) =>
+  page.getByRole('button', { name: `Block settings: ${title}`, exact: true })
 
-// A circuit's row reads its target the same way, and Off is a value too.
-const targetChip = (page: Parameters<typeof logIn>[0], name: string, value: string) =>
-  page.getByRole('button', { name: `Target duration for ${name}: ${value}`, exact: true })
+const exerciseChip = (page: Parameters<typeof logIn>[0], name: string) =>
+  page.getByRole('button', { name: `Exercise settings: ${name}`, exact: true })
+
+// A sheet edits as it goes, so "Done" only closes it.
+const closeSheet = async (page: Parameters<typeof logIn>[0]) => {
+  await page.getByRole('button', { name: 'Done', exact: true }).click()
+  await expect(page.getByRole('dialog')).toBeHidden()
+}
+
+// A new routine opens on the starting shapes, each of them a list of blocks the
+// editor forgets the origin of.
+const startRoutine = async (
+  page: Parameters<typeof logIn>[0],
+  shape: 'Blank' | 'Circuit' | 'Intervals',
+) => {
+  const sheet = page.getByRole('dialog')
+  await sheet.getByRole('button', { name: new RegExp(`^${shape} —`) }).click()
+  await expect(sheet).toBeHidden()
+}
 
 // Whether a search found the row a cleanup is about to delete. isVisible()
 // does not retry, so the search settles on a hit or on its empty state before
@@ -359,10 +375,14 @@ const addRoutineExercise = async (
   page: Parameters<typeof logIn>[0],
   name?: string,
   groupIndex = 0,
+  tracking?: 'Sets' | 'Timed' | 'Distance',
 ) => {
   await page.getByRole('button', { name: 'Add exercise' }).nth(groupIndex).click()
   const sheet = page.getByRole('dialog')
 
+  // How the routine counts the work is chosen before the exercise is, so the
+  // row arrives prescribed rather than needing a second visit.
+  if (tracking) await sheet.getByRole('button', { name: tracking, exact: true }).click()
   if (name) await sheet.getByLabel('Search exercises').fill(name)
   // A blind pick feeds callers that log weight and reps, so the seeded cardio
   // exercise — whose set inputs are distance and time — stays out of it.
@@ -391,6 +411,7 @@ test.describe('routine lifecycle', () => {
     const updatedName = `${routineName} Updated`
 
     await page.goto('/routines/create')
+    await startRoutine(page, 'Blank')
     const saveButton = page.getByRole('button', { name: 'Create routine' })
     await expect(saveButton).toBeDisabled()
     await page.getByLabel('Routine name').fill(routineName)
@@ -474,6 +495,7 @@ test.describe('routine lifecycle', () => {
 
     try {
       await page.goto('/routines/create')
+      await startRoutine(page, 'Blank')
       await page.getByLabel('Routine name').fill(routineName)
       const first = await addRoutineExercise(page)
       const second = await addRoutineExercise(page)
@@ -511,6 +533,7 @@ test.describe('routine lifecycle', () => {
   // form's own "Cancel" is gone from the slot right beside it.
   test('keeps the save pinned and leaves by the back row @mutation', async ({ page }) => {
     await page.goto('/routines/create')
+    await startRoutine(page, 'Blank')
     await page.getByLabel('Routine name').fill(uniqueName('E2E Pinned'))
     for (let added = 0; added < 4; added += 1) await addRoutineExercise(page)
 
@@ -542,60 +565,67 @@ test.describe('routine lifecycle', () => {
       }
 
       await page.goto('/routines/create')
+      await startRoutine(page, 'Intervals')
       await page.getByLabel('Routine name').fill(routineName)
-      await page.getByRole('button', { name: 'Intervals', exact: true }).click()
 
-      // Three parts, one button each, and no way to add a fourth: the shape is
-      // fixed, which is the whole point of this mode.
+      // The shape laid out three blocks, named for what they are.
       await expect(page.getByRole('button', { name: 'Add exercise' })).toHaveCount(3)
-      await expect(page.getByRole('button', { name: 'New group' })).toHaveCount(0)
+      await expect(blockChip(page, 'Warm-up')).toBeVisible()
+      await expect(blockChip(page, 'Repeat')).toBeVisible()
+      await expect(blockChip(page, 'Cool-down')).toBeVisible()
 
       // A five-minute walk to warm up, then a minute's run and two minutes'
-      // walk, five times through. The same walk is trained in two parts, so a
-      // row's stepper is folded away again before the next one is opened —
-      // otherwise both rows answer to the same nudge.
-      const setTarget = async (exercise: string, halfMinutes: number, value: string) => {
-        await targetChip(page, exercise, 'Off').click()
-        await stepRest(page, `Target duration for ${exercise}`, 'Add', halfMinutes)
-        await targetChip(page, exercise, value).click()
+      // walk, five times through. A timed exercise arrives held for half a
+      // minute, so the steps are what it takes to get from there. The same walk
+      // is trained in two blocks, so each row's own chip opens the one being
+      // set.
+      const setHold = async (chip: Locator, steps: number, value: string) => {
+        await chip.click()
+        await stepRest(page, 'Held for', 'Add', steps)
+        await closeSheet(page)
+        await expect(chip).toContainText(value)
       }
 
-      await addRoutineExercise(page, walk, 0)
-      await setTarget(walk, 10, '5:00')
-      await addRoutineExercise(page, run, 1)
-      await setTarget(run, 2, '1:00')
-      await addRoutineExercise(page, walk, 1)
-      await setTarget(walk, 4, '2:00')
+      await addRoutineExercise(page, walk, 0, 'Timed')
+      await setHold(exerciseChip(page, walk).first(), 9, '5:00')
+      await addRoutineExercise(page, run, 1, 'Timed')
+      await addRoutineExercise(page, walk, 1, 'Timed')
+      await setHold(exerciseChip(page, run), 1, '1:00')
+      await setHold(exerciseChip(page, walk).last(), 3, '2:00')
 
+      await blockChip(page, 'Repeat').click()
       await stepRounds(page, 'Add', 2)
-      await expect(page.getByText('Announced as Round n of 5')).toBeVisible()
-      await expect(page.getByText(`${run} and ${walk}, 5 times through`)).toBeVisible()
+      await expect(page.getByText('Worked through 5 times')).toBeVisible()
+      await closeSheet(page)
+      await expect(page.getByText('One set of each, 5 times through')).toBeVisible()
 
       // The last walk is dropped, so the session ends on the run: ten intervals
       // rather than eleven, and eighteen minutes rather than twenty.
       await expect(page.getByText('10 intervals')).toBeVisible()
-      await expect(page.getByText('18 min planned')).toBeVisible()
+      await expect(page.getByText('≈ 18 min planned')).toBeVisible()
 
       await page.getByRole('button', { name: 'Create routine' }).click()
       await expect(page).toHaveURL(/\/routines$/)
 
-      // Reopened for editing, the builder shows the three parts it was built
-      // with rather than the groups they are stored as.
+      // Reopened for editing, the builder shows the blocks it was built with —
+      // names, rounds and skip included — and never asks what to start from.
       await page.getByLabel('Search routines').fill(routineName)
       await page.getByRole('heading', { name: routineName }).click()
       await page.getByRole('link', { name: 'Edit exercises' }).click()
 
-      await expect(page.getByRole('button', { name: 'Intervals', exact: true })).toHaveAttribute(
-        'aria-pressed',
-        'true',
-      )
-      await expect(page.getByText('Warm-up', { exact: true })).toBeVisible()
-      await expect(page.getByText('Cool-down', { exact: true })).toBeVisible()
+      await expect(page.getByText('Start from')).toHaveCount(0)
+      await expect(blockChip(page, 'Warm-up')).toBeVisible()
+      await expect(blockChip(page, 'Repeat')).toBeVisible()
+      // The cool-down was never filled in, so it is not part of the routine.
+      await expect(blockChip(page, 'Cool-down')).toHaveCount(0)
+      await expect(page.getByText('10 intervals')).toBeVisible()
+
+      await blockChip(page, 'Repeat').click()
       await expect(page.getByRole('spinbutton', { name: 'Rounds' })).toHaveText('5')
       await expect(
         page.getByRole('switch', { name: 'Skip last exercise on final round' }),
       ).toBeChecked()
-      await expect(page.getByText('10 intervals')).toBeVisible()
+      await closeSheet(page)
     } finally {
       await deleteRoutine(page, routineName)
       await deleteExercise(page, walk)
@@ -624,25 +654,28 @@ test.describe('routine lifecycle', () => {
       }
 
       await page.goto('/routines/create')
+      await startRoutine(page, 'Circuit')
       await page.getByLabel('Routine name').fill(routineName)
+      // A circuit rotates through stations held against the clock, so that is
+      // what an exercise added to one arrives as.
       await addRoutineExercise(page, first)
       await addRoutineExercise(page, second)
       await expect(routineExercises(page)).toHaveCount(2)
+      await expect(exerciseChip(page, first)).toContainText('Timed')
 
-      // Grouping is the advanced half of the form; a circuit lives inside it.
-      await page.getByRole('button', { name: 'Groups', exact: true }).click()
-      await page.getByRole('button', { name: 'Circuit', exact: true }).click()
-      // A circuit's rows carry a target instead of a rest between sets: how
-      // long a round holds the exercise when the session is guided on a phone.
-      // Off until asked, and nudged by the same stepper as a rest.
-      await targetChip(page, first, 'Off').click()
-      await stepRest(page, `Target duration for ${first}`, 'Add', 4)
-      await expect(targetChip(page, first, '2:00')).toBeVisible()
-      await stepRest(page, 'Rest after each exercise in group A', 'Subtract', 2)
-      await stepRest(page, 'Rest after each round in group A', 'Add')
+      await exerciseChip(page, first).click()
+      await stepRest(page, 'Held for', 'Add', 3)
+      await closeSheet(page)
+      await expect(exerciseChip(page, first)).toContainText('2:00')
+
+      await blockChip(page, 'Block A').click()
+      await stepRest(page, 'Rest after each exercise', 'Add')
+      await stepRest(page, 'Rest after each round', 'Add')
       // A new circuit arrives prescribed for three rounds; two is enough here.
-      await expect(page.getByRole('spinbutton', { name: 'Rounds in group A' })).toHaveText('3')
+      await expect(page.getByRole('spinbutton', { name: 'Rounds' })).toHaveText('3')
       await stepRounds(page, 'Subtract')
+      await closeSheet(page)
+
       await page.getByRole('button', { name: 'Create routine' }).click()
 
       await expect(page).toHaveURL(/\/routines$/)
@@ -660,21 +693,16 @@ test.describe('routine lifecycle', () => {
       // than as the plain block a routine starts as, and a change to it is
       // saved as one.
       await page.getByRole('link', { name: 'Edit exercises' }).click()
-      await expect(page.getByRole('button', { name: 'Groups', exact: true })).toHaveAttribute(
-        'aria-pressed',
-        'true',
-      )
-      await expect(page.getByRole('button', { name: 'Circuit', exact: true })).toHaveAttribute(
-        'aria-pressed',
-        'true',
-      )
-      await expect(page.getByRole('spinbutton', { name: 'Rounds in group A' })).toHaveText('2')
+      await expect(page.getByText('One set of each, 2 times through')).toBeVisible()
       await expect(routineExercises(page)).toHaveCount(2)
-      // The target came back with the routine, for the one row it was set on.
-      await expect(targetChip(page, first, '2:00')).toBeVisible()
-      await expect(targetChip(page, second, 'Off')).toBeVisible()
+      // The hold came back with the routine, for the one row it was set on.
+      await expect(exerciseChip(page, first)).toContainText('2:00')
+      await expect(exerciseChip(page, second)).toContainText('0:30')
 
-      await stepRest(page, 'Rest after each round in group A', 'Subtract', 3)
+      await blockChip(page, 'Block A').click()
+      await expect(page.getByRole('spinbutton', { name: 'Rounds' })).toHaveText('2')
+      await stepRest(page, 'Rest after each round', 'Subtract', 3)
+      await closeSheet(page)
       await page.getByRole('button', { name: 'Save changes' }).click()
 
       await expect(
@@ -776,23 +804,28 @@ test.describe('routine lifecycle', () => {
       }
 
       await page.goto('/routines/create')
+      await startRoutine(page, 'Blank')
       await page.getByLabel('Routine name').fill(routineName)
       await addRoutineExercise(page, lift)
       await addRoutineExercise(page, second)
 
       // Read off a clock, and a real value from the moment it is picked rather
-      // than a placeholder for a length written down somewhere else. The
-      // stepper is folded away behind the chip until somebody tunes it.
-      await restChip(page, lift, '1:30').click()
-      await stepRest(page, `Rest between sets of ${lift}`, 'Add', 7)
-      await expect(restValue(page, `Rest between sets of ${lift}`)).toHaveText('5:00')
+      // than a placeholder for a length written down somewhere else.
+      await expect(exerciseChip(page, lift)).toContainText('1:30 rest')
+      await exerciseChip(page, lift).click()
+      await stepRest(page, 'Rest between sets', 'Add', 7)
+      await expect(restValue(page, 'Rest between sets')).toHaveText('5:00')
+      await closeSheet(page)
+      await expect(exerciseChip(page, lift)).toContainText('5:00 rest')
 
-      // A plain routine says how long it pauses between exercises too, without
-      // having to be turned into a circuit first.
+      // A block says how long it pauses between exercises too, without having
+      // to be turned into a circuit first.
+      await blockChip(page, 'Block A').click()
       const between = restValue(page, 'Rest after each exercise')
-      await expect(between).toHaveText('1:30')
-      await stepRest(page, 'Rest after each exercise', 'Add')
+      await expect(between).toHaveText('0:00')
+      await stepRest(page, 'Rest after each exercise', 'Add', 4)
       await expect(between).toHaveText('2:00')
+      await closeSheet(page)
 
       await page.getByRole('button', { name: 'Create routine' }).click()
 
@@ -803,8 +836,8 @@ test.describe('routine lifecycle', () => {
       // Saved and read back from the API: reopening the builder shows the
       // routine's own answers rather than a default.
       await page.getByRole('link', { name: 'Edit exercises' }).click()
-      await expect(restChip(page, lift, '5:00')).toBeVisible()
-      await expect(restValue(page, 'Rest after each exercise')).toHaveText('2:00')
+      await expect(exerciseChip(page, lift)).toContainText('5:00 rest')
+      await expect(blockChip(page, 'Block A')).toContainText('2:00 rest')
       await page.getByRole('button', { name: 'Save changes' }).click()
 
       await page.getByRole('link', { name: 'Start workout' }).click()
@@ -922,6 +955,7 @@ test.describe('plan lifecycle', () => {
 
     for (const name of [firstRoutine, secondRoutine]) {
       await page.goto('/routines/create')
+      await startRoutine(page, 'Blank')
       await page.getByLabel('Routine name').fill(name)
       await addRoutineExercise(page)
       await page.getByRole('button', { name: 'Create routine' }).click()

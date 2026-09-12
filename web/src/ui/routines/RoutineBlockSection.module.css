@@ -1,0 +1,94 @@
+@reference '../../assets/base.css';
+
+/* A block is a titled thing on the page: what it is called and how it runs sit
+ * above the card, and the card holds the exercises being ordered into it. */
+.block {
+  @apply flex flex-col gap-2;
+}
+
+.header {
+  @apply flex min-h-12 items-center gap-3 px-1;
+}
+
+/* The tile says at a glance which kind of block this is. A straight one is a
+   quiet letter; a circuit is inked, because the round count is the one thing
+   about it worth reading from across the screen. */
+.tile {
+  @apply grid size-10 shrink-0 place-items-center rounded-control bg-info-surface text-body font-semibold text-text-muted;
+}
+
+.tileCircuit {
+  @apply grid size-10 shrink-0 place-items-center rounded-control bg-ink text-meta font-bold tabular-nums text-text-inverse;
+}
+
+.heading {
+  @apply min-w-0 flex-1;
+}
+
+.title {
+  @apply block truncate text-body-lg font-semibold text-text;
+}
+
+/* It wraps rather than truncating: the title is the line that has to stay
+   whole, and a sentence cut to three words says less than nothing. */
+.meta {
+  @apply block text-meta text-text-muted;
+}
+
+/* Nothing inside is boxed: the exercises are ruled rows, so the name keeps the
+ * width a nested border would have taken. */
+.card {
+  @apply mb-0 overflow-hidden;
+}
+
+.exercises {
+  @apply flex flex-col divide-y divide-border;
+}
+
+.entryRow {
+  @apply flex min-h-14 items-center gap-2.5 py-2 pl-4 pr-2;
+}
+
+/* A count, not a tile: the number orders the list and nothing more. */
+.position {
+  @apply w-6 shrink-0 text-meta tabular-nums text-text-subtle;
+}
+
+/* The name takes whatever the controls leave, and never less than legible: it
+ * is the only part of the row that says which exercise this is. */
+.exerciseName {
+  @apply mr-auto min-w-0 flex-1 truncate text-body-lg font-semibold text-text;
+}
+
+.empty {
+  @apply px-4 py-5;
+}
+
+/* A grip, not a menu: short strokes that read as something to hold. */
+.dragHandle {
+  @apply cursor-grab text-ink-border active:cursor-grabbing;
+}
+
+.dragHandle svg {
+  @apply size-4;
+}
+
+/* SortableJS puts these on the DOM itself, so the hashed names are handed to
+   it rather than written in the markup. */
+.sortableGhost {
+  @apply opacity-30;
+}
+
+.sortableDrag {
+  @apply rounded-control border border-ink-border bg-surface shadow-raised;
+}
+
+/* Ruled off from the exercises above it: adding one is what a block is built
+   with, so it is the width of the card rather than a button parked in a row. */
+.actions {
+  @apply border-t border-border p-2;
+}
+
+.actions button {
+  @apply w-full;
+}

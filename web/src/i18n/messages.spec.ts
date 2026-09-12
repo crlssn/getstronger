@@ -165,7 +165,7 @@ describe('messages', () => {
     expect(guided, guided.join('\n')).toEqual([])
     expect(messages.timedCircuit.start.toLocaleLowerCase()).toContain(noun)
     expect(messages.privacy.collectTraining).toContain(noun)
-    expect(messages.routine.form.groups.circuit).toBe(group)
+    expect(messages.routine.form.blocks.circuit).toBe(group)
   })
 
   // The toast tells the reader which button to press, so it must name the

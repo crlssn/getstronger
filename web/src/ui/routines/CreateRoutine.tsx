@@ -35,6 +35,9 @@ export const CreateRoutine = () => {
 
   return (
     <RoutineForm
+      // Only a new routine is offered a starting shape; an existing one
+      // already has the blocks it was built with.
+      startable
       submitLabel={t('routine.form.create')}
       saving={saving}
       error={error}

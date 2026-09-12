@@ -1,10 +1,11 @@
 import type { RoutineGroup } from '@/proto/api/v1/routine_service_pb'
 import type { Exercise } from '@/proto/api/v1/shared_pb'
 
-import { ExerciseMetric, RoutineGroupMode, RoutineGroupRole } from '@/proto/api/v1/shared_pb'
+import { RoutineExerciseTracking } from '@/proto/api/v1/routine_service_pb'
+import { RoutineGroupMode, RoutineGroupRole } from '@/proto/api/v1/shared_pb'
 
 /**
- * How a group's exercises are worked through: straight sets finish one exercise
+ * How a block's exercises are worked through: straight sets finish one exercise
  * before the next begins, a circuit takes one set of each in turn and goes round
  * again, for the rounds it is prescribed or for as many as the session takes.
  */
@@ -15,7 +16,10 @@ export type GroupMode = 'straight' | 'circuit'
  * round count, the block that count repeats, a cool-down worked once after it.
  *
  * The empty string is a block with no such place — every gym circuit, and every
- * routine saved before intervals existed.
+ * routine saved before intervals existed. The editor never shows a role: a
+ * block is named instead, and the Intervals preset writes both. The role is
+ * what a live session reads to number its intervals, so it travels with the
+ * block rather than being inferred from its name.
  */
 export type GroupRole = '' | IntervalRole
 
@@ -26,12 +30,16 @@ export type IntervalRole = 'warmup' | 'repeat' | 'cooldown'
 export const intervalRoles: readonly IntervalRole[] = ['warmup', 'repeat', 'cooldown']
 
 /**
- * How a routine is built: one list, blocks of its own choosing, or the fixed
- * three parts of an interval session.
+ * How one occurrence's work is counted, and so which of its three prescriptions
+ * is the one that means anything: sets recovered between, a clock that ends the
+ * effort, or a distance covered however long it takes.
  */
-export type RoutineShape = 'simple' | 'groups' | 'intervals'
+export type ExerciseTracking = 'sets' | 'timed' | 'distance'
 
-/** How long an exercise rests between sets when nothing says otherwise. */
+/**
+ * How long a new occurrence rests between its sets. The app's one answer to
+ * that question: a session falls back to it too, and so does the server.
+ */
 export const defaultRestSeconds = 90
 
 /** The rest a new circuit takes once a round closes. */
@@ -39,6 +47,15 @@ export const defaultRoundRestSeconds = 90
 
 /** How many times a new circuit is prescribed to go round. */
 export const defaultRounds = 3
+
+/** How many sets a new occurrence prescribes. */
+export const defaultSets = 3
+
+/** How long a new timed occurrence is held for. */
+export const defaultHoldSeconds = 30
+
+/** How far a new distance occurrence covers, in metres. */
+export const defaultDistanceMeters = 1000
 
 /**
  * A block worked once through, which is what a warm-up and a cool-down are.
@@ -51,55 +68,57 @@ const maximumRestSeconds = 3600
 
 export const maximumRounds = 99
 
+export const minimumSets = 1
+export const maximumSets = 20
+
+export const minimumDistanceMeters = 100
+export const maximumDistanceMeters = 50000
+
 /**
- * How long an exercise rests between sets where a routine has just started
- * training it.
- *
- * An exercise measured against the clock — a plank, a run — is one continuous
- * effort rather than a set to recover from, so it starts with no timer at all.
+ * How far the distance stepper moves. Below a kilometre a hundred metres is a
+ * lap of the track; above it, half a kilometre is the next thing worth running.
  */
-export const newOccurrenceRestSeconds = (exercise: Exercise): number =>
-  exercise.metrics.includes(ExerciseMetric.TIME) ? 0 : defaultRestSeconds
+export const distanceStepMeters = (meters: number) => (meters >= 1000 ? 500 : 100)
 
 /**
  * One exercise where a routine trains it.
  *
  * It carries a key of its own because the same exercise may be in more than one
- * group — a bench press in the warm-up and a bench press in the circuit — and
- * removing one of them must not remove the other. Twice inside one group is not
- * a thing: a group is a block of distinct work.
+ * block — a bench press in the warm-up and a bench press in the circuit — and
+ * removing one of them must not remove the other. Twice inside one block is not
+ * a thing: a block is a piece of distinct work.
+ *
+ * All three prescriptions are held at once and only the tracked one is read, so
+ * an occurrence switched from timed to sets and back is the one it was.
  */
 export interface DraftEntry {
-  targetDurationSeconds?: number
   key: string
   exerciseId: string
-  /**
-   * How long this occurrence rests between sets; zero turns the timer off here
-   * alone. A circuit rests between exercises and between rounds, so it never
-   * applies — the value is kept while the group is one, so switching back
-   * restores what was typed.
-   */
+  tracking: ExerciseTracking
+  /** Sets prescribed, read while tracked in sets. */
+  sets: number
+  /** Rest between sets; zero turns the timer off for this occurrence alone. */
   restSeconds: number
+  /** Seconds held, read while tracked against the clock. */
+  targetDurationSeconds: number
+  /** Metres covered, read while tracked by distance. */
+  targetDistanceMeters: number
 }
 
 /**
- * A group while it is being edited.
+ * A block while it is being edited.
  *
- * The ID is local to the form: a save replaces a routine's groups wholesale, so
+ * The ID is local to the form: a save replaces a routine's blocks wholesale, so
  * the only thing it has to do is stay stable while the form is open.
  */
 export interface DraftGroup {
   id: string
+  /** What the athlete called it, or nothing at all — then it reads "Block A". */
+  title: string
   mode: GroupMode
-  /**
-   * Whether this block runs a rest timer at all.
-   *
-   * Off is stored as no rest anywhere in the block, since "no timer" and "rest
-   * for nothing" are the same session. The lengths stay in the draft while it
-   * is off, so flipping it twice costs nothing.
-   */
-  restTimers: boolean
+  /** Rest taken on the way from one exercise to the next; zero is no timer. */
   restBetweenExercisesSeconds: number
+  /** Rest taken once a round closes; a circuit's alone. */
   restBetweenRoundsSeconds: number
   /**
    * How many times a circuit is prescribed to go round; zero runs it for as
@@ -110,15 +129,11 @@ export interface DraftGroup {
    * block is straight sets rather than cleared.
    */
   rounds: number
-  /**
-   * Where this block sits in an interval routine, or nothing at all where the
-   * routine is not one.
-   */
+  /** Where this block sits in an interval routine, or nothing where it is not one. */
   role: GroupRole
   /**
    * Whether the repeating block drops its last exercise on its final round, so
-   * a walk-run does not end the session with a walk. Only the repeating block
-   * reads it.
+   * a walk-run does not end the session with a walk.
    */
   skipLastOnFinalRound: boolean
   entries: DraftEntry[]
@@ -131,121 +146,81 @@ const newLocalId = (prefix: string) => {
   return `${prefix}-${nextLocalId}`
 }
 
-const straightGroup = (
-  entries: DraftEntry[],
-  restBetweenExercisesSeconds = defaultRestSeconds,
-): DraftGroup => ({
+/** A block as it arrives: straight, worked once through, resting nowhere. */
+export const newBlock = (block: Partial<DraftGroup> = {}): DraftGroup => ({
   id: newLocalId('group'),
+  title: '',
   mode: 'straight',
-  restTimers: true,
-  restBetweenExercisesSeconds,
-  // A straight block is worked once through, so there is no round to close,
-  // and none to count.
-  restBetweenRoundsSeconds: 0,
-  rounds: 0,
+  restBetweenExercisesSeconds: 0,
+  restBetweenRoundsSeconds: defaultRoundRestSeconds,
+  rounds: defaultRounds,
   role: '',
   skipLastOnFinalRound: false,
-  entries,
+  entries: [],
+  ...block,
 })
 
-/**
- * What every routine starts as: one block, worked one exercise at a time.
- *
- * Named by ID rather than by exercise because the only caller that has nothing
- * but IDs is a routine saved before grouping, where what each of them measures
- * was never recorded against the occurrence either.
- */
+/** One exercise, prescribed the way a new occurrence of it is. */
+const newEntry = (exerciseId: string, tracking: ExerciseTracking): DraftEntry => ({
+  key: newLocalId('entry'),
+  exerciseId,
+  tracking,
+  sets: defaultSets,
+  restSeconds: defaultRestSeconds,
+  targetDurationSeconds: defaultHoldSeconds,
+  targetDistanceMeters: defaultDistanceMeters,
+})
+
+/** What a routine starts as: one block, worked one exercise at a time. */
 export const singleStraightGroup = (exerciseIds: readonly string[] = []): DraftGroup[] => [
-  straightGroup(
-    exerciseIds.map((exerciseId) => ({
-      key: newLocalId('entry'),
-      exerciseId,
-      restSeconds: defaultRestSeconds,
-    })),
-  ),
+  newBlock({ entries: exerciseIds.map((exerciseId) => newEntry(exerciseId, 'sets')) }),
 ]
 
 /**
- * Collapses a grouped routine into the one block a plain routine is.
+ * The shapes a new routine can start in.
  *
- * The exercises keep their order and the rest each of them takes; only the
- * structure goes, which is the one thing a single block cannot express. Two
- * groups can name the same exercise, and one block trains it once.
+ * A starting shape rather than a mode: each of them is a list of blocks, and
+ * nothing about the routine afterwards remembers which one it began as.
  */
-export const collapseToSingleGroup = (groups: readonly DraftGroup[]): DraftGroup[] => {
-  // One block cannot run two timers, so it runs one if any block did.
-  const restTimers = groups.some((group) => group.restTimers)
-  const seen = new Set<string>()
-  const entries = groups
-    .flatMap((group) => group.entries)
-    .filter((entry) => {
-      if (seen.has(entry.exerciseId)) return false
-      seen.add(entry.exerciseId)
-      return true
-    })
+export type StartingShape = 'blank' | 'circuit' | 'intervals'
 
-  // The block keeps the first group's pause between exercises: the structure is
-  // what a single block cannot express, not the rests.
-  return [{ ...straightGroup(entries, groups[0]?.restBetweenExercisesSeconds), restTimers }]
+/**
+ * The blocks a starting shape lays out.
+ *
+ * Intervals is the one that writes roles as well as names: a live session reads
+ * them to number its intervals and to end the repeating block an exercise
+ * early, which no other shape has.
+ */
+export const startingBlocks = (shape: StartingShape, titles: Record<IntervalRole, string>) => {
+  switch (shape) {
+    case 'circuit':
+      return [newBlock({ mode: 'circuit' })]
+    case 'intervals':
+      return intervalRoles.map((role) =>
+        newBlock({
+          title: titles[role],
+          role,
+          mode: role === 'repeat' ? 'circuit' : 'straight',
+          rounds: role === 'repeat' ? defaultRounds : singleRound,
+          // An interval routine rests nowhere: the easy interval is the rest,
+          // and a timer between rounds would be a fourth thing to work through.
+          restBetweenRoundsSeconds: 0,
+          // A walk-run that ends on a walk ends on the part nobody came for, so
+          // a new repeating block drops it and the athlete turns that off.
+          skipLastOnFinalRound: role === 'repeat',
+        }),
+      )
+    default:
+      return [newBlock()]
+  }
 }
 
-/** A, B, C — how a group is named everywhere it is spoken about. */
+/** A, B, C — how a block with no name of its own is spoken about. */
 export const groupLetter = (index: number) => String.fromCharCode(65 + index)
 
 /** Every exercise the routine trains, in order, repeats included. */
 export const groupExerciseIds = (groups: readonly DraftGroup[]): string[] =>
   groups.flatMap((group) => group.entries.map((entry) => entry.exerciseId))
-
-/**
- * Whether the routine uses grouping at all.
- *
- * One straight group is the plain routine the form opens on, so it is what the
- * advanced controls stay folded away for.
- */
-export const isGrouped = (groups: readonly DraftGroup[]): boolean =>
-  groups.length > 1 || groups.some((group) => group.mode === 'circuit')
-
-/**
- * Whether the routine is built as intervals rather than as blocks of its own
- * choosing. One part carrying a role is enough: a routine with an empty warm-up
- * saves two parts, not three.
- */
-export const isIntervals = (groups: readonly DraftGroup[]): boolean =>
-  groups.some((group) => group.role !== '')
-
-/** Which of the three shapes the form is holding. */
-export const routineShape = (groups: readonly DraftGroup[]): RoutineShape =>
-  isIntervals(groups) ? 'intervals' : isGrouped(groups) ? 'groups' : 'simple'
-
-/**
- * One part of an interval routine.
- *
- * Every part is a circuit: an interval is held for the time it says and the
- * next one starts, which is the same thing a guided round does. It rests
- * nowhere, because in an interval session the easy interval is the rest.
- */
-const intervalPart = (role: IntervalRole, entries: DraftEntry[] = []): DraftGroup => ({
-  id: newLocalId('group'),
-  mode: 'circuit',
-  restTimers: false,
-  restBetweenExercisesSeconds: 0,
-  restBetweenRoundsSeconds: 0,
-  rounds: role === 'repeat' ? defaultRounds : singleRound,
-  role,
-  // A walk-run that ends on a walk ends on the part nobody came for, so a new
-  // repeating block drops it and the athlete turns that off if they want it.
-  skipLastOnFinalRound: role === 'repeat',
-  entries,
-})
-
-/**
- * The three parts an interval routine is, in the order they are trained.
- *
- * The exercises go into the repeating block, which is the one the session is
- * built around; a warm-up and a cool-down are added to it by hand.
- */
-export const intervalGroups = (entries: DraftEntry[] = []): DraftGroup[] =>
-  intervalRoles.map((role) => intervalPart(role, role === 'repeat' ? entries : []))
 
 /** The part of an interval routine that plays this role, if the form holds one. */
 export const intervalPartOf = (
@@ -253,69 +228,77 @@ export const intervalPartOf = (
   role: IntervalRole,
 ): DraftGroup | undefined => groups.find((group) => group.role === role)
 
-/**
- * Reshapes the form into the three parts of an interval routine, keeping every
- * exercise it already held.
- *
- * A routine already built as intervals keeps its parts as they are — a walk-run
- * walks in the warm-up and again in the block, which is two occurrences of one
- * exercise and the point of the shape. Anything else folds into the repeating
- * block, which is the block a session is built around, and one block trains an
- * exercise once.
- */
-export const toIntervalGroups = (groups: readonly DraftGroup[]): DraftGroup[] => {
-  if (isIntervals(groups)) return intervalDrafts(groups)
-
-  const seen = new Set<string>()
-  const entries = groups
-    .flatMap((group) => group.entries)
-    .filter((entry) => {
-      if (seen.has(entry.exerciseId)) return false
-      seen.add(entry.exerciseId)
-      return true
-    })
-
-  return intervalGroups(entries)
-}
-
-/**
- * Drops the interval shape and keeps the blocks, which is what a routine built
- * as intervals is once it is read as groups.
- */
-export const clearIntervalRoles = (groups: readonly DraftGroup[]): DraftGroup[] =>
-  groups.map((group) => ({ ...group, role: '', skipLastOnFinalRound: false }))
-
-/**
- * How many intervals an interval routine prescribes: the warm-up, the block
- * once per round, and the cool-down, less the exercise the final round drops.
- */
-export const intervalCount = (groups: readonly DraftGroup[]): number =>
-  groups.reduce((count, group) => count + intervalsIn(group), 0)
-
-/** How long an interval routine is planned to take, in seconds. */
-export const intervalSeconds = (groups: readonly DraftGroup[]): number =>
-  groups.reduce((seconds, group) => {
-    const block = group.entries.reduce((sum, entry) => sum + (entry.targetDurationSeconds ?? 0), 0)
-    const skipped = skipsLast(group) ? (group.entries.at(-1)?.targetDurationSeconds ?? 0) : 0
-    return seconds + block * roundsOf(group) - skipped
-  }, 0)
+/** How many rounds this block is worked through, counting a straight one once. */
+const roundsOf = (group: DraftGroup) =>
+  group.mode === 'circuit' ? Math.max(group.rounds, singleRound) : singleRound
 
 /** Whether this block ends its final round an exercise early. */
 const skipsLast = (group: DraftGroup): boolean =>
-  group.skipLastOnFinalRound && group.role === 'repeat' && group.entries.length > 1
-
-const roundsOf = (group: DraftGroup) => Math.max(group.rounds, singleRound)
-
-const intervalsIn = (group: DraftGroup) =>
-  group.entries.length * roundsOf(group) - (skipsLast(group) ? 1 : 0)
+  group.skipLastOnFinalRound && group.mode === 'circuit' && group.entries.length > 1
 
 /**
- * How the interval parts came back from the API, filled out to the three the
- * form edits. An empty part is not saved, so a routine with no cool-down comes
- * back with two.
+ * How long a set of an exercise takes when nothing times it: long enough to
+ * work through and rack, which is what makes a planned minute a minute.
  */
-const intervalDrafts = (groups: readonly DraftGroup[]): DraftGroup[] =>
-  intervalRoles.map((role) => intervalPartOf(groups, role) ?? intervalPart(role))
+const workingSetSeconds = 40
+
+/**
+ * How long a prescribed distance takes, per metre. Six minutes a kilometre is
+ * a steady run, which is the pace a routine that prescribes a distance without
+ * prescribing a time is most often written at.
+ */
+const secondsPerMetre = 0.36
+
+/** How long one occurrence takes inside this block. */
+const entrySeconds = (entry: DraftEntry, group: DraftGroup) => {
+  switch (entry.tracking) {
+    case 'timed':
+      return entry.targetDurationSeconds
+    case 'distance':
+      return Math.round(entry.targetDistanceMeters * secondsPerMetre)
+    default:
+      // A circuit takes one set of each in turn, so a round holds one of them
+      // however many the occurrence prescribes across the block.
+      return group.mode === 'circuit'
+        ? workingSetSeconds
+        : entry.sets * workingSetSeconds + Math.max(entry.sets - 1, 0) * entry.restSeconds
+  }
+}
+
+/** How long the routine is planned to take, in seconds. */
+export const plannedSeconds = (groups: readonly DraftGroup[]): number =>
+  groups.reduce((seconds, group) => {
+    if (!group.entries.length) return seconds
+
+    const rounds = roundsOf(group)
+    const perRound =
+      group.entries.reduce((sum, entry) => sum + entrySeconds(entry, group), 0) +
+      group.restBetweenExercisesSeconds * (group.entries.length - 1)
+    // A final round that ends an exercise early does not work it, and does not
+    // take the pause on the way to it either.
+    const dropped = skipsLast(group)
+      ? entrySeconds(group.entries[group.entries.length - 1], group) +
+        group.restBetweenExercisesSeconds
+      : 0
+
+    return seconds + perRound * rounds + group.restBetweenRoundsSeconds * (rounds - 1) - dropped
+  }, 0)
+
+/**
+ * How many efforts the routine prescribes: one per set of a straight block, one
+ * per exercise per round of a circuit, less the one a final round drops.
+ */
+export const plannedIntervals = (groups: readonly DraftGroup[]): number =>
+  groups.reduce((count, group) => {
+    const rounds = roundsOf(group)
+    const perRound = group.entries.reduce(
+      (sum, entry) =>
+        sum + (group.mode === 'circuit' || entry.tracking !== 'sets' ? singleRound : entry.sets),
+      0,
+    )
+
+    return count + perRound * rounds - (skipsLast(group) ? 1 : 0)
+  }, 0)
 
 /** Where a saved block sits in an interval routine, as the form names it. */
 export const groupRole = (role: RoutineGroupRole): GroupRole => {
@@ -331,6 +314,32 @@ export const groupRole = (role: RoutineGroupRole): GroupRole => {
   }
 }
 
+/**
+ * How a saved occurrence's work is counted.
+ *
+ * A routine saved before it could say carries nothing, and is read the way it
+ * was read then: held against the clock where it prescribes a duration, counted
+ * in sets everywhere else.
+ */
+export const trackingOf = (
+  tracking: RoutineExerciseTracking,
+  targetDurationSeconds: number,
+): ExerciseTracking => {
+  switch (tracking) {
+    case RoutineExerciseTracking.TIMED:
+      return 'timed'
+    case RoutineExerciseTracking.DISTANCE:
+      return 'distance'
+    case RoutineExerciseTracking.SETS:
+      return 'sets'
+    default:
+      return targetDurationSeconds > 0 ? 'timed' : 'sets'
+  }
+}
+
+/** A saved value, or what a new occurrence would start at where there is none. */
+const savedOr = (value: number, fallback: number) => (value > 0 ? value : fallback)
+
 /** Reads a saved routine into the form, tolerating one saved before grouping. */
 export const draftGroupsFromRoutine = (
   groups: readonly RoutineGroup[],
@@ -338,40 +347,35 @@ export const draftGroupsFromRoutine = (
 ): DraftGroup[] => {
   if (!groups.length) return singleStraightGroup(exerciseIds)
 
-  const drafts: DraftGroup[] = groups.map((group) => {
-    // A block that rests nowhere is a block with the timer off. Its fields fall
-    // back to what a new occurrence would take, so switching the timer on hands
-    // back a routine's worth of lengths rather than a column of zeros.
-    const restTimers =
-      group.restBetweenExercisesSeconds > 0 ||
-      group.restBetweenRoundsSeconds > 0 ||
-      group.exercises.some((entry) => entry.restSeconds > 0)
-
-    return {
-      id: newLocalId('group'),
-      mode: group.mode === RoutineGroupMode.CIRCUIT ? 'circuit' : 'straight',
-      restTimers,
-      restBetweenExercisesSeconds: restTimers
-        ? group.restBetweenExercisesSeconds
-        : defaultRestSeconds,
-      restBetweenRoundsSeconds: restTimers
+  return groups.map((group) => ({
+    id: newLocalId('group'),
+    title: group.title,
+    mode: group.mode === RoutineGroupMode.CIRCUIT ? 'circuit' : 'straight',
+    restBetweenExercisesSeconds: group.restBetweenExercisesSeconds,
+    // A circuit's own answer, zero included: resting nowhere between rounds is
+    // what an interval routine says. A straight block has no round to close, so
+    // the length it would show once made a circuit is a new circuit's rather
+    // than the zero it stores.
+    restBetweenRoundsSeconds:
+      group.mode === RoutineGroupMode.CIRCUIT
         ? group.restBetweenRoundsSeconds
         : defaultRoundRestSeconds,
-      rounds: group.rounds,
-      role: groupRole(group.role),
-      skipLastOnFinalRound: group.skipLastOnFinalRound,
-      entries: group.exercises.map((entry) => ({
-        key: newLocalId('entry'),
-        exerciseId: entry.exercise?.id ?? '',
-        targetDurationSeconds: entry.targetDurationSeconds,
-        restSeconds: restTimers
-          ? entry.restSeconds
-          : ((entry.exercise && newOccurrenceRestSeconds(entry.exercise)) ?? defaultRestSeconds),
-      })),
-    }
-  })
-
-  return isIntervals(drafts) ? intervalDrafts(drafts) : drafts
+    rounds: group.rounds,
+    role: groupRole(group.role),
+    skipLastOnFinalRound: group.skipLastOnFinalRound,
+    entries: group.exercises.map((entry) => ({
+      key: newLocalId('entry'),
+      exerciseId: entry.exercise?.id ?? '',
+      tracking: trackingOf(entry.tracking, entry.targetDurationSeconds),
+      // The two prescriptions this occurrence is not tracked by fall back to
+      // what a new one would take, so switching to them offers a length rather
+      // than a zero.
+      sets: savedOr(entry.sets, defaultSets),
+      restSeconds: entry.restSeconds,
+      targetDurationSeconds: savedOr(entry.targetDurationSeconds, defaultHoldSeconds),
+      targetDistanceMeters: savedOr(entry.targetDistanceMeters, defaultDistanceMeters),
+    })),
+  }))
 }
 
 /** Changes one block of the form and leaves the others as they are. */
@@ -381,7 +385,18 @@ export const withGroup = (
   changes: Partial<DraftGroup>,
 ): DraftGroup[] => groups.map((group) => (group.id === groupId ? { ...group, ...changes } : group))
 
-/** Whether the group already trains this exercise, and so will not take it again. */
+/** Changes one occurrence and leaves every other one as it is. */
+export const withEntry = (
+  groups: readonly DraftGroup[],
+  key: string,
+  changes: Partial<DraftEntry>,
+): DraftGroup[] =>
+  groups.map((group) => ({
+    ...group,
+    entries: group.entries.map((entry) => (entry.key === key ? { ...entry, ...changes } : entry)),
+  }))
+
+/** Whether the block already trains this exercise, and so will not take it again. */
 const groupHasExercise = (group: DraftGroup, exerciseId: string): boolean =>
   group.entries.some((entry) => entry.exerciseId === exerciseId)
 
@@ -389,20 +404,11 @@ export const addExerciseToGroup = (
   groups: readonly DraftGroup[],
   groupId: string,
   exercise: Exercise,
+  tracking: ExerciseTracking,
 ): DraftGroup[] =>
   groups.map((group) =>
     group.id === groupId && !groupHasExercise(group, exercise.id)
-      ? {
-          ...group,
-          entries: [
-            ...group.entries,
-            {
-              key: newLocalId('entry'),
-              exerciseId: exercise.id,
-              restSeconds: newOccurrenceRestSeconds(exercise),
-            },
-          ],
-        }
+      ? { ...group, entries: [...group.entries, newEntry(exercise.id, tracking)] }
       : group,
   )
 
@@ -413,66 +419,62 @@ export const removeEntry = (groups: readonly DraftGroup[], key: string): DraftGr
   }))
 
 /**
- * Puts an exercise where it was dropped inside the group holding it.
+ * Puts an exercise where it was dropped, in the block it was dropped into.
  *
- * Positions rather than a direction: the row is dragged to a place in the list,
- * and SortableJS reports where it landed.
+ * Positions rather than a direction: the row is dragged to a place in a list,
+ * and SortableJS reports which list and where in it. A block trains an exercise
+ * once, so a row dropped onto a block already holding it goes back where it was.
  */
+export const moveEntry = (
+  groups: readonly DraftGroup[],
+  fromGroupId: string,
+  from: number,
+  toGroupId: string,
+  to: number,
+): DraftGroup[] => {
+  const source = groups.find((group) => group.id === fromGroupId)
+  const target = groups.find((group) => group.id === toGroupId)
+  const moved = source?.entries[from]
+  if (!source || !target || !moved) return [...groups]
+  if (fromGroupId === toGroupId && from === to) return [...groups]
+  if (fromGroupId !== toGroupId && groupHasExercise(target, moved.exerciseId)) return [...groups]
+
+  return groups.map((group) => {
+    if (group.id !== fromGroupId && group.id !== toGroupId) return group
+
+    const entries = [...group.entries]
+    if (group.id === fromGroupId) entries.splice(from, 1)
+    if (group.id === toGroupId) {
+      entries.splice(Math.min(Math.max(to, 0), entries.length), 0, moved)
+    }
+
+    return { ...group, entries }
+  })
+}
+
+/** Reorders inside one block, which is the move a keyboard makes. */
 export const reorderEntry = (
   groups: readonly DraftGroup[],
   groupId: string,
   from: number,
   to: number,
-): DraftGroup[] =>
-  groups.map((group) => {
-    if (group.id !== groupId) return group
+): DraftGroup[] => {
+  const group = groups.find((candidate) => candidate.id === groupId)
+  const outOfRange = [from, to].some(
+    (position) => position < 0 || position >= (group?.entries.length ?? 0),
+  )
+  if (outOfRange) return [...groups]
 
-    const outOfRange = [from, to].some(
-      (position) => position < 0 || position >= group.entries.length,
-    )
-    if (from === to || outOfRange) return group
+  return moveEntry(groups, groupId, from, groupId, to)
+}
 
-    const entries = [...group.entries]
-    const [moved] = entries.splice(from, 1)
-    if (moved) entries.splice(to, 0, moved)
-
-    return { ...group, entries }
-  })
-
-/** Sets how long one exercise rests between sets where this routine trains it. */
-export const setEntryRest = (
-  groups: readonly DraftGroup[],
-  key: string,
-  restSeconds: number,
-): DraftGroup[] =>
-  groups.map((group) => ({
-    ...group,
-    entries: group.entries.map((entry) => (entry.key === key ? { ...entry, restSeconds } : entry)),
-  }))
+/** Appends the empty straight block "Add block" asks for. */
+export const addGroup = (groups: readonly DraftGroup[]): DraftGroup[] => [...groups, newBlock()]
 
 /**
- * A second group is nearly always the circuit somebody came here for, so it
- * arrives ready to rotate rather than as another straight block.
- */
-export const addGroup = (groups: readonly DraftGroup[]): DraftGroup[] => [
-  ...groups,
-  {
-    id: newLocalId('group'),
-    mode: 'circuit',
-    restTimers: true,
-    restBetweenExercisesSeconds: 0,
-    restBetweenRoundsSeconds: defaultRoundRestSeconds,
-    rounds: defaultRounds,
-    role: '',
-    skipLastOnFinalRound: false,
-    entries: [],
-  },
-]
-
-/**
- * Removes a group, handing its exercises to a neighbour so removing a block
- * never removes exercises from the routine — except the ones the neighbour
- * already trains, which it cannot hold twice.
+ * Removes a block, handing its exercises to a neighbour so removing one never
+ * removes exercises from the routine — except the ones the neighbour already
+ * trains, which it cannot hold twice.
  */
 export const removeGroup = (groups: readonly DraftGroup[], groupId: string): DraftGroup[] => {
   if (groups.length < 2) return [...groups]
@@ -495,67 +497,75 @@ export const removeGroup = (groups: readonly DraftGroup[], groupId: string): Dra
     })
 }
 
-const clampRest = (value: number) =>
-  Math.min(Math.max(Number.isFinite(value) ? Math.round(value) : 0, 0), maximumRestSeconds)
+const clamp = (value: number, minimum: number, maximum: number) =>
+  Math.min(Math.max(Number.isFinite(value) ? Math.round(value) : minimum, minimum), maximum)
 
-const clampRounds = (value: number) =>
-  Math.min(Math.max(Number.isFinite(value) ? Math.round(value) : 0, 0), maximumRounds)
-
-/** Keeps a group's settings inside what the API accepts. */
-const clampGroup = (group: DraftGroup): DraftGroup => {
-  // Rounds are how the block is worked through rather than how it rests, so a
-  // block with its timer off is still prescribed for the rounds it says. A part
-  // of an interval routine is worked at least once: an open-ended warm-up is a
-  // session with no shape, which is what the other two modes are for.
-  const rounds =
-    group.mode !== 'circuit'
-      ? 0
-      : group.role === ''
-        ? clampRounds(group.rounds)
-        : Math.max(clampRounds(group.rounds), singleRound)
-
-  // No timer is no rest: the lengths the draft is holding are what the switch
-  // would hand back, not what this routine trains with.
-  if (!group.restTimers) {
-    return {
-      ...group,
-      restBetweenExercisesSeconds: 0,
-      restBetweenRoundsSeconds: 0,
-      rounds,
-      entries: group.entries.map((entry) => ({ ...entry, restSeconds: 0 })),
-    }
-  }
-
-  // A circuit rests on the way to the next exercise and on the way into the
-  // next round, so a set rest has nowhere to go while it is one. It travels
-  // anyway, so a group switched back to straight sets rests as it did before.
-  const entries = group.entries.map((entry) => ({
-    ...entry,
-    restSeconds: clampRest(entry.restSeconds),
-  }))
-
-  // A straight block pauses on the way to the next exercise like a circuit
-  // does; what it has no use for is a round rest or a round count, having no
-  // rounds.
-  if (group.mode !== 'circuit') {
-    return {
-      ...group,
-      restBetweenExercisesSeconds: clampRest(group.restBetweenExercisesSeconds),
-      restBetweenRoundsSeconds: 0,
-      rounds,
-      entries,
-    }
-  }
-
-  return {
-    ...group,
-    restBetweenExercisesSeconds: clampRest(group.restBetweenExercisesSeconds),
-    restBetweenRoundsSeconds: clampRest(group.restBetweenRoundsSeconds),
-    rounds,
-    entries,
+/**
+ * Keeps an occurrence's prescription inside what the API accepts, and says only
+ * the one it is tracked by.
+ *
+ * The draft holds all three so switching between them and back costs nothing.
+ * What is saved is what is prescribed: a run measured by distance that also
+ * carried a leftover thirty seconds would be guided as a thirty-second run by
+ * every reader that trusts the field.
+ */
+const clampEntry = (entry: DraftEntry): DraftEntry => {
+  switch (entry.tracking) {
+    case 'timed':
+      return {
+        ...entry,
+        sets: 0,
+        restSeconds: 0,
+        targetDurationSeconds: clamp(entry.targetDurationSeconds, 0, maximumRestSeconds),
+        targetDistanceMeters: 0,
+      }
+    case 'distance':
+      return {
+        ...entry,
+        sets: 0,
+        restSeconds: 0,
+        targetDurationSeconds: 0,
+        targetDistanceMeters: clamp(
+          entry.targetDistanceMeters,
+          minimumDistanceMeters,
+          maximumDistanceMeters,
+        ),
+      }
+    default:
+      return {
+        ...entry,
+        sets: clamp(entry.sets, minimumSets, maximumSets),
+        restSeconds: clamp(entry.restSeconds, 0, maximumRestSeconds),
+        targetDurationSeconds: 0,
+        targetDistanceMeters: 0,
+      }
   }
 }
 
-/** The groups as the API takes them: empty ones dropped, settings in range. */
+/** Keeps a block's settings inside what the API accepts. */
+const clampGroup = (group: DraftGroup): DraftGroup => {
+  const circuit = group.mode === 'circuit'
+
+  return {
+    ...group,
+    title: group.title.trim(),
+    restBetweenExercisesSeconds: clamp(group.restBetweenExercisesSeconds, 0, maximumRestSeconds),
+    // A straight block is worked once through, so it has no round to close and
+    // none to count.
+    restBetweenRoundsSeconds: circuit
+      ? clamp(group.restBetweenRoundsSeconds, 0, maximumRestSeconds)
+      : 0,
+    // A part of an interval routine is worked at least once: an open-ended
+    // warm-up is a session with no shape.
+    rounds: circuit
+      ? Math.max(clamp(group.rounds, 0, maximumRounds), group.role === '' ? 0 : singleRound)
+      : 0,
+    // Only the block a round count repeats has a final round to end early.
+    skipLastOnFinalRound: group.skipLastOnFinalRound && circuit,
+    entries: group.entries.map(clampEntry),
+  }
+}
+
+/** The blocks as the API takes them: empty ones dropped, settings in range. */
 export const saveableGroups = (groups: readonly DraftGroup[]): DraftGroup[] =>
   groups.filter((group) => group.entries.length > 0).map(clampGroup)

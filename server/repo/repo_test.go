@@ -1507,6 +1507,59 @@ func (s *repoSuite) TestSetRoutineGroupsKeepsTheIntervalRoles() {
 	s.Require().False(groups[0].SkipLastOnFinalRound)
 }
 
+// What a block is called and what each of its exercises prescribes survive a
+// save and a reload, which is the whole of what the editor writes down.
+func (s *repoSuite) TestSetRoutineGroupsKeepsTheBlockNamesAndPrescriptions() {
+	user := s.factory.NewUser()
+	exercises := s.factory.NewExerciseSlice(2, factory.ExerciseUserID(user.ID))
+	exerciseIDs := []uuid.UUID{exercises[0].ID, exercises[1].ID}
+
+	routine, err := s.repo.CreateRoutine(context.Background(), repo.CreateRoutineParams{
+		UserID:      user.ID,
+		Name:        "Park intervals",
+		ExerciseIDs: exerciseIDs,
+	})
+	s.Require().NoError(err)
+
+	s.Require().NoError(s.repo.SetRoutineGroups(context.Background(), routine, []training.RoutineGroupDraft{
+		{
+			Mode:  training.RoutineGroupModeStraight,
+			Title: "Warm-up",
+			Exercises: []training.RoutineExerciseDraft{
+				{
+					ExerciseID:           exerciseIDs[0],
+					Tracking:             training.RoutineExerciseTrackingDistance,
+					TargetDistanceMeters: 1000,
+				},
+			},
+		},
+		{
+			Mode: training.RoutineGroupModeStraight,
+			Exercises: []training.RoutineExerciseDraft{
+				{
+					ExerciseID: exerciseIDs[1],
+					Tracking:   training.RoutineExerciseTrackingSets,
+					Sets:       4,
+				},
+			},
+		},
+	}, s.loadExercises(exercises)))
+
+	groups, err := s.repo.ListRoutineGroups(context.Background(), routine.ID)
+	s.Require().NoError(err)
+	s.Require().Len(groups, 2)
+
+	s.Require().Equal("Warm-up", groups[0].Title)
+	s.Require().Equal(training.RoutineExerciseTrackingDistance, groups[0].Exercises[0].Tracking)
+	s.Require().Equal(int32(1000), groups[0].Exercises[0].TargetDistanceMeters)
+
+	// A block left unnamed reads by its position instead, which the row says by
+	// holding nothing.
+	s.Require().Empty(groups[1].Title)
+	s.Require().Equal(training.RoutineExerciseTrackingSets, groups[1].Exercises[0].Tracking)
+	s.Require().Equal(int32(4), groups[1].Exercises[0].Sets)
+}
+
 // The whole point of the per-occurrence rest: the routine's own answer survives
 // a save and a reload, and a save that says nothing gets the rest a new
 // occurrence starts at rather than no rest at all.
