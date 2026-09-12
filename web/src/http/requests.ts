@@ -87,10 +87,14 @@ import {
   GetWorkoutRequestSchema,
   type GetWorkoutResponse,
   type PaceReference,
+  LikeWorkoutRequestSchema,
+  type LikeWorkoutResponse,
   ListWorkoutsRequestSchema,
   type ListWorkoutsResponse,
   PostCommentRequestSchema,
   type PostCommentResponse,
+  UnlikeWorkoutRequestSchema,
+  type UnlikeWorkoutResponse,
   UpdateWorkoutRequestSchema,
   type UpdateWorkoutResponse,
   type Workout,
@@ -700,6 +704,22 @@ export const postWorkoutComment = async (
     workoutId: workoutId,
   })
   return tryCatch(() => workoutClient.postComment(req))
+}
+
+/**
+ * Reps a workout — a like, named for what the athlete calls it.
+ *
+ * Two requests rather than one toggle: both are idempotent, so a tap that
+ * lands twice on a slow connection says the same thing twice.
+ */
+export const likeWorkout = async (workoutId: string): Promise<LikeWorkoutResponse | void> => {
+  const req = create(LikeWorkoutRequestSchema, { workoutId: workoutId })
+  return tryCatch(() => workoutClient.likeWorkout(req))
+}
+
+export const unlikeWorkout = async (workoutId: string): Promise<UnlikeWorkoutResponse | void> => {
+  const req = create(UnlikeWorkoutRequestSchema, { workoutId: workoutId })
+  return tryCatch(() => workoutClient.unlikeWorkout(req))
 }
 
 export const getPersonalBests = async (

@@ -11,14 +11,18 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
 vi.mock('@/http/requests', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/http/requests')>()),
   deleteWorkout: vi.fn(),
+  likeWorkout: vi.fn(),
   postWorkoutComment: vi.fn(),
+  unlikeWorkout: vi.fn(),
 }))
 
 import * as requests from '@/http/requests'
 import { ExerciseMetric, RoutineGroupMode } from '@/proto/api/v1/shared_pb'
 import {
   DeleteWorkoutResponseSchema,
+  LikeWorkoutResponseSchema,
   PostCommentResponseSchema,
+  UnlikeWorkoutResponseSchema,
   WorkoutSchema,
 } from '@/proto/api/v1/workout_service_pb'
 import { useToastStore } from '@/stores/toasts'
@@ -30,7 +34,9 @@ import { CardWorkout } from './CardWorkout'
 
 const mocked = {
   deleteWorkout: vi.mocked(requests.deleteWorkout),
+  likeWorkout: vi.mocked(requests.likeWorkout),
   postWorkoutComment: vi.mocked(requests.postWorkoutComment),
+  unlikeWorkout: vi.mocked(requests.unlikeWorkout),
 }
 
 const ownerId = 'user-owner'
@@ -43,7 +49,12 @@ const workout = ({
   exerciseSets,
   comments,
   groups,
-}: Pick<WorkoutInit, 'exerciseSets' | 'comments' | 'groups'> = {}) =>
+  likeCount,
+  likedByViewer,
+}: Pick<
+  WorkoutInit,
+  'exerciseSets' | 'comments' | 'groups' | 'likeCount' | 'likedByViewer'
+> = {}) =>
   create(WorkoutSchema, {
     id: 'workout-1',
     name: 'Push Day',
@@ -52,6 +63,8 @@ const workout = ({
     exerciseSets,
     comments,
     groups,
+    likeCount,
+    likedByViewer,
   })
 
 const withSets = () =>
@@ -207,6 +220,8 @@ describe('CardWorkout', () => {
   beforeEach(() => {
     Object.values(mocked).forEach((mock) => mock.mockReset())
     mocked.deleteWorkout.mockResolvedValue(create(DeleteWorkoutResponseSchema, {}))
+    mocked.likeWorkout.mockResolvedValue(create(LikeWorkoutResponseSchema, {}))
+    mocked.unlikeWorkout.mockResolvedValue(create(UnlikeWorkoutResponseSchema, {}))
     useAuthStore.setState({ userId: ownerId })
     useToastStore.getState().dismiss()
     useConfirmationStore.setState({ confirmation: null, resolver: null })
@@ -372,6 +387,15 @@ describe('CardWorkout', () => {
       ).toBeInTheDocument()
     })
 
+    // The whole row is one link to the workout, and a control inside it is
+    // reached by tapping past that link. Repping happens where the session is
+    // read.
+    test('offers no rep control on the row', () => {
+      render(<CardWorkout compact workout={workout({ likeCount: 2 })} />)
+
+      expect(screen.queryByRole('button', { name: /rep/i })).not.toBeInTheDocument()
+    })
+
     test('leaves out the exercises and the comments', () => {
       render(<CardWorkout compact workout={withSets()} />)
 
@@ -505,6 +529,55 @@ describe('CardWorkout', () => {
       render(<CardWorkout compact={false} workout={workout()} />)
 
       expect(screen.queryByRole('button', { name: 'Workout actions' })).not.toBeInTheDocument()
+    })
+
+    // The tap is answered here and reconciled after: a rep is the lightest
+    // thing on the screen and waiting on the round trip is what makes it feel
+    // like work.
+    test('reps a workout and moves the count before the request returns', async () => {
+      useAuthStore.setState({ userId: 'someone-else' })
+      render(<CardWorkout compact={false} workout={workout({ likeCount: 2 })} />)
+
+      await userEvent.click(screen.getByRole('button', { name: 'Rep this workout, 2 reps' }))
+
+      const control = await screen.findByRole('button', { name: 'Remove your rep, 3 reps' })
+      expect(control).toHaveAttribute('aria-pressed', 'true')
+      expect(mocked.likeWorkout).toHaveBeenCalledWith('workout-1')
+    })
+
+    test('takes the rep back again', async () => {
+      useAuthStore.setState({ userId: 'someone-else' })
+      render(
+        <CardWorkout compact={false} workout={workout({ likeCount: 3, likedByViewer: true })} />,
+      )
+
+      await userEvent.click(screen.getByRole('button', { name: 'Remove your rep, 3 reps' }))
+
+      const control = await screen.findByRole('button', { name: 'Rep this workout, 2 reps' })
+      expect(control).toHaveAttribute('aria-pressed', 'false')
+      expect(mocked.unlikeWorkout).toHaveBeenCalledWith('workout-1')
+    })
+
+    // A count that stayed where the tap put it says the rep landed when it did
+    // not, and the next reader of the workout sees a different number.
+    test('puts the count back and says so when the rep fails', async () => {
+      mocked.likeWorkout.mockResolvedValue(undefined)
+      useAuthStore.setState({ userId: 'someone-else' })
+      render(<CardWorkout compact={false} workout={workout({ likeCount: 2 })} />)
+
+      await userEvent.click(screen.getByRole('button', { name: 'Rep this workout, 2 reps' }))
+
+      expect(await screen.findByRole('alert')).toHaveTextContent('Something went wrong')
+      expect(screen.getByRole('button', { name: 'Rep this workout, 2 reps' })).toHaveAttribute(
+        'aria-pressed',
+        'false',
+      )
+    })
+
+    test('reps your own workout as readily as anyone else’s', () => {
+      render(<CardWorkout compact={false} workout={workout({ likeCount: 1 })} />)
+
+      expect(screen.getByRole('button', { name: 'Rep this workout, 1 rep' })).toBeInTheDocument()
     })
 
     test('posts a comment and shows it straight away', async () => {
