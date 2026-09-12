@@ -52,6 +52,7 @@ func exactMatches() []string {
 // here.
 func routeSegments() []string {
 	return []string{
+		"delete-account",
 		"exercises",
 		"forgot-password",
 		"home",
