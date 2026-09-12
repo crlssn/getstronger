@@ -202,7 +202,7 @@ Apple's nutrition labels and Google's Data safety form are filled in from the sa
 
 Account deletion is a store requirement rather than a nicety, and it is two requirements. Both stores refuse an app that lets people create an account without letting them delete it from inside the app: that control lives under Me → Account → Delete account, and erases the account and everything it owns. Google's Data safety form and App Store Connect then ask separately for a deletion URL that opens with nobody signed in and the app uninstalled — `https://www.getstronger.studio/delete-account` (`web/src/ui/AccountDeletion.tsx`), which says how to ask, what goes, and what is kept. A privacy policy URL does not answer that question and gets bounced.
 
-What the deletion page claims has to stay true of what `repo.DeleteUser` does. One gap is live: PostHog holds usage and error events under the account id, nothing in the deletion path reaches them, and the page therefore routes that to `privacy@getstronger.studio` by hand.
+What the deletion page claims has to stay true of what `repo.DeleteUser` does. PostHog is the one thing outside it: its events keep the account id after the account is gone, which the page discloses rather than promises to erase. That disclosure reads as anonymous only while the PostHog project discards client IP data — an event still carrying `$ip` and its `$geoip_*` properties identifies someone whatever our own database has forgotten.
 
 The `privacy@getstronger.studio` address both pages point at has to receive mail before the first submission — it is the only route people have for a data request, and the only one a deletion request has once the app is uninstalled.
 

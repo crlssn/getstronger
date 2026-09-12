@@ -949,7 +949,7 @@ export const en = {
     keptTitle: 'What is kept, and for how long',
     keptBackups: 'Database backups hold a copy for up to 30 days, and are then overwritten.',
     keptAnalytics:
-      'Usage and error events sit at PostHog under your account id, and deleting from inside the app does not reach them. Ask at the address above and they go too.',
+      'Usage and error events stay at PostHog, filed under an account id that no longer belongs to anyone and holding nothing that names you.',
     keptDevice:
       'Nothing stays on your phone: deleting the account clears the drafts, cached pages and preferences the app kept there.',
     policyBody:
@@ -1930,7 +1930,7 @@ export const sv = {
     keptBackups:
       'Säkerhetskopior av databasen har en kopia i upp till 30 dagar och skrivs sedan över.',
     keptAnalytics:
-      'Användnings- och felhändelser ligger hos PostHog under ditt konto-id, och borttagningen inne i appen når inte dem. Be på adressen ovan så försvinner de också.',
+      'Användnings- och felhändelser ligger kvar hos PostHog, sorterade under ett konto-id som inte längre tillhör någon och som inte innehåller något som pekar ut dig.',
     keptDevice:
       'Inget blir kvar i telefonen: att ta bort kontot rensar utkast, sparade sidor och inställningar som appen lagt där.',
     policyBody:
