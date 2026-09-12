@@ -40,7 +40,7 @@ const roles = {
   // session. The two auth and input cases are invalid-field states, which is
   // the same "you cannot proceed" the colour already carries.
   danger: [
-    'auth/VerifyEmailPending.module.css',
+    'auth/auth.module.css',
     'components/AppButton.module.css',
     'components/AppErrorState.module.css',
     'components/AppIconButton.module.css',

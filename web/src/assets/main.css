@@ -74,39 +74,3 @@ select {
 .loading-line:nth-of-type(2) {
   @apply w-52;
 }
-
-.auth-view {
-  @apply w-full;
-}
-
-.auth-intro {
-  @apply mb-8;
-}
-
-.auth-intro h1 {
-  @apply mt-2 text-display font-bold text-text;
-}
-
-.auth-intro > p:last-child {
-  @apply mt-3 text-base leading-6 text-text-muted;
-}
-
-.auth-eyebrow {
-  @apply text-eyebrow font-bold uppercase text-text-subtle;
-}
-
-.auth-form {
-  @apply space-y-5;
-}
-
-/* The only route between logging in and signing up, so it carries a thumb's
-   worth of room on both axes — "Log in" is 40px of text. The negative margin
-   spends the height on the hit area rather than on the line, which keeps the
-   sentence it sits in the height it was. */
-.auth-link {
-  @apply -my-3 inline-flex min-h-(--size-control-sm) min-w-(--size-control-sm) items-center justify-center py-3 font-semibold text-ink underline decoration-ink-border underline-offset-4 transition hover:text-ink-strong hover:decoration-ink-muted;
-}
-
-.auth-footer {
-  @apply mt-7 text-center text-sm text-text-muted;
-}

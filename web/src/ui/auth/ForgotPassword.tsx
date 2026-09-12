@@ -11,6 +11,8 @@ import { AppButton } from '@/ui/components/AppButton'
 import { AppInlineError } from '@/ui/components/AppInlineError'
 import { AppInput } from '@/ui/components/AppInput'
 
+import styles from './auth.module.css'
+
 export const ForgotPassword = () => {
   const { t } = useTranslation()
   const [email, setEmail] = useState('')
@@ -40,14 +42,14 @@ export const ForgotPassword = () => {
   }
 
   return (
-    <section className="auth-view">
-      <header className="auth-intro">
-        <p className="auth-eyebrow">{t('auth.recovery.eyebrow')}</p>
+    <section className={styles.view}>
+      <header className={styles.intro}>
+        <p className={styles.eyebrow}>{t('auth.recovery.eyebrow')}</p>
         <h1>{t('auth.recovery.title')}</h1>
         <p>{t('auth.recovery.intro')}</p>
       </header>
 
-      <form className="auth-form" method="POST" onSubmit={(event) => void onSubmit(event)}>
+      <form className={styles.form} method="POST" onSubmit={(event) => void onSubmit(event)}>
         <AppInput
           id="email"
           name="email"
@@ -74,9 +76,9 @@ export const ForgotPassword = () => {
         </AppButton>
       </form>
 
-      <p className="auth-footer">
+      <p className={styles.footer}>
         {t('auth.recovery.rememberPassword')}{' '}
-        <Link to="/login" className="auth-link">
+        <Link to="/login" className={styles.link}>
           {t('auth.login')}
         </Link>
       </p>

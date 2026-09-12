@@ -98,8 +98,8 @@ export const logInAs = async (page: Page, userEmail: string, userPassword: strin
 export const logIn = async (page: Page) => logInAs(page, seedEmail, seedPassword)
 
 export const waitForHome = async (page: Page) => {
-  // `.loading-card` is the one class the app still declares globally, and it is
-  // what the screenshot harness settles on too.
+  // `.loading-card` is one of the two classes the app still declares globally,
+  // and it is what the screenshot harness settles on too.
   await expect(page.locator('.loading-card')).toHaveCount(0)
   // The feed has settled once it says something: a workout, the caught-up
   // marker, the empty state, or the error.
