@@ -14,6 +14,10 @@ const (
 	fxValidator     = `name:"validator"`
 )
 
+// A workout's recording_json may be 5 MB (workout_service.proto) and JSON
+// transport escapes it, so the largest legitimate body is about twice that.
+const handlerReadMaxBytes = 12 << 20
+
 func Module() fx.Option {
 	return fx.Module("interceptors", fx.Options(
 		fx.Provide(
@@ -39,6 +43,11 @@ func Module() fx.Option {
 
 // Authentication establishes the request context; limiting precedes validation
 // so malformed guest requests consume the same source budget as valid ones.
+// The cap precedes all three: connect buffers and unmarshals a body before the
+// chain runs, so without it a gzipped megabyte expands to gigabytes unrefused.
 func provideHandlerOptions(auth, limit, validator connect.Interceptor) []connect.HandlerOption {
-	return []connect.HandlerOption{connect.WithInterceptors(auth, limit, validator)}
+	return []connect.HandlerOption{
+		connect.WithReadMaxBytes(handlerReadMaxBytes),
+		connect.WithInterceptors(auth, limit, validator),
+	}
 }
