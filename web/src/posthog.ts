@@ -11,6 +11,10 @@ export const isPostHogConfigured = Boolean(key && host) && !inTest
 if (key && host && !inTest) {
   posthog.init(key, {
     api_host: host,
+    // api_host is a reverse proxy on our own domain that serves ingestion and
+    // nothing else, so the SDK cannot reach the PostHog app by guessing. Our
+    // project lives in the EU region.
+    ui_host: 'https://eu.posthog.com',
     // Pageviews replace Google Analytics; pin SPA route-change capture
     // rather than relying on the library default.
     capture_pageview: 'history_change',
