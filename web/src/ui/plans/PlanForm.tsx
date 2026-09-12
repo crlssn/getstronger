@@ -5,13 +5,15 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 
-import { consumeRequestError, getPlan, listRoutines } from '@/http/requests'
+import { consumeRequestError, consumeRequestNotFound, getPlan, listRoutines } from '@/http/requests'
 import posthog from '@/posthog'
 import { lastPerformedIn, useActivityStore } from '@/stores/activity'
 import { usePlanStore } from '@/stores/plans'
 import { useToastStore } from '@/stores/toasts'
 import { AppButton } from '@/ui/components/AppButton'
 import { AppEmptyInline } from '@/ui/components/AppEmptyInline'
+import { AppEmptyState } from '@/ui/components/AppEmptyState'
+import { AppErrorState } from '@/ui/components/AppErrorState'
 import { AppFormFooter } from '@/ui/components/AppFormFooter'
 import { AppIconButton } from '@/ui/components/AppIconButton'
 import { AppInput } from '@/ui/components/AppInput'
@@ -40,8 +42,11 @@ export const PlanForm = ({ planId }: Props) => {
   const [selected, setSelected] = useState<Routine[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [failed, setFailed] = useState(false)
+  const [gone, setGone] = useState(false)
   const [error, setError] = useState<string>()
   const [pickerOpen, setPickerOpen] = useState(false)
+  const [attempt, setAttempt] = useState(0)
 
   const editing = Boolean(planId)
 
@@ -52,6 +57,10 @@ export const PlanForm = ({ planId }: Props) => {
     let replaced = false
 
     const load = async () => {
+      setLoading(true)
+      setFailed(false)
+      setGone(false)
+
       // The picker says when each routine was last trained, which is what tells
       // three routines with the same name and exercise count apart.
       void useActivityStore.getState().load()
@@ -63,8 +72,14 @@ export const PlanForm = ({ planId }: Props) => {
       if (planId) {
         const response = await getPlan(planId)
         if (replaced) return
+
+        // A refusal, a server error and an unreachable backend all answer with
+        // void, and only the first of the three means the plan is gone.
         if (!response?.plan) {
-          await navigate('/plans', { replace: true })
+          const notFound = consumeRequestNotFound()
+          setGone(notFound)
+          setFailed(!notFound)
+          setLoading(false)
           return
         }
         setName(response.plan.name)
@@ -77,7 +92,7 @@ export const PlanForm = ({ planId }: Props) => {
     return () => {
       replaced = true
     }
-  }, [planId, navigate])
+  }, [planId, attempt])
 
   // A routine appears once in a plan, so the picker only offers what is left.
   const selectedIds = new Set(selected.map((routine) => routine.id))
@@ -143,6 +158,17 @@ export const PlanForm = ({ planId }: Props) => {
       .getState()
       .success(editing ? t('training.planForm.updated') : t('training.planForm.created'))
     await navigate(`/plans/${plan.id}`)
+  }
+
+  if (failed) return <AppErrorState onRetry={() => setAttempt((count) => count + 1)} />
+  if (gone) {
+    return (
+      <AppEmptyState
+        title={t('training.planView.unavailable')}
+        body={t('training.planView.unavailableBody')}
+        action={{ label: t('training.planView.viewPlans'), to: '/plans' }}
+      />
+    )
   }
 
   return (

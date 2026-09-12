@@ -11,6 +11,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 vi.mock('@/http/requests', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/http/requests')>()),
+  consumeRequestNotFound: vi.fn(),
   getPlan: vi.fn(),
   listRoutines: vi.fn(),
 }))
@@ -32,6 +33,7 @@ import { PlansView } from './PlansView'
 import { ViewPlan } from './ViewPlan'
 
 const mocked = {
+  consumeRequestNotFound: vi.mocked(requests.consumeRequestNotFound),
   getPlan: vi.mocked(requests.getPlan),
   listRoutines: vi.mocked(requests.listRoutines),
 }
@@ -60,6 +62,7 @@ beforeEach(() => {
   lowerKeyboard()
   useActivityStore.setState({ routineLastPerformed: {}, loaded: true, failed: false })
   Object.values(mocked).forEach((mock) => mock.mockReset())
+  mocked.consumeRequestNotFound.mockReturnValue(false)
   mocked.listRoutines.mockResolvedValue(create(ListRoutinesResponseSchema, { routines }))
   mocked.getPlan.mockResolvedValue(create(GetPlanResponseSchema, { plan: plan() }))
   vi.spyOn(useDashboardStore.getState(), 'load').mockResolvedValue(undefined)
@@ -187,6 +190,31 @@ describe('ViewPlan', () => {
       { route: '/plans/plan-1' },
     )
 
+  // A refusal, a 500 and an unreachable backend all answer with void. Sending
+  // the reader back to the list said the plan was gone in all three cases, and
+  // replaced the history entry that would have taken them back to it.
+  test('stays put and offers a retry when the plan does not load', async () => {
+    mocked.getPlan.mockResolvedValue(undefined)
+    render()
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Something went wrong')
+    expect(screen.queryByText('plans')).not.toBeInTheDocument()
+
+    mocked.getPlan.mockResolvedValue(create(GetPlanResponseSchema, { plan: plan() }))
+    await userEvent.click(screen.getByRole('button', { name: 'Try again' }))
+
+    expect(await screen.findByText('Push day')).toBeInTheDocument()
+  })
+
+  test('says the plan is gone when the backend says it is', async () => {
+    mocked.getPlan.mockResolvedValue(undefined)
+    mocked.consumeRequestNotFound.mockReturnValue(true)
+    render()
+
+    expect(await screen.findByText('Plan unavailable')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'View plans' })).toHaveAttribute('href', '/plans')
+  })
+
   test('lists the loop in order', async () => {
     render()
 
@@ -253,13 +281,6 @@ describe('ViewPlan', () => {
     // Following it again would put it straight back into a state where it
     // cannot say what to train next.
     expect(screen.queryByRole('button', { name: 'Make active' })).not.toBeInTheDocument()
-  })
-
-  test('goes back to the list when the plan is gone', async () => {
-    mocked.getPlan.mockResolvedValue(undefined)
-    render()
-
-    expect(await screen.findByText('plans')).toBeInTheDocument()
   })
 })
 
@@ -431,6 +452,27 @@ describe('PlanForm', () => {
       })
 
       expect(field).toHaveValue('Renamed')
+    })
+
+    test('offers a retry rather than a form it could not fill', async () => {
+      mocked.getPlan.mockResolvedValue(undefined)
+      renderWithProviders(<PlanForm planId="plan-1" />, { route: '/plans/plan-1/edit' })
+
+      expect(await screen.findByRole('alert')).toHaveTextContent('Something went wrong')
+
+      mocked.getPlan.mockResolvedValue(create(GetPlanResponseSchema, { plan: plan() }))
+      await userEvent.click(screen.getByRole('button', { name: 'Try again' }))
+
+      expect(await screen.findByDisplayValue('Push pull legs')).toBeInTheDocument()
+    })
+
+    test('says the plan is gone when the backend says it is', async () => {
+      mocked.getPlan.mockResolvedValue(undefined)
+      mocked.consumeRequestNotFound.mockReturnValue(true)
+      renderWithProviders(<PlanForm planId="plan-1" />, { route: '/plans/plan-1/edit' })
+
+      expect(await screen.findByText('Plan unavailable')).toBeInTheDocument()
+      expect(screen.getByRole('link', { name: 'View plans' })).toHaveAttribute('href', '/plans')
     })
 
     test('saves the changes', async () => {

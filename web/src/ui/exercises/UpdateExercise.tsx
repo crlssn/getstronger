@@ -2,14 +2,21 @@ import type { Exercise } from '@/proto/api/v1/shared_pb'
 import type { ExerciseFormValues } from '@/ui/exercises/ExerciseForm'
 
 import { create } from '@bufbuild/protobuf'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useParams } from 'react-router-dom'
 
-import { consumeRequestError, getExercise, listSets, updateExercise } from '@/http/requests'
+import {
+  consumeRequestError,
+  consumeRequestNotFound,
+  getExercise,
+  listSets,
+  updateExercise,
+} from '@/http/requests'
 import { ExerciseSchema } from '@/proto/api/v1/shared_pb'
 import { useToastStore } from '@/stores/toasts'
 import { AppButton } from '@/ui/components/AppButton'
+import { AppErrorState } from '@/ui/components/AppErrorState'
 import { AppSkeleton } from '@/ui/components/AppSkeleton'
 import { ExerciseForm } from '@/ui/exercises/ExerciseForm'
 import { emptyPageToken } from '@/utils/usePagination'
@@ -29,26 +36,39 @@ export const UpdateExercise = () => {
   // logged, so the form asks for a single set to find out before offering one.
   const [metricsLocked, setMetricsLocked] = useState(false)
   const [error, setError] = useState<string>()
+  const [failed, setFailed] = useState(false)
+
+  const load = useCallback(async () => {
+    const [res, logged] = await Promise.all([
+      getExercise(id),
+      listSets([], [id], emptyPageToken, 1),
+    ])
+
+    // A refusal, a server error and an unreachable backend all answer with
+    // void, and only the first of the three means the exercise is gone.
+    if (!res?.exercise) {
+      setFailed(!consumeRequestNotFound())
+      setLoading(false)
+      return
+    }
+
+    setFailed(false)
+    setExercise(res.exercise)
+    setValues({
+      name: res.exercise.name,
+      tags: [...res.exercise.tags],
+      metrics: [...res.exercise.metrics],
+    })
+    setMetricsLocked((logged?.sets.length ?? 0) > 0)
+    setLoading(false)
+  }, [id])
 
   useEffect(() => {
-    const load = async () => {
-      const [res, logged] = await Promise.all([
-        getExercise(id),
-        listSets([], [id], emptyPageToken, 1),
-      ])
-      if (res?.exercise) {
-        setExercise(res.exercise)
-        setValues({
-          name: res.exercise.name,
-          tags: [...res.exercise.tags],
-          metrics: [...res.exercise.metrics],
-        })
-        setMetricsLocked((logged?.sets.length ?? 0) > 0)
-      }
-      setLoading(false)
+    const initialLoad = async () => {
+      await load()
     }
-    void load()
-  }, [id])
+    void initialLoad()
+  }, [load])
 
   const onSubmit = async () => {
     if (!exercise || !values) return
@@ -78,6 +98,7 @@ export const UpdateExercise = () => {
   }
 
   if (loading) return <AppSkeleton />
+  if (failed) return <AppErrorState onRetry={() => void load()} />
 
   return (
     <section className={styles.formStatus}>

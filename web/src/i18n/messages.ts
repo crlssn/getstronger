@@ -413,7 +413,7 @@ export const en = {
     },
     view: {
       unavailable: 'Workout unavailable',
-      unavailableBody: 'This workout could not be loaded or no longer exists.',
+      unavailableBody: 'This workout no longer exists.',
       viewWorkouts: 'View workouts',
     },
     edit: {
@@ -499,6 +499,9 @@ export const en = {
     },
     planView: {
       trainingPlan: 'Training plan',
+      unavailable: 'Plan unavailable',
+      unavailableBody: 'This plan no longer exists.',
+      viewPlans: 'View plans',
       routinesRepeat_one: '{count} routine repeats continuously in this order.',
       routinesRepeat_other: '{count} routines repeat continuously in this order.',
       orderTitle: 'Your repeating sequence',
@@ -686,7 +689,7 @@ export const en = {
       prPill: 'PR',
       emptyHistory: 'Log this exercise in a workout to start its history.',
       loadMoreSets: 'Load more sets',
-      unavailableBody: 'This exercise could not be loaded or no longer exists.',
+      unavailableBody: 'This exercise no longer exists.',
       viewExercises: 'View exercises',
     },
     form: {
@@ -1400,7 +1403,7 @@ export const sv = {
     },
     view: {
       unavailable: 'Träningspasset är inte tillgängligt',
-      unavailableBody: 'Det gick inte att ladda träningspasset eller så finns det inte längre.',
+      unavailableBody: 'Träningspasset finns inte längre.',
       viewWorkouts: 'Visa träningspass',
     },
     edit: {
@@ -1486,6 +1489,9 @@ export const sv = {
     },
     planView: {
       trainingPlan: 'Träningsplan',
+      unavailable: 'Planen är inte tillgänglig',
+      unavailableBody: 'Planen finns inte längre.',
+      viewPlans: 'Visa planer',
       routinesRepeat_one: '{count} pass upprepas löpande i den här ordningen.',
       routinesRepeat_other: '{count} pass upprepas löpande i den här ordningen.',
       orderTitle: 'Passen i ordning',
@@ -1672,7 +1678,7 @@ export const sv = {
       prPill: 'PR',
       emptyHistory: 'Logga övningen i ett träningspass för att börja bygga historik.',
       loadMoreSets: 'Ladda fler set',
-      unavailableBody: 'Det gick inte att ladda övningen eller så finns den inte längre.',
+      unavailableBody: 'Övningen finns inte längre.',
       viewExercises: 'Visa övningar',
     },
     form: {

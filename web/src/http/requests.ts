@@ -732,6 +732,11 @@ type TryCatchOptions = {
 // to collect. One slot suffices: requests follow user actions, one at a time.
 let requestErrorMessage: string | undefined
 
+// Recorded beside the message because no message can carry it: a screen that
+// hides the thing it asked for has to tell "it is gone" from "the request
+// never landed", and only the first is worth saying to the reader.
+let requestNotFound = false
+
 /** The message the request that just returned void failed with, then clears it. */
 export const consumeRequestError = (): string | undefined => {
   const message = requestErrorMessage
@@ -739,11 +744,19 @@ export const consumeRequestError = (): string | undefined => {
   return message
 }
 
+/** Whether the request that just returned void was refused as not-found, then clears it. */
+export const consumeRequestNotFound = (): boolean => {
+  const notFound = requestNotFound
+  requestNotFound = false
+  return notFound
+}
+
 const tryCatch = async <T>(
   fn: () => Promise<T>,
   options: TryCatchOptions = {},
 ): Promise<T | void> => {
   requestErrorMessage = undefined
+  requestNotFound = false
   try {
     return await fn()
   } catch (error) {
@@ -758,6 +771,8 @@ const tryCatch = async <T>(
         await logoutUnauthenticatedUser()
         return
       }
+
+      requestNotFound = error.code === Code.NotFound
 
       if (options.rethrow) throw error
 

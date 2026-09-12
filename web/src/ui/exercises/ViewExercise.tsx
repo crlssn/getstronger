@@ -12,7 +12,13 @@ import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 
-import { consumeRequestError, deleteExercise, getExercise, listSets } from '@/http/requests'
+import {
+  consumeRequestError,
+  consumeRequestNotFound,
+  deleteExercise,
+  getExercise,
+  listSets,
+} from '@/http/requests'
 import { useAuthStore } from '@/stores/auth'
 import { useConfirmationStore } from '@/stores/confirmation'
 import { usePageTitleStore } from '@/stores/pageTitle'
@@ -20,6 +26,7 @@ import { useToastStore } from '@/stores/toasts'
 import { useWorkoutStore } from '@/stores/workout'
 import { AppButton } from '@/ui/components/AppButton'
 import { AppChip } from '@/ui/components/AppChip'
+import { AppErrorState } from '@/ui/components/AppErrorState'
 import { AppLoadMore } from '@/ui/components/AppLoadMore'
 import { AppOptionRow } from '@/ui/components/AppOptionRow'
 import { AppInlineError } from '@/ui/components/AppInlineError'
@@ -55,6 +62,7 @@ export const ViewExercise = () => {
   const [exercise, setExercise] = useState<Exercise>()
   const [sets, setSets] = useState<Set[]>([])
   const [loading, setLoading] = useState(true)
+  const [failed, setFailed] = useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [deleteError, setDeleteError] = useState<string>()
   const [deleting, setDeleting] = useState(false)
@@ -67,18 +75,27 @@ export const ViewExercise = () => {
     setFromResponse(response.pagination)
   }, [id, currentPageToken, setFromResponse])
 
-  useEffect(() => {
-    const load = async () => {
-      const response = await getExercise(id)
-      if (response?.exercise) {
-        setExercise(response.exercise)
-        usePageTitleStore.getState().setPageTitle(response.exercise.name)
-        await fetchSets()
-      }
-      setLoading(false)
+  const load = useCallback(async () => {
+    const response = await getExercise(id)
+
+    // A refusal, a server error and an unreachable backend all answer with
+    // void, and only the first of the three means the exercise is gone.
+    const gone = consumeRequestNotFound()
+    setFailed(!response && !gone)
+    if (response?.exercise) {
+      setExercise(response.exercise)
+      usePageTitleStore.getState().setPageTitle(response.exercise.name)
+      await fetchSets()
     }
-    void load()
+    setLoading(false)
   }, [id, fetchSets])
+
+  useEffect(() => {
+    const initialLoad = async () => {
+      await load()
+    }
+    void initialLoad()
+  }, [load])
 
   const onDeleteExercise = async () => {
     if (deleting) return
@@ -126,6 +143,7 @@ export const ViewExercise = () => {
   }
 
   if (loading) return <AppSkeleton />
+  if (failed) return <AppErrorState onRetry={() => void load()} />
 
   if (!exercise) {
     return (
