@@ -289,6 +289,10 @@ test.describe('profiles and notifications', () => {
       .getByRole('link', { name: /View .* workout details/ })
       .first()
       .click()
+    // `url()` is a cached read, and a client-side navigation reaches it after
+    // the click has returned: waited for, or the address kept here is the
+    // profile the reload below would find no rep button on.
+    await expect(sam).toHaveURL(/\/workouts\/[0-9a-f-]+$/)
     const workout = sam.url()
 
     const rep = sam.getByRole('button', { name: /^Rep this workout/ })
