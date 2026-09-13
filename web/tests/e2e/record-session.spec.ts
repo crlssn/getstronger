@@ -163,6 +163,37 @@ test.describe('a session with no set length', () => {
     expect(JSON.parse(saved ?? '{}')).toMatchObject({ cueLeadSeconds: 20 })
   })
 
+  // A saved recording is no longer on the workout's row: it is written to the
+  // object store and read back when the workout is opened. Coming back to the
+  // workout from elsewhere is what proves the round trip, since nothing the
+  // recorder still held in hand survives the navigation.
+  test('reopens the route it recorded from storage @mutation', async ({ page }) => {
+    await withoutTiles(page)
+    await logIn(page)
+    await page.goto('/exercises')
+    await page
+      .getByRole('link', { name: /^Run\b/ })
+      .first()
+      .click()
+
+    await page.getByRole('button', { name: /Record a session/ }).click()
+    await page.getByRole('button', { name: 'Start', exact: true }).click()
+    await walkTheRoute(page)
+    await page.getByRole('button', { name: 'End session' }).click()
+    await expect(page).toHaveURL(/\/workouts\/[0-9a-f-]+$/)
+
+    const saved = page.url()
+    await page.goto('/home')
+    await page.goto(saved)
+
+    const route = page
+      .locator('section')
+      .filter({ has: page.getByRole('heading', { name: 'Workout route' }) })
+    await expect(route.getByText('1 round')).toBeVisible()
+    // The same 34 m the recording measured, read back out of storage.
+    await expect(route.getByText(/^0\.03\s*km$/).first()).toBeVisible()
+  })
+
   test('records from an exercise and saves without asking @mutation', async ({ page }) => {
     await withoutTiles(page)
     await logIn(page)
