@@ -31,6 +31,7 @@ import (
 	"github.com/crlssn/getstronger/server/rpc/parser"
 	"github.com/crlssn/getstronger/server/testing/container"
 	"github.com/crlssn/getstronger/server/testing/factory"
+	"github.com/crlssn/getstronger/server/testing/objectstoretest"
 	"github.com/crlssn/getstronger/server/weightunit"
 	"github.com/crlssn/getstronger/server/xcontext"
 )
@@ -54,7 +55,7 @@ func (s *userSuite) SetupSuite() {
 	ctx := context.Background()
 	s.container = container.NewContainer(ctx)
 	s.factory = factory.NewFactory(s.container.DB)
-	s.repo = repo.New(s.container.DB)
+	s.repo = repo.New(s.container.DB, objectstoretest.NewMemory())
 	// FollowUser publishes, so the suite needs a real bus: nothing subscribes,
 	// which leaves the event persisted and buffered, exactly as a dropped one is.
 	s.handler = handlers.NewUserHandler(s.repo, pubsub.New(pubsub.Params{

@@ -19,6 +19,7 @@ import (
 	handlers "github.com/crlssn/getstronger/server/rpc/handlers/v1"
 	"github.com/crlssn/getstronger/server/testing/container"
 	"github.com/crlssn/getstronger/server/testing/factory"
+	"github.com/crlssn/getstronger/server/testing/objectstoretest"
 	"github.com/crlssn/getstronger/server/training"
 	"github.com/crlssn/getstronger/server/xcontext"
 )
@@ -41,7 +42,7 @@ func (s *routineSuite) SetupSuite() {
 	ctx := context.Background()
 	s.container = container.NewContainer(ctx)
 	s.factory = factory.NewFactory(s.container.DB)
-	s.handler = handlers.NewRoutineHandler(repo.New(s.container.DB))
+	s.handler = handlers.NewRoutineHandler(repo.New(s.container.DB, objectstoretest.NewMemory()))
 
 	s.T().Cleanup(func() {
 		if err := s.container.Terminate(ctx); err != nil {

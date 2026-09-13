@@ -33,6 +33,7 @@ import (
 	handlers "github.com/crlssn/getstronger/server/rpc/handlers/v1"
 	"github.com/crlssn/getstronger/server/testing/container"
 	"github.com/crlssn/getstronger/server/testing/factory"
+	"github.com/crlssn/getstronger/server/testing/objectstoretest"
 	"github.com/crlssn/getstronger/server/xcontext"
 )
 
@@ -66,7 +67,7 @@ func (s *authSuite) SetupSuite() {
 	s.jwt = jwt.NewIssuer([]byte("access-key"), []byte("refresh-key"))
 	s.handler = handlers.NewAuthHandler(handlers.AuthHandlerParams{
 		JWT:     s.jwt,
-		Repo:    repo.New(s.container.DB),
+		Repo:    repo.New(s.container.DB, objectstoretest.NewMemory()),
 		Email:   s.mocks.email,
 		Cookies: cookies.New(new(config.Config)),
 	})

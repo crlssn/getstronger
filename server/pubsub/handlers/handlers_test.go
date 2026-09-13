@@ -20,6 +20,7 @@ import (
 	"github.com/crlssn/getstronger/server/repo"
 	"github.com/crlssn/getstronger/server/testing/container"
 	"github.com/crlssn/getstronger/server/testing/factory"
+	"github.com/crlssn/getstronger/server/testing/objectstoretest"
 	"github.com/crlssn/getstronger/server/training"
 )
 
@@ -63,7 +64,7 @@ func TestWorkoutCommentPosted_HandlePayload(t *testing.T) {
 	ctx := context.Background()
 	c := container.NewContainer(ctx)
 	f := factory.NewFactory(c.DB)
-	handler := handlers.NewWorkoutCommentPosted(zap.NewExample(), repo.New(c.DB))
+	handler := handlers.NewWorkoutCommentPosted(zap.NewExample(), repo.New(c.DB, objectstoretest.NewMemory()))
 
 	t.Run("ok_workout_comment_posted", func(t *testing.T) {
 		t.Parallel()
@@ -134,7 +135,7 @@ func TestWorkoutLiked_HandlePayload(t *testing.T) {
 	ctx := context.Background()
 	c := container.NewContainer(ctx)
 	f := factory.NewFactory(c.DB)
-	handler := handlers.NewWorkoutLiked(zap.NewExample(), repo.New(c.DB))
+	handler := handlers.NewWorkoutLiked(zap.NewExample(), repo.New(c.DB, objectstoretest.NewMemory()))
 
 	t.Run("ok_the_owner_is_told_once", func(t *testing.T) {
 		t.Parallel()

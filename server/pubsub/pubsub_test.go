@@ -19,6 +19,7 @@ import (
 	"github.com/crlssn/getstronger/server/repo"
 	"github.com/crlssn/getstronger/server/testing/container"
 	"github.com/crlssn/getstronger/server/testing/leak"
+	"github.com/crlssn/getstronger/server/testing/objectstoretest"
 )
 
 type pubSubSuite struct {
@@ -43,7 +44,7 @@ func (s *pubSubSuite) SetupSuite() {
 
 	s.pubSub = pubsub.New(pubsub.Params{
 		Log:   zap.NewExample(),
-		Store: repo.New(c.DB),
+		Store: repo.New(c.DB, objectstoretest.NewMemory()),
 	})
 
 	s.mocks.controller = gomock.NewController(s.T())

@@ -12,11 +12,13 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/crlssn/getstronger/server/gen/models"
+	"github.com/crlssn/getstronger/server/objectstore"
 	"github.com/crlssn/getstronger/server/pubsub"
 	"github.com/crlssn/getstronger/server/pubsub/events"
 	"github.com/crlssn/getstronger/server/repo"
 	"github.com/crlssn/getstronger/server/testing/container"
 	"github.com/crlssn/getstronger/server/testing/factory"
+	"github.com/crlssn/getstronger/server/testing/objectstoretest"
 )
 
 // The module binds one repo to four ports and subscribes every topic on start.
@@ -38,7 +40,12 @@ func TestModuleSubscribesEveryTopic(t *testing.T) {
 	var bus *pubsub.PubSub
 	app := fx.New(
 		pubsub.Module(),
-		fx.Provide(func() *sql.DB { return c.DB }, repo.New, zap.NewExample),
+		fx.Provide(
+			func() *sql.DB { return c.DB },
+			func() objectstore.Store { return objectstoretest.NewMemory() },
+			repo.New,
+			zap.NewExample,
+		),
 		fx.Populate(&bus),
 		fx.NopLogger,
 	)
