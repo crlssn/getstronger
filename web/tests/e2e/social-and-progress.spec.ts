@@ -257,30 +257,41 @@ test.describe('profiles and notifications', () => {
 
   // The whole of the feature in one pass: the tap, the count the server kept,
   // and the row it puts in front of the athlete who trained.
-  test('reps another athlete’s workout and tells them so @mutation', async ({ page }) => {
+  test('reps another athlete’s workout and tells them so @mutation', async ({ browser, page }) => {
+    // Two personas in two browsers, and a row waited for by asking for the page
+    // again: the longest flow in this file.
+    test.slow()
+
+    // Sam reps from a browser of their own, which leaves this one signed in as
+    // the athlete who trained — the one the notification is for. The context
+    // takes this project's phone with it, so the control is still measured
+    // against a thumb.
+    const samsBrowser = await browser.newContext()
+    const sam = await samsBrowser.newPage()
+
     // Sam has no history and follows nobody, so the session is reached through
     // its owner's profile rather than through a feed.
-    await logInAs(page, newUserEmail, seedPassword)
-    await page.getByRole('button', { name: 'Search', exact: true }).click()
-    await page
+    await logInAs(sam, newUserEmail, seedPassword)
+    await sam.getByRole('button', { name: 'Search', exact: true }).click()
+    await sam
       .getByRole('searchbox', { name: 'Search people, routines, plans, exercises', exact: true })
       .fill('Alex Morgan')
-    await page
+    await sam
       .getByRole('region', { name: 'Search' })
       .getByRole('link', { name: /Alex Morgan/ })
       .click()
 
-    await page
+    await sam
       .getByRole('navigation', { name: 'Profile sections' })
       .getByRole('link', { name: 'Workouts', exact: true })
       .click()
-    await page
+    await sam
       .getByRole('link', { name: /View .* workout details/ })
       .first()
       .click()
-    const workout = page.url()
+    const workout = sam.url()
 
-    const rep = page.getByRole('button', { name: /^Rep this workout/ })
+    const rep = sam.getByRole('button', { name: /^Rep this workout/ })
     await expect(rep).toHaveAttribute('aria-pressed', 'false')
     const before = Number(await rep.innerText())
 
@@ -291,27 +302,26 @@ test.describe('profiles and notifications', () => {
     expect(box.width).toBeGreaterThanOrEqual(44)
 
     await rep.click()
-    const repped = page.getByRole('button', { name: /^Remove your rep/ })
+    const repped = sam.getByRole('button', { name: /^Remove your rep/ })
     await expect(repped).toHaveAttribute('aria-pressed', 'true')
     await expect(repped).toHaveText(String(before + 1))
 
     // Reloading reads the count back off the server rather than off the tap.
-    await page.goto(workout)
-    await expect(page.getByRole('button', { name: /^Remove your rep/ })).toHaveText(
+    await sam.goto(workout)
+    await expect(sam.getByRole('button', { name: /^Remove your rep/ })).toHaveText(
       String(before + 1),
     )
+    await samsBrowser.close()
 
     // The session's owner is told, and the row leads back to the workout. The
-    // notification is written off an event rather than inside the request, so
-    // the page is asked again rather than once.
-    await logIn(page)
-    const notification = page.getByRole('listitem').filter({ hasText: '@sam repped your' }).first()
-    await expect
-      .poll(async () => {
-        await page.goto('/notifications')
-        return notification.count()
-      })
-      .toBe(1)
+    // notification is written off an event rather than inside the request, and
+    // the list is fetched once per visit, so each attempt loads the page and
+    // then waits on the row rather than counting what has yet to arrive.
+    const notification = page.getByRole('listitem').filter({ hasText: '@sam repped your' })
+    await expect(async () => {
+      await page.goto('/notifications')
+      await expect(notification).toHaveCount(1, { timeout: 5_000 })
+    }).toPass({ timeout: 20_000 })
 
     await notification.getByRole('link').click()
     await expect(page).toHaveURL(workout)
