@@ -176,6 +176,18 @@ set -euo pipefail
   -new-name="$NEW_USER_NAME"
 ''']
 
+# Moves the recordings still kept on their rows into the object store. Safe to
+# run again: it claims a workout only while its document is still on the row.
+[tasks."db:recordings"]
+description = "Move workout recordings from the database into object storage"
+run = [{ task = "worktree:guard" }, '''
+#!/usr/bin/env bash
+set -euo pipefail
+
+# See the note in 'db:reset' on why the binary is resolved through mise.
+"$(mise which go)" run ./server/cmd/recordings "$@"
+''']
+
 # Code generation tasks
 
 [tasks.gen]

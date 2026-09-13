@@ -55,7 +55,9 @@ func (s *repoSuite) TestCreateWorkoutStoresItsRecordingAsAnObject() {
 	s.Require().NoError(err)
 	s.Require().Empty(row.RecordingJSON)
 	s.Require().Equal(repo.RecordingKey(workout.ID), row.RecordingKey)
-	s.Require().Equal([]string{repo.RecordingKey(workout.ID)}, s.recordings.Keys())
+	stored, err := s.recordings.Get(ctx, row.RecordingKey)
+	s.Require().NoError(err)
+	s.Require().JSONEq(recordedSession, string(stored))
 
 	// And reading it back answers with the recording, wherever it is kept.
 	read, err := s.repo.GetWorkout(ctx, repo.GetWorkoutWithID(workout.ID))
@@ -200,4 +202,83 @@ func TestPutRecordingReportsAnUnreachableStore(t *testing.T) {
 
 	_, err := repo.New(nil, store).PutRecording(context.Background(), recordedSession)
 	require.ErrorIs(t, err, store.PutErr)
+}
+
+// The backfill moves what is left on the rows and nothing else, and a second
+// run over the same data has nothing to do.
+func (s *repoSuite) TestBackfillRecordingsMovesEveryRowAndOnlyOnce() {
+	ctx := context.Background()
+	user := s.factory.NewUser()
+
+	onRow := s.factory.NewWorkout(
+		factory.WorkoutUserID(user.ID),
+		factory.WorkoutRecordingJSON(recordedSession),
+	)
+	byHand := s.factory.NewWorkout(factory.WorkoutUserID(user.ID))
+
+	alreadyMoved := s.factory.NewWorkout(factory.WorkoutUserID(user.ID))
+	movedKey := repo.RecordingKey(alreadyMoved.ID)
+	s.Require().NoError(s.recordings.Put(ctx, movedKey, []byte(`{"version":1,"moved":true}`)))
+	s.factory.NewWorkout(
+		factory.WorkoutID(alreadyMoved.ID),
+		factory.WorkoutUserID(user.ID),
+		factory.WorkoutRecordingKey(movedKey),
+	)
+
+	// Two rows at a time, so the loop that claims the next batch is exercised
+	// rather than the whole table fitting in one pass. The count is the whole
+	// table's: every other test in this suite shares the database, and what
+	// this one owns is asserted row by row below.
+	moved, err := s.repo.BackfillRecordings(ctx, 2)
+	s.Require().NoError(err)
+	s.Require().Positive(moved)
+
+	db := bob.NewDB(s.container.DB)
+	row, err := models.Workouts.Query(models.SelectWhere.Workouts.ID.EQ(onRow.ID)).One(ctx, db)
+	s.Require().NoError(err)
+	s.Require().Empty(row.RecordingJSON)
+	s.Require().Equal(repo.RecordingKey(onRow.ID), row.RecordingKey)
+
+	stored, err := s.recordings.Get(ctx, repo.RecordingKey(onRow.ID))
+	s.Require().NoError(err)
+	s.Require().JSONEq(recordedSession, string(stored))
+
+	// The session it moved still opens, and so does the one it left alone.
+	read, err := s.repo.GetWorkout(ctx, repo.GetWorkoutWithID(onRow.ID))
+	s.Require().NoError(err)
+	s.Require().JSONEq(recordedSession, read.RecordingJSON)
+
+	read, err = s.repo.GetWorkout(ctx, repo.GetWorkoutWithID(byHand.ID))
+	s.Require().NoError(err)
+	s.Require().Empty(read.RecordingJSON)
+
+	// A second run finds nothing left to move and leaves the already-moved
+	// row's document as it was.
+	moved, err = s.repo.BackfillRecordings(ctx, 2)
+	s.Require().NoError(err)
+	s.Require().Zero(moved)
+
+	stored, err = s.recordings.Get(ctx, movedKey)
+	s.Require().NoError(err)
+	s.Require().JSONEq(`{"version":1,"moved":true}`, string(stored))
+}
+
+// A bucket that will not take a document leaves the row carrying it, so the
+// run can be repeated rather than having lost the recording.
+func (s *repoSuite) TestBackfillRecordingsKeepsTheRowWhenTheStoreRefuses() {
+	ctx := context.Background()
+	workout := s.factory.NewWorkout(factory.WorkoutRecordingJSON(recordedSession))
+
+	s.recordings.PutErr = errBucketUnreachable
+	defer func() { s.recordings.PutErr = nil }()
+
+	_, err := s.repo.BackfillRecordings(ctx, 0)
+	s.Require().ErrorIs(err, errBucketUnreachable)
+
+	row, err := models.Workouts.Query(
+		models.SelectWhere.Workouts.ID.EQ(workout.ID),
+	).One(ctx, bob.NewDB(s.container.DB))
+	s.Require().NoError(err)
+	s.Require().JSONEq(recordedSession, row.RecordingJSON)
+	s.Require().Empty(row.RecordingKey)
 }
