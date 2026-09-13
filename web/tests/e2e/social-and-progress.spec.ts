@@ -301,10 +301,15 @@ test.describe('profiles and notifications', () => {
     expect(box.height).toBeGreaterThanOrEqual(44)
     expect(box.width).toBeGreaterThanOrEqual(44)
 
+    // The count moves on the tap, before the server has heard about it, so the
+    // request is armed here: navigating while it is still in flight cancels the
+    // very write the reload below is about to read back.
+    const kept = sam.waitForResponse('**/api.v1.WorkoutService/LikeWorkout')
     await rep.click()
     const repped = sam.getByRole('button', { name: /^Remove your rep/ })
     await expect(repped).toHaveAttribute('aria-pressed', 'true')
     await expect(repped).toHaveText(String(before + 1))
+    expect((await kept).ok()).toBe(true)
 
     // Reloading reads the count back off the server rather than off the tap.
     await sam.goto(workout)
