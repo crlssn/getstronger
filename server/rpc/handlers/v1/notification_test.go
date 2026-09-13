@@ -19,6 +19,7 @@ import (
 	handlers "github.com/crlssn/getstronger/server/rpc/handlers/v1"
 	"github.com/crlssn/getstronger/server/testing/container"
 	"github.com/crlssn/getstronger/server/testing/factory"
+	"github.com/crlssn/getstronger/server/testing/objectstoretest"
 	"github.com/crlssn/getstronger/server/xcontext"
 )
 
@@ -40,7 +41,7 @@ func (s *notificationSuite) SetupSuite() {
 	ctx := context.Background()
 	s.testContainer = container.NewContainer(ctx)
 	s.testFactory = factory.NewFactory(s.testContainer.DB)
-	s.handler = handlers.NewNotificationHandler(repo.New(s.testContainer.DB))
+	s.handler = handlers.NewNotificationHandler(repo.New(s.testContainer.DB, objectstoretest.NewMemory()))
 
 	s.T().Cleanup(func() {
 		if err := s.testContainer.Terminate(ctx); err != nil {
@@ -67,7 +68,7 @@ func (s *notificationSuite) TestMarkSingleNotificationAsRead() {
 	s.Require().NoError(err)
 	s.Require().NotNil(res)
 
-	count, err := repo.New(s.testContainer.DB).CountNotifications(
+	count, err := repo.New(s.testContainer.DB, objectstoretest.NewMemory()).CountNotifications(
 		ctx,
 		repo.CountNotificationsWithUserID(user.ID),
 		repo.CountNotificationsWithUnreadOnly(true),
@@ -75,7 +76,7 @@ func (s *notificationSuite) TestMarkSingleNotificationAsRead() {
 	s.Require().NoError(err)
 	s.Equal(int64(1), count)
 
-	otherCount, err := repo.New(s.testContainer.DB).CountNotifications(
+	otherCount, err := repo.New(s.testContainer.DB, objectstoretest.NewMemory()).CountNotifications(
 		ctx,
 		repo.CountNotificationsWithUserID(otherNotification.UserID),
 		repo.CountNotificationsWithUnreadOnly(true),
@@ -98,7 +99,7 @@ func (s *notificationSuite) TestMarkAllNotificationsAsRead() {
 	s.Require().NoError(err)
 	s.Require().NotNil(res)
 
-	count, err := repo.New(s.testContainer.DB).CountNotifications(
+	count, err := repo.New(s.testContainer.DB, objectstoretest.NewMemory()).CountNotifications(
 		ctx,
 		repo.CountNotificationsWithUserID(user.ID),
 		repo.CountNotificationsWithUnreadOnly(true),
@@ -106,7 +107,7 @@ func (s *notificationSuite) TestMarkAllNotificationsAsRead() {
 	s.Require().NoError(err)
 	s.Require().Zero(count)
 
-	otherCount, err := repo.New(s.testContainer.DB).CountNotifications(
+	otherCount, err := repo.New(s.testContainer.DB, objectstoretest.NewMemory()).CountNotifications(
 		ctx,
 		repo.CountNotificationsWithUserID(otherNotification.UserID),
 		repo.CountNotificationsWithUnreadOnly(true),

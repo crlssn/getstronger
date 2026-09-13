@@ -61,11 +61,12 @@ func (h *workoutHandler) CreateWorkout(ctx context.Context, req *connect.Request
 	if err = h.verifyExercisesOwned(ctx, ids.user, session.exerciseSets); err != nil {
 		return nil, err
 	}
-	if err = training.ValidateRecording(req.Msg.GetRecordingJson(), period); err != nil {
-		return nil, connect.NewError(connect.CodeInvalidArgument, err)
+	recording, err := h.storeRecording(ctx, req.Msg.GetRecordingJson(), period)
+	if err != nil {
+		return nil, err
 	}
 
-	workout, planAdvanceSkipped, err := h.createWorkout(ctx, req.Msg, ids, workoutName, period, session)
+	workout, planAdvanceSkipped, err := h.createWorkout(ctx, req.Msg, ids, workoutName, period, session, recording)
 	if errors.Is(err, training.ErrWorkoutAlreadySaved) {
 		return h.savedWorkout(ctx, ids.idempotencyKey, ids.user)
 	}
@@ -88,6 +89,24 @@ func (h *workoutHandler) CreateWorkout(ctx context.Context, req *connect.Request
 			WorkoutId: workout.ID.String(),
 		},
 	}, nil
+}
+
+// storeRecording checks the session's recording and writes it to the object
+// store before the transaction opens, so an unreachable bucket fails the save
+// outright: nothing is written, and the queue replays the attempt under the
+// same idempotency key rather than keeping a session without its route.
+func (h *workoutHandler) storeRecording(ctx context.Context, raw string, period training.Period) (repo.Recording, error) {
+	if err := training.ValidateRecording(raw, period); err != nil {
+		return repo.Recording{}, connect.NewError(connect.CodeInvalidArgument, err)
+	}
+
+	recording, err := h.repo.PutRecording(ctx, raw)
+	if err != nil {
+		xcontext.MustExtractLogger(ctx).Error("Put recording for workout save", zap.Error(err))
+		return repo.Recording{}, connect.NewError(connect.CodeInternal, nil)
+	}
+
+	return recording, nil
 }
 
 // savedWorkout answers a repeated save — one the offline queue replayed, or a
@@ -149,6 +168,7 @@ func (h *workoutHandler) createWorkout(
 	workoutName string,
 	period training.Period,
 	session workoutSession,
+	recording repo.Recording,
 ) (*training.Workout, error, error) {
 	var workout *training.Workout
 	var planAdvanceSkipped error
@@ -164,7 +184,7 @@ func (h *workoutHandler) createWorkout(
 			Groups:       session.groups,
 
 			IdempotencyKey: ids.idempotencyKey,
-			RecordingJSON:  request.GetRecordingJson(),
+			Recording:      recording,
 		})
 		if createErr != nil {
 			return fmt.Errorf("create workout: %w", createErr)

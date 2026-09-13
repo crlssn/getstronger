@@ -20,3 +20,6 @@ junit.xml
 # kept them out of 'git status', and that file is neither tracked nor cloned.
 /.claude/worktrees/
 /.claude/settings.local.json
+# Where the filesystem object store writes when nothing names a bucket, which
+# is every developer's own stack and the end-to-end suite.
+/.objectstore/

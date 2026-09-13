@@ -16,6 +16,7 @@ import (
 	"github.com/crlssn/getstronger/server/repo"
 	"github.com/crlssn/getstronger/server/testing/container"
 	"github.com/crlssn/getstronger/server/testing/factory"
+	"github.com/crlssn/getstronger/server/testing/objectstoretest"
 	"github.com/crlssn/getstronger/server/training"
 )
 
@@ -31,7 +32,7 @@ func TestPlanLifecycle(t *testing.T) {
 	})
 
 	f := factory.NewFactory(testContainer.DB)
-	r := repo.New(testContainer.DB)
+	r := repo.New(testContainer.DB, objectstoretest.NewMemory())
 	user := f.NewUser()
 	lower := f.NewRoutine(factory.RoutineUserID(user.ID), factory.RoutineName("Lower"))
 	chest := f.NewRoutine(factory.RoutineUserID(user.ID), factory.RoutineName("Chest"))
@@ -93,7 +94,7 @@ func TestPlanReadRoundTrips(t *testing.T) {
 	})
 
 	f := factory.NewFactory(testContainer.DB)
-	r := repo.New(testContainer.DB)
+	r := repo.New(testContainer.DB, objectstoretest.NewMemory())
 	user := f.NewUser()
 	userID := user.ID
 
@@ -161,7 +162,7 @@ func TestPlanRotationRejections(t *testing.T) {
 	})
 
 	f := factory.NewFactory(testContainer.DB)
-	r := repo.New(testContainer.DB)
+	r := repo.New(testContainer.DB, objectstoretest.NewMemory())
 	user, stranger := f.NewUser(), f.NewUser()
 	own := f.NewRoutine(factory.RoutineUserID(user.ID))
 	theirs := f.NewRoutine(factory.RoutineUserID(stranger.ID))
@@ -217,7 +218,7 @@ func countedRepo(t *testing.T, connection string) (*atomic.Int64, *repo.Repo) {
 		}
 	})
 
-	return counter, repo.New(db)
+	return counter, repo.New(db, objectstoretest.NewMemory())
 }
 
 // queryCounter counts every query pgx sends, whatever issues it.
@@ -262,7 +263,7 @@ func TestSoftDeleteRoutineLeavesPlansPointingWhereTheyWere(t *testing.T) {
 	})
 
 	f := factory.NewFactory(testContainer.DB)
-	r := repo.New(testContainer.DB)
+	r := repo.New(testContainer.DB, objectstoretest.NewMemory())
 	user := f.NewUser()
 	lower := f.NewRoutine(factory.RoutineUserID(user.ID), factory.RoutineName("Lower"))
 	chest := f.NewRoutine(factory.RoutineUserID(user.ID), factory.RoutineName("Chest"))

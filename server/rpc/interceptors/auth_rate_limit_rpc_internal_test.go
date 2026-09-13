@@ -33,6 +33,7 @@ import (
 	handlers "github.com/crlssn/getstronger/server/rpc/handlers/v1"
 	"github.com/crlssn/getstronger/server/testing/container"
 	"github.com/crlssn/getstronger/server/testing/factory"
+	"github.com/crlssn/getstronger/server/testing/objectstoretest"
 )
 
 func TestAuthRateLimitRPC(t *testing.T) {
@@ -126,7 +127,7 @@ func authLimitServer(t *testing.T, db *sql.DB, policy *config.AuthRateLimit, pee
 	log := zap.NewNop()
 	cfg := &config.Config{JWT: config.JWT{AccessTokenKey: "test-key"}}
 	issuer := jwt.NewIssuer([]byte("test-key"), []byte("refresh-key"))
-	store := repo.New(db)
+	store := repo.New(db, objectstoretest.NewMemory())
 	validator, err := protovalidate.New()
 	require.NoError(t, err)
 	_, handler := apiv1connect.NewAuthServiceHandler(handlers.NewAuthHandler(handlers.AuthHandlerParams{

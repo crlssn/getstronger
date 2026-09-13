@@ -48,6 +48,7 @@ type WorkoutTemplate struct {
 	RoutineID      func() null.Val[uuid.UUID]
 	IdempotencyKey func() null.Val[uuid.UUID]
 	RecordingJSON  func() string
+	RecordingKey   func() string
 
 	r workoutR
 	f *Factory
@@ -219,6 +220,10 @@ func (o WorkoutTemplate) BuildSetter() *models.WorkoutSetter {
 		val := o.RecordingJSON()
 		m.RecordingJSON = omit.From(val)
 	}
+	if o.RecordingKey != nil {
+		val := o.RecordingKey()
+		m.RecordingKey = omit.From(val)
+	}
 
 	return m
 }
@@ -270,6 +275,9 @@ func (o WorkoutTemplate) Build() *models.Workout {
 	}
 	if o.RecordingJSON != nil {
 		m.RecordingJSON = o.RecordingJSON()
+	}
+	if o.RecordingKey != nil {
+		m.RecordingKey = o.RecordingKey()
 	}
 
 	o.setModelRels(m)
@@ -567,6 +575,7 @@ func (m workoutMods) RandomizeAllColumns(f *faker.Faker) WorkoutMod {
 		WorkoutMods.RandomRoutineID(f),
 		WorkoutMods.RandomIdempotencyKey(f),
 		WorkoutMods.RandomRecordingJSON(f),
+		WorkoutMods.RandomRecordingKey(f),
 	}
 }
 
@@ -941,6 +950,37 @@ func (m workoutMods) UnsetRecordingJSON() WorkoutMod {
 func (m workoutMods) RandomRecordingJSON(f *faker.Faker) WorkoutMod {
 	return WorkoutModFunc(func(_ context.Context, o *WorkoutTemplate) {
 		o.RecordingJSON = func() string {
+			return random_string(f)
+		}
+	})
+}
+
+// Set the model columns to this value
+func (m workoutMods) RecordingKey(val string) WorkoutMod {
+	return WorkoutModFunc(func(_ context.Context, o *WorkoutTemplate) {
+		o.RecordingKey = func() string { return val }
+	})
+}
+
+// Set the Column from the function
+func (m workoutMods) RecordingKeyFunc(f func() string) WorkoutMod {
+	return WorkoutModFunc(func(_ context.Context, o *WorkoutTemplate) {
+		o.RecordingKey = f
+	})
+}
+
+// Clear any values for the column
+func (m workoutMods) UnsetRecordingKey() WorkoutMod {
+	return WorkoutModFunc(func(_ context.Context, o *WorkoutTemplate) {
+		o.RecordingKey = nil
+	})
+}
+
+// Generates a random value for the column using the given faker
+// if faker is nil, a default faker is used
+func (m workoutMods) RandomRecordingKey(f *faker.Faker) WorkoutMod {
+	return WorkoutModFunc(func(_ context.Context, o *WorkoutTemplate) {
+		o.RecordingKey = func() string {
 			return random_string(f)
 		}
 	})
