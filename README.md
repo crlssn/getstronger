@@ -254,6 +254,8 @@ Steps 1 to 7 below walk through production; step 8 covers what beta duplicates a
 8. Create a third IAM application named `getstronger-email` with a policy scoped to the production Project.
 9. Add the `TransactionalEmailEmailApiCreate` permission set so the application can send transactional emails without receiving broader Transactional Email permissions.
 10. Create an API key for the email application and save its secret key.
+11. Create a fourth IAM application named `getstronger-recordings` with a policy scoped to the production Project.
+12. Add the `ObjectStorageObjectsRead` and `ObjectStorageObjectsWrite` permission sets, scoped to the recordings bucket, so the API can read and write the documents it stores there and nothing else. Create an API key and save its access key and secret key.
 
 See Scaleway's guides to [IAM applications](https://www.scaleway.com/en/docs/iam/how-to/manage-applications/) and [Serverless SQL permissions](https://www.scaleway.com/en/docs/serverless-sql-databases/how-to/manage-permissions/) for the current console screens.
 
@@ -321,6 +323,12 @@ EMAIL_FROM_ADDRESS=noreply@getstronger.studio
 SCW_PROJECT_ID=<production-project-id>
 SCW_TEM_REGION=fr-par
 SCW_TEM_SECRET_KEY=<email-iam-secret-key>
+OBJECT_STORE_PROVIDER=s3
+OBJECT_STORE_ENDPOINT=https://s3.fr-par.scw.cloud
+OBJECT_STORE_REGION=fr-par
+OBJECT_STORE_BUCKET=getstronger-recordings
+OBJECT_STORE_ACCESS_KEY=<recordings-iam-access-key>
+OBJECT_STORE_SECRET_KEY=<recordings-iam-secret-key>
 ```
 
 Replace `example.com` with the production domain. The backend supports Scaleway Transactional Email in production, a local SMTP capture service for development, and `noop` when delivery must be disabled. TLS termination is handled by Scaleway's ingress, so no reverse proxy or certificate management is needed in the container. Never commit production configuration or IAM secret keys.
@@ -455,6 +463,7 @@ Beta is a full copy of the production stack, serving `https://beta.getstronger.s
 | Serverless SQL Database | `getstronger` | `getstronger-beta` |
 | Serverless Container | `getstronger` | `getstronger-beta` |
 | Object Storage bucket | `getstronger-public-bucket` | `beta.getstronger.studio` |
+| Recordings bucket | `getstronger-recordings` | `getstronger-recordings-beta` |
 | Web domain | `www.getstronger.studio` | `beta.getstronger.studio` |
 | API domain | `api.getstronger.studio` | `beta.api.getstronger.studio` |
 
@@ -523,6 +532,37 @@ what stops a third concurrent query from paying for a TCP connect, a TLS
 handshake and Postgres authentication on the request path. The lifetime matches
 the five minutes after which Serverless SQL idles a database: a connection held
 longer is one the pooler may already have dropped.
+
+### Workout recordings
+
+A recorded session's GPS trace is written once, read back whole, and never
+queried — so it lives in Object Storage rather than on the `workouts` row, at
+`recordings/<workout-id>.json`. A 45-minute run at one fix a second is around
+240 KB, and the Serverless SQL database would otherwise grow by that on every
+outdoor session and pay for it on every read of the row.
+
+| Environment variable | Purpose |
+| --- | --- |
+| `OBJECT_STORE_PROVIDER` | `s3` for a bucket, `filesystem` for a directory |
+| `OBJECT_STORE_ENDPOINT` | The bucket's S3 endpoint, `https://s3.fr-par.scw.cloud` |
+| `OBJECT_STORE_REGION` | The bucket's region; `fr-par` when unset |
+| `OBJECT_STORE_BUCKET` | The recordings bucket's name |
+| `OBJECT_STORE_ACCESS_KEY` | The `getstronger-recordings` application's access key |
+| `OBJECT_STORE_SECRET_KEY` | Its secret key |
+| `OBJECT_STORE_PATH` | Where `filesystem` writes; `.objectstore` when unset |
+
+The bucket holds one athlete's session per object and is never served to a
+browser, so it stays private: the API reads and writes it with a signed request
+of its own. A deployed environment must name its provider — an unset
+`OBJECT_STORE_PROVIDER` is a directory on the container only while `ENV=local`,
+and every other environment refuses to start rather than write recordings to a
+filesystem the next deploy replaces.
+
+Recordings saved before this existed are still on their rows, and are read from
+there until they are moved. `mise run db:recordings` moves them, one batch at a
+time, against whatever the environment configures; it claims a workout only
+while its document is still on the row, so running it again picks up what an
+interrupted run left and does nothing to what has already moved.
 
 ### 9. Profiling a deployed API
 
