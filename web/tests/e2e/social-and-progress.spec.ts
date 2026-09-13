@@ -285,10 +285,10 @@ test.describe('profiles and notifications', () => {
       .getByRole('navigation', { name: 'Profile sections' })
       .getByRole('link', { name: 'Workouts', exact: true })
       .click()
-    await sam
-      .getByRole('link', { name: /View .* workout details/ })
-      .first()
-      .click()
+    // The handle sits above this link and its tap floor covers the row's
+    // centre, so the tap lands in the padding beside the tile instead.
+    const session = sam.getByRole('link', { name: /View .* workout details/ }).first()
+    await session.click({ position: { x: 8, y: (await boxOf(session)).height / 2 } })
     // `url()` is a cached read, and a client-side navigation reaches it after
     // the click has returned: waited for, or the address kept here is the
     // profile the reload below would find no rep button on.
