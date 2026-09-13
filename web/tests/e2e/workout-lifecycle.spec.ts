@@ -529,6 +529,27 @@ test.describe('quick workout lifecycle', () => {
     await expect(sets.getByRole('cell', { name: 'Set 1, PR' })).toBeVisible()
     await expect(sets.getByRole('cell', { name: /Set [23], PR/ })).toHaveCount(0)
   })
+
+  // An Android System WebView that never updated is stuck on Chrome 90, two
+  // versions short of crypto.randomUUID. The draft mints its idempotency key
+  // the moment the screen opens, so the missing method used to throw before
+  // the first exercise could be chosen. Hiding it here is the only way to run
+  // that device, since every browser Playwright ships has the method.
+  test('records a workout on a WebView without crypto.randomUUID @mutation', async ({ page }) => {
+    await page.addInitScript(() => {
+      Object.defineProperty(crypto, 'randomUUID', { value: undefined, configurable: true })
+    })
+
+    await page.goto('/workouts/quick')
+    const exercise = await addFirstExercise(page)
+    await logFirstSet(page, exercise)
+    await page.getByRole('button', { name: 'Complete exercise' }).click()
+    await finishAndSave(page)
+
+    // The saved workout, which only exists if the key reached the backend.
+    await expect(page).toHaveURL(/\/workouts\/[0-9a-f-]+$/)
+    await expect(page.getByRole('table', { name: `${exercise} sets` })).toBeVisible()
+  })
 })
 
 test.describe('weight units', () => {
