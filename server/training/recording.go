@@ -143,22 +143,12 @@ func (r *recording) validatePhases() error {
 		if phase.DurationSeconds == nil && len(r.Phases) > 1 {
 			return ErrInvalidRecording
 		}
-		if err := phase.validate(); err != nil {
+		if err := phase.validateBounds(); err != nil {
 			return err
 		}
 	}
 
 	return nil
-}
-
-// validate wants a phase from one of the three parts of an interval routine,
-// or from a gym circuit, which names no part at all.
-func (p recordingPhase) validate() error {
-	if p.Role != "" && !p.Role.Valid() {
-		return ErrInvalidRecording
-	}
-
-	return p.validateBounds()
 }
 
 // validateBounds holds a phase's duration, its round and the strings it carries

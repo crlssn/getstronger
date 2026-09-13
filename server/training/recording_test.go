@@ -45,9 +45,11 @@ func TestRecordingValidation(t *testing.T) {
 		// one beside a prescription says two contradictory things.
 		"open beside timed": strings.Replace(open, `"phases":[`, `"phases":[{"exerciseId":"b","stationKey":"b","name":"Walk","round":1,"durationSeconds":60,"instruction":"Walk"},`, 1),
 		"open pause":        strings.Replace(valid, `"pauses":[]`, `"pauses":[{"startedAt":2000}]`, 1),
-		"unknown role":      strings.Replace(interval, `"role":"warmup"`, `"role":"sprint"`, 1),
-		"negative speed":    strings.Replace(held, `"speed":0`, `"speed":-1`, 1),
-		"oversized":         strings.Repeat(" ", 5000001),
+		// The role is an enum whose UnmarshalText refuses a value it does not
+		// know, so an unknown one never reaches the checks after the decode.
+		"role the decoder refuses": strings.Replace(interval, `"role":"warmup"`, `"role":"sprint"`, 1),
+		"negative speed":           strings.Replace(held, `"speed":0`, `"speed":-1`, 1),
+		"oversized":                strings.Repeat(" ", 5000001),
 		// The caps on a phase are what bound the cost of storing one workout.
 		"round below one":  strings.Replace(valid, `"round":1`, `"round":0`, 1),
 		"round above cap":  strings.Replace(valid, `"round":1`, `"round":100`, 1),
