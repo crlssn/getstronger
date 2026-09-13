@@ -1,9 +1,9 @@
 import type { Exercise } from '@/proto/api/v1/shared_pb'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { listExercises, listWorkouts } from '@/http/requests'
+import { listWorkouts } from '@/http/requests'
 import { useAuthStore } from '@/stores/auth'
 import { AppButton } from '@/ui/components/AppButton'
 import { AppErrorState } from '@/ui/components/AppErrorState'
@@ -12,9 +12,8 @@ import { AppOptionRow } from '@/ui/components/AppOptionRow'
 import { AppSearchField } from '@/ui/components/AppSearchField'
 import { AppSheet } from '@/ui/components/AppSheet'
 import { AppSkeleton } from '@/ui/components/AppSkeleton'
-import { appendPage } from '@/utils/appendPage'
 import { isDistanceTimeExercise } from '@/utils/exerciseMeasurements'
-import { usePagination } from '@/utils/usePagination'
+import { useExerciseLibrary } from '@/utils/useExerciseLibrary'
 import styles from './RecordExerciseSheet.module.css'
 
 interface Props {
@@ -38,36 +37,20 @@ const recentWorkouts = 20
  */
 export const RecordExerciseSheet = ({ summary, saving, onSave, onClose }: Props) => {
   const { t } = useTranslation()
-  const { currentPageToken, hasMorePages, setFromResponse } = usePagination()
+  const {
+    options,
+    loading,
+    loaded,
+    failed,
+    search,
+    setSearch,
+    matchesSearch,
+    hasMorePages,
+    loadMore,
+  } = useExerciseLibrary()
 
-  const [options, setOptions] = useState<Exercise[]>([])
   const [recent, setRecent] = useState<string[]>([])
   const [selected, setSelected] = useState<Exercise>()
-  const [loading, setLoading] = useState(true)
-  const [loaded, setLoaded] = useState(false)
-  const [failed, setFailed] = useState(false)
-  const [search, setSearch] = useState('')
-
-  const fetchPage = useCallback(async () => {
-    setFailed(false)
-    const res = await listExercises(currentPageToken())
-    if (!res) {
-      setFailed(true)
-      return
-    }
-
-    setOptions((current) => appendPage(current, res.exercises))
-    setFromResponse(res.pagination)
-    setLoaded(true)
-  }, [currentPageToken, setFromResponse])
-
-  useEffect(() => {
-    const load = async () => {
-      await fetchPage()
-      setLoading(false)
-    }
-    void load()
-  }, [fetchPage])
 
   // What the athlete has logged lately, which is what they are about to pick.
   // A failure here costs the ordering and nothing else, so it goes unreported.
@@ -88,7 +71,6 @@ export const RecordExerciseSheet = ({ summary, saving, onSave, onClose }: Props)
     }
   }, [])
 
-  const query = search.trim().toLowerCase()
   // Recent workouts arrive newest first, so a lower position is a more recent
   // exercise and anything missing sorts behind all of them.
   const lastTrained = (id: string) => {
@@ -96,11 +78,7 @@ export const RecordExerciseSheet = ({ summary, saving, onSave, onClose }: Props)
     return position === -1 ? Infinity : position
   }
   const available = options
-    .filter(
-      (exercise) =>
-        isDistanceTimeExercise(exercise) &&
-        (!query || [exercise.name, ...exercise.tags].join(' ').toLowerCase().includes(query)),
-    )
+    .filter((exercise) => isDistanceTimeExercise(exercise) && matchesSearch(exercise))
     .sort((a, b) => lastTrained(a.id) - lastTrained(b.id))
 
   return (
@@ -120,7 +98,7 @@ export const RecordExerciseSheet = ({ summary, saving, onSave, onClose }: Props)
       {loading && !loaded ? (
         <AppSkeleton />
       ) : failed && !options.length ? (
-        <AppErrorState onRetry={() => void fetchPage()} />
+        <AppErrorState onRetry={loadMore} />
       ) : available.length ? (
         <div className={styles.options}>
           {available.map((exercise) => (
@@ -150,14 +128,13 @@ export const RecordExerciseSheet = ({ summary, saving, onSave, onClose }: Props)
         </div>
       )}
 
+      {failed && options.length > 0 && <AppErrorState compact onRetry={loadMore} />}
+
       {hasMorePages && !failed && (
         <AppLoadMore
           label={loading ? t('common.loading') : t('exercise.loadMore')}
           loading={loading}
-          onFetch={() => {
-            setLoading(true)
-            void fetchPage().finally(() => setLoading(false))
-          }}
+          onFetch={loadMore}
         />
       )}
 

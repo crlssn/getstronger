@@ -134,4 +134,25 @@ describe('ExercisePickerSheet', () => {
 
     expect(onClose).toHaveBeenCalled()
   })
+
+  // The sibling recorder once removed "Load more" here and left nothing in its
+  // place, which is a later page the athlete cannot reach.
+  test('keeps what arrived and offers a retry when a later page fails', async () => {
+    const user = userEvent.setup()
+    listExercises.mockResolvedValueOnce(page([bench], new Uint8Array([1])))
+    listExercises.mockResolvedValueOnce(undefined)
+    await renderPicker()
+
+    await user.click(await screen.findByRole('button', { name: 'Load more exercises' }))
+
+    const failure = await screen.findByRole('alert')
+    expect(failure).toHaveTextContent('Something went wrong')
+    expect(screen.getByRole('button', { name: /Bench Press/ })).toBeInTheDocument()
+
+    listExercises.mockResolvedValueOnce(page([squat]))
+    await user.click(within(failure).getByRole('button', { name: 'Try again' }))
+
+    expect(await screen.findByRole('button', { name: /Squat/ })).toBeInTheDocument()
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+  })
 })

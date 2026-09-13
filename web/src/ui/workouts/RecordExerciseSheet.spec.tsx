@@ -1,5 +1,5 @@
 import { create } from '@bufbuild/protobuf'
-import { screen } from '@testing-library/react'
+import { screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -71,5 +71,38 @@ describe('RecordExerciseSheet', () => {
       'href',
       '/exercises/create',
     )
+  })
+
+  // The page token outlives the failure, so a sheet that only hid "Load more"
+  // left the athlete with no way to reach an exercise on a later page.
+  it('keeps what arrived and offers a retry when a later page fails', async () => {
+    const user = userEvent.setup()
+    vi.mocked(listExercises)
+      .mockResolvedValueOnce({
+        exercises: [run],
+        pagination: { nextPageToken: new Uint8Array([1]) },
+      } as never)
+      .mockResolvedValueOnce(undefined)
+      .mockResolvedValueOnce({ exercises: [bike] } as never)
+
+    renderWithProviders(
+      <RecordExerciseSheet
+        summary="23:07 · 7.62 km"
+        saving={false}
+        onSave={vi.fn()}
+        onClose={vi.fn()}
+      />,
+    )
+
+    await user.click(await screen.findByRole('button', { name: 'Load more exercises' }))
+
+    const failure = await screen.findByRole('alert')
+    expect(failure).toHaveTextContent('Something went wrong')
+    expect(screen.getByRole('button', { name: /Easy run/ })).toBeInTheDocument()
+
+    await user.click(within(failure).getByRole('button', { name: 'Try again' }))
+
+    expect(await screen.findByRole('button', { name: /Bike commute/ })).toBeInTheDocument()
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
   })
 })
