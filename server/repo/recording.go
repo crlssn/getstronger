@@ -5,6 +5,9 @@ import (
 	"fmt"
 
 	"github.com/gofrs/uuid/v5"
+	"github.com/stephenafamo/bob/dialect/psql"
+	"github.com/stephenafamo/bob/dialect/psql/sm"
+	"github.com/stephenafamo/bob/dialect/psql/um"
 	"golang.org/x/sync/errgroup"
 
 	"github.com/crlssn/getstronger/server/gen/models"
@@ -86,4 +89,62 @@ func (r *Repo) fillRecordings(ctx context.Context, rows models.WorkoutSlice, wor
 	}
 
 	return group.Wait() //nolint:wrapcheck // fillRecording has already named the operation.
+}
+
+// BackfillRecordingsBatch is how many rows one pass claims when the caller
+// names no size: small enough that a failure re-does little, large enough that
+// the scan is not the cost.
+const BackfillRecordingsBatch = 100
+
+// BackfillRecordings moves every recording still kept on its row into the
+// object store, a batch at a time, and answers with how many it moved. It is
+// safe to run twice: a row is claimed only while it still carries a document,
+// and writing the same document under the same key again is the same write.
+func (r *Repo) BackfillRecordings(ctx context.Context, batch int) (int, error) {
+	if batch <= 0 {
+		batch = BackfillRecordingsBatch
+	}
+
+	moved := 0
+	for {
+		rows, err := models.Workouts.Query(
+			sm.Where(psql.Raw("recording_json <> '' AND recording_key = ''")),
+			sm.OrderBy(models.Workouts.Columns.ID),
+			sm.Limit(batch),
+		).All(ctx, r.bobExec())
+		if err != nil {
+			return moved, fmt.Errorf("recording backfill fetch: %w", err)
+		}
+		if len(rows) == 0 {
+			return moved, nil
+		}
+
+		for _, row := range rows {
+			if err = r.moveRecording(ctx, row); err != nil {
+				return moved, err
+			}
+			moved++
+		}
+	}
+}
+
+// moveRecording writes one row's recording to the object store and then takes
+// it off the row. The document goes first: a row that still carries it is one
+// the next run picks up again, where a row pointing at an object nobody wrote
+// would be a recording lost for good.
+func (r *Repo) moveRecording(ctx context.Context, row *models.Workout) error {
+	key := RecordingKey(row.ID)
+	if err := r.recordings.Put(ctx, key, []byte(row.RecordingJSON)); err != nil {
+		return fmt.Errorf("recording backfill put: %w", err)
+	}
+
+	if _, err := models.Workouts.Update(
+		um.SetCol(models.Workouts.Columns.RecordingKey.Name()).ToArg(key),
+		um.SetCol(models.Workouts.Columns.RecordingJSON.Name()).ToArg(""),
+		models.UpdateWhere.Workouts.ID.EQ(row.ID),
+	).Exec(ctx, r.bobExec()); err != nil {
+		return fmt.Errorf("recording backfill update: %w", err)
+	}
+
+	return nil
 }
