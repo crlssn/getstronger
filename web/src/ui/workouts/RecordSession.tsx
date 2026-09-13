@@ -33,6 +33,7 @@ import { AppStat } from '@/ui/components/AppStat'
 import { RecordExerciseSheet } from '@/ui/workouts/RecordExerciseSheet'
 import { convertDistance, distanceUnitLabel } from '@/utils/distanceUnits'
 import { paceWords } from '@/utils/halfwayCue'
+import { randomUUID } from '@/utils/randomUUID'
 import { distanceIn, paceIn, speedIn } from '@/utils/exerciseMeasurements'
 import { DistanceUnit } from '@/proto/api/v1/shared_pb'
 import {
@@ -98,7 +99,7 @@ export const RecordSession = () => {
   const savingSession = useRef(false)
   // Minted once per screen and sent with every attempt, so a save the server
   // committed but never answered is recognised rather than saved twice.
-  const [idempotency] = useState(() => crypto.randomUUID())
+  const [idempotency] = useState(() => randomUUID())
 
   const requestedExercise = searchParams.get('exercise') ?? ''
   const key = recordingKeyFor(useAuthStore.getState().userId)

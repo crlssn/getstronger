@@ -18,6 +18,7 @@ import { DistanceUnit, ExerciseMetric, WeightUnit } from '@/proto/api/v1/shared_
 import { convertDistance, normalizeDistanceUnit } from '@/utils/distanceUnits'
 import { exerciseMetrics } from '@/utils/exerciseMeasurements'
 import { isNumber } from '@/utils/numbers'
+import { randomUUID } from '@/utils/randomUUID'
 import { buildTimeline, measureRoute, type Recording } from '@/utils/timedCircuit'
 import { convertWeight, normalizeWeightUnit } from '@/utils/weightUnits'
 
@@ -165,7 +166,7 @@ export const useWorkoutStore = create<WorkoutState>()(
           if (!hasLoggedSet(workout)) delete workout.startedAt
           // Kept with the draft rather than the screen, so a save pressed
           // again after a reload still names the same session.
-          workout.idempotencyKey ??= crypto.randomUUID()
+          workout.idempotencyKey ??= randomUUID()
           if (planId) workout.planId = planId
         }),
 
