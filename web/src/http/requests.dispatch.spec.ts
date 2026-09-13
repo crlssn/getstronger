@@ -96,6 +96,8 @@ const cases: Array<[string, () => Promise<unknown>]> = [
   ['workout.deleteWorkout', () => requests.deleteWorkout('w1')],
   ['workout.listWorkouts', () => requests.listWorkouts(['u1'], page)],
   ['workout.postComment', () => requests.postWorkoutComment('w1', 'nice')],
+  ['workout.likeWorkout', () => requests.likeWorkout('w1')],
+  ['workout.unlikeWorkout', () => requests.unlikeWorkout('w1')],
   ['workout.getPaceReference', () => requests.getPaceReference('r1', PaceReference.PREVIOUS)],
 
   ['user.getUser', () => requests.getUser('u1')],

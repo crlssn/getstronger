@@ -23,6 +23,7 @@ aspirational.
 | You need                       | Use                                                |
 | ------------------------------ | -------------------------------------------------- |
 | Anything a user taps           | `<AppButton>` — or `<AppIconButton>` for icon-only |
+| A reaction, with its count     | `<AppReactionButton>`                              |
 | A text field                   | `<AppInput>` / `<AppTextarea>`                     |
 | A number or a duration         | `<AppNumberField>` / `<AppDurationInput>`          |
 | A date and time                | `<AppDatetimeField>`                               |
@@ -83,6 +84,13 @@ A button whose whole label is its icon, so `label` is required and becomes the
 with nothing around it to say it is one — the home search, the overflow menu,
 the notification bell), `strong` (filled ink) or `danger`. Anything with
 visible text belongs in `<AppButton>` instead.
+
+### `<AppReactionButton>`
+
+An icon and a count that turn on and off together, for the lightest thing one
+person can say to another. `pressed` is carried as `aria-pressed` rather than
+by the fill alone, and `label` says what a tap would do and the count it would
+move — a bare number beside an icon says neither.
 
 ### `<AppCycleButton>`
 

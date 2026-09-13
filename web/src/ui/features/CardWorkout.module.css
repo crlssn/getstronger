@@ -14,6 +14,13 @@
   @apply overflow-hidden;
 }
 
+/* The rep sits on the page rather than in a card of its own: a card around one
+ * control reads as a section with nothing in it. The error takes the line
+ * beside it, which is where the tap was. */
+.repRow {
+  @apply flex flex-wrap items-center gap-3;
+}
+
 /* One row per finished workout: who, what, and the numbers worth a glance. */
 .feedRow {
   @apply flex items-center gap-3 p-4;

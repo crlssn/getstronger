@@ -1,5 +1,6 @@
 import {
   allowRuntimeErrors,
+  boxOf,
   expect,
   logIn,
   logInAs,
@@ -228,13 +229,13 @@ test.describe('profiles and notifications', () => {
     // while it is unread, which is a better handle than the class that styles
     // the dot beside it.
     //
-    // Four rows against three unread: the seeded reps have no row to render
-    // until #1464 gives them one, so they count towards the badge and show
-    // nothing here.
+    // Seven rows: four comments and three reps, of which one comment pair and
+    // one rep are unread.
     const rows = page.getByRole('listitem').filter({ has: page.getByRole('link') })
-    await expect(rows).toHaveCount(4)
-    await expect(rows.filter({ hasText: 'Unread notification' })).toHaveCount(2)
-    await expect(rows.filter({ hasNotText: 'Unread notification' })).toHaveCount(2)
+    await expect(rows).toHaveCount(7)
+    await expect(rows.filter({ hasText: 'Unread notification' })).toHaveCount(3)
+    await expect(rows.filter({ hasNotText: 'Unread notification' })).toHaveCount(4)
+    await expect(rows.filter({ hasText: 'repped your' })).toHaveCount(3)
 
     await page.getByRole('button', { name: 'Mark all read' }).click()
     await expect(rows.filter({ hasText: 'Unread notification' })).toHaveCount(0)
@@ -245,11 +246,94 @@ test.describe('profiles and notifications', () => {
     const notificationText = await janeNotification.innerText()
     await janeNotification.click()
 
-    if (notificationText.includes('commented')) {
+    // What happened decides where the row leads: a comment and a rep are both
+    // about a workout, a follow is about the person.
+    if (notificationText.includes('commented') || notificationText.includes('repped')) {
       await expect(page).toHaveURL(/\/workouts\/[0-9a-f-]+$/)
     } else {
       await expect(page).toHaveURL(/\/users\/[0-9a-f-]+$/)
     }
+  })
+
+  // The whole of the feature in one pass: the tap, the count the server kept,
+  // and the row it puts in front of the athlete who trained.
+  test('reps another athlete’s workout and tells them so @mutation', async ({ browser, page }) => {
+    // Two personas in two browsers, and a row waited for by asking for the page
+    // again: the longest flow in this file.
+    test.slow()
+
+    // Sam reps from a browser of their own, which leaves this one signed in as
+    // the athlete who trained — the one the notification is for. The context
+    // takes this project's phone with it, so the control is still measured
+    // against a thumb.
+    const samsBrowser = await browser.newContext()
+    const sam = await samsBrowser.newPage()
+
+    // Sam has no history and follows nobody, so the session is reached through
+    // its owner's profile rather than through a feed.
+    await logInAs(sam, newUserEmail, seedPassword)
+    await sam.getByRole('button', { name: 'Search', exact: true }).click()
+    await sam
+      .getByRole('searchbox', { name: 'Search people, routines, plans, exercises', exact: true })
+      .fill('Alex Morgan')
+    await sam
+      .getByRole('region', { name: 'Search' })
+      .getByRole('link', { name: /Alex Morgan/ })
+      .click()
+
+    await sam
+      .getByRole('navigation', { name: 'Profile sections' })
+      .getByRole('link', { name: 'Workouts', exact: true })
+      .click()
+    // The handle sits above this link and its tap floor covers the row's
+    // centre, so the tap lands in the padding beside the tile instead.
+    const session = sam.getByRole('link', { name: /View .* workout details/ }).first()
+    await session.click({ position: { x: 8, y: (await boxOf(session)).height / 2 } })
+    // `url()` is a cached read, and a client-side navigation reaches it after
+    // the click has returned: waited for, or the address kept here is the
+    // profile the reload below would find no rep button on.
+    await expect(sam).toHaveURL(/\/workouts\/[0-9a-f-]+$/)
+    const workout = sam.url()
+
+    const rep = sam.getByRole('button', { name: /^Rep this workout/ })
+    await expect(rep).toHaveAttribute('aria-pressed', 'false')
+    const before = Number(await rep.innerText())
+
+    // An icon and a two-character count shrink to well under a thumb unless
+    // the control carries the floor itself.
+    const box = await boxOf(rep)
+    expect(box.height).toBeGreaterThanOrEqual(44)
+    expect(box.width).toBeGreaterThanOrEqual(44)
+
+    // The count moves on the tap, before the server has heard about it, so the
+    // request is armed here: navigating while it is still in flight cancels the
+    // very write the reload below is about to read back.
+    const kept = sam.waitForResponse('**/api.v1.WorkoutService/LikeWorkout')
+    await rep.click()
+    const repped = sam.getByRole('button', { name: /^Remove your rep/ })
+    await expect(repped).toHaveAttribute('aria-pressed', 'true')
+    await expect(repped).toHaveText(String(before + 1))
+    expect((await kept).ok()).toBe(true)
+
+    // Reloading reads the count back off the server rather than off the tap.
+    await sam.goto(workout)
+    await expect(sam.getByRole('button', { name: /^Remove your rep/ })).toHaveText(
+      String(before + 1),
+    )
+    await samsBrowser.close()
+
+    // The session's owner is told, and the row leads back to the workout. The
+    // notification is written off an event rather than inside the request, and
+    // the list is fetched once per visit, so each attempt loads the page and
+    // then waits on the row rather than counting what has yet to arrive.
+    const notification = page.getByRole('listitem').filter({ hasText: '@sam repped your' })
+    await expect(async () => {
+      await page.goto('/notifications')
+      await expect(notification).toHaveCount(1, { timeout: 5_000 })
+    }).toPass({ timeout: 20_000 })
+
+    await notification.getByRole('link').click()
+    await expect(page).toHaveURL(workout)
   })
 
   test('toggles following and exposes every public profile section @mutation', async ({ page }) => {
