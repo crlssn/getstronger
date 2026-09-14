@@ -336,6 +336,70 @@ test.describe('profiles and notifications', () => {
     await expect(page).toHaveURL(workout)
   })
 
+  // A toggle is not a new thing to be told about. Each follow is a genuine
+  // insert and announces itself, so what stops a second row is the id that
+  // announcement carries: derived from the pair rather than minted per follow.
+  test('tells the followee once however often a follow is toggled @mutation', async ({
+    browser,
+    page,
+  }) => {
+    // Two personas in two browsers, and a row waited for by asking for the page
+    // again, as the rep flow above does.
+    test.slow()
+
+    // Sam follows from a browser of their own, which leaves this one signed in
+    // as the athlete being followed — the one the notification is for.
+    const samsBrowser = await browser.newContext()
+    const sam = await samsBrowser.newPage()
+
+    await logInAs(sam, newUserEmail, seedPassword)
+    await sam.getByRole('button', { name: 'Search', exact: true }).click()
+    await sam
+      .getByRole('searchbox', { name: 'Search people, routines, plans, exercises', exact: true })
+      .fill('Alex Morgan')
+    await sam
+      .getByRole('region', { name: 'Search' })
+      .getByRole('link', { name: /Alex Morgan/ })
+      .click()
+    await expect(sam).toHaveURL(/\/users\/[0-9a-f-]+$/)
+
+    const follow = sam.getByRole('button', { name: 'Follow Alex Morgan' })
+    const following = sam.getByRole('button', { name: 'Profile actions' })
+
+    const toggles = 3
+    for (let toggle = 0; toggle < toggles; toggle += 1) {
+      // The button swaps on the tap, before the server has heard about it, so
+      // each write is armed first: toggling back while one is still in flight
+      // cancels the very follow the count below is about to read.
+      const recorded = sam.waitForResponse('**/api.v1.UserService/FollowUser')
+      await follow.click()
+      await expect(following).toBeVisible()
+      expect((await recorded).ok()).toBe(true)
+
+      const removed = sam.waitForResponse('**/api.v1.UserService/UnfollowUser')
+      await openProfileActions(sam)
+      await sam.getByRole('menuitem', { name: 'Unfollow Alex Morgan' }).click()
+      await expect(follow).toBeVisible()
+      expect((await removed).ok()).toBe(true)
+    }
+
+    await samsBrowser.close()
+
+    // The notification is written off an event rather than inside the request,
+    // and the list is fetched once per visit, so each attempt loads the page and
+    // then waits on the row rather than counting what has yet to arrive.
+    const followedYou = page.getByRole('listitem').filter({ hasText: '@sam followed you' })
+    await expect(async () => {
+      await page.goto('/notifications')
+      await expect(followedYou).toHaveCount(1, { timeout: 5_000 })
+    }).toPass({ timeout: 20_000 })
+
+    // One row seen early could be the first of three. Ask again, once the
+    // announcements the other two toggles raised have had their chance.
+    await page.goto('/notifications')
+    await expect(followedYou).toHaveCount(1)
+  })
+
   test('toggles following and exposes every public profile section @mutation', async ({ page }) => {
     await page.goto('/home')
     await page.getByRole('link', { name: '@janedoe', exact: true }).first().click()

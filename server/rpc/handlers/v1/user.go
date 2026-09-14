@@ -7,12 +7,12 @@ import (
 	"fmt"
 
 	"connectrpc.com/connect"
-	"github.com/gofrs/uuid/v5"
 	"go.uber.org/zap"
 
 	"github.com/crlssn/getstronger/server/account"
 	apiv1 "github.com/crlssn/getstronger/server/gen/proto/api/v1"
 	"github.com/crlssn/getstronger/server/gen/proto/api/v1/apiv1connect"
+	"github.com/crlssn/getstronger/server/notification"
 	"github.com/crlssn/getstronger/server/pubsub"
 	"github.com/crlssn/getstronger/server/pubsub/events"
 	"github.com/crlssn/getstronger/server/repo"
@@ -146,7 +146,7 @@ func (h *userHandler) FollowUser(ctx context.Context, req *connect.Request[apiv1
 	h.pubSub.Publish(ctx, events.TopicFollowedUser, events.UserFollowed{
 		FollowerID: userID,
 		FolloweeID: followID,
-		EventID:    uuid.Must(uuid.NewV4()),
+		EventID:    notification.FollowEventID(userID, followID),
 	})
 
 	return &connect.Response[apiv1.FollowUserResponse]{

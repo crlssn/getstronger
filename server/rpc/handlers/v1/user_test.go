@@ -2,6 +2,7 @@ package v1_test
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"strings"
@@ -21,6 +22,7 @@ import (
 	"github.com/crlssn/getstronger/server/gen/models"
 	v1 "github.com/crlssn/getstronger/server/gen/proto/api/v1"
 	"github.com/crlssn/getstronger/server/gen/proto/api/v1/apiv1connect"
+	"github.com/crlssn/getstronger/server/notification"
 	"github.com/crlssn/getstronger/server/pubsub"
 	"github.com/crlssn/getstronger/server/pubsub/events"
 	"github.com/crlssn/getstronger/server/repo"
@@ -591,6 +593,37 @@ func (s *userSuite) TestFollowUser() {
 		s.Require().EqualValues(1, s.followEvents(follower.ID, followee.ID))
 	})
 
+	// An unfollow deletes the row, so following again is a genuine insert and
+	// announces itself. Which id that announcement carries is what decides
+	// whether the followee hears about it all over again.
+	s.Run("ok_unfollowing_and_following_again_announces_the_same_event", func() {
+		follower := s.factory.NewUser()
+		followee := s.factory.NewUser()
+		ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
+		ctx = xcontext.WithUserID(ctx, follower.ID)
+
+		follow := &connect.Request[v1.FollowUserRequest]{
+			Msg: &v1.FollowUserRequest{FollowId: followee.ID.String()},
+		}
+		unfollow := &connect.Request[v1.UnfollowUserRequest]{
+			Msg: &v1.UnfollowUserRequest{UnfollowId: followee.ID.String()},
+		}
+
+		const toggles = 3
+		for range toggles {
+			_, err := s.handler.FollowUser(ctx, follow)
+			s.Require().NoError(err)
+			_, err = s.handler.UnfollowUser(ctx, unfollow)
+			s.Require().NoError(err)
+		}
+
+		ids := s.followEventIDs(follower.ID, followee.ID)
+		s.Require().Len(ids, toggles)
+		for _, id := range ids {
+			s.Require().Equal(notification.FollowEventID(follower.ID, followee.ID), id)
+		}
+	})
+
 	s.Run("err_following_yourself", func() {
 		user := s.factory.NewUser()
 		ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
@@ -649,6 +682,26 @@ func (s *userSuite) followEvents(followerID, followeeID uuid.UUID) int64 {
 	s.Require().NoError(err)
 
 	return count
+}
+
+// followEventIDs is the id each announcement for one pair carried. Notifications
+// dedupe on (user_id, eventId), so ids that differ are a followee told twice.
+func (s *userSuite) followEventIDs(followerID, followeeID uuid.UUID) []uuid.UUID {
+	rows, err := models.Events.Query(
+		models.SelectWhere.Events.Topic.EQ(events.TopicFollowedUser),
+		sm.Where(psql.Raw("payload ->> 'followerId' = ?", followerID)),
+		sm.Where(psql.Raw("payload ->> 'followeeId' = ?", followeeID)),
+	).All(context.Background(), bob.NewDB(s.container.DB))
+	s.Require().NoError(err)
+
+	ids := make([]uuid.UUID, 0, len(rows))
+	for _, row := range rows {
+		var payload events.UserFollowed
+		s.Require().NoError(json.Unmarshal(row.Payload.Val, &payload))
+		ids = append(ids, payload.EventID)
+	}
+
+	return ids
 }
 
 func (s *userSuite) TestUnfollowUser() {

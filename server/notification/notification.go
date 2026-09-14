@@ -82,6 +82,20 @@ func WorkoutLikeEventID(actorID, workoutID uuid.UUID) uuid.UUID {
 	return uuid.NewV5(uuid.Must(uuid.FromString(likeNamespace)), actorID.String()+workoutID.String())
 }
 
+// followNamespace names the follow event space, so an id derived here can never
+// collide with one derived for anything else.
+const followNamespace = "2c9e7d14-8b3f-5a26-9d40-7e5c1b8a6f39"
+
+// FollowEventID names the event of one athlete following another.
+//
+// It is derived rather than minted, because notifications dedupe on
+// (user_id, eventId): a stable id means unfollowing and following again cannot
+// tell the followee about it twice. A follow runs one way, so the pair reversed
+// names the follow back rather than the same event.
+func FollowEventID(followerID, followeeID uuid.UUID) uuid.UUID {
+	return uuid.NewV5(uuid.Must(uuid.FromString(followNamespace)), followerID.String()+followeeID.String())
+}
+
 // CommentAudience is who hears about a new comment on a workout: the athlete
 // whose workout it is, plus everyone already in the conversation. Nobody is
 // notified about their own comment, and nobody is notified twice.
