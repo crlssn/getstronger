@@ -243,7 +243,7 @@ func TestFollowedUser_TellsTheFolloweeOnce(t *testing.T) {
 	ctx := context.Background()
 	c := container.NewContainer(ctx)
 	f := factory.NewFactory(c.DB)
-	handler := handlers.NewFollowedUser(zap.NewExample(), repo.New(c.DB))
+	handler := handlers.NewFollowedUser(zap.NewExample(), repo.New(c.DB, objectstoretest.NewMemory()))
 
 	t.Cleanup(func() {
 		if terminateErr := c.Terminate(ctx); terminateErr != nil {
