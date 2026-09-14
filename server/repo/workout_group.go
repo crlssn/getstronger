@@ -3,6 +3,7 @@ package repo
 import (
 	"context"
 	"fmt"
+	"maps"
 
 	"github.com/aarondl/opt/omit"
 	"github.com/aarondl/opt/omitnull"
@@ -123,10 +124,16 @@ func (r *Repo) ListWorkoutGroups(ctx context.Context, workoutIDs ...uuid.UUID) (
 	return byWorkout, nil
 }
 
-// occurrenceOf is the block occurrence a set belongs to, or null where the
-// workout was saved ungrouped.
+// occurrenceOf is the block occurrence a set belongs to: the one that logged it,
+// or — for a set an edit added past every position the session recorded — the
+// block that exercise was last trained in. A set of an exercise no block holds
+// belongs to none, and is null.
 func occurrenceOf(occurrences map[setOccurrence]uuid.UUID, set setOccurrence) omitnull.Val[uuid.UUID] {
 	id, ok := occurrences[set]
+	if !ok {
+		id, ok = occurrenceBefore(occurrences, set)
+	}
+
 	if !ok {
 		var absent omitnull.Val[uuid.UUID]
 		absent.Null()
@@ -134,6 +141,121 @@ func occurrenceOf(occurrences map[setOccurrence]uuid.UUID, set setOccurrence) om
 	}
 
 	return omitnull.From(id)
+}
+
+// occurrenceBefore is the block the exercise was last trained in ahead of this
+// position, which is the block a set appended to it extends.
+func occurrenceBefore(occurrences map[setOccurrence]uuid.UUID, set setOccurrence) (uuid.UUID, bool) {
+	var id uuid.UUID
+	last := -1
+
+	for candidate, occurrence := range occurrences {
+		if candidate.exerciseID != set.exerciseID {
+			continue
+		}
+		if candidate.position >= set.position || candidate.position <= last {
+			continue
+		}
+
+		last = candidate.position
+		id = occurrence
+	}
+
+	return id, last >= 0
+}
+
+// exerciseSetsOutsideBlocks is the sets of the exercises no block of the workout
+// holds — what an edit introduced rather than what the session trained.
+func exerciseSetsOutsideBlocks(occurrences map[setOccurrence]uuid.UUID, exerciseSets []ExerciseSet) []ExerciseSet {
+	trained := make(map[uuid.UUID]struct{}, len(occurrences))
+	for occurrence := range occurrences {
+		trained[occurrence.exerciseID] = struct{}{}
+	}
+
+	introduced := make([]ExerciseSet, 0, len(exerciseSets))
+	for _, exerciseSet := range exerciseSets {
+		if _, ok := trained[exerciseSet.ExerciseID]; ok {
+			continue
+		}
+		if len(exerciseSet.Sets) == 0 {
+			continue
+		}
+
+		introduced = append(introduced, exerciseSet)
+	}
+
+	return introduced
+}
+
+// addIntroducedExercisesToBlocks gives the exercises an edit introduced a
+// trailing block, and records in occurrences where their sets now belong. A
+// workout logged without blocks is left without any: it reads as the flat list
+// it always did.
+func addIntroducedExercisesToBlocks(
+	ctx context.Context, tx *Repo, workoutID uuid.UUID,
+	exerciseSets []ExerciseSet, occurrences map[setOccurrence]uuid.UUID,
+) error {
+	introduced := exerciseSetsOutsideBlocks(occurrences, exerciseSets)
+	if len(introduced) == 0 {
+		return nil
+	}
+
+	groups, err := tx.ListWorkoutGroups(ctx, workoutID)
+	if err != nil {
+		return err
+	}
+
+	blocks := groups[workoutID]
+	if len(blocks) == 0 {
+		return nil
+	}
+
+	appended, err := appendWorkoutGroup(ctx, tx.bobExec(), workoutID, len(blocks), introduced)
+	if err != nil {
+		return err
+	}
+
+	maps.Copy(occurrences, appended)
+
+	return nil
+}
+
+// appendWorkoutGroup stores a trailing straight block holding the exercises an
+// edit introduced, and returns the occurrence each of their sets was given. A
+// workout that has blocks is read as its blocks, so an exercise none of them
+// holds is work the athlete is never shown again.
+func appendWorkoutGroup(
+	ctx context.Context, exec bob.Executor, workoutID uuid.UUID, position int, exerciseSets []ExerciseSet,
+) (map[setOccurrence]uuid.UUID, error) {
+	group, err := models.WorkoutGroups.Insert(&models.WorkoutGroupSetter{
+		WorkoutID: omit.From(workoutID),
+		Position:  omit.From(safe.Int32FromInt(position)),
+		Mode:      omit.From(training.RoutineGroupModeStraight),
+	}).One(ctx, exec)
+	if err != nil {
+		return nil, fmt.Errorf("workout group insert: %w", err)
+	}
+
+	occurrences := make(map[setOccurrence]uuid.UUID)
+	for index, exerciseSet := range exerciseSets {
+		occurrence, err := models.WorkoutGroupExercises.Insert(&models.WorkoutGroupExerciseSetter{
+			WorkoutGroupID: omit.From(group.ID),
+			ExerciseID:     omit.From(exerciseSet.ExerciseID),
+			Position:       omit.From(safe.Int32FromInt(index)),
+		}).One(ctx, exec)
+		if err != nil {
+			return nil, fmt.Errorf("workout group exercise insert: %w", err)
+		}
+
+		for setPosition := range exerciseSet.Sets {
+			occurrences[setOccurrence{
+				exerciseID: exerciseSet.ExerciseID,
+				position:   setPosition,
+			}] = occurrence.ID
+		}
+	}
+
+	return occurrences, nil
 }
 
 // setOccurrencesOf reads the blocks a workout's stored sets belong to, so an

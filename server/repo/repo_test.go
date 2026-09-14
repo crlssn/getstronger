@@ -2340,16 +2340,115 @@ func (s *repoSuite) TestUpdateWorkoutSetsKeepsTheBlocks() {
 	s.Require().NoError(err)
 	s.Require().Len(updated.Sets, 4)
 
-	grouped := 0
+	// A workout with blocks is read as its blocks, so a set outside every one of
+	// them is a set the athlete never sees again: the squat set the edit added
+	// extends the block the squat was trained in.
+	squatOccurrences := make(map[uuid.UUID]struct{})
 	for _, set := range updated.Sets {
-		if set.OccurrenceID.IsNil() {
-			continue
+		s.Require().False(set.OccurrenceID.IsNil())
+		if set.ExerciseID == squat.ID {
+			squatOccurrences[set.OccurrenceID] = struct{}{}
 		}
-		grouped++
 	}
-	// Three sets were in the block; the fourth was added by the edit and sits
-	// outside every block the session held.
-	s.Require().Equal(3, grouped)
+	s.Require().Len(squatOccurrences, 1)
+}
+
+// An edit may introduce an exercise the session never trained, which no block
+// holds a place for. A workout with blocks renders those instead of the flat
+// list, so the sets of such an exercise are given a trailing block rather than
+// being stored outside every block and never shown.
+func (s *repoSuite) TestUpdateWorkoutSetsGivesAnIntroducedExerciseABlock() {
+	ctx := context.Background()
+	user := s.factory.NewUser()
+	press := s.factory.NewExercise(factory.ExerciseUserID(user.ID))
+	deadlift := s.factory.NewExercise(factory.ExerciseUserID(user.ID))
+
+	workout, err := s.repo.CreateWorkout(ctx, repo.CreateWorkoutParams{
+		Name:       "Push",
+		UserID:     user.ID,
+		StartedAt:  time.Now(),
+		FinishedAt: time.Now().Add(time.Hour),
+		ExerciseSets: []repo.ExerciseSet{
+			{ExerciseID: press.ID, Sets: []repo.Set{{Reps: 8, Weight: 60}}},
+		},
+		Groups: []training.WorkoutGroup{
+			{
+				Mode: training.RoutineGroupModeStraight,
+				Exercises: []training.WorkoutGroupExerciseSets{
+					{ExerciseID: press.ID, SetPositions: []int{0}},
+				},
+			},
+		},
+	})
+	s.Require().NoError(err)
+
+	s.Require().NoError(s.repo.UpdateWorkoutSets(ctx, repo.UpdateWorkoutSetsParams{
+		WorkoutID: workout.ID,
+		ExerciseSets: []repo.ExerciseSet{
+			{ExerciseID: press.ID, Sets: []repo.Set{{Reps: 8, Weight: 60}}},
+			{ExerciseID: deadlift.ID, Sets: []repo.Set{{Reps: 5, Weight: 100}, {Reps: 5, Weight: 100}}},
+		},
+	}))
+
+	groups, err := s.repo.ListWorkoutGroups(ctx, workout.ID)
+	s.Require().NoError(err)
+	s.Require().Len(groups[workout.ID], 2)
+
+	trailing := groups[workout.ID][1]
+	s.Require().Equal(training.RoutineGroupModeStraight, trailing.Mode)
+	s.Require().Len(trailing.Exercises, 1)
+	s.Require().Equal(deadlift.ID, trailing.Exercises[0].ExerciseID)
+
+	updated, err := s.repo.GetWorkout(ctx, repo.GetWorkoutWithID(workout.ID), repo.GetWorkoutLoadSets())
+	s.Require().NoError(err)
+	s.Require().Len(updated.Sets, 3)
+
+	for _, set := range updated.Sets {
+		s.Require().False(set.OccurrenceID.IsNil())
+		if set.ExerciseID == deadlift.ID {
+			s.Require().Equal(trailing.Exercises[0].ID, set.OccurrenceID)
+		}
+	}
+}
+
+// A workout logged without blocks reads as the flat list it always did, so an
+// edit of one has no block to put a set in and must not invent one.
+func (s *repoSuite) TestUpdateWorkoutSetsLeavesAnUngroupedWorkoutUngrouped() {
+	ctx := context.Background()
+	user := s.factory.NewUser()
+	press := s.factory.NewExercise(factory.ExerciseUserID(user.ID))
+	deadlift := s.factory.NewExercise(factory.ExerciseUserID(user.ID))
+
+	workout, err := s.repo.CreateWorkout(ctx, repo.CreateWorkoutParams{
+		Name:       "Push",
+		UserID:     user.ID,
+		StartedAt:  time.Now(),
+		FinishedAt: time.Now().Add(time.Hour),
+		ExerciseSets: []repo.ExerciseSet{
+			{ExerciseID: press.ID, Sets: []repo.Set{{Reps: 8, Weight: 60}}},
+		},
+	})
+	s.Require().NoError(err)
+
+	s.Require().NoError(s.repo.UpdateWorkoutSets(ctx, repo.UpdateWorkoutSetsParams{
+		WorkoutID: workout.ID,
+		ExerciseSets: []repo.ExerciseSet{
+			{ExerciseID: press.ID, Sets: []repo.Set{{Reps: 8, Weight: 60}, {Reps: 8, Weight: 60}}},
+			{ExerciseID: deadlift.ID, Sets: []repo.Set{{Reps: 5, Weight: 100}}},
+		},
+	}))
+
+	groups, err := s.repo.ListWorkoutGroups(ctx, workout.ID)
+	s.Require().NoError(err)
+	s.Require().Empty(groups[workout.ID])
+
+	updated, err := s.repo.GetWorkout(ctx, repo.GetWorkoutWithID(workout.ID), repo.GetWorkoutLoadSets())
+	s.Require().NoError(err)
+	s.Require().Len(updated.Sets, 3)
+
+	for _, set := range updated.Sets {
+		s.Require().True(set.OccurrenceID.IsNil())
+	}
 }
 
 func (s *repoSuite) TestUpdateWorkout() {

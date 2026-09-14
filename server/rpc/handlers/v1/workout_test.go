@@ -1093,6 +1093,178 @@ func (s *workoutSuite) TestUpdateWorkout() {
 	})
 }
 
+// A workout trained in blocks is read as its blocks, so a set an edit adds has
+// to arrive in one of them: the summary counts every set, and a set no block
+// holds leaves the athlete reading a count the list below it cannot account for.
+func (s *workoutSuite) TestUpdateWorkoutKeepsAnAddedSetInItsBlock() {
+	user := s.factory.NewUser()
+	routine := s.factory.NewRoutine(factory.RoutineUserID(user.ID))
+	press := s.factory.NewExercise(factory.ExerciseUserID(user.ID))
+	squat := s.factory.NewExercise(factory.ExerciseUserID(user.ID))
+
+	ctx := xcontext.WithUserID(context.Background(), user.ID)
+	ctx = xcontext.WithLogger(ctx, zap.NewExample())
+	created, err := s.handler.CreateWorkout(ctx, connect.NewRequest(&apiv1.CreateWorkoutRequest{
+		RoutineId: routine.ID.String(),
+		ExerciseSets: []*apiv1.ExerciseSets{
+			{
+				Exercise: &apiv1.Exercise{Id: press.ID.String()},
+				Sets:     []*apiv1.Set{{Reps: 8, Weight: 60}, {Reps: 8, Weight: 60}},
+			},
+			{
+				Exercise: &apiv1.Exercise{Id: squat.ID.String()},
+				Sets:     []*apiv1.Set{{Reps: 5, Weight: 90}, {Reps: 5, Weight: 90}},
+			},
+		},
+		Groups: []*apiv1.WorkoutGroup{
+			{
+				Mode: apiv1.RoutineGroupMode_ROUTINE_GROUP_MODE_STRAIGHT,
+				Exercises: []*apiv1.WorkoutGroupExercise{
+					{Exercise: &apiv1.Exercise{Id: press.ID.String()}, SetCount: 2},
+				},
+			},
+			{
+				Mode: apiv1.RoutineGroupMode_ROUTINE_GROUP_MODE_STRAIGHT,
+				Exercises: []*apiv1.WorkoutGroupExercise{
+					{Exercise: &apiv1.Exercise{Id: squat.ID.String()}, SetCount: 2},
+				},
+			},
+		},
+		StartedAt:  timestamppb.Now(),
+		FinishedAt: timestamppb.New(time.Now().Add(time.Hour)),
+	}))
+	s.Require().NoError(err)
+
+	startedAt := time.Now().UTC().Truncate(time.Second)
+	_, err = s.handler.UpdateWorkout(ctx, connect.NewRequest(&apiv1.UpdateWorkoutRequest{
+		Workout: &apiv1.Workout{
+			Id:         created.Msg.GetWorkoutId(),
+			Name:       "Push and squat",
+			StartedAt:  timestamppb.New(startedAt),
+			FinishedAt: timestamppb.New(startedAt.Add(time.Hour)),
+			ExerciseSets: []*apiv1.ExerciseSets{
+				{
+					Exercise: &apiv1.Exercise{Id: press.ID.String()},
+					Sets:     []*apiv1.Set{{Reps: 8, Weight: 60}, {Reps: 8, Weight: 60}},
+				},
+				{
+					// The third squat set the edit adds.
+					Exercise: &apiv1.Exercise{Id: squat.ID.String()},
+					Sets: []*apiv1.Set{
+						{Reps: 5, Weight: 90},
+						{Reps: 5, Weight: 90},
+						{Reps: 5, Weight: 95},
+					},
+				},
+			},
+		},
+	}))
+	s.Require().NoError(err)
+
+	fetched, err := s.handler.GetWorkout(ctx, connect.NewRequest(&apiv1.GetWorkoutRequest{
+		Id: created.Msg.GetWorkoutId(),
+	}))
+	s.Require().NoError(err)
+
+	groups := fetched.Msg.GetWorkout().GetGroups()
+	s.Require().Len(groups, 2)
+	s.Require().Len(groups[1].GetExercises(), 1)
+	s.Require().Equal(squat.ID.String(), groups[1].GetExercises()[0].GetExercise().GetId())
+	s.Require().Len(groups[1].GetExercises()[0].GetSets(), 3)
+	s.Require().InDelta(95, groups[1].GetExercises()[0].GetSets()[2].GetWeight(), 0.01)
+
+	// The blocks and the flat list are two readings of one session, so they hold
+	// the same five sets.
+	sets := 0
+	for _, exerciseSet := range fetched.Msg.GetWorkout().GetExerciseSets() {
+		sets += len(exerciseSet.GetSets())
+	}
+	s.Require().Equal(5, sets)
+}
+
+// An edit may add an exercise the session never trained, which no block of it
+// has a place for. It is given a trailing block rather than disappearing from
+// the only list a blocked workout shows.
+func (s *workoutSuite) TestUpdateWorkoutBlocksAnExerciseTheEditAdds() {
+	user := s.factory.NewUser()
+	routine := s.factory.NewRoutine(factory.RoutineUserID(user.ID))
+	press := s.factory.NewExercise(factory.ExerciseUserID(user.ID))
+	squat := s.factory.NewExercise(factory.ExerciseUserID(user.ID))
+	deadlift := s.factory.NewExercise(factory.ExerciseUserID(user.ID))
+
+	ctx := xcontext.WithUserID(context.Background(), user.ID)
+	ctx = xcontext.WithLogger(ctx, zap.NewExample())
+	created, err := s.handler.CreateWorkout(ctx, connect.NewRequest(&apiv1.CreateWorkoutRequest{
+		RoutineId: routine.ID.String(),
+		ExerciseSets: []*apiv1.ExerciseSets{
+			{
+				Exercise: &apiv1.Exercise{Id: press.ID.String()},
+				Sets:     []*apiv1.Set{{Reps: 8, Weight: 60}},
+			},
+			{
+				Exercise: &apiv1.Exercise{Id: squat.ID.String()},
+				Sets:     []*apiv1.Set{{Reps: 5, Weight: 90}},
+			},
+		},
+		Groups: []*apiv1.WorkoutGroup{
+			{
+				Mode: apiv1.RoutineGroupMode_ROUTINE_GROUP_MODE_STRAIGHT,
+				Exercises: []*apiv1.WorkoutGroupExercise{
+					{Exercise: &apiv1.Exercise{Id: press.ID.String()}, SetCount: 1},
+				},
+			},
+			{
+				Mode: apiv1.RoutineGroupMode_ROUTINE_GROUP_MODE_STRAIGHT,
+				Exercises: []*apiv1.WorkoutGroupExercise{
+					{Exercise: &apiv1.Exercise{Id: squat.ID.String()}, SetCount: 1},
+				},
+			},
+		},
+		StartedAt:  timestamppb.Now(),
+		FinishedAt: timestamppb.New(time.Now().Add(time.Hour)),
+	}))
+	s.Require().NoError(err)
+
+	startedAt := time.Now().UTC().Truncate(time.Second)
+	_, err = s.handler.UpdateWorkout(ctx, connect.NewRequest(&apiv1.UpdateWorkoutRequest{
+		Workout: &apiv1.Workout{
+			Id:         created.Msg.GetWorkoutId(),
+			Name:       "Full body",
+			StartedAt:  timestamppb.New(startedAt),
+			FinishedAt: timestamppb.New(startedAt.Add(time.Hour)),
+			ExerciseSets: []*apiv1.ExerciseSets{
+				{
+					Exercise: &apiv1.Exercise{Id: press.ID.String()},
+					Sets:     []*apiv1.Set{{Reps: 8, Weight: 60}},
+				},
+				{
+					Exercise: &apiv1.Exercise{Id: squat.ID.String()},
+					Sets:     []*apiv1.Set{{Reps: 5, Weight: 90}},
+				},
+				{
+					Exercise: &apiv1.Exercise{Id: deadlift.ID.String()},
+					Sets:     []*apiv1.Set{{Reps: 3, Weight: 120}},
+				},
+			},
+		},
+	}))
+	s.Require().NoError(err)
+
+	fetched, err := s.handler.GetWorkout(ctx, connect.NewRequest(&apiv1.GetWorkoutRequest{
+		Id: created.Msg.GetWorkoutId(),
+	}))
+	s.Require().NoError(err)
+
+	groups := fetched.Msg.GetWorkout().GetGroups()
+	s.Require().Len(groups, 3)
+
+	trailing := groups[2]
+	s.Require().Equal(apiv1.RoutineGroupMode_ROUTINE_GROUP_MODE_STRAIGHT, trailing.GetMode())
+	s.Require().Len(trailing.GetExercises(), 1)
+	s.Require().Equal(deadlift.ID.String(), trailing.GetExercises()[0].GetExercise().GetId())
+	s.Require().Len(trailing.GetExercises()[0].GetSets(), 1)
+}
+
 // A plan workout is a routine's turn in a rotation, so one that names a plan
 // and no routine is not a quick workout — it is a request that lost its routine.
 func (s *workoutSuite) TestCreateWorkoutRejectsAPlanWithoutARoutine() {
