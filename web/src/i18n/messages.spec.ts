@@ -32,6 +32,13 @@ const assembledPrefixes = [
   'activity.',
 ]
 
+// Whether the sources spell the key out, rather than merely contain it: a key
+// that is a strict prefix of another is used only where nothing word-like
+// follows it. An eighth of the catalogue prefixes another key, and a plain
+// substring search vouches for every one of them.
+const referencedIn = (sources: string, key: string): boolean =>
+  new RegExp(`${key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?![\\w-])`).test(sources)
+
 const catalogueDir = dirname(fileURLToPath(import.meta.url))
 const cataloguePath = join(catalogueDir, 'messages.ts')
 const sourceRoot = join(catalogueDir, '..', '..')
@@ -143,9 +150,18 @@ describe('messages', () => {
       // Both arms of a plural are reached through the stem alone.
       .map((key) => key.replace(/_(one|other)$/, ''))
       .filter((key) => !assembledPrefixes.some((prefix) => key.startsWith(prefix)))
-      .filter((key) => !sources.includes(key))
+      .filter((key) => !referencedIn(sources, key))
 
     expect([...new Set(orphaned)], 'nothing renders these — delete them from en and sv').toEqual([])
+  })
+
+  // The keys here are invented: a real one written out would be a reference,
+  // and this file is one of the sources the check above reads.
+  it('reads a key as used only where the sources write it in full', () => {
+    expect(referencedIn("t('parable.orphan')", 'parable.orphan')).toBe(true)
+    expect(referencedIn('messages.parable.orphan.length', 'parable.orphan')).toBe(true)
+    expect(referencedIn("t('parable.orphans')", 'parable.orphan')).toBe(false)
+    expect(referencedIn("'parable.orphanCount'", 'parable.orphan')).toBe(false)
   })
 
   // The recording feature was "Guided circuit", a gym word for the routine's
