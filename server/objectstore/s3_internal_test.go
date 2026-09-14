@@ -133,3 +133,65 @@ func signingStore(t *testing.T, endpoint string) *s3 {
 
 	return store.(*s3) //nolint:forcetypeassert // newS3 returns nothing else.
 }
+
+// A key outside the alphabet never reaches the bucket: the signature covers
+// the path, so a key the store would not sign is one it does not send.
+func TestS3RefusesAKeyItWouldNotSign(t *testing.T) {
+	t.Parallel()
+
+	store := signingStore(t, "https://s3.fr-par.scw.cloud")
+
+	require.ErrorIs(t, store.Put(context.Background(), "../escaped.json", nil), ErrInvalidKey)
+	_, err := store.Get(context.Background(), "recordings/../../escaped.json")
+	require.ErrorIs(t, err, ErrInvalidKey)
+}
+
+func TestS3ReportsAnEndpointItCannotAddress(t *testing.T) {
+	t.Parallel()
+
+	store := signingStore(t, "://nowhere")
+
+	err := store.Put(context.Background(), signedKey, []byte(`{"version":1}`))
+	require.ErrorContains(t, err, "create object store request")
+}
+
+// A bucket that cannot be reached is a failed save rather than a session
+// stored without its route.
+func TestS3ReportsABucketItCannotReach(t *testing.T) {
+	t.Parallel()
+
+	server := httptest.NewServer(http.NotFoundHandler())
+	endpoint := server.URL
+	server.Close()
+
+	store := signingStore(t, endpoint)
+
+	err := store.Put(context.Background(), signedKey, []byte(`{"version":1}`))
+	require.ErrorContains(t, err, "send object store request")
+
+	_, err = store.Get(context.Background(), signedKey)
+	require.ErrorContains(t, err, "send object store request")
+}
+
+// A reply that stops half way through is not a document, and not an empty one
+// either.
+func TestS3ReportsATruncatedReply(t *testing.T) {
+	t.Parallel()
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// More body promised than sent, so the connection closes mid-read.
+		w.Header().Set("Content-Length", "64")
+		if r.Method == http.MethodPut {
+			w.WriteHeader(http.StatusForbidden)
+		}
+		_, _ = w.Write([]byte("{"))
+	}))
+	t.Cleanup(server.Close)
+
+	store := signingStore(t, server.URL)
+
+	require.ErrorIs(t, store.Put(context.Background(), signedKey, []byte(`{"version":1}`)), errS3Response)
+
+	_, err := store.Get(context.Background(), signedKey)
+	require.ErrorContains(t, err, "read object "+signedKey)
+}

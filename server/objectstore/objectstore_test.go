@@ -131,3 +131,48 @@ func newFilesystem(t *testing.T, root string) objectstore.Store {
 
 	return store
 }
+
+// A root the store cannot create is a store that cannot write, and it says so
+// on the way up rather than on the first save.
+func TestNewFilesystemReportsARootItCannotCreate(t *testing.T) {
+	t.Parallel()
+
+	base := filepath.Join(t.TempDir(), "file")
+	require.NoError(t, os.WriteFile(base, nil, 0o600))
+
+	c := &config.Config{Environment: config.EnvironmentLocal}
+	c.ObjectStore.Path = filepath.Join(base, "objects")
+	_, err := objectstore.NewFilesystem(c)
+	require.ErrorContains(t, err, "create object store path")
+}
+
+func TestFilesystemReportsADirectoryItCannotCreate(t *testing.T) {
+	t.Parallel()
+
+	root := t.TempDir()
+	store := newFilesystem(t, root)
+
+	// A file standing where the key's directory has to go.
+	require.NoError(t, os.WriteFile(filepath.Join(root, "recordings"), nil, 0o600))
+	err := store.Put(context.Background(), "recordings/one.json", []byte(`{"version":1}`))
+	require.ErrorContains(t, err, "create object directory")
+}
+
+// A document that cannot be written or read is reported as such: a failed read
+// is not the same answer as a key the store holds nothing under.
+func TestFilesystemReportsADocumentItCannotReplace(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	root := t.TempDir()
+	store := newFilesystem(t, root)
+
+	require.NoError(t, os.MkdirAll(filepath.Join(root, "recordings", "one.json"), 0o750))
+
+	err := store.Put(ctx, "recordings/one.json", []byte(`{"version":1}`))
+	require.ErrorContains(t, err, "write object recordings/one.json")
+
+	_, err = store.Get(ctx, "recordings/one.json")
+	require.ErrorContains(t, err, "read object recordings/one.json")
+	require.NotErrorIs(t, err, objectstore.ErrObjectNotFound)
+}

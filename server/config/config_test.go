@@ -137,3 +137,12 @@ func TestNewReadsThePprofToken(t *testing.T) {
 	t.Setenv("PPROF_TOKEN", token)
 	require.Equal(t, token, config.New().Pprof.Token)
 }
+
+func TestObjectStoreRoot(t *testing.T) {
+	t.Parallel()
+
+	// Nothing configured is the directory beside the checkout, which is where
+	// a developer's own stack keeps its documents.
+	require.Equal(t, config.DefaultObjectStorePath, config.ObjectStore{}.Root())
+	require.Equal(t, "/srv/recordings", config.ObjectStore{Path: "/srv/recordings"}.Root())
+}
