@@ -2451,6 +2451,52 @@ func (s *repoSuite) TestUpdateWorkoutSetsLeavesAnUngroupedWorkoutUngrouped() {
 	}
 }
 
+// The block an introduced exercise needs is written before the sets are
+// rewritten, so an edit that fails afterwards has to take it with it: a
+// workout must never come back holding a block of work it does not have.
+func (s *repoSuite) TestUpdateWorkoutSetsRollsBackTheBlockItAdded() {
+	ctx := context.Background()
+	user := s.factory.NewUser()
+	press := s.factory.NewExercise(factory.ExerciseUserID(user.ID))
+
+	workout, err := s.repo.CreateWorkout(ctx, repo.CreateWorkoutParams{
+		Name:       "Push",
+		UserID:     user.ID,
+		StartedAt:  time.Now(),
+		FinishedAt: time.Now().Add(time.Hour),
+		ExerciseSets: []repo.ExerciseSet{
+			{ExerciseID: press.ID, Sets: []repo.Set{{Reps: 8, Weight: 60}}},
+		},
+		Groups: []training.WorkoutGroup{
+			{
+				Mode: training.RoutineGroupModeStraight,
+				Exercises: []training.WorkoutGroupExerciseSets{
+					{ExerciseID: press.ID, SetPositions: []int{0}},
+				},
+			},
+		},
+	})
+	s.Require().NoError(err)
+
+	// No exercise has this ID, so the block the edit introduces cannot be stored.
+	s.Require().Error(s.repo.UpdateWorkoutSets(ctx, repo.UpdateWorkoutSetsParams{
+		WorkoutID: workout.ID,
+		ExerciseSets: []repo.ExerciseSet{
+			{ExerciseID: press.ID, Sets: []repo.Set{{Reps: 8, Weight: 60}}},
+			{ExerciseID: uuid.Must(uuid.NewV4()), Sets: []repo.Set{{Reps: 5, Weight: 100}}},
+		},
+	}))
+
+	groups, err := s.repo.ListWorkoutGroups(ctx, workout.ID)
+	s.Require().NoError(err)
+	s.Require().Len(groups[workout.ID], 1)
+
+	updated, err := s.repo.GetWorkout(ctx, repo.GetWorkoutWithID(workout.ID), repo.GetWorkoutLoadSets())
+	s.Require().NoError(err)
+	s.Require().Len(updated.Sets, 1)
+	s.Require().Equal(press.ID, updated.Sets[0].ExerciseID)
+}
+
 func (s *repoSuite) TestUpdateWorkout() {
 	type expected struct {
 		err     error
