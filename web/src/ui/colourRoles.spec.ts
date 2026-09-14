@@ -80,13 +80,16 @@ const roles = {
 }
 
 const uiRoot = join(import.meta.dirname)
+const srcRoot = join(uiRoot, '..')
 
-const modules = (directory: string): string[] =>
+const files = (directory: string, suffix: string): string[] =>
   readdirSync(directory).flatMap((entry) => {
     const path = join(directory, entry)
-    if (statSync(path).isDirectory()) return modules(path)
-    return path.endsWith('.module.css') ? [path] : []
+    if (statSync(path).isDirectory()) return files(path, suffix)
+    return path.endsWith(suffix) ? [path] : []
   })
+
+const modules = (directory: string): string[] => files(directory, '.module.css')
 
 const spenders = (colour: string) =>
   modules(uiRoot)
@@ -120,6 +123,26 @@ describe('the colour roles', () => {
   test('no module spends a raw white or black', () => {
     expect(spenders('white')).toEqual([])
     expect(spenders('black')).toEqual([])
+  })
+
+  // The same rule, one level down. Every check above matches utility class
+  // names, so a colour written as a plain declaration — the 18% white the
+  // interval groove was drawn in — walked past all of them. theme.css is the
+  // one file where a colour is allowed to be a value rather than a role.
+  test('no stylesheet outside the token layer states a colour of its own', () => {
+    const tokens = join(srcRoot, 'assets', 'theme.css')
+    const offenders = files(srcRoot, '.css')
+      .filter(
+        (path) =>
+          path !== tokens &&
+          /#[0-9a-f]{3,8}\b|\b(?:rgba?|hsla?)\(/i.test(
+            readFileSync(path, 'utf8').replace(/\/\*[\s\S]*?\*\//g, ''),
+          ),
+      )
+      .map((path) => path.slice(srcRoot.length + 1))
+      .sort()
+
+    expect(offenders).toEqual([])
   })
 
   // The same rule, in the one place a raw white is spent by saying nothing:

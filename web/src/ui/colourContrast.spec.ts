@@ -129,6 +129,15 @@ describe.each([
     expect(contrast(tokens[text], tokens[fill])).toBeGreaterThanOrEqual(minimum)
   })
 
+  // The interval countdown's groove is cut into an ink fill, and ink inverts.
+  // A groove is a shape rather than a sentence, so the floor is the light
+  // palette's own 1.76:1 rounded down — enough to see how far through the
+  // interval the bar has travelled, at arm's length, mid-stride.
+  test('the countdown groove reads on the ink it is cut into', () => {
+    expect(tokens['ink-track'], 'ink-track').toBeDefined()
+    expect(contrast(tokens['ink-track'], tokens['ink'])).toBeGreaterThanOrEqual(1.5)
+  })
+
   // A scrim dims the page under a sheet. Ink inverts, so a scrim mixed from
   // the ink family lightens in one palette and washes the page out instead.
   test('the scrim darkens what it covers', () => {

@@ -88,11 +88,10 @@
   @apply text-text-muted;
 }
 
-/* A groove on ink, which the light palette's track colour cannot be: it is a
-   surface value, and this sits on the darkest thing on the screen. */
+/* A groove on ink, which the surface track cannot be: that one is cut into a
+   card, and this is cut into the fill the card inverts with. */
 .track {
-  @apply h-1.5 overflow-hidden rounded-pill;
-  background: rgb(255 255 255 / 0.18);
+  @apply h-1.5 overflow-hidden rounded-pill bg-ink-track;
 }
 
 .track span {
