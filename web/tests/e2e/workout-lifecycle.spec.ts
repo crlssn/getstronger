@@ -891,6 +891,56 @@ test.describe('planned workouts and history', () => {
     await expect(page).toHaveURL(/\/plans$/)
   })
 
+  // An edit rewrites every set of the workout, and a session trained in blocks
+  // is read as its blocks rather than as the flat list: a set added by the edit
+  // that lands outside them is work the athlete never sees again, under a
+  // summary that goes on counting it.
+  test('keeps a set added by an edit in the block it extends @mutation', async ({ page }) => {
+    const squat = 'Barbell back squat'
+
+    await page.goto('/profile')
+    await page.getByRole('link', { name: /Public profile/ }).click()
+    await page.getByRole('link', { name: 'View Full Body Circuit workout details' }).first().click()
+    await expect(page).toHaveURL(/\/workouts\/[0-9a-f-]+$/)
+    const workoutUrl = page.url()
+
+    const squatBlockRow = sectionWithHeading(page, 'Exercises')
+      .locator('button[aria-expanded]')
+      .filter({ hasText: squat })
+    await expect(squatBlockRow).toContainText('3 sets')
+
+    const setsLogged = page.getByRole('listitem').filter({ hasText: 'Sets logged' })
+    const loggedBefore = Number((await setsLogged.innerText()).replace(/\D/g, ''))
+
+    await page.goto(`${workoutUrl}/edit`)
+    const squatEntry = page
+      .getByRole('listitem')
+      .filter({ has: page.getByRole('heading', { name: squat, exact: true }) })
+    await squatEntry.getByRole('button', { name: 'Add set' }).click()
+    await page.getByRole('textbox', { name: `${squat} set 4 weight`, exact: true }).fill('62.5')
+    await page.getByRole('textbox', { name: `${squat} set 4 reps`, exact: true }).fill('8')
+    await page.getByRole('button', { name: 'Save changes' }).click()
+    await expect(page.getByRole('status')).toContainText('Workout updated')
+    await expect(page).toHaveURL(/\/workouts\/[0-9a-f-]+$/)
+
+    // The summary counts the stored sets and the block list shows them, so the
+    // two are the same session read twice: four squat sets, one more than the
+    // block held before the edit.
+    await expect(squatBlockRow).toContainText('4 sets')
+    await expect(setsLogged).toContainText(String(loggedBefore + 1))
+
+    // The block list opens no exercise of its own accord, unlike the flat one.
+    if ((await squatBlockRow.getAttribute('aria-expanded')) !== 'true') await squatBlockRow.click()
+    await expect(squatBlockRow).toHaveAttribute('aria-expanded', 'true')
+
+    const squatSets = page
+      .getByRole('table', { name: `${squat} sets` })
+      .getByRole('row')
+      .filter({ hasNotText: 'Set' })
+    await expect(squatSets).toHaveCount(4)
+    await expect(squatSets.last()).toContainText('62.5')
+  })
+
   // A circuit recorded on a phone comes back on the web as its route: every
   // interval's time and distance, one colour per exercise across all the
   // rounds, and the totals in whichever unit the athlete prefers.

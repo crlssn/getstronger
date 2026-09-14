@@ -2149,6 +2149,10 @@ func (r *Repo) UpdateWorkoutSets(ctx context.Context, p UpdateWorkoutSetsParams)
 		// session was structured.
 		occurrences := setOccurrencesOf(workout.Sets)
 
+		if err = addIntroducedExercisesToBlocks(ctx, tx, workout.ID, p.ExerciseSets, occurrences); err != nil {
+			return err
+		}
+
 		if _, err = models.Sets.Delete(
 			models.DeleteWhere.Sets.WorkoutID.EQ(workout.ID),
 		).Exec(ctx, tx.bobExec()); err != nil {
@@ -2171,8 +2175,6 @@ func (r *Repo) UpdateWorkoutSets(ctx context.Context, p UpdateWorkoutSetsParams)
 					DurationSeconds: omit.From(safe.Int32FromInt(set.DurationSeconds)),
 					CreatedAt:       omit.From(setCreatedAt),
 					Position:        omit.From(safe.Int32FromInt(position)),
-					// A set the edit added is beyond every block the session
-					// held, so it is stored ungrouped.
 					WorkoutGroupExerciseID: occurrenceOf(occurrences, setOccurrence{
 						exerciseID: exerciseSet.ExerciseID,
 						position:   position,
