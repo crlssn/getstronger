@@ -6,9 +6,10 @@ it is the difference between roughly $250 a month and nothing, because this
 repository runs about 30 job-hours a day and GitHub bills a private repository
 per minute.
 
-Nothing here is required. Every workflow falls back to a GitHub-hosted runner
-when the repository variables below are unset, which is also how you turn the
-whole thing off again.
+This repository is public today, so none of it is worth doing yet, and the
+variables must stay unset until that changes — see **Do not turn this on while
+the repository is public** below. Every workflow falls back to a GitHub-hosted
+runner when they are, which is also how you turn the whole thing off again.
 
 ## The two pools
 
@@ -117,10 +118,21 @@ A 2018 Mac mini stops at macOS Sequoia, so this pool is good for the unit tests
 and cannot build a release. `release.mobile.yml` stays on GitHub's `macos-26`
 for that reason.
 
+## Do not turn this on while the repository is public
+
+A public repository runs workflows from a fork's pull request, and GitHub only
+withholds that for a contributor's *first* one. A second pull request from
+anyone who has landed one before would run their code on the machine at home,
+with this repository's secrets on it — no approval, no prompt.
+
+So `RUNNER_LINUX` and `RUNNER_MACOS` stay unset until the repository is
+private. If it is ever made public again, unset them first and take the runners
+offline. GitHub's warning about this is not boilerplate.
+
 ## Turning it on
 
-Set the repository variables under **Settings → Secrets and variables →
-Actions → Variables**:
+Once the repository is private, set the variables under **Settings → Secrets
+and variables → Actions → Variables**:
 
 ```
 RUNNER_LINUX = getstronger-linux
@@ -135,10 +147,3 @@ Delete the two variables. Every job goes back to `ubuntu-latest` and `macos-26`
 on the next run. Do this before a holiday, or whenever the box is down for
 longer than a queued job should wait — a job targeting a label with no online
 runner waits rather than failing, and blocks the merge behind it.
-
-## If the repository ever goes public again
-
-Take the runners offline first. A public repository will run a workflow from a
-fork's pull request, and that workflow would execute on a machine holding this
-repository's secrets on your home network. GitHub's warning about this is not
-boilerplate.
