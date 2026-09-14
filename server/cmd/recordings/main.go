@@ -22,20 +22,25 @@ import (
 )
 
 func main() {
-	if err := run(); err != nil {
+	if err := run(os.Args[1:]); err != nil {
 		log.Fatalf("Backfill workout recordings: %v", err)
 	}
 }
 
-func run() error {
+// run takes the arguments rather than reading them, so what the command does
+// with them is exercised by a test rather than only by a deployment.
+func run(args []string) error {
+	flags := flag.NewFlagSet("recordings", flag.ContinueOnError)
+	batch := flags.Int("batch", repo.BackfillRecordingsBatch, "how many workouts to claim per pass")
+	if err := flags.Parse(args); err != nil {
+		return fmt.Errorf("parse arguments: %w", err)
+	}
+
 	// Only local runs have a .env to read; a deployment passes its
 	// configuration through the environment.
 	if err := godotenv.Load(); err != nil && !errors.Is(err, os.ErrNotExist) {
 		return fmt.Errorf("load .env file: %w", err)
 	}
-
-	batch := flag.Int("batch", repo.BackfillRecordingsBatch, "how many workouts to claim per pass")
-	flag.Parse()
 
 	c := config.New()
 	pool, err := config.NewDBPool()
