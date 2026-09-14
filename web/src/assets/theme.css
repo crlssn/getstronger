@@ -72,7 +72,6 @@
   /* A darker step for hover and for text that sits on the danger surface. */
   --color-danger-strong: #a12d24;
   --color-danger-surface: #fdeceb;
-  --color-danger-outline: #e8b4b0;
   /* Unread notifications, in the red that reads as "look at this". It keeps
    * its own name so the two can part company without hunting through 69
    * files, even while they share a value. */
@@ -211,7 +210,6 @@
   --color-danger: #e8887f;
   --color-danger-strong: #eda49d;
   --color-danger-surface: #392220;
-  --color-danger-outline: #6b3a36;
   --color-badge: #e8887f;
   --color-info: #b5b0a5;
   --color-info-surface: #26241f;

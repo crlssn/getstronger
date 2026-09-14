@@ -1,4 +1,4 @@
-import { dirname, relative, resolve } from 'node:path'
+import { dirname, join, relative, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 import { describe, expect, it } from 'vitest'
@@ -25,6 +25,12 @@ import { collectFiles, readSource } from '../tests/sourceScan'
  * module defines compiles to `undefined`, so the element silently wears no
  * class at all. That is how a finished workout's set table lost its wrapper
  * and its horizontal scroller.
+ *
+ * The global layer under `src/assets` is the one place none of that holds: a
+ * class declared there keeps the name it was written with, so anything can
+ * reach it and no argument from hashing applies. It is guarded by being kept
+ * closed instead — the loading skeleton and nothing else — and that closed list
+ * is what lets the same "defined here, applied there" check run over it.
  */
 const src = dirname(fileURLToPath(import.meta.url))
 
@@ -156,5 +162,44 @@ describe('CSS modules', () => {
 
   it('applies no class a module never defines', () => {
     expect(undeclared.sort(), 'write the rule, or stop applying it').toEqual([])
+  })
+})
+
+/**
+ * The classes the global stylesheets may declare, and the reason they are two.
+ *
+ * `.loading-card` is the screenshot harness's settle sentinel and
+ * `.loading-line` is the row it draws, so both are read by name from outside
+ * the component applying them. Nothing else has that excuse: a screen's styling
+ * belongs in a module, where the two checks above reach it.
+ */
+const globalClasses = ['loading-card', 'loading-line']
+
+const globalLayer = collectFiles(join(src, 'assets'), ['.css'])
+
+const declaredGlobally = globalLayer.flatMap((sheet) =>
+  [...defined(readSource(sheet))].map(([name, line]) => ({
+    name,
+    at: `${relative(src, sheet)}:${line} .${name}`,
+  })),
+)
+
+/** A global class keeps its name, so it is applied wherever that name is written. */
+const appliesGlobally = (name: string) =>
+  scripts.some((script) => new RegExp(`(?<![\\w-])${name}(?![\\w-])`).test(readSource(script)))
+
+describe('the global layer', () => {
+  it('declares nothing but the loading skeleton', () => {
+    const strays = declaredGlobally
+      .filter(({ name }) => !globalClasses.includes(name))
+      .map(({ at }) => at)
+
+    expect(strays.sort(), "move the rule into the screen's own module").toEqual([])
+  })
+
+  it('declares no class nothing applies', () => {
+    const unused = declaredGlobally.filter(({ name }) => !appliesGlobally(name)).map(({ at }) => at)
+
+    expect(unused.sort(), 'delete the rule, or apply it').toEqual([])
   })
 })

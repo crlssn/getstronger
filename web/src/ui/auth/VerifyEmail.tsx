@@ -8,6 +8,8 @@ import { useEmailVerificationStore } from '@/stores/emailVerification'
 import { AppErrorState } from '@/ui/components/AppErrorState'
 import { AppSkeleton } from '@/ui/components/AppSkeleton'
 
+import styles from './auth.module.css'
+
 /**
  * The screen the link in a verification email lands on.
  *
@@ -59,28 +61,28 @@ export const VerifyEmail = () => {
 
   if (!failed) {
     return (
-      <section className="auth-view">
+      <section className={styles.view}>
         <AppSkeleton lines={2} />
       </section>
     )
   }
 
   return (
-    <section className="auth-view">
+    <section className={styles.view}>
       <AppErrorState
         title={t('auth.verification.failedTitle')}
         body={t('auth.verification.failedBody')}
         onRetry={retry}
       />
 
-      <p className="auth-footer">
-        <Link to="/verify-email/pending" className="auth-link">
+      <p className={styles.footer}>
+        <Link to="/verify-email/pending" className={styles.link}>
           {t('auth.verification.resend')}
         </Link>
       </p>
 
-      <p className="auth-footer">
-        <Link to="/login" className="auth-link">
+      <p className={styles.footer}>
+        <Link to="/login" className={styles.link}>
           {t('auth.verification.backToLogin')}
         </Link>
       </p>

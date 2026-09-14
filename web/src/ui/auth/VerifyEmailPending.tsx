@@ -8,7 +8,7 @@ import { selectHasPendingEmail, useEmailVerificationStore } from '@/stores/email
 import { AppButton } from '@/ui/components/AppButton'
 import { AppInput } from '@/ui/components/AppInput'
 import { maskEmail } from '@/utils/maskEmail'
-import styles from './VerifyEmailPending.module.css'
+import styles from './auth.module.css'
 
 type ResendStatus = 'failed' | 'idle' | 'sending' | 'sent'
 
@@ -81,9 +81,9 @@ export const VerifyEmailPending = () => {
   }
 
   return (
-    <section className="auth-view">
-      <header className="auth-intro">
-        <p className="auth-eyebrow">{t('auth.verification.eyebrow')}</p>
+    <section className={styles.view}>
+      <header className={styles.intro}>
+        <p className={styles.eyebrow}>{t('auth.verification.eyebrow')}</p>
         <h1>{t('auth.verification.title')}</h1>
         {maskedEmail ? (
           <p className={styles.destination}>
@@ -102,7 +102,7 @@ export const VerifyEmailPending = () => {
         </div>
       </div>
 
-      <form className="auth-form" method="POST" onSubmit={(event) => void onSubmit(event)}>
+      <form className={styles.form} method="POST" onSubmit={(event) => void onSubmit(event)}>
         <p className={styles.hint}>{t('auth.verification.notReceived')}</p>
 
         {!hasPendingEmail && (
@@ -144,15 +144,15 @@ export const VerifyEmailPending = () => {
         )}
       </form>
 
-      <p className="auth-footer">
+      <p className={styles.footer}>
         {t('auth.verification.differentEmailHelp')}{' '}
-        <Link to="/signup" className="auth-link">
+        <Link to="/signup" className={styles.link}>
           {t('auth.verification.differentEmail')}
         </Link>
       </p>
 
-      <p className="auth-footer">
-        <Link to="/login" className="auth-link">
+      <p className={styles.footer}>
+        <Link to="/login" className={styles.link}>
           {t('auth.verification.backToLogin')}
         </Link>
       </p>

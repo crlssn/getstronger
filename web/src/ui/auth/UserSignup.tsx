@@ -14,6 +14,8 @@ import { AppInput } from '@/ui/components/AppInput'
 import { AppPasswordInput } from '@/ui/components/AppPasswordInput'
 import { usernameFromName } from '@/utils/names'
 
+import styles from './auth.module.css'
+
 export const UserSignup = () => {
   const { t } = useTranslation()
   const navigate = useNavigate()
@@ -69,14 +71,14 @@ export const UserSignup = () => {
   }
 
   return (
-    <section className="auth-view">
-      <header className="auth-intro">
-        <p className="auth-eyebrow">{t('auth.startTraining')}</p>
+    <section className={styles.view}>
+      <header className={styles.intro}>
+        <p className={styles.eyebrow}>{t('auth.startTraining')}</p>
         <h1>{t('auth.signupTitle')}</h1>
         <p>{brandSignupSubtitle}</p>
       </header>
 
-      <form className="auth-form" method="POST" onSubmit={(event) => void onSubmit(event)}>
+      <form className={styles.form} method="POST" onSubmit={(event) => void onSubmit(event)}>
         <AppInput
           id="name"
           name="name"
@@ -151,9 +153,9 @@ export const UserSignup = () => {
         </AppButton>
       </form>
 
-      <p className="auth-footer">
+      <p className={styles.footer}>
         {t('auth.alreadyMember')}{' '}
-        <Link to="/login" className="auth-link">
+        <Link to="/login" className={styles.link}>
           {t('auth.login')}
         </Link>
       </p>

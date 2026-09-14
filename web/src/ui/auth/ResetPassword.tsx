@@ -11,6 +11,8 @@ import { AppButton } from '@/ui/components/AppButton'
 import { AppInlineError } from '@/ui/components/AppInlineError'
 import { AppPasswordInput } from '@/ui/components/AppPasswordInput'
 
+import styles from './auth.module.css'
+
 export const ResetPassword = () => {
   const { t } = useTranslation()
   const navigate = useNavigate()
@@ -50,14 +52,14 @@ export const ResetPassword = () => {
   }
 
   return (
-    <section className="auth-view">
-      <header className="auth-intro">
-        <p className="auth-eyebrow">{t('auth.recovery.secureEyebrow')}</p>
+    <section className={styles.view}>
+      <header className={styles.intro}>
+        <p className={styles.eyebrow}>{t('auth.recovery.secureEyebrow')}</p>
         <h1>{t('auth.recovery.chooseTitle')}</h1>
         <p>{t('auth.recovery.chooseIntro')}</p>
       </header>
 
-      <form className="auth-form" method="POST" onSubmit={(event) => void onSubmit(event)}>
+      <form className={styles.form} method="POST" onSubmit={(event) => void onSubmit(event)}>
         <AppPasswordInput
           id="password"
           name="password"

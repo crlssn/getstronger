@@ -1,0 +1,75 @@
+@reference '../../assets/base.css';
+
+/* One module for the flow rather than one per screen: the five pre-login
+   screens are the same page with different fields in the middle, and the
+   verification notice adds rows to it rather than a layout of its own. */
+
+.view {
+  @apply w-full;
+}
+
+.intro {
+  @apply mb-8;
+}
+
+.intro h1 {
+  @apply mt-2 text-display font-bold text-text;
+}
+
+.intro > p:last-child {
+  @apply mt-3 text-base leading-6 text-text-muted;
+}
+
+.eyebrow {
+  @apply text-eyebrow font-bold uppercase text-text-subtle;
+}
+
+.form {
+  @apply space-y-5;
+}
+
+/* The only route between logging in and signing up, so it carries a thumb's
+   worth of room on both axes — "Log in" is 40px of text. The negative margin
+   spends the height on the hit area rather than on the line, which keeps the
+   sentence it sits in the height it was. */
+.link {
+  @apply -my-3 inline-flex min-h-(--size-control-sm) min-w-(--size-control-sm) items-center justify-center py-3 font-semibold text-ink underline decoration-ink-border underline-offset-4 transition hover:text-ink-strong hover:decoration-ink-muted;
+}
+
+.footer {
+  @apply mt-7 text-center text-sm text-text-muted;
+}
+
+.destination {
+  @apply break-words;
+}
+
+/* Neutral rather than amber: waiting on an email is informational, and amber
+   left the palette with the unread cards. */
+.pending {
+  @apply mb-6 flex items-start gap-3 rounded-control bg-info-surface p-4 text-sm text-info;
+}
+
+.pendingIcon {
+  @apply mt-0.5 size-5 shrink-0;
+}
+
+.pendingBody {
+  @apply min-w-0 space-y-1;
+}
+
+.pendingLabel {
+  @apply font-semibold;
+}
+
+.hint {
+  @apply text-sm text-text-muted;
+}
+
+.status {
+  @apply text-sm font-semibold text-text-muted;
+}
+
+.error {
+  @apply rounded-control border border-danger/30 bg-danger-surface p-3 text-sm font-semibold text-danger;
+}

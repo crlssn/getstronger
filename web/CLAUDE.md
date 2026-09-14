@@ -110,10 +110,13 @@ Callers pass `className`, which is appended via `cn()` rather than replacing the
 component's own — a screen positions a component from outside and never
 restyles it from outside.
 
-Only one class name is still global, `.loading-card`. Everything else is a
-module local and appears in the DOM hashed, so **nothing outside a component may
-select by its class**: the end-to-end suite reaches elements by role, name or id
-instead.
+The loading skeleton is the only thing still styled globally — `.loading-card`
+and the `.loading-line` it draws, both read by name from outside the component
+that applies them. Everything else is a module local and appears in the DOM
+hashed, so **nothing outside a component may select by its class**: the
+end-to-end suite reaches elements by role, name or id instead.
+`cssModules.spec.ts` holds the global layer to those two names, and fails on a
+third.
 
 Screens that want an action in the top nav bar render `<PageNavAction>`. A
 sentence with an element in the middle of it goes through `<RichMessage>`.
