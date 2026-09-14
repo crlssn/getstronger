@@ -2,6 +2,9 @@
 
 import { screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { readFileSync } from 'node:fs'
+import { dirname, join } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { useState } from 'react'
 import { afterEach, describe, expect, test, vi } from 'vitest'
 
@@ -187,6 +190,45 @@ describe('AppSheet', () => {
     await userEvent.tab()
 
     expect(dialog()).toHaveFocus()
+  })
+})
+
+// A sheet that lets the page travel underneath it drops the reader somewhere
+// else in the screen they left: the delete confirm scrolled the list it was
+// asking about 900px away.
+describe('AppSheet and the page behind it', () => {
+  afterEach(() => {
+    document.body.removeAttribute('style')
+    Reflect.deleteProperty(window, 'scrollY')
+    vi.restoreAllMocks()
+  })
+
+  test('holds the page still while it is open, and hands it back on close', () => {
+    Object.defineProperty(window, 'scrollY', { configurable: true, value: 900 })
+    vi.spyOn(window, 'scrollTo').mockImplementation(() => {})
+
+    const { unmount } = renderWithProviders(
+      <AppSheet title="Delete “Barbell back squat”?" onClose={vi.fn()} />,
+    )
+    expect(document.body.style.position).toBe('fixed')
+    expect(document.body.style.top).toBe('-900px')
+
+    unmount()
+
+    expect(document.body.style.position).toBe('')
+    expect(window.scrollTo).toHaveBeenCalledWith(0, 900)
+  })
+
+  // Read rather than rendered: jsdom computes no scroll chaining, and the
+  // property is the whole fix — a list scrolled past its end otherwise carries
+  // on into the page behind the sheet.
+  test('keeps a scroll inside its own content region', () => {
+    const stylesheet = readFileSync(
+      join(dirname(fileURLToPath(import.meta.url)), 'AppSheet.module.css'),
+      'utf8',
+    )
+
+    expect(stylesheet).toMatch(/\.sheetContent\s*\{[^}]*overscroll-behavior:\s*contain/)
   })
 })
 

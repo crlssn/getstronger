@@ -265,3 +265,37 @@ test('fills the reserved strip with the paper of the shell below it', async ({ p
   await logIn(page)
   expect(await paperOf(band)).toBe(await paperOf(page.locator('body')))
 })
+
+// A sheet that lets the page travel underneath it leaves the reader somewhere
+// else in the screen they came from: a wheel over the backdrop used to carry
+// the list behind a delete confirm 900px away. Measured on a screen short
+// enough that the form beneath the sheet has somewhere to scroll to.
+test('holds the page still behind a sheet', async ({ page }) => {
+  await logIn(page)
+  await page.setViewportSize({ height: 420, width: 390 })
+  await page.goto('/exercises/create')
+
+  const openLibrary = page.getByRole('button', { name: 'Choose from the library' })
+  await expect(openLibrary).toBeVisible()
+  expect(await verticalOverflow(page)).toBeGreaterThan(0)
+  const restingPlace = await boxOf(openLibrary)
+
+  const library = page.getByRole('dialog', { name: 'Exercise library' })
+  await openLibrary.click()
+  await expect(library).toBeVisible()
+
+  // The sheet sits on the bottom edge, so the top of the screen is the page
+  // behind it — which is the gesture that used to scroll through.
+  await page.mouse.move(195, 20)
+  await page.mouse.wheel(0, 600)
+  await page.waitForTimeout(300)
+  expect(await boxOf(openLibrary), 'the page moved under the sheet').toMatchObject({
+    y: restingPlace.y,
+  })
+
+  await page.keyboard.press('Escape')
+  await expect(library).toHaveCount(0)
+  expect(await boxOf(openLibrary), 'the page was left somewhere else').toMatchObject({
+    y: restingPlace.y,
+  })
+})

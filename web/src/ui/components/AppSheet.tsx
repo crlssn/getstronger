@@ -4,6 +4,7 @@ import { XMarkIcon } from '@heroicons/react/24/outline'
 import { useEffect, useId, useRef } from 'react'
 
 import { cn } from '@/ui/cn'
+import { usePageScrollLock } from '@/utils/usePageScrollLock'
 import styles from './AppSheet.module.css'
 
 type SheetActionTone = 'primary' | 'danger' | 'dangerOutline' | 'tertiary'
@@ -64,6 +65,11 @@ export const AppSheet = ({
   const titleId = useId()
   const panel = useRef<HTMLElement>(null)
   const backdrop = useRef<HTMLDivElement>(null)
+
+  // A page that travels under a sheet leaves the reader somewhere else in the
+  // screen they came from, which reads worst on a confirm: the content
+  // explaining what is about to be deleted is what scrolls away.
+  usePageScrollLock()
 
   // Callers close a sheet by unmounting it, so the slide-down cannot play
   // inside React: by the time this cleanup runs, the backdrop is already out
