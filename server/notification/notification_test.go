@@ -116,6 +116,60 @@ func TestWorkoutLikeEventID(t *testing.T) {
 	})
 }
 
+func TestFollowEventID(t *testing.T) {
+	t.Parallel()
+
+	follower, followee := uuid.Must(uuid.NewV4()), uuid.Must(uuid.NewV4())
+
+	t.Run("is the same however often the follow is toggled", func(t *testing.T) {
+		t.Parallel()
+		first := notification.FollowEventID(follower, followee)
+		require.Equal(t, first, notification.FollowEventID(follower, followee))
+	})
+
+	t.Run("differs by follower and by followee", func(t *testing.T) {
+		t.Parallel()
+		other := uuid.Must(uuid.NewV4())
+		require.NotEqual(
+			t,
+			notification.FollowEventID(follower, followee),
+			notification.FollowEventID(other, followee),
+		)
+		require.NotEqual(
+			t,
+			notification.FollowEventID(follower, followee),
+			notification.FollowEventID(follower, other),
+		)
+	})
+
+	// A follow runs one way: being followed back is something else to be told
+	// about, so the pair reversed is a different event.
+	t.Run("reads in one direction", func(t *testing.T) {
+		t.Parallel()
+		require.NotEqual(
+			t,
+			notification.FollowEventID(follower, followee),
+			notification.FollowEventID(followee, follower),
+		)
+	})
+
+	// Each kind of event derives ids under a namespace of its own, so the same
+	// pair of ids cannot name one event in two of them.
+	t.Run("shares no id with a rep derived from the same pair", func(t *testing.T) {
+		t.Parallel()
+		require.NotEqual(
+			t,
+			notification.FollowEventID(follower, followee),
+			notification.WorkoutLikeEventID(follower, followee),
+		)
+	})
+
+	t.Run("names an event", func(t *testing.T) {
+		t.Parallel()
+		require.False(t, notification.FollowEventID(follower, followee).IsNil())
+	})
+}
+
 // A notification is read once its read time is set; nothing else says so.
 func TestNotificationRead(t *testing.T) {
 	t.Parallel()

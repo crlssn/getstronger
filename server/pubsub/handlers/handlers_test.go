@@ -233,6 +233,43 @@ func TestFollowedUser_HandlePayload(t *testing.T) {
 	})
 }
 
+// A derived id is only worth having if the store turns a replay into nothing.
+// Unfollowing and following again publishes the same event however often it is
+// toggled, and the followee is told the once.
+func TestFollowedUser_TellsTheFolloweeOnce(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	c := container.NewContainer(ctx)
+	f := factory.NewFactory(c.DB)
+	handler := handlers.NewFollowedUser(zap.NewExample(), repo.New(c.DB))
+
+	t.Cleanup(func() {
+		if terminateErr := c.Terminate(ctx); terminateErr != nil {
+			t.Fatal(fmt.Errorf("terminate container: %w", terminateErr))
+		}
+	})
+
+	follower := f.NewUser()
+	followee := f.NewUser()
+	payload := events.UserFollowed{
+		FollowerID: follower.ID,
+		FolloweeID: followee.ID,
+		EventID:    notification.FollowEventID(follower.ID, followee.ID),
+	}
+
+	const toggles = 4
+	for range toggles {
+		handler.HandlePayload(payload)
+	}
+
+	count, err := models.Notifications.Query(
+		models.SelectWhere.Notifications.UserID.EQ(followee.ID),
+	).Count(ctx, bob.NewDB(c.DB))
+	require.NoError(t, err)
+	require.Equal(t, 1, int(count))
+}
+
 var errStore = errors.New("store unavailable")
 
 // A handler runs on the far side of the request that raised the event, so a
