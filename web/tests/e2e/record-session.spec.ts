@@ -258,4 +258,46 @@ test.describe('a session with no set length', () => {
     await sheet.getByRole('button', { name: 'Save as Run' }).click()
     await expect(page).toHaveURL(/\/workouts\/[0-9a-f-]+$/)
   })
+
+  // A page that failed leaves its token in place, so the sheet still has a page
+  // to reach: it must say so and offer the retry rather than quietly ending the
+  // list. The seeded library fits on one page, so the first request is narrowed
+  // to a single exercise — that is what makes the backend hand back a token for
+  // the second request to fail on.
+  test('offers a retry when the naming sheet cannot fetch a later page', async ({ page }) => {
+    test.info().annotations.push(allowRuntimeErrors)
+    await withoutTiles(page)
+    await logIn(page)
+
+    let refused = false
+    await page.route('**/api.v1.ExerciseService/ListExercises', async (route) => {
+      const body = route.request().postDataJSON() as {
+        pagination?: { pageLimit?: number; pageToken?: string }
+      }
+      if (body.pagination?.pageToken && !refused) {
+        refused = true
+        await route.fulfill({ status: 500, contentType: 'application/json', body: '{}' })
+        return
+      }
+      await route.continue({
+        postData: JSON.stringify({ ...body, pagination: { ...body.pagination, pageLimit: 1 } }),
+      })
+    })
+
+    await page.goto('/record')
+    await page.getByRole('button', { name: 'Start', exact: true }).click()
+    await page.getByRole('button', { name: 'End session' }).click()
+
+    const sheet = page.getByRole('dialog', { name: 'What was this?' })
+    await expect(sheet).toBeVisible()
+    await sheet.getByRole('button', { name: 'Load more exercises' }).click()
+
+    const failure = sheet.getByRole('alert').filter({ hasText: 'Something went wrong' })
+    await expect(failure).toBeVisible()
+    await failure.getByRole('button', { name: 'Try again' }).click()
+
+    // The retry brings the next page in and hands the way forward back.
+    await expect(failure).toHaveCount(0)
+    await expect(sheet.getByRole('button', { name: 'Load more exercises' })).toBeVisible()
+  })
 })

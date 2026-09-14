@@ -1,10 +1,8 @@
 import type { Exercise } from '@/proto/api/v1/shared_pb'
 
 import { PlusIcon } from '@heroicons/react/24/outline'
-import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { listExercises } from '@/http/requests'
 import { AppButton } from '@/ui/components/AppButton'
 import { AppErrorState } from '@/ui/components/AppErrorState'
 import { AppLoadMore } from '@/ui/components/AppLoadMore'
@@ -13,8 +11,7 @@ import { AppSearchField } from '@/ui/components/AppSearchField'
 import { AppSheet } from '@/ui/components/AppSheet'
 import { AppSkeleton } from '@/ui/components/AppSkeleton'
 import { ExerciseTags } from '@/ui/exercises/ExerciseTags'
-import { appendPage } from '@/utils/appendPage'
-import { usePagination } from '@/utils/usePagination'
+import { useExerciseLibrary } from '@/utils/useExerciseLibrary'
 import styles from './ExercisePickerSheet.module.css'
 
 interface Props {
@@ -28,53 +25,26 @@ interface Props {
 
 /**
  * Picks an exercise: for the session in progress, or for a group of the routine
- * being built.
- *
- * Searching filters what has already been fetched rather than asking the API
- * again: the list is short enough for that, and it keeps the field responsive
- * between keystrokes.
+ * being built. The library, its paging and its search come from
+ * `useExerciseLibrary`; what this sheet adds is leaving out what is already in
+ * the session.
  */
 export const ExercisePickerSheet = ({ excluded = [], eyebrow, onAdd, onClose }: Props) => {
   const { t } = useTranslation()
+  const {
+    options,
+    loading,
+    loaded,
+    failed,
+    search,
+    setSearch,
+    matchesSearch,
+    hasMorePages,
+    loadMore,
+  } = useExerciseLibrary()
 
-  const [options, setOptions] = useState<Exercise[]>([])
-  const [loading, setLoading] = useState(true)
-  const [loaded, setLoaded] = useState(false)
-  const [failed, setFailed] = useState(false)
-  const [search, setSearch] = useState('')
-  const { currentPageToken, hasMorePages, setFromResponse } = usePagination()
-
-  const fetchPage = useCallback(async () => {
-    setFailed(false)
-    const res = await listExercises(currentPageToken())
-    if (!res) {
-      setFailed(true)
-      return
-    }
-
-    setOptions((current) => appendPage(current, res.exercises))
-    setFromResponse(res.pagination)
-    setLoaded(true)
-  }, [currentPageToken, setFromResponse])
-
-  useEffect(() => {
-    const load = async () => {
-      await fetchPage()
-      setLoading(false)
-    }
-    void load()
-  }, [fetchPage])
-
-  const loadMore = () => {
-    setLoading(true)
-    void fetchPage().finally(() => setLoading(false))
-  }
-
-  const query = search.trim().toLowerCase()
   const available = options.filter(
-    (exercise) =>
-      !excluded.includes(exercise.id) &&
-      (!query || [exercise.name, ...exercise.tags].join(' ').toLowerCase().includes(query)),
+    (exercise) => !excluded.includes(exercise.id) && matchesSearch(exercise),
   )
 
   return (
