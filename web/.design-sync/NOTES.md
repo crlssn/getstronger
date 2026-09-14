@@ -51,9 +51,6 @@ Vite with the app's PostCSS/Tailwind config, then `tsc --emitDeclarationOnly`.
   them inside `<AppList>` or the markup is invalid and the styling is off.
 - Content is the product's own domain: workouts, routines, exercises, kg, rest
   timers. Never `foo`/`bar`.
-- **The catalogue can lag the API.** `src/ui/components/README.md` documents
-  `AppInput` `variant="card"`; the shipped prop is `'default' | 'hero'`. The
-  emitted `<Name>.d.ts` is authoritative — check props against it.
 
 ## Preview harness rules in `ds.css`
 

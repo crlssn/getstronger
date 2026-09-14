@@ -20,13 +20,16 @@ const exported = files.map((file) => file.replace(/\.tsx$/, ''))
 // A file may export a second component that only makes sense beside the first
 // — <SheetAction> in a sheet, <AppListItemLink> in a list. Those are part of
 // the system too, so the catalogue may name them.
-const components = new Set(
-  files.flatMap((file) =>
-    [...readFileSync(join(componentsDir, file), 'utf8').matchAll(/^export const ([A-Z]\w+)/gm)].map(
-      (match) => match[1],
-    ),
-  ),
+const sourceOf = new Map(
+  files.flatMap((file) => {
+    const source = readFileSync(join(componentsDir, file), 'utf8')
+    return [...source.matchAll(/^export const ([A-Z]\w+)/gm)].map(
+      (match) => [match[1], source] as const,
+    )
+  }),
 )
+
+const components = new Set(sourceOf.keys())
 
 describe('the component catalogue', () => {
   it('lists every component in the design system', () => {
@@ -65,6 +68,34 @@ describe('the component catalogue', () => {
     })
 
     expect(cut, 'end the first line on a sentence, and keep it under 120 characters').toEqual([])
+  })
+
+  // A prop value lives in the prose, so it outlives the prop: the catalogue
+  // described `variant="card"` long after AppInput's variants became `default`
+  // and `hero`, and this file is where an author is sent to find out. A value
+  // the component's own source never spells is that drift. A value the prose
+  // rejects — AppNumberField is "not `type="number"`" — is not a claim.
+  it('quotes no prop value its component does not take', () => {
+    const drifted = readme
+      .split(/^### /m)
+      .slice(1)
+      .flatMap((section) => {
+        const [heading] = section.split('\n')
+        const documented = [...heading.matchAll(/`<([A-Z]\w+)>`/g)].map((match) => match[1])
+        const sources = documented.map((name) => sourceOf.get(name) ?? '')
+
+        return [...section.matchAll(/(not )?`(\w+)="([^"]+)"`/g)]
+          .filter(
+            ([, rejected, , value]) =>
+              !rejected &&
+              !sources.some(
+                (source) => source.includes(`'${value}'`) || source.includes(`"${value}"`),
+              ),
+          )
+          .map(([, , prop, value]) => `${documented.join(' and ')}: ${prop}="${value}"`)
+      })
+
+    expect(drifted, 'these components take no such value').toEqual([])
   })
 
   it('gives every component a spec', () => {
