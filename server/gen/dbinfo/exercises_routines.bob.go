@@ -78,6 +78,33 @@ var ExercisesRoutines = Table[
 			Generated: false,
 			AutoIncr:  false,
 		},
+		Tracking: column{
+			Name:      "tracking",
+			DBType:    "public.routine_exercise_tracking",
+			Default:   "'sets'::routine_exercise_tracking",
+			Comment:   "",
+			Nullable:  false,
+			Generated: false,
+			AutoIncr:  false,
+		},
+		Sets: column{
+			Name:      "sets",
+			DBType:    "integer",
+			Default:   "0",
+			Comment:   "",
+			Nullable:  false,
+			Generated: false,
+			AutoIncr:  false,
+		},
+		TargetDistanceMeters: column{
+			Name:      "target_distance_meters",
+			DBType:    "integer",
+			Default:   "0",
+			Comment:   "",
+			Nullable:  false,
+			Generated: false,
+			AutoIncr:  false,
+		},
 	},
 	Indexes: exercisesRoutineIndexes{
 		ExercisesRoutinesPkey: index{
@@ -198,6 +225,22 @@ var ExercisesRoutines = Table[
 			},
 			Expression: "((rest_seconds >= 0) AND (rest_seconds <= 3600))",
 		},
+		ExercisesRoutinesSetsCheck: check{
+			constraint: constraint{
+				Name:    "exercises_routines_sets_check",
+				Columns: []string{"sets"},
+				Comment: "",
+			},
+			Expression: "((sets >= 0) AND (sets <= 20))",
+		},
+		ExercisesRoutinesTargetDistanceMetersCheck: check{
+			constraint: constraint{
+				Name:    "exercises_routines_target_distance_meters_check",
+				Columns: []string{"target_distance_meters"},
+				Comment: "",
+			},
+			Expression: "((target_distance_meters >= 0) AND (target_distance_meters <= 50000))",
+		},
 		ExercisesRoutinesTargetDurationSecondsCheck: check{
 			constraint: constraint{
 				Name:    "exercises_routines_target_duration_seconds_check",
@@ -218,11 +261,14 @@ type exercisesRoutineColumns struct {
 	ID                    column
 	RestSeconds           column
 	TargetDurationSeconds column
+	Tracking              column
+	Sets                  column
+	TargetDistanceMeters  column
 }
 
 func (c exercisesRoutineColumns) AsSlice() []column {
 	return []column{
-		c.RoutineID, c.ExerciseID, c.Position, c.GroupID, c.ID, c.RestSeconds, c.TargetDurationSeconds,
+		c.RoutineID, c.ExerciseID, c.Position, c.GroupID, c.ID, c.RestSeconds, c.TargetDurationSeconds, c.Tracking, c.Sets, c.TargetDistanceMeters,
 	}
 }
 
@@ -259,11 +305,13 @@ func (u exercisesRoutineUniques) AsSlice() []constraint {
 
 type exercisesRoutineChecks struct {
 	ExercisesRoutinesRestSecondsValid           check
+	ExercisesRoutinesSetsCheck                  check
+	ExercisesRoutinesTargetDistanceMetersCheck  check
 	ExercisesRoutinesTargetDurationSecondsCheck check
 }
 
 func (c exercisesRoutineChecks) AsSlice() []check {
 	return []check{
-		c.ExercisesRoutinesRestSecondsValid, c.ExercisesRoutinesTargetDurationSecondsCheck,
+		c.ExercisesRoutinesRestSecondsValid, c.ExercisesRoutinesSetsCheck, c.ExercisesRoutinesTargetDistanceMetersCheck, c.ExercisesRoutinesTargetDurationSecondsCheck,
 	}
 }

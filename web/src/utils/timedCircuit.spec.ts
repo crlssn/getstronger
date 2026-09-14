@@ -404,8 +404,6 @@ describe('interval routines', () => {
         create(RoutineGroupSchema, {
           mode: RoutineGroupMode.CIRCUIT,
           rounds: 3,
-          // Nothing an interval routine says applies here, the skip included.
-          skipLastOnFinalRound: true,
           exercises: [
             { exercise: { id: 'squat', name: 'Squat' }, targetDurationSeconds: 40 },
             { exercise: { id: 'row', name: 'Row' }, targetDurationSeconds: 40 },
@@ -417,9 +415,80 @@ describe('interval routines', () => {
     )
 
     expect(phases).toHaveLength(6)
+    // A block outside an interval routine has no place in one, so the session
+    // reads as its groups and rounds rather than as a numbered sequence.
     expect(phases.every((phase) => phase.role === undefined)).toBe(true)
     expect(isIntervalRecording({ ...recording(), phases })).toBe(false)
     expect(recordedRounds({ ...recording(), phases })).toBe(3)
+  })
+
+  // A gym circuit ends its final round early for the same reason a walk-run
+  // does: nobody comes for the last station.
+  it('ends a circuit an exercise early wherever it says to', () => {
+    const phases = circuitPhases(
+      [
+        create(RoutineGroupSchema, {
+          mode: RoutineGroupMode.CIRCUIT,
+          rounds: 3,
+          skipLastOnFinalRound: true,
+          exercises: [
+            { exercise: { id: 'squat', name: 'Squat' }, targetDurationSeconds: 40 },
+            { exercise: { id: 'row', name: 'Row' }, targetDurationSeconds: 40 },
+          ],
+        }),
+      ],
+      (name, seconds) => `${name} ${seconds}`,
+      'Rest',
+    )
+
+    expect(phases).toHaveLength(5)
+    expect(phases.at(-1)?.name).toBe('Squat')
+  })
+
+  // A warm-up is worked once through, which is a straight block. Guiding it is
+  // the same work as guiding a circuit that goes round once, so a routine whose
+  // parts are not all circuits is still a session the clock can run.
+  it('guides a straight block as the one round it is worked for', () => {
+    const phases = circuitPhases(
+      [
+        create(RoutineGroupSchema, {
+          mode: RoutineGroupMode.STRAIGHT,
+          role: RoutineGroupRole.WARMUP,
+          exercises: [{ exercise: { id: 'walk', name: 'Walk' }, targetDurationSeconds: 60 }],
+        }),
+        create(RoutineGroupSchema, {
+          mode: RoutineGroupMode.CIRCUIT,
+          rounds: 2,
+          role: RoutineGroupRole.REPEAT,
+          exercises: [{ exercise: { id: 'run', name: 'Run' }, targetDurationSeconds: 30 }],
+        }),
+      ],
+      (name, seconds) => `${name} ${seconds}`,
+      'Rest',
+    )
+
+    expect(phases.map((phase) => phase.name)).toEqual(['Walk', 'Run', 'Run'])
+    expect(phases.map((phase) => phase.round)).toEqual([1, 1, 2])
+    // The count is the repeating block's: a warm-up is worked outside it.
+    expect(recordedRounds({ ...recording(), phases })).toBe(2)
+  })
+
+  // An open-ended circuit has no prescribed length, so there is no session for
+  // the clock to run through.
+  it('builds nothing from a circuit with no round count', () => {
+    expect(
+      circuitPhases(
+        [
+          create(RoutineGroupSchema, {
+            mode: RoutineGroupMode.CIRCUIT,
+            rounds: 0,
+            exercises: [{ exercise: { id: 'row', name: 'Row' }, targetDurationSeconds: 40 }],
+          }),
+        ],
+        (name, seconds) => `${name} ${seconds}`,
+        'Rest',
+      ),
+    ).toEqual([])
   })
 })
 

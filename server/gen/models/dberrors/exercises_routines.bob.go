@@ -18,6 +18,20 @@ var ExercisesRoutineErrors = &exercisesRoutineErrors{
 		s:       "exercises_routines_rest_seconds_valid",
 	},
 
+	ErrCheckExercisesRoutinesSetsCheck: &CheckConstraintError{
+		schema:  "",
+		table:   "exercises_routines",
+		columns: []string{"sets"},
+		s:       "exercises_routines_sets_check",
+	},
+
+	ErrCheckExercisesRoutinesTargetDistanceMetersCheck: &CheckConstraintError{
+		schema:  "",
+		table:   "exercises_routines",
+		columns: []string{"target_distance_meters"},
+		s:       "exercises_routines_target_distance_meters_check",
+	},
+
 	ErrCheckExercisesRoutinesTargetDurationSecondsCheck: &CheckConstraintError{
 		schema:  "",
 		table:   "exercises_routines",
@@ -30,6 +44,10 @@ type exercisesRoutineErrors struct {
 	ErrUniqueExercisesRoutinesPkey *UniqueConstraintError
 
 	ErrCheckExercisesRoutinesRestSecondsValid *CheckConstraintError
+
+	ErrCheckExercisesRoutinesSetsCheck *CheckConstraintError
+
+	ErrCheckExercisesRoutinesTargetDistanceMetersCheck *CheckConstraintError
 
 	ErrCheckExercisesRoutinesTargetDurationSecondsCheck *CheckConstraintError
 }

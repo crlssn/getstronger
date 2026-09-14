@@ -163,6 +163,82 @@ func (e *NotificationType) Scan(value any) error {
 	return nil
 }
 
+// Enum values for RoutineExerciseTracking
+const (
+	RoutineExerciseTrackingSets     RoutineExerciseTracking = "sets"
+	RoutineExerciseTrackingTimed    RoutineExerciseTracking = "timed"
+	RoutineExerciseTrackingDistance RoutineExerciseTracking = "distance"
+)
+
+func AllRoutineExerciseTracking() []RoutineExerciseTracking {
+	return []RoutineExerciseTracking{
+		RoutineExerciseTrackingSets,
+		RoutineExerciseTrackingTimed,
+		RoutineExerciseTrackingDistance,
+	}
+}
+
+type RoutineExerciseTracking string
+
+func (e RoutineExerciseTracking) String() string {
+	return string(e)
+}
+
+func (e RoutineExerciseTracking) Valid() bool {
+	switch e {
+	case RoutineExerciseTrackingSets,
+		RoutineExerciseTrackingTimed,
+		RoutineExerciseTrackingDistance:
+		return true
+	default:
+		return false
+	}
+}
+
+// useful when testing in other packages
+func (e RoutineExerciseTracking) All() []RoutineExerciseTracking {
+	return AllRoutineExerciseTracking()
+}
+
+func (e RoutineExerciseTracking) MarshalText() ([]byte, error) {
+	return []byte(e), nil
+}
+
+func (e *RoutineExerciseTracking) UnmarshalText(text []byte) error {
+	return e.Scan(text)
+}
+
+func (e RoutineExerciseTracking) MarshalBinary() ([]byte, error) {
+	return []byte(e), nil
+}
+
+func (e *RoutineExerciseTracking) UnmarshalBinary(data []byte) error {
+	return e.Scan(data)
+}
+
+func (e RoutineExerciseTracking) Value() (driver.Value, error) {
+	return string(e), nil
+}
+
+func (e *RoutineExerciseTracking) Scan(value any) error {
+	switch x := value.(type) {
+	case string:
+		*e = RoutineExerciseTracking(x)
+	case []byte:
+		*e = RoutineExerciseTracking(x)
+	case nil:
+		return fmt.Errorf("cannot nil into RoutineExerciseTracking")
+	default:
+		return fmt.Errorf("cannot scan type %T: %v", value, value)
+	}
+
+	if !e.Valid() {
+		return fmt.Errorf("invalid RoutineExerciseTracking value: %s", *e)
+	}
+
+	return nil
+}
+
 // Enum values for RoutineGroupMode
 const (
 	RoutineGroupModeStraight RoutineGroupMode = "straight"

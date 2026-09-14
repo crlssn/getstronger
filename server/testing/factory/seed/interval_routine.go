@@ -14,6 +14,8 @@ import (
 // actually has, and the one the finished workout reads straight through.
 const (
 	intervalRoutineName   = "Walk-Run Intervals"
+	intervalWarmupTitle   = "Warm-up"
+	intervalRepeatTitle   = "Repeat"
 	intervalRounds        = 5
 	intervalWarmupSeconds = 300
 	intervalRunSeconds    = 60
@@ -35,6 +37,7 @@ func seedActiveIntervalRoutine(f *factory.Factory, active *models.User, walk, ru
 		factory.RoutineGroupCircuit(0, 0),
 		factory.RoutineGroupRounds(1),
 		factory.RoutineGroupRole(enums.RoutineGroupRoleWarmup, false),
+		factory.RoutineGroupTitle(intervalWarmupTitle),
 	)
 	f.AddTimedRoutineExercise(routine, intervalWarmupSeconds, walk)
 
@@ -43,6 +46,7 @@ func seedActiveIntervalRoutine(f *factory.Factory, active *models.User, walk, ru
 		factory.RoutineGroupCircuit(0, 0),
 		factory.RoutineGroupRounds(intervalRounds),
 		factory.RoutineGroupRole(enums.RoutineGroupRoleRepeat, true),
+		factory.RoutineGroupTitle(intervalRepeatTitle),
 	)
 	f.AddTimedRoutineExercise(routine, intervalRunSeconds, run)
 	f.AddTimedRoutineExercise(routine, intervalWalkSeconds, walk)

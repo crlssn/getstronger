@@ -277,6 +277,9 @@ func routineGroupDrafts(groups []*apiv1.RoutineGroup) ([]training.RoutineGroupDr
 				ExerciseID:            exerciseID,
 				RestSeconds:           &rest,
 				TargetDurationSeconds: entry.GetTargetDurationSeconds(),
+				Tracking:              parser.RoutineExerciseTrackingFromProto(entry.GetTracking()),
+				Sets:                  entry.GetSets(),
+				TargetDistanceMeters:  entry.GetTargetDistanceMeters(),
 			})
 		}
 
@@ -287,6 +290,7 @@ func routineGroupDrafts(groups []*apiv1.RoutineGroup) ([]training.RoutineGroupDr
 			Rounds:                      group.GetRounds(),
 			Role:                        parser.RoutineGroupRoleFromProto(group.GetRole()),
 			SkipLastOnFinalRound:        group.GetSkipLastOnFinalRound(),
+			Title:                       group.GetTitle(),
 			Exercises:                   exercises,
 		})
 	}

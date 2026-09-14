@@ -334,6 +334,38 @@ func TestRoutineGroupRole(t *testing.T) {
 	require.Empty(t, parser.RoutineGroupRoleFromProto(v1.RoutineGroupRole(99)))
 }
 
+// How an occurrence's work is counted, over the wire and back. Anything the
+// schema does not know is an occurrence that does not say, which the reader
+// answers from the target duration it carries.
+func TestRoutineExerciseTracking(t *testing.T) {
+	t.Parallel()
+
+	trackings := map[training.RoutineExerciseTracking]v1.RoutineExerciseTracking{
+		training.RoutineExerciseTrackingSets:     v1.RoutineExerciseTracking_ROUTINE_EXERCISE_TRACKING_SETS,
+		training.RoutineExerciseTrackingTimed:    v1.RoutineExerciseTracking_ROUTINE_EXERCISE_TRACKING_TIMED,
+		training.RoutineExerciseTrackingDistance: v1.RoutineExerciseTracking_ROUTINE_EXERCISE_TRACKING_DISTANCE,
+	}
+
+	for tracking, proto := range trackings {
+		require.Equal(t, proto, parser.RoutineExerciseTrackingToProto(tracking))
+		require.Equal(t, tracking, parser.RoutineExerciseTrackingFromProto(proto))
+	}
+
+	require.Equal(
+		t,
+		v1.RoutineExerciseTracking_ROUTINE_EXERCISE_TRACKING_UNSPECIFIED,
+		parser.RoutineExerciseTrackingToProto(""),
+	)
+	require.Equal(
+		t,
+		v1.RoutineExerciseTracking_ROUTINE_EXERCISE_TRACKING_UNSPECIFIED,
+		parser.RoutineExerciseTrackingToProto(training.RoutineExerciseTracking("laps")),
+	)
+
+	require.Empty(t, parser.RoutineExerciseTrackingFromProto(v1.RoutineExerciseTracking_ROUTINE_EXERCISE_TRACKING_UNSPECIFIED))
+	require.Empty(t, parser.RoutineExerciseTrackingFromProto(v1.RoutineExerciseTracking(99)))
+}
+
 func TestWorkout(t *testing.T) {
 	t.Parallel()
 

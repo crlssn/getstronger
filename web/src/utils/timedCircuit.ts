@@ -101,6 +101,19 @@ export const recordedRounds = (recording: Recording): number => {
   return counted.reduce((rounds, phase) => Math.max(rounds, phase.round), 0)
 }
 
+/**
+ * How many rounds a block is guided through, or nothing where it cannot be.
+ *
+ * A straight block is worked once: a warm-up walked through before the count
+ * starts is one round of one block, and guiding it is the same work as guiding
+ * a circuit that goes round once. A circuit left open-ended has no prescribed
+ * length, so no guided session can be built from it.
+ */
+const roundsOf = (group: RoutineGroup): number => {
+  if (group.mode !== RoutineGroupMode.CIRCUIT) return 1
+  return group.rounds < 1 ? 0 : group.rounds
+}
+
 /** Freeze the prescription before recording so later routine edits cannot change it. */
 export const circuitPhases = (
   groups: readonly RoutineGroup[],
@@ -111,8 +124,7 @@ export const circuitPhases = (
     !groups.length ||
     groups.some(
       (group) =>
-        group.mode !== RoutineGroupMode.CIRCUIT ||
-        group.rounds < 1 ||
+        !roundsOf(group) ||
         !group.exercises.length ||
         group.exercises.some((entry) => !entry.exercise || entry.targetDurationSeconds <= 0),
     )
@@ -120,6 +132,7 @@ export const circuitPhases = (
     return []
   const occurrences = new Map<string, number>()
   return groups.flatMap((group) => {
+    const rounds = roundsOf(group)
     const stations = group.exercises.map((entry) => {
       const exercise = entry.exercise!
       const occurrence = (occurrences.get(exercise.id) ?? 0) + 1
@@ -131,12 +144,12 @@ export const circuitPhases = (
       }
     })
     const role = phaseRoles[group.role]
-    return Array.from({ length: group.rounds }, (_, index) => {
+    return Array.from({ length: rounds }, (_, index) => {
       // A walk-run that ran its last walk ended on the part nobody came for, so
-      // the repeating block may stop an exercise short of its final round.
-      const finalRound = index === group.rounds - 1
+      // a repeating block may stop an exercise short of its final round.
+      const finalRound = index === rounds - 1
       const worked =
-        group.skipLastOnFinalRound && role === 'repeat' && finalRound && stations.length > 1
+        group.skipLastOnFinalRound && finalRound && stations.length > 1
           ? stations.slice(0, -1)
           : stations
 

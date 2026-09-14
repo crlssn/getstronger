@@ -2,6 +2,7 @@ package training
 
 import (
 	"slices"
+	"strings"
 
 	"github.com/gofrs/uuid/v5"
 
@@ -19,6 +20,13 @@ type RoutineGroupMode = enums.RoutineGroupMode
 // gym circuit, and every routine saved before intervals existed.
 type RoutineGroupRole = enums.RoutineGroupRole
 
+// RoutineExerciseTracking says how the work of one occurrence is counted: in
+// sets recovered between, against a clock that ends it, or by a distance
+// covered however long it takes. The zero value is an occurrence saved before a
+// routine said, which reads as timed where it carries a target duration and as
+// sets everywhere else.
+type RoutineExerciseTracking = enums.RoutineExerciseTracking
+
 const (
 	RoutineGroupModeStraight = enums.RoutineGroupModeStraight
 	RoutineGroupModeCircuit  = enums.RoutineGroupModeCircuit
@@ -26,6 +34,10 @@ const (
 	RoutineGroupRoleWarmup   = enums.RoutineGroupRoleWarmup
 	RoutineGroupRoleRepeat   = enums.RoutineGroupRoleRepeat
 	RoutineGroupRoleCooldown = enums.RoutineGroupRoleCooldown
+
+	RoutineExerciseTrackingSets     = enums.RoutineExerciseTrackingSets
+	RoutineExerciseTrackingTimed    = enums.RoutineExerciseTrackingTimed
+	RoutineExerciseTrackingDistance = enums.RoutineExerciseTrackingDistance
 
 	// A rest longer than an hour is a different session, not a longer rest.
 	routineGroupMaxRestSeconds = 3600
@@ -36,6 +48,16 @@ const (
 	// A guided interval is held for at most a day, which is the recording's
 	// own ceiling.
 	routineGroupMaxTargetDurationSeconds = 86400
+
+	// Twenty sets of one exercise is a session, not a block of one.
+	routineGroupMaxSets = 20
+
+	// Fifty kilometres in one prescribed effort is an ultra, and further than
+	// a routine plans for.
+	routineGroupMaxDistanceMeters = 50000
+
+	// A title longer than this is a note, and the column takes sixty.
+	routineGroupMaxTitleRunes = 60
 )
 
 // RoutineGroup is one block of a routine: the exercises it holds, in training
@@ -56,7 +78,10 @@ type RoutineGroup struct {
 	// final round, so a walk-run does not end the session with a walk. Only the
 	// repeating block has it.
 	SkipLastOnFinalRound bool
-	Exercises            []RoutineExercise
+	// Title is what the athlete named this block, or nothing at all where they
+	// left it to read by its position.
+	Title     string
+	Exercises []RoutineExercise
 }
 
 // RoutineExercise is one exercise where a routine trains it. The same exercise
@@ -70,6 +95,14 @@ type RoutineExercise struct {
 	// TargetDurationSeconds is how long a circuit round holds this occurrence
 	// when the session is guided against the clock; zero logs it by hand.
 	TargetDurationSeconds int32
+	// Tracking says which of the three prescriptions below to read.
+	Tracking RoutineExerciseTracking
+	// Sets is how many sets this occurrence prescribes; zero is a routine that
+	// does not say. Read only where the occurrence is tracked in sets.
+	Sets int32
+	// TargetDistanceMeters is the distance this occurrence covers, however long
+	// it takes. Read only where the occurrence is tracked by distance.
+	TargetDistanceMeters int32
 }
 
 // RoutineGroupDraft is a group as a save describes it. Exercises are named by
@@ -82,6 +115,7 @@ type RoutineGroupDraft struct {
 	Rounds                      int32
 	Role                        RoutineGroupRole
 	SkipLastOnFinalRound        bool
+	Title                       string
 	Exercises                   []RoutineExerciseDraft
 }
 
@@ -92,6 +126,9 @@ type RoutineExerciseDraft struct {
 	ExerciseID            uuid.UUID
 	RestSeconds           *int32
 	TargetDurationSeconds int32
+	Tracking              RoutineExerciseTracking
+	Sets                  int32
+	TargetDistanceMeters  int32
 }
 
 // NewOccurrenceRestSeconds is how long an exercise rests between sets where a
@@ -173,6 +210,7 @@ func normalizeRoutineGroup(group RoutineGroupDraft, exercises []RoutineExerciseD
 	normalized := RoutineGroupDraft{
 		Mode:      group.Mode,
 		Role:      group.Role,
+		Title:     routineGroupTitle(group.Title),
 		Exercises: exercises,
 	}
 	if !normalized.Mode.Valid() {
@@ -185,17 +223,12 @@ func normalizeRoutineGroup(group RoutineGroupDraft, exercises []RoutineExerciseD
 		normalized.Role = ""
 	}
 
-	// Only the block a round count repeats has a final round to end early.
-	normalized.SkipLastOnFinalRound = group.SkipLastOnFinalRound && normalized.Role == RoutineGroupRoleRepeat
+	// Only a block worked round after round has a final round to end early. A
+	// straight block is worked once through, so it has none.
+	normalized.SkipLastOnFinalRound = group.SkipLastOnFinalRound && normalized.Mode == RoutineGroupModeCircuit
 
 	for index, exercise := range normalized.Exercises {
-		normalized.Exercises[index].TargetDurationSeconds = clampInt32(exercise.TargetDurationSeconds, routineGroupMaxTargetDurationSeconds)
-		if exercise.RestSeconds == nil {
-			continue
-		}
-
-		rest := clampInt32(*exercise.RestSeconds, routineGroupMaxRestSeconds)
-		normalized.Exercises[index].RestSeconds = &rest
+		normalized.Exercises[index] = normalizeRoutineExercise(exercise)
 	}
 
 	// Every block pauses on the way to the next exercise, so both kinds carry
@@ -211,6 +244,63 @@ func normalizeRoutineGroup(group RoutineGroupDraft, exercises []RoutineExerciseD
 	}
 
 	return normalized
+}
+
+// normalizeRoutineExercise is what one occurrence is worth saving as: the
+// prescription it is tracked by, and nothing else.
+//
+// The two it is not tracked by are cleared rather than carried. A run measured
+// by the distance it covers that also held a leftover thirty seconds would be
+// guided as a thirty-second run by every reader that trusts the field, and the
+// row is what every reader has.
+func normalizeRoutineExercise(exercise RoutineExerciseDraft) RoutineExerciseDraft {
+	normalized := RoutineExerciseDraft{
+		ExerciseID: exercise.ExerciseID,
+		Tracking:   occurrenceTracking(exercise),
+	}
+
+	switch normalized.Tracking {
+	case RoutineExerciseTrackingTimed:
+		normalized.TargetDurationSeconds = clampInt32(exercise.TargetDurationSeconds, routineGroupMaxTargetDurationSeconds)
+	case RoutineExerciseTrackingDistance:
+		normalized.TargetDistanceMeters = clampInt32(exercise.TargetDistanceMeters, routineGroupMaxDistanceMeters)
+	default:
+		normalized.Sets = clampInt32(exercise.Sets, routineGroupMaxSets)
+		if exercise.RestSeconds != nil {
+			rest := clampInt32(*exercise.RestSeconds, routineGroupMaxRestSeconds)
+			normalized.RestSeconds = &rest
+		}
+	}
+
+	return normalized
+}
+
+// routineGroupTitle is the name a block stores. Surrounding space is not part
+// of a name, and the column takes sixty characters — counted in runes, so a
+// name is not cut where the athlete did not write a cut.
+func routineGroupTitle(title string) string {
+	trimmed := strings.TrimSpace(title)
+	runes := []rune(trimmed)
+	if len(runes) <= routineGroupMaxTitleRunes {
+		return trimmed
+	}
+
+	return strings.TrimSpace(string(runes[:routineGroupMaxTitleRunes]))
+}
+
+// occurrenceTracking is how an occurrence's work is counted. A save that does
+// not say — an older client, or one that named no groups at all — is read the
+// way every routine was read before a routine could say: held against the clock
+// where it prescribes a duration, counted in sets everywhere else.
+func occurrenceTracking(exercise RoutineExerciseDraft) RoutineExerciseTracking {
+	if exercise.Tracking.Valid() {
+		return exercise.Tracking
+	}
+	if exercise.TargetDurationSeconds > 0 {
+		return RoutineExerciseTrackingTimed
+	}
+
+	return RoutineExerciseTrackingSets
 }
 
 // clampInt32 pulls a group setting into the range the schema takes. Every one

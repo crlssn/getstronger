@@ -1,4 +1,4 @@
-import type { Routine } from '@/proto/api/v1/routine_service_pb'
+import type { Routine, RoutineExercise } from '@/proto/api/v1/routine_service_pb'
 import type { Exercise, ExerciseSets } from '@/proto/api/v1/shared_pb'
 
 import { RoutineGroupMode } from '@/proto/api/v1/shared_pb'
@@ -24,6 +24,7 @@ import {
 } from '@/http/requests'
 import { useConfirmationStore } from '@/stores/confirmation'
 import { useDashboardStore } from '@/stores/dashboard'
+import { usePreferencesStore } from '@/stores/preferences'
 import { usePageTitleStore } from '@/stores/pageTitle'
 import { useToastStore } from '@/stores/toasts'
 import { AppButton } from '@/ui/components/AppButton'
@@ -34,6 +35,7 @@ import { AppSkeleton } from '@/ui/components/AppSkeleton'
 import { ExerciseTags } from '@/ui/exercises/ExerciseTags'
 import { formatExerciseSet } from '@/utils/exerciseMeasurements'
 import { groupLetter, groupRole } from '@/utils/routineGroups'
+import { prescribedFromRoutine, prescribes, prescriptionOf } from '@/utils/routinePrescription'
 import { intervalPartBadge, intervalPartNote, intervalPartTitle } from '@/ui/routines/intervalParts'
 import { useSortable } from '@/utils/useSortable'
 import styles from './ViewRoutine.module.css'
@@ -45,6 +47,7 @@ const minimumEstimatedMinutes = 30
 /** One routine: what is in it, in what order, and what to do with it. */
 export const ViewRoutine = () => {
   const { t } = useTranslation()
+  const distanceUnit = usePreferencesStore((state) => state.distanceUnit)
   const navigate = useNavigate()
   const { id = '' } = useParams()
 
@@ -160,14 +163,33 @@ export const ViewRoutine = () => {
   // page used to render nothing under the title, with no way to ask again.
   if (!routine) return <AppErrorState onRetry={() => void load()} />
 
-  const exerciseRow = (exercise: Exercise, index: number, draggable: boolean, key = '') => {
+  const exerciseRow = (
+    exercise: Exercise,
+    index: number,
+    draggable: boolean,
+    key = '',
+    prescribed?: RoutineExercise,
+  ) => {
     const summary = lastSession(exercise.id)
+    // What the routine asks for, said before what last happened: one is the
+    // plan and the other is the history, and the plan is why this row is here.
+    // A routine saved before it could prescribe says nothing, and nothing is
+    // what the row then shows.
+    const prescription =
+      prescribed && prescribes(prescribed)
+        ? prescriptionOf(prescribedFromRoutine(prescribed), t, distanceUnit)
+        : undefined
 
     return (
       <li key={key || exercise.id} data-id={exercise.id}>
         <span className={styles.number}>{index + 1}</span>
         <span className={styles.exerciseCopy}>
           <strong>{exercise.name}</strong>
+          {prescription && (
+            <small className={styles.prescription}>
+              {prescription.caption} · {prescription.value}
+            </small>
+          )}
           {summary ? <small>{summary}</small> : <ExerciseTags compact tags={exercise.tags} />}
         </span>
         {draggable && (
@@ -255,10 +277,13 @@ export const ViewRoutine = () => {
                       {role ? t(intervalPartBadge[role], { count: group.rounds }) : letter}
                     </span>
                     <div>
+                      {/* A block the athlete named reads by that name; one
+                          left unnamed reads by what it is, or by its letter. */}
                       <strong>
-                        {role
-                          ? t(intervalPartTitle[role])
-                          : t('routine.form.groups.groupName', { letter })}
+                        {group.title ||
+                          (role
+                            ? t(intervalPartTitle[role])
+                            : t('routine.form.blocks.blockName', { letter }))}
                       </strong>
                       {/* A prescribed circuit says so here, beside what it
                           is: how many times round is the first thing anyone
@@ -301,7 +326,7 @@ export const ViewRoutine = () => {
                   <ol className={styles.exerciseList}>
                     {group.exercises.map((entry, index) =>
                       entry.exercise
-                        ? exerciseRow(entry.exercise, index, false, `${group.id}-${index}`)
+                        ? exerciseRow(entry.exercise, index, false, `${group.id}-${index}`, entry)
                         : null,
                     )}
                   </ol>

@@ -249,6 +249,9 @@ func (f *Factory) fromExistingExercisesRoutine(ctx context.Context, m *models.Ex
 	o.ID = func() uuid.UUID { return m.ID }
 	o.RestSeconds = func() int32 { return m.RestSeconds }
 	o.TargetDurationSeconds = func() int32 { return m.TargetDurationSeconds }
+	o.Tracking = func() enums.RoutineExerciseTracking { return m.Tracking }
+	o.Sets = func() int32 { return m.Sets }
+	o.TargetDistanceMeters = func() int32 { return m.TargetDistanceMeters }
 
 	if visited, ok := factoryVisitedCtx.Value(ctx); ok {
 		ptr := uintptr(unsafe.Pointer(m))
@@ -541,6 +544,7 @@ func (f *Factory) fromExistingRoutineGroup(ctx context.Context, m *models.Routin
 	o.Rounds = func() int32 { return m.Rounds }
 	o.Role = func() null.Val[enums.RoutineGroupRole] { return m.Role }
 	o.SkipLastOnFinalRound = func() bool { return m.SkipLastOnFinalRound }
+	o.Title = func() string { return m.Title }
 
 	if visited, ok := factoryVisitedCtx.Value(ctx); ok {
 		ptr := uintptr(unsafe.Pointer(m))

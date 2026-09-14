@@ -9,6 +9,7 @@ import (
 
 	"github.com/aarondl/opt/omit"
 	models "github.com/crlssn/getstronger/server/gen/models"
+	enums "github.com/crlssn/getstronger/server/gen/models/enums"
 	"github.com/gofrs/uuid/v5"
 	"github.com/jaswdr/faker/v2"
 	"github.com/stephenafamo/bob"
@@ -42,6 +43,9 @@ type ExercisesRoutineTemplate struct {
 	ID                    func() uuid.UUID
 	RestSeconds           func() int32
 	TargetDurationSeconds func() int32
+	Tracking              func() enums.RoutineExerciseTracking
+	Sets                  func() int32
+	TargetDistanceMeters  func() int32
 
 	r exercisesRoutineR
 	f *Factory
@@ -133,6 +137,18 @@ func (o ExercisesRoutineTemplate) BuildSetter() *models.ExercisesRoutineSetter {
 		val := o.TargetDurationSeconds()
 		m.TargetDurationSeconds = omit.From(val)
 	}
+	if o.Tracking != nil {
+		val := o.Tracking()
+		m.Tracking = omit.From(val)
+	}
+	if o.Sets != nil {
+		val := o.Sets()
+		m.Sets = omit.From(val)
+	}
+	if o.TargetDistanceMeters != nil {
+		val := o.TargetDistanceMeters()
+		m.TargetDistanceMeters = omit.From(val)
+	}
 
 	return m
 }
@@ -175,6 +191,15 @@ func (o ExercisesRoutineTemplate) Build() *models.ExercisesRoutine {
 	}
 	if o.TargetDurationSeconds != nil {
 		m.TargetDurationSeconds = o.TargetDurationSeconds()
+	}
+	if o.Tracking != nil {
+		m.Tracking = o.Tracking()
+	}
+	if o.Sets != nil {
+		m.Sets = o.Sets()
+	}
+	if o.TargetDistanceMeters != nil {
+		m.TargetDistanceMeters = o.TargetDistanceMeters()
 	}
 
 	o.setModelRels(m)
@@ -423,6 +448,9 @@ func (m exercisesRoutineMods) RandomizeAllColumns(f *faker.Faker) ExercisesRouti
 		ExercisesRoutineMods.RandomID(f),
 		ExercisesRoutineMods.RandomRestSeconds(f),
 		ExercisesRoutineMods.RandomTargetDurationSeconds(f),
+		ExercisesRoutineMods.RandomTracking(f),
+		ExercisesRoutineMods.RandomSets(f),
+		ExercisesRoutineMods.RandomTargetDistanceMeters(f),
 	}
 }
 
@@ -638,6 +666,99 @@ func (m exercisesRoutineMods) UnsetTargetDurationSeconds() ExercisesRoutineMod {
 func (m exercisesRoutineMods) RandomTargetDurationSeconds(f *faker.Faker) ExercisesRoutineMod {
 	return ExercisesRoutineModFunc(func(_ context.Context, o *ExercisesRoutineTemplate) {
 		o.TargetDurationSeconds = func() int32 {
+			return random_int32(f)
+		}
+	})
+}
+
+// Set the model columns to this value
+func (m exercisesRoutineMods) Tracking(val enums.RoutineExerciseTracking) ExercisesRoutineMod {
+	return ExercisesRoutineModFunc(func(_ context.Context, o *ExercisesRoutineTemplate) {
+		o.Tracking = func() enums.RoutineExerciseTracking { return val }
+	})
+}
+
+// Set the Column from the function
+func (m exercisesRoutineMods) TrackingFunc(f func() enums.RoutineExerciseTracking) ExercisesRoutineMod {
+	return ExercisesRoutineModFunc(func(_ context.Context, o *ExercisesRoutineTemplate) {
+		o.Tracking = f
+	})
+}
+
+// Clear any values for the column
+func (m exercisesRoutineMods) UnsetTracking() ExercisesRoutineMod {
+	return ExercisesRoutineModFunc(func(_ context.Context, o *ExercisesRoutineTemplate) {
+		o.Tracking = nil
+	})
+}
+
+// Generates a random value for the column using the given faker
+// if faker is nil, a default faker is used
+func (m exercisesRoutineMods) RandomTracking(f *faker.Faker) ExercisesRoutineMod {
+	return ExercisesRoutineModFunc(func(_ context.Context, o *ExercisesRoutineTemplate) {
+		o.Tracking = func() enums.RoutineExerciseTracking {
+			return random_enums_RoutineExerciseTracking(f)
+		}
+	})
+}
+
+// Set the model columns to this value
+func (m exercisesRoutineMods) Sets(val int32) ExercisesRoutineMod {
+	return ExercisesRoutineModFunc(func(_ context.Context, o *ExercisesRoutineTemplate) {
+		o.Sets = func() int32 { return val }
+	})
+}
+
+// Set the Column from the function
+func (m exercisesRoutineMods) SetsFunc(f func() int32) ExercisesRoutineMod {
+	return ExercisesRoutineModFunc(func(_ context.Context, o *ExercisesRoutineTemplate) {
+		o.Sets = f
+	})
+}
+
+// Clear any values for the column
+func (m exercisesRoutineMods) UnsetSets() ExercisesRoutineMod {
+	return ExercisesRoutineModFunc(func(_ context.Context, o *ExercisesRoutineTemplate) {
+		o.Sets = nil
+	})
+}
+
+// Generates a random value for the column using the given faker
+// if faker is nil, a default faker is used
+func (m exercisesRoutineMods) RandomSets(f *faker.Faker) ExercisesRoutineMod {
+	return ExercisesRoutineModFunc(func(_ context.Context, o *ExercisesRoutineTemplate) {
+		o.Sets = func() int32 {
+			return random_int32(f)
+		}
+	})
+}
+
+// Set the model columns to this value
+func (m exercisesRoutineMods) TargetDistanceMeters(val int32) ExercisesRoutineMod {
+	return ExercisesRoutineModFunc(func(_ context.Context, o *ExercisesRoutineTemplate) {
+		o.TargetDistanceMeters = func() int32 { return val }
+	})
+}
+
+// Set the Column from the function
+func (m exercisesRoutineMods) TargetDistanceMetersFunc(f func() int32) ExercisesRoutineMod {
+	return ExercisesRoutineModFunc(func(_ context.Context, o *ExercisesRoutineTemplate) {
+		o.TargetDistanceMeters = f
+	})
+}
+
+// Clear any values for the column
+func (m exercisesRoutineMods) UnsetTargetDistanceMeters() ExercisesRoutineMod {
+	return ExercisesRoutineModFunc(func(_ context.Context, o *ExercisesRoutineTemplate) {
+		o.TargetDistanceMeters = nil
+	})
+}
+
+// Generates a random value for the column using the given faker
+// if faker is nil, a default faker is used
+func (m exercisesRoutineMods) RandomTargetDistanceMeters(f *faker.Faker) ExercisesRoutineMod {
+	return ExercisesRoutineModFunc(func(_ context.Context, o *ExercisesRoutineTemplate) {
+		o.TargetDistanceMeters = func() int32 {
 			return random_int32(f)
 		}
 	})
