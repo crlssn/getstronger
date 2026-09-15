@@ -4,6 +4,7 @@ import { create } from 'zustand'
 
 import { notificationClient } from '@/http/clients'
 import { refreshAccessTokenOrLogout } from '@/jwt/jwt'
+import { subscribeAppState } from '@/native/appState'
 import { GetUnreadNotificationCountRequestSchema } from '@/proto/api/v1/notification_service_pb'
 import { selectAuthorised, useAuthStore } from '@/stores/auth'
 
@@ -23,6 +24,7 @@ let pollingEnabled = false
 let pollController: AbortController | undefined
 let pollTimer: ReturnType<typeof setInterval> | undefined
 let watchingVisibility = false
+let unsubscribeAppState: (() => void) | undefined
 
 const countReq = createMessage(GetUnreadNotificationCountRequestSchema, {})
 
@@ -54,6 +56,16 @@ export const useNotificationStore = create<NotificationState>()((set, get) => {
     startPollingIfVisible()
   }
 
+  // The native app suspends the WebView in the background, so the badge is
+  // only as fresh as the last poll before it left. Coming back refreshes at
+  // once and restarts the poll from that moment, rather than beside a timer
+  // the OS may or may not have kept.
+  const onAppStateChange = (active: boolean) => {
+    if (!active) return
+    pausePolling()
+    startPollingIfVisible()
+  }
+
   const endSession = () => {
     pollingEnabled = false
     pausePolling()
@@ -61,6 +73,8 @@ export const useNotificationStore = create<NotificationState>()((set, get) => {
       document.removeEventListener('visibilitychange', onVisibilityChange)
       watchingVisibility = false
     }
+    unsubscribeAppState?.()
+    unsubscribeAppState = undefined
     set({ unreadCount: 0 })
   }
 
@@ -103,6 +117,7 @@ export const useNotificationStore = create<NotificationState>()((set, get) => {
         document.addEventListener('visibilitychange', onVisibilityChange)
         watchingVisibility = true
       }
+      unsubscribeAppState ??= subscribeAppState(onAppStateChange)
       startPollingIfVisible()
     },
 

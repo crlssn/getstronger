@@ -30,6 +30,7 @@ vi.mock('@capacitor/local-notifications', () => ({
   LocalNotifications: { addListener: bridge.addNotificationListener },
 }))
 
+import { subscribeAppState } from './appState'
 import { deepLinkPath, initNativePlatform, type NativeRouter } from './platform'
 
 type Listener = (state: { location: { pathname: string } }) => void
@@ -240,5 +241,19 @@ describe('initNativePlatform', () => {
     notificationTap(undefined)
 
     expect(router.navigate).not.toHaveBeenCalled()
+  })
+
+  // visibilitychange is the browser's account of the app's lifecycle;
+  // appStateChange is the OS's, and the one the stores hear through the helper.
+  test('hands the app returning to the foreground to its subscribers', async () => {
+    const { router } = routerAt('/home')
+    const listener = vi.fn()
+    const unsubscribe = subscribeAppState(listener)
+
+    await initNativePlatform(router)
+    handlerFor('appStateChange')?.({ isActive: true } as never)
+
+    expect(listener).toHaveBeenCalledWith(true)
+    unsubscribe()
   })
 })
