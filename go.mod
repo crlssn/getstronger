@@ -11,7 +11,7 @@ require (
 	github.com/brianvoe/gofakeit/v7 v7.17.0
 	github.com/gofrs/uuid/v5 v5.5.1
 	github.com/golang-jwt/jwt/v5 v5.3.1
-	github.com/jackc/pgx/v5 v5.10.0
+	github.com/jackc/pgx/v5 v5.11.0
 	github.com/jaswdr/faker/v2 v2.9.1
 	github.com/joho/godotenv v1.5.1
 	github.com/lib/pq v1.12.3
