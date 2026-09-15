@@ -174,6 +174,30 @@ The WebView loads the bundled assets, so it has no dev-server proxy: syncs build
 
 Native builds route unary API calls through Capacitor's native HTTP layer, so they bypass CORS and keep the refresh-token cookie in the platform's cookie jar. Server-streaming calls (the unread-notification stream) still run through the WebView's `fetch`, which means the backend's `CORS_ALLOWED_ORIGIN` must include the native origins `capacitor://localhost` (iOS) and `http://localhost` (Android). Without them the app still works; unread counts then update through polling alone.
 
+### A physical device against a local backend
+
+The simulator reaches the backend on `http://localhost:<SERVER_PORT>` — the port `mise run worktree:env` wrote to `.env` — which App Transport Security exempts as loopback. A phone needs the Mac's LAN address instead, and ATS blocks cleartext there, so every request fails silently until the app is told to allow it.
+
+```bash
+VITE_API_URL=http://<mac-lan-ip>:<SERVER_PORT> mise run mobile:sync
+```
+
+Add the exception to `mobile/ios/App/App/Info.plist` and **leave it uncommitted**. That file is shared with the Release configuration, so both keys would otherwise reach the App Store build — the usage string included, where users and App Review read it.
+
+```xml
+<key>NSAppTransportSecurity</key>
+<dict>
+	<key>NSAllowsLocalNetworking</key>
+	<true/>
+</dict>
+<key>NSLocalNetworkUsageDescription</key>
+<string>Connect to the development API running on your Mac.</string>
+```
+
+`NSAllowsLocalNetworking` covers the private address ranges without weakening ATS anywhere else. Open the project with `bunx cap open ios` from `mobile/`, set the Team under Signing & Capabilities, choose the device and Run — `cap run ios --target` goes through native-run, which is unreliable against recent iOS versions. Allow the Local Network prompt on first launch.
+
+Two things to expect. The build carries the release bundle id, so it replaces a TestFlight install until that one is reinstalled. And the phone has to be on the same network: if requests hang, load `http://<mac-lan-ip>:<SERVER_PORT>` in Safari on the phone — a bare `404 page not found` means the path works and the fault is elsewhere, while nothing at all means the network isolates its clients and a tunnel to an `https://` URL is the way round it.
+
 ### Deep links
 
 Verification and password-reset emails link to the web domain. The native projects are configured so those links open the app once domain verification is in place: the iOS project declares an Associated Domain (`applinks:www.getstronger.studio`) and the Android manifest carries an `autoVerify` intent filter for the same host. Both platforms fall back to the browser until the two files under `web/public/.well-known/` are filled with the release identities from the store setup:
