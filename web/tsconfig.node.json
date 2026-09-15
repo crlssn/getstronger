@@ -5,7 +5,8 @@
     "vitest.config.*",
     "playwright.config.*",
     "playwright.screenshots.config.*",
-    "tests/auth-rate-policy.ts"
+    "tests/auth-rate-policy.ts",
+    "tests/timeZone.ts"
   ],
   "compilerOptions": {
     "composite": true,

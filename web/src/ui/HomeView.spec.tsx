@@ -6,6 +6,7 @@ import { create } from '@bufbuild/protobuf'
 import { timestampFromDate } from '@bufbuild/protobuf/wkt'
 import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { DateTime } from 'luxon'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
 vi.mock('@/http/requests', async (importOriginal) => ({
@@ -93,15 +94,20 @@ describe('HomeView', () => {
     vi.unstubAllGlobals()
   })
 
-  test('greets by the time of day', async () => {
+  // The greeting reads the reader's own clock, so each case fixes a wall-clock
+  // hour rather than an instant: 18:00 is the evening wherever they are, and
+  // the instant that means is not the same one twice. Noon and six are the
+  // cuts themselves — either could drift by an hour and still greet most of
+  // the day correctly.
+  test.each([
+    { hour: 6, greeting: 'Good morning' },
+    { hour: 12, greeting: 'Good afternoon' },
+    { hour: 18, greeting: 'Good evening' },
+  ])('greets the reader at $hour:00 their time', async ({ hour, greeting }) => {
+    vi.setSystemTime(DateTime.local(2026, 8, 14, hour).toJSDate())
     render()
 
-    expect(
-      await screen.findByRole('heading', { name: 'Good morning', level: 1 }),
-    ).toBeInTheDocument()
-
-    vi.setSystemTime(new Date('2026-08-14T19:00:00Z'))
-    screen.getByRole('button', { name: 'Search' })
+    expect(await screen.findByRole('heading', { name: greeting, level: 1 })).toBeInTheDocument()
   })
 
   describe('up next', () => {
