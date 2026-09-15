@@ -3,6 +3,7 @@ import { Capacitor } from '@capacitor/core'
 import type { RestNotificationTarget } from '@/native/restNotification'
 
 import { appStateChanged } from '@/native/appState'
+import { startPressHaptics } from '@/native/pressHaptics'
 import { canSwipeBack, SwipeBack } from '@/native/swipeBack'
 import { isFocusedShellPath } from '@/router/routes'
 import { workoutHref } from '@/utils/workoutHref'
@@ -43,6 +44,10 @@ export const deepLinkPath = (url: string): string | undefined => {
  */
 export const initNativePlatform = async (router: NativeRouter): Promise<void> => {
   if (!Capacitor.isNativePlatform()) return
+
+  // Every control in the document, for the whole life of the app: there is
+  // nothing to release, and the listener outlives any one screen.
+  startPressHaptics()
 
   const [{ App }, { KeepAwake }] = await Promise.all([
     import('@capacitor/app'),

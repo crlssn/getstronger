@@ -29,7 +29,7 @@ vi.mock('@capacitor/core', async (importOriginal) => {
     Capacitor: { ...actual.Capacitor, isNativePlatform: () => native.enabled },
   }
 })
-const haptics = vi.hoisted(() => ({ vibrateRestOver: vi.fn() }))
+const haptics = vi.hoisted(() => ({ vibrateRestOver: vi.fn(), haptic: vi.fn() }))
 vi.mock('@/native/haptics', () => haptics)
 vi.mock('@/native/timedCircuit', () => ({
   timedCircuit: {
@@ -214,6 +214,7 @@ describe('StartWorkout', () => {
 
     Object.values(mocked).forEach((mock) => mock.mockReset())
     haptics.vibrateRestOver.mockReset()
+    haptics.haptic.mockReset()
     mocked.getCurrentUser.mockResolvedValue(currentUser(WeightUnit.KILOGRAMS))
     mocked.getRoutine.mockResolvedValue(routineOf('Push Day'))
     mocked.getPreviousWorkoutSets.mockResolvedValue(
@@ -886,6 +887,49 @@ describe('StartWorkout', () => {
       // says: the three minutes stored against the bench press are not this
       // group's to take.
       expect(within(restBanner()!).getByText('00:15')).toBeInTheDocument()
+    })
+  })
+
+  describe('logging a set', () => {
+    // The set is logged by its last field being filled rather than by a
+    // button, so the buzz is the only confirmation a hand gets without looking.
+    test('buzzes as the set becomes complete', async () => {
+      const user = userEvent.setup()
+      await renderWorkout()
+
+      await user.type(setField('Bench Press set 1 weight'), '80')
+      expect(haptics.haptic).not.toHaveBeenCalled()
+
+      await user.type(setField('Bench Press set 1 reps'), '8')
+
+      expect(haptics.haptic).toHaveBeenCalledExactlyOnceWith('setCompleted')
+    })
+
+    // The crossing, not the state: correcting a logged set is not logging it
+    // again.
+    test('stays still while a complete set is edited', async () => {
+      const user = userEvent.setup()
+      await renderWorkout()
+      await logFirstSet(user)
+      haptics.haptic.mockReset()
+
+      await user.type(setField('Bench Press set 1 reps'), '0')
+
+      expect(haptics.haptic).not.toHaveBeenCalled()
+    })
+
+    // Emptying a field takes the set back out of the log, so filling it in
+    // again is a set being taken.
+    test('buzzes again when a set is emptied and refilled', async () => {
+      const user = userEvent.setup()
+      await renderWorkout()
+      await logFirstSet(user)
+      haptics.haptic.mockReset()
+
+      await user.clear(setField('Bench Press set 1 reps'))
+      await user.type(setField('Bench Press set 1 reps'), '8')
+
+      expect(haptics.haptic).toHaveBeenCalledExactlyOnceWith('setCompleted')
     })
   })
 

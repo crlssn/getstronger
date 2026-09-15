@@ -12,7 +12,7 @@ import type { RefObject } from 'react'
 
 import { create } from '@bufbuild/protobuf'
 import { Capacitor } from '@capacitor/core'
-import { vibrateRestOver } from '@/native/haptics'
+import { haptic, vibrateRestOver } from '@/native/haptics'
 import { timedCircuit } from '@/native/timedCircuit'
 import { pacingFor, paceReferenceRequested } from '@/utils/pacing'
 import { circuitPhases, parseRecording, type Recording } from '@/utils/timedCircuit'
@@ -664,6 +664,10 @@ export const StartWorkout = () => {
     if (set && isExerciseSetComplete(set, station.exercise)) {
       if (!completedSets.current.has(key)) {
         completedSets.current.add(key)
+        // The set is logged by the last field being filled rather than by a
+        // button, so this buzz is the only confirmation a hand gets without
+        // looking up — which is most of why the app has haptics at all.
+        haptic('setCompleted')
         // A set filled entirely from the autofill is still a set the athlete
         // took: nothing typed into it started the workout, so this does.
         useWorkoutStore.getState().startWorkout(routineID)
