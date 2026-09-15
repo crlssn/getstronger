@@ -76,12 +76,18 @@ export const previewHalfway = (
  * as a turned-down one.
  */
 export const previewPaceTone = (tone: PaceTone, volume: AnnouncementVolume): void => {
-  const level = paceToneVolume * (speechVolume(volume) || 1)
-  if (Capacitor.getPlatform() === 'ios') {
+  const level = speechVolume(volume) || 1
+  // Both phones own the audio a note goes out on, and neither lets the WebView
+  // reach it: iOS silences a page's note with the Ring/Silent switch, and
+  // Android sends it out on whichever stream the WebView chose for itself. The
+  // level crossing the bridge is the announcements', and each recorder puts
+  // its own tone level under it, as it does on a run.
+  if (Capacitor.getPlatform() !== 'web') {
     void timedCircuit.previewTone({ tone, volume: level }).catch(() => {
-      // A failed native preview must not fall back to the silent iOS WebView.
+      // A failed native example must not fall back to the WebView's own
+      // audio, which is the thing being avoided.
     })
     return
   }
-  playPaceTone(tone, level)
+  playPaceTone(tone, paceToneVolume * level)
 }

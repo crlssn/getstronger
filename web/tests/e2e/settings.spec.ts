@@ -178,12 +178,19 @@ test.describe('settings', () => {
   })
 
   // A note is the one thing a row of copy cannot describe, so each is offered
-  // under its own name below the choice rather than spoken as a word.
-  test('sounds each pace note from a button of its own', async ({ page }) => {
-    type Sounded = Window & { sounded?: number[] }
+  // under its own name below the choice rather than spoken as a word. It is
+  // sounded through the recorder rather than by the page, which is what lets
+  // a phone put it on the audio session a run is heard on — so the level it
+  // arrives at is the recorder's, not the screen's.
+  test('sounds each pace note from a button of its own, as loudly as a run does', async ({
+    page,
+  }) => {
+    type Sounded = Window & { sounded?: number[]; peaks?: number[] }
     await page.addInitScript(() => {
       const sounded: number[] = []
+      const peaks: number[] = []
       ;(window as Sounded).sounded = sounded
+      ;(window as Sounded).peaks = peaks
       const Native = window.AudioContext
       window.AudioContext = class extends Native {
         createOscillator() {
@@ -195,22 +202,50 @@ test.describe('settings', () => {
           }
           return oscillator
         }
+
+        createGain() {
+          const gain = super.createGain()
+          const ramp = gain.gain.linearRampToValueAtTime.bind(gain.gain)
+          // Each beep ramps up to its level and back down to nothing; the
+          // rise is the one that says how loud the note was played.
+          gain.gain.linearRampToValueAtTime = (value: number, at: number) => {
+            if (value > 0) peaks.push(Number(value.toFixed(3)))
+            return ramp(value, at)
+          }
+          return gain
+        }
       }
     })
+    // Both reset by every navigation, because the script runs again on each.
+    const sounded = () => page.evaluate(() => (window as Sounded).sounded ?? [])
+    const peaks = () => page.evaluate(() => (window as Sounded).peaks ?? [])
 
     await page.goto('/settings/pace-tones')
     const example = page.getByRole('group', { name: 'Audio example' })
     // Faster is two taps of the same note, slower one long one: the pair is
     // told apart by rhythm rather than by pitch alone.
-    await example.getByRole('button', { name: 'Faster pace' }).click()
-    await expect
-      .poll(() => page.evaluate(() => (window as Sounded).sounded ?? []))
-      .toEqual([1320, 1320])
+    await example.getByRole('button', { name: 'Faster' }).click()
+    await expect.poll(sounded).toEqual([1320, 1320])
+    // Two taps at six tenths of the level the recorder sounds a note at, and
+    // one long note at all of it: the shapes a run plays.
+    await expect.poll(peaks).toEqual([0.18, 0.18])
 
-    await example.getByRole('button', { name: 'Slower pace' }).click()
-    await expect
-      .poll(() => page.evaluate(() => (window as Sounded).sounded ?? []))
-      .toEqual([1320, 1320, 440])
+    await example.getByRole('button', { name: 'Slower' }).click()
+    await expect.poll(sounded).toEqual([1320, 1320, 440])
+    await expect.poll(peaks).toEqual([0.18, 0.18, 0.3])
+
+    // The notes go quiet with the announcements on a run. The example does
+    // not: one nobody can hear reads as a broken feature rather than as a
+    // turned-down one.
+    await page.goto('/settings/announcements')
+    await page.getByRole('button', { name: /^Off/ }).click()
+    await page.goto('/settings/pace-tones')
+    await example.getByRole('button', { name: 'Slower' }).click()
+    await expect.poll(peaks).toEqual([0.3])
+
+    // Put the device's default back for the tests after this one.
+    await page.goto('/settings/announcements')
+    await page.getByRole('button', { name: 'Full' }).click()
   })
 
   // The one preference on the profile the account knows nothing about. The
