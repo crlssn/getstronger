@@ -1,3 +1,6 @@
+// Internal: reaches workoutFromRow and workoutCommentFromRow, the row conversions
+// the rest of the tree only meets through a query.
+
 package repo
 
 import (

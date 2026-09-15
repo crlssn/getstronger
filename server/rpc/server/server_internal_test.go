@@ -1,3 +1,6 @@
+// Internal: reaches the server field, to serve on a listener of the test's own
+// choosing and to close it, which Server does not offer its callers.
+
 package server
 
 import (

@@ -1,3 +1,6 @@
+// Internal: reaches provideHandlerOptions and handlerReadMaxBytes, which only the
+// fx module assembles.
+
 package interceptors
 
 import (

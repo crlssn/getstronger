@@ -1,3 +1,5 @@
+// Internal: package main cannot be imported, so no external test package can reach it.
+
 package main
 
 import (

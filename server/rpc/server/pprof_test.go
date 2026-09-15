@@ -1,4 +1,4 @@
-package server
+package server_test
 
 import (
 	"net/http"
@@ -14,6 +14,7 @@ import (
 	"go.uber.org/zap/zaptest/observer"
 
 	"github.com/crlssn/getstronger/server/config"
+	"github.com/crlssn/getstronger/server/rpc/server"
 )
 
 const testToken = "0123456789abcdef0123456789abcdef"
@@ -34,7 +35,7 @@ func TestProfilesAreUnmountedWithAGuessableToken(t *testing.T) {
 	t.Parallel()
 
 	core, logs := observer.New(zapcore.WarnLevel)
-	mux := NewMultiplexer(MultiplexerParams{
+	mux := server.NewMultiplexer(server.MultiplexerParams{
 		Log:    zap.New(core),
 		Config: &config.Config{Pprof: config.Pprof{Token: "hunter2"}},
 	})
@@ -111,7 +112,7 @@ func TestProfilesAreAnnouncedWhenMounted(t *testing.T) {
 	t.Parallel()
 
 	core, logs := observer.New(zapcore.InfoLevel)
-	NewMultiplexer(MultiplexerParams{
+	server.NewMultiplexer(server.MultiplexerParams{
 		Log:    zap.New(core),
 		Config: &config.Config{Pprof: config.Pprof{Token: testToken}},
 	})
@@ -125,7 +126,7 @@ func TestProfilesAreSilentWhenUnconfigured(t *testing.T) {
 	t.Parallel()
 
 	core, logs := observer.New(zapcore.DebugLevel)
-	NewMultiplexer(MultiplexerParams{Log: zap.New(core), Config: &config.Config{}})
+	server.NewMultiplexer(server.MultiplexerParams{Log: zap.New(core), Config: &config.Config{}})
 
 	assert.Empty(t, logs.All())
 }
@@ -133,7 +134,7 @@ func TestProfilesAreSilentWhenUnconfigured(t *testing.T) {
 func newProfilingMultiplexer(t *testing.T, cfg config.Pprof) *http.ServeMux {
 	t.Helper()
 
-	return NewMultiplexer(MultiplexerParams{
+	return server.NewMultiplexer(server.MultiplexerParams{
 		Log:    zap.NewNop(),
 		Config: &config.Config{Pprof: cfg},
 	})
