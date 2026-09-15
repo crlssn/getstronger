@@ -59,7 +59,6 @@ const roles = {
     'routines/ViewRoutine.module.css',
     'workouts/StartWorkout.module.css',
     'workouts/SetTable.module.css',
-    'workouts/WorkoutView.module.css',
   ],
   // A personal record. Nothing else.
   record: [

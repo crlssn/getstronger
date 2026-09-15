@@ -260,18 +260,12 @@ export const WorkoutView = () => {
         {!loaded ? (
           <AppSkeleton />
         ) : failed ? (
-          <div className={styles.historyError} role="alert">
-            <span>{t('workout.historyError')}</span>
-            <AppButton
-              type="button"
-              colour="destructive"
-              size="sm"
-              width="auto"
-              onClick={() => void loadMoreHistory()}
-            >
-              {t('common.retry')}
-            </AppButton>
-          </div>
+          <AppErrorState
+            compact
+            className={styles.historyError}
+            title={t('workout.historyError')}
+            onRetry={() => void loadMoreHistory()}
+          />
         ) : workouts.length === 0 ? (
           <AppEmptyInline className={styles.historyEmpty}>
             {t('workout.historyEmpty')}
