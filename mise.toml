@@ -598,6 +598,14 @@ run = [
 # local half; the upload itself needs the DesignSync tool, so it runs from the
 # '/design-sync' skill in Claude Code. See web/.design-sync/NOTES.md.
 
+[tasks."design:barrel-check"]
+alias = "design_barrel_check"
+description = "Fail if web/.design-sync/entry.ts lags the component catalogue"
+dir = "web"
+# The barrel is hand-maintained, and a component missing from it is invisible
+# to the sync rather than an error: the bundle simply ships without it.
+run = "node .design-sync/barrel-check.mjs"
+
 [tasks."design:build"]
 alias = "design_build"
 description = "Build the design system as a library into web/ds-dist"
@@ -614,6 +622,7 @@ dir = "web"
 # Needs the converter staged in web/.ds-sync, which the '/design-sync' skill
 # puts there. It is gitignored, so a fresh clone runs the skill once first.
 run = [
+    { task = "design:barrel-check" },
     { task = "design:build" },
     'test -d .ds-sync || { echo "✗ web/.ds-sync is missing — run /design-sync in Claude Code once to stage the converter." >&2; exit 1; }',
     "node .ds-sync/package-build.mjs --config .design-sync/config.json --node-modules ./node_modules --entry ./ds-dist/index.js --out ./ds-bundle",

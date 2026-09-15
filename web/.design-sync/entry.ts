@@ -1,11 +1,15 @@
-// The design system's library entry, generated for design-sync.
-// Regenerate with: node .design-sync/build-ds.mjs (it rewrites this file).
+// The design system's library entry, for design-sync.
+//
+// Hand-maintained: nothing regenerates it, so a component added to
+// ui/components is invisible to the sync until it is listed here. The
+// catalogue in ui/components/README.md is the list to check it against.
 
 export * from '@/ui/components/ActionButton'
 export * from '@/ui/components/AppButton'
 export * from '@/ui/components/AppCard'
 export * from '@/ui/components/AppCarousel'
 export * from '@/ui/components/AppChip'
+export * from '@/ui/components/AppCycleButton'
 export * from '@/ui/components/AppDatetimeField'
 export * from '@/ui/components/AppDurationInput'
 export * from '@/ui/components/AppDurationStepper'
@@ -26,10 +30,12 @@ export * from '@/ui/components/AppOptionRow'
 export * from '@/ui/components/AppPageHeader'
 export * from '@/ui/components/AppPasswordInput'
 export * from '@/ui/components/AppPreferenceRow'
+export * from '@/ui/components/AppReactionButton'
 export * from '@/ui/components/AppSearchField'
 export * from '@/ui/components/AppSegmented'
 export * from '@/ui/components/AppSheet'
 export * from '@/ui/components/AppSkeleton'
+export * from '@/ui/components/AppStat'
 export * from '@/ui/components/AppStepper'
 export * from '@/ui/components/AppSwitch'
 export * from '@/ui/components/AppTextarea'

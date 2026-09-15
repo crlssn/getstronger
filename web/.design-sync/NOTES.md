@@ -21,6 +21,22 @@ Vite with the app's PostCSS/Tailwind config, then `tsc --emitDeclarationOnly`.
 - **`ds-dist/package.json` is generated**, so the converter resolves `ds-dist`
   as the design-system package (`getstronger-ds`) and finds `index.d.ts`.
 
+## `entry.ts` is hand-maintained, and nothing tells you when it is stale
+
+`.design-sync/entry.ts` is the barrel the whole sync sees. Nothing generates
+it — the header comment used to claim `build-ds.mjs` rewrites it, which is
+false and cost this sync a full clean run that reported "39 unchanged, 0
+added" while three catalogued components were missing entirely. A component
+absent from the barrel is not flagged anywhere: it is simply not in the design
+system, and every downstream count agrees with itself.
+
+**Diff the barrel against the catalogue before trusting a verdict.** From
+`web/`, `mise run design:barrel-check` does it; by hand it is a sorted diff of
+the names in `entry.ts` against `src/ui/components/*.tsx`. Names only on the
+component side are invisible to the sync. Secondary exports
+(`AppSegmentedNav`, `SheetAction`, `AppListItemLink`) ride along on a
+sibling's `export *` and correctly have no line of their own.
+
 ## Tailwind quirks this build works around
 
 - **`@apply` expands only on a CSS Module's first encounter per build.**
@@ -147,6 +163,7 @@ prompts drift from it.
 
 ## Running it again
 
+- `mise run design:barrel-check` — fails if `entry.ts` lags the catalogue.
 - `mise run design:build` — the library build only (`ds-dist/`).
 - `mise run design:bundle` — build, convert and validate (`ds-bundle/`).
 - `mise run design:review` — serve the preview cards to look at them.
@@ -208,3 +225,7 @@ marked as having no side effects`**, twice, while esbuild bundles. A bare
 - Preview grades are keyed to the authored `.tsx` files; editing a component's
   props without re-checking its preview can leave a card that renders but no
   longer shows the current API.
+- **A clean verdict does not mean a complete one.** The diff compares the
+  built barrel against the anchor, so a component missing from `entry.ts` is
+  "unchanged" in the only sense the driver can measure. Check the barrel
+  first; it is the one gap no tag in the self-heal table covers.
