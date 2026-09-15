@@ -11,6 +11,8 @@
  * one — so an example the page said itself was never the voice being chosen.
  */
 
+import { Capacitor } from '@capacitor/core'
+
 import { paceToneVolume, playPaceTone } from '@/native/cueTone'
 import { timedCircuit } from '@/native/timedCircuit'
 import { i18n } from '@/i18n'
@@ -74,5 +76,12 @@ export const previewHalfway = (
  * as a turned-down one.
  */
 export const previewPaceTone = (tone: PaceTone, volume: AnnouncementVolume): void => {
-  playPaceTone(tone, paceToneVolume * (speechVolume(volume) || 1))
+  const level = paceToneVolume * (speechVolume(volume) || 1)
+  if (Capacitor.getPlatform() === 'ios') {
+    void timedCircuit.previewTone({ tone, volume: level }).catch(() => {
+      // A failed native preview must not fall back to the silent iOS WebView.
+    })
+    return
+  }
+  playPaceTone(tone, level)
 }

@@ -62,12 +62,13 @@ private let toneFadeSeconds = 0.01
 public class TimedCircuitPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManagerDelegate, AVSpeechSynthesizerDelegate {
     public let identifier = "TimedCircuitPlugin"
     public let jsName = "TimedCircuit"
-    public let pluginMethods = ["start", "read", "pause", "resume", "finish", "clear", "setVolume", "speak"]
+    public let pluginMethods = ["start", "read", "pause", "resume", "finish", "clear", "setVolume", "speak", "previewTone"]
         .compactMap { CAPPluginMethod(name: $0, returnType: CAPPluginReturnPromise) }
     private let location = CLLocationManager()
     private let speech = AVSpeechSynthesizer()
     private let engine = AVAudioEngine()
     private let tonePlayer = AVAudioPlayerNode()
+    private var previewEngine: AVAudioEngine?
     private var tones: [String: AVAudioPCMBuffer] = [:]
     private var timer: Timer?
     private var recording: [String: Any]?
@@ -288,6 +289,7 @@ public class TimedCircuitPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManagerD
         speaking = 0
         duck(false)
         guard recording == nil || recording?["endedAt"] != nil else { return }
+        guard previewEngine == nil else { return }
         closeAudio()
     }
 
@@ -815,7 +817,48 @@ public class TimedCircuitPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManagerD
                 self.locale = call.getString("locale") ?? self.locale
                 self.speech.stopSpeaking(at: .immediate)
             }
+            do { try self.openAudio() }
+            catch { call.reject("Audio example could not start", nil, error); return }
             self.speak(phrase, at: level)
+            call.resolve()
+        }
+    }
+
+    /// A settings tone owns a short-lived engine so it cannot change the
+    /// recorder's volume or depend on a recording having prepared its tones.
+    @objc func previewTone(_ call: CAPPluginCall) {
+        DispatchQueue.main.async {
+            guard let shape = toneShapes[call.getString("tone") ?? ""],
+                  let format = AVAudioFormat(standardFormatWithSampleRate: 44100, channels: 1),
+                  let buffer = self.note(shape, format: format) else {
+                call.reject("Unknown pace tone")
+                return
+            }
+            self.previewEngine?.stop()
+            self.previewEngine = nil
+            let engine = AVAudioEngine()
+            let player = AVAudioPlayerNode()
+            engine.attach(player)
+            engine.connect(player, to: engine.mainMixerNode, format: format)
+            player.volume = Float(min(max(call.getDouble("volume") ?? 0.3, 0), 1))
+            do {
+                try self.openAudio()
+                try engine.start()
+            } catch {
+                self.releaseAudioIfDone()
+                call.reject("Audio example could not start", nil, error)
+                return
+            }
+            self.previewEngine = engine
+            player.scheduleBuffer(buffer, completionCallbackType: .dataPlayedBack) { [weak self, weak engine] _ in
+                DispatchQueue.main.async {
+                    guard let self, let engine, self.previewEngine === engine else { return }
+                    engine.stop()
+                    self.previewEngine = nil
+                    self.releaseAudioIfDone()
+                }
+            }
+            player.play()
             call.resolve()
         }
     }
