@@ -83,9 +83,18 @@ export const say = (phrase: string, volume: number, locale: string): void => {
       // into one another, so the rest of the phrase waits on a timer. Started
       // from the end of this part rather than from now: a queue is not a
       // clock, and the part ahead of it may be any length.
-      if (index + 1 < parts.length)
-        utterance.onend = () =>
+      if (index + 1 < parts.length) {
+        let moved = false
+        const onwards = () => {
+          if (moved) return
+          moved = true
           window.setTimeout(() => speakFrom(index + 1), announcementPauseSeconds * 1000)
+        }
+        utterance.onend = onwards
+        // A part the browser gives up on must not swallow the rest of the
+        // phrase: "Half way" without the pace is the half worth less.
+        utterance.onerror = onwards
+      }
       window.speechSynthesis.speak(utterance)
     }
     if (parts.length > 0) speakFrom(0)

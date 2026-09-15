@@ -240,6 +240,34 @@ describe('say', () => {
     vi.useRealTimers()
   })
 
+  // "Half way" without the pace is the half worth less, so a part the browser
+  // gives up on must not swallow the rest of the phrase.
+  test('carries on to the rest of a phrase when a part errors', async () => {
+    const spoken: { text: string; onerror?: () => void }[] = []
+    vi.stubGlobal('speechSynthesis', {
+      speak: (utterance: { text: string }) => spoken.push(utterance),
+      getVoices: () => [],
+    })
+    vi.stubGlobal(
+      'SpeechSynthesisUtterance',
+      class {
+        volume = 1
+        lang = ''
+        onerror?: () => void
+        constructor(public text: string) {}
+      },
+    )
+    vi.useFakeTimers()
+    const { say } = await load()
+
+    say('Half way.{pause}5 minutes per kilometre', 1, 'en')
+    spoken[0].onerror?.()
+    vi.advanceTimersByTime(1000)
+
+    expect(spoken.map((each) => each.text)).toEqual(['Half way.', '5 minutes per kilometre.'])
+    vi.useRealTimers()
+  })
+
   test('says nothing at no volume, and nothing where the browser cannot speak', async () => {
     const speak = vi.fn()
     vi.stubGlobal('speechSynthesis', { speak, getVoices: () => [] })

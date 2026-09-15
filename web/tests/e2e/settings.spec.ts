@@ -154,6 +154,9 @@ test.describe('settings', () => {
       ;(window as Spied).spokenExamples = spoken
       window.speechSynthesis.speak = (utterance: SpeechSynthesisUtterance) => {
         spoken.push(utterance.text)
+        // The real one always ends an utterance, and a phrase that holds a
+        // pause waits on that to say the rest of itself.
+        setTimeout(() => utterance.onend?.(new SpeechSynthesisEvent('end', { utterance })), 0)
       }
     })
     // Reset by every navigation, because the script runs again on each one.
@@ -197,13 +200,17 @@ test.describe('settings', () => {
 
     await page.goto('/settings/pace-tones')
     const example = page.getByRole('group', { name: 'Audio example' })
+    // Faster is two taps of the same note, slower one long one: the pair is
+    // told apart by rhythm rather than by pitch alone.
     await example.getByRole('button', { name: 'Faster' }).click()
-    await expect.poll(() => page.evaluate(() => (window as Sounded).sounded ?? [])).toEqual([1320])
+    await expect
+      .poll(() => page.evaluate(() => (window as Sounded).sounded ?? []))
+      .toEqual([1320, 1320])
 
     await example.getByRole('button', { name: 'Slower' }).click()
     await expect
       .poll(() => page.evaluate(() => (window as Sounded).sounded ?? []))
-      .toEqual([1320, 440])
+      .toEqual([1320, 1320, 440])
   })
 
   // The one preference on the profile the account knows nothing about. The
@@ -216,6 +223,9 @@ test.describe('settings', () => {
       ;(window as Spied).spokenExamples = spoken
       window.speechSynthesis.speak = (utterance: SpeechSynthesisUtterance) => {
         spoken.push(utterance.text)
+        // The real one always ends an utterance, and a phrase that holds a
+        // pause waits on that to say the rest of itself.
+        setTimeout(() => utterance.onend?.(new SpeechSynthesisEvent('end', { utterance })), 0)
       }
     })
 
@@ -223,10 +233,11 @@ test.describe('settings', () => {
     const call = page.getByRole('switch', { name: 'Call the half-way point' })
     await expect(call).toHaveAttribute('aria-checked', 'false')
 
+    // Said in two parts, with the call and the pace either side of a pause.
     await call.click()
     await expect
       .poll(() => page.evaluate(() => (window as Spied).spokenExamples ?? []))
-      .toEqual(['Half way. 5 minutes per kilometre.'])
+      .toEqual(['Half way.', '5 minutes per kilometre.'])
 
     // Kept on the device, so a reload is what proves it landed.
     await page.reload()
