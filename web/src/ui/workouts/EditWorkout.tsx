@@ -1,3 +1,4 @@
+import type { DistanceUnit, WeightUnit } from '@/proto/api/v1/shared_pb'
 import type { Workout } from '@/proto/api/v1/workout_service_pb'
 import { AppIconButton } from '@/ui/components/AppIconButton'
 import { AppTextarea } from '@/ui/components/AppTextarea'
@@ -30,9 +31,33 @@ import { normalizeDistanceUnit } from '@/utils/distanceUnits'
 import { isExerciseSetComplete } from '@/utils/exerciseMeasurements'
 import { useSortable } from '@/utils/useSortable'
 import { normalizeWeightUnit } from '@/utils/weightUnits'
+import { incompleteSetCount } from '@/utils/workoutSession'
 import styles from './EditWorkout.module.css'
 
 const localInput = "yyyy-MM-dd'T'HH:mm"
+
+type EditedSet = Workout['exerciseSets'][number]['sets'][number]
+
+// Absent, not zero: absent is what tells a row nobody has filled in from one
+// holding a real 0, and every proto scalar defaults to the latter.
+const unmeasured: Partial<EditedSet> = {
+  weight: undefined,
+  reps: undefined,
+  distance: undefined,
+  durationSeconds: undefined,
+}
+
+/**
+ * A row to type into, carrying the units and nothing else.
+ *
+ * A set built straight from the schema arrives reading "0 reps" — a value the
+ * save has to refuse rather than the empty row somebody just asked for. The
+ * session's store starts one the same way, measurements absent until typed.
+ */
+const blankSet = (weightUnit: WeightUnit, distanceUnit: DistanceUnit): EditedSet => ({
+  ...create(SetSchema, { weightUnit, distanceUnit }),
+  ...unmeasured,
+})
 
 const toLocalInput = (timestamp: Timestamp | undefined) =>
   timestamp
@@ -79,9 +104,26 @@ export const EditWorkout = () => {
 
   const onSubmit = async () => {
     if (!workout) return
+    setSaveError(undefined)
 
-    // A set left half-filled is dropped rather than saved as a real one, and an
-    // exercise with nothing left in it goes with them.
+    // A set that was started and left incomplete is refused, the way the
+    // session screen refuses to finish on one. Dropping it instead deleted
+    // training that is still on screen, under a toast saying the save worked:
+    // `required` is satisfied by any non-empty field, so 0 reps and 2.5 reps
+    // reached the filter below and were quietly taken out by it.
+    const partial = incompleteSetCount(
+      workout.exerciseSets.flatMap((exerciseSet) =>
+        exerciseSet.exercise ? [{ exercise: exerciseSet.exercise, sets: exerciseSet.sets }] : [],
+      ),
+    )
+    if (partial > 0) {
+      setSaveError(t('workout.completePartialSets', { count: partial }))
+      return
+    }
+
+    // What is left is either complete or a row nobody put anything in, so the
+    // filter now only ever drops the empty ones — and an exercise with nothing
+    // left in it goes with them.
     const exerciseSets = workout.exerciseSets
       .map((exerciseSet) => ({
         ...exerciseSet,
@@ -89,7 +131,6 @@ export const EditWorkout = () => {
       }))
       .filter((exerciseSet) => exerciseSet.sets.length > 0)
 
-    setSaveError(undefined)
     const res = await updateWorkout({ ...workout, exerciseSets })
     if (!res) {
       setSaveError(consumeRequestError() ?? t('common.somethingWentWrong'))
@@ -209,10 +250,10 @@ export const EditWorkout = () => {
                 onClick={() =>
                   updateSets(exerciseIndex, (sets) => [
                     ...sets,
-                    create(SetSchema, {
-                      weightUnit: normalizeWeightUnit(workout.user?.weightUnit),
-                      distanceUnit: normalizeDistanceUnit(workout.user?.distanceUnit),
-                    }),
+                    blankSet(
+                      normalizeWeightUnit(workout.user?.weightUnit),
+                      normalizeDistanceUnit(workout.user?.distanceUnit),
+                    ),
                   ])
                 }
               />

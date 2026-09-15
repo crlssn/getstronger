@@ -941,6 +941,43 @@ test.describe('planned workouts and history', () => {
     await expect(squatSets.last()).toContainText('62.5')
   })
 
+  // 0 reps satisfies the field's `required`, so the editor used to carry it
+  // all the way to the save's completeness filter, drop the set there, and
+  // report a workout updated. The set was gone and nothing had said so.
+  test('refuses a set corrected to zero reps instead of deleting it', async ({ page }) => {
+    const squat = 'Barbell back squat'
+
+    await page.goto('/profile')
+    await page.getByRole('link', { name: /Public profile/ }).click()
+    await page.getByRole('link', { name: 'View Full Body Circuit workout details' }).first().click()
+    await expect(page).toHaveURL(/\/workouts\/[0-9a-f-]+$/)
+    const workoutUrl = page.url()
+
+    // Read rather than hardcoded: an earlier spec in this file adds a set to
+    // this same block, and the assertion is that the count does not move.
+    const squatBlockRow = sectionWithHeading(page, 'Exercises')
+      .locator('button[aria-expanded]')
+      .filter({ hasText: squat })
+    await expect(squatBlockRow).toContainText(/\d+ sets/)
+    const setsBefore = (await squatBlockRow.innerText()).match(/(\d+) sets/)?.[1]
+
+    await page.goto(`${workoutUrl}/edit`)
+    await page.getByRole('textbox', { name: `${squat} set 1 reps`, exact: true }).fill('0')
+    await page.getByRole('button', { name: 'Save changes' }).click()
+
+    // Said where the save lives, and the editor is still open on the set that
+    // has to be fixed — no toast, and no navigation away from it.
+    await expect(page.getByText('Complete 1 partial set')).toBeVisible()
+    await expect(page).toHaveURL(/\/edit$/)
+    await expect(
+      page.getByRole('textbox', { name: `${squat} set 1 reps`, exact: true }),
+    ).toHaveValue('0')
+
+    // Nothing reached the database: the block still holds every set it did.
+    await page.goto(workoutUrl)
+    await expect(squatBlockRow).toContainText(`${setsBefore} sets`)
+  })
+
   // A circuit recorded on a phone comes back on the web as its route: every
   // interval's time and distance, one colour per exercise across all the
   // rounds, and the totals in whichever unit the athlete prefers.
