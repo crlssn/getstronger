@@ -66,6 +66,47 @@ describe('dashboard store', () => {
     expect(store().preferredRoutineId).toBe('r2')
   })
 
+  test('keeps the latest selection when an older request finishes last', async () => {
+    let land = (): void => {}
+    getDashboardMock.mockReturnValueOnce(
+      new Promise((resolve) => {
+        land = () => resolve(response({ nextRoutine: { id: 'r1' } }))
+      }),
+    )
+    const first = store().selectRoutine('r1')
+    getDashboardMock.mockResolvedValue(response({ nextRoutine: { id: 'r2' } }))
+    await store().selectRoutine('r2')
+    land()
+    await first
+
+    expect(selectNextRoutine(store())?.id).toBe('r2')
+    expect(store().preferredRoutineId).toBe('r2')
+  })
+
+  test('keeps loading while a newer request is still pending', async () => {
+    let landFirst = (): void => {}
+    let landSecond = (): void => {}
+    getDashboardMock
+      .mockReturnValueOnce(
+        new Promise((resolve) => {
+          landFirst = () => resolve(response({}))
+        }),
+      )
+      .mockReturnValueOnce(
+        new Promise((resolve) => {
+          landSecond = () => resolve(response({}))
+        }),
+      )
+    const first = store().load()
+    const second = store().load()
+    landFirst()
+    await first
+    expect(store().loading).toBe(true)
+    landSecond()
+    await second
+    expect(store().loading).toBe(false)
+  })
+
   // Starting a routine from the home row is a choice made on the way off the
   // screen, so it records the preference and leaves the fetch to the screen
   // that opens next.
