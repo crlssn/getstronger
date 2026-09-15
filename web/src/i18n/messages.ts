@@ -151,6 +151,11 @@ export const en = {
     loadFailedBody: 'That did not load. Check your connection and try again.',
     somethingWentWrong: 'Something went wrong. Please try again.',
     tooManyAttempts: 'Too many attempts. Please try again later.',
+    requestRejected: 'That was not accepted. Check what you entered and try again.',
+    notAllowedNow: 'That cannot be done right now.',
+    noPermission: 'You do not have permission to do that.',
+    alreadyExists: 'That already exists.',
+    notFound: 'That could not be found.',
   },
   nav: {
     primary: 'Primary navigation',
@@ -1145,6 +1150,11 @@ export const sv = {
     loadFailedBody: 'Innehållet kunde inte laddas. Kontrollera din anslutning och försök igen.',
     somethingWentWrong: 'Något gick fel. Försök igen.',
     tooManyAttempts: 'För många försök. Försök igen senare.',
+    requestRejected: 'Det godkändes inte. Kontrollera uppgifterna och försök igen.',
+    notAllowedNow: 'Det går inte att göra just nu.',
+    noPermission: 'Du har inte behörighet att göra det.',
+    alreadyExists: 'Det finns redan.',
+    notFound: 'Det gick inte att hitta.',
   },
   nav: {
     primary: 'Primär navigering',

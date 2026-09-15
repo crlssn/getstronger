@@ -215,15 +215,48 @@ describe('shared error handling', () => {
     expect(consumeRequestNotFound()).toBe(false)
   })
 
-  it('records an application error for the caller to render inline', async () => {
-    getUser.mockRejectedValue(new ConnectError('exercise not found', Code.InvalidArgument))
+  // Nothing the backend sends is written for a reader: a refusal arrives as
+  // "[failed_precondition]" or as a Go sentence in English, so what the
+  // caller renders inline is a catalogue message chosen by the code.
+  it.each([
+    [Code.InvalidArgument, 'en', 'That was not accepted. Check what you entered and try again.'],
+    [Code.InvalidArgument, 'sv', 'Det godkändes inte. Kontrollera uppgifterna och försök igen.'],
+    [Code.FailedPrecondition, 'en', 'That cannot be done right now.'],
+    [Code.FailedPrecondition, 'sv', 'Det går inte att göra just nu.'],
+    [Code.PermissionDenied, 'en', 'You do not have permission to do that.'],
+    [Code.PermissionDenied, 'sv', 'Du har inte behörighet att göra det.'],
+    [Code.AlreadyExists, 'en', 'That already exists.'],
+    [Code.AlreadyExists, 'sv', 'Det finns redan.'],
+    [Code.NotFound, 'en', 'That could not be found.'],
+    [Code.NotFound, 'sv', 'Det gick inte att hitta.'],
+    [Code.Internal, 'en', 'Something went wrong. Please try again.'],
+    [Code.Internal, 'sv', 'Något gick fel. Försök igen.'],
+    [Code.DeadlineExceeded, 'en', 'Something went wrong. Please try again.'],
+  ])('renders a %s refusal from the catalogue in %s', async (code, locale, message) => {
+    const previous = i18n.language
+    try {
+      await i18n.changeLanguage(locale)
+      getUser.mockRejectedValue(new ConnectError('workout must start before it finishes', code))
 
-    await getCurrentUser('user-1')
+      await fetchUser('user-2')
 
-    expect(consumeRequestError()).toContain('exercise not found')
-    // Consuming is a read-once: the next caller must not inherit it.
-    expect(consumeRequestError()).toBeUndefined()
-    expect(useToastStore.getState().toast).toBeNull()
+      expect(consumeRequestError()).toBe(message)
+      // Consuming is a read-once: the next caller must not inherit it.
+      expect(consumeRequestError()).toBeUndefined()
+      expect(useToastStore.getState().toast).toBeNull()
+    } finally {
+      await i18n.changeLanguage(previous)
+    }
+  })
+
+  // The bare token is what an error built with a nil cause carries, and the
+  // only text on screen before the codes were mapped.
+  it('never renders the protocol token', async () => {
+    getUser.mockRejectedValue(new ConnectError('', Code.FailedPrecondition))
+
+    await fetchUser('user-2')
+
+    expect(consumeRequestError()).toBe('That cannot be done right now.')
   })
 
   // The failure the app used to swallow. Silence here is what let the screens

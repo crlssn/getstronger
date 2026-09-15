@@ -784,6 +784,18 @@ export const consumeRequestNotFound = (): boolean => {
   return notFound
 }
 
+// Nothing the backend sends is written for a reader: a refusal's message is
+// "[code_name]" plus, at most, a Go sentence in English. The code is what the
+// athlete can act on, so it picks the message. A refusal that needs specific
+// wording carries an ErrorDetail, handled above the fallback.
+const refusalMessageKeys: Partial<Record<Code, string>> = {
+  [Code.InvalidArgument]: 'common.requestRejected',
+  [Code.FailedPrecondition]: 'common.notAllowedNow',
+  [Code.PermissionDenied]: 'common.noPermission',
+  [Code.AlreadyExists]: 'common.alreadyExists',
+  [Code.NotFound]: 'common.notFound',
+}
+
 const tryCatch = async <T>(
   fn: () => Promise<T>,
   options: TryCatchOptions = {},
@@ -828,14 +840,10 @@ const tryCatch = async <T>(
         }
       }
 
-      // An application error says something the user can act on, so it is
-      // kept as it came. Cancelled and unreachable are neither: they fall
+      // Cancelled and unreachable are not the user's to act on: they fall
       // through to the connectivity handling below.
       if (error.code !== Code.Canceled && !isConnectivityError(error)) {
-        // An Unknown carries a transport message ("[unknown] Failed to
-        // fetch"), which tells the user nothing they can do anything with.
-        requestErrorMessage =
-          error.code === Code.Unknown ? i18n.t('common.somethingWentWrong') : error.message
+        requestErrorMessage = i18n.t(refusalMessageKeys[error.code] ?? 'common.somethingWentWrong')
         return
       }
     }

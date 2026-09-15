@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test'
-import { expect, logIn, resetSeedData, test } from './fixtures'
+import { allowRuntimeErrors, expect, logIn, resetSeedData, test } from './fixtures'
 
 test.beforeAll(resetSeedData)
 
@@ -51,6 +51,22 @@ test.describe('in Swedish', () => {
     await expect(page.getByRole('heading', { name: 'Aviseringar' }).first()).toBeVisible()
     await expect(page.locator('body')).not.toContainText('followed you')
     await expect(page.locator('body')).not.toContainText('commented on')
+  })
+
+  // Issue #1573: a refusal used to render the backend's own message, which is
+  // "[invalid_argument] invalid credentials" whatever the locale.
+  test('refuses a wrong password in Swedish', async ({ page }) => {
+    test.info().annotations.push(allowRuntimeErrors)
+    await page.goto('/login')
+    await page.locator('#email').fill(email)
+    await page.locator('#password').fill('not-the-password')
+    await page.locator('button[type="submit"]').click()
+
+    await expect(page.getByRole('alert')).toContainText(
+      'Det godkändes inte. Kontrollera uppgifterna och försök igen.',
+    )
+    await expect(page.locator('body')).not.toContainText('invalid_argument')
+    await expect(page).toHaveURL(/\/login$/)
   })
 })
 
