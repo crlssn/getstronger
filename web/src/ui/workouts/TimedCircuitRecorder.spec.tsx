@@ -39,7 +39,7 @@ describe('TimedCircuitRecorder', () => {
     instruction: 'Walk for 2 minutes',
   }
 
-  it('requests native recording only after start and leaves manual logging available after refusal', async () => {
+  it('starts the recording as the screen opens and leaves manual logging available after refusal', async () => {
     const user = userEvent.setup()
     const cancel = vi.fn()
     vi.mocked(timedCircuit.start).mockRejectedValue(new Error('LOCATION_DENIED'))
@@ -53,22 +53,22 @@ describe('TimedCircuitRecorder', () => {
         onDiscard={vi.fn()}
       />,
     )
-    expect(timedCircuit.start).not.toHaveBeenCalled()
-    // No page in front of the session: the screen it is run on is the screen
-    // it is started from, showing the first interval at its full length.
+    // No page in front of the session and no tap either: the screen it is run
+    // on is the screen it starts itself on, showing the first interval at its
+    // full length. The comparison travels with the prescription: the phone
+    // owns it from there, screen locked and WebView asleep.
+    await waitFor(() =>
+      expect(timedCircuit.start).toHaveBeenCalledWith(
+        expect.objectContaining({
+          key: 'athlete:routine',
+          phases: [phase],
+          pacing: pacingFor([phase]),
+        }),
+      ),
+    )
     expect(screen.getByRole('heading', { name: 'Walk' })).toBeVisible()
     expect(screen.getByText('2:00')).toBeVisible()
-    await user.click(screen.getByRole('button', { name: 'Start live session' }))
-    // The comparison travels with the prescription: the phone owns it from
-    // there, screen locked and WebView asleep.
-    expect(timedCircuit.start).toHaveBeenCalledWith(
-      expect.objectContaining({
-        key: 'athlete:routine',
-        phases: [phase],
-        pacing: pacingFor([phase]),
-      }),
-    )
-    expect(screen.getByRole('alert')).toHaveTextContent('Check location permission')
+    expect(await screen.findByRole('alert')).toHaveTextContent('Check location permission')
     await user.click(screen.getByRole('button', { name: 'Fill in manually' }))
     expect(cancel).toHaveBeenCalledOnce()
   })
@@ -76,7 +76,6 @@ describe('TimedCircuitRecorder', () => {
   // The recorder is told the lead when the session starts, which is what makes
   // a change in settings reach the next recording and not this one.
   it('hands the athlete lead to the recorder it starts', async () => {
-    const user = userEvent.setup()
     usePreferencesStore.setState({ intervalCueLeadSeconds: 20 })
     vi.mocked(timedCircuit.start).mockResolvedValue(undefined)
     renderWithProviders(
@@ -90,16 +89,72 @@ describe('TimedCircuitRecorder', () => {
       />,
     )
 
-    await user.click(screen.getByRole('button', { name: 'Start live session' }))
-
     // The recorder speaks the cue and the ending, so it is handed both in the
     // athlete's language rather than asked to translate.
-    expect(timedCircuit.start).toHaveBeenCalledWith(
-      expect.objectContaining({
-        cueLeadSeconds: 20,
-        cuePhrase: '20 seconds',
-        completedPhrase: 'Workout completed',
-      }),
+    await waitFor(() =>
+      expect(timedCircuit.start).toHaveBeenCalledWith(
+        expect.objectContaining({
+          cueLeadSeconds: 20,
+          cuePhrase: '20 seconds',
+          completedPhrase: 'Workout completed',
+        }),
+      ),
+    )
+  })
+
+  // The phone owns the recording, so a screen reopened mid-session finds one
+  // already running: starting again would lay a second recording over it.
+  it('picks up a recording the phone is already keeping rather than starting another', async () => {
+    vi.mocked(timedCircuit.read).mockResolvedValue({ recording: running() })
+    renderWithProviders(
+      <TimedCircuitRecorder
+        recordingKey="athlete:routine"
+        pacing={pacingFor([phase])}
+        phases={[phase]}
+        onComplete={vi.fn()}
+        onCancel={vi.fn()}
+        onDiscard={vi.fn()}
+      />,
+    )
+
+    await screen.findByRole('heading', { name: 'Run' })
+    expect(timedCircuit.start).not.toHaveBeenCalled()
+    expect(screen.getByRole('button', { name: /^Pause$/ })).toBeVisible()
+  })
+
+  // The comparison is handed over at the start and cannot be handed over
+  // afterwards, so a session that starts itself waits for it to arrive.
+  it('waits for the session it is paced against before starting itself', async () => {
+    vi.mocked(timedCircuit.start).mockResolvedValue(undefined)
+    const { rerender } = renderWithProviders(
+      <TimedCircuitRecorder
+        recordingKey="athlete:routine"
+        pacing={undefined}
+        phases={[phase]}
+        onComplete={vi.fn()}
+        onCancel={vi.fn()}
+        onDiscard={vi.fn()}
+      />,
+    )
+
+    await screen.findByRole('heading', { name: 'Walk' })
+    expect(timedCircuit.start).not.toHaveBeenCalled()
+
+    rerender(
+      <TimedCircuitRecorder
+        recordingKey="athlete:routine"
+        pacing={pacingFor([phase])}
+        phases={[phase]}
+        onComplete={vi.fn()}
+        onCancel={vi.fn()}
+        onDiscard={vi.fn()}
+      />,
+    )
+
+    await waitFor(() =>
+      expect(timedCircuit.start).toHaveBeenCalledWith(
+        expect.objectContaining({ pacing: pacingFor([phase]) }),
+      ),
     )
   })
 
@@ -399,6 +454,78 @@ describe('TimedCircuitRecorder', () => {
     expect(cancel).not.toHaveBeenCalled()
   })
 
+  // The session no longer waits to be started, so the form it replaces cannot
+  // be offered only before it: the way back stays on the screen, and what was
+  // recorded on the way there is thrown away with the same question.
+  it('keeps the form a tap away once the session has started itself', async () => {
+    const user = userEvent.setup()
+    const cancel = vi.fn()
+    vi.mocked(timedCircuit.read).mockResolvedValue({ recording: running() })
+    vi.mocked(timedCircuit.clear).mockResolvedValue()
+    renderWithProviders(
+      <TimedCircuitRecorder
+        recordingKey="athlete:routine"
+        pacing={pacingFor([phase])}
+        phases={[phase]}
+        onComplete={vi.fn()}
+        onCancel={cancel}
+        onDiscard={vi.fn()}
+      />,
+    )
+    await screen.findByRole('heading', { name: 'Run' })
+
+    await user.click(screen.getByRole('button', { name: 'Fill in manually' }))
+    await waitFor(() => expect(useConfirmationStore.getState().confirmation).not.toBeNull())
+    useConfirmationStore.getState().dismiss()
+    expect(timedCircuit.clear).not.toHaveBeenCalled()
+    expect(cancel).not.toHaveBeenCalled()
+
+    await user.click(screen.getByRole('button', { name: 'Fill in manually' }))
+    await waitFor(() => expect(useConfirmationStore.getState().confirmation).not.toBeNull())
+    useConfirmationStore.getState().accept()
+    await waitFor(() => expect(cancel).toHaveBeenCalledOnce())
+    expect(timedCircuit.clear).toHaveBeenCalledWith({ key: 'athlete:routine' })
+  })
+
+  // Both exits are now within seconds of a recording the athlete never asked
+  // to start, and nothing measured is nothing to lose: asking there would be
+  // the tap this screen has just stopped asking for.
+  it('leaves either way without a question while nothing has been recorded', async () => {
+    const user = userEvent.setup()
+    const cancel = vi.fn()
+    const discard = vi.fn()
+    vi.mocked(timedCircuit.read).mockResolvedValue({
+      recording: {
+        version: 1,
+        startedAt: Date.now() - 2000,
+        phases: [phase],
+        pauses: [],
+        points: [],
+        interrupted: false,
+      },
+    })
+    vi.mocked(timedCircuit.clear).mockResolvedValue()
+    renderWithProviders(
+      <TimedCircuitRecorder
+        recordingKey="athlete:routine"
+        pacing={pacingFor([phase])}
+        phases={[phase]}
+        onComplete={vi.fn()}
+        onCancel={cancel}
+        onDiscard={discard}
+      />,
+    )
+    await screen.findByRole('heading', { name: 'Walk' })
+
+    await user.click(screen.getByRole('button', { name: 'Fill in manually' }))
+    await waitFor(() => expect(cancel).toHaveBeenCalledOnce())
+    expect(timedCircuit.clear).toHaveBeenCalledWith({ key: 'athlete:routine' })
+
+    await user.click(screen.getByRole('button', { name: 'Discard' }))
+    await waitFor(() => expect(discard).toHaveBeenCalledOnce())
+    expect(useConfirmationStore.getState().confirmation).toBeNull()
+  })
+
   // A warm-up is worked once, before the count, so announcing it as a round of
   // anything says something the routine never asked for.
   it('counts the rounds of the repeating block alone', async () => {
@@ -466,7 +593,6 @@ describe('TimedCircuitRecorder', () => {
   // Turned down last time is turned down this time: the level is the athlete's
   // rather than the session's.
   it('starts the next session at the level the last one was left on', async () => {
-    const user = userEvent.setup()
     useAnnouncementsStore.setState({ volume: 'off' })
     vi.mocked(timedCircuit.start).mockResolvedValue()
     renderWithProviders(
@@ -480,9 +606,9 @@ describe('TimedCircuitRecorder', () => {
       />,
     )
 
-    await user.click(screen.getByRole('button', { name: 'Start live session' }))
-
-    expect(timedCircuit.start).toHaveBeenCalledWith(expect.objectContaining({ volume: 0 }))
+    await waitFor(() =>
+      expect(timedCircuit.start).toHaveBeenCalledWith(expect.objectContaining({ volume: 0 })),
+    )
   })
 
   it('announces the round once the repeating block starts', async () => {
