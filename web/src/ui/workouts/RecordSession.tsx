@@ -89,6 +89,10 @@ export const RecordSession = () => {
   const [saving, setSaving] = useState(false)
   // A save the server refused, waiting for the athlete to ask again.
   const [refused, setRefused] = useState(false)
+  // Whether the recorder has been asked what it is already keeping. The
+  // session starts itself, and one already under way is picked up rather than
+  // written over.
+  const [checked, setChecked] = useState(false)
 
   const savedWorkoutId = useRef('')
   // The phone answers every read with a fresh recording, so an effect that
@@ -132,6 +136,7 @@ export const RecordSession = () => {
         if (!disposed) setError(t('timedCircuit.failed'))
       } finally {
         reading = false
+        if (!disposed) setChecked(true)
       }
     }
     void read()
@@ -143,7 +148,7 @@ export const RecordSession = () => {
   }, [key, t])
 
   const title = exercise?.name ?? t('record.session')
-  const start = async () => {
+  const start = useCallback(async () => {
     setBusy(true)
     setError('')
     try {
@@ -173,7 +178,23 @@ export const RecordSession = () => {
     } finally {
       setBusy(false)
     }
-  }
+  }, [key, title, exercise, i18n.language, cueLeadSeconds, distanceUnit, autoPause, t])
+
+  // Opening the screen is the whole of asking for the session, so it runs from
+  // the moment the screen appears. One the recorder is already keeping is
+  // picked up rather than written over, and an exercise the session was opened
+  // from is waited for: the interval is named once, when it starts.
+  const started = useRef(false)
+  useEffect(() => {
+    if (!checked || started.current || recording) return
+    if (requestedExercise && !exercise) return
+    started.current = true
+    // Starting the recorder is the external system this effect exists to
+    // reach; the state it sets on the way is that one request's own status,
+    // set once per screen, so there is no cascade for the rule to prevent.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void start()
+  }, [checked, recording, requestedExercise, exercise, start])
 
   const command = async (kind: 'pause' | 'resume' | 'finish') => {
     setBusy(true)
@@ -189,14 +210,20 @@ export const RecordSession = () => {
     }
   }
 
+  // Asked only where there is something to lose: the session starts itself,
+  // so this exit is now within seconds of a recording the athlete never tapped
+  // to start. A finished run always is something to lose.
   const discard = async () => {
-    const confirmed = await useConfirmationStore.getState().confirm({
-      body: t('timedCircuit.discardBody'),
-      cancelLabel: t('timedCircuit.discardKeep'),
-      confirmLabel: t('timedCircuit.discardConfirm'),
-      destructive: true,
-      title: t('timedCircuit.discardTitle'),
-    })
+    const recorded = Boolean(recording?.endedAt) || (recording?.points.length ?? 0) > 0
+    const confirmed =
+      !recorded ||
+      (await useConfirmationStore.getState().confirm({
+        body: t('timedCircuit.discardBody'),
+        cancelLabel: t('timedCircuit.discardKeep'),
+        confirmLabel: t('timedCircuit.discardConfirm'),
+        destructive: true,
+        title: t('timedCircuit.discardTitle'),
+      }))
     if (!confirmed) return
     await timedCircuit.clear({ key })
     await navigate('/home', { replace: true })

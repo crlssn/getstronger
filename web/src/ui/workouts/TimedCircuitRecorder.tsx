@@ -1,5 +1,5 @@
 import { SpeakerWaveIcon, SpeakerXMarkIcon } from '@heroicons/react/24/outline'
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { timedCircuit } from '@/native/timedCircuit'
 import {
@@ -51,8 +51,12 @@ const liveDistanceDigits = 3
 interface Props {
   recordingKey: string
   phases: Phase[]
-  /** The session this one is paced against, and how closely. */
-  pacing: Pacing
+  /**
+   * The session this one is paced against, and how closely. Absent until that
+   * is known: the recorder is handed the comparison when it starts and cannot
+   * be handed it later, so a session that starts itself waits for it.
+   */
+  pacing?: Pacing
   saved?: Recording
   onComplete: (recording: Recording) => void
   /** The athlete would rather log this session by hand than record it. */
@@ -89,6 +93,10 @@ export const TimedCircuitRecorder = ({
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
   const [now, setNow] = useState(() => Date.now())
+  // Whether the recorder has been asked what it is already keeping. The
+  // session starts itself, and one already under way is picked up rather than
+  // written over.
+  const [checked, setChecked] = useState(false)
   useEffect(() => {
     let disposed = false
     let reading = false
@@ -106,6 +114,7 @@ export const TimedCircuitRecorder = ({
         if (!disposed) setError(t('timedCircuit.failed'))
       } finally {
         reading = false
+        if (!disposed) setChecked(true)
       }
     }
     void read()
@@ -115,43 +124,68 @@ export const TimedCircuitRecorder = ({
       clearInterval(timer)
     }
   }, [key, saved, onComplete, t])
-  const action = async (kind: 'start' | 'pause' | 'resume' | 'finish' | 'clear') => {
-    setBusy(true)
-    setError('')
-    try {
-      if (kind === 'start')
-        await timedCircuit.start({
-          key,
-          phases,
-          locale: i18n.language,
-          volume: speechVolume(volume),
-          cueLeadSeconds,
-          // Spoken by the recorder, so it is handed the words rather than
-          // asked to translate.
-          cuePhrase: t('timedCircuit.cueSeconds', { count: cueLeadSeconds }),
-          // The pace is only known while the interval is being run, so the
-          // recorder is handed the phrase with the hole still in it.
-          halfwayPhrase: halfwayCue ? halfwayPhrase(t, unit) : '',
-          distanceUnit: distanceUnitLabel(unit),
-          paceWords: paceWords(t),
-          completedPhrase: t('timedCircuit.completed'),
-          pacing,
-          autoPause,
-        })
-      else await timedCircuit[kind]({ key })
-      if (kind === 'clear') {
-        onDiscard()
-        return
+  /** Runs one recorder command, and says whether it went through. */
+  const action = useCallback(
+    async (kind: 'start' | 'pause' | 'resume' | 'finish' | 'clear') => {
+      setBusy(true)
+      setError('')
+      try {
+        if (kind === 'start')
+          await timedCircuit.start({
+            key,
+            phases,
+            locale: i18n.language,
+            volume: speechVolume(volume),
+            cueLeadSeconds,
+            // Spoken by the recorder, so it is handed the words rather than
+            // asked to translate.
+            cuePhrase: t('timedCircuit.cueSeconds', { count: cueLeadSeconds }),
+            // The pace is only known while the interval is being run, so the
+            // recorder is handed the phrase with the hole still in it.
+            halfwayPhrase: halfwayCue ? halfwayPhrase(t, unit) : '',
+            distanceUnit: distanceUnitLabel(unit),
+            paceWords: paceWords(t),
+            completedPhrase: t('timedCircuit.completed'),
+            pacing,
+            autoPause,
+          })
+        else await timedCircuit[kind]({ key })
+        if (kind !== 'clear') {
+          const result = await timedCircuit.read({ key })
+          setRecording(result.recording)
+          if (result.recording?.endedAt) onComplete(result.recording)
+        }
+        return true
+      } catch {
+        setError(t('timedCircuit.failed'))
+        return false
+      } finally {
+        setBusy(false)
       }
-      const result = await timedCircuit.read({ key })
-      setRecording(result.recording)
-      if (result.recording?.endedAt) onComplete(result.recording)
-    } catch {
-      setError(t('timedCircuit.failed'))
-    } finally {
-      setBusy(false)
-    }
-  }
+    },
+    [
+      key,
+      phases,
+      i18n.language,
+      volume,
+      cueLeadSeconds,
+      halfwayCue,
+      unit,
+      pacing,
+      autoPause,
+      onComplete,
+      t,
+    ],
+  )
+  // Nothing here is a second decision: the athlete asked for this session on
+  // the screen before, so it runs from the moment this one appears. A refusal
+  // leaves the screen on its own Start, which is the athlete's to tap again.
+  const started = useRef(false)
+  useEffect(() => {
+    if (!checked || !pacing || started.current || saved || recording) return
+    started.current = true
+    void action('start')
+  }, [checked, pacing, saved, recording, action])
   // Never disabled and never behind a sheet: this is the one control an athlete
   // reaches for with somebody talking to them, so the tap is the whole gesture
   // and the level moves before the recorder has answered.
@@ -166,20 +200,35 @@ export const TimedCircuitRecorder = ({
     }
   }
   // A recorded run cannot be recovered, and Discard is half a button wide next
-  // to the one that ends the session properly.
-  const discard = async () => {
-    const confirmed = await useConfirmationStore.getState().confirm({
+  // to the one that ends the session properly. Asked only where there is
+  // something to lose: both exits are now within seconds of a recording the
+  // athlete never tapped to start, and a question there is the tap this screen
+  // has just stopped asking for. A finished run always is something to lose.
+  const recorded = Boolean(recording?.endedAt) || (recording?.points.length ?? 0) > 0
+  const agreed = async () =>
+    !recorded ||
+    (await useConfirmationStore.getState().confirm({
       title: t('timedCircuit.discardTitle'),
       body: t('timedCircuit.discardBody'),
       confirmLabel: t('timedCircuit.discardConfirm'),
       cancelLabel: t('timedCircuit.discardKeep'),
       destructive: true,
-    })
-    if (confirmed) await action('clear')
+    }))
+  const discard = async () => {
+    if (!(await agreed())) return
+    if (await action('clear')) onDiscard()
   }
-  // Before the first tap there is nothing recorded, and the screen still has
-  // to show the session it is about to run: a recording that starts now has
-  // the first interval at its full length and every figure blank, which is
+  // The session no longer waits to be started, so the form it replaces cannot
+  // be offered only before it: the way back outlives the start, and throws
+  // away what was recorded on the way to it.
+  const manual = async () => {
+    if (!(await agreed())) return
+    if (recording && !(await action('clear'))) return
+    onCancel()
+  }
+  // Until the recorder answers there is nothing recorded, and the screen still
+  // has to show the session it is about to run: a recording that starts now
+  // has the first interval at its full length and every figure blank, which is
   // exactly that screen.
   const shown: Recording = useMemo(
     () =>
@@ -472,7 +521,7 @@ export const TimedCircuitRecorder = ({
               counterpart, so the screen says once what they are comparing
               against. Absent where the routine has never been recorded, which
               is exactly when nothing sounds. */}
-          {hasPaceTargets(pacing) && (
+          {pacing && hasPaceTargets(pacing) && (
             <p className={styles.paced}>
               {t(
                 paceReference === 'best'
@@ -496,9 +545,9 @@ export const TimedCircuitRecorder = ({
               disabled={busy}
               onClick={() => void action(!recording ? 'start' : paused ? 'resume' : 'pause')}
             >
-              {/* The screen opens on a routine written in minutes without
-                  being asked for, so the button that starts it says what it
-                  starts — the same words the form's dock offers. */}
+              {/* The session starts itself, so this reads Start only where
+                  that was refused: it says what it starts, in the same words
+                  the form's dock offers. */}
               {t(
                 !recording
                   ? 'timedCircuit.start'
@@ -507,7 +556,7 @@ export const TimedCircuitRecorder = ({
                     : 'timedCircuit.pause',
               )}
             </AppButton>
-            {recording ? (
+            {recording && (
               <div className={styles.exits}>
                 <AppButton
                   type="button"
@@ -526,13 +575,14 @@ export const TimedCircuitRecorder = ({
                   {t('timedCircuit.cancel')}
                 </AppButton>
               </div>
-            ) : (
-              /* Nothing to end or discard yet; what the athlete may still want
-                 is the ordinary form, which is what this session replaces. */
-              <AppButton type="button" colour="ghost" disabled={busy} onClick={onCancel}>
-                {t('timedCircuit.manual')}
-              </AppButton>
             )}
+            {/* What the athlete may still want is the ordinary form, which is
+                what this session replaces: the quietest button on the screen,
+                and the only one that is here whether the session has started
+                or not. */}
+            <AppButton type="button" colour="ghost" disabled={busy} onClick={() => void manual()}>
+              {t('timedCircuit.manual')}
+            </AppButton>
           </div>
         </section>
       )}
