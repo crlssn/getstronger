@@ -2,7 +2,7 @@
 
 import type { MessageInitShape } from '@bufbuild/protobuf'
 
-import { create } from '@bufbuild/protobuf'
+import { create, toJson } from '@bufbuild/protobuf'
 import { timestampFromDate } from '@bufbuild/protobuf/wkt'
 import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
@@ -345,6 +345,32 @@ describe('EditWorkout', () => {
 
     await waitFor(() => expect(mocked.updateWorkout).toHaveBeenCalled())
     expect(mocked.updateWorkout.mock.calls[0]?.[0]?.exerciseSets[0]?.sets).toHaveLength(1)
+  })
+
+  // A new row starts with its measurements absent, and absent is nothing the
+  // wire takes: encoded the way the transport encodes it, a set still carrying
+  // `undefined` throws before the request ever leaves the browser.
+  test('saves a new set that was filled in, as a message the wire encodes', async () => {
+    render()
+
+    await userEvent.click((await screen.findAllByRole('button', { name: 'Add set' }))[0])
+    await userEvent.type(screen.getByRole('textbox', { name: 'Bench press set 2 weight' }), '90')
+    await userEvent.type(screen.getByRole('textbox', { name: 'Bench press set 2 reps' }), '8')
+    await userEvent.click(screen.getByRole('button', { name: 'Save changes' }))
+
+    await waitFor(() => expect(mocked.updateWorkout).toHaveBeenCalled())
+    const saved = create(WorkoutSchema, mocked.updateWorkout.mock.calls[0]?.[0])
+    expect(toJson(WorkoutSchema, saved)).toMatchObject({
+      exerciseSets: [
+        {
+          sets: [
+            { weight: 100, reps: 5 },
+            { weight: 90, reps: 8 },
+          ],
+        },
+        {},
+      ],
+    })
   })
 
   // Emptying every field is how a set is taken out by hand, next to the row's

@@ -59,6 +59,15 @@ const blankSet = (weightUnit: WeightUnit, distanceUnit: DistanceUnit): EditedSet
   ...unmeasured,
 })
 
+/**
+ * The row back as a whole message, absent measurements zero again.
+ *
+ * The wire has no absent: encoding a scalar left `undefined` throws before the
+ * request leaves the browser. `create` fills in what the init leaves out, but
+ * hands a message back untouched, so the type name comes off first.
+ */
+const measuredSet = ({ $typeName: _, ...fields }: EditedSet): EditedSet => create(SetSchema, fields)
+
 const toLocalInput = (timestamp: Timestamp | undefined) =>
   timestamp
     ? DateTime.fromSeconds(Number(timestamp.seconds)).toFormat(localInput)
@@ -127,7 +136,9 @@ export const EditWorkout = () => {
     const exerciseSets = workout.exerciseSets
       .map((exerciseSet) => ({
         ...exerciseSet,
-        sets: exerciseSet.sets.filter((set) => isExerciseSetComplete(set, exerciseSet.exercise)),
+        sets: exerciseSet.sets
+          .filter((set) => isExerciseSetComplete(set, exerciseSet.exercise))
+          .map(measuredSet),
       }))
       .filter((exerciseSet) => exerciseSet.sets.length > 0)
 
