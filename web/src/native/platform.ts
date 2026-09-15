@@ -2,6 +2,7 @@ import { Capacitor } from '@capacitor/core'
 
 import type { RestNotificationTarget } from '@/native/restNotification'
 
+import { appStateChanged } from '@/native/appState'
 import { canSwipeBack, SwipeBack } from '@/native/swipeBack'
 import { isFocusedShellPath } from '@/router/routes'
 import { workoutHref } from '@/utils/workoutHref'
@@ -109,6 +110,11 @@ export const initNativePlatform = async (router: NativeRouter): Promise<void> =>
     const path = deepLinkPath(url)
     if (path) void router.navigate(path)
   })
+
+  // visibilitychange is the browser's account of the app's lifecycle and the
+  // stores keep listening to it; this is the OS's, and the one that reliably
+  // fires as the app leaves for and returns from the background.
+  await App.addListener('appStateChange', ({ isActive }) => appStateChanged(isActive))
 
   // A rest notification fires with the app off screen, so tapping it is often
   // the way back into the session.

@@ -11,6 +11,7 @@ vi.mock('@/jwt/jwt', () => ({ refreshAccessTokenOrLogout: vi.fn() }))
 
 import { notificationClient } from '@/http/clients'
 import * as jwt from '@/jwt/jwt'
+import { appStateChanged } from '@/native/appState'
 import { selectAuthorised, useAuthStore } from '@/stores/auth'
 import { useNotificationStore } from './notifications'
 
@@ -127,6 +128,51 @@ describe('notification store', () => {
     document.dispatchEvent(new Event('visibilitychange'))
     await Promise.resolve()
 
+    expect(getUnreadNotificationCount).toHaveBeenCalledTimes(1)
+  })
+
+  // Inside the native shell the badge was only as fresh as the last poll before
+  // the app was suspended, so the OS's own foreground signal refreshes it at
+  // once and restarts the poll from that moment rather than adding a second.
+  test('refreshes at once when the native app returns to the foreground', async () => {
+    vi.useFakeTimers()
+    store().pollUnreadNotifications()
+    await vi.advanceTimersByTimeAsync(0)
+    expect(getUnreadNotificationCount).toHaveBeenCalledTimes(1)
+
+    await vi.advanceTimersByTimeAsync(30 * 1000)
+    getUnreadNotificationCount.mockResolvedValue({ count: 5n } as never)
+    appStateChanged(true)
+    await vi.advanceTimersByTimeAsync(0)
+    expect(getUnreadNotificationCount).toHaveBeenCalledTimes(2)
+    expect(store().unreadCount).toBe(5)
+
+    await vi.advanceTimersByTimeAsync(60 * 1000)
+    expect(getUnreadNotificationCount).toHaveBeenCalledTimes(3)
+  })
+
+  test('does not refresh for the app going to the background', async () => {
+    vi.useFakeTimers()
+    store().pollUnreadNotifications()
+    await vi.advanceTimersByTimeAsync(0)
+
+    appStateChanged(false)
+    await vi.advanceTimersByTimeAsync(0)
+
+    expect(getUnreadNotificationCount).toHaveBeenCalledTimes(1)
+  })
+
+  test('hears the foreground only while polling', async () => {
+    appStateChanged(true)
+    await Promise.resolve()
+    expect(getUnreadNotificationCount).not.toHaveBeenCalled()
+
+    store().pollUnreadNotifications()
+    await vi.waitFor(() => expect(getUnreadNotificationCount).toHaveBeenCalledTimes(1))
+    store().stopUnreadNotifications()
+
+    appStateChanged(true)
+    await Promise.resolve()
     expect(getUnreadNotificationCount).toHaveBeenCalledTimes(1)
   })
 })
