@@ -18,8 +18,8 @@ const files = readdirSync(componentsDir).filter(
 const exported = files.map((file) => file.replace(/\.tsx$/, ''))
 
 // A file may export a second component that only makes sense beside the first
-// — <SheetAction> in a sheet, <AppListItemLink> in a list. Those are part of
-// the system too, so the catalogue may name them.
+// — <SheetAction> in a sheet, <AppSegmentedNav> beside the control it mirrors.
+// Those are part of the system too, so the catalogue may name them.
 const sourceOf = new Map(
   files.flatMap((file) => {
     const source = readFileSync(join(componentsDir, file), 'utf8')

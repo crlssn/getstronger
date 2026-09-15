@@ -4,6 +4,9 @@
 // a package pointing at a path that only exists in node_modules.
 import '@fontsource-variable/plus-jakarta-sans'
 import './assets/main.css'
+// The app's own window, which main.css deliberately knows nothing about: it is
+// shipped to pages that are not this one. See assets/shell.css.
+import './assets/shell.css'
 
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'

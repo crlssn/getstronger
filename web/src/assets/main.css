@@ -18,21 +18,6 @@ body {
   @apply min-h-full bg-canvas text-text antialiased;
 }
 
-/* With viewport-fit=cover the page extends under the status bar and Dynamic
-   Island inside the native WebView; this keeps static content below them.
-   Browsers report zero insets, so the web layout is unchanged. Elements that
-   stick to the viewport top handle the inset themselves. */
-body {
-  padding-top: env(safe-area-inset-top);
-}
-
-/* A whole screen is the right height here and only here: this is the body
-   itself, and Preflight's border-box puts the padding above inside the 100vh
-   rather than after it. A shell nested inside gets less than a screen. */
-#app {
-  @apply min-h-screen;
-}
-
 h6 {
   @apply mb-2 block px-1 text-eyebrow font-bold uppercase text-text-subtle;
 }

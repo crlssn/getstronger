@@ -1,11 +1,12 @@
 @reference '../../assets/base.css';
 
 /* Above the tab bar, whose height the shell publishes — 4.5rem where there is
- * one, nothing on a create or edit screen, which has given it up. Frosted
- * rather than opaque, so the form reads as continuing under it instead of
- * ending at it. */
+ * one, nothing on a create or edit screen, which has given it up. Nothing is
+ * also the fallback: a shell that has not spoken has no bar to clear, and this
+ * component is shipped to shells that are not the app's. Frosted rather than
+ * opaque, so the form reads as continuing under it instead of ending at it. */
 .footer {
-  bottom: calc(var(--tab-bar-height, 4.5rem) + env(safe-area-inset-bottom));
+  bottom: calc(var(--tab-bar-height, 0px) + env(safe-area-inset-bottom));
   /* Surface, not the canvas: the bar has to read as chrome over the page, and
      a sunken fill matched the body underneath it to within a shade. */
   @apply fixed inset-x-0 z-30 border-t border-border bg-surface/90 backdrop-blur;
