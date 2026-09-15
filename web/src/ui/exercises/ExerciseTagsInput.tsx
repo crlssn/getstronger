@@ -5,6 +5,7 @@ import { useId, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { cn } from '@/ui/cn'
+import { AppInlineError } from '@/ui/components/AppInlineError'
 import {
   appendTags,
   matchingSuggestions,
@@ -187,9 +188,14 @@ export const ExerciseTagsInput = ({ value, onChange, suggestions = [] }: Props) 
       )}
 
       <div className={styles.tagHelp}>
-        <small className={cn(rejection && styles.error)}>
-          {rejection ? rejectionMessage(rejection) : t('exercise.tagHelp')}
-        </small>
+        {/* Focus stays in the field when a tag is refused, so the refusal has
+            to announce itself. The help text takes the same spot but never
+            the live role: it must not be read out on every render. */}
+        {rejection ? (
+          <AppInlineError>{rejectionMessage(rejection)}</AppInlineError>
+        ) : (
+          <small>{t('exercise.tagHelp')}</small>
+        )}
         <small>
           {value.length}/{maxTags}
         </small>

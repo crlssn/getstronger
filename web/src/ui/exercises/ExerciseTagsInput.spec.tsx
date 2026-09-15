@@ -233,6 +233,19 @@ describe('ExerciseTagsInput', () => {
       expect(screen.getByText(`1/${maxTags}`)).toBeInTheDocument()
     })
 
+    // Focus never leaves the field when a tag is refused, so nothing moves a
+    // screen reader to the message: it has to announce itself. The ordinary
+    // help line shares the spot and must stay quiet.
+    test('announces a refusal, and only a refusal', async () => {
+      renderWithProviders(<Harness initial={['Push']} />)
+      expect(screen.getByText('Use Enter or a comma to add each tag.')).toBeInTheDocument()
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+
+      await userEvent.type(field(), 'push{Enter}')
+
+      expect(screen.getByRole('alert')).toHaveTextContent('“push” is already added.')
+    })
+
     test('clears the complaint when a tag is removed', async () => {
       renderWithProviders(<Harness initial={['Push']} />)
 
