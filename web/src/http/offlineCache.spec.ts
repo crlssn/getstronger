@@ -88,6 +88,17 @@ describe('offlineCache', () => {
     await expect(run(listRequest(), next)).rejects.toThrow(ConnectError)
   })
 
+  test.each(['{invalid', '{"exercises":"invalid"}'])(
+    'preserves the network error when the cached response is damaged: %s',
+    async (cached) => {
+      await run(listRequest(), vi.fn().mockResolvedValue(listResponse('Bench Press')))
+      for (const key of storage.keys()) storage.set(key, cached)
+      const error = networkError()
+
+      await expect(run(listRequest(), vi.fn().mockRejectedValue(error))).rejects.toBe(error)
+    },
+  )
+
   test('rethrows application errors without touching the cache', async () => {
     const next = vi
       .fn()

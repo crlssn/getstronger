@@ -71,13 +71,21 @@ export const offlineCache: Interceptor = (next) => async (req) => {
     }
     if (cached === null) throw error
 
+    let message
+    try {
+      message = fromJson(req.method.output, JSON.parse(cached) as JsonValue)
+    } catch {
+      // Stale or damaged cache data must not mask the transport failure.
+      throw error
+    }
+
     return {
       stream: false,
       service: req.service,
       method: req.method,
       header: new Headers(),
       trailer: new Headers(),
-      message: fromJson(req.method.output, JSON.parse(cached) as JsonValue),
+      message,
     }
   }
 }
