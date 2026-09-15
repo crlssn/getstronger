@@ -250,8 +250,6 @@ func (h *workoutHandler) GetWorkout(ctx context.Context, req *connect.Request[ap
 		repo.GetWorkoutLoadUser(),
 		repo.GetWorkoutLoadComments(),
 		repo.GetWorkoutLoadLikes(),
-		repo.GetWorkoutLoadExercises(),
-		repo.GetWorkoutLoadCommentUsers(),
 	)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -306,7 +304,6 @@ func (h *workoutHandler) ListWorkouts(ctx context.Context, req *connect.Request[
 		repo.ListWorkoutsLoadSets(),
 		repo.ListWorkoutsLoadUser(),
 		repo.ListWorkoutsLoadLikes(),
-		repo.ListWorkoutsLoadExercises(),
 		repo.ListWorkoutsWithLimit(limit+1),
 		repo.ListWorkoutsWithUserIDs(userIDs...),
 		repo.ListWorkoutsWithPageToken(req.Msg.GetPagination().GetPageToken()),

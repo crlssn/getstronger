@@ -75,7 +75,6 @@ func (d *dashboard) GetDashboard(ctx context.Context, req *connect.Request[apiv1
 		repo.ListWorkoutsLoadSets(),
 		repo.ListWorkoutsLoadUser(),
 		repo.ListWorkoutsLoadLikes(),
-		repo.ListWorkoutsLoadExercises(),
 		repo.ListWorkoutsWithLimit(dashboardListLimit),
 		repo.ListWorkoutsWithUserIDs(userID),
 		repo.ListWorkoutsWithPageToken(nil),
