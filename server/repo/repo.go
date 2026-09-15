@@ -1004,10 +1004,13 @@ func ListWorkoutsLoadLikes() ListWorkoutsOpt {
 	}
 }
 
+// ListWorkoutsLoadSets loads each workout's sets with their exercises. Bob
+// runs every loader it is handed and the last one wins, so this is the only
+// sets loader: a second one would fetch the page's sets twice.
 func ListWorkoutsLoadSets() ListWorkoutsOpt {
 	return func() ([]bob.Mod[*dialect.SelectQuery], error) {
 		return []bob.Mod[*dialect.SelectQuery]{
-			models.SelectThenLoad.Workout.Sets(),
+			models.SelectThenLoad.Workout.Sets(models.Preload.Set.Exercise()),
 		}, nil
 	}
 }
@@ -1163,9 +1166,11 @@ func GetWorkoutWithIdempotencyKey(key uuid.UUID) GetWorkoutOpt {
 	}
 }
 
+// GetWorkoutLoadSets loads the sets with their exercises, and is the only
+// sets loader for the same reason as ListWorkoutsLoadSets.
 func GetWorkoutLoadSets() GetWorkoutOpt {
 	return func() bob.Mod[*dialect.SelectQuery] {
-		return models.SelectThenLoad.Workout.Sets()
+		return models.SelectThenLoad.Workout.Sets(models.Preload.Set.Exercise())
 	}
 }
 
@@ -1175,27 +1180,17 @@ func GetWorkoutLoadUser() GetWorkoutOpt {
 	}
 }
 
+// GetWorkoutLoadComments loads the comments with their authors, and is the
+// only comments loader for the same reason as ListWorkoutsLoadSets.
 func GetWorkoutLoadComments() GetWorkoutOpt {
 	return func() bob.Mod[*dialect.SelectQuery] {
-		return models.SelectThenLoad.Workout.WorkoutComments()
+		return models.SelectThenLoad.Workout.WorkoutComments(models.Preload.WorkoutComment.User())
 	}
 }
 
 func GetWorkoutLoadLikes() GetWorkoutOpt {
 	return func() bob.Mod[*dialect.SelectQuery] {
 		return models.SelectThenLoad.Workout.WorkoutLikes()
-	}
-}
-
-func GetWorkoutLoadExercises() GetWorkoutOpt {
-	return func() bob.Mod[*dialect.SelectQuery] {
-		return models.SelectThenLoad.Workout.Sets(models.Preload.Set.Exercise())
-	}
-}
-
-func GetWorkoutLoadCommentUsers() GetWorkoutOpt {
-	return func() bob.Mod[*dialect.SelectQuery] {
-		return models.SelectThenLoad.Workout.WorkoutComments(models.Preload.WorkoutComment.User())
 	}
 }
 
@@ -2219,12 +2214,4 @@ func (r *Repo) PublishEvent(ctx context.Context, topic events.Topic, payload []b
 	}
 
 	return nil
-}
-
-func ListWorkoutsLoadExercises() ListWorkoutsOpt {
-	return func() ([]bob.Mod[*dialect.SelectQuery], error) {
-		return []bob.Mod[*dialect.SelectQuery]{
-			models.SelectThenLoad.Workout.Sets(models.Preload.Set.Exercise()),
-		}, nil
-	}
 }
