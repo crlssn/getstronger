@@ -1,3 +1,6 @@
+// Internal: reaches newAuthRateLimit, newValidator and provideHandlerOptions to
+// assemble the chain the fx module wires.
+
 package interceptors
 
 import (

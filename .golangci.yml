@@ -73,15 +73,20 @@ linters:
       # some of them vendor Go sources that this linter would otherwise report.
       - web/
     rules:
-      # Internal-package tests intentionally exercise unexported helpers. Requiring
-      # external test packages or parallel subtests would make those tests less clear.
+      # Tests repeat literals on purpose and choose for themselves what runs in
+      # parallel. The external test package is still required: a test that needs
+      # an unexported identifier says so by its name, *_internal_test.go, which
+      # testpackage skips by default.
       - path: _test\.go
         linters:
           - goconst
           - gosec
           - paralleltest
-          - testpackage
           - tparallel
+      # bobgen writes these, package clause included.
+      - path: server/gen/
+        linters:
+          - testpackage
       # Seed data is made of representative literal weights and repetition counts.
       - path: server/testing/factory/seed/main\.go
         linters:

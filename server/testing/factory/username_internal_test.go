@@ -1,3 +1,6 @@
+// Internal: reaches nextUsername and usernameMaxLength; NewUser only shows the
+// one username it picked.
+
 package factory
 
 import (

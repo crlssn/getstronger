@@ -1,3 +1,6 @@
+// Internal: reaches newValidator, which only the fx module constructs, and
+// errRequestMessageNotProtoMessage.
+
 package interceptors
 
 import (

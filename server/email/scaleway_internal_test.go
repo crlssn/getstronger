@@ -1,3 +1,6 @@
+// Internal: reaches newScaleway to point the provider at a test server, and the
+// createEmailRequest and address types to read back what it sent.
+
 package email
 
 import (

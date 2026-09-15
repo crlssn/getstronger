@@ -1,3 +1,6 @@
+// Internal: reaches profile, and asserts a frame name that carries this package's
+// own name.
+
 package leak
 
 import (
