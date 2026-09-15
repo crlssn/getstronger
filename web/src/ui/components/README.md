@@ -12,6 +12,13 @@ reuse this?":
 | `ui/shell`      | App chrome — the nav bars, the banners, the toaster. | Rendered once   |
 | `ui/features`   | Domain widgets — workout cards, charts, the streak.  | Within a domain |
 
+The arrow points one way, with one exception: a component pinned to an edge of
+the screen has to know what is already there. `--tab-bar-height` is that, and
+the only one — the shell publishes it, 4.5rem where a tab bar is drawn and 0
+where the screen has given it up. A component reads it and falls back to 0,
+because a shell that has not said is a shell with nothing to clear.
+`shellTokens.spec.ts` fails on a component that guesses instead.
+
 `catalogue.spec.ts` fails if a component here is missing from this file, if this
 file describes one that no longer exists, or if one has no spec. That is what
 makes the rule in [`web/CLAUDE.md`](../../../CLAUDE.md) — a new pattern is added
@@ -121,7 +128,8 @@ A form's primary action, pinned above the tab bar instead of parked at the
 bottom of the scroll where a long form hides it. It stands down while the
 on-screen keyboard is up — a bar floating on the keyboard covers the field being
 typed into — and leaves a spacer behind either way, so the page does not jump as
-the keyboard comes and goes. `hint` names what a disabled submit is waiting for;
+the keyboard comes and goes. It sits on `--tab-bar-height`, so it clears what
+the shell says is there rather than what this app happens to draw. `hint` names what a disabled submit is waiting for;
 `error` says why the last submit failed, rendered as an `<AppInlineError>` in
 the same full-width row.
 
