@@ -2,7 +2,7 @@
 
 import type { MessageInitShape } from '@bufbuild/protobuf'
 
-import { create } from '@bufbuild/protobuf'
+import { create, toJson } from '@bufbuild/protobuf'
 import { timestampFromDate } from '@bufbuild/protobuf/wkt'
 import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
@@ -248,9 +248,11 @@ describe('EditWorkout', () => {
     expect(screen.getAllByRole('button', { name: /^Remove set/ })).toHaveLength(2)
   })
 
-  // A half-filled set is not a real one, and an exercise with nothing left in
-  // it goes with them.
-  test('drops a set that was never finished', async () => {
+  // A row with a value in it makes the rest of its fields required, so the
+  // browser holds this one before the form is ever submitted. What matters is
+  // that nothing goes to the server behind it: this used to save the workout
+  // with the half-filled row quietly removed.
+  test('will not save a set that was started and never finished', async () => {
     render()
 
     await userEvent.click((await screen.findAllByRole('button', { name: 'Add set' }))[0])
@@ -259,8 +261,131 @@ describe('EditWorkout', () => {
     await userEvent.type(screen.getByRole('textbox', { name: 'Bench press set 2 weight' }), '90')
     await userEvent.click(screen.getByRole('button', { name: 'Save changes' }))
 
+    expect(mocked.updateWorkout).not.toHaveBeenCalled()
+    expect(screen.getByRole('textbox', { name: 'Bench press set 2 weight' })).toHaveValue('90')
+  })
+
+  // `required` is satisfied by any non-empty field, so 0 and 2.5 cleared the
+  // browser's check and then failed the save's — which deleted the set and
+  // said the workout was updated.
+  test.each([
+    ['zero', '0'],
+    ['a fraction of a rep', '2.5'],
+  ])('refuses a set corrected to %s rather than deleting it', async (_, entered) => {
+    render()
+
+    const reps = await screen.findByRole('textbox', { name: 'Bench press set 1 reps' })
+    await userEvent.clear(reps)
+    await userEvent.type(reps, entered)
+    await userEvent.click(screen.getByRole('button', { name: 'Save changes' }))
+
+    expect(await screen.findByText('Complete 1 partial set')).toBeVisible()
+    expect(mocked.updateWorkout).not.toHaveBeenCalled()
+  })
+
+  // An exercise whose sets were all dropped went with them, so correcting
+  // Row's only set to 0 took the whole exercise off the workout.
+  test('refuses rather than losing the exercise whose only set went to zero', async () => {
+    render()
+
+    const reps = await screen.findByRole('textbox', { name: 'Row set 1 reps' })
+    await userEvent.clear(reps)
+    await userEvent.type(reps, '0')
+    await userEvent.click(screen.getByRole('button', { name: 'Save changes' }))
+
+    expect(await screen.findByText('Complete 1 partial set')).toBeVisible()
+    expect(mocked.updateWorkout).not.toHaveBeenCalled()
+    expect(screen.getByRole('heading', { name: 'Row' })).toBeVisible()
+  })
+
+  test('counts every partial set, not just the first', async () => {
+    render()
+
+    const bench = await screen.findByRole('textbox', { name: 'Bench press set 1 reps' })
+    await userEvent.clear(bench)
+    await userEvent.type(bench, '0')
+    const row = screen.getByRole('textbox', { name: 'Row set 1 reps' })
+    await userEvent.clear(row)
+    await userEvent.type(row, '0')
+    await userEvent.click(screen.getByRole('button', { name: 'Save changes' }))
+
+    expect(await screen.findByText('Complete 2 partial sets')).toBeVisible()
+  })
+
+  // The refusal is about this attempt, not the screen: fixing the set and
+  // pressing save again clears it.
+  test('saves once the partial set is completed', async () => {
+    render()
+
+    const reps = await screen.findByRole('textbox', { name: 'Bench press set 1 reps' })
+    await userEvent.clear(reps)
+    await userEvent.type(reps, '0')
+    await userEvent.click(screen.getByRole('button', { name: 'Save changes' }))
+    expect(await screen.findByText('Complete 1 partial set')).toBeVisible()
+
+    await userEvent.clear(reps)
+    await userEvent.type(reps, '6')
+    await userEvent.click(screen.getByRole('button', { name: 'Save changes' }))
+
+    await waitFor(() => expect(mocked.updateWorkout).toHaveBeenCalled())
+    expect(screen.queryByText('Complete 1 partial set')).not.toBeInTheDocument()
+    expect(mocked.updateWorkout.mock.calls[0]?.[0]?.exerciseSets[0]?.sets[0]?.reps).toBe(6)
+  })
+
+  // A new row is empty, not the zero every proto scalar defaults to — so
+  // adding one and thinking better of it is still free.
+  test('adds an empty row, and drops it again when nothing is typed in', async () => {
+    render()
+
+    await userEvent.click((await screen.findAllByRole('button', { name: 'Add set' }))[0])
+    expect(screen.getByRole('textbox', { name: 'Bench press set 2 reps' })).toHaveValue('')
+    expect(screen.getByRole('textbox', { name: 'Bench press set 2 weight' })).toHaveValue('')
+
+    await userEvent.click(screen.getByRole('button', { name: 'Save changes' }))
+
     await waitFor(() => expect(mocked.updateWorkout).toHaveBeenCalled())
     expect(mocked.updateWorkout.mock.calls[0]?.[0]?.exerciseSets[0]?.sets).toHaveLength(1)
+  })
+
+  // A new row starts with its measurements absent, and absent is nothing the
+  // wire takes: encoded the way the transport encodes it, a set still carrying
+  // `undefined` throws before the request ever leaves the browser.
+  test('saves a new set that was filled in, as a message the wire encodes', async () => {
+    render()
+
+    await userEvent.click((await screen.findAllByRole('button', { name: 'Add set' }))[0])
+    await userEvent.type(screen.getByRole('textbox', { name: 'Bench press set 2 weight' }), '90')
+    await userEvent.type(screen.getByRole('textbox', { name: 'Bench press set 2 reps' }), '8')
+    await userEvent.click(screen.getByRole('button', { name: 'Save changes' }))
+
+    await waitFor(() => expect(mocked.updateWorkout).toHaveBeenCalled())
+    const saved = create(WorkoutSchema, mocked.updateWorkout.mock.calls[0]?.[0])
+    expect(toJson(WorkoutSchema, saved)).toMatchObject({
+      exerciseSets: [
+        {
+          sets: [
+            { weight: 100, reps: 5 },
+            { weight: 90, reps: 8 },
+          ],
+        },
+        {},
+      ],
+    })
+  })
+
+  // Emptying every field is how a set is taken out by hand, next to the row's
+  // own remove control. An exercise with nothing left in it still goes.
+  test('drops a set whose every field was cleared', async () => {
+    render()
+
+    await userEvent.clear(await screen.findByRole('textbox', { name: 'Bench press set 1 weight' }))
+    await userEvent.clear(screen.getByRole('textbox', { name: 'Bench press set 1 reps' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Save changes' }))
+
+    await waitFor(() => expect(mocked.updateWorkout).toHaveBeenCalled())
+    expect(
+      mocked.updateWorkout.mock.calls[0]?.[0]?.exerciseSets.map((set) => set.exercise?.id),
+    ).toEqual(['row'])
   })
 
   // Logging a set is the app's most-used interaction, so correcting one is the
