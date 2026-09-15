@@ -140,6 +140,29 @@ describe('useMutationQueueStore', () => {
     expect(store().pending).toHaveLength(0)
   })
 
+  test('does not discard a new queue when a cleared replay finishes', async () => {
+    store().enqueue(WorkoutService.method.createWorkout, request('old-account'))
+    let land = (): void => {}
+    createWorkout.mockReturnValueOnce(
+      new Promise((resolve) => {
+        land = () => resolve({ workoutId: 'old-workout' })
+      }) as never,
+    )
+    const flushing = store().flush()
+
+    store().clear()
+    store().enqueue(WorkoutService.method.createWorkout, request('new-account'))
+    land()
+    await flushing
+
+    expect(store().pending).toHaveLength(1)
+    expect(createWorkout).toHaveBeenCalledTimes(1)
+    createWorkout.mockResolvedValue({ workoutId: 'new-workout' } as never)
+    await store().flush()
+    expect(createWorkout.mock.calls[1]?.[0].routineId).toBe('new-account')
+    expect(store().pending).toHaveLength(0)
+  })
+
   // The queue is the offline safety net, so it has to survive the reload that
   // an offline user is most likely to trigger.
   test('persists the queue across a reload', () => {

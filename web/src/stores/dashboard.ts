@@ -25,6 +25,8 @@ export const selectNextRoutine = (state: DashboardState): Routine | undefined =>
 export const selectActivePlan = (state: DashboardState): Plan | undefined =>
   state.dashboard?.activePlan
 
+let latestLoad = 0
+
 export const useDashboardStore = create<DashboardState>()(
   persist(
     (set, get) => ({
@@ -34,9 +36,11 @@ export const useDashboardStore = create<DashboardState>()(
       failed: false,
 
       load: async () => {
+        const load = ++latestLoad
         set({ loading: true })
         try {
           const response = await getDashboard(get().preferredRoutineId)
+          if (load !== latestLoad) return
           if (!response) {
             set({ failed: true })
             return
@@ -51,7 +55,7 @@ export const useDashboardStore = create<DashboardState>()(
             set({ preferredRoutineId: response.nextRoutine.id })
           }
         } finally {
-          set({ loading: false })
+          if (load === latestLoad) set({ loading: false })
         }
       },
 

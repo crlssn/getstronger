@@ -107,6 +107,8 @@ export const useMutationQueueStore = create<MutationQueueState>()(
               if (isConnectivityError(error)) return
               console.error('dropping queued mutation rejected by the backend', error)
             }
+            // Clearing the queue during replay starts a new account's queue.
+            if (get().pending[0] !== entry) return
             set({ pending: get().pending.slice(1) })
           }
         } finally {
