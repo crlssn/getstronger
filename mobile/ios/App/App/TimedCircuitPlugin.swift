@@ -50,6 +50,13 @@ public class TimedCircuitPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManagerD
     private var audible = false
     /// Whether whatever else is playing is currently held down for a word.
     private var ducking = false
+    /// Announcements still to be said, so the duck lifts after the last of them.
+    ///
+    /// Counted rather than read back off the synthesiser: `isSpeaking` is
+    /// cleared on its own queue, so it is still true inside `didFinish` as
+    /// often as not, and a duck lifted only when it happened to be false left
+    /// the athlete's music held down for the rest of the run.
+    private var speaking = 0
     private var autoPauses = false
     private var fixes: [Fix] = []
     /// The route as `smoothedPoints` has read it so far, and the filter's state.
@@ -206,6 +213,7 @@ public class TimedCircuitPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManagerD
         utterance.voice = announcementVoice()
         utterance.volume = Float(level)
         utterance.rate = announcementRate
+        speaking += 1
         duck(true)
         speech.speak(utterance)
     }
@@ -217,15 +225,25 @@ public class TimedCircuitPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManagerD
     /// The ending is the last thing said, and the audio session waits for it:
     /// closed under an utterance, the session cuts the word off.
     public func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didFinish utterance: AVSpeechUtterance) {
-        releaseAudioIfDone()
+        announced()
     }
 
     public func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didCancel utterance: AVSpeechUtterance) {
+        announced()
+    }
+
+    /// One announcement done with; the last of them lets the other audio back up.
+    private func announced() {
+        speaking = max(0, speaking - 1)
         releaseAudioIfDone()
     }
 
     private func releaseAudioIfDone() {
-        guard !speech.isSpeaking else { return }
+        // The count is what decides, and an idle synthesiser overrules it: a
+        // callback the synthesiser never made would otherwise hold the duck
+        // open for good, which is the failure this is here to end.
+        guard speaking == 0 || !speech.isSpeaking else { return }
+        speaking = 0
         duck(false)
         guard recording == nil || recording?["endedAt"] != nil else { return }
         closeAudio()
@@ -295,6 +313,7 @@ public class TimedCircuitPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManagerD
         guard audible else { return }
         audible = false
         ducking = false
+        speaking = 0
         try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
     }
 
