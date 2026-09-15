@@ -43,7 +43,9 @@ test.describe('guest authentication and routing', () => {
 
     await page.getByRole('button', { name: 'Log in' }).click()
 
-    await expect(page.getByRole('alert')).toContainText('invalid credentials')
+    await expect(page.getByRole('alert')).toContainText(
+      'That was not accepted. Check what you entered and try again.',
+    )
     await expect(page).toHaveURL(/\/login$/)
 
     // The complaint stays inline in the form rather than toasting: it sits
@@ -344,7 +346,9 @@ test.describe('password reset', () => {
     await page.getByLabel('Email address').fill(email)
     await page.getByLabel('Password', { exact: true }).fill(password)
     await page.getByRole('button', { name: 'Log in' }).click()
-    await expect(page.getByRole('alert')).toContainText('invalid credentials')
+    await expect(page.getByRole('alert')).toContainText(
+      'That was not accepted. Check what you entered and try again.',
+    )
   })
 })
 
@@ -405,7 +409,9 @@ test.describe('account deletion', () => {
     await page.getByLabel('Email address').fill(email)
     await page.getByLabel('Password', { exact: true }).fill(password)
     await page.getByRole('button', { name: 'Log in' }).click()
-    await expect(page.getByRole('alert')).toContainText('invalid credentials')
+    await expect(page.getByRole('alert')).toContainText(
+      'That was not accepted. Check what you entered and try again.',
+    )
     await expect(page).toHaveURL(/\/login$/)
   })
 })
