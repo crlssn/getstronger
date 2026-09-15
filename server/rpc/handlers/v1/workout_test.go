@@ -25,6 +25,7 @@ import (
 	handlers "github.com/crlssn/getstronger/server/rpc/handlers/v1"
 	"github.com/crlssn/getstronger/server/testing/container"
 	"github.com/crlssn/getstronger/server/testing/factory"
+	"github.com/crlssn/getstronger/server/testing/objectstoretest"
 	"github.com/crlssn/getstronger/server/training"
 	"github.com/crlssn/getstronger/server/xcontext"
 )
@@ -35,8 +36,9 @@ type workoutSuite struct {
 	repo    *repo.Repo
 	handler apiv1connect.WorkoutServiceHandler
 
-	factory   *factory.Factory
-	container *container.Container
+	factory    *factory.Factory
+	container  *container.Container
+	recordings *objectstoretest.Memory
 }
 
 func TestWorkoutSuite(t *testing.T) {
@@ -48,7 +50,8 @@ func (s *workoutSuite) SetupSuite() {
 	ctx := context.Background()
 	s.container = container.NewContainer(ctx)
 	s.factory = factory.NewFactory(s.container.DB)
-	s.repo = repo.New(s.container.DB)
+	s.recordings = objectstoretest.NewMemory()
+	s.repo = repo.New(s.container.DB, s.recordings)
 	// PostComment publishes, so the suite needs a real bus: nothing subscribes,
 	// which leaves the event persisted and buffered, exactly as a dropped one is.
 	s.handler = handlers.NewWorkoutHandler(s.repo, pubsub.New(pubsub.Params{
@@ -197,7 +200,7 @@ func (s *workoutSuite) TestCreateWorkoutAdvancesActivePlan() {
 	routine := s.factory.NewRoutine(factory.RoutineUserID(user.ID))
 	nextRoutine := s.factory.NewRoutine(factory.RoutineUserID(user.ID))
 	exercise := s.factory.NewExercise(factory.ExerciseUserID(user.ID))
-	planRepo := repo.New(s.container.DB)
+	planRepo := repo.New(s.container.DB, objectstoretest.NewMemory())
 	plan, err := planRepo.CreatePlan(context.Background(), repo.CreatePlanParams{
 		UserID:     user.ID,
 		Name:       "Rotation",
@@ -236,7 +239,7 @@ func (s *workoutSuite) TestCreateWorkoutRepeatedWithItsKeyIsSavedOnce() {
 	routine := s.factory.NewRoutine(factory.RoutineUserID(user.ID))
 	nextRoutine := s.factory.NewRoutine(factory.RoutineUserID(user.ID))
 	exercise := s.factory.NewExercise(factory.ExerciseUserID(user.ID))
-	planRepo := repo.New(s.container.DB)
+	planRepo := repo.New(s.container.DB, objectstoretest.NewMemory())
 	plan, err := planRepo.CreatePlan(context.Background(), repo.CreatePlanParams{
 		UserID:     user.ID,
 		Name:       "Rotation",
@@ -485,7 +488,7 @@ func (s *workoutSuite) TestCreateWorkoutSavesWhenRoutineIsNoLongerNextInPlan() {
 	completedRoutine := s.factory.NewRoutine(factory.RoutineUserID(user.ID))
 	nextRoutine := s.factory.NewRoutine(factory.RoutineUserID(user.ID))
 	exercise := s.factory.NewExercise(factory.ExerciseUserID(user.ID))
-	planRepo := repo.New(s.container.DB)
+	planRepo := repo.New(s.container.DB, objectstoretest.NewMemory())
 	plan, err := planRepo.CreatePlan(context.Background(), repo.CreatePlanParams{
 		UserID:     user.ID,
 		Name:       "Rotation",

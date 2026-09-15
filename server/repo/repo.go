@@ -28,6 +28,7 @@ import (
 	"github.com/crlssn/getstronger/server/distanceunit"
 	"github.com/crlssn/getstronger/server/gen/models"
 	"github.com/crlssn/getstronger/server/notification"
+	"github.com/crlssn/getstronger/server/objectstore"
 	"github.com/crlssn/getstronger/server/pubsub/events"
 	"github.com/crlssn/getstronger/server/safe"
 	"github.com/crlssn/getstronger/server/training"
@@ -52,14 +53,18 @@ const (
 type Repo struct {
 	db *sql.DB
 	tx *sql.Tx
+	// recordings holds the documents too big to keep on a row. Repo uses the
+	// whole of the store rather than a slice of it, so it depends on the
+	// adapter itself rather than restating it under another name.
+	recordings objectstore.Store
 }
 
 func (r *Repo) exec() *sql.Tx {
 	return r.tx
 }
 
-func New(db *sql.DB) *Repo {
-	return &Repo{db, nil}
+func New(db *sql.DB, recordings objectstore.Store) *Repo {
+	return &Repo{db, nil, recordings}
 }
 
 // NewTx runs f against a transactional Repo, committing when it returns nil and
@@ -75,7 +80,7 @@ func (r *Repo) NewTx(ctx context.Context, f func(tx *Repo) error) error {
 		return fmt.Errorf("begin tx: %w", err)
 	}
 
-	if err = f(&Repo{nil, tx}); err != nil {
+	if err = f(&Repo{nil, tx, r.recordings}); err != nil {
 		if errRollback := tx.Rollback(); errRollback != nil {
 			return fmt.Errorf("rollback tx: %w", errors.Join(err, errRollback))
 		}
@@ -951,12 +956,17 @@ func (r *Repo) ListWorkouts(ctx context.Context, opts ...ListWorkoutsOpt) ([]*tr
 		query = append(query, q...)
 	}
 
-	workouts, err := models.Workouts.Query(query...).All(ctx, r.bobExec())
+	rows, err := models.Workouts.Query(query...).All(ctx, r.bobExec())
 	if err != nil {
 		return nil, fmt.Errorf("workouts fetch: %w", err)
 	}
 
-	return workoutsFromRows(workouts), nil
+	workouts := workoutsFromRows(rows)
+	if err = r.fillRecordings(ctx, rows, workouts); err != nil {
+		return nil, fmt.Errorf("workouts fetch: %w", err)
+	}
+
+	return workouts, nil
 }
 
 // CountWorkouts is every workout the user has ever logged. Callers that show a
@@ -1049,7 +1059,9 @@ type CreateWorkoutParams struct {
 	// under is rejected with training.ErrWorkoutAlreadySaved; a nil one is
 	// stored as none and never a repeat.
 	IdempotencyKey uuid.UUID
-	RecordingJSON  string
+	// Recording is the session's recording, already written to the object
+	// store by PutRecording. The zero value is a workout logged by hand.
+	Recording Recording
 }
 
 type ExerciseSet struct {
@@ -1072,6 +1084,7 @@ func (r *Repo) CreateWorkout(ctx context.Context, p CreateWorkoutParams) (*train
 	if err := r.NewTx(ctx, func(tx *Repo) error {
 		var err error
 		workout, err = models.Workouts.Insert(&models.WorkoutSetter{
+			ID:         omitUUID(p.Recording.WorkoutID),
 			Name:       omit.From(p.Name),
 			Note:       nullIfEmpty(p.Note),
 			UserID:     omit.From(p.UserID),
@@ -1080,7 +1093,7 @@ func (r *Repo) CreateWorkout(ctx context.Context, p CreateWorkoutParams) (*train
 			FinishedAt: omit.From(p.FinishedAt.Truncate(time.Minute).UTC()),
 
 			IdempotencyKey: nullUUID(p.IdempotencyKey),
-			RecordingJSON:  omit.From(p.RecordingJSON),
+			RecordingKey:   omit.From(p.Recording.Key),
 		}).One(ctx, tx.bobExec())
 		if err != nil {
 			return fmt.Errorf("workout insert: %w", translateWorkoutError(err))
@@ -1205,12 +1218,17 @@ func (r *Repo) GetWorkout(ctx context.Context, opts ...GetWorkoutOpt) (*training
 		query = append(query, opt())
 	}
 
-	workout, err := models.Workouts.Query(query...).One(ctx, r.bobExec())
+	row, err := models.Workouts.Query(query...).One(ctx, r.bobExec())
 	if err != nil {
 		return nil, fmt.Errorf("workout fetch: %w", err)
 	}
 
-	return workoutFromRow(workout), nil
+	workout := workoutFromRow(row)
+	if err = r.fillRecording(ctx, row, workout); err != nil {
+		return nil, fmt.Errorf("workout fetch: %w", err)
+	}
+
+	return workout, nil
 }
 
 type DeleteWorkoutOpt func() bob.Mod[*dialect.SelectQuery]
@@ -1310,10 +1328,10 @@ ORDER BY created_at;
 // routine. It reports sql.ErrNoRows where the routine has no recorded session,
 // which every first recording of it does.
 func (r *Repo) GetLastRecordedWorkout(ctx context.Context, userID, routineID uuid.UUID) (*training.Workout, error) {
-	workout, err := models.Workouts.Query(
+	row, err := models.Workouts.Query(
 		models.SelectWhere.Workouts.UserID.EQ(userID),
 		models.SelectWhere.Workouts.RoutineID.EQ(routineID),
-		models.SelectWhere.Workouts.RecordingJSON.NE(""),
+		sm.Where(psql.Raw("(recording_json <> '' OR recording_key <> '')")),
 		sm.OrderBy(models.Workouts.Columns.FinishedAt).Desc(),
 		sm.OrderBy(models.Workouts.Columns.ID).Desc(),
 		sm.Limit(1),
@@ -1322,7 +1340,12 @@ func (r *Repo) GetLastRecordedWorkout(ctx context.Context, userID, routineID uui
 		return nil, fmt.Errorf("last recorded workout fetch: %w", err)
 	}
 
-	return workoutFromRow(workout), nil
+	workout := workoutFromRow(row)
+	if err = r.fillRecording(ctx, row, workout); err != nil {
+		return nil, fmt.Errorf("last recorded workout fetch: %w", err)
+	}
+
+	return workout, nil
 }
 
 // GetFastestRecordedWorkout is the athlete's quickest recorded session of a
@@ -1336,7 +1359,7 @@ func (r *Repo) GetFastestRecordedWorkout(ctx context.Context, userID, routineID 
 	rawQuery := `
 SELECT w.id FROM public.workouts w
 JOIN public.sets s ON s.workout_id = w.id
-WHERE w.user_id = $1 AND w.routine_id = $2 AND w.recording_json <> ''
+WHERE w.user_id = $1 AND w.routine_id = $2 AND (w.recording_json <> '' OR w.recording_key <> '')
 GROUP BY w.id
 HAVING SUM(s.distance) > 0 AND SUM(s.duration_seconds) > 0
 ORDER BY SUM(s.duration_seconds) / SUM(s.distance), w.id
