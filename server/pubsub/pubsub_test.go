@@ -3,6 +3,7 @@ package pubsub_test
 import (
 	"context"
 	"errors"
+	"fmt"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -12,6 +13,7 @@ import (
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/mock/gomock"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zaptest/observer"
 
 	"github.com/crlssn/getstronger/server/pubsub"
 	"github.com/crlssn/getstronger/server/pubsub/events"
@@ -142,10 +144,11 @@ func TestPublishNeverFailsTheCaller(t *testing.T) {
 		require.Zero(t, store.published.Load())
 	})
 
-	t.Run("store_failure_is_swallowed", func(t *testing.T) {
+	t.Run("store_failure_is_swallowed_and_logged_once", func(t *testing.T) {
 		t.Parallel()
+		core, logs := observer.New(zap.DebugLevel)
 		ps := pubsub.New(pubsub.Params{
-			Log:   zap.NewExample(),
+			Log:   zap.New(core),
 			Store: &stubStore{err: errStorePublish},
 		})
 
@@ -154,14 +157,17 @@ func TestPublishNeverFailsTheCaller(t *testing.T) {
 				EventID: uuid.Must(uuid.NewV4()),
 			})
 		})
+		require.Len(t, logs.FilterMessage("Persist event").FilterLevelExact(zap.ErrorLevel).All(), 1)
 	})
 
 	// With nothing draining the channel, the buffer fills and further events are
-	// dropped from dispatch — but every one of them is still persisted.
+	// dropped from dispatch — but every one of them is still persisted, so the
+	// drop is an expected anomaly, stated as a warning rather than an error.
 	t.Run("a_full_buffer_drops_dispatch_not_the_event", func(t *testing.T) {
 		t.Parallel()
 		store := new(stubStore)
-		ps := pubsub.New(pubsub.Params{Log: zap.NewExample(), Store: store})
+		core, logs := observer.New(zap.DebugLevel)
+		ps := pubsub.New(pubsub.Params{Log: zap.New(core), Store: store})
 
 		const overflow = 1100
 		for range overflow {
@@ -171,7 +177,41 @@ func TestPublishNeverFailsTheCaller(t *testing.T) {
 		}
 
 		require.Equal(t, int64(overflow), store.published.Load())
+		require.Empty(t, logs.FilterLevelExact(zap.ErrorLevel).All())
+		require.NotEmpty(t, logs.FilterMessage("Event buffer full: dropping event").FilterLevelExact(zap.WarnLevel).All())
 	})
+}
+
+// The trace middleware publishes from a defer holding the request's own
+// context, so a client that hangs up mid-request cancels the persist. That is
+// not a failure anyone needs to act on, and it must not be logged as one.
+func TestPublishDoesNotLogCancellationAsAnError(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name string
+		err  error
+	}{
+		{name: "cancelled", err: fmt.Errorf("publish event: %w", context.Canceled)},
+		{name: "deadline_exceeded", err: fmt.Errorf("publish event: %w", context.DeadlineExceeded)},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			core, logs := observer.New(zap.DebugLevel)
+			store := &stubStore{err: tt.err}
+			ps := pubsub.New(pubsub.Params{Log: zap.New(core), Store: store})
+
+			ps.Publish(context.Background(), events.TopicFollowedUser, events.UserFollowed{
+				EventID: uuid.Must(uuid.NewV4()),
+			})
+
+			require.Empty(t, logs.FilterLevelExact(zap.ErrorLevel).All())
+			require.Empty(t, logs.FilterLevelExact(zap.WarnLevel).All())
+			require.Len(t, logs.FilterMessage("Persist event cancelled").FilterLevelExact(zap.DebugLevel).All(), 1)
+		})
+	}
 }
 
 // handlerFunc adapts a plain function to handlers.Handler.

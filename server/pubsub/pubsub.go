@@ -3,6 +3,7 @@ package pubsub
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"sync"
 
 	"go.uber.org/fx"
@@ -62,6 +63,13 @@ func (ps *PubSub) Publish(ctx context.Context, topic events.Topic, payload any) 
 	}
 
 	if err = ps.store.PublishEvent(ctx, topic, p); err != nil {
+		// The trace middleware publishes from a defer holding the request's
+		// context, so a client that hangs up cancels the persist. Nobody needs
+		// paging for that.
+		if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+			ps.log.Debug("Persist event cancelled", zap.Error(err))
+			return
+		}
 		ps.log.Error("Persist event", zap.Error(err))
 		return
 	}
@@ -71,7 +79,7 @@ func (ps *PubSub) Publish(ctx context.Context, topic events.Topic, payload any) 
 	default:
 		// Never block the request path; the event remains persisted in the
 		// events table even when it cannot be dispatched.
-		ps.log.Error("Event buffer full: dropping event", zap.String("topic", topic.String()))
+		ps.log.Warn("Event buffer full: dropping event", zap.String("topic", topic.String()))
 	}
 }
 
