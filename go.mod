@@ -5,7 +5,7 @@ go 1.27.1
 require (
 	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.36.12-20260825204119-511051f7f437.1
 	buf.build/go/protovalidate v1.3.0
-	connectrpc.com/connect v1.20.0
+	connectrpc.com/connect v1.21.0
 	connectrpc.com/cors v0.1.0
 	github.com/aarondl/opt v0.0.0-20250607033636-982744e1bd65
 	github.com/brianvoe/gofakeit/v7 v7.16.0
