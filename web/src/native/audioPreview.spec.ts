@@ -1,10 +1,16 @@
 // @vitest-environment jsdom
 
+import { Capacitor } from '@capacitor/core'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
 import { paceToneVolume, playPaceTone } from '@/native/cueTone'
 import { timedCircuit } from '@/native/timedCircuit'
 import { previewAnnouncement, previewIntervalCue, previewPaceTone } from './audioPreview'
+
+vi.mock('@capacitor/core', async (original) => {
+  const core = await original<typeof import('@capacitor/core')>()
+  return { ...core, Capacitor: { ...core.Capacitor, getPlatform: vi.fn(() => 'web') } }
+})
 
 vi.mock('@/native/cueTone', async (original) => ({
   ...(await original<typeof import('@/native/cueTone')>()),
@@ -14,7 +20,10 @@ vi.mock('@/native/cueTone', async (original) => ({
 // The example goes through the recorder, which is what knows the voice a run
 // is announced in; Capacitor answers with the phone's plugin where there is one.
 vi.mock('@/native/timedCircuit', () => ({
-  timedCircuit: { speak: vi.fn(() => Promise.resolve()) },
+  timedCircuit: {
+    speak: vi.fn(() => Promise.resolve()),
+    previewTone: vi.fn(() => Promise.resolve()),
+  },
 }))
 
 const spoken = () =>
@@ -22,6 +31,7 @@ const spoken = () =>
 
 beforeEach(() => {
   vi.clearAllMocks()
+  vi.mocked(Capacitor.getPlatform).mockReturnValue('web')
   vi.useFakeTimers()
 })
 
@@ -66,6 +76,38 @@ describe('previewIntervalCue', () => {
 })
 
 describe('previewPaceTone', () => {
+  test.each(['ahead', 'behind'] as const)(
+    'uses native iOS playback for %s before a workout',
+    (tone) => {
+      vi.mocked(Capacitor.getPlatform).mockReturnValue('ios')
+
+      previewPaceTone(tone, 'off')
+
+      expect(timedCircuit.previewTone).toHaveBeenCalledExactlyOnceWith({
+        tone,
+        volume: paceToneVolume,
+      })
+      expect(playPaceTone).not.toHaveBeenCalled()
+      expect(timedCircuit.speak).not.toHaveBeenCalled()
+    },
+  )
+
+  test('applies the selected volume to native iOS tones', () => {
+    vi.mocked(Capacitor.getPlatform).mockReturnValue('ios')
+    previewPaceTone('behind', 'low')
+    expect(timedCircuit.previewTone).toHaveBeenCalledExactlyOnceWith({
+      tone: 'behind',
+      volume: paceToneVolume * 0.4,
+    })
+  })
+
+  test('keeps browser playback on Android', () => {
+    vi.mocked(Capacitor.getPlatform).mockReturnValue('android')
+    previewPaceTone('ahead', 'full')
+    expect(playPaceTone).toHaveBeenCalledExactlyOnceWith('ahead', paceToneVolume)
+    expect(timedCircuit.previewTone).not.toHaveBeenCalled()
+  })
+
   test('sounds the note it is asked for', () => {
     previewPaceTone('ahead', 'full')
     expect(playPaceTone).toHaveBeenCalledExactlyOnceWith('ahead', paceToneVolume)

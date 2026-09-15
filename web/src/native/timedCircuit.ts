@@ -1,9 +1,11 @@
 import { registerPlugin } from '@capacitor/core'
 import type { PaceWords } from '@/utils/halfwayCue'
-import type { Pacing } from '@/utils/pacing'
+import type { PaceTone, Pacing } from '@/utils/pacing'
 import type { Phase, Recording } from '@/utils/timedCircuit'
 
 interface TimedCircuitPlugin {
+  /** iOS settings example, using the same tone shapes as the native recorder. */
+  previewTone(options: { tone: PaceTone; volume: number }): Promise<void>
   /** `cueLeadSeconds` is the athlete's warning before an interval ends; 0 says nothing. */
   // The pacing is optional: a routine with no session to compare against is
   // recorded exactly as it was before there was anything to compare with.
