@@ -59,10 +59,10 @@ describe('PaceToneSettings', () => {
     render()
 
     const example = screen.getByRole('group', { name: 'Audio example' })
-    await user.click(within(example).getByRole('button', { name: 'Faster' }))
+    await user.click(within(example).getByRole('button', { name: 'Faster pace' }))
     expect(previewPaceTone).toHaveBeenCalledExactlyOnceWith('ahead', 'full')
 
-    await user.click(within(example).getByRole('button', { name: 'Slower' }))
+    await user.click(within(example).getByRole('button', { name: 'Slower pace' }))
     expect(previewPaceTone).toHaveBeenLastCalledWith('behind', 'full')
   })
 

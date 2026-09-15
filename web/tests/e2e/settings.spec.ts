@@ -202,12 +202,12 @@ test.describe('settings', () => {
     const example = page.getByRole('group', { name: 'Audio example' })
     // Faster is two taps of the same note, slower one long one: the pair is
     // told apart by rhythm rather than by pitch alone.
-    await example.getByRole('button', { name: 'Faster' }).click()
+    await example.getByRole('button', { name: 'Faster pace' }).click()
     await expect
       .poll(() => page.evaluate(() => (window as Sounded).sounded ?? []))
       .toEqual([1320, 1320])
 
-    await example.getByRole('button', { name: 'Slower' }).click()
+    await example.getByRole('button', { name: 'Slower pace' }).click()
     await expect
       .poll(() => page.evaluate(() => (window as Sounded).sounded ?? []))
       .toEqual([1320, 1320, 440])
