@@ -15,6 +15,7 @@ const root = join(__dirname, '..', '..')
 // its own copy of these files at whatever revision it is on.
 const skipped = new Set([
   '.git',
+  '.golangci-lint-cache',
   'coverage',
   'dist',
   'node_modules',
