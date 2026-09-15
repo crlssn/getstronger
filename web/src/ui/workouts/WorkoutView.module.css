@@ -101,13 +101,13 @@
 }
 
 .historyStatus,
-.historyError,
 .historyEnd {
   @apply mt-3 flex min-h-14 items-center justify-center gap-2 rounded-control px-4 text-center text-xs text-text-subtle;
 }
 
+/* AppErrorState draws the row; this only places it under the list. */
 .historyError {
-  @apply justify-between border border-danger/20 bg-danger-surface text-left text-danger;
+  @apply mt-3;
 }
 
 .historyEmpty {

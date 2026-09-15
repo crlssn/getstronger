@@ -621,10 +621,11 @@ describe('WorkoutView', () => {
     mocked.listWorkouts.mockResolvedValueOnce(undefined)
     render()
 
-    expect(await screen.findByRole('alert')).toBeInTheDocument()
+    const alert = await screen.findByRole('alert')
+    expect(alert).toHaveTextContent('Workout history could not be loaded.')
 
     history([workout()])
-    await userEvent.click(within(screen.getByRole('alert')).getByRole('button'))
+    await userEvent.click(within(alert).getByRole('button', { name: 'Try again' }))
 
     expect(await screen.findByRole('link', { name: /Push day/ })).toBeInTheDocument()
   })
