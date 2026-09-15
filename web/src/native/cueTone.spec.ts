@@ -14,6 +14,26 @@ const volume = () => ({
   connect: vi.fn(),
 })
 
+/** One oscillator and one gain per beep, in the order they were asked for. */
+const beeps = () => {
+  const oscillators: ReturnType<typeof tone>[] = []
+  const gains: ReturnType<typeof volume>[] = []
+  return {
+    oscillators,
+    gains,
+    createOscillator: () => {
+      const made = tone()
+      oscillators.push(made)
+      return made
+    },
+    createGain: () => {
+      const made = volume()
+      gains.push(made)
+      return made
+    },
+  }
+}
+
 // The module keeps one context for the tab, so each test gets its own copy of
 // it rather than the one the test before opened.
 const load = async () => import('./cueTone')
@@ -26,40 +46,92 @@ afterEach(() => {
   vi.unstubAllGlobals()
 })
 
-describe('playTone', () => {
-  test('sounds a short note, ramped so it does not click', async () => {
-    const oscillator = tone()
-    const gain = volume()
-    const resume = vi.fn()
+describe('playPaceTone', () => {
+  test('taps twice, quietly and quickly, for an interval that is ahead', async () => {
+    const played = beeps()
     vi.stubGlobal(
       'AudioContext',
       class {
         state = 'running'
         currentTime = 4
-        resume = resume
+        resume = vi.fn()
         destination = {}
-        createOscillator = () => oscillator
-        createGain = () => gain
+        createOscillator = played.createOscillator
+        createGain = played.createGain
       },
     )
 
-    ;(await load()).playTone(1320)
+    ;(await load()).playPaceTone('ahead', 1)
 
-    expect(oscillator.frequency.value).toBe(1320)
-    expect(oscillator.start).toHaveBeenCalledWith(4)
-    expect(oscillator.stop).toHaveBeenCalledWith(4.2)
-    expect(gain.gain.linearRampToValueAtTime).toHaveBeenCalledWith(0, 4.2)
-    // A context already awake is not woken again: resuming is what the test
-    // below covers, and it is the suspended case that has to wait for it.
-    expect(resume).not.toHaveBeenCalled()
+    expect(played.oscillators).toHaveLength(2)
+    expect(played.oscillators.map((each) => each.frequency.value)).toEqual([1320, 1320])
+    // 70ms of note, 60ms of silence, then the second tap.
+    expect(played.oscillators[0].start).toHaveBeenCalledWith(4)
+    expect(played.oscillators[0].stop).toHaveBeenCalledWith(4.07)
+    expect(played.oscillators[1].start).toHaveBeenCalledWith(4.13)
+    expect(played.oscillators[1].stop).toHaveBeenCalledWith(4.2)
+    // Softer than the level it is given: a pair carries without the volume a
+    // single note was reaching for.
+    for (const gain of played.gains) {
+      expect(gain.gain.linearRampToValueAtTime).toHaveBeenCalledWith(0.6, expect.any(Number))
+    }
+  })
+
+  test('holds one long note for an interval that is behind', async () => {
+    const played = beeps()
+    vi.stubGlobal(
+      'AudioContext',
+      class {
+        state = 'running'
+        currentTime = 4
+        resume = vi.fn()
+        destination = {}
+        createOscillator = played.createOscillator
+        createGain = played.createGain
+      },
+    )
+
+    ;(await load()).playPaceTone('behind', 1)
+
+    expect(played.oscillators).toHaveLength(1)
+    expect(played.oscillators[0].frequency.value).toBe(440)
+    expect(played.oscillators[0].start).toHaveBeenCalledWith(4)
+    expect(played.oscillators[0].stop).toHaveBeenCalledWith(4.6)
+    // Held rather than decaying away: length is what says "slower", and a note
+    // that fades out at once is over before it has said it.
+    expect(played.gains[0].gain.linearRampToValueAtTime).toHaveBeenCalledWith(1, 4.01)
+    expect(played.gains[0].gain.setValueAtTime).toHaveBeenCalledWith(1, 4.59)
+    expect(played.gains[0].gain.linearRampToValueAtTime).toHaveBeenCalledWith(0, 4.6)
+  })
+
+  test('scales both notes by the level it is given', async () => {
+    const played = beeps()
+    vi.stubGlobal(
+      'AudioContext',
+      class {
+        state = 'running'
+        currentTime = 0
+        resume = vi.fn()
+        destination = {}
+        createOscillator = played.createOscillator
+        createGain = played.createGain
+      },
+    )
+    const { playPaceTone, paceToneVolume } = await load()
+
+    playPaceTone('behind', paceToneVolume)
+
+    expect(played.gains[0].gain.linearRampToValueAtTime).toHaveBeenCalledWith(
+      paceToneVolume,
+      expect.any(Number),
+    )
   })
 
   // Autoplay policy hands back a suspended context, whose clock does not move
   // until it resumes — so a note scheduled against it is already in the past
   // by the time there is anything to hear it on, and is never heard at all.
   test('waits for a suspended context to resume before scheduling the note', async () => {
-    const oscillator = tone()
-    const gain = volume()
+    const played = beeps()
     let resumed = () => {}
     const context = {
       state: 'suspended',
@@ -75,8 +147,8 @@ describe('playTone', () => {
           }),
       ),
       destination: {},
-      createOscillator: () => oscillator,
-      createGain: () => gain,
+      createOscillator: played.createOscillator,
+      createGain: played.createGain,
     }
     vi.stubGlobal(
       'AudioContext',
@@ -87,12 +159,13 @@ describe('playTone', () => {
       },
     )
 
-    ;(await load()).playTone(1320)
-    expect(oscillator.start).not.toHaveBeenCalled()
+    ;(await load()).playPaceTone('behind', 1)
+    expect(played.oscillators).toHaveLength(0)
 
     resumed()
-    await vi.waitFor(() => expect(oscillator.start).toHaveBeenCalledWith(9))
-    expect(oscillator.stop).toHaveBeenCalledWith(9.2)
+    await vi.waitFor(() => expect(played.oscillators).toHaveLength(1))
+    expect(played.oscillators[0].start).toHaveBeenCalledWith(9)
+    expect(played.oscillators[0].stop).toHaveBeenCalledWith(9.6)
   })
 
   // A browser that will not open an audio context is still recording, and the
@@ -106,9 +179,9 @@ describe('playTone', () => {
         }
       },
     )
-    const { playTone } = await load()
+    const { playPaceTone } = await load()
 
-    expect(() => playTone(440)).not.toThrow()
+    expect(() => playPaceTone('behind', 1)).not.toThrow()
   })
 })
 

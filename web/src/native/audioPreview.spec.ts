@@ -2,13 +2,13 @@
 
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
-import { paceToneHertz, paceToneVolume, playTone } from '@/native/cueTone'
+import { paceToneVolume, playPaceTone } from '@/native/cueTone'
 import { timedCircuit } from '@/native/timedCircuit'
 import { previewAnnouncement, previewIntervalCue, previewPaceTone } from './audioPreview'
 
 vi.mock('@/native/cueTone', async (original) => ({
   ...(await original<typeof import('@/native/cueTone')>()),
-  playTone: vi.fn(),
+  playPaceTone: vi.fn(),
 }))
 
 // The example goes through the recorder, which is what knows the voice a run
@@ -68,10 +68,10 @@ describe('previewIntervalCue', () => {
 describe('previewPaceTone', () => {
   test('sounds the note it is asked for', () => {
     previewPaceTone('ahead', 'full')
-    expect(playTone).toHaveBeenCalledExactlyOnceWith(paceToneHertz.ahead, paceToneVolume)
+    expect(playPaceTone).toHaveBeenCalledExactlyOnceWith('ahead', paceToneVolume)
 
     previewPaceTone('behind', 'full')
-    expect(playTone).toHaveBeenLastCalledWith(paceToneHertz.behind, paceToneVolume)
+    expect(playPaceTone).toHaveBeenLastCalledWith('behind', paceToneVolume)
   })
 
   // The notes follow the announcement volume on a run, but an example nobody
@@ -79,6 +79,6 @@ describe('previewPaceTone', () => {
   test('is heard even with the announcements turned off', () => {
     previewPaceTone('ahead', 'off')
 
-    expect(playTone).toHaveBeenCalledExactlyOnceWith(paceToneHertz.ahead, paceToneVolume)
+    expect(playPaceTone).toHaveBeenCalledExactlyOnceWith('ahead', paceToneVolume)
   })
 })

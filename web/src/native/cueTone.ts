@@ -12,14 +12,42 @@
 import { announcementPhrase, announcementLocale, bestVoice } from '@/native/announcementVoice'
 import type { PaceTone } from '@/utils/pacing'
 
-const seconds = 0.2
-const peak = 0.3
+// A note is ramped rather than switched at both ends, because a square edge on
+// a sine is heard as a click. Ten milliseconds is short enough to keep a tap
+// crisp and long enough that there is nothing to hear at the join.
+const fadeSeconds = 0.01
 
-// The two notes, in hertz: the interval is going better than the reference, or
-// worse than it. Higher is better is the one convention nobody has to be
-// taught, and the cue is spoken, so a note is never mistaken for it. The
-// phones sound the same two.
-export const paceToneHertz: Record<PaceTone, number> = { ahead: 1320, behind: 440 }
+/**
+ * The shape of each of the two notes.
+ *
+ * Pitch alone is a poor signal on a road: a fifth is hard to place under music
+ * and behind a footfall, and an athlete who hears one note in twenty minutes
+ * has nothing to compare it to. Rhythm carries where pitch does not, so ahead
+ * is two quick taps and behind is one long note — told apart by counting,
+ * which needs no ear at all. The phones sound the same two.
+ */
+export interface PaceToneShape {
+  hertz: number
+  /** How long one beep lasts, in seconds. */
+  seconds: number
+  /** How many beeps the note is made of. */
+  beeps: number
+  /** The silence between them, in seconds. */
+  gapSeconds: number
+  /** How loud, as a fraction of the level the note is played at. */
+  level: number
+}
+
+export const paceTones: Record<PaceTone, PaceToneShape> = {
+  // Two taps at six tenths the level: a pair carries without the volume a
+  // single note was reaching for, and the whole gesture is over in a fifth of
+  // a second.
+  ahead: { hertz: 1320, seconds: 0.07, beeps: 2, gapSeconds: 0.06, level: 0.6 },
+  // One note held for six tenths of a second. Length is what says "slower",
+  // so it is sustained rather than left to decay: a note that fades out at
+  // once is over before it has said anything.
+  behind: { hertz: 440, seconds: 0.6, beeps: 1, gapSeconds: 0, level: 1 },
+}
 
 /** How loud a pace note is at full announcement volume. */
 export const paceToneVolume = 0.3
@@ -60,22 +88,33 @@ export const hush = (): void => {
   }
 }
 
-export const playTone = (frequencyHz: number, level = peak): void => {
+/**
+ * Sounds one of the two pace notes at the level it is given.
+ *
+ * Higher is better is the one convention nobody has to be taught, and the
+ * interval cue is spoken, so a note is never mistaken for it.
+ */
+export const playPaceTone = (tone: PaceTone, level: number): void => {
+  const shape = paceTones[tone]
   try {
     context ??= new AudioContext()
     const sound = context
     const schedule = () => {
-      const at = sound.currentTime
-      const oscillator = sound.createOscillator()
-      const gain = sound.createGain()
-      oscillator.frequency.value = frequencyHz
-      // Ramped rather than switched, so the tone does not click at either end.
-      gain.gain.setValueAtTime(0, at)
-      gain.gain.linearRampToValueAtTime(level, at + 0.01)
-      gain.gain.linearRampToValueAtTime(0, at + seconds)
-      oscillator.connect(gain).connect(sound.destination)
-      oscillator.start(at)
-      oscillator.stop(at + seconds)
+      const from = sound.currentTime
+      const peak = level * shape.level
+      for (let beep = 0; beep < shape.beeps; beep += 1) {
+        const at = from + beep * (shape.seconds + shape.gapSeconds)
+        const oscillator = sound.createOscillator()
+        const gain = sound.createGain()
+        oscillator.frequency.value = shape.hertz
+        gain.gain.setValueAtTime(0, at)
+        gain.gain.linearRampToValueAtTime(peak, at + fadeSeconds)
+        gain.gain.setValueAtTime(peak, at + shape.seconds - fadeSeconds)
+        gain.gain.linearRampToValueAtTime(0, at + shape.seconds)
+        oscillator.connect(gain).connect(sound.destination)
+        oscillator.start(at)
+        oscillator.stop(at + shape.seconds)
+      }
     }
     // Autoplay policy suspends a context opened before the first gesture, and
     // a suspended clock does not move: a note scheduled against it is already
