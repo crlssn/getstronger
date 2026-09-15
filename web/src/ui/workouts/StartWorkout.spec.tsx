@@ -1321,6 +1321,7 @@ describe('StartWorkout', () => {
     beforeEach(() => {
       native.enabled = true
       vi.mocked(timedCircuit.read).mockReset().mockResolvedValue({})
+      vi.mocked(timedCircuit.start).mockReset().mockResolvedValue(undefined)
       vi.mocked(timedCircuit.clear).mockReset().mockResolvedValue(undefined)
       mocked.getRoutine.mockResolvedValue(timedRoutine())
     })
@@ -1338,10 +1339,9 @@ describe('StartWorkout', () => {
       // routine's own name is not on it.
       await renderWorkout(undefined, 'Bench Press')
 
-      // Opened on, not started: nothing is asked of the phone until the
-      // athlete taps, and the ordinary form is one tap the other way.
-      expect(await screen.findByRole('button', { name: 'Start live session' })).toBeInTheDocument()
-      expect(timedCircuit.start).not.toHaveBeenCalled()
+      // Opened on and started with it: the athlete asked for the session by
+      // opening the routine, and the ordinary form is one tap the other way.
+      await waitFor(() => expect(timedCircuit.start).toHaveBeenCalledOnce())
 
       await user.click(screen.getByRole('button', { name: 'Fill in manually' }))
       // The form is reached for the first time here, so its sets are written
@@ -1363,22 +1363,41 @@ describe('StartWorkout', () => {
       await waitFor(() => expect(requests.getPaceReference).toHaveBeenCalled())
     })
 
+    // The comparison is handed over when the recording starts and cannot be
+    // handed over afterwards, so a session that starts itself waits for it.
+    test('starts with the session it is paced against rather than ahead of it', async () => {
+      let answer = (): void => undefined
+      vi.mocked(requests.getPaceReference).mockReturnValue(
+        new Promise((resolve) => {
+          answer = () => resolve(undefined)
+        }),
+      )
+      vi.mocked(timedCircuit.start).mockResolvedValue(undefined)
+      usePreferencesStore.getState().setPaceReference('previous')
+      await renderWorkout(undefined, 'Bench Press')
+
+      await waitFor(() => expect(requests.getPaceReference).toHaveBeenCalled())
+      expect(timedCircuit.start).not.toHaveBeenCalled()
+
+      answer()
+      await waitFor(() => expect(timedCircuit.start).toHaveBeenCalledOnce())
+    })
+
     // The phone reads each phase out as it starts, so the prescription is
     // frozen in the words a synthesiser should say rather than in a count of
     // seconds the runner has to convert mid-stride.
     test('freezes each phase in spoken units', async () => {
-      const user = userEvent.setup()
       vi.mocked(timedCircuit.start).mockResolvedValue(undefined)
       await renderWorkout(undefined, 'Bench Press')
 
-      await user.click(screen.getByRole('button', { name: 'Start live session' }))
-
-      expect(timedCircuit.start).toHaveBeenCalledWith(
-        expect.objectContaining({
-          phases: expect.arrayContaining([
-            expect.objectContaining({ instruction: 'Bench Press for 1 minute' }),
-          ]),
-        }),
+      await waitFor(() =>
+        expect(timedCircuit.start).toHaveBeenCalledWith(
+          expect.objectContaining({
+            phases: expect.arrayContaining([
+              expect.objectContaining({ instruction: 'Bench Press for 1 minute' }),
+            ]),
+          }),
+        ),
       )
     })
 
