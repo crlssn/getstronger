@@ -34,8 +34,8 @@ system, and every downstream count agrees with itself.
 `web/`, `mise run design:barrel-check` does it; by hand it is a sorted diff of
 the names in `entry.ts` against `src/ui/components/*.tsx`. Names only on the
 component side are invisible to the sync. Secondary exports
-(`AppSegmentedNav`, `SheetAction`, `AppListItemLink`) ride along on a
-sibling's `export *` and correctly have no line of their own.
+(`AppSegmentedNav`, `SheetAction`) ride along on a sibling's `export *` and
+correctly have no line of their own.
 
 ## Tailwind quirks this build works around
 
@@ -63,8 +63,8 @@ sibling's `export *` and correctly have no line of their own.
   utility class used only in a preview is never generated.
 - `@heroicons/react/24/outline` imports work in previews and are the right way
   to fill an `icon` prop.
-- `AppListRow`, `AppListItem` and `AppListItemLink` render an `<li>` — compose
-  them inside `<AppList>` or the markup is invalid and the styling is off.
+- `AppListRow` renders an `<li>` — compose it inside `<AppList>` or the markup
+  is invalid and the styling is off.
 - Content is the product's own domain: workouts, routines, exercises, kg, rest
   timers. Never `foo`/`bar`.
 
@@ -159,7 +159,9 @@ Triaged as legitimate — a warn NOT in this list is new and worth looking at.
 splitter in the sync transcript: each `###` section becomes one component's doc
 and the enclosing `##` heading becomes its group (actions / input / surfaces /
 lists-and-states). Regenerate after editing the catalogue, or the groups and
-prompts drift from it.
+prompts drift from it. `catalogue.spec.ts` fails on a section with no doc and on
+a doc with no section, so the reminder is a check; the groups inside a doc are
+still yours to keep straight.
 
 ## Running it again
 

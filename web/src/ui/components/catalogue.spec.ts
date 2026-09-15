@@ -31,6 +31,18 @@ const sourceOf = new Map(
 
 const components = new Set(sourceOf.keys())
 
+// The design side reads `.design-sync/docs/`, one file per component, split out
+// of the catalogue's `###` sections. A section with no doc is a component the
+// design system was never told about; a doc with no section describes one the
+// app no longer has.
+const docs = readdirSync(join(componentsDir, '../../../.design-sync/docs'))
+  .filter((file) => file.endsWith('.md'))
+  .map((file) => file.replace(/\.md$/, ''))
+
+const catalogued = [...readme.matchAll(/^### (.+)$/gm)].flatMap(([, heading]) =>
+  [...heading.matchAll(/`<(\w+)>`/g)].map((match) => match[1]),
+)
+
 describe('the component catalogue', () => {
   it('lists every component in the design system', () => {
     const undocumented = exported.filter((name) => !readme.includes(`\`<${name}>\``))
@@ -43,6 +55,16 @@ describe('the component catalogue', () => {
     )
     const stale = [...new Set(documented)].filter((name) => !components.has(name))
     expect(stale, 'these are catalogued but nothing exports them').toEqual([])
+  })
+
+  it('hands every catalogued component to the design side', () => {
+    const unsynced = catalogued.filter((name) => !docs.includes(name))
+    expect(unsynced, 'regenerate web/.design-sync/docs/ from the catalogue').toEqual([])
+  })
+
+  it('keeps no design-sync doc the catalogue has dropped', () => {
+    const orphaned = docs.filter((name) => !catalogued.includes(name))
+    expect(orphaned, 'these docs describe components the catalogue no longer names').toEqual([])
   })
 
   // design-sync collapses a doc comment and cuts it — a component's summary at
