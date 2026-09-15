@@ -1,6 +1,14 @@
 import { fileURLToPath } from 'node:url'
 import { mergeConfig, defineConfig, configDefaults } from 'vitest/config'
 import viteConfig from './vite.config.ts'
+import { suiteTimeZone } from './tests/timeZone.ts'
+
+// The app renders the reader's local clock, so every spec that fixes an
+// instant is asserting about a zone. Pin it before the workers start and the
+// assertion holds on any machine; leave it to the machine and it holds only on
+// CI's. Set here rather than in `test.env`, which lands too late for the zone
+// Node has already resolved. See tests/timeZone.ts for why this one, not UTC.
+process.env.TZ = suiteTimeZone
 
 export default mergeConfig(
   viteConfig,
