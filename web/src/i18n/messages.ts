@@ -58,8 +58,8 @@ export const en = {
     // Said at the midpoint of an interval, with the pace held over it so far.
     // The recorder measuring the pace is the one that fills {pace} in, so the
     // unit it is per belongs to the phrase rather than being added after it.
-    halfwayKilometre: 'Half way. {pace} per kilometre',
-    halfwayMile: 'Half way. {pace} per mile',
+    halfwayKilometre: 'Half way. {pause} {pace} per kilometre',
+    halfwayMile: 'Half way. {pause} {pace} per mile',
     // The bare words the pace in that phrase is built from. A pace is a
     // duration and is spelled out like one: a synthesiser reads "5:00" as a
     // time and says it back as "five o'clock".
@@ -1057,8 +1057,8 @@ export const sv = {
     intervalNamed: '{name} {round}',
     cueSeconds_one: '{count} sekund',
     cueSeconds_other: '{count} sekunder',
-    halfwayKilometre: 'Halvvägs. {pace} per kilometer',
-    halfwayMile: 'Halvvägs. {pace} per mile',
+    halfwayKilometre: 'Halvvägs. {pause} {pace} per kilometer',
+    halfwayMile: 'Halvvägs. {pause} {pace} per mile',
     paceMinute: 'minut',
     paceMinutes: 'minuter',
     paceSecond: 'sekund',

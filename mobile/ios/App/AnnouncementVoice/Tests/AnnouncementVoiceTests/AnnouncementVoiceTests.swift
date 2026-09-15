@@ -86,4 +86,26 @@ final class AnnouncementPhraseTests: XCTestCase {
     func testLeavesAnEmptyCueSilent() {
         XCTAssertEqual(announcementPhrase("   "), "")
     }
+
+    // None of the three engines gives a full stop much of a beat, so a phrase
+    // that wants one is split and each side asks for the pause its own way.
+    func testSplitsAPhraseAtThePauseItHolds() {
+        XCTAssertEqual(announcementParts("Half way.{pause}5 minutes per kilometre"),
+                       ["Half way.", "5 minutes per kilometre."])
+    }
+
+    func testTrimsAroundTheMarker() {
+        XCTAssertEqual(announcementParts("Half way. {pause} 5 minutes per kilometre"),
+                       ["Half way.", "5 minutes per kilometre."])
+    }
+
+    func testGivesAPhraseWithNoPauseAsTheOnePartItIs() {
+        XCTAssertEqual(announcementParts("Run for 2 minutes"), ["Run for 2 minutes."])
+    }
+
+    // A marker at either end would otherwise buy a wait around silence.
+    func testDropsTheEmptySidesOfAStrayMarker() {
+        XCTAssertEqual(announcementParts("{pause}Half way.{pause}"), ["Half way."])
+        XCTAssertEqual(announcementParts("   "), [])
+    }
 }

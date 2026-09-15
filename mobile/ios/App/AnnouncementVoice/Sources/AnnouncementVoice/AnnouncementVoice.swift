@@ -64,3 +64,21 @@ func announcementPhrase(_ instruction: String) -> String {
     guard let last = cue.last, !".!?,:;".contains(last) else { return cue }
     return cue + "."
 }
+
+/// The token a phrase holds a pause at, mirroring `pausePlaceholder` in
+/// `web/src/native/announcementVoice.ts`.
+let pausePlaceholder = "{pause}"
+
+/// How long the synthesiser waits at one, in seconds.
+let announcementPauseSeconds = 0.5
+
+/// A phrase as the parts the synthesiser says it in, each closed off.
+///
+/// A full stop is the only pause a phrase can carry on its own, and no engine
+/// gives one much of a beat. A phrase that wants one is split here, and the
+/// wait is asked of `AVSpeechUtterance.preUtteranceDelay` instead.
+func announcementParts(_ instruction: String) -> [String] {
+    instruction.components(separatedBy: pausePlaceholder)
+        .map(announcementPhrase)
+        .filter { !$0.isEmpty }
+}

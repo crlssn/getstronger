@@ -92,7 +92,7 @@ describe('pace targets', () => {
 
 describe('watching the pace', () => {
   const pacing: Pacing = {
-    targets: [300, 300],
+    targets: [300, 300, 300, 300],
     toleranceSeconds: 10,
     minimumGapSeconds: 30,
     windowSeconds: 15,
@@ -111,7 +111,7 @@ describe('watching the pace', () => {
     expect(read(inside.watch, 291, 40000).tone).toBeUndefined()
   })
 
-  it('sounds once when the pace pulls ahead, and again only after it comes back', () => {
+  it('sounds once when the pace pulls ahead, and not again on its own', () => {
     const ahead = read(newPaceWatch(), 280, 20000)
     expect(ahead.tone).toBe('ahead')
 
@@ -119,9 +119,11 @@ describe('watching the pace', () => {
     const held = read(ahead.watch, 275, 80000)
     expect(held.tone).toBeUndefined()
 
+    // Back inside the band and out the same side again: the athlete has
+    // already been told they are ahead, and a second telling says nothing new.
     const back = read(held.watch, 300, 100000)
     expect(back.tone).toBeUndefined()
-    expect(read(back.watch, 280, 140000).tone).toBe('ahead')
+    expect(read(back.watch, 280, 140000).tone).toBeUndefined()
   })
 
   it('sounds the other way when the pace falls behind', () => {
@@ -143,11 +145,41 @@ describe('watching the pace', () => {
     expect(early.watch.zone).toBeUndefined()
   })
 
-  it('starts each interval afresh', () => {
+  it('carries the last note across an interval boundary', () => {
     const ahead = read(newPaceWatch(), 280, 20000)
     expect(ahead.tone).toBe('ahead')
-    // The next interval is a crossing of its own, once the gap has passed.
-    expect(read(ahead.watch, 280, 60000, 1).tone).toBe('ahead')
+    // A run held above its target and the walk after it held above its own
+    // are one piece of news, not two.
+    expect(read(ahead.watch, 280, 60000, 1).tone).toBeUndefined()
+    // The other way round is still worth hearing.
+    expect(read(ahead.watch, 320, 60000, 1).tone).toBe('behind')
+  })
+
+  it('lets a note through again once the other one has been heard', () => {
+    const ahead = read(newPaceWatch(), 280, 20000)
+    const behind = read(ahead.watch, 320, 60000)
+    expect(behind.tone).toBe('behind')
+    expect(read(behind.watch, 280, 100000).tone).toBe('ahead')
+  })
+
+  it('never sounds the same note twice running over a whole session', () => {
+    const readings: [number, number, number][] = [
+      [280, 20000, 0],
+      [275, 60000, 1],
+      [330, 100000, 1],
+      [325, 140000, 2],
+      [270, 180000, 2],
+      [300, 220000, 3],
+      [265, 260000, 3],
+    ]
+    let watch = newPaceWatch()
+    const heard: string[] = []
+    for (const [pace, at, phaseIndex] of readings) {
+      const result = read(watch, pace, at, phaseIndex)
+      watch = result.watch
+      if (result.tone) heard.push(result.tone)
+    }
+    expect(heard).toEqual(['ahead', 'behind', 'ahead'])
   })
 
   it('says nothing without a target or without a pace', () => {

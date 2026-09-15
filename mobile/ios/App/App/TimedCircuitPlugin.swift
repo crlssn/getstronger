@@ -30,6 +30,33 @@ private let standingSpeed = 0.3
 // fix, mirroring `wanderSpeed` in `web/src/utils/timedCircuit.ts`.
 private let wanderSpeed = 3.0
 
+/// The shape of one of the two pace notes, mirroring `paceTones` in
+/// `web/src/native/cueTone.ts`.
+///
+/// Pitch alone is a poor signal on a road: a fifth is hard to place under
+/// music and behind a footfall. Rhythm carries where pitch does not, so ahead
+/// is two quick taps and behind is one long note — told apart by counting.
+private struct ToneShape {
+    let hertz: Double
+    /// How long one beep lasts, in seconds.
+    let seconds: Double
+    /// How many beeps the note is made of.
+    let beeps: Int
+    /// The silence between them, in seconds.
+    let gapSeconds: Double
+    /// How loud, as a fraction of the level the note is played at.
+    let level: Double
+}
+
+private let toneShapes: [String: ToneShape] = [
+    "ahead": ToneShape(hertz: 1320, seconds: 0.07, beeps: 2, gapSeconds: 0.06, level: 0.6),
+    "behind": ToneShape(hertz: 440, seconds: 0.6, beeps: 1, gapSeconds: 0, level: 1),
+]
+
+// Ramped rather than switched at both ends: a square edge on a sine is heard
+// as a click.
+private let toneFadeSeconds = 0.01
+
 /// Native ownership keeps the recording independent of the WebView lifecycle.
 @objc(TimedCircuitPlugin)
 public class TimedCircuitPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManagerDelegate, AVSpeechSynthesizerDelegate {
@@ -50,6 +77,13 @@ public class TimedCircuitPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManagerD
     private var audible = false
     /// Whether whatever else is playing is currently held down for a word.
     private var ducking = false
+    /// Announcements still to be said, so the duck lifts after the last of them.
+    ///
+    /// Counted rather than read back off the synthesiser: `isSpeaking` is
+    /// cleared on its own queue, so it is still true inside `didFinish` as
+    /// often as not, and a duck lifted only when it happened to be false left
+    /// the athlete's music held down for the rest of the run.
+    private var speaking = 0
     private var autoPauses = false
     private var fixes: [Fix] = []
     /// The route as `smoothedPoints` has read it so far, and the filter's state.
@@ -92,6 +126,9 @@ public class TimedCircuitPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManagerD
     private var paceZone = ""
     private var paceZonePhase = -1
     private var paceTonedAt = 0.0
+    /// The last note the session actually played, which the next one may not
+    /// repeat. Unlike the zone this outlives the interval it was heard in.
+    private var paceToned = ""
     /// How loud a note is against a full-volume announcement: a fifth was
     /// lost under a footfall on a busy road.
     private let toneVolume = 0.6
@@ -202,12 +239,25 @@ public class TimedCircuitPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManagerD
     private func speak(_ instruction: String, at level: Double? = nil) {
         let level = level ?? volume
         guard level > 0 else { return }
-        let utterance = AVSpeechUtterance(string: announcementPhrase(instruction))
-        utterance.voice = announcementVoice()
-        utterance.volume = Float(level)
-        utterance.rate = announcementRate
+        let parts = announcementParts(instruction)
+        guard !parts.isEmpty else { return }
+        // Ranked once for the phrase rather than once for each part of it:
+        // the answer is the same, and it reads every voice on the phone.
+        let voice = announcementVoice()
+        // Counted up front so the duck holds across the pause between the
+        // parts rather than lifting inside it.
+        speaking += parts.count
         duck(true)
-        speech.speak(utterance)
+        for (index, part) in parts.enumerated() {
+            let utterance = AVSpeechUtterance(string: part)
+            utterance.voice = voice
+            utterance.volume = Float(level)
+            utterance.rate = announcementRate
+            // The synthesiser's own wait, not silence played over the top: it
+            // holds the session, and nothing can slip into the gap.
+            if index > 0 { utterance.preUtteranceDelay = announcementPauseSeconds }
+            speech.speak(utterance)
+        }
     }
 
     /// The cue is its own setting, so the announcements being off does not
@@ -217,15 +267,25 @@ public class TimedCircuitPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManagerD
     /// The ending is the last thing said, and the audio session waits for it:
     /// closed under an utterance, the session cuts the word off.
     public func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didFinish utterance: AVSpeechUtterance) {
-        releaseAudioIfDone()
+        announced()
     }
 
     public func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didCancel utterance: AVSpeechUtterance) {
+        announced()
+    }
+
+    /// One announcement done with; the last of them lets the other audio back up.
+    private func announced() {
+        speaking = max(0, speaking - 1)
         releaseAudioIfDone()
     }
 
     private func releaseAudioIfDone() {
-        guard !speech.isSpeaking else { return }
+        // The count is what decides, and an idle synthesiser overrules it: a
+        // callback the synthesiser never made would otherwise hold the duck
+        // open for good, which is the failure this is here to end.
+        guard speaking == 0 || !speech.isSpeaking else { return }
+        speaking = 0
         duck(false)
         guard recording == nil || recording?["endedAt"] != nil else { return }
         closeAudio()
@@ -295,6 +355,7 @@ public class TimedCircuitPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManagerD
         guard audible else { return }
         audible = false
         ducking = false
+        speaking = 0
         try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
     }
 
@@ -311,15 +372,16 @@ public class TimedCircuitPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManagerD
         paceZone = ""
         paceZonePhase = -1
         paceTonedAt = 0
+        paceToned = ""
         paceTargets = ((pacing?["targets"] as? [Any]) ?? []).map { ($0 as? NSNumber)?.doubleValue ?? 0 }
         paceTolerance = (pacing?["toleranceSeconds"] as? NSNumber)?.doubleValue ?? 0
         paceGap = (pacing?["minimumGapSeconds"] as? NSNumber)?.doubleValue ?? 0
         paceWindow = (pacing?["windowSeconds"] as? NSNumber)?.doubleValue ?? 0
     }
 
-    /// Two short notes, higher for ahead and lower for behind, generated
-    /// rather than shipped: the same two the browser recorder sounds. The cue
-    /// is spoken, so a note is never mistaken for it.
+    /// The two notes, generated rather than shipped: the same two the browser
+    /// recorder sounds, in the same two shapes. The cue is spoken, so a note
+    /// is never mistaken for it.
     ///
     /// They follow the announcement volume: turned off, the recorder holds no
     /// audio session at all, and a session that says nothing must not beep.
@@ -328,28 +390,41 @@ public class TimedCircuitPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManagerD
         try? openAudio()
         guard let format = AVAudioFormat(standardFormatWithSampleRate: 44100, channels: 1) else { return }
         if tones.isEmpty {
-            guard let ahead = note(hertz: 1320, format: format),
-                  let behind = note(hertz: 440, format: format) else { return }
+            var made: [String: AVAudioPCMBuffer] = [:]
+            for (zone, shape) in toneShapes {
+                guard let buffer = note(shape, format: format) else { return }
+                made[zone] = buffer
+            }
             engine.attach(tonePlayer)
             engine.connect(tonePlayer, to: engine.mainMixerNode, format: format)
-            tones = ["ahead": ahead, "behind": behind]
+            tones = made
         }
         tonePlayer.volume = Float(toneVolume * volume)
         if !engine.isRunning { try? engine.start() }
         if !tonePlayer.isPlaying { tonePlayer.play() }
     }
 
-    private func note(hertz: Double, format: AVAudioFormat) -> AVAudioPCMBuffer? {
-        guard let buffer = AVAudioPCMBuffer(pcmFormat: format,
-                                            frameCapacity: AVAudioFrameCount(format.sampleRate * 0.3)),
+    /// One note as a buffer of silence with the shape's beeps written into it.
+    ///
+    /// The shape's own level is baked in rather than set on the player, which
+    /// carries one volume for both notes.
+    private func note(_ shape: ToneShape, format: AVAudioFormat) -> AVAudioPCMBuffer? {
+        let beepFrames = Int(format.sampleRate * shape.seconds)
+        let gapFrames = Int(format.sampleRate * shape.gapSeconds)
+        let frames = beepFrames * shape.beeps + gapFrames * (shape.beeps - 1)
+        guard beepFrames > 0, frames > 0,
+              let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: AVAudioFrameCount(frames)),
               let samples = buffer.floatChannelData?[0] else { return nil }
-        let frames = buffer.frameCapacity
-        buffer.frameLength = frames
-        let fadeFrames = format.sampleRate * 0.02
-        for frame in 0..<Int(frames) {
-            // Faded at both ends: a square edge on a sine is heard as a click.
-            let fade = min(1.0, min(Double(frame), Double(Int(frames) - frame)) / fadeFrames)
-            samples[frame] = Float(sin(2 * .pi * hertz * Double(frame) / format.sampleRate) * fade)
+        buffer.frameLength = AVAudioFrameCount(frames)
+        let fadeFrames = format.sampleRate * toneFadeSeconds
+        for frame in 0..<frames { samples[frame] = 0 }
+        for beep in 0..<shape.beeps {
+            let start = beep * (beepFrames + gapFrames)
+            for frame in 0..<beepFrames {
+                let fade = min(1.0, min(Double(frame), Double(beepFrames - frame)) / fadeFrames)
+                let wave = sin(2 * .pi * shape.hertz * Double(frame) / format.sampleRate)
+                samples[start + frame] = Float(wave * fade * shape.level)
+            }
         }
         return buffer
     }
@@ -484,10 +559,15 @@ public class TimedCircuitPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManagerD
             paceZone = zone
             return
         }
-        // A crossing the gap swallowed stays pending, so it is heard late
+        // The two notes alternate and nothing else is heard: a second "ahead"
+        // says what the first one already said, so the pair only ever reports
+        // a change of direction — across intervals as much as within one. A
+        // crossing the gap swallowed stays pending, so it is heard late
         // rather than not at all.
-        guard zone != paceZone, paceTonedAt == 0 || time - paceTonedAt >= paceGap * 1000 else { return }
+        guard zone != paceZone, zone != paceToned,
+              paceTonedAt == 0 || time - paceTonedAt >= paceGap * 1000 else { return }
         paceZone = zone
+        paceToned = zone
         paceTonedAt = time
         play(tone: zone)
     }

@@ -41,6 +41,36 @@ public class TimedCircuitService extends Service implements LocationListener {
      */
     private static final double PACE_TONE_VOLUME = 0.6;
     /**
+     * The shape of one of the two pace notes, mirroring {@code paceTones} in
+     * {@code web/src/native/cueTone.ts}.
+     *
+     * <p>Pitch alone is a poor signal on a road: a fifth is hard to place under
+     * music and behind a footfall. Rhythm carries where pitch does not, so
+     * ahead is two quick taps and behind is one long note — told apart by
+     * counting, which needs no ear at all.
+     */
+    private static final class ToneShape {
+        /** How long one beep lasts, and the silence between them, in seconds. */
+        final double hertz, seconds, gapSeconds;
+        /** How many beeps the note is made of. */
+        final int beeps;
+        /** How loud, as a fraction of the level the note is played at. */
+        final double level;
+
+        ToneShape(double hertz, double seconds, int beeps, double gapSeconds, double level) {
+            this.hertz = hertz;
+            this.seconds = seconds;
+            this.beeps = beeps;
+            this.gapSeconds = gapSeconds;
+            this.level = level;
+        }
+    }
+
+    private static final ToneShape AHEAD = new ToneShape(1320, 0.07, 2, 0.06, 0.6);
+    private static final ToneShape BEHIND = new ToneShape(440, 0.6, 1, 0, 1);
+    /** Ramped rather than switched at both ends: a square edge on a sine is heard as a click. */
+    private static final double TONE_FADE_SECONDS = 0.01;
+    /**
      * The shortest interval with a midpoint worth naming, in seconds, and the
      * ground a pace holds behind before it is a number, in metres. Both mirror
      * {@code web/src/utils/halfwayCue.ts} and {@code paceFloorMeters}.
@@ -128,6 +158,11 @@ public class TimedCircuitService extends Service implements LocationListener {
     private String paceZone = "";
     private int paceZonePhase = -1;
     private long paceTonedAt;
+    /**
+     * The last note the session actually played, which the next one may not
+     * repeat. Unlike the zone this outlives the interval it was heard in.
+     */
+    private String paceToned = "";
     private AudioTrack aheadTone;
     private AudioTrack behindTone;
     private final Runnable ticker = new Runnable() {
@@ -351,12 +386,35 @@ public class TimedCircuitService extends Service implements LocationListener {
     /** Turned all the way down speaks nothing: a silent utterance still takes audio focus for nothing. */
     private int announce(String phrase, String id, int queue, double volume) {
         if (volume == 0 || phrase.isEmpty()) return TextToSpeech.SUCCESS;
+        List<String> parts = AnnouncementVoice.parts(phrase);
+        if (parts.isEmpty()) return TextToSpeech.SUCCESS;
         Bundle params = new Bundle();
         params.putFloat(TextToSpeech.Engine.KEY_PARAM_VOLUME, (float) volume);
-        speaking++;
+        // Counted up front so the duck holds across the pause between the
+        // parts rather than lifting inside it.
+        speaking += parts.size();
         duck();
-        int result = speech.speak(AnnouncementVoice.phrase(phrase), queue, params, id);
-        if (result == TextToSpeech.ERROR) said();
+        int result = TextToSpeech.SUCCESS;
+        for (int index = 0; index < parts.size(); index++) {
+            // The engine's own silence, queued behind the part before it, so
+            // nothing can slip into the gap. It carries no id and so is not
+            // counted: a request without one is never called back.
+            if (index > 0) {
+                speech.playSilentUtterance(
+                    AnnouncementVoice.ANNOUNCEMENT_PAUSE_MS, TextToSpeech.QUEUE_ADD, null);
+            }
+            // Only the last part answers to the caller's id, so a phrase is
+            // reported finished once and the ending stops the service once.
+            boolean last = index == parts.size() - 1;
+            result = speech.speak(parts.get(index), index == 0 ? queue : TextToSpeech.QUEUE_ADD,
+                params, last ? id : id + "-" + index);
+            if (result == TextToSpeech.ERROR) {
+                // Nothing queued behind a refusal will be said, so every part
+                // still outstanding is counted back here.
+                for (int pending = index; pending < parts.size(); pending++) said();
+                break;
+            }
+        }
         return result;
     }
     /**
@@ -402,6 +460,7 @@ public class TimedCircuitService extends Service implements LocationListener {
         paceZone = "";
         paceZonePhase = -1;
         paceTonedAt = 0;
+        paceToned = "";
         if (pacing == null) return;
         JSONArray targets = pacing.optJSONArray("targets");
         paceTargets = new double[targets == null ? 0 : targets.length()];
@@ -410,21 +469,29 @@ public class TimedCircuitService extends Service implements LocationListener {
         paceGap = pacing.optDouble("minimumGapSeconds", 0);
         paceWindow = pacing.optDouble("windowSeconds", 0);
         if (paceTargets.length == 0) return;
-        // Higher for ahead and lower for behind, generated rather than
-        // shipped: the same two notes the browser recorder sounds. The cue is
-        // spoken, so a note is never mistaken for it.
-        aheadTone = note(1320);
-        behindTone = note(440);
+        // Generated rather than shipped: the same two notes the browser
+        // recorder sounds, in the same two shapes. The cue is spoken, so a
+        // note is never mistaken for it.
+        aheadTone = note(AHEAD);
+        behindTone = note(BEHIND);
     }
 
-    private AudioTrack note(double hertz) {
+    /** One note as a buffer of silence with the shape's beeps written into it. */
+    private AudioTrack note(ToneShape shape) {
         int rate = 44100;
-        int frames = (int) (rate * 0.3);
-        short[] samples = new short[frames];
-        for (int frame = 0; frame < frames; frame++) {
-            // Faded at both ends: a square edge on a sine is heard as a click.
-            double fade = Math.min(1.0, Math.min(frame, frames - frame) / (rate * 0.02));
-            samples[frame] = (short) (Math.sin(2 * Math.PI * hertz * frame / rate) * Short.MAX_VALUE * fade);
+        int beepFrames = (int) (rate * shape.seconds);
+        int gapFrames = (int) (rate * shape.gapSeconds);
+        short[] samples = new short[beepFrames * shape.beeps + gapFrames * (shape.beeps - 1)];
+        double fadeFrames = rate * TONE_FADE_SECONDS;
+        for (int beep = 0; beep < shape.beeps; beep++) {
+            int start = beep * (beepFrames + gapFrames);
+            for (int frame = 0; frame < beepFrames; frame++) {
+                double fade = Math.min(1.0, Math.min(frame, beepFrames - frame) / fadeFrames);
+                double wave = Math.sin(2 * Math.PI * shape.hertz * frame / rate);
+                // The shape's own level is baked in rather than set on the
+                // track, whose volume carries the announcement level for both.
+                samples[start + frame] = (short) (wave * Short.MAX_VALUE * fade * shape.level);
+            }
         }
         AudioTrack track = new AudioTrack.Builder()
             // Media rather than a system sound: the note follows the volume
@@ -641,10 +708,15 @@ public class TimedCircuitService extends Service implements LocationListener {
             paceZone = zone;
             return;
         }
-        // A crossing the gap swallowed stays pending, so it is heard late
+        // The two notes alternate and nothing else is heard: a second "ahead"
+        // says what the first one already said, so the pair only ever reports
+        // a change of direction — across intervals as much as within one. A
+        // crossing the gap swallowed stays pending, so it is heard late
         // rather than not at all.
-        if (zone.equals(paceZone) || (paceTonedAt != 0 && time - paceTonedAt < paceGap * 1000)) return;
+        if (zone.equals(paceZone) || zone.equals(paceToned)) return;
+        if (paceTonedAt != 0 && time - paceTonedAt < paceGap * 1000) return;
         paceZone = zone;
+        paceToned = zone;
         paceTonedAt = time;
         play(zone);
     }

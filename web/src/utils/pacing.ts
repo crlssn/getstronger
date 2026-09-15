@@ -126,6 +126,11 @@ export interface PaceWatch {
   zone?: PaceZone
   /** When a tone last played, on the recording's own clock. */
   tonedAt?: number
+  /**
+   * The last tone the session actually played, which the next one may not
+   * repeat. Unlike the zone this outlives the interval it was heard in.
+   */
+  toned?: PaceTone
 }
 
 /** One reading of the pace, taken by whichever recorder is running. */
@@ -145,10 +150,12 @@ export const newPaceWatch = (): PaceWatch => ({ phaseIndex: -1 })
 /**
  * The tone a reading calls for, and the watch to read the next one against.
  *
- * A tone marks the crossing rather than the state: pulling ahead is worth
- * hearing once, and again only after coming back and going out a second time.
- * A crossing the gap swallowed stays pending, so the athlete hears it late
- * rather than not at all.
+ * The two notes alternate, and nothing else is ever heard: a second "ahead"
+ * says what the first one already said, so the pair only ever reports a
+ * change of direction. That holds across intervals as much as within one —
+ * a run held above its target and the walk after it held above its own are
+ * one piece of news. A crossing the gap swallowed stays pending, so the
+ * athlete hears it late rather than not at all.
  */
 export const watchPace = (
   watch: PaceWatch,
@@ -170,13 +177,14 @@ export const watchPace = (
         : 'holding'
   const rested =
     watch.tonedAt === undefined || reading.at - watch.tonedAt >= pacing.minimumGapSeconds * 1000
-  const tone = now !== 'holding' && now !== zone && rested ? now : undefined
+  const tone = now !== 'holding' && now !== zone && now !== watch.toned && rested ? now : undefined
 
   return {
     watch: {
       phaseIndex: reading.phaseIndex,
       zone: tone ?? (now === 'holding' ? now : zone),
       tonedAt: tone ? reading.at : watch.tonedAt,
+      toned: tone ?? watch.toned,
     },
     tone,
   }

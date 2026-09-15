@@ -2,14 +2,14 @@ import type { Phase } from '@/utils/timedCircuit'
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { playTone, say } from '@/native/cueTone'
+import { playPaceTone, say } from '@/native/cueTone'
 import { openSessionPhases } from '@/utils/timedCircuit'
 import { TimedCircuitWeb } from './timedCircuitWeb'
 
 vi.mock('@/native/cueTone', async (original) => ({
   ...(await original<typeof import('@/native/cueTone')>()),
   say: vi.fn(),
-  playTone: vi.fn(),
+  playPaceTone: vi.fn(),
 }))
 
 const fix = (
@@ -32,15 +32,15 @@ let watchers: {
 /** A degree of longitude at the equator, on the sphere the route is measured on. */
 const metreDegrees = 180 / (6371000 * Math.PI)
 
-// Every note the recorder played, in hertz, in the order it played them.
-const tones = () => vi.mocked(playTone).mock.calls.map(([hertz]) => hertz)
+// Every note the recorder played, in the order it played them.
+const tones = () => vi.mocked(playPaceTone).mock.calls.map(([tone]) => tone)
 
 describe('the browser recorder', () => {
   beforeEach(() => {
     watchers = []
     localStorage.clear()
     vi.mocked(say).mockClear()
-    vi.mocked(playTone).mockClear()
+    vi.mocked(playPaceTone).mockClear()
     vi.useFakeTimers()
     vi.setSystemTime(1_000_000)
     vi.stubGlobal('navigator', {
@@ -196,7 +196,7 @@ describe('the browser recorder', () => {
     // interval is not judged, so nothing was used up while it was silent.
     await expect(TimedCircuitWeb.setVolume({ key: 'athlete', volume: 1 })).resolves.toBeUndefined()
     stride(25, 125)
-    expect(tones()).toEqual([1320])
+    expect(tones()).toEqual(['ahead'])
   })
 
   it('refuses a session another one is already recording, and answers only its own key', async () => {
@@ -238,11 +238,11 @@ describe('the browser recorder', () => {
     stride(15, 75)
     stride(20, 100)
     // The crossing sounds once, not on every fix that follows it.
-    expect(tones()).toEqual([1320])
+    expect(tones()).toEqual(['ahead'])
 
     // A metre a second from here, which is well behind.
     for (let step = 1; step <= 5; step += 1) stride(20 + step * 5, 100 + step * 5)
-    expect(tones()).toEqual([1320, 440])
+    expect(tones()).toEqual(['ahead', 'behind'])
   })
 
   it('rejects a prescription that is neither timed throughout nor one open interval', async () => {

@@ -11,7 +11,7 @@ import {
   type RoutePoint,
 } from '@/utils/timedCircuit'
 
-import { hush, paceToneHertz, paceToneVolume, playTone, say } from '@/native/cueTone'
+import { hush, paceToneVolume, playPaceTone, say } from '@/native/cueTone'
 import { callsHalfway, halfwaySaid, type PaceWords } from '@/utils/halfwayCue'
 import { cuesInterval } from '@/utils/intervalCue'
 
@@ -133,7 +133,7 @@ const judge = (phaseIndex: number, phaseSeconds: number, at: number) => {
   }
   const result = watchPace(pace, reading, saved.pacing)
   pace = result.watch
-  if (result.tone) playTone(paceToneHertz[result.tone], paceToneVolume * saved.volume)
+  if (result.tone) playPaceTone(result.tone, paceToneVolume * saved.volume)
 }
 
 /**

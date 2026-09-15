@@ -11,7 +11,7 @@
  * one — so an example the page said itself was never the voice being chosen.
  */
 
-import { paceToneHertz, paceToneVolume, playTone } from '@/native/cueTone'
+import { paceToneVolume, playPaceTone } from '@/native/cueTone'
 import { timedCircuit } from '@/native/timedCircuit'
 import { i18n } from '@/i18n'
 import { speechVolume, type AnnouncementVolume } from '@/stores/announcements'
@@ -74,5 +74,5 @@ export const previewHalfway = (
  * as a turned-down one.
  */
 export const previewPaceTone = (tone: PaceTone, volume: AnnouncementVolume): void => {
-  playTone(paceToneHertz[tone], paceToneVolume * (speechVolume(volume) || 1))
+  playPaceTone(tone, paceToneVolume * (speechVolume(volume) || 1))
 }
