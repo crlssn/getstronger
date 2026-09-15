@@ -157,6 +157,14 @@ describe('migratedStorage, out of room', () => {
     expect(() => storage.setItem('workouts', saved)).not.toThrow()
   })
 
+  test('lets the update through when access to storage itself is denied', () => {
+    const denied = migratedStorage<Saved>(() => {
+      throw new DOMException('denied', 'SecurityError')
+    })
+
+    expect(() => denied.setItem('workouts', saved)).not.toThrow()
+  })
+
   test('lets the update through when the storage refuses to be removed from', () => {
     const sealed = {
       ...bounded(() => false),

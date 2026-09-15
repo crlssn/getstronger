@@ -67,7 +67,13 @@ const webViewStorage = <T>(getStorage: () => Storage): PersistStorage<T> => ({
   // throws out of whatever action changed the state — mid-workout, that is
   // every keystroke in a set. Nothing here is worth dropping a rep over.
   setItem: (name, value) => {
-    const storage = getStorage()
+    let storage: Storage
+    try {
+      storage = getStorage()
+    } catch {
+      // Browsers can deny access to the storage property itself.
+      return
+    }
     const raw = JSON.stringify(value)
     try {
       storage.setItem(name, raw)
