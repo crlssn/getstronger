@@ -12,7 +12,6 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.media.AudioAttributes;
 import android.media.AudioFocusRequest;
-import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioTrack;
 import android.os.Bundle;
@@ -35,41 +34,6 @@ import java.util.Locale;
 /** The foreground service owns the clock, speech and private recording file. */
 public class TimedCircuitService extends Service implements LocationListener {
     private static final String CHANNEL = "timed-circuit";
-    /**
-     * How loud a pace note is against a full-volume announcement: a fifth was
-     * lost under a footfall on a busy road.
-     */
-    private static final double PACE_TONE_VOLUME = 0.6;
-    /**
-     * The shape of one of the two pace notes, mirroring {@code paceTones} in
-     * {@code web/src/native/cueTone.ts}.
-     *
-     * <p>Pitch alone is a poor signal on a road: a fifth is hard to place under
-     * music and behind a footfall. Rhythm carries where pitch does not, so
-     * ahead is two quick taps and behind is one long note — told apart by
-     * counting, which needs no ear at all.
-     */
-    private static final class ToneShape {
-        /** How long one beep lasts, and the silence between them, in seconds. */
-        final double hertz, seconds, gapSeconds;
-        /** How many beeps the note is made of. */
-        final int beeps;
-        /** How loud, as a fraction of the level the note is played at. */
-        final double level;
-
-        ToneShape(double hertz, double seconds, int beeps, double gapSeconds, double level) {
-            this.hertz = hertz;
-            this.seconds = seconds;
-            this.beeps = beeps;
-            this.gapSeconds = gapSeconds;
-            this.level = level;
-        }
-    }
-
-    private static final ToneShape AHEAD = new ToneShape(1320, 0.07, 2, 0.06, 0.6);
-    private static final ToneShape BEHIND = new ToneShape(440, 0.6, 1, 0, 1);
-    /** Ramped rather than switched at both ends: a square edge on a sine is heard as a click. */
-    private static final double TONE_FADE_SECONDS = 0.01;
     /**
      * The shortest interval with a midpoint worth naming, in seconds, and the
      * ground a pace holds behind before it is a number, in metres. Both mirror
@@ -469,58 +433,16 @@ public class TimedCircuitService extends Service implements LocationListener {
         paceGap = pacing.optDouble("minimumGapSeconds", 0);
         paceWindow = pacing.optDouble("windowSeconds", 0);
         if (paceTargets.length == 0) return;
-        // Generated rather than shipped: the same two notes the browser
-        // recorder sounds, in the same two shapes. The cue is spoken, so a
-        // note is never mistaken for it.
-        aheadTone = note(AHEAD);
-        behindTone = note(BEHIND);
-    }
-
-    /** One note as a buffer of silence with the shape's beeps written into it. */
-    private AudioTrack note(ToneShape shape) {
-        int rate = 44100;
-        int beepFrames = (int) (rate * shape.seconds);
-        int gapFrames = (int) (rate * shape.gapSeconds);
-        short[] samples = new short[beepFrames * shape.beeps + gapFrames * (shape.beeps - 1)];
-        double fadeFrames = rate * TONE_FADE_SECONDS;
-        for (int beep = 0; beep < shape.beeps; beep++) {
-            int start = beep * (beepFrames + gapFrames);
-            for (int frame = 0; frame < beepFrames; frame++) {
-                double fade = Math.min(1.0, Math.min(frame, beepFrames - frame) / fadeFrames);
-                double wave = Math.sin(2 * Math.PI * shape.hertz * frame / rate);
-                // The shape's own level is baked in rather than set on the
-                // track, whose volume carries the announcement level for both.
-                samples[start + frame] = (short) (wave * Short.MAX_VALUE * fade * shape.level);
-            }
-        }
-        AudioTrack track = new AudioTrack.Builder()
-            // Media rather than a system sound: the note follows the volume
-            // the announcements play at, not the one the ringer is set to.
-            .setAudioAttributes(new AudioAttributes.Builder()
-                .setUsage(AudioAttributes.USAGE_MEDIA)
-                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION).build())
-            .setAudioFormat(new AudioFormat.Builder()
-                .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
-                .setSampleRate(rate)
-                .setChannelMask(AudioFormat.CHANNEL_OUT_MONO).build())
-            .setBufferSizeInBytes(samples.length * 2)
-            .setTransferMode(AudioTrack.MODE_STATIC)
-            .build();
-        track.write(samples, 0, samples.length);
-        return track;
+        // Built up front rather than on the first crossing: the same two notes
+        // the browser recorder sounds, and the same two the settings examples
+        // play. The cue is spoken, so a note is never mistaken for it.
+        aheadTone = PaceTones.note("ahead");
+        behindTone = PaceTones.note("behind");
     }
 
     /** A note follows the announcement volume: a session that says nothing must not beep. */
     private void play(String zone) {
-        AudioTrack track = zone.equals("ahead") ? aheadTone : behindTone;
-        double volume = level(saved.optDouble("volume", 1));
-        if (track == null || volume == 0) return;
-        try {
-            track.setVolume((float) (PACE_TONE_VOLUME * volume));
-            track.stop();
-            track.reloadStaticData();
-            track.play();
-        } catch (IllegalStateException error) { /* A note nobody hears is not worth a failed session. */ }
+        PaceTones.play(zone.equals("ahead") ? aheadTone : behindTone, level(saved.optDouble("volume", 1)));
     }
 
     private void resetFilter() {

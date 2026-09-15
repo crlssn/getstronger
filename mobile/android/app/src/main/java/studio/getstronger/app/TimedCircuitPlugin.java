@@ -2,6 +2,7 @@ package studio.getstronger.app;
 
 import android.Manifest;
 import android.content.Intent;
+import android.media.AudioTrack;
 import android.os.Bundle;
 import android.speech.tts.TextToSpeech;
 import androidx.core.content.ContextCompat;
@@ -23,6 +24,8 @@ public class TimedCircuitPlugin extends Plugin {
     private boolean exampleReady;
     /** The example that asked for the engine, waiting for it to come up. */
     private Runnable pending;
+    /** The two notes the examples sound, built on the first tap and kept. */
+    private AudioTrack aheadExample, behindExample;
     @PluginMethod public void start(PluginCall call) {
         if (getPermissionState("location") != PermissionState.GRANTED) {
             requestPermissionForAlias("location", call, "locationPermission");
@@ -85,6 +88,35 @@ public class TimedCircuitPlugin extends Plugin {
             } catch (Exception error) { call.reject("The example could not be said", error); }
         });
     }
+    /**
+     * Sounds one of the two pace notes as a settings example, outside any
+     * recording.
+     *
+     * Here for the same reason as {@code speak}. A note the page sounded went
+     * out on whatever stream the WebView had configured for itself, which the
+     * app never reaches: it was never the note a run plays, on the stream a
+     * run plays it. Sounded here it is the same track the service builds, on
+     * the media stream the announcements share.
+     */
+    @PluginMethod public void previewTone(PluginCall call) {
+        String tone = call.getString("tone", "");
+        Double volume = call.getDouble("volume", 1d);
+        if (tone == null || volume == null || volume <= 0) { call.resolve(); return; }
+        // The announcements' level, with the recorder's own tone level put
+        // under it by PaceTones — the same arithmetic a run does.
+        double level = Math.min(volume, 1);
+        getActivity().runOnUiThread(() -> {
+            try {
+                // Built on the first tap rather than with the app: a note
+                // nobody asks for is memory nobody needed. A name the two
+                // buttons never send builds nothing at all.
+                if (tone.equals("ahead") && aheadExample == null) aheadExample = PaceTones.note(tone);
+                if (tone.equals("behind") && behindExample == null) behindExample = PaceTones.note(tone);
+                PaceTones.play(tone.equals("ahead") ? aheadExample : behindExample, level);
+                call.resolve();
+            } catch (Exception error) { call.reject("The example could not be sounded", error); }
+        });
+    }
     /** Started on the first example rather than with the app: an engine nobody asks for is memory nobody needed. */
     private void start() {
         examples = new TextToSpeech(getContext(), status -> getActivity().runOnUiThread(() -> {
@@ -106,6 +138,8 @@ public class TimedCircuitPlugin extends Plugin {
         if (examples != null) { examples.stop(); examples.shutdown(); examples = null; }
         exampleReady = false;
         pending = null;
+        if (aheadExample != null) { aheadExample.release(); aheadExample = null; }
+        if (behindExample != null) { behindExample.release(); behindExample = null; }
         super.handleOnDestroy();
     }
     private void command(PluginCall call, String action) {
