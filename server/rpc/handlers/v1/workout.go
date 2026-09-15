@@ -382,6 +382,11 @@ func (h *workoutHandler) PostComment(ctx context.Context, req *connect.Request[a
 		Comment:   req.Msg.GetComment(),
 	}, h.repo.PostCreateWorkoutCommentLoadUser(ctx))
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			log.Warn("Workout not found for comment")
+			return nil, connect.NewError(connect.CodeNotFound, nil)
+		}
+
 		log.Error("Create workout comment", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}

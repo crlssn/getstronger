@@ -820,6 +820,20 @@ func (s *workoutSuite) TestPostComment() {
 			Comment:   "Nobody's session.",
 		}))
 		s.Require().Nil(res)
+		s.Require().Equal(connect.NewError(connect.CodeNotFound, nil).Error(), err.Error())
+	})
+
+	// Not found is reserved for the workout. A comment nobody can be the
+	// author of is the account being broken, which the athlete cannot act on.
+	s.Run("err_comment_from_an_account_that_is_gone", func() {
+		ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
+		ctx = xcontext.WithUserID(ctx, uuid.Must(uuid.NewV4()))
+
+		res, err := s.handler.PostComment(ctx, connect.NewRequest(&apiv1.PostCommentRequest{
+			WorkoutId: s.factory.NewWorkout().ID.String(),
+			Comment:   "Strong session.",
+		}))
+		s.Require().Nil(res)
 		s.Require().Equal(connect.NewError(connect.CodeInternal, nil).Error(), err.Error())
 	})
 }

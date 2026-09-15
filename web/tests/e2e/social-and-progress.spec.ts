@@ -1,4 +1,5 @@
 import {
+  acceptConfirmDialog,
   allowRuntimeErrors,
   boxOf,
   expect,
@@ -104,6 +105,62 @@ test.describe('social feed and discovery', () => {
     await page.getByLabel('Add a comment').fill(comment)
     await page.getByRole('button', { name: 'Post comment' }).click()
     await expect(page.getByText(comment, { exact: true })).toBeVisible()
+  })
+
+  // The feed is other people's sessions, and one can go between the page
+  // being opened and the comment being sent. That is the workout being gone,
+  // not the server failing: the athlete is told, and nobody is paged.
+  test('refuses a comment on a workout deleted since it was opened @mutation', async ({
+    browser,
+    page,
+  }) => {
+    // Chromium logs every 4xx as a console error, so the fixture cannot judge
+    // this one; the status assertion below is what fails the test on a 5xx.
+    test.info().annotations.push(allowRuntimeErrors)
+
+    // Sam logs a session in a browser of their own, and keeps it open to
+    // delete the session from.
+    const samsBrowser = await browser.newContext()
+    const sam = await samsBrowser.newPage()
+    await logInAs(sam, newUserEmail, seedPassword)
+    const exerciseName = uniqueName('Goblet squat')
+    await sam.goto('/exercises')
+    await sam.getByRole('link', { name: 'New exercise' }).click()
+    await sam.locator('form input[type="text"]').first().fill(exerciseName)
+    await sam.getByRole('button', { name: 'Create exercise' }).click()
+    await expect(sam).toHaveURL(/\/exercises$/)
+    await sam.goto('/workouts/quick')
+    await sam.getByRole('button', { name: 'Choose exercise' }).click()
+    await sam
+      .getByRole('dialog', { name: 'Add exercise' })
+      .getByRole('button', { name: exerciseName })
+      .click()
+    await sam.getByRole('textbox', { name: `${exerciseName} set 1 weight`, exact: true }).fill('20')
+    await sam.getByRole('textbox', { name: `${exerciseName} set 1 reps`, exact: true }).fill('10')
+    await sam.getByRole('button', { name: 'Complete exercise' }).click()
+    await sam.getByRole('button', { name: 'Finish workout' }).click()
+    await sam
+      .getByRole('dialog', { name: 'Finish workout?' })
+      .getByRole('button', { name: 'Finish and save' })
+      .click()
+    await expect(sam).toHaveURL(/\/workouts\/[0-9a-f-]+$/)
+
+    // The active athlete has the session open, with a comment written, when
+    // Sam deletes it.
+    await page.goto(new URL(sam.url()).pathname)
+    await page.getByLabel('Add a comment').fill('Strong session.')
+
+    await sam.getByRole('button', { name: 'Workout actions' }).click()
+    await sam.getByRole('menuitem', { name: 'Delete workout' }).click()
+    await acceptConfirmDialog(sam, 'Delete workout')
+    await expect(sam.getByRole('status')).toContainText('Workout deleted')
+    await samsBrowser.close()
+
+    // Not found rather than a failure.
+    const answered = page.waitForResponse('**/api.v1.WorkoutService/PostComment')
+    await page.getByRole('button', { name: 'Post comment' }).click()
+    expect((await answered).status()).toBe(404)
+    await expect(page.getByRole('alert')).toBeVisible()
   })
 
   // Shown is seen: the feed marks what arrived since it was last on screen,
