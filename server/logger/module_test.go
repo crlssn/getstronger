@@ -118,10 +118,75 @@ func TestModuleSamplesBothBranchesAlike(t *testing.T) {
 	require.Len(t, collected.records(), 100)
 }
 
+// A config with no sampling policy tees straight through rather than building a
+// sampler out of nothing.
+func TestModuleWithoutSamplingExportsEveryEntry(t *testing.T) {
+	collected, endpoint := collectorFor(t)
+	t.Setenv("POSTHOG_KEY", "phc_test")
+	t.Setenv("POSTHOG_LOGS_ENDPOINT", endpoint)
+
+	local := filepath.Join(t.TempDir(), "logs.json")
+	built, stop := start(t, local, func(c zap.Config) zap.Config {
+		c.Sampling = nil
+
+		return c
+	})
+	for range 150 {
+		built.Info("Repeat me")
+	}
+	stop()
+
+	require.Equal(t, 150, strings.Count(readFile(t, local), "Repeat me"))
+	require.Len(t, collected.records(), 150)
+}
+
+// A config zap cannot build has to fail the graph rather than hand back a
+// logger that quietly drops everything, on either path through build.
+func TestModuleRefusesAConfigZapCannotBuild(t *testing.T) {
+	for name, token := range map[string]string{"without_an_exporter": "", "with_an_exporter": "phc_test"} {
+		t.Run(name, func(t *testing.T) {
+			_, endpoint := collectorFor(t)
+			t.Setenv("POSTHOG_KEY", token)
+			t.Setenv("POSTHOG_LOGS_ENDPOINT", endpoint)
+
+			var built *zap.Logger
+			app := fx.New(
+				logger.Module(),
+				providesTheEnvironment(),
+				fx.Decorate(func(c zap.Config) zap.Config {
+					c.Encoding = "no-such-encoder"
+
+					return c
+				}),
+				fx.Populate(&built),
+				fx.NopLogger,
+			)
+
+			require.ErrorContains(t, app.Err(), "logger build")
+		})
+	}
+}
+
+// fx stops on a deadline, so the flush can run out of time. It says so rather
+// than reporting a clean shutdown it did not have.
+func TestExporterShutdownReportsAnUnfinishedFlush(t *testing.T) {
+	_, endpoint := collectorFor(t)
+	t.Setenv("POSTHOG_KEY", "phc_test")
+	t.Setenv("POSTHOG_LOGS_ENDPOINT", endpoint)
+
+	exporter, err := logger.NewExporter(config.New())
+	require.NoError(t, err)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	require.ErrorContains(t, exporter.Shutdown(ctx), "log exporter shutdown")
+}
+
 // start builds the graph and hands back the logger and the stop that flushes
 // it. The module builds its own config, so pointing the local branch at a file
 // is the only way to read what it wrote.
-func start(t *testing.T, path string) (*zap.Logger, func()) {
+func start(t *testing.T, path string, decorate ...func(zap.Config) zap.Config) (*zap.Logger, func()) {
 	t.Helper()
 
 	var built *zap.Logger
@@ -130,6 +195,10 @@ func start(t *testing.T, path string) (*zap.Logger, func()) {
 		providesTheEnvironment(),
 		fx.Decorate(func(c zap.Config) zap.Config {
 			c.OutputPaths = []string{path}
+			for _, decorator := range decorate {
+				c = decorator(c)
+			}
+
 			return c
 		}),
 		fx.Populate(&built),
