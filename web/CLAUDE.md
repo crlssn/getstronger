@@ -152,11 +152,12 @@ creates itself. See `tests/e2e/seed.ts` and
 `server/testing/factory/snapshot/main.go`.
 
 **One run means one database, so `workers: 1` stays.** The suite gets faster by
-being split across runners rather than across workers: CI shards it four ways,
-and each shard is a runner with a Postgres, a backend and a dev server of its
-own. Turning `fullyParallel` on would first need per-worker data — an account
-per worker, or a database and a backend per worker — and nothing here provides
-it.
+being split across runners rather than across workers: CI shards it across
+runners, each with a Postgres, a backend and a dev server of its own. The shard
+count lives in `.github/workflows/test.e2e.yml`, which is the only place it
+should be written down. Turning `fullyParallel` on would first need per-worker
+data — an account per worker, or a database and a backend per worker — and
+nothing here provides it.
 
 ## Localisation
 
