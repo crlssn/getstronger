@@ -239,13 +239,25 @@ public class TimedCircuitPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManagerD
     private func speak(_ instruction: String, at level: Double? = nil) {
         let level = level ?? volume
         guard level > 0 else { return }
-        let utterance = AVSpeechUtterance(string: announcementPhrase(instruction))
-        utterance.voice = announcementVoice()
-        utterance.volume = Float(level)
-        utterance.rate = announcementRate
-        speaking += 1
+        let parts = announcementParts(instruction)
+        guard !parts.isEmpty else { return }
+        // Ranked once for the phrase rather than once for each part of it:
+        // the answer is the same, and it reads every voice on the phone.
+        let voice = announcementVoice()
+        // Counted up front so the duck holds across the pause between the
+        // parts rather than lifting inside it.
+        speaking += parts.count
         duck(true)
-        speech.speak(utterance)
+        for (index, part) in parts.enumerated() {
+            let utterance = AVSpeechUtterance(string: part)
+            utterance.voice = voice
+            utterance.volume = Float(level)
+            utterance.rate = announcementRate
+            // The synthesiser's own wait, not silence played over the top: it
+            // holds the session, and nothing can slip into the gap.
+            if index > 0 { utterance.preUtteranceDelay = announcementPauseSeconds }
+            speech.speak(utterance)
+        }
     }
 
     /// The cue is its own setting, so the announcements being off does not

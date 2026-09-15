@@ -386,12 +386,35 @@ public class TimedCircuitService extends Service implements LocationListener {
     /** Turned all the way down speaks nothing: a silent utterance still takes audio focus for nothing. */
     private int announce(String phrase, String id, int queue, double volume) {
         if (volume == 0 || phrase.isEmpty()) return TextToSpeech.SUCCESS;
+        List<String> parts = AnnouncementVoice.parts(phrase);
+        if (parts.isEmpty()) return TextToSpeech.SUCCESS;
         Bundle params = new Bundle();
         params.putFloat(TextToSpeech.Engine.KEY_PARAM_VOLUME, (float) volume);
-        speaking++;
+        // Counted up front so the duck holds across the pause between the
+        // parts rather than lifting inside it.
+        speaking += parts.size();
         duck();
-        int result = speech.speak(AnnouncementVoice.phrase(phrase), queue, params, id);
-        if (result == TextToSpeech.ERROR) said();
+        int result = TextToSpeech.SUCCESS;
+        for (int index = 0; index < parts.size(); index++) {
+            // The engine's own silence, queued behind the part before it, so
+            // nothing can slip into the gap. It carries no id and so is not
+            // counted: a request without one is never called back.
+            if (index > 0) {
+                speech.playSilentUtterance(
+                    AnnouncementVoice.ANNOUNCEMENT_PAUSE_MS, TextToSpeech.QUEUE_ADD, null);
+            }
+            // Only the last part answers to the caller's id, so a phrase is
+            // reported finished once and the ending stops the service once.
+            boolean last = index == parts.size() - 1;
+            result = speech.speak(parts.get(index), index == 0 ? queue : TextToSpeech.QUEUE_ADD,
+                params, last ? id : id + "-" + index);
+            if (result == TextToSpeech.ERROR) {
+                // Nothing queued behind a refusal will be said, so every part
+                // still outstanding is counted back here.
+                for (int pending = index; pending < parts.size(); pending++) said();
+                break;
+            }
+        }
         return result;
     }
     /**

@@ -9,7 +9,12 @@
  * and a session is a few hundred beeps long.
  */
 
-import { announcementPhrase, announcementLocale, bestVoice } from '@/native/announcementVoice'
+import {
+  announcementLocale,
+  announcementParts,
+  announcementPauseSeconds,
+  bestVoice,
+} from '@/native/announcementVoice'
 import type { PaceTone } from '@/utils/pacing'
 
 // A note is ramped rather than switched at both ends, because a square edge on
@@ -64,15 +69,26 @@ let context: AudioContext | undefined
 export const say = (phrase: string, volume: number, locale: string): void => {
   try {
     if (!('speechSynthesis' in window) || volume <= 0) return
-    const utterance = new SpeechSynthesisUtterance(announcementPhrase(phrase))
-    utterance.volume = Math.min(volume, 1)
-    utterance.lang = announcementLocale(locale)
+    const parts = announcementParts(phrase)
     // Chrome fills this list asynchronously and answers with none until it
     // has: the first cue of a session is then said in the default voice, and
     // every one after it in the chosen one.
     const voice = bestVoice(locale, window.speechSynthesis.getVoices())
-    if (voice) utterance.voice = voice
-    window.speechSynthesis.speak(utterance)
+    const speakFrom = (index: number) => {
+      const utterance = new SpeechSynthesisUtterance(parts[index])
+      utterance.volume = Math.min(volume, 1)
+      utterance.lang = announcementLocale(locale)
+      if (voice) utterance.voice = voice
+      // The web speech API has no pause and runs queued utterances straight
+      // into one another, so the rest of the phrase waits on a timer. Started
+      // from the end of this part rather than from now: a queue is not a
+      // clock, and the part ahead of it may be any length.
+      if (index + 1 < parts.length)
+        utterance.onend = () =>
+          window.setTimeout(() => speakFrom(index + 1), announcementPauseSeconds * 1000)
+      window.speechSynthesis.speak(utterance)
+    }
+    if (parts.length > 0) speakFrom(0)
   } catch {
     // A tab that cannot speak still records; the words are the one thing it
     // goes without.

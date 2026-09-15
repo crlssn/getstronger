@@ -2,7 +2,12 @@
 
 import { describe, expect, test } from 'vitest'
 
-import { announcementLocale, announcementPhrase, bestVoice } from './announcementVoice'
+import {
+  announcementLocale,
+  announcementParts,
+  announcementPhrase,
+  bestVoice,
+} from './announcementVoice'
 
 const voice = (name: string, lang: string, localService = true): SpeechSynthesisVoice => ({
   name,
@@ -55,6 +60,34 @@ describe('bestVoice', () => {
     const beta = voice('Beta (Enhanced)', 'sv-SE')
 
     expect(bestVoice('sv', [alfa, beta])).toBe(bestVoice('sv', [beta, alfa]))
+  })
+})
+
+describe('announcementParts', () => {
+  // None of the three engines gives a full stop much of a beat, so a phrase
+  // that wants one is split and each side is asked for the pause its own way.
+  test('splits a phrase at the pause it holds, closing each part off', () => {
+    expect(announcementParts('Half way.{pause}5 minutes per kilometre')).toEqual([
+      'Half way.',
+      '5 minutes per kilometre.',
+    ])
+  })
+
+  test('trims around the marker, so the catalogue may space it to read', () => {
+    expect(announcementParts('Half way. {pause} 5 minutes per kilometre')).toEqual([
+      'Half way.',
+      '5 minutes per kilometre.',
+    ])
+  })
+
+  test('gives a phrase with no pause in it as the one part it is', () => {
+    expect(announcementParts('Run for 2 minutes')).toEqual(['Run for 2 minutes.'])
+  })
+
+  // A marker at either end would otherwise buy a wait around silence.
+  test('drops the empty sides of a stray marker', () => {
+    expect(announcementParts('{pause}Half way.{pause}')).toEqual(['Half way.'])
+    expect(announcementParts('   ')).toEqual([])
   })
 })
 

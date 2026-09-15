@@ -2,9 +2,12 @@ package studio.getstronger.app;
 
 import android.speech.tts.TextToSpeech;
 import android.speech.tts.Voice;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Locale;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 /**
  * Which of the engine's voices announces an interval, and how a cue is closed
@@ -82,5 +85,31 @@ final class AnnouncementVoice {
         String cue = instruction == null ? "" : instruction.trim();
         if (cue.isEmpty()) return cue;
         return ".!?,:;".indexOf(cue.charAt(cue.length() - 1)) >= 0 ? cue : cue + ".";
+    }
+
+    /**
+     * The token a phrase holds a pause at, mirroring {@code pausePlaceholder}
+     * in {@code web/src/native/announcementVoice.ts}.
+     */
+    static final String PAUSE_PLACEHOLDER = "{pause}";
+
+    /** How long the synthesiser waits at one, in milliseconds. */
+    static final long ANNOUNCEMENT_PAUSE_MS = 500;
+
+    /**
+     * A phrase as the parts the synthesiser says it in, each closed off.
+     *
+     * <p>A full stop is the only pause a phrase can carry on its own, and no
+     * engine gives one much of a beat. A phrase that wants one is split here,
+     * and the wait is asked of {@code playSilentUtterance} instead.
+     */
+    static List<String> parts(String instruction) {
+        List<String> said = new ArrayList<>();
+        if (instruction == null) return said;
+        for (String part : instruction.split(Pattern.quote(PAUSE_PLACEHOLDER), -1)) {
+            String cue = phrase(part);
+            if (!cue.isEmpty()) said.add(cue);
+        }
+        return said;
     }
 }

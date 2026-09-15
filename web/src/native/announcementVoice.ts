@@ -82,3 +82,35 @@ export const announcementPhrase = (instruction: string): string => {
   const last = cue.at(-1)
   return !last || '.!?,:;'.includes(last) ? cue : `${cue}.`
 }
+
+/**
+ * The token a phrase holds a pause at.
+ *
+ * Spelled out again in `AnnouncementVoice.swift` and `AnnouncementVoice.java`:
+ * the phones never see this file, and a phrase is no use to them without it.
+ */
+const pausePlaceholder = '{pause}'
+
+/**
+ * How long a synthesiser waits at one, in seconds.
+ *
+ * Long enough that "Half way" lands before the number arrives, short enough
+ * that the call is still one thought rather than two.
+ */
+export const announcementPauseSeconds = 0.5
+
+/**
+ * A phrase as the parts a synthesiser says it in, each closed off.
+ *
+ * A full stop is the only pause a phrase can carry on its own, and none of the
+ * three engines gives one much of a beat — an ellipsis is worse, read as a wait
+ * by some and as "dot dot dot" by others. So a phrase that wants a pause is
+ * split here, and each recorder asks its own platform for the wait: iOS has
+ * `preUtteranceDelay`, Android `playSilentUtterance`, and the browser nothing
+ * but a timer.
+ */
+export const announcementParts = (instruction: string): string[] =>
+  instruction
+    .split(pausePlaceholder)
+    .map(announcementPhrase)
+    .filter((part) => part !== '')

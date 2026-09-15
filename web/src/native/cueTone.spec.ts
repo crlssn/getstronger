@@ -207,6 +207,39 @@ describe('say', () => {
     )
   })
 
+  // There is no pause in the web speech API and queued utterances run straight
+  // into one another, so the second half waits on a timer of its own.
+  test('holds a phrase that asks for a pause, and says the rest after it', async () => {
+    const spoken: { text: string; onend?: () => void }[] = []
+    vi.stubGlobal('speechSynthesis', {
+      speak: (utterance: { text: string }) => spoken.push(utterance),
+      getVoices: () => [],
+    })
+    vi.stubGlobal(
+      'SpeechSynthesisUtterance',
+      class {
+        volume = 1
+        lang = ''
+        onend?: () => void
+        constructor(public text: string) {}
+      },
+    )
+    vi.useFakeTimers()
+    const { say } = await load()
+    const { announcementPauseSeconds } = await import('./announcementVoice')
+
+    say('Half way.{pause}5 minutes per kilometre', 1, 'en')
+    expect(spoken.map((each) => each.text)).toEqual(['Half way.'])
+
+    spoken[0].onend?.()
+    vi.advanceTimersByTime(announcementPauseSeconds * 1000 - 1)
+    expect(spoken).toHaveLength(1)
+
+    vi.advanceTimersByTime(1)
+    expect(spoken.map((each) => each.text)).toEqual(['Half way.', '5 minutes per kilometre.'])
+    vi.useRealTimers()
+  })
+
   test('says nothing at no volume, and nothing where the browser cannot speak', async () => {
     const speak = vi.fn()
     vi.stubGlobal('speechSynthesis', { speak, getVoices: () => [] })
