@@ -1982,6 +1982,27 @@ func (s *repoSuite) TestCreateWorkoutLikeByAUserThatIsGone() {
 	s.Require().NotErrorIs(err, sql.ErrNoRows)
 }
 
+func (s *repoSuite) TestCreateWorkoutCommentOnAWorkoutThatIsGone() {
+	_, err := s.repo.CreateWorkoutComment(context.Background(), repo.CreateWorkoutCommentParams{
+		UserID:    s.factory.NewUser().ID,
+		WorkoutID: uuid.Must(uuid.NewV4()),
+		Comment:   "Nobody's session.",
+	})
+	s.Require().ErrorIs(err, sql.ErrNoRows)
+}
+
+// Only the workout's foreign key means not found. A comment the athlete's own
+// row cannot satisfy is a broken account, and stays the error Postgres gave.
+func (s *repoSuite) TestCreateWorkoutCommentByAUserThatIsGone() {
+	_, err := s.repo.CreateWorkoutComment(context.Background(), repo.CreateWorkoutCommentParams{
+		UserID:    uuid.Must(uuid.NewV4()),
+		WorkoutID: s.factory.NewWorkout().ID,
+		Comment:   "Strong session.",
+	})
+	s.Require().Error(err)
+	s.Require().NotErrorIs(err, sql.ErrNoRows)
+}
+
 func (s *repoSuite) TestDeleteWorkoutLike() {
 	ctx := context.Background()
 	db := bob.NewDB(s.container.DB)

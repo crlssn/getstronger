@@ -1644,6 +1644,8 @@ func (r *Repo) PostCreateWorkoutCommentLoadUser(ctx context.Context) CreateWorko
 	}
 }
 
+// CreateWorkoutComment leaves the athlete's comment on the workout. A workout
+// no row answers to is sql.ErrNoRows.
 func (r *Repo) CreateWorkoutComment(ctx context.Context, p CreateWorkoutCommentParams, opts ...CreateWorkoutCommentOpts) (*training.WorkoutComment, error) {
 	inserted, err := models.WorkoutComments.Insert(&models.WorkoutCommentSetter{
 		UserID:    omit.From(p.UserID),
@@ -1651,7 +1653,7 @@ func (r *Repo) CreateWorkoutComment(ctx context.Context, p CreateWorkoutCommentP
 		Comment:   omit.From(p.Comment),
 	}).One(ctx, r.bobExec())
 	if err != nil {
-		return nil, fmt.Errorf("workout comment insert: %w", err)
+		return nil, fmt.Errorf("workout comment insert: %w", translateWorkoutCommentError(err))
 	}
 
 	comment := workoutCommentFromRow(inserted)
@@ -1662,6 +1664,16 @@ func (r *Repo) CreateWorkoutComment(ctx context.Context, p CreateWorkoutCommentP
 	}
 
 	return comment, nil
+}
+
+// The workout's foreign key is whether the session being commented on exists
+// at all.
+func translateWorkoutCommentError(err error) error {
+	if foreignKeyViolation(err, "workout_comments_workout_id_fkey") {
+		return sql.ErrNoRows
+	}
+
+	return err
 }
 
 type CreateWorkoutLikeParams struct {
