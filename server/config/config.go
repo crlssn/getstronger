@@ -38,6 +38,10 @@ func New() *Config {
 		Pprof: Pprof{
 			Token: os.Getenv("PPROF_TOKEN"),
 		},
+		Logs: Logs{
+			Token:    os.Getenv("POSTHOG_KEY"),
+			Endpoint: os.Getenv("POSTHOG_LOGS_ENDPOINT"),
+		},
 		Environment: Environment(os.Getenv("ENV")),
 	}
 }
@@ -48,6 +52,7 @@ type Config struct {
 	Email       Email
 	Server      Server
 	Pprof       Pprof
+	Logs        Logs
 	Environment Environment
 }
 

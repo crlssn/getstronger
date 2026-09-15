@@ -137,3 +137,25 @@ func TestNewReadsThePprofToken(t *testing.T) {
 	t.Setenv("PPROF_TOKEN", token)
 	require.Equal(t, token, config.New().Pprof.Token)
 }
+
+func TestLogsEnabled(t *testing.T) {
+	t.Parallel()
+
+	require.False(t, config.Logs{}.Enabled())
+	require.False(t, config.Logs{Endpoint: "https://eu.i.posthog.com/i/v1/logs"}.Enabled())
+	require.True(t, config.Logs{Token: "phc_test"}.Enabled())
+}
+
+func TestLogsURL(t *testing.T) {
+	t.Parallel()
+
+	require.Equal(t, config.DefaultLogsEndpoint, config.Logs{}.URL())
+	require.Equal(t, "http://127.0.0.1:1/i/v1/logs", config.Logs{Endpoint: "http://127.0.0.1:1/i/v1/logs"}.URL())
+}
+
+func TestNewReadsTheLogsToken(t *testing.T) {
+	t.Setenv("POSTHOG_KEY", "phc_test")
+	t.Setenv("POSTHOG_LOGS_ENDPOINT", "http://127.0.0.1:1/i/v1/logs")
+	require.Equal(t, "phc_test", config.New().Logs.Token)
+	require.Equal(t, "http://127.0.0.1:1/i/v1/logs", config.New().Logs.URL())
+}

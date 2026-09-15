@@ -406,6 +406,12 @@ Set it up once, from [organization proxy settings](https://eu.posthog.com/settin
 
 `ui_host` is pinned to `https://eu.posthog.com` in `web/src/posthog.ts`, because the proxy serves ingestion and nothing else: without it every link the SDK builds points at a 404.
 
+#### Server logs
+
+The API exports its zap logs to [PostHog Logs](https://posthog.com/docs/logs) over OTLP, so the backend's side of a request is queryable next to the events the web app sends. Set `POSTHOG_KEY` on the container to that same `phc_` project token; unset — every environment but production — the API logs to stdout alone. Records go straight to `https://eu.i.posthog.com/i/v1/logs` rather than through the reverse proxy, which exists to dodge ad blockers a server does not meet. `POSTHOG_LOGS_ENDPOINT` overrides that for a collector of your own.
+
+Export is a second branch rather than a replacement, so Scaleway's own container logs are untouched. `server/logger/module.go` holds the two branches to the same entries: the configured level binds both, and one sampler covers both, so a hot loop costs one line in a hundred on each rather than everything on the branch that bills. A container that scales to zero takes any batch younger than a second with it — the shutdown flush only covers a graceful stop.
+
 #### Cutting a release
 
 1. Open **Releases → Draft a new release** and create a tag such as `v1.4.0` on the commit to promote, or push the tag first with `git tag v1.4.0 && git push origin v1.4.0`.
