@@ -13,6 +13,8 @@ const parseEntry = (value: string) => {
   return Number.isFinite(parsed) ? parsed : undefined
 }
 
+const display = (value: number | undefined) => (value === undefined ? '' : String(value))
+
 interface Props extends Omit<ComponentProps<'input'>, 'value' | 'onChange' | 'type' | 'className'> {
   value: number | undefined
   onChange: (value: number | undefined) => void
@@ -33,12 +35,17 @@ interface Props extends Omit<ComponentProps<'input'>, 'value' | 'onChange' | 'ty
  * text: typing a decimal into the other lost the point.
  */
 export const AppNumberField = ({ value, onChange, unit, className, ...rest }: Props) => {
-  const [text, setText] = useState(() => (value === undefined ? '' : String(value)))
+  const [text, setText] = useState(() => display(value))
+  const [focused, setFocused] = useState(false)
 
+  // The value moves on every keystroke, so while the field is focused the
+  // text is left alone: "62.5" backspaced to "62." parses to 62, and writing
+  // that back would eat the point. An empty field still takes the write — the
+  // session log copies the previous set in during the focus event.
   const [seen, setSeen] = useState(value)
   if (value !== seen) {
     setSeen(value)
-    setText(value === undefined ? '' : String(value))
+    if (!focused || !text.trim()) setText(display(value))
   }
 
   const field = (
@@ -50,6 +57,15 @@ export const AppNumberField = ({ value, onChange, unit, className, ...rest }: Pr
       onChange={(event) => {
         setText(event.target.value)
         onChange(parseEntry(event.target.value))
+      }}
+      onFocus={(event) => {
+        setFocused(true)
+        rest.onFocus?.(event)
+      }}
+      onBlur={(event) => {
+        setFocused(false)
+        setText(display(value))
+        rest.onBlur?.(event)
       }}
     />
   )
