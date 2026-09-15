@@ -114,6 +114,10 @@ test.describe('social feed and discovery', () => {
     browser,
     page,
   }) => {
+    // Chromium logs every 4xx as a console error, so the fixture cannot judge
+    // this one; the status assertion below is what fails the test on a 5xx.
+    test.info().annotations.push(allowRuntimeErrors)
+
     // Sam logs a session in a browser of their own, and keeps it open to
     // delete the session from.
     const samsBrowser = await browser.newContext()
@@ -152,7 +156,7 @@ test.describe('social feed and discovery', () => {
     await expect(sam.getByRole('status')).toContainText('Workout deleted')
     await samsBrowser.close()
 
-    // Not found rather than a failure: the fixture fails the test on a 5xx.
+    // Not found rather than a failure.
     const answered = page.waitForResponse('**/api.v1.WorkoutService/PostComment')
     await page.getByRole('button', { name: 'Post comment' }).click()
     expect((await answered).status()).toBe(404)
