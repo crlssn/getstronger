@@ -65,10 +65,6 @@
   @apply flex items-center justify-between gap-3 text-text-subtle;
 }
 
-.tagHelp .error {
-  @apply text-danger;
-}
-
 .full {
   @apply border-ink-border;
 }

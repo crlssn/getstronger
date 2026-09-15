@@ -190,7 +190,9 @@ test.describe('exercise library', () => {
 
       await tagInput.fill(sharedTag.toUpperCase())
       await tagInput.press('Enter')
-      await expect(page.getByText(/is already added/)).toBeVisible()
+      // As an alert: the field keeps focus, so the refusal has to announce
+      // itself for a screen reader to hear that nothing was added.
+      await expect(page.getByRole('alert')).toHaveText(/is already added/)
 
       for (let index = 1; index <= 9; index += 1) {
         await tagInput.fill(`E2E tag ${index}`)

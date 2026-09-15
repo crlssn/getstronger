@@ -50,7 +50,6 @@ const roles = {
     'components/AppListRow.module.css',
     'components/AppSheet.module.css',
     'components/DropdownButton.module.css',
-    'exercises/ExerciseTagsInput.module.css',
     // The danger pattern: an outlined red pill inside the card that explains
     // the consequence — the routine editor set it, plans and the account
     // settings follow it.
