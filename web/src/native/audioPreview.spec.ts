@@ -76,39 +76,49 @@ describe('previewIntervalCue', () => {
 })
 
 describe('previewPaceTone', () => {
-  test.each(['ahead', 'behind'] as const)(
-    'uses native iOS playback for %s before a workout',
-    (tone) => {
-      vi.mocked(Capacitor.getPlatform).mockReturnValue('ios')
+  // Both phones own the audio a note goes out on, and the WebView cannot
+  // reach it: iOS silences a page's note with the Ring/Silent switch, and
+  // Android sends it out on a stream of the WebView's choosing.
+  test.each(['ios', 'android'] as const)('sounds the note through the recorder on %s', (phone) => {
+    vi.mocked(Capacitor.getPlatform).mockReturnValue(phone)
 
-      previewPaceTone(tone, 'off')
+    previewPaceTone('ahead', 'full')
 
-      expect(timedCircuit.previewTone).toHaveBeenCalledExactlyOnceWith({
-        tone,
-        volume: paceToneVolume,
-      })
-      expect(playPaceTone).not.toHaveBeenCalled()
-      expect(timedCircuit.speak).not.toHaveBeenCalled()
-    },
-  )
+    // The announcements' level alone: each recorder puts its own tone level
+    // under it, so the example is as loud as the note a run plays.
+    expect(timedCircuit.previewTone).toHaveBeenCalledExactlyOnceWith({
+      tone: 'ahead',
+      volume: 1,
+    })
+    expect(playPaceTone).not.toHaveBeenCalled()
+    expect(timedCircuit.speak).not.toHaveBeenCalled()
+  })
 
-  test('applies the selected volume to native iOS tones', () => {
+  test('says which note, and at the level just chosen', () => {
     vi.mocked(Capacitor.getPlatform).mockReturnValue('ios')
+
     previewPaceTone('behind', 'low')
+
     expect(timedCircuit.previewTone).toHaveBeenCalledExactlyOnceWith({
       tone: 'behind',
-      volume: paceToneVolume * 0.4,
+      volume: 0.4,
     })
   })
 
-  test('keeps browser playback on Android', () => {
-    vi.mocked(Capacitor.getPlatform).mockReturnValue('android')
-    previewPaceTone('ahead', 'full')
-    expect(playPaceTone).toHaveBeenCalledExactlyOnceWith('ahead', paceToneVolume)
-    expect(timedCircuit.previewTone).not.toHaveBeenCalled()
+  // A phone that will not sound it stays silent rather than falling back to
+  // the WebView's audio, which is the thing being avoided.
+  test('does not fall back to the page when the phone refuses', async () => {
+    vi.mocked(Capacitor.getPlatform).mockReturnValue('ios')
+    vi.mocked(timedCircuit.previewTone).mockRejectedValueOnce(new Error('no audio'))
+
+    expect(() => previewPaceTone('ahead', 'full')).not.toThrow()
+    await vi.waitFor(() => expect(timedCircuit.previewTone).toHaveBeenCalledOnce())
+    expect(playPaceTone).not.toHaveBeenCalled()
   })
 
-  test('sounds the note it is asked for', () => {
+  // A browser has only the one audio session, and this is what the recorder
+  // there already plays through.
+  test('sounds the note itself in a browser', () => {
     previewPaceTone('ahead', 'full')
     expect(playPaceTone).toHaveBeenCalledExactlyOnceWith('ahead', paceToneVolume)
 

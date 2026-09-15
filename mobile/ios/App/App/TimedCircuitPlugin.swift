@@ -30,33 +30,6 @@ private let standingSpeed = 0.3
 // fix, mirroring `wanderSpeed` in `web/src/utils/timedCircuit.ts`.
 private let wanderSpeed = 3.0
 
-/// The shape of one of the two pace notes, mirroring `paceTones` in
-/// `web/src/native/cueTone.ts`.
-///
-/// Pitch alone is a poor signal on a road: a fifth is hard to place under
-/// music and behind a footfall. Rhythm carries where pitch does not, so ahead
-/// is two quick taps and behind is one long note — told apart by counting.
-private struct ToneShape {
-    let hertz: Double
-    /// How long one beep lasts, in seconds.
-    let seconds: Double
-    /// How many beeps the note is made of.
-    let beeps: Int
-    /// The silence between them, in seconds.
-    let gapSeconds: Double
-    /// How loud, as a fraction of the level the note is played at.
-    let level: Double
-}
-
-private let toneShapes: [String: ToneShape] = [
-    "ahead": ToneShape(hertz: 1320, seconds: 0.07, beeps: 2, gapSeconds: 0.06, level: 0.6),
-    "behind": ToneShape(hertz: 440, seconds: 0.6, beeps: 1, gapSeconds: 0, level: 1),
-]
-
-// Ramped rather than switched at both ends: a square edge on a sine is heard
-// as a click.
-private let toneFadeSeconds = 0.01
-
 /// Native ownership keeps the recording independent of the WebView lifecycle.
 @objc(TimedCircuitPlugin)
 public class TimedCircuitPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManagerDelegate, AVSpeechSynthesizerDelegate {
@@ -406,28 +379,14 @@ public class TimedCircuitPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManagerD
         if !tonePlayer.isPlaying { tonePlayer.play() }
     }
 
-    /// One note as a buffer of silence with the shape's beeps written into it.
-    ///
-    /// The shape's own level is baked in rather than set on the player, which
-    /// carries one volume for both notes.
+    /// One note as a buffer holding the samples `toneSamples` wrote.
     private func note(_ shape: ToneShape, format: AVAudioFormat) -> AVAudioPCMBuffer? {
-        let beepFrames = Int(format.sampleRate * shape.seconds)
-        let gapFrames = Int(format.sampleRate * shape.gapSeconds)
-        let frames = beepFrames * shape.beeps + gapFrames * (shape.beeps - 1)
-        guard beepFrames > 0, frames > 0,
-              let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: AVAudioFrameCount(frames)),
-              let samples = buffer.floatChannelData?[0] else { return nil }
-        buffer.frameLength = AVAudioFrameCount(frames)
-        let fadeFrames = format.sampleRate * toneFadeSeconds
-        for frame in 0..<frames { samples[frame] = 0 }
-        for beep in 0..<shape.beeps {
-            let start = beep * (beepFrames + gapFrames)
-            for frame in 0..<beepFrames {
-                let fade = min(1.0, min(Double(frame), Double(beepFrames - frame)) / fadeFrames)
-                let wave = sin(2 * .pi * shape.hertz * Double(frame) / format.sampleRate)
-                samples[start + frame] = Float(wave * fade * shape.level)
-            }
-        }
+        let samples = toneSamples(shape, sampleRate: format.sampleRate)
+        guard !samples.isEmpty,
+              let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: AVAudioFrameCount(samples.count)),
+              let channel = buffer.floatChannelData?[0] else { return nil }
+        buffer.frameLength = AVAudioFrameCount(samples.count)
+        for (frame, sample) in samples.enumerated() { channel[frame] = sample }
         return buffer
     }
 
@@ -840,7 +799,10 @@ public class TimedCircuitPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManagerD
             let player = AVAudioPlayerNode()
             engine.attach(player)
             engine.connect(player, to: engine.mainMixerNode, format: format)
-            player.volume = Float(min(max(call.getDouble("volume") ?? 0.3, 0), 1))
+            // The announcements' level, with the recorder's own tone level
+            // under it — the same arithmetic `prepareTones` does for a run,
+            // so the example is as loud as the note it is an example of.
+            player.volume = Float(self.toneVolume * min(max(call.getDouble("volume") ?? 1, 0), 1))
             do {
                 try self.openAudio()
                 try engine.start()
