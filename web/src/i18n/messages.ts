@@ -849,8 +849,8 @@ export const en = {
     // Said before each note in the example, because two tones on their own do
     // not say which way round they go.
     paceTonesExample: 'Audio example',
-    paceTonesFaster: 'Faster',
-    paceTonesSlower: 'Slower',
+    paceTonesFaster: 'Faster pace',
+    paceTonesSlower: 'Slower pace',
     paceTonesPrevious: 'Last session',
     paceTonesPreviousBody: 'Against your most recent recording',
     paceTonesBest: 'Best session',
@@ -1846,8 +1846,8 @@ export const sv = {
     paceTonesOff: 'Av',
     paceTonesOffBody: 'Ingen jämförelse under passet',
     paceTonesExample: 'Ljudexempel',
-    paceTonesFaster: 'Snabbare',
-    paceTonesSlower: 'Långsammare',
+    paceTonesFaster: 'Snabbare tempo',
+    paceTonesSlower: 'Långsammare tempo',
     paceTonesPrevious: 'Senaste passet',
     paceTonesPreviousBody: 'Jämför med ditt senaste pass',
     paceTonesBest: 'Bästa passet',
