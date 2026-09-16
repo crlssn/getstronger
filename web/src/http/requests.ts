@@ -764,6 +764,11 @@ let requestErrorMessage: string | undefined
 // never landed", and only the first is worth saying to the reader.
 let requestNotFound = false
 
+// Recorded for the same reason: an action the device can complete on its own
+// has to tell a backend that refused it from one that never heard it, and only
+// the second is hers to queue.
+let requestOffline = false
+
 /** The message the request that just returned void failed with, then clears it. */
 export const consumeRequestError = (): string | undefined => {
   const message = requestErrorMessage
@@ -776,6 +781,13 @@ export const consumeRequestNotFound = (): boolean => {
   const notFound = requestNotFound
   requestNotFound = false
   return notFound
+}
+
+/** Whether the request that just returned void never reached the backend, then clears it. */
+export const consumeRequestOffline = (): boolean => {
+  const offline = requestOffline
+  requestOffline = false
+  return offline
 }
 
 // Nothing the backend sends is written for a reader: a refusal's message is
@@ -796,6 +808,7 @@ const tryCatch = async <T>(
 ): Promise<T | void> => {
   requestErrorMessage = undefined
   requestNotFound = false
+  requestOffline = false
   try {
     return await fn()
   } catch (error) {
@@ -852,6 +865,7 @@ const tryCatch = async <T>(
     // state from there on; the recorded message lets whichever action failed
     // say so inline as well.
     if (isConnectivityError(error)) {
+      requestOffline = true
       requestErrorMessage = i18n.t('offline.requestFailed')
       if (useConnectionStore.getState().online) {
         useConnectionStore.getState().setOnline(false)

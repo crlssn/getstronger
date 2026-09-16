@@ -169,6 +169,94 @@ func (s *exerciseSuite) TestCreateExercise() {
 	}
 }
 
+// TestCreateExerciseWithID covers the id a client mints for itself, so an
+// exercise created offline can be referenced before the create has been sent.
+func (s *exerciseSuite) TestCreateExerciseWithID() {
+	type expected struct {
+		code connect.Code
+		name string
+	}
+
+	type test struct {
+		name     string
+		id       string
+		init     func(t test) context.Context
+		expected expected
+	}
+
+	tests := []test{
+		{
+			name: "ok_exercise_stored_under_the_minted_id",
+			id:   uuid.Must(uuid.NewV4()).String(),
+			init: func(_ test) context.Context {
+				ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
+				return xcontext.WithUserID(ctx, s.factory.NewUser().ID)
+			},
+			expected: expected{
+				name: "Sled push",
+			},
+		},
+		{
+			name: "ok_repeat_answers_with_the_stored_exercise",
+			id:   uuid.Must(uuid.NewV4()).String(),
+			init: func(t test) context.Context {
+				user := s.factory.NewUser()
+				s.factory.NewExercise(
+					factory.ExerciseID(t.id),
+					factory.ExerciseUserID(user.ID),
+					factory.ExerciseTitle("Stored first"),
+				)
+
+				ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
+				return xcontext.WithUserID(ctx, user.ID)
+			},
+			expected: expected{
+				// The replayed create does not overwrite what the first one
+				// stored: the exercise is already there under this id.
+				name: "Stored first",
+			},
+		},
+		{
+			name: "err_id_owned_by_another_athlete",
+			id:   uuid.Must(uuid.NewV4()).String(),
+			init: func(t test) context.Context {
+				s.factory.NewExercise(factory.ExerciseID(t.id))
+
+				ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
+				return xcontext.WithUserID(ctx, s.factory.NewUser().ID)
+			},
+			expected: expected{
+				code: connect.CodeAlreadyExists,
+			},
+		},
+	}
+
+	for _, t := range tests {
+		s.Run(t.name, func() {
+			ctx := t.init(t)
+
+			res, err := s.handler.CreateExercise(ctx, &connect.Request[v1.CreateExerciseRequest]{
+				Msg: &v1.CreateExerciseRequest{
+					Id:   &t.id,
+					Name: "Sled push",
+				},
+			})
+			if t.expected.code != 0 {
+				s.Require().Nil(res)
+				s.Require().Equal(t.expected.code, connect.CodeOf(err))
+				return
+			}
+
+			s.Require().NoError(err)
+			s.Require().Equal(t.id, res.Msg.GetId())
+
+			exercise, err := models.FindExercise(ctx, bob.NewDB(s.container.DB), nativeUUID(t.id))
+			s.Require().NoError(err)
+			s.Require().Equal(t.expected.name, exercise.Title)
+		})
+	}
+}
+
 func (s *exerciseSuite) TestGetExercise() {
 	type expected struct {
 		err error

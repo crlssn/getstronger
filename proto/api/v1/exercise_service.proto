@@ -48,6 +48,13 @@ message CreateExerciseRequest {
   // the routine occurrence rather than of the library.
   reserved 4;
   reserved "rest_seconds";
+  // Optional. The id the exercise is stored under, minted by the client so a
+  // routine or a workout can reference an exercise created offline before the
+  // create has reached the server. A repeat of an id its owner already used is
+  // answered with the exercise already stored; one another athlete owns is
+  // refused. Omitting it lets the server mint the id, as every client did
+  // before offline creation.
+  optional string id = 5 [(buf.validate.field).string.uuid = true];
 }
 message CreateExerciseResponse {
   string id = 1;
