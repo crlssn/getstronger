@@ -10,8 +10,9 @@ import { persist } from 'zustand/middleware'
 
 import { migratedStorage } from '@/stores/persistence'
 
-import { workoutClient } from '@/http/clients'
+import { exerciseClient, workoutClient } from '@/http/clients'
 import { isConnectivityError } from '@/http/offlineCache'
+import { ExerciseService, type CreateExerciseRequest } from '@/proto/api/v1/exercise_service_pb'
 import { WorkoutService, type CreateWorkoutRequest } from '@/proto/api/v1/workout_service_pb'
 import { useConnectionStore } from '@/stores/connection'
 
@@ -36,13 +37,26 @@ const replayers: Record<string, Replayer> = {
         fromJson(WorkoutService.method.createWorkout.input, JSON.parse(request) as JsonValue),
       ),
   },
+  [`${ExerciseService.typeName}.CreateExercise`]: {
+    serialize: (message) =>
+      JSON.stringify(
+        toJson(ExerciseService.method.createExercise.input, message as CreateExerciseRequest),
+      ),
+    // The request carries the id the device already uses, and the server
+    // answers a repeat of it with the exercise it stored the first time.
+    replay: (request) =>
+      exerciseClient.createExercise(
+        fromJson(ExerciseService.method.createExercise.input, JSON.parse(request) as JsonValue),
+      ),
+  },
 }
 
-const keyFor = (method: DescMethodUnary) => `${method.parent.typeName}.${method.name}`
+/** Names a method the way a queued entry records it. */
+export const queueKey = (method: DescMethodUnary) => `${method.parent.typeName}.${method.name}`
 
 // The request stays a JSON string rather than a JsonValue, so a recursive JSON
 // type never has to be carried through the store's own types.
-type PendingMutation = {
+export type PendingMutation = {
   method: string
   request: string
   queuedAt: string
@@ -70,7 +84,7 @@ export const useMutationQueueStore = create<MutationQueueState>()(
       // Typed against the descriptor base types: the replayer registry, not the
       // signature, is what guarantees a queued request can be replayed.
       enqueue: (method, message) => {
-        const key = keyFor(method)
+        const key = queueKey(method)
         const replayer = replayers[key]
         if (!replayer) throw new Error(`method ${key} is not queueable`)
 

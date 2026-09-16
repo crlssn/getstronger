@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next'
 
 import { listExercises } from '@/http/requests'
 import { lastPerformedIn, useActivityStore } from '@/stores/activity'
+import { useExercisesWithPending } from '@/stores/pendingExercises'
 import { AppEmptyState } from '@/ui/components/AppEmptyState'
 import { AppErrorState } from '@/ui/components/AppErrorState'
 import { AppButton } from '@/ui/components/AppButton'
@@ -53,12 +54,13 @@ export const ListExercises = () => {
     void load()
   }, [fetchExercises])
 
+  const library = useExercisesWithPending(exercises)
   const query = search.trim().toLowerCase()
   const filtered = query
-    ? exercises.filter((exercise) =>
+    ? library.filter((exercise) =>
         [exercise.name, ...exercise.tags].join(' ').toLowerCase().includes(query),
       )
-    : exercises
+    : library
 
   const groups = useMemo(
     () =>
@@ -97,7 +99,7 @@ export const ListExercises = () => {
 
       {loading ? (
         <AppSkeleton />
-      ) : failed && exercises.length === 0 ? (
+      ) : failed && library.length === 0 ? (
         <AppErrorState onRetry={() => void fetchExercises()} />
       ) : filtered.length > 0 ? (
         <section className={styles.exerciseList}>

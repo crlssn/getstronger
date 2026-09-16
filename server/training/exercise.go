@@ -19,6 +19,10 @@ const DefaultRestSeconds = 90
 var (
 	ErrInvalidExerciseTags   = errors.New("exercise tags must contain no more than 10 non-empty, trimmed, unique values")
 	ErrInvalidExerciseMetric = errors.New("exercise must contain one or more unique measurements")
+	// ErrExerciseAlreadyCreated reports a create under an id the store already
+	// holds an exercise for: a queued create replayed, or two devices minting
+	// the same id. It says nothing about who owns that exercise.
+	ErrExerciseAlreadyCreated = errors.New("exercise is already created")
 )
 
 // Metric is what an exercise measures a set by.

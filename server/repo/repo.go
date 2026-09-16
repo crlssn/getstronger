@@ -421,6 +421,11 @@ func (r *Repo) DeleteUser(ctx context.Context, userID uuid.UUID) error {
 }
 
 type CreateExerciseParams struct {
+	// ID is the id to store the exercise under, minted by a client that has to
+	// reference the exercise before the create reaches here. An id already
+	// stored is rejected with training.ErrExerciseAlreadyCreated; a nil one
+	// lets the database mint it.
+	ID      uuid.UUID
 	UserID  uuid.UUID
 	Name    string
 	Tags    []string
@@ -436,13 +441,22 @@ func (r *Repo) CreateExercise(ctx context.Context, p CreateExerciseParams) (*tra
 	if p.Tags == nil {
 		p.Tags = []string{}
 	}
-	exercise, err := models.Exercises.Insert(&models.ExerciseSetter{
+	setter := &models.ExerciseSetter{
 		UserID:  omit.From(p.UserID),
 		Title:   omit.From(p.Name),
 		Tags:    omit.From(pq.StringArray(p.Tags)),
 		Metrics: omit.From(pq.StringArray(p.Metrics)),
-	}).One(ctx, r.bobExec())
+	}
+	if !p.ID.IsNil() {
+		setter.ID = omit.From(p.ID)
+	}
+
+	exercise, err := models.Exercises.Insert(setter).One(ctx, r.bobExec())
 	if err != nil {
+		if uniqueViolation(err, "exercises_pkey") {
+			return nil, training.ErrExerciseAlreadyCreated
+		}
+
 		return nil, fmt.Errorf("exercise insert: %w", err)
 	}
 

@@ -900,6 +900,36 @@ func (s *repoSuite) TestCreateExercise() {
 	}
 }
 
+// TestCreateExerciseWithID covers the id a client mints for itself: the store
+// uses it, and refuses a second exercise under it whoever sends that one.
+func (s *repoSuite) TestCreateExerciseWithID() {
+	ctx := context.Background()
+	user := s.factory.NewUser()
+	exerciseID := uuid.Must(uuid.NewV4())
+
+	exercise, err := s.repo.CreateExercise(ctx, repo.CreateExerciseParams{
+		ID:     exerciseID,
+		UserID: user.ID,
+		Name:   "Sled push",
+	})
+	s.Require().NoError(err)
+	s.Require().Equal(exerciseID, exercise.ID)
+
+	_, err = s.repo.CreateExercise(ctx, repo.CreateExerciseParams{
+		ID:     exerciseID,
+		UserID: user.ID,
+		Name:   "Sled push",
+	})
+	s.Require().ErrorIs(err, training.ErrExerciseAlreadyCreated)
+
+	_, err = s.repo.CreateExercise(ctx, repo.CreateExerciseParams{
+		ID:     exerciseID,
+		UserID: s.factory.NewUser().ID,
+		Name:   "Sled push",
+	})
+	s.Require().ErrorIs(err, training.ErrExerciseAlreadyCreated)
+}
+
 func (s *repoSuite) TestSoftDeleteExercise() {
 	type expected struct {
 		err error

@@ -14,9 +14,14 @@ vi.mock('@/http/requests', async (importOriginal) => ({
 }))
 
 import * as requests from '@/http/requests'
-import { ListExercisesResponseSchema } from '@/proto/api/v1/exercise_service_pb'
+import {
+  CreateExerciseRequestSchema,
+  ExerciseService,
+  ListExercisesResponseSchema,
+} from '@/proto/api/v1/exercise_service_pb'
 import { ExerciseMetric } from '@/proto/api/v1/shared_pb'
 import { useActivityStore } from '@/stores/activity'
+import { useMutationQueueStore } from '@/stores/mutationQueue'
 import { renderWithProviders } from '@/ui/testing'
 import { ListExercises } from './ListExercises'
 
@@ -57,6 +62,36 @@ describe('ListExercises', () => {
     listExercises.mockResolvedValue(page([bench, run]))
     vi.spyOn(useActivityStore.getState(), 'load').mockResolvedValue(undefined)
     useActivityStore.setState({ exerciseLastPerformed: {}, loaded: true, failed: false })
+    useMutationQueueStore.setState({ pending: [] })
+  })
+
+  // Created in a gym with no signal, the movement is in the library from the
+  // moment it is filed rather than from the moment the queue flushes.
+  test('lists an exercise still waiting to reach the backend', async () => {
+    useMutationQueueStore
+      .getState()
+      .enqueue(
+        ExerciseService.method.createExercise,
+        create(CreateExerciseRequestSchema, { id: 'sled', name: 'Sled push' }),
+      )
+    render()
+
+    expect(await screen.findByRole('link', { name: /Sled push/ })).toBeInTheDocument()
+  })
+
+  // A library that will not load is an error page, but not while this device
+  // holds exercises of its own to show.
+  test('shows what is queued rather than an error when the library will not load', async () => {
+    listExercises.mockResolvedValue(undefined)
+    useMutationQueueStore
+      .getState()
+      .enqueue(
+        ExerciseService.method.createExercise,
+        create(CreateExerciseRequestSchema, { id: 'sled', name: 'Sled push' }),
+      )
+    render()
+
+    expect(await screen.findByRole('link', { name: /Sled push/ })).toBeInTheDocument()
   })
 
   afterEach(() => {
