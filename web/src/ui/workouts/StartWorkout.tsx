@@ -95,7 +95,7 @@ import {
 import { isNumber } from '@/utils/numbers'
 import { restRemainingSeconds } from '@/utils/restTimer'
 import { convertWeight, normalizeWeightUnit } from '@/utils/weightUnits'
-import { defaultRestSeconds } from '@/utils/routineGroups'
+import { defaultRestSeconds, roleMessages } from '@/utils/routineGroups'
 import {
   activeSetIndex,
   circuitRound,
@@ -131,6 +131,9 @@ const workoutGroupMessages = (groups: readonly SavedGroup[]): WorkoutGroup[] =>
       restBetweenExercisesSeconds: group.restBetweenExercisesSeconds,
       restBetweenRoundsSeconds: group.restBetweenRoundsSeconds,
       rounds: group.rounds,
+      role: roleMessages[group.role],
+      skipLastOnFinalRound: group.skipLastOnFinalRound,
+      title: group.title,
       exercises: group.exercises.map((entry) => ({
         exercise: { id: entry.exerciseId },
         setCount: entry.setCount,

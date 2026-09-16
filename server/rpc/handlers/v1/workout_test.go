@@ -308,6 +308,66 @@ func (s *workoutSuite) TestCreateWorkoutKeyIsUniquePerUser() {
 	s.Require().NotEqual(save(one.ID, key), save(one.ID, uuid.Must(uuid.NewV4()).String()))
 }
 
+// The name the athlete gave a block, and where the block sat in the session,
+// are part of what was trained: a finished workout that has lost them reads as
+// "Block A" however the athlete built it.
+func (s *workoutSuite) TestCreateWorkoutKeepsTheNamesAndRolesOfItsBlocks() {
+	user := s.factory.NewUser()
+	routine := s.factory.NewRoutine(factory.RoutineUserID(user.ID))
+	walk := s.factory.NewExercise(factory.ExerciseUserID(user.ID))
+	run := s.factory.NewExercise(factory.ExerciseUserID(user.ID))
+
+	ctx := xcontext.WithUserID(context.Background(), user.ID)
+	ctx = xcontext.WithLogger(ctx, zap.NewExample())
+	created, err := s.handler.CreateWorkout(ctx, connect.NewRequest(&apiv1.CreateWorkoutRequest{
+		RoutineId: routine.ID.String(),
+		ExerciseSets: []*apiv1.ExerciseSets{
+			{Exercise: &apiv1.Exercise{Id: walk.ID.String()}, Sets: []*apiv1.Set{{Reps: 1}}},
+			{Exercise: &apiv1.Exercise{Id: run.ID.String()}, Sets: []*apiv1.Set{{Reps: 1}, {Reps: 1}}},
+		},
+		Groups: []*apiv1.WorkoutGroup{
+			{
+				Mode:  apiv1.RoutineGroupMode_ROUTINE_GROUP_MODE_STRAIGHT,
+				Role:  apiv1.RoutineGroupRole_ROUTINE_GROUP_ROLE_WARMUP,
+				Title: "Easy start",
+				Exercises: []*apiv1.WorkoutGroupExercise{
+					{Exercise: &apiv1.Exercise{Id: walk.ID.String()}, SetCount: 1},
+				},
+			},
+			{
+				Mode:                 apiv1.RoutineGroupMode_ROUTINE_GROUP_MODE_CIRCUIT,
+				Role:                 apiv1.RoutineGroupRole_ROUTINE_GROUP_ROLE_REPEAT,
+				SkipLastOnFinalRound: true,
+				Rounds:               2,
+				Exercises: []*apiv1.WorkoutGroupExercise{
+					{Exercise: &apiv1.Exercise{Id: run.ID.String()}, SetCount: 2},
+				},
+			},
+		},
+		StartedAt:  timestamppb.Now(),
+		FinishedAt: timestamppb.New(time.Now().Add(time.Hour)),
+	}))
+	s.Require().NoError(err)
+
+	fetched, err := s.handler.GetWorkout(ctx, connect.NewRequest(&apiv1.GetWorkoutRequest{
+		Id: created.Msg.GetWorkoutId(),
+	}))
+	s.Require().NoError(err)
+
+	groups := fetched.Msg.GetWorkout().GetGroups()
+	s.Require().Len(groups, 2)
+
+	s.Require().Equal("Easy start", groups[0].GetTitle())
+	s.Require().Equal(apiv1.RoutineGroupRole_ROUTINE_GROUP_ROLE_WARMUP, groups[0].GetRole())
+	s.Require().False(groups[0].GetSkipLastOnFinalRound())
+
+	// A block left unnamed reads by its position, which is what an empty title
+	// has always meant.
+	s.Require().Empty(groups[1].GetTitle())
+	s.Require().Equal(apiv1.RoutineGroupRole_ROUTINE_GROUP_ROLE_REPEAT, groups[1].GetRole())
+	s.Require().True(groups[1].GetSkipLastOnFinalRound())
+}
+
 // The whole point of the snapshot: a session trained in blocks is read back in
 // them, and an exercise trained in two blocks keeps its sets apart.
 func (s *workoutSuite) TestCreateWorkoutRecordsTheBlocksItWasTrainedIn() {

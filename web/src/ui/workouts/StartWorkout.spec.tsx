@@ -51,6 +51,7 @@ import {
   ExerciseSchema,
   ExerciseSetsSchema,
   RoutineGroupMode,
+  RoutineGroupRole,
   WeightUnit,
 } from '@/proto/api/v1/shared_pb'
 import { GetUserResponseSchema } from '@/proto/api/v1/user_service_pb'
@@ -543,6 +544,40 @@ describe('StartWorkout', () => {
 
       expect(screen.queryByRole('button', { name: 'Complete circuit' })).not.toBeInTheDocument()
     })
+  })
+
+  // The workout keeps its own copy of the blocks it was trained in, and the
+  // athlete's name for one is part of that: the routine may be renamed or
+  // rebuilt afterwards, and the session is the only record of what was trained.
+  test('saves the name and the place the routine gave each block', async () => {
+    const user = userEvent.setup()
+    mocked.getRoutine.mockResolvedValue(
+      create(GetRoutineResponseSchema, {
+        routine: create(RoutineSchema, {
+          name: 'Push Day',
+          exercises: [benchPress],
+          groups: [
+            {
+              id: 'group-warmup',
+              mode: RoutineGroupMode.STRAIGHT,
+              role: RoutineGroupRole.WARMUP,
+              title: 'Easy start',
+              exercises: [trains(benchPress)],
+            },
+          ],
+        }),
+      }),
+    )
+    await renderWorkout()
+
+    await logFirstSet(user)
+    await user.click(screen.getAllByRole('button', { name: 'Finish workout' })[0])
+    await user.click(screen.getByRole('button', { name: 'Finish and save' }))
+
+    await waitFor(() => expect(mocked.createWorkout).toHaveBeenCalled())
+    const [group] = mocked.createWorkout.mock.calls[0][0].groups
+    expect(group?.title).toBe('Easy start')
+    expect(group?.role).toBe(RoutineGroupRole.WARMUP)
   })
 
   // The same exercise in two groups is two pieces of work: two rows, two sets of

@@ -790,6 +790,87 @@ test.describe('routine lifecycle', () => {
     }
   })
 
+  // The name is the athlete's own word for the block, and the workout keeps its
+  // own copy of the blocks it was trained in: named in the builder, trained,
+  // and read back off the saved session rather than off the routine.
+  test('carries a block’s name onto the workout it was trained in @mutation', async ({ page }) => {
+    const routineName = uniqueName('E2E Named')
+    const lift = uniqueName('E2E Named press')
+    const second = uniqueName('E2E Named row')
+
+    try {
+      for (const name of [lift, second]) {
+        await page.goto('/exercises/create')
+        await page.locator('form input[type="text"]').first().fill(name)
+        await page.getByRole('button', { name: 'Create exercise' }).click()
+        await expect(page).toHaveURL(/\/exercises$/)
+      }
+
+      await page.goto('/routines/create')
+      await startRoutine(page, 'Blank')
+      await page.getByLabel('Routine name').fill(routineName)
+      await addRoutineExercise(page, lift)
+
+      // One straight block is read as the plain session it is rather than as a
+      // block, so a routine that is read as its blocks is what a block's name
+      // is read off: two of them.
+      await page.getByRole('button', { name: 'Add block' }).click()
+      await addRoutineExercise(page, second, 1)
+
+      await blockChip(page, 'Block A').click()
+      await page.getByLabel('Block name').fill('Warm-up')
+      await closeSheet(page)
+      await expect(blockChip(page, 'Warm-up')).toBeVisible()
+
+      await page.getByRole('button', { name: 'Create routine' }).click()
+      await expect(page).toHaveURL(/\/routines$/)
+      await page.getByLabel('Search routines').fill(routineName)
+      await page.getByRole('heading', { name: routineName }).click()
+      await expect(page.getByText('Warm-up', { exact: true })).toBeVisible()
+
+      await page.getByRole('link', { name: 'Start workout' }).click()
+      await page.getByRole('textbox', { name: `${lift} set 1 weight`, exact: true }).fill('40')
+      await page.getByRole('textbox', { name: `${lift} set 1 reps`, exact: true }).fill('10')
+
+      // A block with no work logged in it is not part of the session that
+      // happened, so the second block is trained too — the session opens one
+      // exercise at a time, and ticking the first off opens it.
+      await page.getByRole('button', { name: 'Complete exercise' }).first().click()
+      await page.getByRole('textbox', { name: `${second} set 1 weight`, exact: true }).fill('30')
+      await page.getByRole('textbox', { name: `${second} set 1 reps`, exact: true }).fill('8')
+
+      await page.getByRole('button', { name: 'Finish workout' }).first().click()
+      await page.getByRole('dialog').getByRole('button', { name: 'Finish and save' }).click()
+      await expect(page).toHaveURL(/\/workouts\//)
+
+      // Stored on the workout rather than read off the routine: the session
+      // used to come back as "Block A" however the athlete had named it.
+      await expect(page.getByText('Warm-up', { exact: true })).toBeVisible()
+      await expect(page.getByText('Block A', { exact: true })).toHaveCount(0)
+
+      await page.reload()
+      await expect(page.getByText('Warm-up', { exact: true })).toBeVisible()
+
+      await page.getByRole('button', { name: 'Workout actions' }).click()
+      await page.getByRole('menuitem', { name: 'Delete workout' }).click()
+      await acceptConfirmDialog(page, 'Delete workout')
+      await expect(page.getByRole('status')).toContainText('Workout deleted')
+    } finally {
+      await page.goto('/routines')
+      await page.getByLabel('Search routines').fill(routineName)
+      const savedRoutine = page.getByRole('heading', { name: routineName })
+      const noRoutines = page.getByRole('heading', { name: 'No matching routines' })
+      if (await foundInSearch(savedRoutine, noRoutines)) {
+        await savedRoutine.click()
+        await page.getByRole('button', { name: 'Delete' }).click()
+        await acceptConfirmDialog(page, 'Delete')
+        await expect(page.getByRole('status')).toContainText('Routine deleted')
+      }
+      await deleteExercise(page, second)
+      await deleteExercise(page, lift)
+    }
+  })
+
   // Both rests belong to the routine: how long a lift rests between its sets,
   // and how long the block pauses on the way to the next lift. Built, saved,
   // read back, and then trained with both lengths on the clock.

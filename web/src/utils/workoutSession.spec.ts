@@ -1,10 +1,16 @@
+import type { IntervalRole } from '@/utils/routineGroups'
 import type { SessionExercise } from './workoutSession'
 
 import { create } from '@bufbuild/protobuf'
 import { describe, expect, test } from 'vitest'
 
 import { RoutineGroupSchema } from '@/proto/api/v1/routine_service_pb'
-import { ExerciseMetric, ExerciseSchema, RoutineGroupMode } from '@/proto/api/v1/shared_pb'
+import {
+  ExerciseMetric,
+  ExerciseSchema,
+  RoutineGroupMode,
+  RoutineGroupRole,
+} from '@/proto/api/v1/shared_pb'
 import { defaultRestSeconds } from '@/utils/routineGroups'
 import {
   activeSetIndex,
@@ -151,6 +157,16 @@ const circuit = (
     exercises: exerciseIds.map((exerciseId, index) => trains(exerciseId, rests[index])),
   })
 
+const named = (id: string, exerciseIds: string[], title: string, role: IntervalRole) =>
+  create(RoutineGroupSchema, {
+    id,
+    mode: RoutineGroupMode.STRAIGHT,
+    title,
+    role: role === 'warmup' ? RoutineGroupRole.WARMUP : RoutineGroupRole.REPEAT,
+    skipLastOnFinalRound: true,
+    exercises: exerciseIds.map((exerciseId) => trains(exerciseId)),
+  })
+
 const straight = (id: string, exerciseIds: string[], rests: (number | undefined)[] = []) =>
   create(RoutineGroupSchema, {
     id,
@@ -263,6 +279,9 @@ describe('savedGroups', () => {
         restBetweenExercisesSeconds: 0,
         restBetweenRoundsSeconds: 0,
         rounds: 0,
+        role: '',
+        skipLastOnFinalRound: false,
+        title: '',
         exercises: [{ exerciseId: 'a', setCount: 3 }],
       },
       {
@@ -270,11 +289,29 @@ describe('savedGroups', () => {
         restBetweenExercisesSeconds: 15,
         restBetweenRoundsSeconds: 90,
         rounds: 2,
+        role: '',
+        skipLastOnFinalRound: false,
+        title: '',
         exercises: [
           { exerciseId: 'b', setCount: 2 },
           { exerciseId: 'c', setCount: 2 },
         ],
       },
+    ])
+  })
+
+  // The workout keeps its own copy of the blocks it was trained in, so what the
+  // routine called each one has to reach the save: the routine may be edited
+  // afterwards, and the session is the only record of what was trained.
+  test('carries the name and the place the routine gave each block', () => {
+    const blocks = sessionGroups([named('one', ['a'], 'Warm-up', 'warmup')], [lift('a')])
+
+    expect(blocks[0]?.title).toBe('Warm-up')
+    expect(blocks[0]?.role).toBe('warmup')
+    expect(blocks[0]?.skipLastOnFinalRound).toBe(true)
+
+    expect(savedGroups(blocks, { a: 1 })).toEqual([
+      expect.objectContaining({ title: 'Warm-up', role: 'warmup', skipLastOnFinalRound: true }),
     ])
   })
 

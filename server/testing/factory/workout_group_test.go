@@ -54,6 +54,26 @@ func TestFactory_WorkoutGroup(t *testing.T) {
 		require.Equal(t, int32(3), group.Rounds)
 	})
 
+	t.Run("NamedInterval", func(t *testing.T) {
+		t.Parallel()
+		workout := f.NewWorkout()
+		group := f.NewWorkoutGroup(
+			workout,
+			factory.WorkoutGroupTitle("Warm-up"),
+			factory.WorkoutGroupRole(enums.RoutineGroupRoleWarmup, false),
+		)
+		require.Equal(t, "Warm-up", group.Title)
+		require.Equal(t, enums.RoutineGroupRoleWarmup, group.Role.GetOrZero())
+		require.False(t, group.SkipLastOnFinalRound)
+	})
+
+	t.Run("BlockWithNoPlaceInAnIntervalSession", func(t *testing.T) {
+		t.Parallel()
+		workout := f.NewWorkout()
+		group := f.NewWorkoutGroup(workout, factory.WorkoutGroupRole("", false))
+		require.True(t, group.Role.IsNull())
+	})
+
 	t.Run("Exercises", func(t *testing.T) {
 		t.Parallel()
 		user := f.NewUser()

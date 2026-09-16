@@ -12,6 +12,7 @@ import (
 
 	"github.com/aarondl/opt/null"
 	"github.com/aarondl/opt/omit"
+	"github.com/aarondl/opt/omitnull"
 	enums "github.com/crlssn/getstronger/server/gen/models/enums"
 	"github.com/gofrs/uuid/v5"
 	"github.com/stephenafamo/bob"
@@ -29,14 +30,17 @@ import (
 
 // WorkoutGroup is an object representing the database table.
 type WorkoutGroup struct {
-	ID                          uuid.UUID              `db:"id,pk" `
-	WorkoutID                   uuid.UUID              `db:"workout_id" `
-	Position                    int32                  `db:"position" `
-	Mode                        enums.RoutineGroupMode `db:"mode" `
-	RestBetweenExercisesSeconds int32                  `db:"rest_between_exercises_seconds" `
-	RestBetweenRoundsSeconds    int32                  `db:"rest_between_rounds_seconds" `
-	Rounds                      int32                  `db:"rounds" `
-	CreatedAt                   time.Time              `db:"created_at" `
+	ID                          uuid.UUID                        `db:"id,pk" `
+	WorkoutID                   uuid.UUID                        `db:"workout_id" `
+	Position                    int32                            `db:"position" `
+	Mode                        enums.RoutineGroupMode           `db:"mode" `
+	RestBetweenExercisesSeconds int32                            `db:"rest_between_exercises_seconds" `
+	RestBetweenRoundsSeconds    int32                            `db:"rest_between_rounds_seconds" `
+	Rounds                      int32                            `db:"rounds" `
+	CreatedAt                   time.Time                        `db:"created_at" `
+	Title                       string                           `db:"title" `
+	Role                        null.Val[enums.RoutineGroupRole] `db:"role" `
+	SkipLastOnFinalRound        bool                             `db:"skip_last_on_final_round" `
 
 	R workoutGroupR `db:"-" `
 
@@ -71,7 +75,7 @@ type workoutGroupRLoaded struct {
 
 func buildWorkoutGroupColumns(tableName string) workoutGroupColumns {
 	columnsExpr := expr.NewColumnsExpr(
-		"id", "workout_id", "position", "mode", "rest_between_exercises_seconds", "rest_between_rounds_seconds", "rounds", "created_at",
+		"id", "workout_id", "position", "mode", "rest_between_exercises_seconds", "rest_between_rounds_seconds", "rounds", "created_at", "title", "role", "skip_last_on_final_round",
 	)
 
 	if tableName != "" {
@@ -89,6 +93,9 @@ func buildWorkoutGroupColumns(tableName string) workoutGroupColumns {
 		RestBetweenRoundsSeconds:    buildWorkoutGroupColumn(tableName, "rest_between_rounds_seconds"),
 		Rounds:                      buildWorkoutGroupColumn(tableName, "rounds"),
 		CreatedAt:                   buildWorkoutGroupColumn(tableName, "created_at"),
+		Title:                       buildWorkoutGroupColumn(tableName, "title"),
+		Role:                        buildWorkoutGroupColumn(tableName, "role"),
+		SkipLastOnFinalRound:        buildWorkoutGroupColumn(tableName, "skip_last_on_final_round"),
 	}
 }
 
@@ -103,6 +110,9 @@ type workoutGroupColumns struct {
 	RestBetweenRoundsSeconds    workoutGroupColumn
 	Rounds                      workoutGroupColumn
 	CreatedAt                   workoutGroupColumn
+	Title                       workoutGroupColumn
+	Role                        workoutGroupColumn
+	SkipLastOnFinalRound        workoutGroupColumn
 }
 
 // Alias returns the current table alias for the columns set.
@@ -148,18 +158,21 @@ func (c workoutGroupColumn) ShouldOmitParens() bool {
 // All values are optional, and do not have to be set
 // Generated columns are not included
 type WorkoutGroupSetter struct {
-	ID                          omit.Val[uuid.UUID]              `db:"id,pk" `
-	WorkoutID                   omit.Val[uuid.UUID]              `db:"workout_id" `
-	Position                    omit.Val[int32]                  `db:"position" `
-	Mode                        omit.Val[enums.RoutineGroupMode] `db:"mode" `
-	RestBetweenExercisesSeconds omit.Val[int32]                  `db:"rest_between_exercises_seconds" `
-	RestBetweenRoundsSeconds    omit.Val[int32]                  `db:"rest_between_rounds_seconds" `
-	Rounds                      omit.Val[int32]                  `db:"rounds" `
-	CreatedAt                   omit.Val[time.Time]              `db:"created_at" `
+	ID                          omit.Val[uuid.UUID]                  `db:"id,pk" `
+	WorkoutID                   omit.Val[uuid.UUID]                  `db:"workout_id" `
+	Position                    omit.Val[int32]                      `db:"position" `
+	Mode                        omit.Val[enums.RoutineGroupMode]     `db:"mode" `
+	RestBetweenExercisesSeconds omit.Val[int32]                      `db:"rest_between_exercises_seconds" `
+	RestBetweenRoundsSeconds    omit.Val[int32]                      `db:"rest_between_rounds_seconds" `
+	Rounds                      omit.Val[int32]                      `db:"rounds" `
+	CreatedAt                   omit.Val[time.Time]                  `db:"created_at" `
+	Title                       omit.Val[string]                     `db:"title" `
+	Role                        omitnull.Val[enums.RoutineGroupRole] `db:"role" `
+	SkipLastOnFinalRound        omit.Val[bool]                       `db:"skip_last_on_final_round" `
 }
 
 func (s WorkoutGroupSetter) SetColumns() []string {
-	vals := make([]string, 0, 8)
+	vals := make([]string, 0, 11)
 	if s.ID.IsValue() {
 		vals = append(vals, "id")
 	}
@@ -183,6 +196,15 @@ func (s WorkoutGroupSetter) SetColumns() []string {
 	}
 	if s.CreatedAt.IsValue() {
 		vals = append(vals, "created_at")
+	}
+	if s.Title.IsValue() {
+		vals = append(vals, "title")
+	}
+	if s.Role.IsValue() || s.Role.IsNull() {
+		vals = append(vals, "role")
+	}
+	if s.SkipLastOnFinalRound.IsValue() {
+		vals = append(vals, "skip_last_on_final_round")
 	}
 	return vals
 }
@@ -211,6 +233,15 @@ func (s WorkoutGroupSetter) Overwrite(t *WorkoutGroup) {
 	}
 	if s.CreatedAt.IsValue() {
 		t.CreatedAt = s.CreatedAt.MustGet()
+	}
+	if s.Title.IsValue() {
+		t.Title = s.Title.MustGet()
+	}
+	if s.Role.IsValue() || s.Role.IsNull() {
+		t.Role = s.Role.MustGetNull()
+	}
+	if s.SkipLastOnFinalRound.IsValue() {
+		t.SkipLastOnFinalRound = s.SkipLastOnFinalRound.MustGet()
 	}
 }
 
@@ -260,6 +291,21 @@ func (s *WorkoutGroupSetter) Apply(q *dialect.InsertQuery) {
 				return psql.Raw("DEFAULT").WriteSQL(ctx, w, d, start)
 			}
 			return psql.Arg(s.CreatedAt.MustGet()).WriteSQL(ctx, w, d, start)
+		}), bob.ExpressionFunc(func(ctx context.Context, w io.StringWriter, d bob.Dialect, start int) ([]any, error) {
+			if s.Title.IsUnset() {
+				return psql.Raw("DEFAULT").WriteSQL(ctx, w, d, start)
+			}
+			return psql.Arg(s.Title.MustGet()).WriteSQL(ctx, w, d, start)
+		}), bob.ExpressionFunc(func(ctx context.Context, w io.StringWriter, d bob.Dialect, start int) ([]any, error) {
+			if s.Role.IsUnset() {
+				return psql.Raw("DEFAULT").WriteSQL(ctx, w, d, start)
+			}
+			return psql.Arg(s.Role.MustGetNull()).WriteSQL(ctx, w, d, start)
+		}), bob.ExpressionFunc(func(ctx context.Context, w io.StringWriter, d bob.Dialect, start int) ([]any, error) {
+			if s.SkipLastOnFinalRound.IsUnset() {
+				return psql.Raw("DEFAULT").WriteSQL(ctx, w, d, start)
+			}
+			return psql.Arg(s.SkipLastOnFinalRound.MustGet()).WriteSQL(ctx, w, d, start)
 		}))
 }
 
@@ -268,7 +314,7 @@ func (s WorkoutGroupSetter) UpdateMod() bob.Mod[*dialect.UpdateQuery] {
 }
 
 func (s WorkoutGroupSetter) Expressions(prefix ...string) []bob.Expression {
-	exprs := make([]bob.Expression, 0, 8)
+	exprs := make([]bob.Expression, 0, 11)
 
 	if s.ID.IsValue() {
 		exprs = append(exprs, expr.Join{Sep: " = ", Exprs: []bob.Expression{
@@ -326,6 +372,27 @@ func (s WorkoutGroupSetter) Expressions(prefix ...string) []bob.Expression {
 		}})
 	}
 
+	if s.Title.IsValue() {
+		exprs = append(exprs, expr.Join{Sep: " = ", Exprs: []bob.Expression{
+			psql.Quote(append(prefix, "title")...),
+			psql.Arg(s.Title),
+		}})
+	}
+
+	if s.Role.IsValue() || s.Role.IsNull() {
+		exprs = append(exprs, expr.Join{Sep: " = ", Exprs: []bob.Expression{
+			psql.Quote(append(prefix, "role")...),
+			psql.Arg(s.Role),
+		}})
+	}
+
+	if s.SkipLastOnFinalRound.IsValue() {
+		exprs = append(exprs, expr.Join{Sep: " = ", Exprs: []bob.Expression{
+			psql.Quote(append(prefix, "skip_last_on_final_round")...),
+			psql.Arg(s.SkipLastOnFinalRound),
+		}})
+	}
+
 	return exprs
 }
 
@@ -336,7 +403,7 @@ func workoutGroupScanMapper(ctx context.Context, cols []string) (scan.BeforeFunc
 		idx int
 		dst func(o *WorkoutGroup) any
 	}
-	targets := make([]target, 0, 8)
+	targets := make([]target, 0, 11)
 	for i, col := range cols {
 		switch col {
 		case "id":
@@ -355,6 +422,12 @@ func workoutGroupScanMapper(ctx context.Context, cols []string) (scan.BeforeFunc
 			targets = append(targets, target{i, func(o *WorkoutGroup) any { return &o.Rounds }})
 		case "created_at":
 			targets = append(targets, target{i, func(o *WorkoutGroup) any { return &o.CreatedAt }})
+		case "title":
+			targets = append(targets, target{i, func(o *WorkoutGroup) any { return &o.Title }})
+		case "role":
+			targets = append(targets, target{i, func(o *WorkoutGroup) any { return &o.Role }})
+		case "skip_last_on_final_round":
+			targets = append(targets, target{i, func(o *WorkoutGroup) any { return &o.SkipLastOnFinalRound }})
 		}
 	}
 
@@ -813,6 +886,9 @@ type workoutGroupWhere[Q psql.Filterable] struct {
 	RestBetweenRoundsSeconds    psql.WhereMod[Q, int32]
 	Rounds                      psql.WhereMod[Q, int32]
 	CreatedAt                   psql.WhereMod[Q, time.Time]
+	Title                       psql.WhereMod[Q, string]
+	Role                        psql.WhereNullMod[Q, enums.RoutineGroupRole]
+	SkipLastOnFinalRound        psql.WhereMod[Q, bool]
 	R                           workoutGroupWhereR[Q]
 }
 
@@ -831,6 +907,9 @@ func buildWorkoutGroupWhere[Q psql.Filterable](cols workoutGroupColumns) workout
 		RestBetweenRoundsSeconds:    psql.Where[Q, int32](cols.RestBetweenRoundsSeconds.Expression),
 		Rounds:                      psql.Where[Q, int32](cols.Rounds.Expression),
 		CreatedAt:                   psql.Where[Q, time.Time](cols.CreatedAt.Expression),
+		Title:                       psql.Where[Q, string](cols.Title.Expression),
+		Role:                        psql.WhereNull[Q, enums.RoutineGroupRole](cols.Role.Expression),
+		SkipLastOnFinalRound:        psql.Where[Q, bool](cols.SkipLastOnFinalRound.Expression),
 		R:                           workoutGroupWhereR[Q]{cols: cols},
 	}
 }
@@ -882,6 +961,9 @@ type workoutGroupPreloadBuf struct {
 	RestBetweenRoundsSeconds    null.Val[int32]
 	Rounds                      null.Val[int32]
 	CreatedAt                   null.Val[time.Time]
+	Title                       null.Val[string]
+	Role                        null.Val[enums.RoutineGroupRole]
+	SkipLastOnFinalRound        null.Val[bool]
 }
 
 // workoutGroupScanMapperNullable maps the preloaded workoutGroup
@@ -896,7 +978,7 @@ func workoutGroupScanMapperNullable(prefix string) scan.Mapper[*WorkoutGroup] {
 			idx int
 			dst func(b *workoutGroupPreloadBuf) any
 		}
-		targets := make([]target, 0, 8)
+		targets := make([]target, 0, 11)
 		for i, col := range cols {
 			name, ok := strings.CutPrefix(col, prefix)
 			if !ok {
@@ -919,6 +1001,12 @@ func workoutGroupScanMapperNullable(prefix string) scan.Mapper[*WorkoutGroup] {
 				targets = append(targets, target{i, func(b *workoutGroupPreloadBuf) any { return &b.Rounds }})
 			case "created_at":
 				targets = append(targets, target{i, func(b *workoutGroupPreloadBuf) any { return &b.CreatedAt }})
+			case "title":
+				targets = append(targets, target{i, func(b *workoutGroupPreloadBuf) any { return &b.Title }})
+			case "role":
+				targets = append(targets, target{i, func(b *workoutGroupPreloadBuf) any { return &b.Role }})
+			case "skip_last_on_final_round":
+				targets = append(targets, target{i, func(b *workoutGroupPreloadBuf) any { return &b.SkipLastOnFinalRound }})
 			}
 		}
 
@@ -948,7 +1036,10 @@ func workoutGroupScanMapperNullable(prefix string) scan.Mapper[*WorkoutGroup] {
 					!(buf.RestBetweenExercisesSeconds.IsValue()) &&
 					!(buf.RestBetweenRoundsSeconds.IsValue()) &&
 					!(buf.Rounds.IsValue()) &&
-					!(buf.CreatedAt.IsValue()) {
+					!(buf.CreatedAt.IsValue()) &&
+					!(buf.Title.IsValue()) &&
+					!(buf.Role.IsValue()) &&
+					!(buf.SkipLastOnFinalRound.IsValue()) {
 					return nil, nil
 				}
 
@@ -976,6 +1067,13 @@ func workoutGroupScanMapperNullable(prefix string) scan.Mapper[*WorkoutGroup] {
 				}
 				if buf.CreatedAt.IsValue() {
 					o.CreatedAt = buf.CreatedAt.MustGet()
+				}
+				if buf.Title.IsValue() {
+					o.Title = buf.Title.MustGet()
+				}
+				o.Role = buf.Role
+				if buf.SkipLastOnFinalRound.IsValue() {
+					o.SkipLastOnFinalRound = buf.SkipLastOnFinalRound.MustGet()
 				}
 				return o, nil
 			}
