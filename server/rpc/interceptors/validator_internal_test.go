@@ -5,6 +5,7 @@ package interceptors
 
 import (
 	"context"
+	"math"
 	"strings"
 	"testing"
 
@@ -571,4 +572,76 @@ func TestValidatorRejectsAMalformedIdempotencyKey(t *testing.T) {
 	}))
 	require.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
 	require.False(t, reached)
+}
+
+// Postgres sorts NaN above every other double, and the personal best is the
+// set that sorts first, so one non-finite metric holds the record for good.
+// The schema refuses it before the handler ever sees it.
+func TestValidatorRejectsANonFiniteSetMetric(t *testing.T) {
+	t.Parallel()
+	validator, err := protovalidate.New()
+	require.NoError(t, err)
+
+	workout := func(set *apiv1.Set) connect.AnyRequest {
+		return connect.NewRequest(&apiv1.CreateWorkoutRequest{
+			WorkoutName: "Quick Workout",
+			ExerciseSets: []*apiv1.ExerciseSets{{
+				Exercise: &apiv1.Exercise{Id: uuid.Must(uuid.NewV4()).String()},
+				Sets:     []*apiv1.Set{set},
+			}},
+			StartedAt:  timestamppb.Now(),
+			FinishedAt: timestamppb.Now(),
+		})
+	}
+
+	for name, req := range map[string]connect.AnyRequest{
+		"weight not a number":   workout(&apiv1.Set{Weight: math.NaN(), Reps: 1}),
+		"weight infinite":       workout(&apiv1.Set{Weight: math.Inf(1), Reps: 1}),
+		"weight minus infinite": workout(&apiv1.Set{Weight: math.Inf(-1), Reps: 1}),
+		// distance already refuses NaN through its gte rule, which infinity passes.
+		"distance infinite": workout(&apiv1.Set{Distance: math.Inf(1), Reps: 1}),
+	} {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			reached := false
+			next := func(_ context.Context, _ connect.AnyRequest) (connect.AnyResponse, error) {
+				reached = true
+				return connect.NewResponse(&apiv1.CreateWorkoutResponse{}), nil
+			}
+			interceptor := newValidator(zap.NewNop(), validator)
+
+			_, err := interceptor.WrapUnary(next)(context.Background(), req)
+			require.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
+			require.False(t, reached)
+		})
+	}
+}
+
+// An assisted lift is logged as a negative weight, which is why the field
+// carries no bound. Refusing the non-finite values must not take it with them.
+func TestValidatorAllowsANegativeSetWeight(t *testing.T) {
+	t.Parallel()
+	validator, err := protovalidate.New()
+	require.NoError(t, err)
+
+	called := false
+	next := func(_ context.Context, _ connect.AnyRequest) (connect.AnyResponse, error) {
+		called = true
+		return connect.NewResponse(&apiv1.CreateWorkoutResponse{}), nil
+	}
+	interceptor := newValidator(zap.NewNop(), validator)
+
+	_, err = interceptor.WrapUnary(next)(context.Background(), connect.NewRequest(&apiv1.CreateWorkoutRequest{
+		WorkoutName: "Quick Workout",
+		ExerciseSets: []*apiv1.ExerciseSets{{
+			Exercise: &apiv1.Exercise{Id: uuid.Must(uuid.NewV4()).String()},
+			Sets:     []*apiv1.Set{{Weight: -20, Reps: 8}},
+		}},
+		StartedAt:  timestamppb.Now(),
+		FinishedAt: timestamppb.Now(),
+	}))
+
+	require.NoError(t, err)
+	require.True(t, called)
 }

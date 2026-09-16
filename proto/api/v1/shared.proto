@@ -87,10 +87,16 @@ enum DistanceUnit {
 
 message Set {
   string id = 1;
-  double weight = 2; // The weight can be less than zero.
+  // The weight can be less than zero, so it carries no bound. It still has to
+  // be a real number: Postgres sorts NaN above every other double, so a
+  // non-finite weight would hold the personal best for good.
+  double weight = 2 [(buf.validate.field).double.finite = true];
   int32 reps = 3 [(buf.validate.field).int32 = { gte: 0 }];
   MetadataSet metadata = 4;
-  double distance = 5 [(buf.validate.field).double = { gte: 0 }];
+  double distance = 5 [(buf.validate.field).double = {
+    gte: 0
+    finite: true
+  }];
   int32 duration_seconds = 6 [(buf.validate.field).int32 = { gte: 0 }];
   WeightUnit weight_unit = 7 [(buf.validate.field).enum.defined_only = true];
   DistanceUnit distance_unit = 8 [(buf.validate.field).enum.defined_only = true];
