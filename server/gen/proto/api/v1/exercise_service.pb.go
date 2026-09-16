@@ -25,10 +25,17 @@ const (
 )
 
 type CreateExerciseRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	Tags          []string               `protobuf:"bytes,2,rep,name=tags,proto3" json:"tags,omitempty"`
-	Metrics       []ExerciseMetric       `protobuf:"varint,3,rep,packed,name=metrics,proto3,enum=api.v1.ExerciseMetric" json:"metrics,omitempty"`
+	state   protoimpl.MessageState `protogen:"open.v1"`
+	Name    string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Tags    []string               `protobuf:"bytes,2,rep,name=tags,proto3" json:"tags,omitempty"`
+	Metrics []ExerciseMetric       `protobuf:"varint,3,rep,packed,name=metrics,proto3,enum=api.v1.ExerciseMetric" json:"metrics,omitempty"`
+	// Optional. The id the exercise is stored under, minted by the client so a
+	// routine or a workout can reference an exercise created offline before the
+	// create has reached the server. A repeat of an id its owner already used is
+	// answered with the exercise already stored; one another athlete owns is
+	// refused. Omitting it lets the server mint the id, as every client did
+	// before offline creation.
+	Id            *string `protobuf:"bytes,5,opt,name=id,proto3,oneof" json:"id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -82,6 +89,13 @@ func (x *CreateExerciseRequest) GetMetrics() []ExerciseMetric {
 		return x.Metrics
 	}
 	return nil
+}
+
+func (x *CreateExerciseRequest) GetId() string {
+	if x != nil && x.Id != nil {
+		return *x.Id
+	}
+	return ""
 }
 
 type CreateExerciseResponse struct {
@@ -799,12 +813,14 @@ var File_api_v1_exercise_service_proto protoreflect.FileDescriptor
 
 const file_api_v1_exercise_service_proto_rawDesc = "" +
 	"\n" +
-	"\x1dapi/v1/exercise_service.proto\x12\x06api.v1\x1a\x13api/v1/shared.proto\x1a google/protobuf/field_mask.proto\x1a\x1bbuf/validate/validate.proto\"\xb8\x01\n" +
+	"\x1dapi/v1/exercise_service.proto\x12\x06api.v1\x1a\x13api/v1/shared.proto\x1a google/protobuf/field_mask.proto\x1a\x1bbuf/validate/validate.proto\"\xde\x01\n" +
 	"\x15CreateExerciseRequest\x12\x1d\n" +
 	"\x04name\x18\x01 \x01(\tB\t\xbaH\x06r\x04\x10\x01\x18dR\x04name\x12&\n" +
 	"\x04tags\x18\x02 \x03(\tB\x12\xbaH\x0f\x92\x01\f\x10\n" +
 	"\x18\x01\"\x06r\x04\x10\x01\x18@R\x04tags\x12D\n" +
-	"\ametrics\x18\x03 \x03(\x0e2\x16.api.v1.ExerciseMetricB\x12\xbaH\x0f\x92\x01\f\x18\x01\"\b\x82\x01\x05\x10\x01\"\x01\x00R\ametricsJ\x04\b\x04\x10\x05R\frest_seconds\"(\n" +
+	"\ametrics\x18\x03 \x03(\x0e2\x16.api.v1.ExerciseMetricB\x12\xbaH\x0f\x92\x01\f\x18\x01\"\b\x82\x01\x05\x10\x01\"\x01\x00R\ametrics\x12\x1d\n" +
+	"\x02id\x18\x05 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01H\x00R\x02id\x88\x01\x01B\x05\n" +
+	"\x03_idJ\x04\b\x04\x10\x05R\frest_seconds\"(\n" +
 	"\x16CreateExerciseResponse\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\".\n" +
 	"\x12GetExerciseRequest\x12\x18\n" +
@@ -944,6 +960,7 @@ func file_api_v1_exercise_service_proto_init() {
 		return
 	}
 	file_api_v1_shared_proto_init()
+	file_api_v1_exercise_service_proto_msgTypes[0].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{

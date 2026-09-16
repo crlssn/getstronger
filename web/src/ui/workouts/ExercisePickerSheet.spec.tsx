@@ -11,8 +11,13 @@ vi.mock('@/http/requests', async (importOriginal) => ({
 }))
 
 import * as requests from '@/http/requests'
-import { ListExercisesResponseSchema } from '@/proto/api/v1/exercise_service_pb'
+import {
+  CreateExerciseRequestSchema,
+  ExerciseService,
+  ListExercisesResponseSchema,
+} from '@/proto/api/v1/exercise_service_pb'
 import { ExerciseSchema } from '@/proto/api/v1/shared_pb'
+import { useMutationQueueStore } from '@/stores/mutationQueue'
 import { renderWithProviders } from '@/ui/testing'
 import { ExercisePickerSheet } from './ExercisePickerSheet'
 
@@ -44,6 +49,38 @@ describe('ExercisePickerSheet', () => {
   beforeEach(() => {
     listExercises.mockReset()
     listExercises.mockResolvedValue(page())
+    useMutationQueueStore.setState({ pending: [] })
+  })
+
+  // An exercise created in a gym with no signal is still an exercise this
+  // session can be built out of: it carries the id it will be stored under.
+  test('offers an exercise the queue has not delivered yet', async () => {
+    useMutationQueueStore
+      .getState()
+      .enqueue(
+        ExerciseService.method.createExercise,
+        create(CreateExerciseRequestSchema, { id: 'sled', name: 'Sled push' }),
+      )
+    const { onAdd } = await renderPicker()
+
+    await userEvent.click(await screen.findByRole('button', { name: /Sled push/ }))
+
+    expect(onAdd.mock.calls[0]?.[0]).toMatchObject({ id: 'sled', name: 'Sled push' })
+  })
+
+  // Once the queue flushes, the library returns it too. Listing both copies
+  // would offer the same movement twice.
+  test('lists an exercise the backend has caught up with only once', async () => {
+    listExercises.mockResolvedValue(page([bench, exercise('sled', 'Sled push')]))
+    useMutationQueueStore
+      .getState()
+      .enqueue(
+        ExerciseService.method.createExercise,
+        create(CreateExerciseRequestSchema, { id: 'sled', name: 'Sled push' }),
+      )
+    await renderPicker()
+
+    expect(await screen.findAllByRole('button', { name: /Sled push/ })).toHaveLength(1)
   })
 
   test('offers everything not already in the session', async () => {

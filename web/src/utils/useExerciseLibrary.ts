@@ -3,6 +3,7 @@ import type { Exercise } from '@/proto/api/v1/shared_pb'
 import { useCallback, useEffect, useState } from 'react'
 
 import { listExercises } from '@/http/requests'
+import { useExercisesWithPending } from '@/stores/pendingExercises'
 import { appendPage } from '@/utils/appendPage'
 import { usePagination } from '@/utils/usePagination'
 
@@ -51,10 +52,14 @@ export const useExerciseLibrary = () => {
   }, [fetchPage])
 
   const query = search.trim().toLowerCase()
+  const available = useExercisesWithPending(options)
 
   return {
-    /** Every exercise fetched so far, in the order the API returned them. */
-    options,
+    /**
+     * Every exercise fetched so far, in the order the API returned them, led by
+     * the ones created on this device that have not reached the backend yet.
+     */
+    options: available,
     /** A page is in flight, the first one included. */
     loading,
     /** A page has arrived, so an empty list is empty rather than unfetched. */

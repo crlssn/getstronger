@@ -155,6 +155,75 @@ test.describe('offline mode', () => {
     await expect(history.getByRole('link', { name: /Quick workout/ }).first()).toBeVisible()
   })
 
+  // Adding a movement in a gym with no signal used to fail outright, with the
+  // exercise kept nowhere: the queue could only replay a finished workout.
+  test('creates an exercise offline, trains it, and syncs it on reconnect', async ({
+    context,
+    page,
+  }, testInfo) => {
+    testInfo.annotations.push(allowRuntimeErrors)
+
+    const exerciseName = `Sled push ${Date.now()}`
+
+    // Visited online so the library's first page is cached: offline, the
+    // pending exercise is listed alongside it rather than instead of it.
+    await page.goto('/exercises')
+    await expect(page.locator('a[href^="/exercises/"] strong').first()).toBeVisible()
+
+    await context.setOffline(true)
+    let created: Promise<unknown> | undefined
+    try {
+      // Every move from here is in-app: a document request offline reaches no
+      // server, so the router is the only way between screens.
+      await page.getByRole('link', { name: 'New exercise' }).click()
+      await page.getByRole('textbox', { name: 'Name', exact: true }).fill(exerciseName)
+      await page.getByRole('button', { name: 'Create exercise' }).click()
+
+      // Filing it without internet is a success: it is kept on the device and
+      // the library shows it from here on.
+      await expect(page.getByText('Exercise saved on this device')).toBeVisible()
+      await expect(page).toHaveURL(/\/exercises$/)
+      await expect(
+        page.locator('a[href^="/exercises/"] strong').filter({ hasText: exerciseName }),
+      ).toBeVisible()
+
+      // And the workout picker offers it, so the session that wanted the
+      // movement can be built out of it before the queue has flushed.
+      await navLink(page, 'Workout').click()
+      // The quick-start card sits above the history, whose rows are called
+      // Quick workout too.
+      await page.getByRole('link', { name: 'Quick workout' }).first().click()
+      await page.getByRole('button', { name: 'Choose exercise' }).click()
+      const picker = page.getByRole('dialog', { name: 'Add exercise' })
+      await picker.getByRole('button').filter({ hasText: exerciseName }).first().click()
+      await logFirstSet(page, exerciseName)
+      await finishAndSave(page)
+      await expect(page).toHaveURL(/\/home$/)
+
+      // Armed before reconnecting so the replayed create cannot slip past it.
+      created = page.waitForResponse(
+        (response) => response.url().includes('CreateExercise') && response.ok(),
+      )
+    } finally {
+      await context.setOffline(false)
+    }
+
+    await created
+    await expect(offlineBanner(page)).toHaveCount(0)
+
+    // Stored once, under the id the device has been using all along, so the
+    // workout that already references it resolves without remapping.
+    await page.goto('/exercises')
+    await expect(
+      page.locator('a[href^="/exercises/"] strong').filter({ hasText: exerciseName }),
+    ).toHaveCount(1)
+
+    // The id the device minted is the id the server stored it under, so the
+    // link the library has been showing all along now opens the real exercise.
+    await page.locator('a[href^="/exercises/"]').filter({ hasText: exerciseName }).first().click()
+    await expect(page.getByRole('heading', { name: exerciseName })).toBeVisible()
+  })
+
   // A save the server committed but whose reply never arrived is queued and
   // sent again on reconnect. It used to be stored twice; the key the request
   // carries lets the server answer the repeat with the workout it already has.

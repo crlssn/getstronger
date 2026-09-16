@@ -5,16 +5,18 @@ import { create } from '@bufbuild/protobuf'
 import { Code, ConnectError } from '@connectrpc/connect'
 
 vi.mock('@/http/clients', () => ({
+  exerciseClient: { createExercise: vi.fn() },
   workoutClient: { createWorkout: vi.fn() },
 }))
 
-import { workoutClient } from '@/http/clients'
-import { ExerciseService } from '@/proto/api/v1/exercise_service_pb'
+import { exerciseClient, workoutClient } from '@/http/clients'
+import { CreateExerciseRequestSchema, ExerciseService } from '@/proto/api/v1/exercise_service_pb'
 import { CreateWorkoutRequestSchema, WorkoutService } from '@/proto/api/v1/workout_service_pb'
 import { useConnectionStore } from '@/stores/connection'
 import { startMutationQueue, useMutationQueueStore } from './mutationQueue'
 
 const createWorkout = vi.mocked(workoutClient.createWorkout)
+const createExercise = vi.mocked(exerciseClient.createExercise)
 
 const networkError = () => ConnectError.from(new TypeError('Failed to fetch'))
 
@@ -28,6 +30,22 @@ describe('useMutationQueueStore', () => {
     useMutationQueueStore.setState({ pending: [] })
     useConnectionStore.setState({ online: true, reconnectCallbacks: [] })
     createWorkout.mockReset()
+    createExercise.mockReset()
+  })
+
+  // An exercise created offline is queued under the id the device already
+  // shows it under, so the replay stores it there rather than minting another.
+  test('replays a queued exercise under the id it was created with', async () => {
+    store().enqueue(
+      ExerciseService.method.createExercise,
+      create(CreateExerciseRequestSchema, { id: 'exercise-1', name: 'Sled push' }),
+    )
+    createExercise.mockResolvedValue({ id: 'exercise-1' } as never)
+
+    await store().flush()
+
+    expect(store().pending).toHaveLength(0)
+    expect(createExercise.mock.calls[0]?.[0]).toMatchObject({ id: 'exercise-1', name: 'Sled push' })
   })
 
   test('replays queued mutations in order and empties the queue', async () => {
