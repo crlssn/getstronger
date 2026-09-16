@@ -173,7 +173,9 @@ test.describe('offline mode', () => {
     await context.setOffline(true)
     let created: Promise<unknown> | undefined
     try {
-      await page.goto('/exercises/create')
+      // Every move from here is in-app: a document request offline reaches no
+      // server, so the router is the only way between screens.
+      await page.getByRole('link', { name: 'New exercise' }).click()
       await page.getByRole('textbox', { name: 'Name', exact: true }).fill(exerciseName)
       await page.getByRole('button', { name: 'Create exercise' }).click()
 
@@ -187,7 +189,10 @@ test.describe('offline mode', () => {
 
       // And the workout picker offers it, so the session that wanted the
       // movement can be built out of it before the queue has flushed.
-      await page.goto('/workouts/quick')
+      await navLink(page, 'Workout').click()
+      // The quick-start card sits above the history, whose rows are called
+      // Quick workout too.
+      await page.getByRole('link', { name: 'Quick workout' }).first().click()
       await page.getByRole('button', { name: 'Choose exercise' }).click()
       const picker = page.getByRole('dialog', { name: 'Add exercise' })
       await picker.getByRole('button').filter({ hasText: exerciseName }).first().click()
@@ -215,11 +220,7 @@ test.describe('offline mode', () => {
 
     // The id the device minted is the id the server stored it under, so the
     // link the library has been showing all along now opens the real exercise.
-    await page
-      .locator('a[href^="/exercises/"]')
-      .filter({ hasText: exerciseName })
-      .first()
-      .click()
+    await page.locator('a[href^="/exercises/"]').filter({ hasText: exerciseName }).first().click()
     await expect(page.getByRole('heading', { name: exerciseName })).toBeVisible()
   })
 
