@@ -217,6 +217,17 @@ func (s *exerciseSuite) TestCreateExerciseWithID() {
 			},
 		},
 		{
+			name: "err_id_is_not_a_uuid",
+			id:   "sled-push",
+			init: func(_ test) context.Context {
+				ctx := xcontext.WithLogger(context.Background(), zap.NewExample())
+				return xcontext.WithUserID(ctx, s.factory.NewUser().ID)
+			},
+			expected: expected{
+				code: connect.CodeInvalidArgument,
+			},
+		},
+		{
 			name: "err_id_owned_by_another_athlete",
 			id:   uuid.Must(uuid.NewV4()).String(),
 			init: func(t test) context.Context {
