@@ -285,6 +285,14 @@ var Sets = Table[
 	},
 
 	Checks: setChecks{
+		SetsDistanceFinite: check{
+			constraint: constraint{
+				Name:    "sets_distance_finite",
+				Columns: []string{"distance"},
+				Comment: "",
+			},
+			Expression: "((distance > '-Infinity'::double precision) AND (distance < 'Infinity'::double precision))",
+		},
 		SetsDistanceNonNegative: check{
 			constraint: constraint{
 				Name:    "sets_distance_non_negative",
@@ -316,6 +324,14 @@ var Sets = Table[
 				Comment: "",
 			},
 			Expression: "(\"position\" >= 0)",
+		},
+		SetsWeightFinite: check{
+			constraint: constraint{
+				Name:    "sets_weight_finite",
+				Columns: []string{"weight"},
+				Comment: "",
+			},
+			Expression: "((weight > '-Infinity'::double precision) AND (weight < 'Infinity'::double precision))",
 		},
 		SetsWeightUnitCheck: check{
 			constraint: constraint{
@@ -385,15 +401,17 @@ func (u setUniques) AsSlice() []constraint {
 }
 
 type setChecks struct {
+	SetsDistanceFinite             check
 	SetsDistanceNonNegative        check
 	SetsDistanceUnitCheck          check
 	SetsDurationSecondsNonNegative check
 	SetsPositionCheck              check
+	SetsWeightFinite               check
 	SetsWeightUnitCheck            check
 }
 
 func (c setChecks) AsSlice() []check {
 	return []check{
-		c.SetsDistanceNonNegative, c.SetsDistanceUnitCheck, c.SetsDurationSecondsNonNegative, c.SetsPositionCheck, c.SetsWeightUnitCheck,
+		c.SetsDistanceFinite, c.SetsDistanceNonNegative, c.SetsDistanceUnitCheck, c.SetsDurationSecondsNonNegative, c.SetsPositionCheck, c.SetsWeightFinite, c.SetsWeightUnitCheck,
 	}
 }
