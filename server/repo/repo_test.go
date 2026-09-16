@@ -10,6 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"math"
 	"slices"
 	"strings"
 	"testing"
@@ -3404,6 +3405,46 @@ func (s *repoSuite) TestGetPersonalBestsFollowsTheExerciseMeasurements() {
 	bests, err = s.repo.GetPersonalBests(ctx, user.ID)
 	s.Require().NoError(err)
 	s.Require().Equal([]uuid.UUID{mostReps.ID}, setIDsOf(bests))
+}
+
+// The schema refuses a non-finite metric the RPC layer never validated: NaN
+// sorts above every other double in Postgres, so a set carrying one would hold
+// the record for good and no later set could reclaim it.
+func (s *repoSuite) TestSetsRefuseANonFiniteMetric() {
+	ctx := context.Background()
+	user := s.factory.NewUser()
+	exercise := s.factory.NewExercise(factory.ExerciseUserID(user.ID), factory.ExerciseMetrics("weight", "reps"))
+	workout := s.factory.NewWorkout(factory.WorkoutUserID(user.ID))
+
+	best := s.factory.NewSet(
+		factory.SetUserID(user.ID), factory.SetWorkoutID(workout.ID), factory.SetExerciseID(exercise.ID),
+		factory.SetWeight(100), factory.SetReps(5),
+	)
+
+	for name, setter := range map[string]*models.SetSetter{
+		"weight not a number":   {Weight: omit.From(math.NaN())},
+		"weight infinite":       {Weight: omit.From(math.Inf(1))},
+		"weight minus infinite": {Weight: omit.From(math.Inf(-1))},
+		"distance infinite":     {Weight: omit.From(float64(0)), Distance: omit.From(math.Inf(1))},
+	} {
+		s.Run(name, func() {
+			setter.UserID = omit.From(user.ID)
+			setter.WorkoutID = omit.From(workout.ID)
+			setter.ExerciseID = omit.From(exercise.ID)
+			setter.Reps = omit.From(int32(1))
+
+			_, err := models.Sets.Insert(setter).One(ctx, bob.NewDB(s.container.DB))
+
+			var pgErr *pgconn.PgError
+			s.Require().ErrorAs(err, &pgErr)
+			s.Require().Contains([]string{"sets_weight_finite", "sets_distance_finite"}, pgErr.ConstraintName)
+		})
+	}
+
+	// The record is still the set the athlete actually lifted.
+	bests, err := s.repo.GetPersonalBests(ctx, user.ID)
+	s.Require().NoError(err)
+	s.Require().Equal([]uuid.UUID{best.ID}, setIDsOf(bests))
 }
 
 // An athlete who has logged nothing holds no records — not every record in the
