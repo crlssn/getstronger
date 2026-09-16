@@ -168,6 +168,17 @@ message WorkoutGroup {
   // is read off the sets.
   int32 rounds = 5 [(buf.validate.field).int32 = {gte: 0, lte: 99}];
   repeated WorkoutGroupExercise exercises = 6;
+  // Where this block sat in an interval session. Unspecified everywhere else,
+  // which is every gym workout and every session saved before intervals
+  // existed.
+  RoutineGroupRole role = 7;
+  // Whether the repeating block dropped its last exercise on its final round.
+  // Ignored outside it.
+  bool skip_last_on_final_round = 8;
+  // What the athlete named this block when they trained it. Empty is a block
+  // that reads by its position instead — "Block A", "Block B" — which is every
+  // block trained before one could be named.
+  string title = 9 [(buf.validate.field).string.max_len = 60];
 }
 
 // One exercise where a block trained it, and the sets it took there. The same

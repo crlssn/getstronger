@@ -1,11 +1,11 @@
 import type { RoutineGroup } from '@/proto/api/v1/routine_service_pb'
 import type { Exercise } from '@/proto/api/v1/shared_pb'
 import type { Set } from '@/types/workout'
-import type { GroupMode } from '@/utils/routineGroups'
+import type { GroupMode, GroupRole } from '@/utils/routineGroups'
 
 import { RoutineGroupMode } from '@/proto/api/v1/shared_pb'
 import { hasAnyExerciseSetValue, isExerciseSetComplete } from '@/utils/exerciseMeasurements'
-import { defaultRestSeconds } from '@/utils/routineGroups'
+import { defaultRestSeconds, groupRole } from '@/utils/routineGroups'
 
 /** How much a "+30 sec" tap adds to a running rest. */
 export const restExtensionSeconds = 30
@@ -128,6 +128,12 @@ export interface SessionGroup {
    * circuit that runs for as many rounds as the session takes.
    */
   rounds: number
+  /** Where this block sits in an interval routine, or nothing where it is not one. */
+  role: GroupRole
+  /** Whether the repeating block drops its last exercise on its final round. */
+  skipLastOnFinalRound: boolean
+  /** What the athlete named this block, or nothing where they left it unnamed. */
+  title: string
   stations: SessionStation[]
 }
 
@@ -174,6 +180,9 @@ export const sessionGroups = (
       restBetweenRoundsSeconds: group.restBetweenRoundsSeconds,
       // Only a circuit goes round, so only a circuit is prescribed rounds.
       rounds: circuit ? group.rounds : 0,
+      role: groupRole(group.role),
+      skipLastOnFinalRound: group.skipLastOnFinalRound,
+      title: group.title,
       stations,
     })
   }
@@ -200,6 +209,9 @@ export const sessionGroups = (
       restBetweenExercisesSeconds: 0,
       restBetweenRoundsSeconds: 0,
       rounds: 0,
+      role: '',
+      skipLastOnFinalRound: false,
+      title: '',
       stations: trailing,
     })
   }
@@ -221,6 +233,9 @@ export interface SavedGroup {
   restBetweenExercisesSeconds: number
   restBetweenRoundsSeconds: number
   rounds: number
+  role: GroupRole
+  skipLastOnFinalRound: boolean
+  title: string
   exercises: { exerciseId: string; setCount: number }[]
 }
 
@@ -240,6 +255,9 @@ export const savedGroups = (
       restBetweenExercisesSeconds: block.restBetweenExercisesSeconds,
       restBetweenRoundsSeconds: block.restBetweenRoundsSeconds,
       rounds: block.rounds,
+      role: block.role,
+      skipLastOnFinalRound: block.skipLastOnFinalRound,
+      title: block.title,
       exercises: block.stations
         .map((station) => ({
           exerciseId: station.exercise.id,

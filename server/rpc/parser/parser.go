@@ -439,6 +439,9 @@ func WorkoutGroups(
 			RestBetweenExercisesSeconds: record.RestBetweenExercisesSeconds,
 			RestBetweenRoundsSeconds:    record.RestBetweenRoundsSeconds,
 			Rounds:                      record.Rounds,
+			Role:                        RoutineGroupRoleToProto(record.Role),
+			SkipLastOnFinalRound:        record.SkipLastOnFinalRound,
+			Title:                       record.Title,
 			Exercises:                   exercises,
 		})
 	}

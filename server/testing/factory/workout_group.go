@@ -7,6 +7,7 @@ import (
 	"fmt"
 
 	"github.com/aarondl/opt/omit"
+	"github.com/aarondl/opt/omitnull"
 	"github.com/stephenafamo/bob/dialect/psql/sm"
 
 	"github.com/crlssn/getstronger/server/gen/models"
@@ -29,6 +30,26 @@ func WorkoutGroupCircuit(restBetweenExercisesSeconds, restBetweenRoundsSeconds i
 func WorkoutGroupRounds(rounds int32) WorkoutGroupOpt {
 	return func(group *models.WorkoutGroupSetter) {
 		group.Rounds = omit.From(rounds)
+	}
+}
+
+// WorkoutGroupTitle is what the athlete named the block they trained.
+func WorkoutGroupTitle(title string) WorkoutGroupOpt {
+	return func(group *models.WorkoutGroupSetter) {
+		group.Title = omit.From(title)
+	}
+}
+
+// WorkoutGroupRole is where the block sat in an interval session, and whether
+// the repeating one dropped its last exercise on the final round. A block with
+// no such place — every gym circuit — is stored with none.
+func WorkoutGroupRole(role enums.RoutineGroupRole, skipLastOnFinalRound bool) WorkoutGroupOpt {
+	return func(group *models.WorkoutGroupSetter) {
+		group.Role = omitnull.From(role)
+		if !role.Valid() {
+			group.Role.Null()
+		}
+		group.SkipLastOnFinalRound = omit.From(skipLastOnFinalRound)
 	}
 }
 

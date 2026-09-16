@@ -17,7 +17,7 @@ vi.mock('@/http/requests', async (importOriginal) => ({
 }))
 
 import * as requests from '@/http/requests'
-import { ExerciseMetric, RoutineGroupMode } from '@/proto/api/v1/shared_pb'
+import { ExerciseMetric, RoutineGroupMode, RoutineGroupRole } from '@/proto/api/v1/shared_pb'
 import {
   DeleteWorkoutResponseSchema,
   LikeWorkoutResponseSchema,
@@ -196,6 +196,54 @@ const withBlocks = () =>
             ],
           },
         ],
+      },
+    ],
+  })
+
+// The same session, with the blocks named as the athlete named them.
+const withNamedBlocks = () =>
+  workout({
+    exerciseSets: [
+      { exercise: lift('exercise-1', 'Bench press'), sets: [{ weight: 40, reps: 10 }] },
+      { exercise: lift('exercise-2', 'Squat'), sets: [{ weight: 90, reps: 5 }] },
+    ],
+    groups: [
+      {
+        id: 'group-warmup',
+        mode: RoutineGroupMode.STRAIGHT,
+        title: 'Warm-up',
+        exercises: [
+          { exercise: lift('exercise-1', 'Bench press'), sets: [{ weight: 40, reps: 10 }] },
+        ],
+      },
+      {
+        id: 'group-main',
+        mode: RoutineGroupMode.STRAIGHT,
+        exercises: [{ exercise: lift('exercise-2', 'Squat'), sets: [{ weight: 90, reps: 5 }] }],
+      },
+    ],
+  })
+
+// A walk-run: the parts of an interval session, none of them named.
+const withIntervalBlocks = () =>
+  workout({
+    exerciseSets: [
+      { exercise: lift('exercise-1', 'Walk'), sets: [{ weight: 0, reps: 1 }] },
+      { exercise: lift('exercise-2', 'Run'), sets: [{ weight: 0, reps: 1 }] },
+    ],
+    groups: [
+      {
+        id: 'group-warmup',
+        mode: RoutineGroupMode.STRAIGHT,
+        role: RoutineGroupRole.WARMUP,
+        exercises: [{ exercise: lift('exercise-1', 'Walk'), sets: [{ weight: 0, reps: 1 }] }],
+      },
+      {
+        id: 'group-repeat',
+        mode: RoutineGroupMode.STRAIGHT,
+        role: RoutineGroupRole.REPEAT,
+        rounds: 3,
+        exercises: [{ exercise: lift('exercise-2', 'Run'), sets: [{ weight: 0, reps: 1 }] }],
       },
     ],
   })
@@ -491,6 +539,27 @@ describe('CardWorkout', () => {
       expect(screen.getByRole('heading', { name: 'Round 1' })).toBeInTheDocument()
       expect(screen.getByRole('heading', { name: 'Round 2' })).toBeInTheDocument()
       expect(screen.getByText('95 kg × 5')).toBeInTheDocument()
+    })
+
+    // The athlete's own word for the block, kept with the session that trained
+    // it: history used to read "Block A" whatever they had called it.
+    test('names a block the way the athlete did', () => {
+      render(<CardWorkout compact={false} workout={withNamedBlocks()} />)
+
+      expect(screen.getByText('Warm-up')).toBeInTheDocument()
+      // A block left unnamed still reads by its position.
+      expect(screen.getByText('Block B')).toBeInTheDocument()
+      expect(screen.queryByText('Block A')).not.toBeInTheDocument()
+    })
+
+    // An interval session is a warm-up, a block repeated and a cool-down, so
+    // its parts are named for what they are rather than lettered.
+    test('names an unnamed interval block for the part it is', () => {
+      render(<CardWorkout compact={false} workout={withIntervalBlocks()} />)
+
+      expect(screen.getByText('Warm-up')).toBeInTheDocument()
+      expect(screen.getByText('Repeat')).toBeInTheDocument()
+      expect(screen.queryByText('Block A')).not.toBeInTheDocument()
     })
 
     // A plain routine, a quick workout, and every session logged before blocks

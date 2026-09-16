@@ -1,6 +1,7 @@
 package training_test
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/gofrs/uuid/v5"
@@ -133,6 +134,76 @@ func TestNormalizeWorkoutGroups(t *testing.T) {
 			setCounts: map[uuid.UUID]int{exerciseID("a"): 1},
 			expected: []training.WorkoutGroup{
 				{Mode: training.RoutineGroupModeStraight, Exercises: positions(0)},
+			},
+		},
+		{
+			// What the athlete named the block is their own input, and the
+			// workout is the only copy of it a finished session has.
+			name: "a block keeps the name it was trained under",
+			groups: []training.WorkoutGroupDraft{
+				{Mode: training.RoutineGroupModeStraight, Title: "Warm-up", Exercises: took("a", 1)},
+			},
+			setCounts: map[uuid.UUID]int{exerciseID("a"): 1},
+			expected: []training.WorkoutGroup{
+				{Mode: training.RoutineGroupModeStraight, Title: "Warm-up", Exercises: positions(0)},
+			},
+		},
+		{
+			// Counted in runes, so a name in a script the column stores as more
+			// than one byte a character is not cut where the athlete did not.
+			name: "a name longer than the column takes is trimmed to it",
+			groups: []training.WorkoutGroupDraft{
+				{
+					Mode:      training.RoutineGroupModeStraight,
+					Title:     "  " + strings.Repeat("ö", 80),
+					Exercises: took("a", 1),
+				},
+			},
+			setCounts: map[uuid.UUID]int{exerciseID("a"): 1},
+			expected: []training.WorkoutGroup{
+				{
+					Mode:      training.RoutineGroupModeStraight,
+					Title:     strings.Repeat("ö", 60),
+					Exercises: positions(0),
+				},
+			},
+		},
+		{
+			// Without the role a finished interval session reads as lettered
+			// blocks again, which is what the role exists to stop.
+			name: "the three parts of an interval session keep their roles",
+			groups: []training.WorkoutGroupDraft{
+				{Mode: training.RoutineGroupModeStraight, Role: training.RoutineGroupRoleWarmup, Exercises: took("a", 1)},
+				{Mode: training.RoutineGroupModeCircuit, Role: training.RoutineGroupRoleRepeat, Exercises: took("a", 1)},
+				{Mode: training.RoutineGroupModeStraight, Role: training.RoutineGroupRoleCooldown, Exercises: took("a", 1)},
+			},
+			setCounts: map[uuid.UUID]int{exerciseID("a"): 3},
+			expected: []training.WorkoutGroup{
+				{Mode: training.RoutineGroupModeStraight, Role: training.RoutineGroupRoleWarmup, Exercises: positions(0)},
+				{Mode: training.RoutineGroupModeCircuit, Role: training.RoutineGroupRoleRepeat, Exercises: positions(1)},
+				{Mode: training.RoutineGroupModeStraight, Role: training.RoutineGroupRoleCooldown, Exercises: positions(2)},
+			},
+		},
+		{
+			name: "a role the schema does not know is no role at all",
+			groups: []training.WorkoutGroupDraft{
+				{Mode: training.RoutineGroupModeStraight, Role: "sprint", Exercises: took("a", 1)},
+			},
+			setCounts: map[uuid.UUID]int{exerciseID("a"): 1},
+			expected: []training.WorkoutGroup{
+				{Mode: training.RoutineGroupModeStraight, Exercises: positions(0)},
+			},
+		},
+		{
+			name: "only a block worked round after round keeps the skip",
+			groups: []training.WorkoutGroupDraft{
+				{Mode: training.RoutineGroupModeCircuit, SkipLastOnFinalRound: true, Exercises: took("a", 1)},
+				{Mode: training.RoutineGroupModeStraight, SkipLastOnFinalRound: true, Exercises: took("a", 1)},
+			},
+			setCounts: map[uuid.UUID]int{exerciseID("a"): 2},
+			expected: []training.WorkoutGroup{
+				{Mode: training.RoutineGroupModeCircuit, SkipLastOnFinalRound: true, Exercises: positions(0)},
+				{Mode: training.RoutineGroupModeStraight, Exercises: positions(1)},
 			},
 		},
 	}

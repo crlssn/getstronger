@@ -35,6 +35,7 @@ import { CardWorkoutCircuit } from '@/ui/features/CardWorkoutCircuit'
 import { CardWorkoutComment } from '@/ui/features/CardWorkoutComment'
 import { CardWorkoutExercise } from '@/ui/features/CardWorkoutExercise'
 import { RouteThumbnail } from '@/ui/features/RouteThumbnail'
+import { intervalPartBadge, intervalPartTitle } from '@/ui/routines/intervalParts'
 import { WorkoutRoute } from '@/ui/features/WorkoutRoute'
 import { AppInlineError } from '@/ui/components/AppInlineError'
 import { DropdownButton } from '@/ui/components/DropdownButton'
@@ -42,7 +43,7 @@ import { handle, initials } from '@/utils/names'
 import { distanceIn, formatDistanceIn, formatDurationDisplay } from '@/utils/exerciseMeasurements'
 import { formatNumber } from '@/utils/numbers'
 import { usePreferencesStore } from '@/stores/preferences'
-import { groupLetter } from '@/utils/routineGroups'
+import { groupLetter, groupRole } from '@/utils/routineGroups'
 import { parseRecording } from '@/utils/timedCircuit'
 import { workoutSummary } from '@/utils/workoutSummary'
 import styles from './CardWorkout.module.css'
@@ -377,16 +378,26 @@ export const CardWorkout = ({ workout, compact, unseen = false }: Props) => {
           <div className={styles.blockList}>
             {workout.groups.map((group, groupIndex) => {
               const circuit = group.mode === RoutineGroupMode.CIRCUIT
+              const letter = groupLetter(groupIndex)
+              // An interval session is a warm-up, a block repeated and a
+              // cool-down, so its parts are named for what they are rather than
+              // lettered as blocks whose order says nothing.
+              const role = groupRole(group.role)
 
               return (
                 <section key={group.id} className={styles.block}>
                   <header className={styles.blockHeader}>
                     <span className={styles.blockBadge} aria-hidden="true">
-                      {groupLetter(groupIndex)}
+                      {role ? t(intervalPartBadge[role], { count: group.rounds }) : letter}
                     </span>
                     <div>
+                      {/* A block the athlete named reads by that name; one
+                          left unnamed reads by what it is, or by its letter. */}
                       <strong>
-                        {t('routine.form.blocks.blockName', { letter: groupLetter(groupIndex) })}
+                        {group.title ||
+                          (role
+                            ? t(intervalPartTitle[role])
+                            : t('routine.form.blocks.blockName', { letter }))}
                       </strong>
                       <small>{blockSummary(group)}</small>
                     </div>
