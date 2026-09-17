@@ -105,7 +105,7 @@ func (s *repoSuite) countingRepo() (*repo.Repo, *atomic.Int64) {
 	db := sql.OpenDB(counter)
 	s.T().Cleanup(func() { s.Require().NoError(db.Close()) })
 
-	return repo.New(db), &counter.statements
+	return repo.New(db, s.recordings), &counter.statements
 }
 
 var errNotPgxConn = errors.New("connection is not a pgx connection")
