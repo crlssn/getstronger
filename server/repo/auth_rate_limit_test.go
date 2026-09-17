@@ -13,6 +13,7 @@ import (
 
 	"github.com/crlssn/getstronger/server/repo"
 	"github.com/crlssn/getstronger/server/testing/container"
+	"github.com/crlssn/getstronger/server/testing/objectstoretest"
 )
 
 func TestAuthRateLimitAcrossInstances(t *testing.T) {
@@ -20,7 +21,7 @@ func TestAuthRateLimitAcrossInstances(t *testing.T) {
 	ctx := t.Context()
 	c := container.NewContainer(ctx)
 	t.Cleanup(func() { require.NoError(t, c.Terminate(context.Background())) })
-	instances := []*repo.Repo{repo.New(c.DB), repo.New(c.DB)}
+	instances := []*repo.Repo{repo.New(c.DB, objectstoretest.NewMemory()), repo.New(c.DB, objectstoretest.NewMemory())}
 	key := fmt.Sprintf("%x", sha256.Sum256([]byte("account")))
 	var admitted atomic.Int32
 	var workers sync.WaitGroup

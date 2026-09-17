@@ -23,6 +23,7 @@ import (
 	handlers "github.com/crlssn/getstronger/server/rpc/handlers/v1"
 	"github.com/crlssn/getstronger/server/testing/container"
 	"github.com/crlssn/getstronger/server/testing/factory"
+	"github.com/crlssn/getstronger/server/testing/objectstoretest"
 	"github.com/crlssn/getstronger/server/xcontext"
 )
 
@@ -62,7 +63,7 @@ func (s *malformedIDSuite) SetupSuite() {
 	s.container = container.NewContainer(ctx)
 	s.factory = factory.NewFactory(s.container.DB)
 
-	r := repo.New(s.container.DB)
+	r := repo.New(s.container.DB, objectstoretest.NewMemory())
 	ps := pubsub.New(pubsub.Params{Log: zap.NewExample(), Store: r})
 
 	s.auth = handlers.NewAuthHandler(handlers.AuthHandlerParams{

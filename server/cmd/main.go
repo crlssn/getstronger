@@ -15,6 +15,7 @@ import (
 	"github.com/crlssn/getstronger/server/email"
 	"github.com/crlssn/getstronger/server/jwt"
 	"github.com/crlssn/getstronger/server/logger"
+	"github.com/crlssn/getstronger/server/objectstore"
 	"github.com/crlssn/getstronger/server/pubsub"
 	"github.com/crlssn/getstronger/server/repo"
 	"github.com/crlssn/getstronger/server/rpc/server"
@@ -48,6 +49,7 @@ func options() []fx.Option {
 		fx.Provide(
 			repo.New,
 			email.New,
+			objectstore.New,
 			trace.New,
 			config.New,
 			cookies.New,

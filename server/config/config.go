@@ -35,6 +35,15 @@ func New() *Config {
 			CookieDomain:   os.Getenv("COOKIE_DOMAIN"),
 			AllowedOrigins: strings.Split(os.Getenv("CORS_ALLOWED_ORIGIN"), ","),
 		},
+		ObjectStore: ObjectStore{
+			Provider:  ObjectStoreProvider(os.Getenv("OBJECT_STORE_PROVIDER")),
+			Endpoint:  os.Getenv("OBJECT_STORE_ENDPOINT"),
+			Region:    os.Getenv("OBJECT_STORE_REGION"),
+			Bucket:    os.Getenv("OBJECT_STORE_BUCKET"),
+			AccessKey: os.Getenv("OBJECT_STORE_ACCESS_KEY"),
+			SecretKey: os.Getenv("OBJECT_STORE_SECRET_KEY"),
+			Path:      os.Getenv("OBJECT_STORE_PATH"),
+		},
 		Pprof: Pprof{
 			Token: os.Getenv("PPROF_TOKEN"),
 		},
@@ -51,6 +60,7 @@ type Config struct {
 	JWT         JWT
 	Email       Email
 	Server      Server
+	ObjectStore ObjectStore
 	Pprof       Pprof
 	Logs        Logs
 	Environment Environment
@@ -169,3 +179,36 @@ const (
 	EmailProviderNoop     EmailProvider = "noop"
 	EmailProviderLocal    EmailProvider = "local"
 )
+
+// ObjectStore says where the documents that are too big to keep on a row are
+// written. Endpoint, region and bucket name one S3-compatible bucket; Path is
+// the directory the filesystem provider writes under instead.
+type ObjectStore struct {
+	Provider  ObjectStoreProvider
+	Endpoint  string
+	Region    string
+	Bucket    string
+	AccessKey string
+	SecretKey string
+	Path      string
+}
+
+type ObjectStoreProvider string
+
+const (
+	ObjectStoreProviderS3         ObjectStoreProvider = "s3"
+	ObjectStoreProviderFilesystem ObjectStoreProvider = "filesystem"
+)
+
+// DefaultObjectStorePath is where the filesystem provider writes when nothing
+// says otherwise: a directory beside the checkout, which Git ignores.
+const DefaultObjectStorePath = ".objectstore"
+
+// Root is the directory the filesystem provider writes under.
+func (o ObjectStore) Root() string {
+	if o.Path == "" {
+		return DefaultObjectStorePath
+	}
+
+	return o.Path
+}

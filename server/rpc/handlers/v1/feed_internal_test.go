@@ -9,6 +9,7 @@ import (
 
 	"github.com/crlssn/getstronger/server/repo"
 	"github.com/crlssn/getstronger/server/testing/container"
+	"github.com/crlssn/getstronger/server/testing/objectstoretest"
 	"github.com/crlssn/getstronger/server/training"
 )
 
@@ -24,7 +25,7 @@ func TestPersonalBestsOfWrapsARefusedQuery(t *testing.T) {
 		require.NoError(t, c.Terminate(ctx))
 	})
 
-	handler := &feedHandler{repo: repo.New(c.DB)}
+	handler := &feedHandler{repo: repo.New(c.DB, objectstoretest.NewMemory())}
 	cancelled, cancel := context.WithCancel(ctx)
 	cancel()
 

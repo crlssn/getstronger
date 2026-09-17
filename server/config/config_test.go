@@ -159,3 +159,12 @@ func TestNewReadsTheLogsToken(t *testing.T) {
 	require.Equal(t, "phc_test", config.New().Logs.Token)
 	require.Equal(t, "http://127.0.0.1:1/i/v1/logs", config.New().Logs.URL())
 }
+
+func TestObjectStoreRoot(t *testing.T) {
+	t.Parallel()
+
+	// Nothing configured is the directory beside the checkout, which is where
+	// a developer's own stack keeps its documents.
+	require.Equal(t, config.DefaultObjectStorePath, config.ObjectStore{}.Root())
+	require.Equal(t, "/srv/recordings", config.ObjectStore{Path: "/srv/recordings"}.Root())
+}

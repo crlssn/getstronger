@@ -38,6 +38,7 @@ import (
 	"github.com/crlssn/getstronger/server/repo"
 	"github.com/crlssn/getstronger/server/testing/container"
 	"github.com/crlssn/getstronger/server/testing/factory"
+	"github.com/crlssn/getstronger/server/testing/objectstoretest"
 	"github.com/crlssn/getstronger/server/training"
 	"github.com/crlssn/getstronger/server/weightunit"
 )
@@ -47,8 +48,9 @@ type repoSuite struct {
 
 	repo *repo.Repo
 
-	container *container.Container
-	factory   *factory.Factory
+	container  *container.Container
+	factory    *factory.Factory
+	recordings *objectstoretest.Memory
 }
 
 func TestRepoSuite(t *testing.T) {
@@ -60,7 +62,8 @@ func (s *repoSuite) SetupSuite() {
 	ctx := context.Background()
 	s.container = container.NewContainer(ctx)
 	s.factory = factory.NewFactory(s.container.DB)
-	s.repo = repo.New(s.container.DB)
+	s.recordings = objectstoretest.NewMemory()
+	s.repo = repo.New(s.container.DB, s.recordings)
 	s.T().Cleanup(func() {
 		if err := s.container.Terminate(ctx); err != nil {
 			log.Fatalf("Clean container: %s", err)
@@ -151,7 +154,7 @@ func (rollbackFailTx) Rollback() error { return errRollbackError }
 func TestNewTxRollbackFailure(t *testing.T) {
 	t.Parallel()
 
-	r := repo.New(sql.OpenDB(rollbackFailConnector{}))
+	r := repo.New(sql.OpenDB(rollbackFailConnector{}), objectstoretest.NewMemory())
 	err := r.NewTx(context.Background(), func(*repo.Repo) error {
 		return errTxError
 	})

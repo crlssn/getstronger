@@ -19,11 +19,13 @@ import (
 	"github.com/crlssn/getstronger/server/email"
 	apiv1 "github.com/crlssn/getstronger/server/gen/proto/api/v1"
 	"github.com/crlssn/getstronger/server/jwt"
+	"github.com/crlssn/getstronger/server/objectstore"
 	"github.com/crlssn/getstronger/server/pubsub"
 	"github.com/crlssn/getstronger/server/repo"
 	"github.com/crlssn/getstronger/server/rpc/server"
 	"github.com/crlssn/getstronger/server/testing/container"
 	"github.com/crlssn/getstronger/server/testing/e2e"
+	"github.com/crlssn/getstronger/server/testing/objectstoretest"
 	"github.com/crlssn/getstronger/server/trace"
 )
 
@@ -159,6 +161,7 @@ func options() []fx.Option {
 		fx.Provide(
 			zap.NewDevelopment,
 			repo.New,
+			func() objectstore.Store { return objectstoretest.NewMemory() },
 			email.NewNoop,
 			trace.New,
 			cookies.New,
