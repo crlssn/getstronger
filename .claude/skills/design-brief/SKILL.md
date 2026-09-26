@@ -19,12 +19,9 @@ the first question is whether to open a canvas at all.
 | A screen with no component to photograph             | **Canvas**                        |
 
 Refining what already exists does not need a mock — the app can be
-photographed. Follow `.claude/skills/design-review/SKILL.md`: photograph the ref
-you want as the before with `mise run screenshots`, change the component, then
-`mise run screenshots:diff` to see what moved. Page names are the `name:`
-fields in `web/tests/screenshots/catalogue.ts` — `home`, `workout`,
-`view-routine`, `quick-workout` and the rest. That loop costs a fraction of a
-canvas session and ends in shipped code rather than a mock still to be ported.
+photographed. `.claude/skills/design-review/SKILL.md` has the
+photograph-change-diff loop. It costs a fraction of a canvas session and ends
+in shipped code rather than a mock still to be ported.
 
 A canvas earns its cost when the point is choosing between directions.
 
@@ -37,7 +34,7 @@ round trip spent correcting it.
    flow" returns eight artboards and cost is linear in artboards.
 2. **Dimensions** — 390×844, the viewport `web/playwright.screenshots.config.ts`
    photographs at, so a mock and a screenshot are comparable.
-3. **The tokens**, pasted from below. Left to invent, it emits a bespoke
+3. **The tokens**, extracted as below. Left to invent, it emits a bespoke
    palette and long CSS blocks: more output, and a mock that maps onto nothing.
 4. **Fidelity.** Greybox the alternatives, refine only the survivor. Fidelity
    is the multiplier, and refining three directions to discard two is the
@@ -47,26 +44,15 @@ round trip spent correcting it.
 
 ## The tokens
 
-From `web/src/assets/theme.css`, which is the source of truth. Paste this into
-the brief rather than pointing at the file.
+`web/src/assets/theme.css` is the source of truth, and a copy kept here went
+stale within a fortnight of the design handover. Extract the light palette
+fresh for every brief and paste the output, rather than pointing at the file:
 
+```bash
+sed -n '/^@theme static {/,/^}/p' web/src/assets/theme.css | grep -E '^\s*--' | grep -v -- '--font-sans'
 ```
-Type: system-ui. display 30/1.15/-.025em · title 22/1.25/-.02em ·
-      body-lg 17/1.5 · body 15/1.5 · meta 13/1.4 · eyebrow 12/1.3/+.1em
-      Nothing below 12px, ever.
-Ink:  #25282d · strong #1f2226 · muted #565b61 · tint #e8e9e7 ·
-      surface #f5f5f2 · border #d4d5d3
-Bg:   surface #ffffff · sunken #f5f5f3 · inverse #25282d · track #e8e9e7
-      border #e3e5e0 · strong #cbd5e1
-Text: #16181b · muted #5b6167 · subtle #656b71
-State: success #047857 on #ecfdf5 · warning #b45309 on #fffbeb ·
-       danger #dc2626 (text #b91c1c) on #fef2f2 · info #334155 on #f1f5f9
-Record: #ad7b1f (text #8b5f18) on #fbf4e6, border #e8d0a2 — personal records only
-Controls: 48 default · 44 floor, never below · 56 submit
-Radius: control 12 · card 16 · sheet 24 · pill full
-Shadow: card 0 1px 2px rgb(2 6 23/.06) · raised 0 4px 12px/.08 ·
-        overlay 0 16px 40px/.16
-```
+
+Add one line of your own: type is `system-ui`, and nothing is set below 12px.
 
 Three rules travel with them: no colour outside this list, gold is for personal
 records and nothing else, and destructive is danger *text*, never a red fill.
