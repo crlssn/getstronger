@@ -1501,6 +1501,9 @@ describe('StartWorkout', () => {
       expect(mocked.createWorkout.mock.calls[0]?.[0].note).toBe('Felt strong today.')
       expect(await screen.findByText('saved workout')).toBeInTheDocument()
       expect(useWorkoutStore.getState().workouts[routineID]).toBeUndefined()
+      expect(
+        haptics.haptic.mock.calls.filter(([intent]) => intent === 'workoutSaved'),
+      ).toHaveLength(1)
     })
 
     test('warns that exercises are unfinished when finishing early', async () => {
@@ -1529,6 +1532,7 @@ describe('StartWorkout', () => {
       expect(useMutationQueueStore.getState().pending[0]?.method).toContain('CreateWorkout')
       expect(useWorkoutStore.getState().workouts[routineID]).toBeUndefined()
       expect(screen.getByText('home')).toBeInTheDocument()
+      expect(haptics.haptic).toHaveBeenCalledWith('workoutSaved')
 
       // The replay carries the session's key, so a save the server committed
       // before the connection dropped is recognised rather than stored again.
@@ -1616,6 +1620,7 @@ describe('StartWorkout', () => {
 
       expect(await screen.findByText(/could not be saved/)).toBeInTheDocument()
       expect(useMutationQueueStore.getState().pending).toHaveLength(0)
+      expect(haptics.haptic).not.toHaveBeenCalledWith('workoutSaved')
     })
   })
 

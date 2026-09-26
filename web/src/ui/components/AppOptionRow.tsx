@@ -1,5 +1,6 @@
 import type { ComponentProps, ReactNode } from 'react'
 
+import { haptic } from '@/native/haptics'
 import { cn } from '@/ui/cn'
 import styles from './AppOptionRow.module.css'
 
@@ -36,12 +37,19 @@ export const AppOptionRow = ({
   selected,
   flat = false,
   className,
+  onClick,
   ...rest
 }: Props) => (
   <button
     type="button"
     className={cn(styles.row, flat && styles.flat, selected && styles.selected, className)}
     aria-pressed={selected}
+    onClick={(event) => {
+      // Only an unchosen row with a state changes a value. ponytail: unticking a
+      // multi-select row is silent too; add a prop if that should tick.
+      if (selected === false) haptic('selection')
+      onClick?.(event)
+    }}
     {...rest}
   >
     {leading}

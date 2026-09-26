@@ -8,7 +8,7 @@ import { Capacitor } from '@capacitor/core'
  * moment ends up with five answers and the whole app stops meaning anything.
  */
 export type HapticIntent =
-  'press' | 'selection' | 'setCompleted' | 'personalBest' | 'actionFailed' | 'restOver'
+  'selection' | 'setCompleted' | 'workoutSaved' | 'personalBest' | 'actionFailed' | 'restOver'
 
 // Gestures storm: a thumb on a stepper, two listeners on one tap. Two buzzes
 // closer together than this are a single sensation anyway, so the second is
@@ -19,13 +19,9 @@ const COALESCE_MS = 50
 // Announcements are the opposite: rare, deduped by whoever raises them, and
 // the one the athlete is waiting for. A tap that happened to precede one must
 // never swallow it.
-const GESTURES: ReadonlySet<HapticIntent> = new Set<HapticIntent>([
-  'press',
-  'selection',
-  'setCompleted',
-])
+const GESTURES: ReadonlySet<HapticIntent> = new Set<HapticIntent>(['selection', 'setCompleted'])
 
-// Fetched once and kept. A logged workout is hundreds of presses, and
+// Fetched once and kept. A logged workout is hundreds of sets, and
 // re-entering the module graph for each one is the backlog itself.
 let bridge: Promise<typeof import('@capacitor/haptics')> | undefined
 
@@ -51,14 +47,13 @@ export const haptic = (intent: HapticIntent): void => {
   void bridge
     .then(({ Haptics, ImpactStyle, NotificationType }) => {
       switch (intent) {
-        case 'press':
-          return Haptics.impact({ style: ImpactStyle.Light })
         case 'selection':
           return Haptics.selectionChanged()
         // The app's most repeated action, and the one a hand feels for without
-        // looking, so it lands heavier than the tap that opened a menu.
+        // looking, so it lands heavier than a value ticking over.
         case 'setCompleted':
           return Haptics.impact({ style: ImpactStyle.Medium })
+        case 'workoutSaved':
         case 'personalBest':
         case 'restOver':
           return Haptics.notification({ type: NotificationType.Success })

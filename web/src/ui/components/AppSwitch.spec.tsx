@@ -2,11 +2,26 @@
 
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { describe, expect, test, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 import { AppSwitch } from './AppSwitch'
 
+const haptics = vi.hoisted(() => ({ haptic: vi.fn() }))
+vi.mock('@/native/haptics', () => haptics)
+
 describe('AppSwitch', () => {
+  beforeEach(() => {
+    haptics.haptic.mockReset()
+  })
+
+  test('ticks once when it is flipped', async () => {
+    render(<AppSwitch label="Rest timer" checked={false} onChange={vi.fn()} />)
+
+    await userEvent.click(screen.getByRole('switch'))
+
+    expect(haptics.haptic).toHaveBeenCalledExactlyOnceWith('selection')
+  })
+
   test('says whether it is on', () => {
     const { rerender } = render(<AppSwitch label="Rest timer" checked={false} onChange={vi.fn()} />)
     expect(screen.getByRole('switch', { name: 'Rest timer' })).not.toBeChecked()

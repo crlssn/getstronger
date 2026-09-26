@@ -1,5 +1,6 @@
 import { MinusIcon, PlusIcon } from '@heroicons/react/24/outline'
 
+import { haptic } from '@/native/haptics'
 import { cn } from '@/ui/cn'
 import { AppIconButton } from '@/ui/components/AppIconButton'
 import styles from './AppStepper.module.css'
@@ -45,7 +46,12 @@ export const AppStepper = ({
   className,
 }: Props) => {
   const clamp = (next: number) => Math.min(Math.max(Math.round(next), min), max)
-  const nudge = (by: number) => onChange(clamp(value + by))
+  const nudge = (by: number) => {
+    const next = clamp(value + by)
+    if (next === value) return
+    haptic('selection')
+    onChange(next)
+  }
 
   return (
     <div className={cn(styles.stepper, className)}>

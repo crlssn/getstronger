@@ -976,6 +976,7 @@ export const StartWorkout = () => {
       await timedCircuit.clear({ key: recordingKey })
     useConnectionStore.getState().setOnline(false)
     useWorkoutStore.getState().removeWorkout(routineID)
+    haptic('workoutSaved')
     // Saved on the device rather than the server; the offline banner carries
     // the not-yet-synced state while the toast reports the save itself.
     useToastStore.getState().success(t('workout.savedOffline'))
@@ -1037,6 +1038,7 @@ export const StartWorkout = () => {
         logged_set_count: loggedSetCount(entries),
         workout_type: quickWorkout ? 'quick' : 'routine',
       })
+      haptic('workoutSaved')
       useToastStore.getState().success(t('workout.saved'))
       await openSavedWorkout(workoutId)
     } catch (error) {

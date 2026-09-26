@@ -2,11 +2,48 @@
 
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { describe, expect, test, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 import { AppOptionRow } from './AppOptionRow'
 
+const haptics = vi.hoisted(() => ({ haptic: vi.fn() }))
+vi.mock('@/native/haptics', () => haptics)
+
 describe('AppOptionRow', () => {
+  beforeEach(() => {
+    haptics.haptic.mockReset()
+  })
+
+  test('ticks once when an unchosen option is chosen', async () => {
+    render(
+      <AppOptionRow selected={false} onClick={vi.fn()}>
+        Bench Press
+      </AppOptionRow>,
+    )
+
+    await userEvent.click(screen.getByRole('button'))
+
+    expect(haptics.haptic).toHaveBeenCalledExactlyOnceWith('selection')
+  })
+
+  // A row that picks and closes is navigation, and the chosen row is already
+  // the value: neither changes anything a finger should feel.
+  test('stays still for a picking row and for the chosen one', async () => {
+    const onClick = vi.fn()
+    const { rerender } = render(<AppOptionRow onClick={onClick}>Bench Press</AppOptionRow>)
+    await userEvent.click(screen.getByRole('button'))
+
+    rerender(
+      <AppOptionRow selected onClick={onClick}>
+        Bench Press
+      </AppOptionRow>,
+    )
+    await userEvent.click(screen.getByRole('button'))
+
+    expect(onClick).toHaveBeenCalledTimes(2)
+    expect(haptics.haptic).not.toHaveBeenCalled()
+  })
+
   test('picks the option it was pressed on', async () => {
     const onClick = vi.fn()
     render(<AppOptionRow onClick={onClick}>Bench Press</AppOptionRow>)
