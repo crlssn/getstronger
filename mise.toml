@@ -239,6 +239,12 @@ run = [
     "npm run test:unit -- --run",
 ]
 
+[tasks."test:web:coverage"]
+alias = "test_web_coverage"
+description = "Run the web unit tests with coverage, as CI enforces it"
+dir = "web"
+run = "npm run test:unit -- --run --coverage"
+
 [tasks."test:backend"]
 alias = "test_backend"
 description = "Run backend tests"

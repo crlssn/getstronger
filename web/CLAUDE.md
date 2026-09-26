@@ -25,20 +25,10 @@ To see the app rather than reason about its markup — screenshots, accessibilit
 and tap-target measurements, visual diffs — follow
 `.claude/skills/design-review/SKILL.md`.
 
-Any change that alters what a page looks like ends with the page itself, before
-and after, shared in the reply rather than only written to disk, so the change
-is judged by looking at it. A set is keyed by the ref it was photographed on, so
-the before is another ref's: photograph `main` once — `git switch main`,
-`mise run screenshots`, `git switch -` — and it survives every run on this
-branch. Then run `mise run screenshots:diff <pattern>` once the change is in
-place: it leaves the new image in `web/screenshots/<ref>/`, a highlighted
-difference in `web/screenshots/<ref>/changes/`, and names both sets it compared.
-Attach all three images.
-
-A change that becomes a pull request puts the same evidence in its body with
-`mise run pr:screenshots <number> --append`, which publishes the images and
-appends a before, after and difference table. The review happens on GitHub, so a
-reply alone leaves the reviewer nothing to look at.
+Any change that alters what a page looks like ends with the page before, after,
+and the highlighted difference: attached to the reply, and in the pull request
+body once there is one. The review happens on GitHub, so a reply alone leaves
+the reviewer nothing to look at. The design-review skill has the commands.
 
 A page the change adds has no before, and a change with no visible effect —
 refactors, state, tests, tooling — needs no screenshot at all; neither does one
@@ -131,7 +121,7 @@ which is the context every screen has in the real app.
 — that is what `utils/appendPage.ts` exists for, and it is what caught a page of
 results being appended twice.
 
-Coverage is reported by `npm run test:unit -- --run --coverage` and enforced in
+Coverage is reported by `mise run test:web:coverage` and enforced in
 CI; it sits above 95% statements. `src/proto`, `src/main.tsx` and the specs are
 excluded.
 
