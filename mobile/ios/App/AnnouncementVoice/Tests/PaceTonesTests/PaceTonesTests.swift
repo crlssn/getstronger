@@ -2,7 +2,6 @@ import XCTest
 
 @testable import PaceTones
 
-/// Where the fade has run its course and the sample is the wave alone.
 private let sampleRate = 44100.0
 
 final class ToneSamplesTests: XCTestCase {

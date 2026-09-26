@@ -178,11 +178,10 @@ test.describe('settings', () => {
   })
 
   // A note is the one thing a row of copy cannot describe, so each is offered
-  // under its own name below the choice rather than spoken as a word. It is
-  // sounded through the recorder rather than by the page, which is what lets
-  // a phone put it on the audio session a run is heard on — so the level it
-  // arrives at is the recorder's, not the screen's.
-  test('sounds each pace note from a button of its own, as loudly as a run does', async ({
+  // under its own name below the choice rather than spoken as a word. A
+  // browser sounds it through its own recorder, so this pins the browser's
+  // levels only; the phones' native examples are not reached from here.
+  test('sounds each pace note from a button of its own, at the level the recorder sets', async ({
     page,
   }) => {
     type Sounded = Window & { sounded?: number[]; peaks?: number[] }

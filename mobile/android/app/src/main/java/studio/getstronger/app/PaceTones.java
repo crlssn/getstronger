@@ -29,8 +29,9 @@ final class PaceTones {
      * counting, which needs no ear at all.
      */
     private static final class Shape {
+        final double hertz;
         /** How long one beep lasts, and the silence between them, in seconds. */
-        final double hertz, seconds, gapSeconds;
+        final double seconds, gapSeconds;
         /** How many beeps the note is made of. */
         final int beeps;
         /** How loud, as a fraction of the level the note is played at. */
@@ -52,10 +53,10 @@ final class PaceTones {
     private static final double FADE_SECONDS = 0.01;
 
     /**
-     * One note as a track of silence with the shape's beeps written into it,
-     * generated rather than shipped; a name nothing sounds gives back null.
+     * One note as silence with the shape's beeps written into it, generated
+     * rather than shipped; a name nothing sounds gives back null.
      */
-    static AudioTrack note(String zone) {
+    static short[] samples(String zone) {
         Shape shape = zone.equals("ahead") ? AHEAD : zone.equals("behind") ? BEHIND : null;
         if (shape == null) return null;
         int beepFrames = (int) (RATE * shape.seconds);
@@ -72,6 +73,13 @@ final class PaceTones {
                 samples[start + frame] = (short) (wave * Short.MAX_VALUE * fade * shape.level);
             }
         }
+        return samples;
+    }
+
+    /** One note as a track ready to play; a name nothing sounds gives back null. */
+    static AudioTrack note(String zone) {
+        short[] samples = samples(zone);
+        if (samples == null) return null;
         AudioTrack track = new AudioTrack.Builder()
             // Media rather than a system sound: the note follows the volume
             // the announcements play at, not the one the ringer is set to.

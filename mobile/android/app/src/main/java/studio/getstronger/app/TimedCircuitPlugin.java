@@ -24,8 +24,8 @@ public class TimedCircuitPlugin extends Plugin {
     private boolean exampleReady;
     /** The example that asked for the engine, waiting for it to come up. */
     private Runnable pending;
-    /** The two notes the examples sound, built on the first tap and kept. */
-    private AudioTrack aheadExample, behindExample;
+    /** The example note sounding now, released when it ends or the next tap cuts it off. */
+    private AudioTrack example;
     @PluginMethod public void start(PluginCall call) {
         if (getPermissionState("location") != PermissionState.GRANTED) {
             requestPermissionForAlias("location", call, "locationPermission");
@@ -107,15 +107,25 @@ public class TimedCircuitPlugin extends Plugin {
         double level = Math.min(volume, 1);
         getActivity().runOnUiThread(() -> {
             try {
-                // Built on the first tap rather than with the app: a note
-                // nobody asks for is memory nobody needed. A name the two
-                // buttons never send builds nothing at all.
-                if (tone.equals("ahead") && aheadExample == null) aheadExample = PaceTones.note(tone);
-                if (tone.equals("behind") && behindExample == null) behindExample = PaceTones.note(tone);
-                PaceTones.play(tone.equals("ahead") ? aheadExample : behindExample, level);
+                // A second tap cuts the first note off, as it does on iOS,
+                // rather than sounding both over each other.
+                releaseExample();
+                AudioTrack track = PaceTones.note(tone);
+                if (track != null) {
+                    example = track;
+                    track.setNotificationMarkerPosition(track.getBufferSizeInFrames());
+                    track.setPlaybackPositionUpdateListener(new AudioTrack.OnPlaybackPositionUpdateListener() {
+                        @Override public void onMarkerReached(AudioTrack ended) { if (ended == example) releaseExample(); }
+                        @Override public void onPeriodicNotification(AudioTrack ended) {}
+                    });
+                    PaceTones.play(track, level);
+                }
                 call.resolve();
             } catch (Exception error) { call.reject("The example could not be sounded", error); }
         });
+    }
+    private void releaseExample() {
+        if (example != null) { example.release(); example = null; }
     }
     /** Started on the first example rather than with the app: an engine nobody asks for is memory nobody needed. */
     private void start() {
@@ -138,8 +148,7 @@ public class TimedCircuitPlugin extends Plugin {
         if (examples != null) { examples.stop(); examples.shutdown(); examples = null; }
         exampleReady = false;
         pending = null;
-        if (aheadExample != null) { aheadExample.release(); aheadExample = null; }
-        if (behindExample != null) { behindExample.release(); behindExample = null; }
+        releaseExample();
         super.handleOnDestroy();
     }
     private void command(PluginCall call, String action) {
