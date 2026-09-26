@@ -361,6 +361,15 @@ run = [
     'echo "Open the contact sheet with: mise run screenshots:open"',
 ]
 
+[tasks.promo]
+description = "Render the 30 s product film into promo/out/ from the latest screenshot set"
+# Needs a set from 'mise run screenshots'. Playwright comes from web/node_modules;
+# three.js is promo's own dependency, so the app's package.json stays untouched.
+run = [
+    "cd promo && npm ci --no-audit --no-fund",
+    "cd promo && node music.mjs && node render.mjs video && node finish.mjs",
+]
+
 [tasks."screenshots:page"]
 description = "Re-capture the pages whose name matches a pattern, keeping the rest of the set"
 usage = 'arg "<pattern>" help="Matched against page names, for example routine or \"active home\""'
