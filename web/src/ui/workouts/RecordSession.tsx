@@ -82,6 +82,9 @@ export const RecordSession = () => {
   const autoPause = usePreferencesStore((state) => state.autoPause)
 
   const [exercise, setExercise] = useState<Exercise>()
+  // Answered, even with nothing: one that cannot be fetched is asked for when
+  // the session ends, as a blank session's is.
+  const [exerciseRead, setExerciseRead] = useState(false)
   const [recording, setRecording] = useState<Recording>()
   const [now, setNow] = useState(() => Date.now())
   const [error, setError] = useState('')
@@ -89,6 +92,10 @@ export const RecordSession = () => {
   const [saving, setSaving] = useState(false)
   // A save the server refused, waiting for the athlete to ask again.
   const [refused, setRefused] = useState(false)
+  // Whether the recorder has been asked what it is already keeping. The
+  // session starts itself, and one already under way is picked up rather than
+  // written over.
+  const [checked, setChecked] = useState(false)
 
   const savedWorkoutId = useRef('')
   // The phone answers every read with a fresh recording, so an effect that
@@ -108,7 +115,9 @@ export const RecordSession = () => {
     if (!requestedExercise) return
     let disposed = false
     void getExercise(requestedExercise).then((res) => {
-      if (!disposed && res?.exercise) setExercise(res.exercise)
+      if (disposed) return
+      if (res?.exercise) setExercise(res.exercise)
+      setExerciseRead(true)
     })
     return () => {
       disposed = true
@@ -132,6 +141,7 @@ export const RecordSession = () => {
         if (!disposed) setError(t('timedCircuit.failed'))
       } finally {
         reading = false
+        if (!disposed) setChecked(true)
       }
     }
     void read()
@@ -143,7 +153,13 @@ export const RecordSession = () => {
   }, [key, t])
 
   const title = exercise?.name ?? t('record.session')
-  const start = async () => {
+  // The interval is named once, when it starts, so nothing starts it before
+  // the exercise it was opened from has answered.
+  const naming = Boolean(requestedExercise) && !exerciseRead
+  // Set by any start, tapped or not, so the screen never lays a second over it.
+  const started = useRef(false)
+  const start = useCallback(async () => {
+    started.current = true
     setBusy(true)
     setError('')
     try {
@@ -173,7 +189,16 @@ export const RecordSession = () => {
     } finally {
       setBusy(false)
     }
-  }
+  }, [key, title, exercise, i18n.language, cueLeadSeconds, distanceUnit, autoPause, t])
+
+  // Opening the screen is the whole of asking for the session, so it runs from
+  // the moment the screen appears. One the recorder is already keeping is
+  // picked up rather than written over, and an exercise the session was opened
+  // from is waited for.
+  useEffect(() => {
+    if (!checked || naming || started.current || recording) return
+    void start()
+  }, [checked, naming, recording, start])
 
   const command = async (kind: 'pause' | 'resume' | 'finish') => {
     setBusy(true)
@@ -189,14 +214,20 @@ export const RecordSession = () => {
     }
   }
 
+  // Asked only where there is something to lose: the session starts itself,
+  // so this exit is now within seconds of a recording the athlete never tapped
+  // to start. A finished run always is something to lose.
   const discard = async () => {
-    const confirmed = await useConfirmationStore.getState().confirm({
-      body: t('timedCircuit.discardBody'),
-      cancelLabel: t('timedCircuit.discardKeep'),
-      confirmLabel: t('timedCircuit.discardConfirm'),
-      destructive: true,
-      title: t('timedCircuit.discardTitle'),
-    })
+    const recorded = Boolean(recording?.endedAt) || (recording?.points.length ?? 0) > 0
+    const confirmed =
+      !recorded ||
+      (await useConfirmationStore.getState().confirm({
+        body: t('timedCircuit.discardBody'),
+        cancelLabel: t('timedCircuit.discardKeep'),
+        confirmLabel: t('timedCircuit.discardConfirm'),
+        destructive: true,
+        title: t('timedCircuit.discardTitle'),
+      }))
     if (!confirmed) return
     await timedCircuit.clear({ key })
     await navigate('/home', { replace: true })
@@ -430,7 +461,7 @@ export const RecordSession = () => {
           type="button"
           colour="primary"
           size="lg"
-          disabled={busy || ended}
+          disabled={busy || ended || (!recording && naming)}
           onClick={() => void (recording ? command(openPause ? 'resume' : 'pause') : start())}
         >
           {t(
@@ -461,8 +492,9 @@ export const RecordSession = () => {
             </AppButton>
           </div>
         ) : (
-          /* Nothing to end or discard yet, so the way out is the way back. */
-          <AppButton type="link" colour="ghost" to="/home">
+          /* Nothing to end or discard yet, so the way out is the way back —
+             replacing this screen, which Back would reopen and start again. */
+          <AppButton type="link" colour="ghost" to="/home" replace>
             {t('common.cancel')}
           </AppButton>
         )}

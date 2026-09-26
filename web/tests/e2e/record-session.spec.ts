@@ -74,6 +74,12 @@ const creepOn = async (page: Parameters<typeof logIn>[0], from: number) => {
   }
 }
 
+// The session starts itself as the screen opens, so every test below waits
+// for the recording rather than tapping anything to begin it.
+const recording = async (page: Parameters<typeof logIn>[0]) => {
+  await expect(page.getByRole('button', { name: 'Pause', exact: true })).toBeVisible()
+}
+
 /** The ground the recording screen says has been covered, in metres. */
 const sessionMetres = async (page: Parameters<typeof logIn>[0]) => {
   const reading = await page.getByText('Distance', { exact: true }).locator('..').textContent()
@@ -99,9 +105,10 @@ test.describe('a session with no set length', () => {
 
     await page.getByRole('link', { name: /Record a session/ }).click()
     await expect(page).toHaveURL(/\/record$/)
-    // The session opens on the screen it is run on, with nothing to confirm.
+    // The session opens on the screen it is run on, and starts with it: there
+    // is nothing to confirm and nothing to tap.
     await expect(page.getByText('Active time')).toBeVisible()
-    await page.getByRole('button', { name: 'Start', exact: true }).click()
+    await recording(page)
 
     // No countdown and no round: the clock counts up and says why.
     await expect(page.getByText('Active time')).toBeVisible()
@@ -156,7 +163,7 @@ test.describe('a session with no set length', () => {
     await page.getByRole('button', { name: '20 seconds before the end' }).click()
 
     await page.goto('/record')
-    await page.getByRole('button', { name: 'Start', exact: true }).click()
+    await recording(page)
     await expect(page.getByText('Active time')).toBeVisible()
 
     const saved = await page.evaluate(() => localStorage.getItem('getstronger:timed-circuit'))
@@ -177,7 +184,7 @@ test.describe('a session with no set length', () => {
     await expect(page).toHaveURL(/\/record\?exercise=[0-9a-f-]+$/)
     // The exercise came with it, so the screen is already named for it.
     await expect(page.getByRole('heading', { name: 'Run', exact: true })).toBeVisible()
-    await page.getByRole('button', { name: 'Start', exact: true }).click()
+    await recording(page)
     await walkTheRoute(page)
 
     await page.getByRole('button', { name: 'End session' }).click()
@@ -205,7 +212,7 @@ test.describe('a session with no set length', () => {
     await expect(page.getByRole('status')).toContainText('Auto-pause updated')
 
     await page.goto('/record')
-    await page.getByRole('button', { name: 'Start', exact: true }).click()
+    await recording(page)
     await walkTheRoute(page)
     await standStill(page)
     await expect(page.getByText('Auto-paused')).toBeVisible()
@@ -238,7 +245,7 @@ test.describe('a session with no set length', () => {
     await expect(page.getByRole('status')).toContainText('Auto-pause updated')
 
     await page.goto('/record')
-    await page.getByRole('button', { name: 'Start', exact: true }).click()
+    await recording(page)
     await walkTheRoute(page)
     await expect(page.getByText('Auto-paused')).toHaveCount(0)
 
@@ -285,7 +292,7 @@ test.describe('a session with no set length', () => {
     })
 
     await page.goto('/record')
-    await page.getByRole('button', { name: 'Start', exact: true }).click()
+    await recording(page)
     await page.getByRole('button', { name: 'End session' }).click()
 
     const sheet = page.getByRole('dialog', { name: 'What was this?' })

@@ -38,7 +38,14 @@ export default defineConfig({
   // The one spec that photographs; the harness beside it is unit tested.
   testMatch: 'capture.spec.ts',
   timeout: 60_000,
-  use: { baseURL },
+  // A session with no set length runs from the moment its page opens, so the
+  // page a refused browser photographs is a permission error rather than the
+  // screen. Somewhere in Stockholm, fixed, so the run stays repeatable.
+  use: {
+    baseURL,
+    geolocation: { latitude: 59.3326, longitude: 18.0649 },
+    permissions: ['geolocation'],
+  },
   webServer: [
     {
       command: process.env.CI ? 'go run ./server/cmd/main.go' : 'mise run app:backend',

@@ -6,7 +6,7 @@ import { create } from '@bufbuild/protobuf'
 import { Code, ConnectError } from '@connectrpc/connect'
 import { act, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { Route, Routes } from 'react-router-dom'
+import { Route, Routes, useNavigationType } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
 vi.mock('@/http/requests', async (importOriginal) => ({
@@ -113,6 +113,9 @@ const currentUser = (
   }> = {},
 ) => create(GetUserResponseSchema, { user: { weightUnit, ...extra } })
 
+// Says how it was reached: a pushed tab leaves the workout one Back away.
+const WorkoutTab = () => <p>workout tab, {useNavigationType()}</p>
+
 const mountWorkout = (route = `/workouts/routine/${routineID}`) =>
   renderWithProviders(
     <Routes>
@@ -120,7 +123,7 @@ const mountWorkout = (route = `/workouts/routine/${routineID}`) =>
       <Route path="/workouts/quick" element={<StartWorkout />} />
       <Route path="/workouts/:id" element={<p>saved workout</p>} />
       <Route path="/home" element={<p>home</p>} />
-      <Route path="/workout" element={<p>workout tab</p>} />
+      <Route path="/workout" element={<WorkoutTab />} />
       <Route path="/routines" element={<p>routines</p>} />
     </Routes>,
     { route },
@@ -304,7 +307,7 @@ describe('StartWorkout', () => {
       expect(screen.getByRole('heading', { name: 'Delete this workout?' })).toBeInTheDocument()
       await user.click(screen.getByRole('button', { name: 'Discard workout' }))
 
-      expect(screen.getByText('workout tab')).toBeInTheDocument()
+      expect(screen.getByText('workout tab, REPLACE')).toBeInTheDocument()
       expect(useWorkoutStore.getState().workouts[routineID]).toBeUndefined()
     })
   })
@@ -1356,6 +1359,7 @@ describe('StartWorkout', () => {
     beforeEach(() => {
       native.enabled = true
       vi.mocked(timedCircuit.read).mockReset().mockResolvedValue({})
+      vi.mocked(timedCircuit.start).mockReset().mockResolvedValue(undefined)
       vi.mocked(timedCircuit.clear).mockReset().mockResolvedValue(undefined)
       mocked.getRoutine.mockResolvedValue(timedRoutine())
     })
@@ -1373,10 +1377,9 @@ describe('StartWorkout', () => {
       // routine's own name is not on it.
       await renderWorkout(undefined, 'Bench Press')
 
-      // Opened on, not started: nothing is asked of the phone until the
-      // athlete taps, and the ordinary form is one tap the other way.
-      expect(await screen.findByRole('button', { name: 'Start live session' })).toBeInTheDocument()
-      expect(timedCircuit.start).not.toHaveBeenCalled()
+      // Opened on and started with it: the athlete asked for the session by
+      // opening the routine, and the ordinary form is one tap the other way.
+      await waitFor(() => expect(timedCircuit.start).toHaveBeenCalledOnce())
 
       await user.click(screen.getByRole('button', { name: 'Fill in manually' }))
       // The form is reached for the first time here, so its sets are written
@@ -1398,22 +1401,41 @@ describe('StartWorkout', () => {
       await waitFor(() => expect(requests.getPaceReference).toHaveBeenCalled())
     })
 
+    // The comparison is handed over when the recording starts and cannot be
+    // handed over afterwards, so a session that starts itself waits for it.
+    test('starts with the session it is paced against rather than ahead of it', async () => {
+      let answer = (): void => undefined
+      vi.mocked(requests.getPaceReference).mockReturnValue(
+        new Promise((resolve) => {
+          answer = () => resolve(undefined)
+        }),
+      )
+      vi.mocked(timedCircuit.start).mockResolvedValue(undefined)
+      usePreferencesStore.getState().setPaceReference('previous')
+      await renderWorkout(undefined, 'Bench Press')
+
+      await waitFor(() => expect(requests.getPaceReference).toHaveBeenCalled())
+      expect(timedCircuit.start).not.toHaveBeenCalled()
+
+      answer()
+      await waitFor(() => expect(timedCircuit.start).toHaveBeenCalledOnce())
+    })
+
     // The phone reads each phase out as it starts, so the prescription is
     // frozen in the words a synthesiser should say rather than in a count of
     // seconds the runner has to convert mid-stride.
     test('freezes each phase in spoken units', async () => {
-      const user = userEvent.setup()
       vi.mocked(timedCircuit.start).mockResolvedValue(undefined)
       await renderWorkout(undefined, 'Bench Press')
 
-      await user.click(screen.getByRole('button', { name: 'Start live session' }))
-
-      expect(timedCircuit.start).toHaveBeenCalledWith(
-        expect.objectContaining({
-          phases: expect.arrayContaining([
-            expect.objectContaining({ instruction: 'Bench Press for 1 minute' }),
-          ]),
-        }),
+      await waitFor(() =>
+        expect(timedCircuit.start).toHaveBeenCalledWith(
+          expect.objectContaining({
+            phases: expect.arrayContaining([
+              expect.objectContaining({ instruction: 'Bench Press for 1 minute' }),
+            ]),
+          }),
+        ),
       )
     })
 
@@ -1478,7 +1500,9 @@ describe('StartWorkout', () => {
       await waitFor(() => expect(useConfirmationStore.getState().confirmation).not.toBeNull())
       useConfirmationStore.getState().accept()
 
-      expect(await screen.findByText('workout tab')).toBeInTheDocument()
+      // Replaced rather than pushed: Back would reopen the routine with no
+      // workout, which starts a fresh session on its own.
+      expect(await screen.findByText('workout tab, REPLACE')).toBeInTheDocument()
       expect(useWorkoutStore.getState().workouts[routineID]).toBeUndefined()
     })
   })

@@ -285,6 +285,9 @@ export const StartWorkout = () => {
   // The session this one is measured against, or nothing where the routine has
   // never been recorded.
   const [reference, setReference] = useState<Recording>()
+  // Whether that fetch has answered — a routine recorded for the first time
+  // answers with nothing, which is not the same as not having answered.
+  const [referenceRead, setReferenceRead] = useState(false)
   const [previousSets, setPreviousSets] = useState<ExerciseSets[]>([])
   const [activeStationIndex, setActiveStationIndex] = useState(0)
   // The round each circuit has open, by block. Unset, a block opens on the
@@ -338,26 +341,35 @@ export const StartWorkout = () => {
       ),
     [session?.groups, t],
   )
-  // Asked for as the screen opens rather than when recording starts: the
-  // recorder is handed the whole comparison at the first interval, and by then
-  // the athlete is already moving.
+  // Off is nothing fetched rather than something fetched and ignored, and a
+  // session with nothing to fetch has nothing to wait for.
+  const comparable =
+    Capacitor.isNativePlatform() && !quickWorkout && phases.length > 0 && paceReference !== 'off'
+  // Asked for as the screen opens rather than when recording starts, which is
+  // what lets the recorder be handed the whole comparison at the first
+  // interval — the session now starts itself, so that is immediately.
   useEffect(() => {
-    // Off is nothing fetched rather than something fetched and ignored.
-    if (!Capacitor.isNativePlatform() || quickWorkout || !phases.length) return
-    if (paceReference === 'off') return
+    if (!comparable) return
     let disposed = false
     void getPaceReference(routineID, paceReferenceRequested(paceReference)).then((res) => {
-      if (!disposed) setReference(parseRecording(res?.recordingJson))
+      if (disposed) return
+      setReference(parseRecording(res?.recordingJson))
+      setReferenceRead(true)
     })
     return () => {
       disposed = true
     }
-  }, [routineID, quickWorkout, phases.length, paceReference])
+  }, [routineID, comparable, paceReference])
   // Turned off, the recorder is handed no targets, and sounds none — even
-  // against a session fetched before the switch was flipped.
+  // against a session fetched before the switch was flipped. Absent until the
+  // comparison has been fetched: the recorder cannot be handed it afterwards,
+  // so a session that starts itself waits for it.
   const pacing = useMemo(
-    () => pacingFor(phases, paceReference === 'off' ? undefined : reference),
-    [phases, reference, paceReference],
+    () =>
+      comparable && !referenceRead
+        ? undefined
+        : pacingFor(phases, paceReference === 'off' ? undefined : reference),
+    [phases, reference, paceReference, comparable, referenceRead],
   )
   const recordingComplete = useCallback(
     (recording: Recording) => {
@@ -1244,10 +1256,11 @@ export const StartWorkout = () => {
           }}
           // Leaving, not changing your mind about how to log it: handing back
           // the routine's empty form reads as the app asking the athlete to
-          // type up the session it has just thrown away.
+          // type up the session it has just thrown away. Replaced, since Back
+          // would reopen the routine with no workout and start a new session.
           onDiscard={() => {
             useWorkoutStore.getState().removeWorkout(routineID)
-            void navigate('/workout')
+            void navigate('/workout', { replace: true })
           }}
           // Handed to the recorder rather than rendered under it: the review
           // screen owns the order the two exits are read in.
@@ -1664,7 +1677,8 @@ export const StartWorkout = () => {
                   onClick={() => {
                     useWorkoutStore.getState().removeWorkout(routineID)
                     closeLeaveDialog()
-                    void navigate('/workout')
+                    // Replaced: Back would reopen a timed routine live again.
+                    void navigate('/workout', { replace: true })
                   }}
                 >
                   <TrashIcon aria-hidden="true" /> {t('workout.discard')}

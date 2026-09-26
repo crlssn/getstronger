@@ -1,13 +1,15 @@
 import type { Recording } from '@/utils/timedCircuit'
 
 import { create } from '@bufbuild/protobuf'
-import { screen, waitFor } from '@testing-library/react'
+import { act, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { Route, Routes, useNavigationType } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { createWorkout, getExercise, listExercises, listWorkouts } from '@/http/requests'
 import { timedCircuit } from '@/native/timedCircuit'
 import { ExerciseMetric, ExerciseSchema } from '@/proto/api/v1/shared_pb'
+import { useConfirmationStore } from '@/stores/confirmation'
 import { renderWithProviders } from '@/ui/testing'
 import { RecordSession } from './RecordSession'
 
@@ -72,22 +74,23 @@ describe('RecordSession', () => {
     vi.useFakeTimers({ shouldAdvanceTime: true })
     vi.setSystemTime(1_120_000)
     vi.mocked(timedCircuit.read).mockResolvedValue({})
+    useConfirmationStore.setState({ confirmation: null, resolver: null })
     vi.mocked(listExercises).mockResolvedValue({ exercises: [bike] } as never)
     vi.mocked(listWorkouts).mockResolvedValue({ workouts: [] } as never)
   })
 
   it('starts an open interval and counts up without a countdown or a round', async () => {
-    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
     renderWithProviders(<RecordSession />)
 
-    // No page in front of the session: the clock is on the screen before the
-    // first tap, at nothing, and the tap that starts it is on that screen.
+    // No page in front of the session and no tap either: opening the screen is
+    // the whole of asking for it.
     expect(await screen.findByText('Active time')).toBeVisible()
-    await user.click(screen.getByRole('button', { name: 'Start' }))
-    expect(timedCircuit.start).toHaveBeenCalledWith(
-      expect.objectContaining({
-        phases: [expect.not.objectContaining({ durationSeconds: expect.anything() })],
-      }),
+    await waitFor(() =>
+      expect(timedCircuit.start).toHaveBeenCalledWith(
+        expect.objectContaining({
+          phases: [expect.not.objectContaining({ durationSeconds: expect.anything() })],
+        }),
+      ),
     )
 
     vi.mocked(timedCircuit.read).mockResolvedValue({ recording: recorded() })
@@ -163,11 +166,130 @@ describe('RecordSession', () => {
   })
 
   it('reads location refusal as a reason rather than as a recording failure', async () => {
-    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
     vi.mocked(timedCircuit.start).mockRejectedValue(new Error('LOCATION_DENIED'))
     renderWithProviders(<RecordSession />)
 
+    expect(await screen.findByRole('alert')).toHaveTextContent('Location access is needed')
+    // Refused, the screen is back where it used to open: the session is the
+    // athlete's to start once location is theirs to give.
+    expect(screen.getByRole('button', { name: 'Start' })).toBeVisible()
+  })
+
+  // The recorder keeps the recording, so a screen reopened mid-session finds
+  // one already running: starting again would lay a second over the first.
+  it('picks up a recording already running rather than starting another', async () => {
+    vi.mocked(timedCircuit.read).mockResolvedValue({ recording: recorded() })
+    renderWithProviders(<RecordSession />)
+
+    expect(await screen.findByText('Active time')).toBeVisible()
+    expect(timedCircuit.start).not.toHaveBeenCalled()
+    expect(screen.getByRole('button', { name: 'Pause' })).toBeVisible()
+  })
+
+  // The interval is named when the session starts and the exercise is fetched
+  // after the screen opens, so starting itself waits for the name.
+  it('waits for the exercise it was opened from before starting', async () => {
+    vi.mocked(getExercise).mockResolvedValue({ exercise: bike } as never)
+    renderWithProviders(<RecordSession />, { route: '/record?exercise=bike' })
+
+    await waitFor(() =>
+      expect(timedCircuit.start).toHaveBeenCalledWith(
+        expect.objectContaining({
+          phases: [expect.objectContaining({ exerciseId: 'bike', name: 'Bike commute' })],
+        }),
+      ),
+    )
+    expect(timedCircuit.start).toHaveBeenCalledOnce()
+  })
+
+  // Nor can a tap start it unnamed while the exercise is still on its way.
+  it('keeps Start shut while the exercise it was opened from loads', async () => {
+    vi.mocked(getExercise).mockReturnValue(new Promise(() => undefined))
+    renderWithProviders(<RecordSession />, { route: '/record?exercise=bike' })
+
+    expect(await screen.findByRole('button', { name: 'Start' })).toBeDisabled()
+    expect(timedCircuit.start).not.toHaveBeenCalled()
+  })
+
+  // An exercise that cannot be fetched is asked for when the session ends,
+  // as a blank session's is, rather than holding the start forever.
+  it('starts unnamed when the exercise it was opened from cannot be fetched', async () => {
+    vi.mocked(getExercise).mockResolvedValue(undefined)
+    renderWithProviders(<RecordSession />, { route: '/record?exercise=bike' })
+
+    await waitFor(() =>
+      expect(timedCircuit.start).toHaveBeenCalledWith(
+        expect.objectContaining({ phases: [expect.objectContaining({ name: 'Session' })] }),
+      ),
+    )
+  })
+
+  // A tap before the recorder has answered is the start; the screen does not
+  // start a second one over it once the answer arrives.
+  it('starts once when tapped before the recorder has answered', async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
+    let answer = (): void => undefined
+    vi.mocked(timedCircuit.read).mockReturnValueOnce(
+      new Promise((resolve) => {
+        answer = () => resolve({})
+      }),
+    )
+    vi.mocked(timedCircuit.start).mockResolvedValue(undefined)
+    renderWithProviders(<RecordSession />)
+
     await user.click(await screen.findByRole('button', { name: 'Start' }))
-    expect(screen.getByRole('alert')).toHaveTextContent('Location access is needed')
+    await act(async () => answer())
+
+    expect(timedCircuit.start).toHaveBeenCalledOnce()
+  })
+
+  // Back from home would reopen the screen and ask for location again.
+  it('leaves a refused session by replacing it', async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
+    vi.mocked(timedCircuit.start).mockRejectedValue(new Error('LOCATION_DENIED'))
+    const Home = () => <p>home, {useNavigationType()}</p>
+    renderWithProviders(
+      <Routes>
+        <Route path="/record" element={<RecordSession />} />
+        <Route path="/home" element={<Home />} />
+      </Routes>,
+      { route: '/record' },
+    )
+
+    await screen.findByRole('alert')
+    await user.click(screen.getByRole('link', { name: 'Cancel' }))
+    expect(await screen.findByText('home, REPLACE')).toBeVisible()
+  })
+
+  // Discard is now within seconds of a recording the athlete never asked to
+  // start, and nothing measured is nothing to lose.
+  it('leaves without a question while nothing has been recorded', async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
+    vi.mocked(timedCircuit.read).mockResolvedValue({ recording: recorded({ points: [] }) })
+    vi.mocked(timedCircuit.clear).mockResolvedValue(undefined)
+    renderWithProviders(<RecordSession />)
+
+    await user.click(await screen.findByRole('button', { name: 'Discard' }))
+    await waitFor(() => expect(navigate).toHaveBeenCalledWith('/home', { replace: true }))
+    expect(useConfirmationStore.getState().confirmation).toBeNull()
+    expect(timedCircuit.clear).toHaveBeenCalledOnce()
+  })
+
+  // A route already measured is not thrown away on a tap.
+  it('asks before discarding a recording with something in it', async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
+    vi.mocked(timedCircuit.read).mockResolvedValue({ recording: recorded() })
+    vi.mocked(timedCircuit.clear).mockResolvedValue(undefined)
+    renderWithProviders(<RecordSession />)
+
+    await user.click(await screen.findByRole('button', { name: 'Discard' }))
+    await waitFor(() => expect(useConfirmationStore.getState().confirmation).not.toBeNull())
+    useConfirmationStore.getState().dismiss()
+    expect(timedCircuit.clear).not.toHaveBeenCalled()
+
+    await user.click(screen.getByRole('button', { name: 'Discard' }))
+    await waitFor(() => expect(useConfirmationStore.getState().confirmation).not.toBeNull())
+    useConfirmationStore.getState().accept()
+    await waitFor(() => expect(navigate).toHaveBeenCalledWith('/home', { replace: true }))
   })
 })
