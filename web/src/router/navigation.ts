@@ -19,6 +19,13 @@ export const setNavigator = (fn: Navigate | undefined) => {
 export const currentPath = () => (typeof window === 'undefined' ? '/' : window.location.pathname)
 
 /**
+ * Where the current history entry sits among those the app pushed, 0 when it
+ * was opened from a link. React Router numbers the entries it pushed;
+ * history.state is otherwise any.
+ */
+export const historyIndex = () => ((window.history.state ?? {}) as { idx?: number }).idx ?? 0
+
+/**
  * Navigates within the app, falling back to a document load.
  *
  * A redirect can be triggered by a request that a route loader fired before the

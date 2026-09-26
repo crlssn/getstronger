@@ -1,5 +1,7 @@
 import type { RouteAccess } from '@/router/routes'
+import type { RouterState } from 'react-router-dom'
 
+import { historyIndex } from '@/router/navigation'
 import { useActionButton } from '@/stores/actionButton'
 import { useAuthStore } from '@/stores/auth'
 import { usePageTitleStore } from '@/stores/pageTitle'
@@ -51,7 +53,15 @@ export const onNavigate = () => {
  * the screen set its own.
  */
 export const applyPageTitle = (titleKey?: string) => {
-  // enterPage rather than setPageTitle: this runs once per navigation, which is
-  // exactly when the screen being left becomes the one back is named after.
   usePageTitleStore.getState().enterPage(titleKey)
+}
+
+/**
+ * Files the title under the history entry a navigation landed on, which is
+ * what names the back row on the entry after it. Runs from the router's
+ * subscription: the loader is too early, because mid-push the browser is still
+ * on the entry being left.
+ */
+export const fileTitle = (state: Pick<RouterState, 'navigation'>) => {
+  if (state.navigation.state === 'idle') usePageTitleStore.getState().arrive(historyIndex())
 }

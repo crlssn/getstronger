@@ -3,7 +3,6 @@ import type { ExerciseFormValues } from '@/ui/exercises/ExerciseForm'
 import { create } from '@bufbuild/protobuf'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useNavigate } from 'react-router-dom'
 
 import { consumeRequestError, createExercise } from '@/http/requests'
 import posthog from '@/posthog'
@@ -11,6 +10,7 @@ import { CreateExerciseRequestSchema } from '@/proto/api/v1/exercise_service_pb'
 import { ExerciseMetric } from '@/proto/api/v1/shared_pb'
 import { useToastStore } from '@/stores/toasts'
 import { ExerciseForm } from '@/ui/exercises/ExerciseForm'
+import { useLeave } from '@/utils/useLeave'
 
 // Weight and reps: what most exercises are, so most of this form is already
 // filled in.
@@ -22,7 +22,7 @@ const blankExercise: ExerciseFormValues = {
 
 export const CreateExercise = () => {
   const { t } = useTranslation()
-  const navigate = useNavigate()
+  const leave = useLeave()
   const [values, setValues] = useState(blankExercise)
   const [error, setError] = useState<string>()
 
@@ -36,7 +36,7 @@ export const CreateExercise = () => {
 
     posthog.capture('exercise_created')
     useToastStore.getState().success(t('exercise.form.created'))
-    await navigate('/exercises')
+    await leave('/exercises')
   }
 
   return (

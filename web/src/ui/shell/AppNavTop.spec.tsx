@@ -17,8 +17,8 @@ describe('AppNavTop', () => {
     usePageTitleStore.setState({
       pageTitle: 'Exercises',
       pageTitleKey: '',
-      previousPageTitle: '',
-      previousPageTitleKey: '',
+      idx: 0,
+      titles: {},
     })
     useActionButton.setState({ action: () => {}, icon: undefined })
     window.history.replaceState({ idx: 0 }, '', '/')
@@ -65,7 +65,11 @@ describe('AppNavTop', () => {
   // named after that somewhere: the public profile opened from the Me tab used
   // to say "Home", because /users/... hangs off no tab in particular.
   test('names the screen actually left behind', () => {
-    usePageTitleStore.setState({ pageTitle: 'Me', previousPageTitle: 'Me' })
+    usePageTitleStore.setState({
+      pageTitle: 'Alex',
+      idx: 1,
+      titles: { 0: { title: 'Me', key: '' } },
+    })
     window.history.pushState({ idx: 1 }, '', '/users/1')
 
     renderWithProviders(<AppNavTop />, { route: '/users/1' })

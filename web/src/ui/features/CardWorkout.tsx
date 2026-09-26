@@ -9,7 +9,7 @@ import {
 } from '@heroicons/react/24/outline'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 
 import {
   consumeRequestError,
@@ -46,6 +46,7 @@ import { usePreferencesStore } from '@/stores/preferences'
 import { groupLetter, groupRole } from '@/utils/routineGroups'
 import { parseRecording } from '@/utils/timedCircuit'
 import { workoutSummary } from '@/utils/workoutSummary'
+import { useLeave } from '@/utils/useLeave'
 import styles from './CardWorkout.module.css'
 
 const maxCommentLength = 500
@@ -68,7 +69,7 @@ interface Props {
  */
 export const CardWorkout = ({ workout, compact, unseen = false }: Props) => {
   const { t } = useTranslation()
-  const navigate = useNavigate()
+  const leave = useLeave()
   const userId = useAuthStore((state) => state.userId)
 
   const [deleted, setDeleted] = useState(false)
@@ -139,7 +140,7 @@ export const CardWorkout = ({ workout, compact, unseen = false }: Props) => {
     useToastStore.getState().success(t('workout.card.deleted'))
 
     setDeleted(true)
-    if (!compact) await navigate('/home')
+    if (!compact) await leave('/home')
   }
 
   const dropdownItems: DropdownItem[] = [

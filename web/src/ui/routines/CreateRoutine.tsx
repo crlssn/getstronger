@@ -2,16 +2,16 @@ import type { DraftGroup } from '@/utils/routineGroups'
 
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useNavigate } from 'react-router-dom'
 
 import { consumeRequestError, createRoutine } from '@/http/requests'
 import posthog from '@/posthog'
 import { useToastStore } from '@/stores/toasts'
 import { RoutineForm } from '@/ui/routines/RoutineForm'
+import { useLeave } from '@/utils/useLeave'
 
 export const CreateRoutine = () => {
   const { t } = useTranslation()
-  const navigate = useNavigate()
+  const leave = useLeave()
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string>()
 
@@ -27,7 +27,7 @@ export const CreateRoutine = () => {
 
       posthog.capture('routine_created')
       useToastStore.getState().success(t('routine.form.created'))
-      await navigate('/routines')
+      await leave('/routines')
     } finally {
       setSaving(false)
     }

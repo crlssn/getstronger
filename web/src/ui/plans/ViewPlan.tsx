@@ -3,7 +3,7 @@ import type { Plan } from '@/proto/api/v1/routine_service_pb'
 import { PencilIcon, TrashIcon } from '@heroicons/react/24/outline'
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useParams } from 'react-router-dom'
 
 import { consumeRequestError, consumeRequestNotFound, getPlan } from '@/http/requests'
 import { useConfirmationStore } from '@/stores/confirmation'
@@ -16,12 +16,13 @@ import { AppEmptyState } from '@/ui/components/AppEmptyState'
 import { AppErrorState } from '@/ui/components/AppErrorState'
 import { AppInlineError } from '@/ui/components/AppInlineError'
 import { AppSkeleton } from '@/ui/components/AppSkeleton'
+import { useLeave } from '@/utils/useLeave'
 import styles from './ViewPlan.module.css'
 
 /** One plan: the loop of routines it runs, and where in the loop it is. */
 export const ViewPlan = () => {
   const { t } = useTranslation()
-  const navigate = useNavigate()
+  const leave = useLeave()
   const { id = '' } = useParams()
 
   const [plan, setPlan] = useState<Plan>()
@@ -102,7 +103,7 @@ export const ViewPlan = () => {
 
     setActionError(undefined)
     if (await usePlanStore.getState().remove(id)) {
-      await navigate('/plans')
+      await leave('/plans')
       return
     }
     setActionError(consumeRequestError() ?? t('common.somethingWentWrong'))

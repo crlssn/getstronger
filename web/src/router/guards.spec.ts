@@ -1,12 +1,13 @@
 // @vitest-environment jsdom
 
-import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
 import { useActionButton } from '@/stores/actionButton'
 import { useAuthStore } from '@/stores/auth'
 import { usePageTitleStore } from '@/stores/pageTitle'
 import {
   applyPageTitle,
+  fileTitle,
   homePath,
   isSignedIn,
   loginPath,
@@ -98,5 +99,34 @@ describe('applyPageTitle', () => {
 
     expect(usePageTitleStore.getState().pageTitleKey).toBe('')
     expect(usePageTitleStore.getState().pageTitle).toBe('')
+  })
+})
+
+describe('fileTitle', () => {
+  beforeEach(() => {
+    usePageTitleStore.setState({ pageTitle: '', pageTitleKey: '', idx: 0, titles: {} })
+    window.history.replaceState({ idx: 2 }, '', '/')
+  })
+
+  afterEach(() => window.history.replaceState(null, '', '/'))
+
+  // Back is named after the entry before this one, so the title has to be on
+  // record under the entry the navigation actually landed on.
+  test('files the title under the entry a navigation landed on', () => {
+    applyPageTitle('pages.exercises')
+
+    fileTitle({ navigation: { state: 'idle' } } as never)
+
+    expect(usePageTitleStore.getState().titles[2]).toEqual({ title: '', key: 'pages.exercises' })
+  })
+
+  // Mid-push the browser is still on the entry being left, and filing the
+  // incoming title there would rename the screen back goes to.
+  test('waits while a navigation is still loading', () => {
+    applyPageTitle('pages.exercises')
+
+    fileTitle({ navigation: { state: 'loading' } } as never)
+
+    expect(usePageTitleStore.getState().titles).toEqual({})
   })
 })
