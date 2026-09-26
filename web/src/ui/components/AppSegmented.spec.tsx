@@ -2,7 +2,10 @@
 
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { describe, expect, test, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
+
+const haptics = vi.hoisted(() => ({ haptic: vi.fn() }))
+vi.mock('@/native/haptics', () => haptics)
 
 import { AppSegmented } from './AppSegmented'
 
@@ -12,6 +15,8 @@ const options = [
 ]
 
 describe('AppSegmented', () => {
+  beforeEach(() => haptics.haptic.mockReset())
+
   test('names the group it renders', () => {
     render(<AppSegmented label="Weight unit" options={options} value="kg" onChange={vi.fn()} />)
 
@@ -48,5 +53,21 @@ describe('AppSegmented', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Pounds' }))
 
     expect(onChange).not.toHaveBeenCalled()
+  })
+
+  test('ticks when a different option is chosen', async () => {
+    render(<AppSegmented label="Weight unit" options={options} value="kg" onChange={vi.fn()} />)
+
+    await userEvent.click(screen.getByRole('button', { name: 'Pounds' }))
+
+    expect(haptics.haptic).toHaveBeenCalledExactlyOnceWith('selection')
+  })
+
+  test('stays still when the chosen option is pressed again', async () => {
+    render(<AppSegmented label="Weight unit" options={options} value="kg" onChange={vi.fn()} />)
+
+    await userEvent.click(screen.getByRole('button', { name: 'Kilograms' }))
+
+    expect(haptics.haptic).not.toHaveBeenCalled()
   })
 })

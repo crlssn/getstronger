@@ -3,6 +3,7 @@ import type { ReactNode } from 'react'
 import { useRef } from 'react'
 import { NavLink } from 'react-router-dom'
 
+import { haptic } from '@/native/haptics'
 import { cn } from '@/ui/cn'
 import { useOverflowEdges } from '@/utils/useOverflowEdges'
 import styles from './AppSegmented.module.css'
@@ -79,7 +80,10 @@ export const AppSegmented = <T,>({
           className={cn(option.value === value && styles.selected)}
           aria-pressed={option.value === value}
           disabled={busy}
-          onClick={() => onChange(option.value)}
+          onClick={() => {
+            if (option.value !== value) haptic('selection')
+            onChange(option.value)
+          }}
         >
           {option.label}
         </button>

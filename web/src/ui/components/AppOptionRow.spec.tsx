@@ -2,11 +2,16 @@
 
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { describe, expect, test, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
+
+const haptics = vi.hoisted(() => ({ haptic: vi.fn() }))
+vi.mock('@/native/haptics', () => haptics)
 
 import { AppOptionRow } from './AppOptionRow'
 
 describe('AppOptionRow', () => {
+  beforeEach(() => haptics.haptic.mockReset())
+
   test('picks the option it was pressed on', async () => {
     const onClick = vi.fn()
     render(<AppOptionRow onClick={onClick}>Bench Press</AppOptionRow>)
@@ -58,5 +63,33 @@ describe('AppOptionRow', () => {
     )
 
     expect(screen.getByRole('button').className).toContain('flat')
+  })
+
+  test('ticks when an option not yet chosen is chosen', async () => {
+    render(
+      <AppOptionRow selected={false} onClick={vi.fn()}>
+        Bench Press
+      </AppOptionRow>,
+    )
+
+    await userEvent.click(screen.getByRole('button'))
+
+    expect(haptics.haptic).toHaveBeenCalledExactlyOnceWith('selection')
+  })
+
+  // Re-choosing what is chosen changes nothing, and a row without a state
+  // opens something rather than choosing it: both are navigation.
+  test('stays still when nothing is chosen by the press', async () => {
+    const { rerender } = render(
+      <AppOptionRow selected onClick={vi.fn()}>
+        Bench Press
+      </AppOptionRow>,
+    )
+    await userEvent.click(screen.getByRole('button'))
+
+    rerender(<AppOptionRow onClick={vi.fn()}>Bench Press</AppOptionRow>)
+    await userEvent.click(screen.getByRole('button'))
+
+    expect(haptics.haptic).not.toHaveBeenCalled()
   })
 })
