@@ -967,7 +967,7 @@ export const StartWorkout = () => {
     if (workout?.recording && Capacitor.isNativePlatform())
       await timedCircuit.clear({ key: recordingKey })
     try {
-      await navigate(`/workouts/${workoutId}`, { replace: true })
+      await navigate(`/workouts/${workoutId}`, { replace: true, state: { saved: true } })
     } catch {
       setFinishError(t('workout.savedNotOpened'))
       return
@@ -1050,8 +1050,6 @@ export const StartWorkout = () => {
         logged_set_count: loggedSetCount(entries),
         workout_type: quickWorkout ? 'quick' : 'routine',
       })
-      haptic('workoutSaved')
-      useToastStore.getState().success(t('workout.saved'))
       await openSavedWorkout(workoutId)
     } catch (error) {
       console.error('failed to finish workout', error)

@@ -6,7 +6,7 @@ import { create } from '@bufbuild/protobuf'
 import { Code, ConnectError } from '@connectrpc/connect'
 import { act, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { Route, Routes, useNavigationType } from 'react-router-dom'
+import { Route, Routes, useLocation, useNavigationType } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
 vi.mock('@/http/requests', async (importOriginal) => ({
@@ -116,12 +116,24 @@ const currentUser = (
 // Says how it was reached: a pushed tab leaves the workout one Back away.
 const WorkoutTab = () => <p>workout tab, {useNavigationType()}</p>
 
+// Says whether the save handed it the report of itself — the toast, or the
+// record celebration — which the workout page gives once it has loaded.
+const SavedWorkout = () => {
+  const saved = (useLocation().state as { saved?: boolean } | null)?.saved
+  return (
+    <>
+      <p>saved workout</p>
+      {saved && <p>reported by the workout</p>}
+    </>
+  )
+}
+
 const mountWorkout = (route = `/workouts/routine/${routineID}`) =>
   renderWithProviders(
     <Routes>
       <Route path="/workouts/routine/:routine_id" element={<StartWorkout />} />
       <Route path="/workouts/quick" element={<StartWorkout />} />
-      <Route path="/workouts/:id" element={<p>saved workout</p>} />
+      <Route path="/workouts/:id" element={<SavedWorkout />} />
       <Route path="/home" element={<p>home</p>} />
       <Route path="/workout" element={<WorkoutTab />} />
       <Route path="/routines" element={<p>routines</p>} />
@@ -1525,9 +1537,10 @@ describe('StartWorkout', () => {
       expect(mocked.createWorkout.mock.calls[0]?.[0].note).toBe('Felt strong today.')
       expect(await screen.findByText('saved workout')).toBeInTheDocument()
       expect(useWorkoutStore.getState().workouts[routineID]).toBeUndefined()
-      expect(
-        haptics.haptic.mock.calls.filter(([intent]) => intent === 'workoutSaved'),
-      ).toHaveLength(1)
+      // Whether the save beat a record is the workout's to say, so the toast
+      // and the buzz wait for it there rather than going off here.
+      expect(screen.getByText('reported by the workout')).toBeInTheDocument()
+      expect(haptics.haptic).not.toHaveBeenCalledWith('workoutSaved')
     })
 
     test('warns that exercises are unfinished when finishing early', async () => {

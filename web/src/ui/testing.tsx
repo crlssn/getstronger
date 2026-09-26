@@ -2,13 +2,13 @@ import type { ReactElement, ReactNode } from 'react'
 
 import { render, type RenderOptions, type RenderResult } from '@testing-library/react'
 import { I18nextProvider } from 'react-i18next'
-import { MemoryRouter } from 'react-router-dom'
+import { type InitialEntry, MemoryRouter } from 'react-router-dom'
 
 import { i18n } from '@/i18n'
 
 interface Options extends Omit<RenderOptions, 'wrapper'> {
-  /** The URL the component should believe it is on. */
-  route?: string
+  /** The URL the component should believe it is on, with its history state if any. */
+  route?: InitialEntry
 }
 
 /**

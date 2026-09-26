@@ -38,6 +38,8 @@ interface Props {
    */
   open: boolean
   onToggle: () => void
+  /** Set while a save's celebration plays: this exercise's place in the order its record lights. */
+  recordOrder?: number
 }
 
 /**
@@ -54,6 +56,7 @@ export const CardWorkoutExercise = ({
   metrics: exerciseMetricList,
   open,
   onToggle,
+  recordOrder,
 }: Props) => {
   const { t } = useTranslation()
 
@@ -70,7 +73,12 @@ export const CardWorkoutExercise = ({
   }
 
   return (
-    <article className={styles.exercise}>
+    <article
+      className={cn(styles.exercise, recordOrder !== undefined && styles.lighting)}
+      style={
+        recordOrder === undefined ? undefined : ({ '--record-order': recordOrder } as CSSProperties)
+      }
+    >
       <AppOptionRow
         className={styles.summary}
         aria-expanded={open}
@@ -87,7 +95,11 @@ export const CardWorkoutExercise = ({
           <span className={styles.name}>{name}</span>
           {/* The marker is on the row rather than only inside it: what a reader
               scans this list for is which exercises went well. */}
-          {hasPersonalBest && <AppChip tone="record">{t('workout.personalBest')}</AppChip>}
+          {hasPersonalBest && (
+            <AppChip tone="record" className={styles.recordChip}>
+              {t('workout.personalBest')}
+            </AppChip>
+          )}
           <span className={styles.setCount}>
             {t('workout.setsCompact', { count: sets.length })}
           </span>

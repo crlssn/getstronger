@@ -1,0 +1,61 @@
+@reference '../../assets/base.css';
+
+/* AppSheet's shape without being a sheet: no scrim, so the workout's edges stay
+   in view, and no pointer events, so the page beneath stays scrollable. It
+   fades in place — nothing crosses the screen. */
+.moment {
+  @apply pointer-events-none fixed z-40;
+  inset: calc(3.5rem + env(safe-area-inset-top)) 0.75rem calc(1.5rem + env(safe-area-inset-bottom));
+  animation:
+    moment-in 250ms cubic-bezier(0.2, 0, 0, 1) both,
+    moment-out 300ms cubic-bezier(0.2, 0, 0, 1) 1000ms forwards;
+}
+
+.card,
+.backNear,
+.backFar {
+  @apply absolute rounded-sheet border border-record-border bg-surface;
+}
+
+.card {
+  @apply inset-0 flex flex-col items-center justify-center gap-6 px-6 py-8 text-center shadow-overlay;
+}
+
+/* The records behind the headline, at most two of them whatever the count. */
+.backNear {
+  @apply shadow-raised;
+  inset: 1rem 0.75rem -0.75rem;
+}
+
+.backFar {
+  @apply shadow-raised;
+  inset: 2rem 1.5rem -1.5rem;
+}
+
+.medallion {
+  @apply grid size-22 place-items-center rounded-full border border-record-border bg-record-surface text-record-strong;
+}
+
+.medallion svg {
+  @apply size-11;
+}
+
+.name {
+  @apply text-body-lg font-semibold text-text;
+}
+
+.more {
+  @apply text-meta font-semibold text-record-strong;
+}
+
+@keyframes moment-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes moment-out {
+  to {
+    opacity: 0;
+  }
+}

@@ -1,5 +1,6 @@
 import type { Workout, WorkoutComment, WorkoutGroup } from '@/proto/api/v1/workout_service_pb'
 import type { DropdownItem } from '@/types/dropdown'
+import type { CSSProperties } from 'react'
 
 import {
   CheckIcon,
@@ -57,6 +58,8 @@ interface Props {
   compact: boolean
   /** Logged since the feed was last shown: the row is tinted, and says so in words. */
   unseen?: boolean
+  /** A save's record celebration is playing over it: its records light up in turn. */
+  celebrating?: boolean
 }
 
 /**
@@ -67,7 +70,7 @@ interface Props {
  * the full one is read under the title the nav bar already shows, and adds the
  * exercises and the comments.
  */
-export const CardWorkout = ({ workout, compact, unseen = false }: Props) => {
+export const CardWorkout = ({ workout, compact, unseen = false, celebrating = false }: Props) => {
   const { t } = useTranslation()
   const leave = useLeave()
   const userId = useAuthStore((state) => state.userId)
@@ -188,8 +191,16 @@ export const CardWorkout = ({ workout, compact, unseen = false }: Props) => {
 
   if (deleted) return null
 
+  // Records light 200ms apart in the order they were trained, and only the
+  // first three stagger: a fourth lights with the third.
+  let recordsLit = 0
+  const recordOrder = (sets: readonly { metadata?: { personalBest: boolean } }[]) =>
+    celebrating && sets.some((set) => set.metadata?.personalBest)
+      ? Math.min(recordsLit++, 2)
+      : undefined
+
   const personalBestBadge = personalBestCount > 0 && (
-    <AppChip tone="record">
+    <AppChip tone="record" className={cn(celebrating && styles.recordBadgeLighting)}>
       <TrophyIcon aria-hidden="true" />
       {t('workout.card.prBadge', { count: personalBestCount })}
     </AppChip>
@@ -336,7 +347,15 @@ export const CardWorkout = ({ workout, compact, unseen = false }: Props) => {
       </p>
 
       <section className={styles.summaryCard}>
-        <div className={cn(styles.completedBand, personalBestCount > 0 && styles.record)}>
+        <div
+          className={cn(styles.completedBand, personalBestCount > 0 && styles.record)}
+          // The session's count arrives with its last record.
+          style={
+            celebrating
+              ? ({ '--record-order': Math.min(personalBestCount - 1, 2) } as CSSProperties)
+              : undefined
+          }
+        >
           <p className={styles.completedLabel}>
             <span className={styles.completedMark}>
               <CheckIcon aria-hidden="true" />
@@ -421,6 +440,7 @@ export const CardWorkout = ({ workout, compact, unseen = false }: Props) => {
                           name={entry.exercise?.name}
                           sets={entry.sets}
                           metrics={entry.exercise?.metrics}
+                          recordOrder={recordOrder(entry.sets)}
                         />
                       )
                     })
@@ -443,6 +463,7 @@ export const CardWorkout = ({ workout, compact, unseen = false }: Props) => {
                   name={exerciseSet.exercise?.name}
                   sets={exerciseSet.sets}
                   metrics={exerciseSet.exercise?.metrics}
+                  recordOrder={recordOrder(exerciseSet.sets)}
                 />
               )
             })}
