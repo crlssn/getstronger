@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next'
 
 import { listExercises } from '@/http/requests'
 import { lastPerformedIn, useActivityStore } from '@/stores/activity'
-import { useExercisesWithPending } from '@/stores/pendingExercises'
+import { useExercisesWithPending, usePendingExerciseIds } from '@/stores/pendingExercises'
 import { AppEmptyState } from '@/ui/components/AppEmptyState'
 import { AppErrorState } from '@/ui/components/AppErrorState'
 import { AppButton } from '@/ui/components/AppButton'
@@ -55,6 +55,7 @@ export const ListExercises = () => {
   }, [fetchExercises])
 
   const library = useExercisesWithPending(exercises)
+  const pendingIds = usePendingExerciseIds()
   const query = search.trim().toLowerCase()
   const filtered = query
     ? library.filter((exercise) =>
@@ -112,7 +113,8 @@ export const ListExercises = () => {
                     key={exercise.id}
                     meta={<small>{exerciseMeta(exercise)}</small>}
                     title={exercise.name}
-                    to={`/exercises/${exercise.id}`}
+                    // Its page would ask the backend for an exercise it lacks.
+                    to={pendingIds.has(exercise.id) ? undefined : `/exercises/${exercise.id}`}
                   />
                 ))}
               </AppList>

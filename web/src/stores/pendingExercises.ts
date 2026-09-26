@@ -2,7 +2,7 @@ import type { Exercise } from '@/proto/api/v1/shared_pb'
 import type { PendingMutation } from '@/stores/mutationQueue'
 
 import { create, fromJson, type JsonValue } from '@bufbuild/protobuf'
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 
 import { ExerciseService } from '@/proto/api/v1/exercise_service_pb'
 import { ExerciseSchema } from '@/proto/api/v1/shared_pb'
@@ -44,6 +44,13 @@ const queuedExercises = (pending: readonly PendingMutation[]): Exercise[] =>
       }
     })
 
+/** The ids of the exercises still waiting to reach the backend. */
+export const usePendingExerciseIds = (): ReadonlySet<string> => {
+  const pending = useMutationQueueStore((state) => state.pending)
+
+  return useMemo(() => new Set(queuedExercises(pending).map((exercise) => exercise.id)), [pending])
+}
+
 /**
  * The library as this device knows it: what the backend returned, plus the
  * exercises still waiting to reach it.
@@ -54,12 +61,18 @@ const queuedExercises = (pending: readonly PendingMutation[]): Exercise[] =>
  */
 export const useExercisesWithPending = (fetched: readonly Exercise[]): Exercise[] => {
   const pending = useMutationQueueStore((state) => state.pending)
+  const queued = useMemo(() => queuedExercises(pending), [pending])
+
+  // The queue lets go of a create once the backend has it, before the page
+  // fetched on mount does, so the row is remembered rather than blinking out.
+  const [known, setKnown] = useState(queued)
+  const unseen = queued.filter((exercise) => !known.some(({ id }) => id === exercise.id))
+  if (unseen.length) setKnown([...known, ...unseen])
 
   return useMemo(() => {
-    const queued = queuedExercises(pending)
-    if (!queued.length) return [...fetched]
+    if (!known.length) return [...fetched]
 
     const stored = new Set(fetched.map((exercise) => exercise.id))
-    return [...queued.filter((exercise) => !stored.has(exercise.id)), ...fetched]
-  }, [fetched, pending])
+    return [...known.filter((exercise) => !stored.has(exercise.id)), ...fetched]
+  }, [fetched, known])
 }

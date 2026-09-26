@@ -3,7 +3,7 @@
 import type { MessageInitShape } from '@bufbuild/protobuf'
 
 import { create } from '@bufbuild/protobuf'
-import { screen, waitFor, within } from '@testing-library/react'
+import { act, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { DateTime } from 'luxon'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
@@ -76,6 +76,27 @@ describe('ListExercises', () => {
       )
     render()
 
+    expect(await screen.findByText('Sled push')).toBeInTheDocument()
+    // Its page asks the backend for an exercise the backend does not have yet.
+    expect(screen.queryByRole('link', { name: /Sled push/ })).not.toBeInTheDocument()
+  })
+
+  // The queue lets go of the create once the backend has it, before the page
+  // fetched on mount does; the row must not blink out in between.
+  test('keeps listing an exercise once it has synced', async () => {
+    useMutationQueueStore
+      .getState()
+      .enqueue(
+        ExerciseService.method.createExercise,
+        create(CreateExerciseRequestSchema, { id: 'sled', name: 'Sled push' }),
+      )
+    render()
+    await screen.findByText('Sled push')
+
+    act(() => {
+      useMutationQueueStore.setState({ pending: [] })
+    })
+
     expect(await screen.findByRole('link', { name: /Sled push/ })).toBeInTheDocument()
   })
 
@@ -91,7 +112,7 @@ describe('ListExercises', () => {
       )
     render()
 
-    expect(await screen.findByRole('link', { name: /Sled push/ })).toBeInTheDocument()
+    expect(await screen.findByText('Sled push')).toBeInTheDocument()
   })
 
   afterEach(() => {
