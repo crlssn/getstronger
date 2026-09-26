@@ -171,6 +171,8 @@ describe('ViewWorkout', () => {
       renderSaved()
       await screen.findByText('New personal record')
 
+      // The card is up before the effect that times it has run.
+      await act(async () => {})
       act(() => void vi.advanceTimersByTime(2000))
       expect(screen.queryByText('New personal record')).not.toBeInTheDocument()
       expect(screen.getByRole('table', { name: /Bench press/ })).toBeInTheDocument()
