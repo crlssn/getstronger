@@ -218,6 +218,9 @@ func workoutGroups(groups []*apiv1.WorkoutGroup, exerciseSets []repo.ExerciseSet
 			RestBetweenExercisesSeconds: group.GetRestBetweenExercisesSeconds(),
 			RestBetweenRoundsSeconds:    group.GetRestBetweenRoundsSeconds(),
 			Rounds:                      group.GetRounds(),
+			Role:                        parser.RoutineGroupRoleFromProto(group.GetRole()),
+			SkipLastOnFinalRound:        group.GetSkipLastOnFinalRound(),
+			Title:                       group.GetTitle(),
 			Exercises:                   exercises,
 		})
 	}

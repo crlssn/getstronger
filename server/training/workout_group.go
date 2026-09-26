@@ -13,7 +13,16 @@ type WorkoutGroupDraft struct {
 	RestBetweenRoundsSeconds    int32
 	// Rounds is the prescription the block was trained against; how many rounds
 	// were actually worked is read off the sets.
-	Rounds    int32
+	Rounds int32
+	// Role is where this block sat in an interval session, or nothing at all
+	// where the session was not one.
+	Role RoutineGroupRole
+	// SkipLastOnFinalRound records that the repeating block dropped its last
+	// exercise on its final round. Only a block worked round after round has one.
+	SkipLastOnFinalRound bool
+	// Title is what the athlete named this block, or nothing at all where they
+	// left it to read by its position.
+	Title     string
 	Exercises []WorkoutGroupExerciseDraft
 }
 
@@ -39,6 +48,9 @@ type WorkoutGroup struct {
 	RestBetweenExercisesSeconds int32
 	RestBetweenRoundsSeconds    int32
 	Rounds                      int32
+	Role                        RoutineGroupRole
+	SkipLastOnFinalRound        bool
+	Title                       string
 	Exercises                   []WorkoutGroupExerciseSets
 }
 
@@ -107,11 +119,22 @@ func takePositions(
 func normalizeWorkoutGroup(group WorkoutGroupDraft, exercises []WorkoutGroupExerciseSets) WorkoutGroup {
 	normalized := WorkoutGroup{
 		Mode:      group.Mode,
+		Role:      group.Role,
+		Title:     routineGroupTitle(group.Title),
 		Exercises: exercises,
 	}
 	if !normalized.Mode.Valid() {
 		normalized.Mode = RoutineGroupModeStraight
 	}
+
+	// A role names one of the three parts of an interval session. Anything else
+	// is a block that has no such place, which is every gym circuit.
+	if !normalized.Role.Valid() {
+		normalized.Role = ""
+	}
+
+	// Only a block worked round after round has a final round to end early.
+	normalized.SkipLastOnFinalRound = group.SkipLastOnFinalRound && normalized.Mode == RoutineGroupModeCircuit
 
 	normalized.RestBetweenExercisesSeconds = clampInt32(group.RestBetweenExercisesSeconds, routineGroupMaxRestSeconds)
 
@@ -133,6 +156,9 @@ type WorkoutGroupRecord struct {
 	RestBetweenExercisesSeconds int32
 	RestBetweenRoundsSeconds    int32
 	Rounds                      int32
+	Role                        RoutineGroupRole
+	SkipLastOnFinalRound        bool
+	Title                       string
 	Exercises                   []WorkoutGroupOccurrence
 }
 

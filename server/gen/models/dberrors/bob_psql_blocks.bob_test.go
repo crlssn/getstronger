@@ -499,4 +499,21 @@ func TestCheckConstraintErrors(t *testing.T) {
 			t.Fatal("expected ErrCheckWorkoutGroupsRoundsCheck.Is not to match different constraint")
 		}
 	})
+	t.Run("WorkoutGroup_ErrCheckWorkoutGroupsTitleCheck", func(t *testing.T) {
+		matchingErr := newCheckErr("23514", "workout_groups_title_check")
+		if !errors.Is(WorkoutGroupErrors.ErrCheckWorkoutGroupsTitleCheck, matchingErr) {
+			t.Fatalf("expected ErrCheckWorkoutGroupsTitleCheck to match constraint %q", "workout_groups_title_check")
+		}
+		if !WorkoutGroupErrors.ErrCheckWorkoutGroupsTitleCheck.Is(matchingErr) {
+			t.Fatalf("expected ErrCheckWorkoutGroupsTitleCheck.Is to match constraint %q", "workout_groups_title_check")
+		}
+
+		nonMatchingErr := newCheckErr("23514", "other_constraint")
+		if errors.Is(WorkoutGroupErrors.ErrCheckWorkoutGroupsTitleCheck, nonMatchingErr) {
+			t.Fatal("expected ErrCheckWorkoutGroupsTitleCheck not to match different constraint")
+		}
+		if WorkoutGroupErrors.ErrCheckWorkoutGroupsTitleCheck.Is(nonMatchingErr) {
+			t.Fatal("expected ErrCheckWorkoutGroupsTitleCheck.Is not to match different constraint")
+		}
+	})
 }

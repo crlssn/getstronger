@@ -931,8 +931,10 @@ func TestWorkoutGroups(t *testing.T) {
 	circuitID := newID()
 	records := []training.WorkoutGroupRecord{
 		{
-			ID:   warmUpID,
-			Mode: training.RoutineGroupModeStraight,
+			ID:    warmUpID,
+			Mode:  training.RoutineGroupModeStraight,
+			Role:  training.RoutineGroupRoleWarmup,
+			Title: "Easy start",
 			Exercises: []training.WorkoutGroupOccurrence{
 				{ID: benchInWarmUp, ExerciseID: bench.ID},
 			},
@@ -943,6 +945,8 @@ func TestWorkoutGroups(t *testing.T) {
 			RestBetweenExercisesSeconds: 15,
 			RestBetweenRoundsSeconds:    90,
 			Rounds:                      2,
+			Role:                        training.RoutineGroupRoleRepeat,
+			SkipLastOnFinalRound:        true,
 			Exercises: []training.WorkoutGroupOccurrence{
 				{ID: benchInCircuit, ExerciseID: bench.ID},
 				{ID: rowInCircuit, ExerciseID: row.ID},
@@ -977,6 +981,10 @@ func TestWorkoutGroups(t *testing.T) {
 	warmUp := groups[0]
 	require.Equal(t, warmUpID.String(), warmUp.GetId())
 	require.Equal(t, v1.RoutineGroupMode_ROUTINE_GROUP_MODE_STRAIGHT, warmUp.GetMode())
+	// What the athlete named the block, and where it sat in the session.
+	require.Equal(t, "Easy start", warmUp.GetTitle())
+	require.Equal(t, v1.RoutineGroupRole_ROUTINE_GROUP_ROLE_WARMUP, warmUp.GetRole())
+	require.False(t, warmUp.GetSkipLastOnFinalRound())
 	require.Len(t, warmUp.GetExercises(), 1)
 	require.Equal(t, bench.ID.String(), warmUp.GetExercises()[0].GetExercise().GetId())
 	require.Equal(t, int32(2), warmUp.GetExercises()[0].GetSetCount())
@@ -989,6 +997,9 @@ func TestWorkoutGroups(t *testing.T) {
 	require.Equal(t, int32(15), circuit.GetRestBetweenExercisesSeconds())
 	require.Equal(t, int32(90), circuit.GetRestBetweenRoundsSeconds())
 	require.Equal(t, int32(2), circuit.GetRounds())
+	require.Empty(t, circuit.GetTitle())
+	require.Equal(t, v1.RoutineGroupRole_ROUTINE_GROUP_ROLE_REPEAT, circuit.GetRole())
+	require.True(t, circuit.GetSkipLastOnFinalRound())
 	require.Len(t, circuit.GetExercises(), 2)
 	require.Equal(t, bench.ID.String(), circuit.GetExercises()[0].GetExercise().GetId())
 	require.Equal(t, []string{third.ID.String()}, setIDs(circuit.GetExercises()[0].GetSets()))

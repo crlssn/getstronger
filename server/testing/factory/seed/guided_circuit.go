@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/crlssn/getstronger/server/gen/models"
+	"github.com/crlssn/getstronger/server/gen/models/enums"
 	"github.com/crlssn/getstronger/server/testing/factory"
 )
 
@@ -139,8 +140,13 @@ func pacePerExercise(walk, run *models.Exercise) map[string]float64 {
 // named by the key the recording's phases carry, which is how each set finds
 // the block that logged it.
 type sessionBlock struct {
-	rounds   int32
-	stations []sessionStation
+	rounds int32
+	// title and role are what the athlete called the block and where it sat in
+	// an interval session; a gym circuit has neither.
+	title                string
+	role                 enums.RoutineGroupRole
+	skipLastOnFinalRound bool
+	stations             []sessionStation
 }
 
 type sessionStation struct {
@@ -212,6 +218,8 @@ func writeSessionBlocks(
 			workout,
 			factory.WorkoutGroupCircuit(0, 0),
 			factory.WorkoutGroupRounds(block.rounds),
+			factory.WorkoutGroupTitle(block.title),
+			factory.WorkoutGroupRole(block.role, block.skipLastOnFinalRound),
 		)
 		for _, station := range block.stations {
 			occurrences[station.key] = f.AddWorkoutGroupExercise(group, station.exercise)[0]

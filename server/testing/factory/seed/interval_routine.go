@@ -59,10 +59,15 @@ func seedActiveIntervalRoutine(f *factory.Factory, active *models.User, walk, ru
 	blocks := []sessionBlock{
 		{
 			rounds:   1,
+			title:    intervalWarmupTitle,
+			role:     enums.RoutineGroupRoleWarmup,
 			stations: []sessionStation{{key: stationKey(walk, firstOccurrence), exercise: walk}},
 		},
 		{
-			rounds: intervalRounds,
+			rounds:               intervalRounds,
+			title:                intervalRepeatTitle,
+			role:                 enums.RoutineGroupRoleRepeat,
+			skipLastOnFinalRound: true,
 			stations: []sessionStation{
 				{key: stationKey(run, firstOccurrence), exercise: run},
 				{key: stationKey(walk, firstOccurrence+1), exercise: walk},

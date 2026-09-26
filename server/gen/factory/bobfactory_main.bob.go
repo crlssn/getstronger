@@ -932,6 +932,9 @@ func (f *Factory) fromExistingWorkoutGroup(ctx context.Context, m *models.Workou
 	o.RestBetweenRoundsSeconds = func() int32 { return m.RestBetweenRoundsSeconds }
 	o.Rounds = func() int32 { return m.Rounds }
 	o.CreatedAt = func() time.Time { return m.CreatedAt }
+	o.Title = func() string { return m.Title }
+	o.Role = func() null.Val[enums.RoutineGroupRole] { return m.Role }
+	o.SkipLastOnFinalRound = func() bool { return m.SkipLastOnFinalRound }
 
 	if visited, ok := factoryVisitedCtx.Value(ctx); ok {
 		ptr := uintptr(unsafe.Pointer(m))

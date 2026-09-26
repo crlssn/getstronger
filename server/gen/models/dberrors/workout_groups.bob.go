@@ -45,6 +45,13 @@ var WorkoutGroupErrors = &workoutGroupErrors{
 		columns: []string{"rounds"},
 		s:       "workout_groups_rounds_check",
 	},
+
+	ErrCheckWorkoutGroupsTitleCheck: &CheckConstraintError{
+		schema:  "",
+		table:   "workout_groups",
+		columns: []string{"title"},
+		s:       "workout_groups_title_check",
+	},
 }
 
 type workoutGroupErrors struct {
@@ -59,4 +66,6 @@ type workoutGroupErrors struct {
 	ErrCheckWorkoutGroupsRestBetweenRoundsSecondsCheck *CheckConstraintError
 
 	ErrCheckWorkoutGroupsRoundsCheck *CheckConstraintError
+
+	ErrCheckWorkoutGroupsTitleCheck *CheckConstraintError
 }

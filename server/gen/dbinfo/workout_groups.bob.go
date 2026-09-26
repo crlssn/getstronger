@@ -87,6 +87,33 @@ var WorkoutGroups = Table[
 			Generated: false,
 			AutoIncr:  false,
 		},
+		Title: column{
+			Name:      "title",
+			DBType:    "text",
+			Default:   "''::text",
+			Comment:   "",
+			Nullable:  false,
+			Generated: false,
+			AutoIncr:  false,
+		},
+		Role: column{
+			Name:      "role",
+			DBType:    "public.routine_group_role",
+			Default:   "NULL",
+			Comment:   "",
+			Nullable:  true,
+			Generated: false,
+			AutoIncr:  false,
+		},
+		SkipLastOnFinalRound: column{
+			Name:      "skip_last_on_final_round",
+			DBType:    "boolean",
+			Default:   "false",
+			Comment:   "",
+			Nullable:  false,
+			Generated: false,
+			AutoIncr:  false,
+		},
 	},
 	Indexes: workoutGroupIndexes{
 		WorkoutGroupsPkey: index{
@@ -185,6 +212,14 @@ var WorkoutGroups = Table[
 			},
 			Expression: "((rounds >= 0) AND (rounds <= 99))",
 		},
+		WorkoutGroupsTitleCheck: check{
+			constraint: constraint{
+				Name:    "workout_groups_title_check",
+				Columns: []string{"title"},
+				Comment: "",
+			},
+			Expression: "(char_length(title) <= 60)",
+		},
 	},
 	Comment: "",
 }
@@ -198,11 +233,14 @@ type workoutGroupColumns struct {
 	RestBetweenRoundsSeconds    column
 	Rounds                      column
 	CreatedAt                   column
+	Title                       column
+	Role                        column
+	SkipLastOnFinalRound        column
 }
 
 func (c workoutGroupColumns) AsSlice() []column {
 	return []column{
-		c.ID, c.WorkoutID, c.Position, c.Mode, c.RestBetweenExercisesSeconds, c.RestBetweenRoundsSeconds, c.Rounds, c.CreatedAt,
+		c.ID, c.WorkoutID, c.Position, c.Mode, c.RestBetweenExercisesSeconds, c.RestBetweenRoundsSeconds, c.Rounds, c.CreatedAt, c.Title, c.Role, c.SkipLastOnFinalRound,
 	}
 }
 
@@ -242,10 +280,11 @@ type workoutGroupChecks struct {
 	WorkoutGroupsRestBetweenExercisesSecondsCheck check
 	WorkoutGroupsRestBetweenRoundsSecondsCheck    check
 	WorkoutGroupsRoundsCheck                      check
+	WorkoutGroupsTitleCheck                       check
 }
 
 func (c workoutGroupChecks) AsSlice() []check {
 	return []check{
-		c.WorkoutGroupsPositionCheck, c.WorkoutGroupsRestBetweenExercisesSecondsCheck, c.WorkoutGroupsRestBetweenRoundsSecondsCheck, c.WorkoutGroupsRoundsCheck,
+		c.WorkoutGroupsPositionCheck, c.WorkoutGroupsRestBetweenExercisesSecondsCheck, c.WorkoutGroupsRestBetweenRoundsSecondsCheck, c.WorkoutGroupsRoundsCheck, c.WorkoutGroupsTitleCheck,
 	}
 }

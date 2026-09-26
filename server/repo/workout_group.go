@@ -39,6 +39,9 @@ func writeWorkoutGroups(
 			RestBetweenExercisesSeconds: omit.From(group.RestBetweenExercisesSeconds),
 			RestBetweenRoundsSeconds:    omit.From(group.RestBetweenRoundsSeconds),
 			Rounds:                      omit.From(group.Rounds),
+			Role:                        nullRole(group.Role),
+			SkipLastOnFinalRound:        omit.From(group.SkipLastOnFinalRound),
+			Title:                       omit.From(group.Title),
 		}).One(ctx, exec)
 		if err != nil {
 			return nil, fmt.Errorf("workout group insert: %w", err)
@@ -117,6 +120,9 @@ func (r *Repo) ListWorkoutGroups(ctx context.Context, workoutIDs ...uuid.UUID) (
 			RestBetweenExercisesSeconds: group.RestBetweenExercisesSeconds,
 			RestBetweenRoundsSeconds:    group.RestBetweenRoundsSeconds,
 			Rounds:                      group.Rounds,
+			Role:                        group.Role.GetOrZero(),
+			SkipLastOnFinalRound:        group.SkipLastOnFinalRound,
+			Title:                       group.Title,
 			Exercises:                   byGroup[group.ID],
 		})
 	}

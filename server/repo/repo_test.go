@@ -3190,6 +3190,94 @@ func (s *repoSuite) TestListNotificationsRefusesAnUnreadablePayload() {
 	s.Require().Error(err)
 }
 
+// The workout keeps its own copy of the blocks it was trained in, so what the
+// athlete named each one — and where it sat in an interval session — has to
+// survive the save. It is the only copy a finished session has.
+func (s *repoSuite) TestWorkoutGroupsKeepTheirNamesAndRoles() {
+	ctx := context.Background()
+	user := s.factory.NewUser()
+	walk := s.factory.NewExercise(factory.ExerciseUserID(user.ID))
+	run := s.factory.NewExercise(factory.ExerciseUserID(user.ID))
+
+	workout, err := s.repo.CreateWorkout(ctx, repo.CreateWorkoutParams{
+		Name:       "Walk-run",
+		UserID:     user.ID,
+		StartedAt:  time.Now(),
+		FinishedAt: time.Now().Add(time.Hour),
+		ExerciseSets: []repo.ExerciseSet{
+			{ExerciseID: walk.ID, Sets: []repo.Set{{Reps: 1, Weight: 0}}},
+			{ExerciseID: run.ID, Sets: []repo.Set{{Reps: 1, Weight: 0}}},
+		},
+		Groups: []training.WorkoutGroup{
+			{
+				Mode:  training.RoutineGroupModeStraight,
+				Role:  training.RoutineGroupRoleWarmup,
+				Title: "Easy start",
+				Exercises: []training.WorkoutGroupExerciseSets{
+					{ExerciseID: walk.ID, SetPositions: []int{0}},
+				},
+			},
+			{
+				Mode:                 training.RoutineGroupModeCircuit,
+				Role:                 training.RoutineGroupRoleRepeat,
+				SkipLastOnFinalRound: true,
+				Rounds:               4,
+				Exercises: []training.WorkoutGroupExerciseSets{
+					{ExerciseID: run.ID, SetPositions: []int{0}},
+				},
+			},
+		},
+	})
+	s.Require().NoError(err)
+
+	groups, err := s.repo.ListWorkoutGroups(ctx, workout.ID)
+	s.Require().NoError(err)
+	s.Require().Len(groups[workout.ID], 2)
+
+	warmup := groups[workout.ID][0]
+	s.Require().Equal("Easy start", warmup.Title)
+	s.Require().Equal(training.RoutineGroupRoleWarmup, warmup.Role)
+	s.Require().False(warmup.SkipLastOnFinalRound)
+
+	repeat := groups[workout.ID][1]
+	s.Require().Empty(repeat.Title)
+	s.Require().Equal(training.RoutineGroupRoleRepeat, repeat.Role)
+	s.Require().True(repeat.SkipLastOnFinalRound)
+}
+
+// A gym session has no place in an interval routine, and the column holds
+// nothing rather than a role it does not have.
+func (s *repoSuite) TestWorkoutGroupsWithoutARoleHaveNone() {
+	ctx := context.Background()
+	user := s.factory.NewUser()
+	press := s.factory.NewExercise(factory.ExerciseUserID(user.ID))
+
+	workout, err := s.repo.CreateWorkout(ctx, repo.CreateWorkoutParams{
+		Name:       "Push",
+		UserID:     user.ID,
+		StartedAt:  time.Now(),
+		FinishedAt: time.Now().Add(time.Hour),
+		ExerciseSets: []repo.ExerciseSet{
+			{ExerciseID: press.ID, Sets: []repo.Set{{Reps: 8, Weight: 60}}},
+		},
+		Groups: []training.WorkoutGroup{
+			{
+				Mode: training.RoutineGroupModeStraight,
+				Exercises: []training.WorkoutGroupExerciseSets{
+					{ExerciseID: press.ID, SetPositions: []int{0}},
+				},
+			},
+		},
+	})
+	s.Require().NoError(err)
+
+	groups, err := s.repo.ListWorkoutGroups(ctx, workout.ID)
+	s.Require().NoError(err)
+	s.Require().Len(groups[workout.ID], 1)
+	s.Require().Empty(groups[workout.ID][0].Role)
+	s.Require().Empty(groups[workout.ID][0].Title)
+}
+
 // Asking about no workouts is not an error and not a query: the caller gets an
 // empty map back without the database being touched.
 func (s *repoSuite) TestListWorkoutGroupsOfNothing() {

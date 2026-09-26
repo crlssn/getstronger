@@ -8,7 +8,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/aarondl/opt/null"
 	"github.com/aarondl/opt/omit"
+	"github.com/aarondl/opt/omitnull"
 	models "github.com/crlssn/getstronger/server/gen/models"
 	enums "github.com/crlssn/getstronger/server/gen/models/enums"
 	"github.com/gofrs/uuid/v5"
@@ -45,6 +47,9 @@ type WorkoutGroupTemplate struct {
 	RestBetweenRoundsSeconds    func() int32
 	Rounds                      func() int32
 	CreatedAt                   func() time.Time
+	Title                       func() string
+	Role                        func() null.Val[enums.RoutineGroupRole]
+	SkipLastOnFinalRound        func() bool
 
 	r workoutGroupR
 	f *Factory
@@ -136,6 +141,18 @@ func (o WorkoutGroupTemplate) BuildSetter() *models.WorkoutGroupSetter {
 		val := o.CreatedAt()
 		m.CreatedAt = omit.From(val)
 	}
+	if o.Title != nil {
+		val := o.Title()
+		m.Title = omit.From(val)
+	}
+	if o.Role != nil {
+		val := o.Role()
+		m.Role = omitnull.FromNull(val)
+	}
+	if o.SkipLastOnFinalRound != nil {
+		val := o.SkipLastOnFinalRound()
+		m.SkipLastOnFinalRound = omit.From(val)
+	}
 
 	return m
 }
@@ -181,6 +198,15 @@ func (o WorkoutGroupTemplate) Build() *models.WorkoutGroup {
 	}
 	if o.CreatedAt != nil {
 		m.CreatedAt = o.CreatedAt()
+	}
+	if o.Title != nil {
+		m.Title = o.Title()
+	}
+	if o.Role != nil {
+		m.Role = o.Role()
+	}
+	if o.SkipLastOnFinalRound != nil {
+		m.SkipLastOnFinalRound = o.SkipLastOnFinalRound()
 	}
 
 	o.setModelRels(m)
@@ -385,6 +411,9 @@ func (m workoutGroupMods) RandomizeAllColumns(f *faker.Faker) WorkoutGroupMod {
 		WorkoutGroupMods.RandomRestBetweenRoundsSeconds(f),
 		WorkoutGroupMods.RandomRounds(f),
 		WorkoutGroupMods.RandomCreatedAt(f),
+		WorkoutGroupMods.RandomTitle(f),
+		WorkoutGroupMods.RandomRole(f),
+		WorkoutGroupMods.RandomSkipLastOnFinalRound(f),
 	}
 }
 
@@ -632,6 +661,121 @@ func (m workoutGroupMods) RandomCreatedAt(f *faker.Faker) WorkoutGroupMod {
 	return WorkoutGroupModFunc(func(_ context.Context, o *WorkoutGroupTemplate) {
 		o.CreatedAt = func() time.Time {
 			return random_time_Time(f)
+		}
+	})
+}
+
+// Set the model columns to this value
+func (m workoutGroupMods) Title(val string) WorkoutGroupMod {
+	return WorkoutGroupModFunc(func(_ context.Context, o *WorkoutGroupTemplate) {
+		o.Title = func() string { return val }
+	})
+}
+
+// Set the Column from the function
+func (m workoutGroupMods) TitleFunc(f func() string) WorkoutGroupMod {
+	return WorkoutGroupModFunc(func(_ context.Context, o *WorkoutGroupTemplate) {
+		o.Title = f
+	})
+}
+
+// Clear any values for the column
+func (m workoutGroupMods) UnsetTitle() WorkoutGroupMod {
+	return WorkoutGroupModFunc(func(_ context.Context, o *WorkoutGroupTemplate) {
+		o.Title = nil
+	})
+}
+
+// Generates a random value for the column using the given faker
+// if faker is nil, a default faker is used
+func (m workoutGroupMods) RandomTitle(f *faker.Faker) WorkoutGroupMod {
+	return WorkoutGroupModFunc(func(_ context.Context, o *WorkoutGroupTemplate) {
+		o.Title = func() string {
+			return random_string(f)
+		}
+	})
+}
+
+// Set the model columns to this value
+func (m workoutGroupMods) Role(val null.Val[enums.RoutineGroupRole]) WorkoutGroupMod {
+	return WorkoutGroupModFunc(func(_ context.Context, o *WorkoutGroupTemplate) {
+		o.Role = func() null.Val[enums.RoutineGroupRole] { return val }
+	})
+}
+
+// Set the Column from the function
+func (m workoutGroupMods) RoleFunc(f func() null.Val[enums.RoutineGroupRole]) WorkoutGroupMod {
+	return WorkoutGroupModFunc(func(_ context.Context, o *WorkoutGroupTemplate) {
+		o.Role = f
+	})
+}
+
+// Clear any values for the column
+func (m workoutGroupMods) UnsetRole() WorkoutGroupMod {
+	return WorkoutGroupModFunc(func(_ context.Context, o *WorkoutGroupTemplate) {
+		o.Role = nil
+	})
+}
+
+// Generates a random value for the column using the given faker
+// if faker is nil, a default faker is used
+// The generated value is sometimes null
+func (m workoutGroupMods) RandomRole(f *faker.Faker) WorkoutGroupMod {
+	return WorkoutGroupModFunc(func(_ context.Context, o *WorkoutGroupTemplate) {
+		o.Role = func() null.Val[enums.RoutineGroupRole] {
+			if f == nil {
+				f = &defaultFaker
+			}
+
+			val := random_enums_RoutineGroupRole(f)
+			return null.From(val)
+		}
+	})
+}
+
+// Generates a random value for the column using the given faker
+// if faker is nil, a default faker is used
+// The generated value is never null
+func (m workoutGroupMods) RandomRoleNotNull(f *faker.Faker) WorkoutGroupMod {
+	return WorkoutGroupModFunc(func(_ context.Context, o *WorkoutGroupTemplate) {
+		o.Role = func() null.Val[enums.RoutineGroupRole] {
+			if f == nil {
+				f = &defaultFaker
+			}
+
+			val := random_enums_RoutineGroupRole(f)
+			return null.From(val)
+		}
+	})
+}
+
+// Set the model columns to this value
+func (m workoutGroupMods) SkipLastOnFinalRound(val bool) WorkoutGroupMod {
+	return WorkoutGroupModFunc(func(_ context.Context, o *WorkoutGroupTemplate) {
+		o.SkipLastOnFinalRound = func() bool { return val }
+	})
+}
+
+// Set the Column from the function
+func (m workoutGroupMods) SkipLastOnFinalRoundFunc(f func() bool) WorkoutGroupMod {
+	return WorkoutGroupModFunc(func(_ context.Context, o *WorkoutGroupTemplate) {
+		o.SkipLastOnFinalRound = f
+	})
+}
+
+// Clear any values for the column
+func (m workoutGroupMods) UnsetSkipLastOnFinalRound() WorkoutGroupMod {
+	return WorkoutGroupModFunc(func(_ context.Context, o *WorkoutGroupTemplate) {
+		o.SkipLastOnFinalRound = nil
+	})
+}
+
+// Generates a random value for the column using the given faker
+// if faker is nil, a default faker is used
+func (m workoutGroupMods) RandomSkipLastOnFinalRound(f *faker.Faker) WorkoutGroupMod {
+	return WorkoutGroupModFunc(func(_ context.Context, o *WorkoutGroupTemplate) {
+		o.SkipLastOnFinalRound = func() bool {
+			return random_bool(f)
 		}
 	})
 }

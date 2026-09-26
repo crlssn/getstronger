@@ -300,6 +300,14 @@ export const plannedIntervals = (groups: readonly DraftGroup[]): number =>
     return count + perRound * rounds - (skipsLast(group) ? 1 : 0)
   }, 0)
 
+/** Where a block sits in an interval routine, as the schema names it. */
+export const roleMessages: Record<GroupRole, RoutineGroupRole> = {
+  '': RoutineGroupRole.UNSPECIFIED,
+  warmup: RoutineGroupRole.WARMUP,
+  repeat: RoutineGroupRole.REPEAT,
+  cooldown: RoutineGroupRole.COOLDOWN,
+}
+
 /** Where a saved block sits in an interval routine, as the form names it. */
 export const groupRole = (role: RoutineGroupRole): GroupRole => {
   switch (role) {
