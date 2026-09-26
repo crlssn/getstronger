@@ -1,4 +1,4 @@
-import { screen, waitFor } from '@testing-library/react'
+import { act, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { timedCircuit } from '@/native/timedCircuit'
@@ -139,6 +139,8 @@ describe('TimedCircuitRecorder', () => {
 
     await screen.findByRole('heading', { name: 'Walk' })
     expect(timedCircuit.start).not.toHaveBeenCalled()
+    // Nor can a tap start it ahead of the comparison.
+    expect(screen.getByRole('button', { name: 'Start live session' })).toBeDisabled()
 
     rerender(
       <TimedCircuitRecorder
@@ -156,6 +158,34 @@ describe('TimedCircuitRecorder', () => {
         expect.objectContaining({ pacing: pacingFor([phase]) }),
       ),
     )
+  })
+
+  // A tap before the recorder has answered is the start; the screen does not
+  // start a second one over it once the answer arrives.
+  it('starts once when tapped before the recorder has answered', async () => {
+    const user = userEvent.setup()
+    let answer = (): void => undefined
+    vi.mocked(timedCircuit.read).mockReturnValueOnce(
+      new Promise((resolve) => {
+        answer = () => resolve({})
+      }),
+    )
+    vi.mocked(timedCircuit.start).mockResolvedValue(undefined)
+    renderWithProviders(
+      <TimedCircuitRecorder
+        recordingKey="athlete:routine"
+        pacing={pacingFor([phase])}
+        phases={[phase]}
+        onComplete={vi.fn()}
+        onCancel={vi.fn()}
+        onDiscard={vi.fn()}
+      />,
+    )
+
+    await user.click(await screen.findByRole('button', { name: 'Start live session' }))
+    await act(async () => answer())
+
+    expect(timedCircuit.start).toHaveBeenCalledOnce()
   })
 
   it('restores native progress and sends pause, resume, and early finish to native', async () => {

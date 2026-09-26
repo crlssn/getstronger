@@ -124,9 +124,12 @@ export const TimedCircuitRecorder = ({
       clearInterval(timer)
     }
   }, [key, saved, onComplete, t])
+  // Set by any start, tapped or not, so the screen never lays a second over it.
+  const started = useRef(false)
   /** Runs one recorder command, and says whether it went through. */
   const action = useCallback(
     async (kind: 'start' | 'pause' | 'resume' | 'finish' | 'clear') => {
+      if (kind === 'start') started.current = true
       setBusy(true)
       setError('')
       try {
@@ -180,10 +183,8 @@ export const TimedCircuitRecorder = ({
   // Nothing here is a second decision: the athlete asked for this session on
   // the screen before, so it runs from the moment this one appears. A refusal
   // leaves the screen on its own Start, which is the athlete's to tap again.
-  const started = useRef(false)
   useEffect(() => {
     if (!checked || !pacing || started.current || saved || recording) return
-    started.current = true
     void action('start')
   }, [checked, pacing, saved, recording, action])
   // Never disabled and never behind a sheet: this is the one control an athlete
@@ -542,7 +543,8 @@ export const TimedCircuitRecorder = ({
               type="button"
               colour="primary"
               size="lg"
-              disabled={busy}
+              // A start before the comparison arrives would run without it.
+              disabled={busy || (!recording && !pacing)}
               onClick={() => void action(!recording ? 'start' : paused ? 'resume' : 'pause')}
             >
               {/* The session starts itself, so this reads Start only where

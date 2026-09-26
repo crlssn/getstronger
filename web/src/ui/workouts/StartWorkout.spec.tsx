@@ -6,7 +6,7 @@ import { create } from '@bufbuild/protobuf'
 import { Code, ConnectError } from '@connectrpc/connect'
 import { act, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { Route, Routes } from 'react-router-dom'
+import { Route, Routes, useNavigationType } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
 vi.mock('@/http/requests', async (importOriginal) => ({
@@ -113,6 +113,9 @@ const currentUser = (
   }> = {},
 ) => create(GetUserResponseSchema, { user: { weightUnit, ...extra } })
 
+// Says how it was reached: a pushed tab leaves the workout one Back away.
+const WorkoutTab = () => <p>workout tab, {useNavigationType()}</p>
+
 const mountWorkout = (route = `/workouts/routine/${routineID}`) =>
   renderWithProviders(
     <Routes>
@@ -120,7 +123,7 @@ const mountWorkout = (route = `/workouts/routine/${routineID}`) =>
       <Route path="/workouts/quick" element={<StartWorkout />} />
       <Route path="/workouts/:id" element={<p>saved workout</p>} />
       <Route path="/home" element={<p>home</p>} />
-      <Route path="/workout" element={<p>workout tab</p>} />
+      <Route path="/workout" element={<WorkoutTab />} />
       <Route path="/routines" element={<p>routines</p>} />
     </Routes>,
     { route },
@@ -304,7 +307,7 @@ describe('StartWorkout', () => {
       expect(screen.getByRole('heading', { name: 'Delete this workout?' })).toBeInTheDocument()
       await user.click(screen.getByRole('button', { name: 'Discard workout' }))
 
-      expect(screen.getByText('workout tab')).toBeInTheDocument()
+      expect(screen.getByText('workout tab, REPLACE')).toBeInTheDocument()
       expect(useWorkoutStore.getState().workouts[routineID]).toBeUndefined()
     })
   })
@@ -1497,7 +1500,9 @@ describe('StartWorkout', () => {
       await waitFor(() => expect(useConfirmationStore.getState().confirmation).not.toBeNull())
       useConfirmationStore.getState().accept()
 
-      expect(await screen.findByText('workout tab')).toBeInTheDocument()
+      // Replaced rather than pushed: Back would reopen the routine with no
+      // workout, which starts a fresh session on its own.
+      expect(await screen.findByText('workout tab, REPLACE')).toBeInTheDocument()
       expect(useWorkoutStore.getState().workouts[routineID]).toBeUndefined()
     })
   })

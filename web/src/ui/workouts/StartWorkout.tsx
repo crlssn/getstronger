@@ -1254,10 +1254,11 @@ export const StartWorkout = () => {
           }}
           // Leaving, not changing your mind about how to log it: handing back
           // the routine's empty form reads as the app asking the athlete to
-          // type up the session it has just thrown away.
+          // type up the session it has just thrown away. Replaced, since Back
+          // would reopen the routine with no workout and start a new session.
           onDiscard={() => {
             useWorkoutStore.getState().removeWorkout(routineID)
-            void navigate('/workout')
+            void navigate('/workout', { replace: true })
           }}
           // Handed to the recorder rather than rendered under it: the review
           // screen owns the order the two exits are read in.
@@ -1674,7 +1675,8 @@ export const StartWorkout = () => {
                   onClick={() => {
                     useWorkoutStore.getState().removeWorkout(routineID)
                     closeLeaveDialog()
-                    void navigate('/workout')
+                    // Replaced: Back would reopen a timed routine live again.
+                    void navigate('/workout', { replace: true })
                   }}
                 >
                   <TrashIcon aria-hidden="true" /> {t('workout.discard')}
