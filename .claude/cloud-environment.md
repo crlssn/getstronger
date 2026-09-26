@@ -1,8 +1,28 @@
 # The cloud environment
 
 The routines run in an Anthropic-hosted cloud session, not a worktree on a
-developer machine. This file records what that image gives us, what it does
-not, and the setup script that closes the gap. Everything here was observed in
+developer machine.
+
+## Working in a cloud session
+
+What changes for an agent running here, against the rules in `CLAUDE.md`:
+
+- **There is no `gh`.** Use the GitHub MCP tools for pull requests, labels,
+  issues and dependencies.
+- **`mise` can fail for the first half hour.** Every `mise run` installs the
+  whole toolset first, and GitHub rate-limits the lookups; the 403s clear on
+  their own. Retry before concluding a tool is out of reach, and meanwhile
+  resolve an installed tool with `mise which <tool>` and run it directly.
+- **`mise run lint:backend` is out of reach** until `golangci-lint` installs.
+  Say so in the pull request rather than skipping it silently.
+- **Nothing can photograph the app.** Add the `screenshots` label to the pull
+  request and CI appends the before/after images.
+- **`mise run pr:create` needs `gh`.** Push the branch, then dispatch
+  `pr.open.yml` on it through the GitHub MCP tools, with the `title`, `body`
+  and `base` inputs; the workflow opens the pull request as the app.
+
+The rest of this file is for whoever maintains the environment: what the image
+gives us, what it does not, and the setup script that closes the gap. Everything here was observed in
 run `cse_01JfKwBKUTNFftWL1iB2dL7X`, not read off the documentation, which is
 wrong about `gh`.
 

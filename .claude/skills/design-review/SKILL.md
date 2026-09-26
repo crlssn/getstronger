@@ -18,8 +18,8 @@ description: Look at the GetStronger app instead of reasoning about its markup �
   under 44 px, text under 12 px, hard-clipped text, and WCAG A/AA violations.
   Read the findings first to decide which images are worth opening.
 - After changing a component, re-photograph only what it affects with
-  `mise run screenshots:page <pattern>`, which matches page names and skips
-  reseeding.
+  `mise run screenshots:page <pattern>`, which matches page names — the
+  `name:` fields in `web/tests/screenshots/catalogue.ts` — and skips reseeding.
 - To find out what a change moved rather than assuming, compare this branch's
   set against another ref's. Photograph the ref you want as the before —
   `git switch main`, `mise run screenshots`, `git switch -` — then run
@@ -39,7 +39,9 @@ description: Look at the GetStronger app instead of reasoning about its markup �
   `web/screenshots/<ref>/changes/` it publishes the baseline image, the new one
   and the difference, and appends a before, after and difference table to the
   body naming both sets, replacing an earlier block rather than adding a second
-  one. Publish a folder of the set as it is with
+  one. A cloud session cannot photograph: it adds the `screenshots` label to
+  the pull request instead, through the GitHub MCP tools, and CI appends the
+  same block. Publish a folder of the set as it is with
   `--path web/screenshots/<ref>/active`; anything outside `web/screenshots/` is
   refused.
 - A set is 32 MB, and one accumulates per branch.

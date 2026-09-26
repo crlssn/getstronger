@@ -18,12 +18,18 @@ that part is opened. Read the file for the area you are about to change.
 | `mobile/`                | [`mobile/CLAUDE.md`](mobile/CLAUDE.md)     | Capacitor wrappers and native builds    |
 | `exercises/`             | [`exercises/README.md`](exercises/README.md) | The movement library: schema, tags, translations |
 
-Three recurring jobs are written up as skills rather than rules, because they
+A cloud session runs without `gh`, and at times without a working `mise`.
+Read [`.claude/cloud-environment.md`](.claude/cloud-environment.md) first
+there; where it conflicts with this file, it wins.
+
+Four recurring jobs are written up as skills rather than rules, because they
 matter only when you are doing them: `.claude/skills/pull-request/SKILL.md` for
 writing a PR description, `.claude/skills/design-review/SKILL.md` for looking at
-the app instead of reasoning about its markup, and
+the app instead of reasoning about its markup,
 `.claude/skills/design-brief/SKILL.md` for briefing Claude Design when a screen
-needs mocking rather than photographing.
+needs mocking rather than photographing, and
+`.claude/skills/backend-coverage/SKILL.md` for finding what no backend test
+reaches.
 
 ## Working in a worktree
 
@@ -86,8 +92,9 @@ worktree. The local stack is not shared, so set it up before running anything.
 - Run the targeted tests, linters, type checks, and builds for the areas you
   touched before considering a change complete. The per-area rules name them;
   `mise run test` and `mise run lint` run everything.
-- After changing backend code, restart this worktree's backend service after
-  verification so the running app uses the new code.
+- After changing backend code, restart this worktree's backend
+  (`mise run app:backend`) after verification so the running app uses the new
+  code.
 - After changing the database schema or database-dependent behavior, add any
   missing seed data, recreate or restart this worktree's database, apply the
   migrations, and reseed it before verification.
@@ -115,10 +122,15 @@ is one issue, not two.
 ## Git commits
 
 - When asked to create a commit, follow the repository's existing commit history.
-- Format commit subjects as `<type>: <description>`, with a lowercase
+- Format commit subjects as `<type>: <area>: <description>`, with a lowercase
   Conventional Commit type and a concise, imperative description. Prefer an
   existing type: `feat`, `fix`, `test`, `refactor`, `chore`, `ci`, `docs`,
-  `build`.
+  `build`. The area is the one part of the tree the change sits in — `web`,
+  `server`, `mobile`, `db`, `proto`, `infra`, `tooling` — and is left out when
+  the change spans several: `fix: web: keep the point when a decimal is
+  deleted`, but `fix: keep the name of every block a workout was trained in`.
+  A pull request's subject follows the same rule, since it becomes the squashed
+  commit.
 - After completing and verifying a valuable, self-contained change, commit it so
   the repository history records the progress.
 - Keep unrelated changes in separate commits, and do not commit incomplete or
