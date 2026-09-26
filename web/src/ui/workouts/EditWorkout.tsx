@@ -10,7 +10,7 @@ import { Bars3Icon } from '@heroicons/react/24/outline'
 import { DateTime } from 'luxon'
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useParams } from 'react-router-dom'
 
 import { consumeRequestError, getWorkout, updateWorkout } from '@/http/requests'
 import { SetSchema } from '@/proto/api/v1/shared_pb'
@@ -32,6 +32,7 @@ import { isExerciseSetComplete } from '@/utils/exerciseMeasurements'
 import { useSortable } from '@/utils/useSortable'
 import { normalizeWeightUnit } from '@/utils/weightUnits'
 import { incompleteSetCount } from '@/utils/workoutSession'
+import { useLeave } from '@/utils/useLeave'
 import styles from './EditWorkout.module.css'
 
 const localInput = "yyyy-MM-dd'T'HH:mm"
@@ -76,7 +77,7 @@ const toLocalInput = (timestamp: Timestamp | undefined) =>
 /** Corrects a finished workout: its sets, when it ran, and the note on it. */
 export const EditWorkout = () => {
   const { t } = useTranslation()
-  const navigate = useNavigate()
+  const leave = useLeave()
   const { id = '' } = useParams()
 
   const [workout, setWorkout] = useState<Workout>()
@@ -149,7 +150,7 @@ export const EditWorkout = () => {
     }
 
     useToastStore.getState().success(t('workout.edit.updated'))
-    await navigate(`/workouts/${workout.id}`)
+    await leave(`/workouts/${workout.id}`)
   }
 
   const updateSets = (

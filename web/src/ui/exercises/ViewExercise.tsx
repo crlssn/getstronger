@@ -43,6 +43,7 @@ import { formatExerciseSet, isDistanceTimeExercise } from '@/utils/exerciseMeasu
 import { downSample } from '@/utils/exerciseTrend'
 import { useActiveWorkout } from '@/utils/useActiveWorkout'
 import { usePagination } from '@/utils/usePagination'
+import { useLeave } from '@/utils/useLeave'
 import styles from './ViewExercise.module.css'
 
 // More points than a chart this size can show, and every one past them costs
@@ -53,6 +54,7 @@ const maxChartPoints = 60
 export const ViewExercise = () => {
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const leave = useLeave()
   const { id = '' } = useParams()
 
   const userId = useAuthStore((state) => state.userId)
@@ -114,7 +116,7 @@ export const ViewExercise = () => {
 
       setDeleteDialogOpen(false)
       useToastStore.getState().success(t('exercise.view.deleted'))
-      await navigate('/exercises')
+      await leave('/exercises')
     } finally {
       setDeleting(false)
     }

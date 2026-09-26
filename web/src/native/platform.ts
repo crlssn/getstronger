@@ -4,6 +4,7 @@ import type { RestNotificationTarget } from '@/native/restNotification'
 
 import { appStateChanged } from '@/native/appState'
 import { canSwipeBack, SwipeBack } from '@/native/swipeBack'
+import { historyIndex } from '@/router/navigation'
 import { isFocusedShellPath } from '@/router/routes'
 import { workoutHref } from '@/utils/workoutHref'
 
@@ -72,9 +73,7 @@ export const initNativePlatform = async (router: NativeRouter): Promise<void> =>
   const applySwipeBack = (pathname: string) => {
     if (!swipeBackSupported) return
 
-    // React Router numbers the entries it pushed; history.state is otherwise any.
-    const { idx } = (window.history.state ?? {}) as { idx?: number }
-    const wanted = canSwipeBack(pathname, idx ?? 0)
+    const wanted = canSwipeBack(pathname, historyIndex())
     if (wanted === swiping) return
 
     swiping = wanted

@@ -23,6 +23,7 @@ import { AppSheet } from '@/ui/components/AppSheet'
 import { AppSkeleton } from '@/ui/components/AppSkeleton'
 import { useSortable } from '@/utils/useSortable'
 import { formatDateTime } from '@/utils/datetime'
+import { useLeave } from '@/utils/useLeave'
 import styles from './PlanForm.module.css'
 
 interface Props {
@@ -34,6 +35,7 @@ interface Props {
 export const PlanForm = ({ planId }: Props) => {
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const leave = useLeave()
 
   const routineLastPerformed = useActivityStore((state) => state.routineLastPerformed)
 
@@ -157,7 +159,10 @@ export const PlanForm = ({ planId }: Props) => {
     useToastStore
       .getState()
       .success(editing ? t('training.planForm.updated') : t('training.planForm.created'))
-    await navigate(`/plans/${plan.id}`)
+    // An edit returns to wherever it was opened from; a new plan takes the
+    // form's place, so back from it goes to wherever the form was opened from.
+    if (editing) await leave(`/plans/${plan.id}`)
+    else await navigate(`/plans/${plan.id}`, { replace: true })
   }
 
   if (failed) return <AppErrorState onRetry={() => setAttempt((count) => count + 1)} />

@@ -4,7 +4,7 @@ import type { ExerciseFormValues } from '@/ui/exercises/ExerciseForm'
 import { create } from '@bufbuild/protobuf'
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useParams } from 'react-router-dom'
 
 import {
   consumeRequestError,
@@ -20,11 +20,12 @@ import { AppErrorState } from '@/ui/components/AppErrorState'
 import { AppSkeleton } from '@/ui/components/AppSkeleton'
 import { ExerciseForm } from '@/ui/exercises/ExerciseForm'
 import { emptyPageToken } from '@/utils/usePagination'
+import { useLeave } from '@/utils/useLeave'
 import styles from './ExerciseForm.module.css'
 
 export const UpdateExercise = () => {
   const { t } = useTranslation()
-  const navigate = useNavigate()
+  const leave = useLeave()
   const { id = '' } = useParams()
 
   // Undefined until loaded rather than an empty object: a blank exercise is
@@ -81,7 +82,7 @@ export const UpdateExercise = () => {
     }
 
     useToastStore.getState().success(t('exercise.form.updated'))
-    await navigate(`/exercises/${exercise.id}`)
+    await leave(`/exercises/${exercise.id}`)
   }
 
   if (values) {

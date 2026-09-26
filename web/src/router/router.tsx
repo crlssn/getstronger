@@ -5,7 +5,7 @@ import type { RouteObject } from 'react-router-dom'
 import { createBrowserRouter, redirect } from 'react-router-dom'
 
 import { App } from '@/App'
-import { applyPageTitle, onNavigate, redirectForRoute } from '@/router/guards'
+import { applyPageTitle, fileTitle, onNavigate, redirectForRoute } from '@/router/guards'
 import { routes } from '@/router/routes'
 import { screens } from '@/router/screens'
 
@@ -54,5 +54,8 @@ export const buildRouteObjects = (
   return build(from)
 }
 
-export const createRouter = () =>
-  createBrowserRouter([{ element: <App />, children: buildRouteObjects() }])
+export const createRouter = () => {
+  const router = createBrowserRouter([{ element: <App />, children: buildRouteObjects() }])
+  router.subscribe(fileTitle)
+  return router
+}

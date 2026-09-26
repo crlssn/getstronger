@@ -4,17 +4,18 @@ import type { DraftGroup } from '@/utils/routineGroups'
 
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useParams } from 'react-router-dom'
 
 import { consumeRequestError, getRoutine, updateRoutine } from '@/http/requests'
 import { useToastStore } from '@/stores/toasts'
 import { AppErrorState } from '@/ui/components/AppErrorState'
 import { AppSkeleton } from '@/ui/components/AppSkeleton'
 import { RoutineForm } from '@/ui/routines/RoutineForm'
+import { useLeave } from '@/utils/useLeave'
 
 export const EditRoutine = () => {
   const { t } = useTranslation()
-  const navigate = useNavigate()
+  const leave = useLeave()
   const { id = '' } = useParams()
 
   const [name, setName] = useState('')
@@ -74,7 +75,7 @@ export const EditRoutine = () => {
       }
 
       useToastStore.getState().success(t('routine.form.updated'))
-      await navigate(`/routines/${id}`)
+      await leave(`/routines/${id}`)
     } finally {
       setSaving(false)
     }

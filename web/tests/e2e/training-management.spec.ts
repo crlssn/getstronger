@@ -550,6 +550,49 @@ test.describe('routine lifecycle', () => {
     await expect(page).toHaveURL(/\/routines$/)
   })
 
+  // Saving and deleting leave the screen rather than pushing where they go, so
+  // back never walks into the saved form or the deleted routine, and the back
+  // row is named after the entry it goes to rather than the screen last left.
+  test('leaves a saved edit and a deleted routine out of history @mutation', async ({ page }) => {
+    const routineName = uniqueName('E2E Back')
+    const updatedName = `${routineName} Updated`
+
+    await page.goto('/routines/create')
+    await startRoutine(page, 'Blank')
+    await page.getByLabel('Routine name').fill(routineName)
+    await addRoutineExercise(page)
+    await page.getByRole('button', { name: 'Create routine' }).click()
+    await expect(page).toHaveURL(/\/routines$/)
+
+    await page.getByLabel('Search routines').fill(routineName)
+    await page.getByRole('heading', { name: routineName }).click()
+    await expect(page).toHaveURL(/\/routines\/[^/]+$/)
+    const routineURL = page.url()
+
+    await page.getByRole('link', { name: 'Edit exercises' }).click()
+    await page.getByLabel('Routine name').fill(updatedName)
+    await page.getByRole('button', { name: 'Save changes' }).click()
+
+    await expect(page).toHaveURL(routineURL)
+    await expect(page.getByRole('heading', { name: updatedName })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Routines', exact: true })).toBeVisible()
+
+    await page.goBack()
+    await expect(page).toHaveURL(/\/routines$/)
+    await page.goForward()
+    await expect(page.getByRole('heading', { name: updatedName })).toBeVisible()
+
+    await page.getByRole('button', { name: 'Delete' }).click()
+    await acceptConfirmDialog(page, 'Delete')
+    await expect(page).toHaveURL(/\/routines$/)
+    await expect(page.getByRole('status')).toContainText('Routine deleted')
+
+    // Back from the list goes to where the list was opened from — Home, after
+    // signing in — and not to the routine just deleted.
+    await page.goBack()
+    await expect(page).toHaveURL(/\/home$/)
+  })
+
   // The walk-run of the ticket, end to end: a longer first walk and a block
   // repeated, built as one routine rather than as two groups, saved, read back,
   // and reopened still in the shape it was built in. The recorded reading it

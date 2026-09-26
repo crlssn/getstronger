@@ -13,7 +13,7 @@ import {
 } from '@heroicons/react/24/outline'
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useParams } from 'react-router-dom'
 
 import {
   consumeRequestError,
@@ -38,6 +38,7 @@ import { groupLetter, groupRole } from '@/utils/routineGroups'
 import { prescribedFromRoutine, prescribes, prescriptionOf } from '@/utils/routinePrescription'
 import { intervalPartBadge, intervalPartNote, intervalPartTitle } from '@/ui/routines/intervalParts'
 import { useSortable } from '@/utils/useSortable'
+import { useLeave } from '@/utils/useLeave'
 import styles from './ViewRoutine.module.css'
 
 // Matches the estimate on the home screen's up-next card.
@@ -48,7 +49,7 @@ const minimumEstimatedMinutes = 30
 export const ViewRoutine = () => {
   const { t } = useTranslation()
   const distanceUnit = usePreferencesStore((state) => state.distanceUnit)
-  const navigate = useNavigate()
+  const leave = useLeave()
   const { id = '' } = useParams()
 
   const preferredRoutineId = useDashboardStore((state) => state.preferredRoutineId)
@@ -154,7 +155,7 @@ export const ViewRoutine = () => {
     }
 
     useToastStore.getState().success(t('routine.deleted'))
-    await navigate('/routines')
+    await leave('/routines')
   }
 
   if (loading) return <AppSkeleton />
