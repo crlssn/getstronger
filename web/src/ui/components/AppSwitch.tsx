@@ -1,3 +1,4 @@
+import { haptic } from '@/native/haptics'
 import { cn } from '@/ui/cn'
 import styles from './AppSwitch.module.css'
 
@@ -19,7 +20,10 @@ export const AppSwitch = ({ label, checked, onChange, disabled, className }: Pro
     aria-checked={checked}
     aria-label={label}
     disabled={disabled}
-    onClick={() => onChange(!checked)}
+    onClick={() => {
+      haptic('selection')
+      onChange(!checked)
+    }}
   >
     <span className={styles.knob} />
   </button>

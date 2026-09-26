@@ -1,5 +1,6 @@
 import type { ComponentProps, ReactNode } from 'react'
 
+import { haptic } from '@/native/haptics'
 import { cn } from '@/ui/cn'
 import styles from './AppOptionRow.module.css'
 
@@ -36,12 +37,18 @@ export const AppOptionRow = ({
   selected,
   flat = false,
   className,
+  onClick,
   ...rest
 }: Props) => (
   <button
     type="button"
     className={cn(styles.row, flat && styles.flat, selected && styles.selected, className)}
     aria-pressed={selected}
+    onClick={(event) => {
+      // Only a row with a state chooses; one without opens something.
+      if (selected === false) haptic('selection')
+      onClick?.(event)
+    }}
     {...rest}
   >
     {leading}

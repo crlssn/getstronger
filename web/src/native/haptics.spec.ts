@@ -46,14 +46,8 @@ afterAll(() => {
 })
 
 describe('haptic', () => {
-  test('answers a press with the lightest impact', async () => {
-    haptic('press')
-
-    await vi.waitFor(() => expect(bridge.impact).toHaveBeenCalledWith({ style: 'LIGHT' }))
-  })
-
   // A set is the app's most repeated action and the one a hand feels for
-  // without looking, so it lands heavier than the tap that opened a menu.
+  // without looking, so it lands heavier than a selection tick.
   test('answers a completed set with a medium impact', async () => {
     haptic('setCompleted')
 
@@ -72,6 +66,12 @@ describe('haptic', () => {
     await vi.waitFor(() => expect(bridge.notification).toHaveBeenCalledWith({ type: 'SUCCESS' }))
   })
 
+  test('answers a saved workout with the success pattern', async () => {
+    haptic('workoutSaved')
+
+    await vi.waitFor(() => expect(bridge.notification).toHaveBeenCalledWith({ type: 'SUCCESS' }))
+  })
+
   test('answers a failed action with the error pattern', async () => {
     haptic('actionFailed')
 
@@ -81,17 +81,17 @@ describe('haptic', () => {
   test('leaves the browser alone', async () => {
     bridge.native = false
 
-    haptic('press')
+    haptic('selection')
     await Promise.resolve()
 
-    expect(bridge.impact).not.toHaveBeenCalled()
+    expect(bridge.selectionChanged).not.toHaveBeenCalled()
   })
 
   test('carries on when the plugin refuses', async () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
     bridge.impact.mockRejectedValue(new Error('no haptics'))
 
-    haptic('press')
+    haptic('setCompleted')
 
     await vi.waitFor(() => expect(warn).toHaveBeenCalled())
     warn.mockRestore()
@@ -100,29 +100,29 @@ describe('haptic', () => {
   // Two buzzes a thumb cannot tell apart are one sensation, and the second is
   // only a queue forming behind the first.
   test('coalesces gestures that arrive together', async () => {
-    haptic('press')
-    haptic('press')
     haptic('selection')
+    haptic('selection')
+    haptic('setCompleted')
 
-    await vi.waitFor(() => expect(bridge.impact).toHaveBeenCalledTimes(1))
-    expect(bridge.selectionChanged).not.toHaveBeenCalled()
+    await vi.waitFor(() => expect(bridge.selectionChanged).toHaveBeenCalledTimes(1))
+    expect(bridge.impact).not.toHaveBeenCalled()
   })
 
   test('lets a deliberate second tap through', async () => {
-    haptic('press')
-    await vi.waitFor(() => expect(bridge.impact).toHaveBeenCalledTimes(1))
+    haptic('selection')
+    await vi.waitFor(() => expect(bridge.selectionChanged).toHaveBeenCalledTimes(1))
 
     vi.setSystemTime((now += 200))
-    haptic('press')
+    haptic('selection')
 
-    await vi.waitFor(() => expect(bridge.impact).toHaveBeenCalledTimes(2))
+    await vi.waitFor(() => expect(bridge.selectionChanged).toHaveBeenCalledTimes(2))
   })
 
   // An announcement is rare, already deduped by whoever raises it, and is the
   // one the athlete is waiting for — the tap that happened to precede it must
   // not swallow it.
-  test('never coalesces an announcement behind a press', async () => {
-    haptic('press')
+  test('never coalesces an announcement behind a tap', async () => {
+    haptic('selection')
     haptic('actionFailed')
 
     await vi.waitFor(() => expect(bridge.notification).toHaveBeenCalledWith({ type: 'ERROR' }))

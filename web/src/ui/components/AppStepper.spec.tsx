@@ -3,7 +3,10 @@
 import { screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { useState } from 'react'
-import { describe, expect, test } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
+
+const haptics = vi.hoisted(() => ({ haptic: vi.fn() }))
+vi.mock('@/native/haptics', () => haptics)
 
 import { renderWithProviders } from '@/ui/testing'
 import { AppStepper } from './AppStepper'
@@ -29,6 +32,8 @@ const minus = () => screen.getByRole('button', { name: 'One round fewer' })
 const plus = () => screen.getByRole('button', { name: 'One round more' })
 
 describe('AppStepper', () => {
+  beforeEach(() => haptics.haptic.mockReset())
+
   // What is shown and what is announced are the same string, so a value read
   // out never disagrees with the one on the screen.
   test('shows the value as its caller formats it', () => {
@@ -73,5 +78,25 @@ describe('AppStepper', () => {
     for (let press = 0; press < 5; press += 1) await userEvent.click(plus())
     expect(value()).toHaveTextContent('5x')
     expect(plus()).toBeDisabled()
+  })
+
+  test('ticks for each step the value takes', async () => {
+    renderWithProviders(<Harness value={3} />)
+
+    await userEvent.click(plus())
+    await userEvent.click(minus())
+
+    expect(haptics.haptic).toHaveBeenCalledTimes(2)
+    expect(haptics.haptic).toHaveBeenCalledWith('selection')
+  })
+
+  // The buttons disable at a limit, but the arrow keys still reach it.
+  test('stays still when a step would pass a limit', async () => {
+    renderWithProviders(<Harness value={5} />)
+
+    value().focus()
+    await userEvent.keyboard('{ArrowUp}')
+
+    expect(haptics.haptic).not.toHaveBeenCalled()
   })
 })
