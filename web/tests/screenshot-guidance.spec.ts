@@ -47,6 +47,11 @@ const guidance = [
 
 const publishCommand = 'mise run pr:screenshots <number> --append'
 
+// Of the rule files and skills, only design-review has the command; these
+// point there instead of carrying a copy that can drift.
+const pointers = ['web/CLAUDE.md', '.claude/skills/pull-request/SKILL.md']
+const holders = guidance.filter((file) => !pointers.includes(file))
+
 // The claims that sent #1216's images to the chat reply. Each says a UI
 // change's evidence stops there, which is what the publishing task undid.
 const contradictions = [
@@ -67,7 +72,11 @@ describe('screenshot guidance', () => {
     expect(violations(pattern)).toEqual([])
   })
 
-  it.each(guidance)('%s sends the evidence to the pull request body', (file) => {
+  it.each(holders)('%s sends the evidence to the pull request body', (file) => {
     expect(readFileSync(join(root, file), 'utf8')).toContain(publishCommand)
+  })
+
+  it.each(pointers)('%s points to the skill that has the command', (file) => {
+    expect(readFileSync(join(root, file), 'utf8')).toContain('design-review skill has the command')
   })
 })
