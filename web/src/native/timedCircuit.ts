@@ -4,7 +4,18 @@ import type { PaceTone, Pacing } from '@/utils/pacing'
 import type { Phase, Recording } from '@/utils/timedCircuit'
 
 interface TimedCircuitPlugin {
-  /** iOS settings example, using the same tone shapes as the native recorder. */
+  /**
+   * Sounds one of the two pace notes as a settings example, outside any
+   * recording, in the same shapes the native recorder sounds mid-run.
+   *
+   * Here for the same reason as `speak`: a WebView is given audio of its own
+   * that the app never reaches — on iOS a session configured in another
+   * process and silenced by the Ring/Silent switch — so a note the page
+   * sounded was never the note a run plays.
+   *
+   * `volume` is the announcements' level, 0 to 1. Each recorder puts its own
+   * tone level under it, so the example is as loud as the note a run plays.
+   */
   previewTone(options: { tone: PaceTone; volume: number }): Promise<void>
   /** `cueLeadSeconds` is the athlete's warning before an interval ends; 0 says nothing. */
   // The pacing is optional: a routine with no session to compare against is

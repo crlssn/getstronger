@@ -2,6 +2,7 @@ package studio.getstronger.app;
 
 import android.Manifest;
 import android.content.Intent;
+import android.media.AudioTrack;
 import android.os.Bundle;
 import android.speech.tts.TextToSpeech;
 import androidx.core.content.ContextCompat;
@@ -23,6 +24,8 @@ public class TimedCircuitPlugin extends Plugin {
     private boolean exampleReady;
     /** The example that asked for the engine, waiting for it to come up. */
     private Runnable pending;
+    /** The example note sounding now, released when it ends or the next tap cuts it off. */
+    private AudioTrack example;
     @PluginMethod public void start(PluginCall call) {
         if (getPermissionState("location") != PermissionState.GRANTED) {
             requestPermissionForAlias("location", call, "locationPermission");
@@ -85,6 +88,45 @@ public class TimedCircuitPlugin extends Plugin {
             } catch (Exception error) { call.reject("The example could not be said", error); }
         });
     }
+    /**
+     * Sounds one of the two pace notes as a settings example, outside any
+     * recording.
+     *
+     * Here for the same reason as {@code speak}. A note the page sounded went
+     * out on whatever stream the WebView had configured for itself, which the
+     * app never reaches: it was never the note a run plays, on the stream a
+     * run plays it. Sounded here it is the same track the service builds, on
+     * the media stream the announcements share.
+     */
+    @PluginMethod public void previewTone(PluginCall call) {
+        String tone = call.getString("tone", "");
+        Double volume = call.getDouble("volume", 1d);
+        if (tone == null || volume == null || volume <= 0) { call.resolve(); return; }
+        // The announcements' level, with the recorder's own tone level put
+        // under it by PaceTones — the same arithmetic a run does.
+        double level = Math.min(volume, 1);
+        getActivity().runOnUiThread(() -> {
+            try {
+                // A second tap cuts the first note off, as it does on iOS,
+                // rather than sounding both over each other.
+                releaseExample();
+                AudioTrack track = PaceTones.note(tone);
+                if (track != null) {
+                    example = track;
+                    track.setNotificationMarkerPosition(track.getBufferSizeInFrames());
+                    track.setPlaybackPositionUpdateListener(new AudioTrack.OnPlaybackPositionUpdateListener() {
+                        @Override public void onMarkerReached(AudioTrack ended) { if (ended == example) releaseExample(); }
+                        @Override public void onPeriodicNotification(AudioTrack ended) {}
+                    });
+                    PaceTones.play(track, level);
+                }
+                call.resolve();
+            } catch (Exception error) { call.reject("The example could not be sounded", error); }
+        });
+    }
+    private void releaseExample() {
+        if (example != null) { example.release(); example = null; }
+    }
     /** Started on the first example rather than with the app: an engine nobody asks for is memory nobody needed. */
     private void start() {
         examples = new TextToSpeech(getContext(), status -> getActivity().runOnUiThread(() -> {
@@ -106,6 +148,7 @@ public class TimedCircuitPlugin extends Plugin {
         if (examples != null) { examples.stop(); examples.shutdown(); examples = null; }
         exampleReady = false;
         pending = null;
+        releaseExample();
         super.handleOnDestroy();
     }
     private void command(PluginCall call, String action) {
