@@ -292,6 +292,23 @@ func TestCheckConstraintErrors(t *testing.T) {
 		}
 	})
 
+	t.Run("Set_ErrCheckSetsDistanceFinite", func(t *testing.T) {
+		matchingErr := newCheckErr("23514", "sets_distance_finite")
+		if !errors.Is(SetErrors.ErrCheckSetsDistanceFinite, matchingErr) {
+			t.Fatalf("expected ErrCheckSetsDistanceFinite to match constraint %q", "sets_distance_finite")
+		}
+		if !SetErrors.ErrCheckSetsDistanceFinite.Is(matchingErr) {
+			t.Fatalf("expected ErrCheckSetsDistanceFinite.Is to match constraint %q", "sets_distance_finite")
+		}
+
+		nonMatchingErr := newCheckErr("23514", "other_constraint")
+		if errors.Is(SetErrors.ErrCheckSetsDistanceFinite, nonMatchingErr) {
+			t.Fatal("expected ErrCheckSetsDistanceFinite not to match different constraint")
+		}
+		if SetErrors.ErrCheckSetsDistanceFinite.Is(nonMatchingErr) {
+			t.Fatal("expected ErrCheckSetsDistanceFinite.Is not to match different constraint")
+		}
+	})
 	t.Run("Set_ErrCheckSetsDistanceNonNegative", func(t *testing.T) {
 		matchingErr := newCheckErr("23514", "sets_distance_non_negative")
 		if !errors.Is(SetErrors.ErrCheckSetsDistanceNonNegative, matchingErr) {
@@ -358,6 +375,23 @@ func TestCheckConstraintErrors(t *testing.T) {
 		}
 		if SetErrors.ErrCheckSetsPositionCheck.Is(nonMatchingErr) {
 			t.Fatal("expected ErrCheckSetsPositionCheck.Is not to match different constraint")
+		}
+	})
+	t.Run("Set_ErrCheckSetsWeightFinite", func(t *testing.T) {
+		matchingErr := newCheckErr("23514", "sets_weight_finite")
+		if !errors.Is(SetErrors.ErrCheckSetsWeightFinite, matchingErr) {
+			t.Fatalf("expected ErrCheckSetsWeightFinite to match constraint %q", "sets_weight_finite")
+		}
+		if !SetErrors.ErrCheckSetsWeightFinite.Is(matchingErr) {
+			t.Fatalf("expected ErrCheckSetsWeightFinite.Is to match constraint %q", "sets_weight_finite")
+		}
+
+		nonMatchingErr := newCheckErr("23514", "other_constraint")
+		if errors.Is(SetErrors.ErrCheckSetsWeightFinite, nonMatchingErr) {
+			t.Fatal("expected ErrCheckSetsWeightFinite not to match different constraint")
+		}
+		if SetErrors.ErrCheckSetsWeightFinite.Is(nonMatchingErr) {
+			t.Fatal("expected ErrCheckSetsWeightFinite.Is not to match different constraint")
 		}
 	})
 	t.Run("Set_ErrCheckSetsWeightUnitCheck", func(t *testing.T) {

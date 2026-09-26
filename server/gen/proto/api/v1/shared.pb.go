@@ -472,15 +472,18 @@ func (x *Exercise) GetMetrics() []ExerciseMetric {
 }
 
 type Set struct {
-	state           protoimpl.MessageState `protogen:"open.v1"`
-	Id              string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Weight          float64                `protobuf:"fixed64,2,opt,name=weight,proto3" json:"weight,omitempty"` // The weight can be less than zero.
-	Reps            int32                  `protobuf:"varint,3,opt,name=reps,proto3" json:"reps,omitempty"`
-	Metadata        *MetadataSet           `protobuf:"bytes,4,opt,name=metadata,proto3" json:"metadata,omitempty"`
-	Distance        float64                `protobuf:"fixed64,5,opt,name=distance,proto3" json:"distance,omitempty"`
-	DurationSeconds int32                  `protobuf:"varint,6,opt,name=duration_seconds,json=durationSeconds,proto3" json:"duration_seconds,omitempty"`
-	WeightUnit      WeightUnit             `protobuf:"varint,7,opt,name=weight_unit,json=weightUnit,proto3,enum=api.v1.WeightUnit" json:"weight_unit,omitempty"`
-	DistanceUnit    DistanceUnit           `protobuf:"varint,8,opt,name=distance_unit,json=distanceUnit,proto3,enum=api.v1.DistanceUnit" json:"distance_unit,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Id    string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	// The weight can be less than zero, so it carries no bound. It still has to
+	// be a real number: Postgres sorts NaN above every other double, so a
+	// non-finite weight would hold the personal best for good.
+	Weight          float64      `protobuf:"fixed64,2,opt,name=weight,proto3" json:"weight,omitempty"`
+	Reps            int32        `protobuf:"varint,3,opt,name=reps,proto3" json:"reps,omitempty"`
+	Metadata        *MetadataSet `protobuf:"bytes,4,opt,name=metadata,proto3" json:"metadata,omitempty"`
+	Distance        float64      `protobuf:"fixed64,5,opt,name=distance,proto3" json:"distance,omitempty"`
+	DurationSeconds int32        `protobuf:"varint,6,opt,name=duration_seconds,json=durationSeconds,proto3" json:"duration_seconds,omitempty"`
+	WeightUnit      WeightUnit   `protobuf:"varint,7,opt,name=weight_unit,json=weightUnit,proto3,enum=api.v1.WeightUnit" json:"weight_unit,omitempty"`
+	DistanceUnit    DistanceUnit `protobuf:"varint,8,opt,name=distance_unit,json=distanceUnit,proto3,enum=api.v1.DistanceUnit" json:"distance_unit,omitempty"`
 	unknownFields   protoimpl.UnknownFields
 	sizeCache       protoimpl.SizeCache
 }
@@ -854,13 +857,13 @@ const file_api_v1_shared_proto_rawDesc = "" +
 	"\x04name\x18\x03 \x01(\tB\a\xbaH\x04r\x02\x18dR\x04name\x12&\n" +
 	"\x04tags\x18\x04 \x03(\tB\x12\xbaH\x0f\x92\x01\f\x10\n" +
 	"\x18\x01\"\x06r\x04\x10\x01\x18@R\x04tags\x12D\n" +
-	"\ametrics\x18\x05 \x03(\x0e2\x16.api.v1.ExerciseMetricB\x12\xbaH\x0f\x92\x01\f\x18\x01\"\b\x82\x01\x05\x10\x01\"\x01\x00R\ametricsJ\x04\b\x06\x10\aR\frest_seconds\"\xdf\x02\n" +
+	"\ametrics\x18\x05 \x03(\x0e2\x16.api.v1.ExerciseMetricB\x12\xbaH\x0f\x92\x01\f\x18\x01\"\b\x82\x01\x05\x10\x01\"\x01\x00R\ametricsJ\x04\b\x06\x10\aR\frest_seconds\"\xea\x02\n" +
 	"\x03Set\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x12\x16\n" +
-	"\x06weight\x18\x02 \x01(\x01R\x06weight\x12\x1b\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1f\n" +
+	"\x06weight\x18\x02 \x01(\x01B\a\xbaH\x04\x12\x02@\x01R\x06weight\x12\x1b\n" +
 	"\x04reps\x18\x03 \x01(\x05B\a\xbaH\x04\x1a\x02(\x00R\x04reps\x12/\n" +
-	"\bmetadata\x18\x04 \x01(\v2\x13.api.v1.MetadataSetR\bmetadata\x12*\n" +
-	"\bdistance\x18\x05 \x01(\x01B\x0e\xbaH\v\x12\t)\x00\x00\x00\x00\x00\x00\x00\x00R\bdistance\x122\n" +
+	"\bmetadata\x18\x04 \x01(\v2\x13.api.v1.MetadataSetR\bmetadata\x12,\n" +
+	"\bdistance\x18\x05 \x01(\x01B\x10\xbaH\r\x12\v@\x01)\x00\x00\x00\x00\x00\x00\x00\x00R\bdistance\x122\n" +
 	"\x10duration_seconds\x18\x06 \x01(\x05B\a\xbaH\x04\x1a\x02(\x00R\x0fdurationSeconds\x12=\n" +
 	"\vweight_unit\x18\a \x01(\x0e2\x12.api.v1.WeightUnitB\b\xbaH\x05\x82\x01\x02\x10\x01R\n" +
 	"weightUnit\x12C\n" +

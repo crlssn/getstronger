@@ -11,6 +11,13 @@ var SetErrors = &setErrors{
 		s:       "sets_pkey",
 	},
 
+	ErrCheckSetsDistanceFinite: &CheckConstraintError{
+		schema:  "",
+		table:   "sets",
+		columns: []string{"distance"},
+		s:       "sets_distance_finite",
+	},
+
 	ErrCheckSetsDistanceNonNegative: &CheckConstraintError{
 		schema:  "",
 		table:   "sets",
@@ -39,6 +46,13 @@ var SetErrors = &setErrors{
 		s:       "sets_position_check",
 	},
 
+	ErrCheckSetsWeightFinite: &CheckConstraintError{
+		schema:  "",
+		table:   "sets",
+		columns: []string{"weight"},
+		s:       "sets_weight_finite",
+	},
+
 	ErrCheckSetsWeightUnitCheck: &CheckConstraintError{
 		schema:  "",
 		table:   "sets",
@@ -50,6 +64,8 @@ var SetErrors = &setErrors{
 type setErrors struct {
 	ErrUniqueSetsPkey *UniqueConstraintError
 
+	ErrCheckSetsDistanceFinite *CheckConstraintError
+
 	ErrCheckSetsDistanceNonNegative *CheckConstraintError
 
 	ErrCheckSetsDistanceUnitCheck *CheckConstraintError
@@ -57,6 +73,8 @@ type setErrors struct {
 	ErrCheckSetsDurationSecondsNonNegative *CheckConstraintError
 
 	ErrCheckSetsPositionCheck *CheckConstraintError
+
+	ErrCheckSetsWeightFinite *CheckConstraintError
 
 	ErrCheckSetsWeightUnitCheck *CheckConstraintError
 }
