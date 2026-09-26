@@ -4,25 +4,36 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { create } from '@bufbuild/protobuf'
 import { Code, ConnectError } from '@connectrpc/connect'
 
-const { createWorkout, getUser, login, markNotificationsAsRead, resendVerificationEmail } =
-  vi.hoisted(() => ({
-    createWorkout: vi.fn(),
-    getUser: vi.fn(),
-    login: vi.fn(),
-    markNotificationsAsRead: vi.fn(),
-    resendVerificationEmail: vi.fn(),
-  }))
+const {
+  createExercise,
+  createWorkout,
+  getUser,
+  login,
+  markNotificationsAsRead,
+  resendVerificationEmail,
+  updateRoutine,
+} = vi.hoisted(() => ({
+  createExercise: vi.fn(),
+  createWorkout: vi.fn(),
+  getUser: vi.fn(),
+  login: vi.fn(),
+  markNotificationsAsRead: vi.fn(),
+  resendVerificationEmail: vi.fn(),
+  updateRoutine: vi.fn(),
+}))
 
 vi.mock('./clients', () => ({
   authClient: { login, resendVerificationEmail },
-  exerciseClient: {},
+  exerciseClient: { createExercise },
   feedClient: {},
   notificationClient: { markNotificationsAsRead },
-  routineClient: {},
+  routineClient: { updateRoutine },
   userClient: { getUser },
   workoutClient: { createWorkout },
 }))
 
+import { CreateExerciseRequestSchema, ExerciseService } from '@/proto/api/v1/exercise_service_pb'
+import { useMutationQueueStore } from '@/stores/mutationQueue'
 import { Error as ApiError, ErrorDetailSchema } from '@/proto/api/v1/errors_pb'
 import { setNavigator, type Navigate } from '@/router/navigation'
 import { i18n } from '@/i18n'
@@ -39,6 +50,7 @@ import {
   login as logIn,
   markNotificationAsRead,
   resendVerificationEmail as resend,
+  updateRoutine as saveRoutine,
   verifyEmailPendingPath,
 } from './requests'
 
@@ -342,5 +354,47 @@ describe('shared error handling', () => {
 
     await expect(getCurrentUser('user-1')).resolves.toEqual({ user: { id: 'user-1' } })
     expect(consumeRequestError()).toBeUndefined()
+  })
+})
+
+// An exercise created offline is referenced by id before the server has it, so
+// a save naming it must wait for the queued create or be refused.
+describe('writes that can name a queued exercise', () => {
+  let land = (): void => {}
+
+  beforeEach(() => {
+    useMutationQueueStore.setState({ pending: [] })
+    useMutationQueueStore
+      .getState()
+      .enqueue(
+        ExerciseService.method.createExercise,
+        create(CreateExerciseRequestSchema, { id: 'exercise-1', name: 'Sled push' }),
+      )
+    createExercise.mockReset()
+    createExercise.mockReturnValue(
+      new Promise((resolve) => {
+        land = () => resolve({ id: 'exercise-1' })
+      }),
+    )
+    createWorkout.mockReset()
+    createWorkout.mockResolvedValue({ workoutId: 'workout-1' })
+    updateRoutine.mockReset()
+    updateRoutine.mockResolvedValue({})
+  })
+
+  it.each([
+    ['createWorkout', () => createAWorkout({} as never), createWorkout],
+    ['updateRoutine', () => saveRoutine('routine-1', 'Legs', ['exercise-1']), updateRoutine],
+  ])('%s is sent after the queued exercise lands', async (_name, save, sent) => {
+    const saving = save()
+    await vi.waitFor(() => expect(createExercise).toHaveBeenCalled())
+
+    expect(sent).not.toHaveBeenCalled()
+
+    land()
+    await saving
+
+    expect(sent).toHaveBeenCalledTimes(1)
+    expect(useMutationQueueStore.getState().pending).toHaveLength(0)
   })
 })

@@ -7,6 +7,7 @@ import {
 } from '@bufbuild/protobuf'
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { Code, ConnectError } from '@connectrpc/connect'
 
 import { migratedStorage } from '@/stores/persistence'
 
@@ -26,6 +27,10 @@ type Replayer = {
   replay: (request: string) => Promise<unknown>
 }
 
+// A save waits for the queue to drain first, so a replay is given the same
+// deadline the save has rather than the power to hang it.
+const replayDeadline = { timeoutMs: 15_000 }
+
 const replayers: Record<string, Replayer> = {
   [`${WorkoutService.typeName}.CreateWorkout`]: {
     serialize: (message) =>
@@ -35,6 +40,7 @@ const replayers: Record<string, Replayer> = {
     replay: (request) =>
       workoutClient.createWorkout(
         fromJson(WorkoutService.method.createWorkout.input, JSON.parse(request) as JsonValue),
+        replayDeadline,
       ),
   },
   [`${ExerciseService.typeName}.CreateExercise`]: {
@@ -47,6 +53,7 @@ const replayers: Record<string, Replayer> = {
     replay: (request) =>
       exerciseClient.createExercise(
         fromJson(ExerciseService.method.createExercise.input, JSON.parse(request) as JsonValue),
+        replayDeadline,
       ),
   },
 }
@@ -69,8 +76,19 @@ interface MutationQueueState {
   clear: () => void
 }
 
+// A fault may pass where a refusal will not, and dropping a faulted entry loses
+// it along with every queued entry that names it, as a workout names an
+// exercise created offline.
+// ponytail: a fault that never passes holds the queue until the backend is
+// fixed; add a retry cap when one is seen.
+const isRetryable = (error: unknown): boolean =>
+  isConnectivityError(error) ||
+  (error instanceof ConnectError &&
+    [Code.Internal, Code.Unknown, Code.DeadlineExceeded].includes(error.code))
+
 // A mutex rather than state: a flush in progress is not something to render.
-let flushing = false
+// It is the flush's promise, so a caller arriving mid-flush waits for it too.
+let flushing: Promise<void> | undefined
 
 /**
  * Holds mutations made while offline and replays them, oldest first, once the
@@ -100,10 +118,8 @@ export const useMutationQueueStore = create<MutationQueueState>()(
         })
       },
 
-      flush: async () => {
-        if (flushing) return
-        flushing = true
-        try {
+      flush: () => {
+        flushing ??= (async () => {
           while (get().pending.length) {
             const entry = get().pending[0]
             if (!entry) break
@@ -115,19 +131,21 @@ export const useMutationQueueStore = create<MutationQueueState>()(
               if (replayer) await replayer.replay(entry.request)
               else console.error('dropping queued mutation with no replayer', entry.method)
             } catch (error) {
-              // Still unreachable: keep everything for the next reconnect. Any
-              // other failure means the backend saw and rejected this request,
-              // and retrying it forever would block the rest of the queue.
-              if (isConnectivityError(error)) return
+              // Still unreachable, or the backend faulted: keep everything for
+              // the next attempt. Any other failure means the backend saw and
+              // rejected this request, and retrying it forever would block the
+              // rest of the queue.
+              if (isRetryable(error)) return
               console.error('dropping queued mutation rejected by the backend', error)
             }
             // Clearing the queue during replay starts a new account's queue.
             if (get().pending[0] !== entry) return
             set({ pending: get().pending.slice(1) })
           }
-        } finally {
-          flushing = false
-        }
+        })().finally(() => {
+          flushing = undefined
+        })
+        return flushing
       },
 
       /** Drops everything still queued, e.g. when the user logs out. */

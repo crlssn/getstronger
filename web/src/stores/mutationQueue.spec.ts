@@ -48,6 +48,22 @@ describe('useMutationQueueStore', () => {
     expect(createExercise.mock.calls[0]?.[0]).toMatchObject({ id: 'exercise-1', name: 'Sled push' })
   })
 
+  // A save waits for the queue, so a replay that hangs would hang the save.
+  test('gives every replay a deadline', async () => {
+    store().enqueue(
+      ExerciseService.method.createExercise,
+      create(CreateExerciseRequestSchema, { id: 'exercise-1', name: 'Sled push' }),
+    )
+    store().enqueue(WorkoutService.method.createWorkout, request('routine-1'))
+    createExercise.mockResolvedValue({ id: 'exercise-1' } as never)
+    createWorkout.mockResolvedValue({ workoutId: 'w1' } as never)
+
+    await store().flush()
+
+    expect(createExercise.mock.calls[0]?.[1]).toMatchObject({ timeoutMs: 15_000 })
+    expect(createWorkout.mock.calls[0]?.[1]).toMatchObject({ timeoutMs: 15_000 })
+  })
+
   test('replays queued mutations in order and empties the queue', async () => {
     store().enqueue(WorkoutService.method.createWorkout, request('routine-1'))
     store().enqueue(WorkoutService.method.createWorkout, request('routine-2'))
@@ -111,6 +127,53 @@ describe('useMutationQueueStore', () => {
 
     expect(createWorkout).toHaveBeenCalledTimes(1)
     expect(store().pending).toHaveLength(0)
+  })
+
+  // A save that must follow the queue awaits flush(); returning before the
+  // entry in flight lands would let the save overtake it.
+  test('a second flush resolves only once the one in flight has landed', async () => {
+    store().enqueue(WorkoutService.method.createWorkout, request('routine-1'))
+    let land = (): void => {}
+    createWorkout.mockReturnValue(
+      new Promise((resolve) => {
+        land = () => resolve({ workoutId: 'w1' })
+      }) as never,
+    )
+    void store().flush()
+    let settled = false
+    const second = store()
+      .flush()
+      .then(() => {
+        settled = true
+      })
+
+    await Promise.resolve()
+    await Promise.resolve()
+    expect(settled).toBe(false)
+
+    land()
+    await second
+    expect(store().pending).toHaveLength(0)
+  })
+
+  // A fault is not a refusal: the backend may take the request on the next
+  // attempt, and a dropped exercise takes every workout that names it along.
+  test.each([
+    ['Internal', Code.Internal],
+    ['Unknown', Code.Unknown],
+    ['DeadlineExceeded', Code.DeadlineExceeded],
+  ])('keeps the queue when the backend fails with %s', async (_name, code) => {
+    store().enqueue(
+      ExerciseService.method.createExercise,
+      create(CreateExerciseRequestSchema, { id: 'exercise-1', name: 'Sled push' }),
+    )
+    store().enqueue(WorkoutService.method.createWorkout, request('routine-1'))
+    createExercise.mockRejectedValue(new ConnectError('fault', code))
+
+    await store().flush()
+
+    expect(store().pending).toHaveLength(2)
+    expect(createWorkout).not.toHaveBeenCalled()
   })
 
   // A queue persisted by an older build can name a method this one no longer

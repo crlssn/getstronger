@@ -159,8 +159,13 @@ import { logoutUnauthenticatedUser } from '@/http/unauthenticated'
 import { currentPath, goTo } from '@/router/navigation'
 import { useConnectionStore } from '@/stores/connection'
 import { useEmailVerificationStore } from '@/stores/emailVerification'
+import { useMutationQueueStore } from '@/stores/mutationQueue'
 
 const defaultPageLimit = 25
+
+// An exercise created offline is named by id before the server stores it, so a
+// write that can name one waits for the queue holding its create.
+const sendQueuedFirst = () => useMutationQueueStore.getState().flush()
 
 export const deleteWorkout = async (id: string): Promise<DeleteWorkoutResponse | void> => {
   const req = create(DeleteWorkoutRequestSchema, {
@@ -175,6 +180,7 @@ export const deleteExercise = async (id: string): Promise<DeleteExerciseResponse
     id: id,
   })
 
+  await sendQueuedFirst()
   return tryCatch(() => exerciseClient.deleteExercise(req))
 }
 
@@ -417,6 +423,7 @@ export const createRoutine = async (
     name: name,
     groups: routineGroupMessages(groups),
   })
+  await sendQueuedFirst()
   return tryCatch(() => routineClient.createRoutine(req))
 }
 
@@ -471,6 +478,7 @@ export const updateRoutine = async (
       groups: routineGroupMessages(groups),
     },
   })
+  await sendQueuedFirst()
   return tryCatch(() => routineClient.updateRoutine(req))
 }
 
@@ -483,6 +491,7 @@ export const updateExercise = async (
       paths: ['name', 'tags', 'metrics'],
     } as FieldMask,
   })
+  await sendQueuedFirst()
   return tryCatch(() => exerciseClient.updateExercise(req))
 }
 
@@ -491,6 +500,7 @@ export const updateExercise = async (
 export const createWorkout = async (
   req: CreateWorkoutRequest,
 ): Promise<CreateWorkoutResponse | void> => {
+  await sendQueuedFirst()
   return tryCatch(() => workoutClient.createWorkout(req, { timeoutMs: 15_000 }), {
     rethrow: true,
   })
@@ -500,6 +510,7 @@ export const updateWorkout = async (workout: Workout): Promise<UpdateWorkoutResp
   const req = create(UpdateWorkoutRequestSchema, {
     workout: workout,
   })
+  await sendQueuedFirst()
   return tryCatch(() => workoutClient.updateWorkout(req))
 }
 
@@ -664,6 +675,7 @@ export const updateExerciseOrder = async (
     exerciseIds: exerciseIds,
     routineId: routineId,
   })
+  await sendQueuedFirst()
   return tryCatch(() => routineClient.updateExerciseOrder(req))
 }
 
