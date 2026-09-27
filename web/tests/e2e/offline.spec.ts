@@ -62,7 +62,11 @@ test.describe('offline mode', () => {
   // Files a new exercise from the library, which must already be cached, while
   // offline. Every move is in-app: offline, a document request reaches nothing.
   const createExerciseOffline = async (page: Parameters<typeof logIn>[0], name: string) => {
-    await page.getByRole('link', { name: 'New exercise' }).click()
+    await page
+      .getByRole('main')
+      .locator('header')
+      .getByRole('link', { name: 'New exercise' })
+      .click()
     await page.getByRole('textbox', { name: 'Name', exact: true }).fill(name)
     await page.getByRole('button', { name: 'Create exercise' }).click()
 
