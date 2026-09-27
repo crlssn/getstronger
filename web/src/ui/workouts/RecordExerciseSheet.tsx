@@ -21,6 +21,8 @@ interface Props {
   summary: string
   saving: boolean
   onSave: (exercise: Exercise) => void
+  onDiscard: () => void
+  /** Only hides the sheet: the recording is kept until saved or discarded. */
   onClose: () => void
 }
 
@@ -35,7 +37,7 @@ const recentWorkouts = 20
  * comes last. Only exercises measured by distance and time are offered: they
  * are the ones a route, a duration and a pace add up to.
  */
-export const RecordExerciseSheet = ({ summary, saving, onSave, onClose }: Props) => {
+export const RecordExerciseSheet = ({ summary, saving, onSave, onDiscard, onClose }: Props) => {
   const { t } = useTranslation()
   const {
     options,
@@ -147,6 +149,15 @@ export const RecordExerciseSheet = ({ summary, saving, onSave, onClose }: Props)
         onClick={() => selected && onSave(selected)}
       >
         {selected ? t('record.saveAs', { name: selected.name }) : t('common.save')}
+      </AppButton>
+      <AppButton
+        className="mt-2"
+        type="button"
+        colour="destructive"
+        disabled={saving}
+        onClick={onDiscard}
+      >
+        {t('timedCircuit.discardConfirm')}
       </AppButton>
     </AppSheet>
   )
