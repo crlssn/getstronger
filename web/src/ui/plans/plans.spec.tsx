@@ -120,8 +120,76 @@ describe('PlansView', () => {
 
     await screen.findByText('Push pull legs')
     expect(screen.getByText('Routine 2 of 2')).toBeInTheDocument()
-    expect(screen.getByText('Pull day')).toBeInTheDocument()
+    expect(screen.getByText('Up next').parentElement).toHaveTextContent('Pull day')
     expect(screen.getByRole('link', { name: 'View plan' })).toHaveAttribute('href', '/plans/plan-1')
+  })
+
+  // Numbered squares looked like buttons and said nothing a name would not.
+  test('shows the loop as named steps, marking where it is', async () => {
+    withPlans([plan({ active: true, currentPosition: 1, routines })])
+    render()
+
+    const steps = await screen.findByRole('list', { name: 'Routine 2 of 3' })
+    const rows = within(steps).getAllByRole('listitem')
+    expect(rows.map((row) => row.textContent)).toEqual(['Push day', 'Pull day', 'Leg day'])
+    expect(rows[1]).toHaveAttribute('aria-current', 'step')
+    expect(rows[0]).not.toHaveAttribute('aria-current')
+    expect(within(steps).queryByRole('button')).not.toBeInTheDocument()
+  })
+
+  // A long loop writes out only the current name; the rest are still read.
+  test('keeps every step named in a loop too long to label', async () => {
+    const long = Array.from({ length: 6 }, (_, index) => ({
+      id: `r${index}`,
+      name: `Routine ${index}`,
+    }))
+    withPlans([plan({ active: true, currentPosition: 2, routines: long })])
+    render()
+
+    const steps = await screen.findByRole('list', { name: 'Routine 3 of 6' })
+    expect(
+      within(steps)
+        .getAllByRole('listitem')
+        .map((row) => row.textContent),
+    ).toEqual(long.map((routine) => routine.name))
+  })
+
+  // The plan is what says what to train next, so the card that says it is
+  // also where the session starts — and starts as the plan's.
+  test('starts the routine up next as part of the plan', async () => {
+    withPlans([plan({ active: true, currentPosition: 1 })])
+    render()
+
+    expect(await screen.findByRole('link', { name: 'Start routine' })).toHaveAttribute(
+      'href',
+      '/workouts/routine/pull?plan_id=plan-1',
+    )
+  })
+
+  // The same question the Workout tab asks, since skipping logs nothing.
+  test('skips to the next routine, once confirmed', async () => {
+    const skip = vi.spyOn(usePlanStore.getState(), 'skip').mockResolvedValue(plan())
+    withPlans([plan({ active: true })])
+    render()
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Skip to next' }))
+    await waitFor(() =>
+      expect(useConfirmationStore.getState().confirmation?.title).toBe('Skip Push day?'),
+    )
+    useConfirmationStore.getState().accept()
+
+    await waitFor(() => expect(skip).toHaveBeenCalledWith('plan-1'))
+    await waitFor(() => expect(useDashboardStore.getState().load).toHaveBeenCalled())
+  })
+
+  // The lead explained plans to someone already looking at theirs, and pushed
+  // the running one down the screen to do it.
+  test('opens on the title without an explainer under it', async () => {
+    withPlans([plan({ active: true })])
+    render()
+
+    await screen.findByText('Push pull legs')
+    expect(screen.queryByText(/Put routines in order/)).not.toBeInTheDocument()
   })
 
   test('says so when no plan is running', async () => {
@@ -131,15 +199,52 @@ describe('PlansView', () => {
     expect(await screen.findByText('No active plan')).toBeInTheDocument()
   })
 
-  test('pauses the running plan, once confirmed', async () => {
+  // Pausing, editing and deleting are occasional, so they wait behind the
+  // menu rather than sitting beside the session the card is there to start.
+  const openActions = async () =>
+    userEvent.click(await screen.findByRole('button', { name: 'Plan actions' }))
+
+  test('pauses the running plan from its menu, once confirmed', async () => {
     const pause = vi.spyOn(usePlanStore.getState(), 'pause').mockResolvedValue(true)
     withPlans([plan({ active: true })])
     render()
 
-    await userEvent.click(await screen.findByRole('button', { name: 'Pause' }))
+    await openActions()
+    await userEvent.click(screen.getByRole('menuitem', { name: 'Pause' }))
     await accept()
 
     await waitFor(() => expect(pause).toHaveBeenCalled())
+  })
+
+  test('edits the running plan from its menu', async () => {
+    withPlans([plan({ active: true })])
+    render()
+
+    await openActions()
+    expect(screen.getByRole('menuitem', { name: 'Edit plan' })).toHaveAttribute(
+      'href',
+      '/plans/plan-1/edit',
+    )
+  })
+
+  // The same warning the plan's own page gives, since it is the same delete.
+  test('deletes the running plan from its menu, once confirmed', async () => {
+    const remove = vi.spyOn(usePlanStore.getState(), 'remove').mockResolvedValue(true)
+    withPlans([plan({ active: true })])
+    render()
+
+    await openActions()
+    await userEvent.click(screen.getByRole('menuitem', { name: 'Delete plan' }))
+    await waitFor(() =>
+      expect(useConfirmationStore.getState().confirmation).toMatchObject({
+        destructive: true,
+        title: 'Delete this plan?',
+      }),
+    )
+    useConfirmationStore.getState().accept()
+
+    await waitFor(() => expect(remove).toHaveBeenCalledWith('plan-1'))
+    await waitFor(() => expect(useDashboardStore.getState().load).toHaveBeenCalled())
   })
 
   // A row that navigates says so, here as everywhere else.

@@ -136,6 +136,12 @@ export const openExerciseActions = async (page: Page) => {
   await settledMenu(page)
 }
 
+// Pausing, editing and deleting the running plan sit behind its card's menu.
+export const openPlanActions = async (page: Page) => {
+  await page.getByRole('button', { name: 'Plan actions' }).click()
+  await settledMenu(page)
+}
+
 // The feed and the workout history page more as their sentinel scrolls into
 // view, so the end-of-list marker only exists once a reader has travelled the
 // whole list. Scrolling the way a person would is what makes it appear.

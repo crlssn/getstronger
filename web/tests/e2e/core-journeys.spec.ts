@@ -3,6 +3,7 @@ import {
   expect,
   logIn,
   openExerciseActions,
+  openPlanActions,
   openProfileActions,
   resetSeedData,
   test,
@@ -49,7 +50,8 @@ test.describe('authenticated journeys', () => {
     // routine alone. Choosing the next session by hand is what happens when
     // nothing is running, and the seeded athlete follows a rotation.
     await page.goto('/plans')
-    await page.getByRole('button', { name: 'Pause' }).click()
+    await openPlanActions(page)
+    await page.getByRole('menuitem', { name: 'Pause' }).click()
     await acceptConfirmDialog(page, 'Pause')
     await expect(page.getByRole('heading', { name: 'No active plan' })).toBeVisible()
 
