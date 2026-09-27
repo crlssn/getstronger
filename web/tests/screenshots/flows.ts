@@ -246,7 +246,8 @@ export const flows: Flow[] = [
           await actions.click()
           await page.getByRole('menuitem', { name: 'Delete workout' }).click()
           await acceptConfirmation(page)
-          await expect(page).toHaveURL(/\/home$/)
+          // Deleting leaves the way the workout was reached, not always home.
+          await expect(page).not.toHaveURL(savedCircuitWorkout)
         }
         savedCircuitWorkout = ''
       }
@@ -292,7 +293,8 @@ export const flows: Flow[] = [
           await page.getByRole('button', { name: 'Create routine' }).click()
           await expect(page).toHaveURL(/\/routines$/)
           await page.getByLabel('Search routines').fill(circuitName)
-          await page.getByRole('heading', { name: circuitName }).click()
+          // First, so a copy a failed cleanup left behind does not fail this too.
+          await page.getByRole('heading', { name: circuitName }).first().click()
           // Matched loosely on purpose. These waits exist to say the page has
           // arrived, and pinning them to the exact wording makes the harness
           // break on precisely the copy changes it is here to photograph — a
@@ -466,7 +468,7 @@ export const flows: Flow[] = [
       await actions.click()
       await page.getByRole('menuitem', { name: 'Delete workout' }).click()
       await acceptConfirmation(page)
-      await expect(page).toHaveURL(/\/home$/)
+      await expect(page).not.toHaveURL(savedWorkout)
       savedWorkout = ''
     },
     component: 'src/ui/workouts/StartWorkout.tsx',
