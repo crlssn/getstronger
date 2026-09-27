@@ -24,16 +24,9 @@
   @apply flex flex-col gap-3 p-4;
 }
 
+/* The row's way into the routine, so it keeps the 44px tap-target floor. */
 .routineHeading {
-  @apply flex items-start justify-between gap-3;
-}
-
-.routineHeading > a {
-  @apply min-w-0 flex-1;
-}
-
-.routineHeading > svg {
-  @apply mt-1.5 size-5 text-text-subtle;
+  @apply block min-h-11 min-w-0;
 }
 
 .routineHeading h3 {

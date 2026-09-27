@@ -1,7 +1,7 @@
 import type { Routine } from '@/proto/api/v1/routine_service_pb'
 import type { DropdownItem } from '@/types/dropdown'
 
-import { ChevronRightIcon, PlayIcon, PlusIcon } from '@heroicons/react/24/outline'
+import { PlayIcon, PlusIcon } from '@heroicons/react/24/outline'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
@@ -135,7 +135,6 @@ export const ListRoutines = () => {
             <PlusIcon className="size-5" aria-hidden="true" /> {t('training.newRoutine')}
           </AppButton>
         }
-        lead={t('training.routinesDescription')}
         title={t('training.heading')}
       />
 
@@ -170,20 +169,15 @@ export const ListRoutines = () => {
                     name={upNext.name}
                     to={workoutHref(upNext.id, activePlan?.id)}
                   />
-                  {/* The two the card itself has no room for, under it. */}
+                  {/* The card starts the session, so opening the routine is in
+                      the menu under it. */}
                   <div className={styles.routineActions}>
-                    <AppButton
-                      type="link"
-                      colour="secondary"
-                      size="sm"
-                      width="auto"
-                      to={`/routines/${upNext.id}`}
-                    >
-                      {t('routine.list.view')}
-                    </AppButton>
                     <div className={styles.routineMenu}>
                       <DropdownButton
-                        items={routineActions(upNext)}
+                        items={[
+                          { title: t('routine.list.view'), href: `/routines/${upNext.id}` },
+                          ...routineActions(upNext),
+                        ]}
                         label={t('routine.list.actionsAria')}
                       />
                     </div>
@@ -201,26 +195,23 @@ export const ListRoutines = () => {
 
                     return (
                       <article key={routine.id} className={styles.routineCard}>
-                        <div className={styles.routineHeading}>
-                          <Link to={`/routines/${routine.id}`}>
-                            <h3>{routine.name}</h3>
-                            {tags.length > 0 ? (
-                              <ExerciseTags compact tags={tags} />
-                            ) : (
-                              <p className={styles.routineExercises}>{exerciseSummary(routine)}</p>
-                            )}
-                            <p className={styles.routineMeta}>
-                              <span>
-                                {t('home.exerciseCount', { count: routine.exercises.length })}
-                              </span>
-                              <span>
-                                {t('home.aboutMinutes', { count: routineMinutes(routine) })}
-                              </span>
-                              {performed && <span>{performed}</span>}
-                            </p>
-                          </Link>
-                          <ChevronRightIcon aria-hidden="true" />
-                        </div>
+                        <Link className={styles.routineHeading} to={`/routines/${routine.id}`}>
+                          <h3>{routine.name}</h3>
+                          {tags.length > 0 ? (
+                            <ExerciseTags compact tags={tags} />
+                          ) : (
+                            <p className={styles.routineExercises}>{exerciseSummary(routine)}</p>
+                          )}
+                          <p className={styles.routineMeta}>
+                            <span>
+                              {t('home.exerciseCount', { count: routine.exercises.length })}
+                            </span>
+                            <span>
+                              {t('home.aboutMinutes', { count: routineMinutes(routine) })}
+                            </span>
+                            {performed && <span>{performed}</span>}
+                          </p>
+                        </Link>
 
                         <div className={styles.routineActions}>
                           <AppButton
@@ -232,15 +223,6 @@ export const ListRoutines = () => {
                           >
                             <PlayIcon className="size-5" aria-hidden="true" />{' '}
                             {t('routine.list.start')}
-                          </AppButton>
-                          <AppButton
-                            type="link"
-                            colour="secondary"
-                            size="sm"
-                            width="auto"
-                            to={`/routines/${routine.id}`}
-                          >
-                            {t('routine.list.view')}
                           </AppButton>
                           <div className={styles.routineMenu}>
                             <DropdownButton

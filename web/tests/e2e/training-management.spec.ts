@@ -113,9 +113,10 @@ const deleteRoutine = async (page: Parameters<typeof logIn>[0], name: string) =>
   const card = page.getByRole('article').filter({ has: page.getByRole('heading', { name }) })
   await expect(card).toBeVisible()
   // The routine a plan trains next is a card that starts it, so it opens from
-  // the button under it instead.
+  // its menu instead.
   if (await card.getByRole('link', { name: `Start ${name}`, exact: true }).isVisible()) {
-    await card.getByRole('link', { name: 'View' }).click()
+    await card.getByRole('button', { name: 'Routine actions' }).click()
+    await page.getByRole('menuitem', { name: 'View routine' }).click()
   } else {
     await page.getByRole('heading', { name }).click()
   }
@@ -473,7 +474,11 @@ test.describe('routine lifecycle', () => {
     // card stops matching "not up next" the moment the menu item is taken.
     const card = page.getByRole('article').filter({ hasNotText: 'Up next' }).first()
     const href = await card.getByRole('link').first().getAttribute('href')
-    const chosen = page.getByRole('article').filter({ has: page.locator(`a[href="${href}"]`) })
+    const id = href!.split('/').pop()
+    // Once up next, the card links to the session it starts rather than here.
+    const chosen = page.getByRole('article').filter({
+      has: page.locator(`a[href="/routines/${id}"], a[href="/workouts/routine/${id}"]`),
+    })
 
     const actions = card.getByRole('button', { name: 'Routine actions' })
     await actions.click()

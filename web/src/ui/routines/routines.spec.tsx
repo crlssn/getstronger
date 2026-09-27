@@ -109,10 +109,12 @@ describe('ListRoutines', () => {
       'href',
       '/workouts/routine/push',
     )
-    expect(within(card).getByRole('link', { name: 'View' })).toHaveAttribute(
+    // The name is the way in; a View button beside it went to the same place.
+    expect(within(card).getByRole('link', { name: /^Push day/ })).toHaveAttribute(
       'href',
       '/routines/push',
     )
+    expect(within(card).queryByRole('link', { name: 'View' })).not.toBeInTheDocument()
   })
 
   test('summarises what is in a routine', async () => {
@@ -170,12 +172,13 @@ describe('ListRoutines', () => {
       'href',
       '/workouts/routine/push',
     )
-    // The two things the card no longer has room for stay under it.
-    expect(within(card).getByRole('link', { name: 'View' })).toHaveAttribute(
+    // The whole card starts the session, so the routine itself opens from
+    // the menu under it.
+    await userEvent.click(within(card).getByRole('button', { name: 'Routine actions' }))
+    expect(screen.getByRole('menuitem', { name: 'View routine' })).toHaveAttribute(
       'href',
       '/routines/push',
     )
-    expect(within(card).getByRole('button', { name: 'Routine actions' })).toBeInTheDocument()
   })
 
   // A plan decides what comes next, so the athlete's own pick waits for it to
