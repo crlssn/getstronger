@@ -272,34 +272,36 @@ export const CardWorkout = ({ workout, compact, unseen = false }: Props) => {
                 words. */}
             {unseen && <span className="sr-only">{t('home.newWorkout')}</span>}
 
-            {/* Session and account on one line: whose it is belongs with what
-                it was, not on a row of its own. */}
-            <div className={cn(styles.feedTitle, styles.feedCardControl)}>
+            <div className={styles.feedTitle}>
               <h2>{workout.name}</h2>
               {/* Gold worn by the row that earned it, not by the whole card:
                   the tinted card said "record" only to sighted readers. */}
               {personalBestCount > 0 && <AppChip tone="record">{t('common.pr')}</AppChip>}
-              <Link to={`/users/${workout.user?.id}`}>{handle(workout.user?.username)}</Link>
             </div>
 
-            {/* What the session moved and how far, then what it was made of,
-                then the date: the line truncates from the end, and the date is
-                the part worth losing first. A unit the session logged nothing
-                in is left out — every run read "0 kg", and every lift would now
-                read "0 km". Exercises are read with the sets rather than
-                instead of them: twenty sets over three exercises and twenty
-                over ten are different sessions. */}
-            <p className={styles.feedMeta}>
-              {[
-                workout.intensity > 0 && `${formatNumber(workout.intensity)} ${t('common.kg')}`,
-                totalDistanceKm > 0 && formatDistanceIn(totalDistanceKm, preferredDistanceUnit),
-                t('home.exerciseCount', { count: workout.exerciseSets.length }),
-                t('workout.setsCompact', { count: setCount }),
-                finishedDate,
-              ]
-                .filter(Boolean)
-                .join(' · ')}
-            </p>
+            {/* Whose it was, what the session moved and how far, what it was
+                made of, then the date: the line truncates from the end, and the
+                date is the part worth losing first. The account sat beside the
+                title and cut long names short. A unit the session logged
+                nothing in is left out — every run read "0 kg", and every lift
+                would now read "0 km". Exercises are read with the sets rather
+                than instead of them: twenty sets over three exercises and
+                twenty over ten are different sessions. */}
+            <div className={cn(styles.feedByline, styles.feedCardControl)}>
+              <Link to={`/users/${workout.user?.id}`}>{handle(workout.user?.username)}</Link>
+              <span aria-hidden="true">·</span>
+              <p className={styles.feedMeta}>
+                {[
+                  workout.intensity > 0 && `${formatNumber(workout.intensity)} ${t('common.kg')}`,
+                  totalDistanceKm > 0 && formatDistanceIn(totalDistanceKm, preferredDistanceUnit),
+                  t('home.exerciseCount', { count: workout.exerciseSets.length }),
+                  t('workout.setsCompact', { count: setCount }),
+                  finishedDate,
+                ]
+                  .filter(Boolean)
+                  .join(' · ')}
+              </p>
+            </div>
           </div>
 
           {unseen && <AppUnreadDot />}

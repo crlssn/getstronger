@@ -30,8 +30,7 @@
   @apply min-w-0 flex-1;
 }
 
-/* Centred, not baseline-aligned: the handle carries a tall hit area, and its
-   baseline inside that box sits below the name's. */
+/* The session and its PR chip; the name has the line to itself. */
 .feedTitle {
   @apply flex min-w-0 items-center gap-2;
 }
@@ -40,10 +39,16 @@
   @apply truncate text-body-lg font-bold tracking-tight text-text;
 }
 
-/* The account, beside the session rather than on a row of its own. It keeps a
-   thumb-sized hit area on both axes without taking the type of the name. */
-.feedTitle a {
-  @apply -my-3 inline-flex min-h-(--size-control-sm) min-w-(--size-control-sm) shrink-0 items-center truncate py-3 text-meta font-semibold text-text-subtle hover:text-ink-strong;
+/* Centred, not baseline-aligned: the handle carries a tall hit area, and its
+   baseline inside that box sits below the numbers'. */
+.feedByline {
+  @apply flex min-w-0 items-center gap-1 text-meta font-medium text-text-subtle;
+}
+
+/* The account, leading the numbers. Its hit area reaches past the text on
+   every side, so it is thumb-sized without pushing the numbers away. */
+.feedByline a {
+  @apply -mx-2 -my-3 inline-flex min-h-(--size-control-sm) shrink-0 items-center px-2 py-3 font-semibold hover:text-ink-strong;
 }
 
 /* Volume, sets, when — one line, truncated rather than wrapped, so every card

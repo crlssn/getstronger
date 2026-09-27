@@ -290,14 +290,16 @@ describe('CardWorkout', () => {
       )
     })
 
-    // The session and the account share the title row; the numbers get the
-    // line under it. The 2x2 grid cost around 340px a card, so a phone showed
-    // one and a half of them.
-    test('names the session and the account on one row', () => {
+    // The session has the title row to itself, so a long name is not cut
+    // short by the account beside it; the account leads the numbers under it.
+    test('names the session on its own row and the account under it', () => {
       render(<CardWorkout compact workout={withSets()} />)
 
       const title = screen.getByRole('heading', { name: 'Push Day' }).closest('div')
-      expect(within(title!).getByRole('link', { name: '@alice' })).toBeInTheDocument()
+      expect(within(title!).queryByRole('link', { name: '@alice' })).not.toBeInTheDocument()
+      expect(screen.getByRole('link', { name: '@alice' }).parentElement).toHaveTextContent(
+        /4,200 kg/,
+      )
     })
 
     test('carries the numbers on the line under it', () => {
