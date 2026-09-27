@@ -43,17 +43,52 @@ func (h *exerciseHandler) CreateExercise(ctx context.Context, req *connect.Reque
 		return nil, connect.NewError(connect.CodeInvalidArgument, err)
 	}
 
+	exerciseID, err := parser.OptionalUUID(req.Msg.GetId())
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInvalidArgument, nil)
+	}
+
 	exercise, err := h.repo.CreateExercise(ctx, repo.CreateExerciseParams{
+		ID:      exerciseID,
 		UserID:  userID,
 		Name:    req.Msg.GetName(),
 		Tags:    tags,
 		Metrics: training.MetricStrings(metrics),
 	})
+	if errors.Is(err, training.ErrExerciseAlreadyCreated) {
+		return h.createdExercise(ctx, exerciseID, userID)
+	}
 	if err != nil {
 		log.Error("Create exercise", zap.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, nil)
 	}
 
+	return connect.NewResponse(&apiv1.CreateExerciseResponse{
+		Id: exercise.ID.String(),
+	}), nil
+}
+
+// createdExercise answers a create under an id already stored: the queue
+// replaying a create the server committed but never answered for, so its owner
+// is given the exercise the first attempt stored rather than a second copy.
+// An id somebody else minted is refused — the caller may not learn whose.
+func (h *exerciseHandler) createdExercise(ctx context.Context, exerciseID, userID uuid.UUID) (*connect.Response[apiv1.CreateExerciseResponse], error) {
+	log := xcontext.MustExtractLogger(ctx).With(xzap.FieldExerciseID(exerciseID))
+
+	exercise, err := h.repo.GetExercise(ctx,
+		repo.GetExerciseWithID(exerciseID),
+		repo.GetExerciseWithUserID(userID))
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			log.Warn("Exercise id taken by another athlete")
+			return nil, connect.NewError(connect.CodeAlreadyExists, nil)
+		}
+
+		log.Error("Get exercise for repeated create", zap.Error(err))
+		return nil, connect.NewError(connect.CodeInternal, nil)
+	}
+
+	log.Info("Repeated exercise create answered with the stored exercise")
 	return connect.NewResponse(&apiv1.CreateExerciseResponse{
 		Id: exercise.ID.String(),
 	}), nil

@@ -46,6 +46,45 @@ test.describe('offline mode', () => {
     await page.getByRole('dialog').getByRole('button', { name: 'Finish and save' }).click()
   }
 
+  // Opens the library online so its first page is cached, and lets the app
+  // finish warming its lazy screens: offline, an unfetched one aborts the
+  // navigation. Offline, a pending exercise is listed beside the cached page.
+  const openLibraryOnline = async (page: Parameters<typeof logIn>[0]) => {
+    await page.goto('/exercises')
+    await expect(page.locator('a[href^="/exercises/"] strong').first()).toBeVisible()
+    await page.waitForLoadState('networkidle')
+  }
+
+  // A library row, linked or not: one still waiting to sync links nowhere.
+  const libraryRow = (page: Parameters<typeof logIn>[0], name: string) =>
+    page.getByRole('listitem').filter({ hasText: name })
+
+  // Files a new exercise from the library, which must already be cached, while
+  // offline. Every move is in-app: offline, a document request reaches nothing.
+  const createExerciseOffline = async (page: Parameters<typeof logIn>[0], name: string) => {
+    await page.getByRole('link', { name: 'New exercise' }).click()
+    await page.getByRole('textbox', { name: 'Name', exact: true }).fill(name)
+    await page.getByRole('button', { name: 'Create exercise' }).click()
+
+    // Filing it without internet is a success: it is kept on the device and
+    // the library shows it from here on.
+    await expect(page.getByText('Exercise saved on this device')).toBeVisible()
+    await expect(page).toHaveURL(/\/exercises$/)
+    await expect(libraryRow(page, name)).toBeVisible()
+  }
+
+  // Opens a quick workout in-app and chooses the named exercise.
+  const trainInQuickWorkout = async (page: Parameters<typeof logIn>[0], name: string) => {
+    await navLink(page, 'Workout').click()
+    // The quick-start card sits above the history, whose rows are called
+    // Quick workout too.
+    await page.getByRole('link', { name: 'Quick workout' }).first().click()
+    await page.getByRole('button', { name: 'Choose exercise' }).click()
+    const picker = page.getByRole('dialog', { name: 'Add exercise' })
+    await picker.getByRole('button').filter({ hasText: name }).first().click()
+    await logFirstSet(page, name)
+  }
+
   test('serves cached pages and shows the banner while offline', async ({
     context,
     page,
@@ -153,6 +192,119 @@ test.describe('offline mode', () => {
       .locator('section')
       .filter({ has: page.getByRole('heading', { name: 'Previous workouts' }) })
     await expect(history.getByRole('link', { name: /Quick workout/ }).first()).toBeVisible()
+  })
+
+  // Adding a movement in a gym with no signal used to fail outright, with the
+  // exercise kept nowhere: the queue could only replay a finished workout.
+  test('creates an exercise offline, trains it, and syncs it on reconnect', async ({
+    context,
+    page,
+  }, testInfo) => {
+    testInfo.annotations.push(allowRuntimeErrors)
+
+    const exerciseName = `Sled push ${Date.now()}`
+
+    await openLibraryOnline(page)
+
+    await context.setOffline(true)
+    let created: Promise<unknown> | undefined
+    try {
+      await createExerciseOffline(page, exerciseName)
+
+      // The workout picker offers it, so the session that wanted the movement
+      // can be built out of it before the queue has flushed.
+      await trainInQuickWorkout(page, exerciseName)
+      await finishAndSave(page)
+      await expect(page).toHaveURL(/\/home$/)
+
+      // Armed before reconnecting so the replayed create cannot slip past it.
+      created = page.waitForResponse(
+        (response) => response.url().includes('CreateExercise') && response.ok(),
+      )
+    } finally {
+      await context.setOffline(false)
+    }
+
+    await created
+    await expect(offlineBanner(page)).toHaveCount(0)
+
+    // Stored once, under the id the device has been using all along, so the
+    // workout that already references it resolves without remapping.
+    await page.goto('/exercises')
+    await expect(
+      page.locator('a[href^="/exercises/"] strong').filter({ hasText: exerciseName }),
+    ).toHaveCount(1)
+
+    // The id the device minted is the id the server stored it under, so the
+    // link the library has been showing all along now opens the real exercise.
+    await page.locator('a[href^="/exercises/"]').filter({ hasText: exerciseName }).first().click()
+    await expect(page.getByRole('heading', { name: exerciseName })).toBeVisible()
+  })
+
+  // The queue lets go of the create before the library refetches, so the row
+  // must stay put, and become the link to the exercise the server now holds.
+  test('keeps an exercise created offline listed through the sync', async ({
+    context,
+    page,
+  }, testInfo) => {
+    testInfo.annotations.push(allowRuntimeErrors)
+
+    const exerciseName = `Farmer carry ${Date.now()}`
+    await openLibraryOnline(page)
+
+    await context.setOffline(true)
+    let created: Promise<unknown> | undefined
+    try {
+      await createExerciseOffline(page, exerciseName)
+      // Its page would ask the backend for an exercise it does not have yet.
+      await expect(page.getByRole('link', { name: exerciseName })).toHaveCount(0)
+
+      created = page.waitForResponse(
+        (response) => response.url().includes('CreateExercise') && response.ok(),
+      )
+    } finally {
+      await context.setOffline(false)
+    }
+
+    await created
+    // Same screen, no reload: the row never left, and now opens the exercise.
+    await page.getByRole('link', { name: exerciseName }).click()
+    await expect(page.getByRole('heading', { name: exerciseName })).toBeVisible()
+  })
+
+  // Back online mid-session, the save must not overtake the queued create of
+  // the exercise it logs, or the server refuses a workout naming one it lacks.
+  test('saves a workout on an exercise still syncing once back online', async ({
+    context,
+    page,
+  }, testInfo) => {
+    testInfo.annotations.push(allowRuntimeErrors)
+
+    const exerciseName = `Sled drag ${Date.now()}`
+    await openLibraryOnline(page)
+
+    await context.setOffline(true)
+    try {
+      await createExerciseOffline(page, exerciseName)
+      await trainInQuickWorkout(page, exerciseName)
+
+      // Held back so the save below is tapped while the replay is in flight.
+      await page.route('**/CreateExercise', async (route) => {
+        await new Promise((resolve) => setTimeout(resolve, 2_000))
+        await route.continue()
+      })
+    } finally {
+      await context.setOffline(false)
+    }
+
+    const saved = page.waitForResponse(
+      (response) => response.url().includes('CreateWorkout') && response.ok(),
+    )
+    await finishAndSave(page)
+    await saved
+    // Saved online, so it opens the workout rather than going home queued.
+    await expect(page).toHaveURL(/\/workouts\/[0-9a-f-]+$/)
+    await expect(page.getByRole('table', { name: `${exerciseName} sets` })).toBeVisible()
   })
 
   // A save the server committed but whose reply never arrived is queued and

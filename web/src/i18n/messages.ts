@@ -706,6 +706,7 @@ export const en = {
     },
     form: {
       created: 'Exercise created',
+      createdOffline: 'Exercise saved on this device. It will sync when you are back online.',
       updated: 'Exercise updated',
       tags: 'Tags',
       addTags: 'Add tags',
@@ -1708,6 +1709,7 @@ export const sv = {
     },
     form: {
       created: 'Övningen har skapats',
+      createdOffline: 'Övningen sparades på den här enheten. Den synkas när du är online igen.',
       updated: 'Övningen har uppdaterats',
       tags: 'Taggar',
       addTags: 'Lägg till taggar',

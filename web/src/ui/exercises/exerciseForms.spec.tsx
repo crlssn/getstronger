@@ -9,6 +9,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
 vi.mock('@/http/requests', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/http/requests')>()),
   consumeRequestNotFound: vi.fn(),
+  consumeRequestOffline: vi.fn(),
   createExercise: vi.fn(),
   updateExercise: vi.fn(),
   getExercise: vi.fn(),
@@ -24,6 +25,7 @@ import {
   UpdateExerciseResponseSchema,
 } from '@/proto/api/v1/exercise_service_pb'
 import { ExerciseMetric } from '@/proto/api/v1/shared_pb'
+import { useMutationQueueStore } from '@/stores/mutationQueue'
 import { useToastStore } from '@/stores/toasts'
 import { lowerKeyboard, raiseKeyboard, renderWithProviders } from '@/ui/testing'
 import { CreateExercise } from './CreateExercise'
@@ -31,6 +33,7 @@ import { UpdateExercise } from './UpdateExercise'
 
 const mocked = {
   consumeRequestNotFound: vi.mocked(requests.consumeRequestNotFound),
+  consumeRequestOffline: vi.mocked(requests.consumeRequestOffline),
   createExercise: vi.mocked(requests.createExercise),
   updateExercise: vi.mocked(requests.updateExercise),
   getExercise: vi.mocked(requests.getExercise),
@@ -70,6 +73,8 @@ beforeEach(() => {
   lowerKeyboard()
   Object.values(mocked).forEach((mock) => mock.mockReset())
   mocked.consumeRequestNotFound.mockReturnValue(false)
+  mocked.consumeRequestOffline.mockReturnValue(false)
+  useMutationQueueStore.setState({ pending: [] })
   mocked.listExerciseTags.mockResolvedValue(['Chest', 'Push'])
   mocked.createExercise.mockResolvedValue(create(CreateExerciseResponseSchema, {}))
   mocked.updateExercise.mockResolvedValue(create(UpdateExerciseResponseSchema, {}))
@@ -123,6 +128,50 @@ describe('CreateExercise', () => {
     })
     expect(await screen.findByText('list')).toBeInTheDocument()
     expect(useToastStore.getState().toast).not.toBeNull()
+  })
+
+  // The id is the client's so that a routine or a workout can reference the
+  // exercise before the create has been sent.
+  test('sends an id of its own with the create', async () => {
+    render(<CreateExercise />)
+
+    await userEvent.type(nameField(), 'Sled push')
+    await userEvent.click(submit('Create exercise'))
+
+    await waitFor(() => expect(mocked.createExercise).toHaveBeenCalled())
+    expect(mocked.createExercise.mock.calls[0]?.[0].id).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/,
+    )
+  })
+
+  // A gym with no signal used to end the form in a request error, with the
+  // movement kept nowhere.
+  test('queues the exercise when the create never reaches the backend', async () => {
+    mocked.createExercise.mockResolvedValue(undefined)
+    mocked.consumeRequestOffline.mockReturnValue(true)
+    render(<CreateExercise />)
+
+    await userEvent.type(nameField(), 'Sled push')
+    await userEvent.click(submit('Create exercise'))
+
+    expect(await screen.findByText('list')).toBeInTheDocument()
+    const queued = useMutationQueueStore.getState().pending
+    expect(queued).toHaveLength(1)
+    expect(JSON.parse(queued[0]?.request ?? '{}')).toMatchObject({
+      id: mocked.createExercise.mock.calls[0]?.[0].id,
+      name: 'Sled push',
+    })
+  })
+
+  test('says a refused create was refused rather than queueing it', async () => {
+    mocked.createExercise.mockResolvedValue(undefined)
+    render(<CreateExercise />)
+
+    await userEvent.type(nameField(), 'Sled push')
+    await userEvent.click(submit('Create exercise'))
+
+    expect(await screen.findByText('Something went wrong. Please try again.')).toBeInTheDocument()
+    expect(useMutationQueueStore.getState().pending).toHaveLength(0)
   })
 
   test('sends what was chosen, not what it started with', async () => {
