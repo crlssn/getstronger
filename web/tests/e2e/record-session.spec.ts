@@ -170,7 +170,9 @@ test.describe('a session with no set length', () => {
     expect(JSON.parse(saved ?? '{}')).toMatchObject({ cueLeadSeconds: 20 })
   })
 
-  test('records from an exercise and saves without asking @mutation', async ({ page }) => {
+  test('records from an exercise and saves without asking which one @mutation', async ({
+    page,
+  }) => {
     await withoutTiles(page)
     await logIn(page)
     await page.goto('/exercises')
@@ -189,8 +191,38 @@ test.describe('a session with no set length', () => {
 
     await page.getByRole('button', { name: 'End session' }).click()
     await expect(page.getByRole('dialog', { name: 'What was this?' })).toHaveCount(0)
+    await page
+      .getByRole('dialog', { name: 'Session ended' })
+      .getByRole('button', { name: 'Save' })
+      .click()
     await expect(page).toHaveURL(/\/workouts\/[0-9a-f-]+$/)
     await expect(page.getByRole('heading', { name: 'Run', exact: true })).toBeVisible()
+  })
+
+  // Discard is an answer to ending, never beside End, and waving the sheet away
+  // keeps the recording rather than throwing it out.
+  test('discards an ended session only once asked twice', async ({ page }) => {
+    await withoutTiles(page)
+    await logIn(page)
+    await page.goto('/record')
+    await recording(page)
+    await expect(page.getByRole('button', { name: /Discard/ })).toHaveCount(0)
+
+    await page.getByRole('button', { name: 'End session' }).click()
+    const sheet = page.getByRole('dialog', { name: 'What was this?' })
+    await sheet.getByRole('button', { name: 'Close exercise picker' }).click()
+    await expect(sheet).toHaveCount(0)
+    await expect(page).toHaveURL(/\/record$/)
+
+    await page.getByRole('button', { name: 'Save or discard' }).click()
+    await sheet.getByRole('button', { name: 'Discard recording' }).click()
+    const confirm = page.getByRole('dialog', { name: 'Discard this recording?' })
+    await confirm.getByRole('button', { name: 'Keep recording' }).click()
+    await expect(page).toHaveURL(/\/record$/)
+
+    await sheet.getByRole('button', { name: 'Discard recording' }).click()
+    await confirm.getByRole('button', { name: 'Discard recording' }).click()
+    await expect(page).toHaveURL(/\/home$/)
   })
 
   // The detector can read a creep as a standstill, and once it holds it needs

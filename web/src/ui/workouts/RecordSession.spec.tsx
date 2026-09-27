@@ -167,17 +167,24 @@ describe('RecordSession', () => {
     await waitFor(() => expect(navigate).toHaveBeenCalledWith('/workouts/saved', { replace: true }))
   })
 
-  it('saves a session started from an exercise without asking which one it was', async () => {
+  // It never asks which exercise it was, only whether to keep it.
+  it('saves a session started from an exercise once the athlete says so', async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
     vi.mocked(getExercise).mockResolvedValue({ exercise: bike } as never)
     vi.mocked(timedCircuit.read).mockResolvedValue({ recording: recorded({ endedAt: 1_120_000 }) })
     vi.mocked(createWorkout).mockResolvedValue({ workoutId: 'saved' } as never)
     renderWithProviders(<RecordSession />, { route: '/record?exercise=bike' })
 
-    await waitFor(() => expect(createWorkout).toHaveBeenCalledOnce())
+    const sheet = await screen.findByRole('dialog', { name: 'Session ended' })
     expect(screen.queryByText('What was this?')).not.toBeInTheDocument()
+    expect(createWorkout).not.toHaveBeenCalled()
+
+    await user.click(within(sheet).getByRole('button', { name: 'Save' }))
+    await waitFor(() => expect(createWorkout).toHaveBeenCalledOnce())
+    await waitFor(() => expect(navigate).toHaveBeenCalledWith('/workouts/saved', { replace: true }))
   })
 
-  it('tries a refused save once per ended recording, then only when asked', async () => {
+  it('tries a refused save once, then only when asked', async () => {
     const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
     vi.mocked(getExercise).mockResolvedValue({ exercise: bike } as never)
     // The phone's plugin crosses a bridge, so every read answers with a freshly
@@ -188,6 +195,8 @@ describe('RecordSession', () => {
     vi.mocked(createWorkout).mockRejectedValue(new Error('exercise deleted'))
     renderWithProviders(<RecordSession />, { route: '/record?exercise=bike' })
 
+    const sheet = await screen.findByRole('dialog', { name: 'Session ended' })
+    await user.click(within(sheet).getByRole('button', { name: 'Save' }))
     await waitFor(() => expect(createWorkout).toHaveBeenCalledOnce())
     expect(await screen.findByRole('alert')).toHaveTextContent('The session could not be saved')
     await vi.advanceTimersByTimeAsync(5000)
@@ -295,35 +304,64 @@ describe('RecordSession', () => {
     expect(await screen.findByText('home, REPLACE')).toBeVisible()
   })
 
-  // Discard is now within seconds of a recording the athlete never asked to
-  // start, and nothing measured is nothing to lose.
-  it('leaves without a question while nothing has been recorded', async () => {
-    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
-    vi.mocked(timedCircuit.read).mockResolvedValue({ recording: recorded({ points: [] }) })
-    vi.mocked(timedCircuit.clear).mockResolvedValue(undefined)
-    renderWithProviders(<RecordSession />)
-
-    await user.click(await screen.findByRole('button', { name: 'Discard' }))
-    await waitFor(() => expect(navigate).toHaveBeenCalledWith('/home', { replace: true }))
-    expect(useConfirmationStore.getState().confirmation).toBeNull()
-    expect(timedCircuit.clear).toHaveBeenCalledOnce()
-  })
-
-  // A route already measured is not thrown away on a tap.
-  it('asks before discarding a recording with something in it', async () => {
+  // Discard used to sit beside End, a slip away from the run it threw out.
+  it('keeps discarding out of the controls while recording', async () => {
     const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
     vi.mocked(timedCircuit.read).mockResolvedValue({ recording: recorded() })
-    vi.mocked(timedCircuit.clear).mockResolvedValue(undefined)
     renderWithProviders(<RecordSession />)
 
-    await user.click(await screen.findByRole('button', { name: 'Discard' }))
-    await waitFor(() => expect(useConfirmationStore.getState().confirmation).not.toBeNull())
-    useConfirmationStore.getState().dismiss()
+    await user.click(await screen.findByRole('button', { name: 'End session' }))
+    expect(screen.queryByRole('button', { name: /Discard/ })).not.toBeInTheDocument()
+    expect(timedCircuit.finish).toHaveBeenCalledOnce()
+  })
+
+  // A route already measured is not thrown away on a tap, and a sheet waved
+  // away is not a discard.
+  it.each([
+    ['a blank session', '/record', 'What was this?', 'Close exercise picker'],
+    ['a session from an exercise', '/record?exercise=bike', 'Session ended', 'Close'],
+  ])('keeps %s when its sheet is closed', async (_, route, title, close) => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
+    vi.mocked(getExercise).mockResolvedValue({ exercise: bike } as never)
+    vi.mocked(timedCircuit.read).mockResolvedValue({ recording: recorded({ endedAt: 1_120_000 }) })
+    renderWithProviders(<RecordSession />, { route })
+
+    const sheet = await screen.findByRole('dialog', { name: title })
+    await user.click(within(sheet).getByRole('button', { name: close }))
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(useConfirmationStore.getState().confirmation).toBeNull()
+    expect(timedCircuit.clear).not.toHaveBeenCalled()
+    expect(createWorkout).not.toHaveBeenCalled()
+
+    await user.click(screen.getByRole('button', { name: 'Save or discard' }))
+    expect(await screen.findByRole('dialog', { name: title })).toBeVisible()
+  })
+
+  it.each([
+    ['a blank session', '/record', 'What was this?'],
+    ['a session from an exercise', '/record?exercise=bike', 'Session ended'],
+  ])('asks before discarding %s from its sheet', async (_, route, title) => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
+    vi.mocked(getExercise).mockResolvedValue({ exercise: bike } as never)
+    vi.mocked(timedCircuit.read).mockResolvedValue({ recording: recorded({ endedAt: 1_120_000 }) })
+    vi.mocked(timedCircuit.clear).mockResolvedValue(undefined)
+    renderWithProviders(<RecordSession />, { route })
+
+    const discard = async () => {
+      const sheet = await screen.findByRole('dialog', { name: title })
+      await user.click(within(sheet).getByRole('button', { name: 'Discard recording' }))
+      await waitFor(() => expect(useConfirmationStore.getState().confirmation).not.toBeNull())
+    }
+
+    await discard()
+    act(() => useConfirmationStore.getState().dismiss())
     expect(timedCircuit.clear).not.toHaveBeenCalled()
 
-    await user.click(screen.getByRole('button', { name: 'Discard' }))
-    await waitFor(() => expect(useConfirmationStore.getState().confirmation).not.toBeNull())
-    useConfirmationStore.getState().accept()
+    // Kept, the athlete is back at the choice.
+    await discard()
+    act(() => useConfirmationStore.getState().accept())
     await waitFor(() => expect(navigate).toHaveBeenCalledWith('/home', { replace: true }))
+    expect(timedCircuit.clear).toHaveBeenCalledOnce()
+    expect(createWorkout).not.toHaveBeenCalled()
   })
 })

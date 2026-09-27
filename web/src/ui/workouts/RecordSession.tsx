@@ -29,6 +29,7 @@ import { cn } from '@/ui/cn'
 import { AppButton } from '@/ui/components/AppButton'
 import { AppInlineError } from '@/ui/components/AppInlineError'
 import { AppPageHeader } from '@/ui/components/AppPageHeader'
+import { AppSheet, SheetAction } from '@/ui/components/AppSheet'
 import { AppStat } from '@/ui/components/AppStat'
 import { RecordExerciseSheet } from '@/ui/workouts/RecordExerciseSheet'
 import { convertDistance, distanceUnitLabel } from '@/utils/distanceUnits'
@@ -67,7 +68,7 @@ const gpsStaleMs = 15000
  * A session with no set length: one interval that runs until it is ended.
  *
  * Entered blank, the exercise is chosen when the session ends; entered from an
- * exercise's page, it is carried in and the session saves straight away. Either
+ * exercise's page, it is carried in and the end asks only whether to keep it. Either
  * way the workout is one interval with the route, distance, time and pace the
  * recording measured, which is what a pace chart and a personal best read.
  */
@@ -96,13 +97,12 @@ export const RecordSession = () => {
   // session starts itself, and one already under way is picked up rather than
   // written over.
   const [checked, setChecked] = useState(false)
+  // The end-of-session sheet waved away: the recording stays until it is
+  // saved or discarded, and the controls bring the sheet back.
+  const [sheetClosed, setSheetClosed] = useState(false)
 
   const savedWorkoutId = useRef('')
-  // The phone answers every read with a fresh recording, so an effect that
-  // saved whenever it changed would re-send a refused save every second.
-  const autoSaved = useRef(false)
-  // The screen reads the recording every second, so the effect that saves an
-  // already-named session can fire again while the first request is still out.
+  // A second tap can land while the first request is still out.
   const savingSession = useRef(false)
   // Minted once per screen and sent with every attempt, so a save the server
   // committed but never answered is recognised rather than saved twice.
@@ -233,6 +233,14 @@ export const RecordSession = () => {
     await navigate('/home', { replace: true })
   }
 
+  // The sheet steps aside for the question rather than stacking under it, and
+  // is back if the answer is to keep the recording.
+  const discardFromSheet = async () => {
+    setSheetClosed(true)
+    await discard()
+    setSheetClosed(false)
+  }
+
   // The session as one interval of whatever it is known by: unnamed, the
   // interval belongs to no exercise and the route measures nothing, so the
   // screen names it provisionally to read its own numbers.
@@ -335,14 +343,8 @@ export const RecordSession = () => {
     [recording, distanceUnit, weightUnit, idempotency, key, navigate, t],
   )
 
-  // A session that carried its exercise in never asks which one it was, and
-  // saves itself once: after a refusal, the next attempt is the athlete's.
   const ended = !!recording?.endedAt
-  useEffect(() => {
-    if (!ended || !exercise || savedWorkoutId.current || autoSaved.current) return
-    autoSaved.current = true
-    void save(exercise)
-  }, [ended, exercise, save])
+  const sheetOpen = ended && !sheetClosed && !naming
 
   return (
     <section className={styles.screen}>
@@ -483,25 +485,17 @@ export const RecordSession = () => {
                 : 'timedCircuit.pause',
           )}
         </AppButton>
+        {/* Discard is not beside End, where a slip throws a run away: it is
+            one of the two answers the end asks for. */}
         {recording ? (
-          <div className={styles.secondaryControls}>
-            <AppButton
-              type="button"
-              colour="secondary"
-              disabled={busy || saving || ended}
-              onClick={() => void command('finish')}
-            >
-              {t('timedCircuit.finish')}
-            </AppButton>
-            <AppButton
-              type="button"
-              colour="destructive"
-              disabled={busy || saving}
-              onClick={() => void discard()}
-            >
-              {t('timedCircuit.cancel')}
-            </AppButton>
-          </div>
+          <AppButton
+            type="button"
+            colour="secondary"
+            disabled={busy || saving}
+            onClick={() => (ended ? setSheetClosed(false) : void command('finish'))}
+          >
+            {t(ended ? 'record.saveOrDiscard' : 'timedCircuit.finish')}
+          </AppButton>
         ) : (
           /* Nothing to end or discard yet, so the way out is the way back —
              replacing this screen, which Back would reopen and start again. */
@@ -511,14 +505,44 @@ export const RecordSession = () => {
         )}
       </div>
 
-      {ended && !exercise && (
-        <RecordExerciseSheet
-          summary={summary}
-          saving={saving}
-          onSave={(chosen) => void save(chosen)}
-          onClose={() => void discard()}
-        />
-      )}
+      {sheetOpen &&
+        (exercise ? (
+          <AppSheet
+            title={t('record.endedTitle')}
+            body={summary}
+            closeLabel={t('common.close')}
+            onClose={() => setSheetClosed(true)}
+            actions={
+              <>
+                <SheetAction
+                  tone="primary"
+                  disabled={saving}
+                  onClick={() => {
+                    setSheetClosed(true)
+                    void save(exercise)
+                  }}
+                >
+                  {t('common.save')}
+                </SheetAction>
+                <SheetAction
+                  tone="dangerOutline"
+                  disabled={saving}
+                  onClick={() => void discardFromSheet()}
+                >
+                  {t('timedCircuit.discardConfirm')}
+                </SheetAction>
+              </>
+            }
+          />
+        ) : (
+          <RecordExerciseSheet
+            summary={summary}
+            saving={saving}
+            onSave={(chosen) => void save(chosen)}
+            onDiscard={() => void discardFromSheet()}
+            onClose={() => setSheetClosed(true)}
+          />
+        ))}
     </section>
   )
 }

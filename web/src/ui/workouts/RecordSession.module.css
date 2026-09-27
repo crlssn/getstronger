@@ -101,7 +101,3 @@
 .controls {
   @apply mt-auto flex flex-col gap-2.5 pb-3;
 }
-
-.secondaryControls {
-  @apply grid grid-cols-2 gap-2.5;
-}

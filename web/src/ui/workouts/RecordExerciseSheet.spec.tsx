@@ -38,6 +38,7 @@ describe('RecordExerciseSheet', () => {
         summary="23:07 · 7.62 km"
         saving={false}
         onSave={save}
+        onDiscard={vi.fn()}
         onClose={vi.fn()}
       />,
     )
@@ -62,6 +63,7 @@ describe('RecordExerciseSheet', () => {
         summary="0:12 · 0 km"
         saving={false}
         onSave={vi.fn()}
+        onDiscard={vi.fn()}
         onClose={vi.fn()}
       />,
     )
@@ -90,6 +92,7 @@ describe('RecordExerciseSheet', () => {
         summary="23:07 · 7.62 km"
         saving={false}
         onSave={vi.fn()}
+        onDiscard={vi.fn()}
         onClose={vi.fn()}
       />,
     )
@@ -104,5 +107,31 @@ describe('RecordExerciseSheet', () => {
 
     expect(await screen.findByRole('button', { name: /Bike commute/ })).toBeInTheDocument()
     expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+  })
+
+  // The way out of an ended session lives here rather than beside End, and
+  // closing the sheet is not it.
+  it('discards only when asked, never on close', async () => {
+    const user = userEvent.setup()
+    const discard = vi.fn()
+    const close = vi.fn()
+    vi.mocked(listExercises).mockResolvedValue({ exercises: [run] } as never)
+
+    renderWithProviders(
+      <RecordExerciseSheet
+        summary="23:07 · 7.62 km"
+        saving={false}
+        onSave={vi.fn()}
+        onDiscard={discard}
+        onClose={close}
+      />,
+    )
+
+    await user.click(await screen.findByRole('button', { name: 'Close exercise picker' }))
+    expect(close).toHaveBeenCalledOnce()
+    expect(discard).not.toHaveBeenCalled()
+
+    await user.click(screen.getByRole('button', { name: 'Discard recording' }))
+    expect(discard).toHaveBeenCalledOnce()
   })
 })
