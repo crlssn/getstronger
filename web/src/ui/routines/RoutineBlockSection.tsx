@@ -21,7 +21,10 @@ const sortableGroup = 'routine-block'
 interface Props {
   groups: DraftGroup[]
   group: DraftGroup
-  /** What the block is called on screen: its own name, or "Block A". */
+  /**
+   * What the block is called: its own name, or "Block A". A lone unnamed block
+   * leaves it off screen, and only its chip's accessible name carries it.
+   */
   title: string
   /** The letter this block would be known by, for the tile of a straight one. */
   letter: string
@@ -91,6 +94,14 @@ export const RoutineBlockSection = ({
   const chipValue = restValue
     ? t('routine.form.blocks.rest', { value: formatMeasurementDuration(restValue) })
     : t('routine.form.blocks.noRest')
+  // The routine's only block, left unnamed, has nothing to be told apart from:
+  // its letter would name it for no one, so the header says how it runs.
+  const plain = groups.length === 1 && !group.title
+  const meta = circuit
+    ? open
+      ? t('routine.form.blocks.circuitMetaOpen')
+      : t('routine.form.blocks.circuitMeta', { count: group.rounds })
+    : t('routine.form.blocks.straightMeta')
   const roundsTile = open
     ? t('routine.form.blocks.roundsTileOpen')
     : t('routine.form.blocks.roundsTile', { count: group.rounds })
@@ -98,18 +109,26 @@ export const RoutineBlockSection = ({
   return (
     <section className={styles.block}>
       <header className={styles.header}>
-        <span className={circuit ? styles.tileCircuit : styles.tile} aria-hidden="true">
-          {circuit ? roundsTile : letter}
-        </span>
-        <div className={styles.heading}>
-          <strong className={styles.title}>{title}</strong>
-          <span className={styles.meta}>
-            {circuit
-              ? open
-                ? t('routine.form.blocks.circuitMetaOpen')
-                : t('routine.form.blocks.circuitMeta', { count: group.rounds })
-              : t('routine.form.blocks.straightMeta')}
+        {circuit ? (
+          <span className={styles.tileCircuit} aria-hidden="true">
+            {roundsTile}
           </span>
+        ) : (
+          !plain && (
+            <span className={styles.tile} aria-hidden="true">
+              {letter}
+            </span>
+          )
+        )}
+        <div className={styles.heading}>
+          {plain ? (
+            <strong className={styles.lead}>{meta}</strong>
+          ) : (
+            <>
+              <strong className={styles.title}>{title}</strong>
+              <span className={styles.meta}>{meta}</span>
+            </>
+          )}
         </div>
         {/* The only way into a block's settings: everything it is set up with
             is one tap behind the value it is worth showing on the row. */}

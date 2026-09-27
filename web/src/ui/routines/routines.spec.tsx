@@ -364,8 +364,37 @@ describe('CreateRoutine', () => {
     const sheet = await screen.findByRole('dialog')
     await userEvent.click(within(sheet).getByRole('button', { name: 'Close' }))
 
-    expect(screen.getByText('Block A')).toBeInTheDocument()
+    expect(screen.getByText('All sets of one exercise, then the next')).toBeInTheDocument()
     expect(screen.getByText('No exercises here yet.')).toBeInTheDocument()
+  })
+
+  // A lone block has nothing to be told apart from, so its header says how it
+  // runs; the letters come back with a second block.
+  test('letters its blocks only once there is more than one', async () => {
+    render()
+    await startFrom(/^Blank/)
+
+    expect(screen.queryByText('Block A')).not.toBeInTheDocument()
+    expect(screen.queryByText('A')).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Block settings: Block A' })).toHaveTextContent(
+      'Straight',
+    )
+
+    await userEvent.click(screen.getByRole('button', { name: 'Add block' }))
+
+    expect(screen.getByText('Block A')).toBeInTheDocument()
+    expect(screen.getByText('Block B')).toBeInTheDocument()
+    expect(screen.getAllByText('All sets of one exercise, then the next')).toHaveLength(2)
+  })
+
+  test('keeps the round count on a lone circuit', async () => {
+    render()
+    await startFrom(/^Circuit/)
+
+    expect(screen.queryByText('Block A')).not.toBeInTheDocument()
+    expect(screen.getByText('One set of each, 3 times through')).toBeInTheDocument()
+    // The tile, and the chip's caption.
+    expect(screen.getAllByText('×3')).toHaveLength(2)
   })
 
   test('adds what is picked, and takes it away again', async () => {

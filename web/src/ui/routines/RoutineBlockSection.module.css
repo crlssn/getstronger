@@ -29,6 +29,11 @@
   @apply block truncate text-body-lg font-semibold text-text;
 }
 
+/* A lone block's header is the sentence saying how it runs, so it wraps. */
+.lead {
+  @apply block text-body-lg font-semibold text-text;
+}
+
 /* It wraps rather than truncating: the title is the line that has to stay
    whole, and a sentence cut to three words says less than nothing. */
 .meta {
