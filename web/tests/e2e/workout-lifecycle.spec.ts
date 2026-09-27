@@ -551,6 +551,43 @@ test.describe('quick workout lifecycle', () => {
     await expect(page).toHaveURL(/\/workouts\/[0-9a-f-]+$/)
     await expect(page.getByRole('table', { name: `${exercise} sets` })).toBeVisible()
   })
+
+  // The best thing that can happen in a workout gets a moment of its own, then
+  // gives way to the workout it happened in.
+  test('celebrates a record before the workout it was set in @mutation', async ({ page }) => {
+    // The moment is motion; the suite otherwise asks for none.
+    await page.emulateMedia({ reducedMotion: 'no-preference' })
+
+    // An exercise of its own, so its first set is certainly its record.
+    const exercise = uniqueName('E2E Record press')
+    await page.goto('/exercises/create')
+    await page.locator('form input[type="text"]').first().fill(exercise)
+    await page.getByRole('button', { name: 'Create exercise' }).click()
+    await expect(page).toHaveURL(/\/exercises$/)
+
+    await page.goto('/workouts/quick')
+    await addExerciseNamed(page, exercise)
+    await page.getByRole('textbox', { name: `${exercise} set 1 weight`, exact: true }).fill('120')
+    await page.getByLabel(`${exercise} set 1 reps`).fill('5')
+    await page.getByRole('button', { name: 'Complete exercise' }).click()
+    await finishAndSave(page)
+
+    await expect(page).toHaveURL(/\/workouts\/[0-9a-f-]+$/)
+    await expect(page.getByText('New personal record')).toBeVisible()
+    await expect(page.getByText('120 kg × 5')).toBeVisible()
+
+    // It ends on its own, on the workout with the record in it.
+    await expect(page.getByText('New personal record')).toBeHidden()
+    const record = page
+      .getByRole('table', { name: `${exercise} sets` })
+      .getByRole('cell', { name: 'Set 1, PR' })
+    await expect(record).toBeVisible()
+
+    // The record was the save's news: reading the workout again is not a save.
+    await page.reload()
+    await expect(record).toBeVisible()
+    await expect(page.getByRole('status')).toHaveCount(0)
+  })
 })
 
 test.describe('weight units', () => {
@@ -615,7 +652,8 @@ test.describe('weight units', () => {
     await finishAndSave(page)
 
     await expect(page).toHaveURL(/\/workouts\/[0-9a-f-]+$/)
-    await expect(page.getByRole('status')).toContainText('Workout saved')
+    // A first set is a record, so the save is celebrated rather than toasted.
+    await expect(page.getByRole('status')).toHaveCount(0)
     await expect(page.getByText(/330\.69\s*lbs/)).toBeVisible()
 
     await page.goto('/progress')

@@ -4,7 +4,7 @@ import type { MessageInitShape } from '@bufbuild/protobuf'
 
 import { create, toJson } from '@bufbuild/protobuf'
 import { timestampFromDate } from '@bufbuild/protobuf/wkt'
-import { screen, waitFor, within } from '@testing-library/react'
+import { act, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { Route, Routes } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
@@ -16,6 +16,9 @@ vi.mock('@/http/requests', async (importOriginal) => ({
   updateWorkout: vi.fn(),
   listWorkouts: vi.fn(),
 }))
+
+const haptics = vi.hoisted(() => ({ haptic: vi.fn() }))
+vi.mock('@/native/haptics', () => haptics)
 
 import * as requests from '@/http/requests'
 import { GetDashboardResponseSchema, PlanSchema } from '@/proto/api/v1/routine_service_pb'
@@ -101,6 +104,7 @@ beforeEach(() => {
   useDashboardStore.setState({ dashboard: undefined, loading: false, failed: false })
   useToastStore.getState().dismiss()
   useConfirmationStore.setState({ confirmation: null, resolver: null })
+  haptics.haptic.mockReset()
 })
 
 describe('ViewWorkout', () => {
@@ -118,6 +122,84 @@ describe('ViewWorkout', () => {
 
     expect(await screen.findByRole('button', { name: /Bench press/ })).toBeInTheDocument()
     expect(screen.getByRole('table', { name: /Bench press/ })).toBeInTheDocument()
+  })
+
+  describe('straight after it was saved', () => {
+    const withRecord = () =>
+      workout({
+        exerciseSets: [
+          {
+            exercise: {
+              id: 'bench',
+              name: 'Bench press',
+              metrics: [ExerciseMetric.WEIGHT, ExerciseMetric.REPS],
+            },
+            sets: [{ id: 'set-1', weight: 100, reps: 5, metadata: { personalBest: true } }],
+          },
+        ],
+      })
+
+    const renderSaved = () =>
+      renderWithProviders(
+        <Routes>
+          <Route path="/workouts/:id" element={<ViewWorkout />} />
+        </Routes>,
+        { route: { pathname: '/workouts/workout-1', state: { saved: true } } },
+      )
+
+    afterEach(() => {
+      vi.useRealTimers()
+    })
+
+    test('celebrates a record in place of the saved toast', async () => {
+      mocked.getWorkout.mockResolvedValue(
+        create(GetWorkoutResponseSchema, { workout: withRecord() }),
+      )
+      renderSaved()
+
+      expect(await screen.findByText('New PR', { selector: '[aria-live]' })).toBeInTheDocument()
+      expect(screen.getByText('New personal record')).toBeInTheDocument()
+      expect(useToastStore.getState().toast).toBeNull()
+      expect(haptics.haptic).toHaveBeenCalledExactlyOnceWith('personalBest')
+    })
+
+    test('lands on the workout once the celebration has played', async () => {
+      mocked.getWorkout.mockResolvedValue(
+        create(GetWorkoutResponseSchema, { workout: withRecord() }),
+      )
+      vi.useFakeTimers({ shouldAdvanceTime: true })
+      renderSaved()
+      await screen.findByText('New personal record')
+
+      // The card is up before the effect that times it has run.
+      await act(async () => {})
+      act(() => void vi.advanceTimersByTime(2000))
+      expect(screen.queryByText('New personal record')).not.toBeInTheDocument()
+      expect(screen.getByRole('table', { name: /Bench press/ })).toBeInTheDocument()
+    })
+
+    test('reports a save without a record the way it always did', async () => {
+      mocked.getWorkout.mockResolvedValue(create(GetWorkoutResponseSchema, { workout: withSets() }))
+      renderSaved()
+
+      expect(await screen.findByRole('table', { name: /Bench press/ })).toBeInTheDocument()
+      expect(useToastStore.getState().toast?.message).toBe('Workout saved')
+      expect(screen.queryByText('New personal record')).not.toBeInTheDocument()
+      expect(haptics.haptic).toHaveBeenCalledExactlyOnceWith('workoutSaved')
+    })
+
+    // The record was this save's news; opening the workout again is reading it.
+    test('does not celebrate a workout opened again later', async () => {
+      mocked.getWorkout.mockResolvedValue(
+        create(GetWorkoutResponseSchema, { workout: withRecord() }),
+      )
+      render()
+
+      expect(await screen.findByRole('table', { name: /Bench press/ })).toBeInTheDocument()
+      expect(screen.queryByText('New personal record')).not.toBeInTheDocument()
+      expect(useToastStore.getState().toast).toBeNull()
+      expect(haptics.haptic).not.toHaveBeenCalled()
+    })
   })
 
   test('offers a way back when the workout is gone', async () => {

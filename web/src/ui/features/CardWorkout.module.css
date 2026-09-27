@@ -270,3 +270,22 @@
 .feedCardControl button {
   @apply pointer-events-auto;
 }
+
+/* Under a save's record celebration, the count fades in with the last record
+   to light — see CardWorkoutExercise's `.lighting`. */
+.recordBadgeLighting {
+  animation: record-badge 300ms cubic-bezier(0.2, 0, 0, 1)
+    calc(1100ms + var(--record-order) * 200ms) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .recordBadgeLighting {
+    animation: record-badge 200ms ease-out both;
+  }
+}
+
+@keyframes record-badge {
+  from {
+    opacity: 0;
+  }
+}

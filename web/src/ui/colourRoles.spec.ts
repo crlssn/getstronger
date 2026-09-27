@@ -74,6 +74,8 @@ const roles = {
     // trophy that marks a record has to travel with it.
     'features/CardWorkoutCircuit.module.css',
     'features/CardWorkoutExercise.module.css',
+    // The moment a save beats a record, before the workout it was set in.
+    'features/RecordCelebration.module.css',
     // The trophy on a personal-best row, wherever that row is listed.
     'features/RecordRow.module.css',
   ],
