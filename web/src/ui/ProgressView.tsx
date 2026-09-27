@@ -1,5 +1,5 @@
 import { ArrowTrendingUpIcon, TrophyIcon } from '@heroicons/react/24/outline'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { useDashboardStore } from '@/stores/dashboard'
@@ -43,7 +43,8 @@ export const ProgressView = () => {
   const failed = useProgressStore((state) => state.failed)
   const dashboardFailed = useDashboardStore((state) => state.failed)
 
-  const [range, setRange] = useState<VolumeRange>('4W')
+  const range = useProgressStore((state) => state.range)
+  const setRange = useProgressStore((state) => state.setRange)
 
   const load = () =>
     void Promise.all([useDashboardStore.getState().load(), useProgressStore.getState().load()])
@@ -86,6 +87,15 @@ export const ProgressView = () => {
       ) : (
         workouts.length > 0 && (
           <section className={styles.chartCard}>
+            <AppSegmented
+              className={styles.periodPicker}
+              density="compact"
+              label={t('progress.periodAria')}
+              options={periodOptions.map((option) => ({ label: option, value: option }))}
+              value={range}
+              onChange={setRange}
+            />
+
             <div className={styles.chartHeading}>
               <div>
                 <h2>{t('progress.trainingVolume')}</h2>
@@ -103,15 +113,6 @@ export const ProgressView = () => {
             ) : (
               <p className={styles.chartEmpty}>{t('progress.emptyRange')}</p>
             )}
-
-            <AppSegmented
-              className={styles.periodPicker}
-              density="compact"
-              label={t('progress.periodAria')}
-              options={periodOptions.map((option) => ({ label: option, value: option }))}
-              value={range}
-              onChange={setRange}
-            />
           </section>
         )
       )}

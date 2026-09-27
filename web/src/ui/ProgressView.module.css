@@ -42,7 +42,7 @@
 }
 
 .periodPicker {
-  @apply mt-4;
+  @apply mb-5;
 }
 
 /* Same height as the chart frame, so switching to an empty range does not

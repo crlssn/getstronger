@@ -61,7 +61,7 @@ describe('ProgressView', () => {
     // The screen loads on mount; the stores are seeded directly instead.
     vi.spyOn(useProgressStore.getState(), 'load').mockResolvedValue(undefined)
     vi.spyOn(useDashboardStore.getState(), 'load').mockResolvedValue(undefined)
-    useProgressStore.setState({ workouts: [], loaded: false, failed: false })
+    useProgressStore.setState({ workouts: [], loaded: false, failed: false, range: '4W' })
     useDashboardStore.setState({ dashboard: undefined, failed: false })
   })
 
@@ -172,6 +172,27 @@ describe('ProgressView', () => {
     await userEvent.click(period('7D'))
     expect(period('7D')).toHaveAttribute('aria-pressed', 'true')
     expect(period('4W')).toHaveAttribute('aria-pressed', 'false')
+  })
+
+  // The range decides what the chart says, so it is read before the chart.
+  test('puts the range picker above the chart', async () => {
+    seed([workout(1, 100), workout(2, 100), workout(3, 100)])
+    renderWithProviders(<ProgressView />)
+
+    const chart = await screen.findByRole('img')
+    expect(period('4W').compareDocumentPosition(chart)).toBe(Node.DOCUMENT_POSITION_FOLLOWING)
+  })
+
+  // Somebody who reads their year leaves for a record and comes back to it.
+  test('keeps the chosen range for the rest of the session', async () => {
+    seed([workout(1, 1000)])
+    const view = renderWithProviders(<ProgressView />)
+    await userEvent.click(period('1Y'))
+    view.unmount()
+
+    renderWithProviders(<ProgressView />)
+
+    expect(period('1Y')).toHaveAttribute('aria-pressed', 'true')
   })
 
   // An empty range keeps the picker on screen and says so, rather than
