@@ -4,7 +4,14 @@ import { DateTime } from 'luxon'
 import { describe, expect, test } from 'vitest'
 
 import { WorkoutSchema } from '@/proto/api/v1/workout_service_pb'
-import { dailyVolume, rangeSeries, totalVolume, volumeSeries, withinRange } from './dailyVolume'
+import {
+  dailyVolume,
+  priorVolume,
+  rangeSeries,
+  totalVolume,
+  volumeSeries,
+  withinRange,
+} from './dailyVolume'
 
 const workout = (finishedAt: string | undefined, intensity: number) =>
   create(WorkoutSchema, {
@@ -214,5 +221,29 @@ describe('rangeSeries', () => {
     const timestamps = rangeSeries([], '3M', now).points.map((point) => point.timestamp)
 
     expect(timestamps).toEqual([...timestamps].sort((first, second) => first - second))
+  })
+})
+
+describe('priorVolume', () => {
+  const now = DateTime.fromISO('2026-08-21T15:00:00')
+
+  test('sums the period of equal length just before the range', () => {
+    const workouts = [
+      workout('2026-08-15T08:00:00', 100),
+      workout('2026-08-14T08:00:00', 200),
+      workout('2026-08-08T08:00:00', 400),
+      workout('2026-08-07T23:00:00', 800),
+    ]
+
+    expect(priorVolume(workouts, '7D', now)).toBe(600)
+  })
+
+  test('reaches back thirteen weeks for 3M', () => {
+    expect(priorVolume([workout('2026-02-25T08:00:00', 100)], '3M', now)).toBe(100)
+  })
+
+  // The store fetches one year, so the year before 1Y was never loaded.
+  test('has nothing to compare a year with', () => {
+    expect(priorVolume([workout('2025-08-01T08:00:00', 100)], '1Y', now)).toBeUndefined()
   })
 })

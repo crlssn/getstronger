@@ -2,6 +2,7 @@ import { ArrowTrendingUpIcon, TrophyIcon } from '@heroicons/react/24/outline'
 import { useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { dateLocale } from '@/i18n'
 import { useDashboardStore } from '@/stores/dashboard'
 import { useProgressStore } from '@/stores/progress'
 import { AppEmptyState } from '@/ui/components/AppEmptyState'
@@ -11,9 +12,11 @@ import { AppList } from '@/ui/components/AppList'
 import { AppSegmented } from '@/ui/components/AppSegmented'
 import { AppSkeleton } from '@/ui/components/AppSkeleton'
 import { PageNavAction } from '@/ui/components/PageNavAction'
+import { cn } from '@/ui/cn'
 import { RecordRow } from '@/ui/features/RecordRow'
 import { WorkoutChart } from '@/ui/features/WorkoutChart'
 import {
+  priorVolume,
   rangeSeries,
   totalVolume,
   withinRange,
@@ -54,6 +57,11 @@ export const ProgressView = () => {
   const filtered = useMemo(() => withinRange(workouts, range), [workouts, range])
   // The range picks the grain, and the chip beside the total names it.
   const series = useMemo(() => rangeSeries(workouts, range), [workouts, range])
+  const total = totalVolume(filtered)
+  const prior = useMemo(() => priorVolume(workouts, range), [workouts, range])
+  // Rounded before it is judged, so a change too small to show says nothing
+  // rather than "0%"; and nothing is said about a period with no training.
+  const change = prior && filtered.length > 0 ? Math.round(((total - prior) / prior) * 100) : 0
   const personalBests = dashboard?.personalBests ?? []
   // Nothing to chart and nothing to list is not two empty sections, it is an
   // account with no training in it — and a "Personal records" card holding the
@@ -99,9 +107,21 @@ export const ProgressView = () => {
             <div className={styles.chartHeading}>
               <div>
                 <h2>{t('progress.trainingVolume')}</h2>
-                <p className={styles.total} id="training-volume">
-                  {formatNumber(totalVolume(filtered))} {t('common.kg')}
-                </p>
+                <div className={styles.totalRow}>
+                  <p className={styles.total} id="training-volume">
+                    {formatNumber(total)} {t('common.kg')}
+                  </p>
+                  {change !== 0 && (
+                    <span className={cn(styles.change, change > 0 && styles.gain)}>
+                      {t('progress.vsPrior', {
+                        delta: new Intl.NumberFormat(dateLocale(), {
+                          signDisplay: 'always',
+                          style: 'percent',
+                        }).format(change / 100),
+                      })}
+                    </span>
+                  )}
+                </div>
               </div>
               <span>
                 <ArrowTrendingUpIcon aria-hidden="true" /> {t(totalsLabel[series.granularity])}

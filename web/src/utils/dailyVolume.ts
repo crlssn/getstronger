@@ -180,6 +180,30 @@ export const rangeSeries = (
   return { granularity, points }
 }
 
+/**
+ * The volume of the period just before a range and as long as it, or
+ * undefined for 1Y: the store fetches one year, so the year before is not there.
+ */
+export const priorVolume = (
+  workouts: readonly Workout[],
+  range: VolumeRange,
+  now: DateTime = DateTime.now(),
+): number | undefined => {
+  const [first] = bucketStarts(range, now)
+  if (range === '1Y' || !first) return undefined
+
+  const { granularity, count } = ranges[range]
+  const { unit, size } = steps[granularity]
+  const start = first.minus({ [unit]: size * count })
+
+  return totalVolume(
+    workouts.filter((workout) => {
+      const finished = finishedAt(workout)
+      return finished !== undefined && finished >= start && finished < first
+    }),
+  )
+}
+
 /** The sum a range's bars add up to, shown as the card's headline figure. */
 export const totalVolume = (workouts: readonly Workout[]): number =>
   workouts.reduce((total, workout) => total + workout.intensity, 0)

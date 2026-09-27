@@ -893,6 +893,8 @@ export const en = {
     monthlyTotals: 'Monthly totals',
     personalRecords: 'Personal records',
     periodAria: 'Progress period',
+    // The change from the period of equal length before, e.g. "+8%".
+    vsPrior: '{delta} vs prior',
     emptyRange: 'No workouts in this period.',
     emptyTitle: 'Nothing to chart yet',
     emptyBody: 'Log your first workout and your volume trend and personal bests start here.',
@@ -1892,6 +1894,7 @@ export const sv = {
     monthlyTotals: 'Per månad',
     personalRecords: 'Personliga rekord',
     periodAria: 'Period för framsteg',
+    vsPrior: '{delta} mot förra perioden',
     emptyRange: 'Inga träningspass under den här perioden.',
     emptyTitle: 'Inget att visa ännu',
     emptyBody: 'Logga ditt första pass så börjar din volymtrend och dina rekord här.',

@@ -23,6 +23,9 @@ const roles = {
   // card's whole point.
   success: [
     'features/StreakCard.module.css',
+    // Volume up on the period before: the one change beside a total worth
+    // celebrating. A fall stays neutral rather than turning red.
+    'ProgressView.module.css',
     'shell/AppRestTimerBanner.module.css',
     'shell/AppToaster.module.css',
     'workouts/WorkoutRestBanner.module.css',

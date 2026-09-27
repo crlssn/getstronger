@@ -195,6 +195,46 @@ describe('ProgressView', () => {
     expect(period('1Y')).toHaveAttribute('aria-pressed', 'true')
   })
 
+  describe('beside the total', () => {
+    test('says how much more than the period before', async () => {
+      seed([workout(1, 1500), workout(30, 1000)])
+      renderWithProviders(<ProgressView />)
+
+      expect(await screen.findByText('+50% vs prior')).toBeInTheDocument()
+    })
+
+    test('says how much less, too', async () => {
+      seed([workout(1, 800), workout(30, 1000)])
+      renderWithProviders(<ProgressView />)
+
+      expect(await screen.findByText(/^[-−]20% vs prior$/)).toBeInTheDocument()
+    })
+
+    // Anything from nothing is not a percentage, and 0% is not news.
+    test.each([
+      ['a prior period with no training', [workout(1, 1500)]],
+      ['an unchanged total', [workout(1, 1000), workout(30, 1000)]],
+      ['an empty range', [workout(30, 1000)]],
+    ])('says nothing for %s', async (_, workouts) => {
+      seed(workouts)
+      renderWithProviders(<ProgressView />)
+
+      await screen.findByText('Training volume')
+      expect(screen.queryByText(/vs prior/)).not.toBeInTheDocument()
+    })
+
+    // The year before 1Y was never fetched.
+    test('says nothing on a year', async () => {
+      seed([workout(1, 1500), workout(30, 1000)])
+      renderWithProviders(<ProgressView />)
+      await screen.findByText('+50% vs prior')
+
+      await userEvent.click(period('1Y'))
+
+      expect(screen.queryByText(/vs prior/)).not.toBeInTheDocument()
+    })
+  })
+
   // An empty range keeps the picker on screen and says so, rather than
   // unmounting the controls the reader needs to get back to a fuller range.
   test('keeps the picker when the chosen range has nothing in it', async () => {
