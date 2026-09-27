@@ -157,7 +157,6 @@ describe('UserSignup', () => {
     await userEvent.type(field('Username'), 'AlexMorgan')
     await userEvent.type(field('Email address'), 'alex@example.com')
     await userEvent.type(field('Password'), 'password123')
-    await userEvent.type(field(/Confirm password/), 'password123')
   }
 
   // Usernames are case-insensitive to the backend, so folding here stops the
@@ -201,6 +200,8 @@ describe('UserSignup', () => {
     expect(field('Username')).toHaveValue('alexmorganreid')
   })
 
+  // The password is typed once, with a toggle to check it, so the server's
+  // confirmation is sent the same password.
   test('creates the account with what was typed', async () => {
     mocked.signup.mockResolvedValue({} as never)
     renderScreen(<UserSignup />)
@@ -208,13 +209,48 @@ describe('UserSignup', () => {
     await fillIn()
     await submit('Create an account')
 
+    expect(screen.queryByLabelText(/Confirm password/)).not.toBeInTheDocument()
     expect(mocked.signup).toHaveBeenCalledWith(
       expect.objectContaining({
         name: 'Alex Morgan',
         username: 'alexmorgan',
         email: 'alex@example.com',
+        password: 'password123',
+        passwordConfirmation: 'password123',
       }),
     )
+  })
+
+  test('describes the username field with its rules', () => {
+    renderScreen(<UserSignup />)
+
+    expect(field('Username')).toHaveAccessibleDescription(
+      'Letters, numbers, underscores and periods. 3–30 characters.',
+    )
+  })
+
+  // Someone who already has an account finds the way out before the form, not
+  // after it.
+  test('offers the log in link once, above the form', () => {
+    renderScreen(<UserSignup />)
+
+    const links = screen.getAllByRole('link', { name: 'Log in' })
+    expect(links).toHaveLength(1)
+    expect(links[0]).toHaveAttribute('href', '/login')
+    expect(links[0].compareDocumentPosition(field('Name'))).toBe(Node.DOCUMENT_POSITION_FOLLOWING)
+  })
+
+  test('links the privacy policy under the submit button', () => {
+    renderScreen(<UserSignup />)
+
+    const policy = screen.getByRole('link', { name: 'privacy policy' })
+    expect(policy).toHaveAttribute('href', '/privacy')
+    expect(policy.parentElement).toHaveTextContent(
+      'By creating an account you agree to the privacy policy.',
+    )
+    expect(
+      screen.getByRole('button', { name: 'Create an account' }).compareDocumentPosition(policy),
+    ).toBe(Node.DOCUMENT_POSITION_FOLLOWING)
   })
 
   // Signup sends the first verification email, so the resend cooldown starts

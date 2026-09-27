@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { Link, useNavigate } from 'react-router-dom'
 
 import { brandSignupSubtitle } from '@/brand'
+import { RichMessage } from '@/i18n/RichMessage'
 import { consumeRequestError, signup, verifyEmailPendingPath } from '@/http/requests'
 import posthog from '@/posthog'
 import { SignupRequestSchema } from '@/proto/api/v1/auth_service_pb'
@@ -24,7 +25,6 @@ export const UserSignup = () => {
   const [username, setUsername] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [passwordConfirmation, setPasswordConfirmation] = useState('')
   const [usernameEdited, setUsernameEdited] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string>()
@@ -52,8 +52,16 @@ export const UserSignup = () => {
     setError(undefined)
     let res
     try {
+      // One password field with a show toggle stands in for a second one, so
+      // the confirmation the server checks is the same password.
       res = await signup(
-        create(SignupRequestSchema, { name, username, email, password, passwordConfirmation }),
+        create(SignupRequestSchema, {
+          name,
+          username,
+          email,
+          password,
+          passwordConfirmation: password,
+        }),
       )
     } finally {
       setSubmitting(false)
@@ -76,6 +84,12 @@ export const UserSignup = () => {
         <p className={styles.eyebrow}>{t('auth.startTraining')}</p>
         <h1>{t('auth.signupTitle')}</h1>
         <p>{brandSignupSubtitle}</p>
+        <p className={styles.switch}>
+          {t('auth.alreadyMember')}{' '}
+          <Link to="/login" className={styles.link}>
+            {t('auth.login')}
+          </Link>
+        </p>
       </header>
 
       <form className={styles.form} method="POST" onSubmit={(event) => void onSubmit(event)}>
@@ -129,16 +143,6 @@ export const UserSignup = () => {
           onValueChange={setPassword}
         />
 
-        <AppPasswordInput
-          id="passwordConfirmation"
-          name="passwordConfirmation"
-          label={t('auth.confirmPassword')}
-          autoComplete="new-password"
-          required
-          value={passwordConfirmation}
-          onValueChange={setPasswordConfirmation}
-        />
-
         {error && <AppInlineError>{error}</AppInlineError>}
 
         <AppButton
@@ -151,14 +155,20 @@ export const UserSignup = () => {
         >
           {submitting ? t('auth.creatingAccount') : t('auth.createAccount')}
         </AppButton>
-      </form>
 
-      <p className={styles.footer}>
-        {t('auth.alreadyMember')}{' '}
-        <Link to="/login" className={styles.link}>
-          {t('auth.login')}
-        </Link>
-      </p>
+        <p className={styles.terms}>
+          <RichMessage
+            i18nKey="auth.privacyAgreement"
+            nodes={{
+              policy: (
+                <Link to="/privacy" className={styles.link}>
+                  {t('auth.privacyPolicy')}
+                </Link>
+              ),
+            }}
+          />
+        </p>
+      </form>
     </section>
   )
 }

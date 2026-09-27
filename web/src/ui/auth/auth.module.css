@@ -16,8 +16,14 @@
   @apply mt-2 text-display font-bold text-text;
 }
 
-.intro > p:last-child {
+.intro > h1 + p {
   @apply mt-3 text-base leading-6 text-text-muted;
+}
+
+/* Signup's way back to logging in, under the subtitle so it is found before
+   the form rather than after it. */
+.switch {
+  @apply mt-3 text-sm text-text-muted;
 }
 
 .eyebrow {
@@ -34,6 +40,10 @@
    sentence it sits in the height it was. */
 .link {
   @apply -my-3 inline-flex min-h-(--size-control-sm) min-w-(--size-control-sm) items-center justify-center py-3 font-semibold text-ink underline decoration-ink-border underline-offset-4 transition hover:text-ink-strong hover:decoration-ink-muted;
+}
+
+.terms {
+  @apply text-center text-sm text-text-muted;
 }
 
 .footer {

@@ -22,10 +22,15 @@ describe('AppInput', () => {
     expect(onChange).toHaveBeenCalled()
   })
 
-  test('renders the hint under the label', () => {
+  // Under the field rather than between it and its label, and read out with it.
+  test('renders the hint under the field and describes it', () => {
     render(<AppInput label="Username" hint="Letters and numbers only." />)
 
-    expect(screen.getByText('Letters and numbers only.')).toBeInTheDocument()
+    const input = screen.getByLabelText('Username')
+    expect(input).toHaveAccessibleDescription('Letters and numbers only.')
+    expect(input.compareDocumentPosition(screen.getByText('Letters and numbers only.'))).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
+    )
   })
 
   // "Forgot your password?" belongs beside the label it answers, not above

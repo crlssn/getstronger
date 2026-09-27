@@ -201,7 +201,7 @@ const insetSpent = (page: Page) =>
 
 // Each with a screen tall enough to hold it, because a scroll is only the
 // shell's own doing when the page itself has nothing below the fold. Signup's
-// five fields need more room than a phone has.
+// four fields need more room than a phone has.
 const guestPages = [
   { height: 844, path: '/login', ready: 'Log in to GetStronger' },
   { height: 1100, path: '/signup', ready: 'Create your account' },

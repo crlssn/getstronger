@@ -15,7 +15,7 @@
 }
 
 .hint {
-  @apply mt-1 text-sm text-text-subtle;
+  @apply mt-2 text-sm text-text-subtle;
 }
 
 /* Positions a trailing control against the input rather than against the
@@ -24,8 +24,7 @@
   @apply relative;
 }
 
-.labelRow + .control,
-.hint + .control {
+.labelRow + .control {
   @apply mt-2;
 }
 

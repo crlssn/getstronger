@@ -10,7 +10,7 @@ interface Props extends Omit<ComponentProps<'input'>, 'className'> {
   label?: string
   /** A control on the label's own line, like a password field's "Forgot it?". */
   labelAction?: ReactNode
-  /** A line under the label explaining what the field wants. */
+  /** A line under the field explaining what it wants, read out as its description. */
   hint?: string
   invalid?: boolean
   /** A control at the trailing edge, inside the field's border. */
@@ -45,6 +45,7 @@ export const AppInput = ({
 }: Props) => {
   const generatedId = useId()
   const inputId = id ?? generatedId
+  const hintId = `${inputId}-hint`
 
   return (
     <div className={cn(styles.field, variant === 'hero' && styles.hero, className)}>
@@ -56,7 +57,6 @@ export const AppInput = ({
           {labelAction}
         </div>
       )}
-      {hint && <p className={styles.hint}>{hint}</p>}
       <div className={styles.control}>
         <input
           id={inputId}
@@ -66,10 +66,16 @@ export const AppInput = ({
             invalid && styles.invalid,
           )}
           aria-invalid={invalid || undefined}
+          aria-describedby={hint ? hintId : undefined}
           {...rest}
         />
         {trailing}
       </div>
+      {hint && (
+        <p id={hintId} className={styles.hint}>
+          {hint}
+        </p>
+      )}
     </div>
   )
 }
