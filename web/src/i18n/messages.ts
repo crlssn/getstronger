@@ -899,6 +899,7 @@ export const en = {
     noRecordsYet: 'Your first personal best will appear here.',
     volumeChartAria: 'Training volume by day',
     volumeChartWeeklyAria: 'Training volume by week',
+    volumeChartMonthlyAria: 'Training volume by month',
     // One datum is a statistic, not a trend, so it is read rather than drawn.
     volumeSinglePoint: 'Only day logged in this range',
     volumeFewPoints: 'Not enough sessions in this range to show a trend yet',
@@ -1897,6 +1898,7 @@ export const sv = {
     noRecordsYet: 'Ditt första personliga rekord visas här.',
     volumeChartAria: 'Träningsvolym per dag',
     volumeChartWeeklyAria: 'Träningsvolym per vecka',
+    volumeChartMonthlyAria: 'Träningsvolym per månad',
     volumeSinglePoint: 'Den enda loggade dagen i perioden',
     volumeFewPoints: 'För få pass i perioden för att visa en trend ännu',
   },

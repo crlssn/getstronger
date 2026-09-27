@@ -13,7 +13,13 @@ import { AppSkeleton } from '@/ui/components/AppSkeleton'
 import { PageNavAction } from '@/ui/components/PageNavAction'
 import { RecordRow } from '@/ui/features/RecordRow'
 import { WorkoutChart } from '@/ui/features/WorkoutChart'
-import { totalVolume, volumeSeries, withinDays, type VolumeGranularity } from '@/utils/dailyVolume'
+import {
+  rangeSeries,
+  totalVolume,
+  withinRange,
+  type VolumeGranularity,
+  type VolumeRange,
+} from '@/utils/dailyVolume'
 import { formatNumber } from '@/utils/numbers'
 import styles from './ProgressView.module.css'
 
@@ -25,12 +31,7 @@ const totalsLabel: Record<VolumeGranularity, string> = {
   month: 'progress.monthlyTotals',
 }
 
-const periodOptions = [
-  { days: 7, label: '7D' },
-  { days: 28, label: '4W' },
-  { days: 90, label: '3M' },
-  { days: 365, label: '1Y' },
-]
+const periodOptions: VolumeRange[] = ['7D', '4W', '3M', '1Y']
 
 /** Training volume over a chosen range, and the personal bests behind it. */
 export const ProgressView = () => {
@@ -42,17 +43,16 @@ export const ProgressView = () => {
   const failed = useProgressStore((state) => state.failed)
   const dashboardFailed = useDashboardStore((state) => state.failed)
 
-  const [periodDays, setPeriodDays] = useState(28)
+  const [range, setRange] = useState<VolumeRange>('4W')
 
   const load = () =>
     void Promise.all([useDashboardStore.getState().load(), useProgressStore.getState().load()])
 
   useEffect(load, [])
 
-  const filtered = useMemo(() => withinDays(workouts, periodDays), [workouts, periodDays])
-  // The chart aggregates to weeks once a range has more days than bars will
-  // fit, so the chip beside the total says which grain is on screen.
-  const granularity = useMemo(() => volumeSeries(filtered).granularity, [filtered])
+  const filtered = useMemo(() => withinRange(workouts, range), [workouts, range])
+  // The range picks the grain, and the chip beside the total names it.
+  const series = useMemo(() => rangeSeries(workouts, range), [workouts, range])
   const personalBests = dashboard?.personalBests ?? []
   // Nothing to chart and nothing to list is not two empty sections, it is an
   // account with no training in it — and a "Personal records" card holding the
@@ -94,12 +94,12 @@ export const ProgressView = () => {
                 </p>
               </div>
               <span>
-                <ArrowTrendingUpIcon aria-hidden="true" /> {t(totalsLabel[granularity])}
+                <ArrowTrendingUpIcon aria-hidden="true" /> {t(totalsLabel[series.granularity])}
               </span>
             </div>
 
             {filtered.length > 0 ? (
-              <WorkoutChart workouts={filtered} />
+              <WorkoutChart series={series} />
             ) : (
               <p className={styles.chartEmpty}>{t('progress.emptyRange')}</p>
             )}
@@ -108,12 +108,9 @@ export const ProgressView = () => {
               className={styles.periodPicker}
               density="compact"
               label={t('progress.periodAria')}
-              options={periodOptions.map((option) => ({
-                label: option.label,
-                value: option.days,
-              }))}
-              value={periodDays}
-              onChange={setPeriodDays}
+              options={periodOptions.map((option) => ({ label: option, value: option }))}
+              value={range}
+              onChange={setRange}
             />
           </section>
         )

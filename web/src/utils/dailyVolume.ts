@@ -103,17 +103,81 @@ export const volumeSeries = (workouts: readonly Workout[]): VolumeSeries => {
   return series
 }
 
-/** Workouts finished within the last `days` calendar days, in store order. */
-export const withinDays = (
+/** The Progress screen's ranges, and the bars each is drawn with. */
+const ranges = {
+  '7D': { granularity: 'day', count: 7 },
+  '4W': { granularity: 'week', count: 4 },
+  '3M': { granularity: 'week', count: 13 },
+  '1Y': { granularity: 'month', count: 12 },
+} as const satisfies Record<string, { granularity: VolumeGranularity; count: number }>
+
+export type VolumeRange = keyof typeof ranges
+
+// Weeks are sevens counted back from today, so every one is whole and they
+// compare fairly; months are the calendar's, since nobody reads a rolling one.
+const steps = {
+  day: { unit: 'days', size: 1, format: 'd LLL' },
+  week: { unit: 'days', size: 7, format: 'd LLL' },
+  month: { unit: 'months', size: 1, format: 'LLL yyyy' },
+} as const
+
+/** Where each of a range's buckets starts, oldest first, the last one holding today. */
+const bucketStarts = (range: VolumeRange, now: DateTime): DateTime[] => {
+  const { granularity, count } = ranges[range]
+  const { unit, size } = steps[granularity]
+  const last =
+    granularity === 'month' ? now.startOf('month') : now.startOf('day').minus({ days: size - 1 })
+
+  return Array.from({ length: count }, (_, index) =>
+    last.minus({ [unit]: size * (count - 1 - index) }),
+  )
+}
+
+const finishedAt = (workout: Workout): DateTime | undefined =>
+  workout.finishedAt ? DateTime.fromSeconds(Number(workout.finishedAt.seconds)) : undefined
+
+/** Workouts finished inside a range's buckets, in store order. */
+export const withinRange = (
   workouts: readonly Workout[],
-  days: number,
+  range: VolumeRange,
   now: DateTime = DateTime.now(),
 ): Workout[] => {
-  const cutoff = now.minus({ days }).toMillis()
+  const [first] = bucketStarts(range, now)
+  const end = now.endOf('day')
+
   return workouts.filter((workout) => {
-    if (!workout.finishedAt) return false
-    return DateTime.fromSeconds(Number(workout.finishedAt.seconds)).toMillis() >= cutoff
+    const finished = finishedAt(workout)
+    return finished !== undefined && first !== undefined && finished >= first && finished <= end
   })
+}
+
+/**
+ * A range's bars: every bucket from its start to today, oldest first.
+ *
+ * An empty bucket stays in at zero, so the bars are spaced by time rather than
+ * by how often somebody trained.
+ */
+export const rangeSeries = (
+  workouts: readonly Workout[],
+  range: VolumeRange,
+  now: DateTime = DateTime.now(),
+): VolumeSeries => {
+  const { granularity } = ranges[range]
+  const starts = bucketStarts(range, now)
+  const points = starts.map((start) => ({
+    label: start.setLocale(dateLocale()).toFormat(steps[granularity].format),
+    timestamp: start.toMillis(),
+    volume: 0,
+  }))
+
+  withinRange(workouts, range, now).forEach((workout) => {
+    const finished = finishedAt(workout)
+    if (!finished) return
+    const point = points[starts.filter((start) => start <= finished).length - 1]
+    if (point) point.volume += workout.intensity
+  })
+
+  return { granularity, points }
 }
 
 /** The sum a range's bars add up to, shown as the card's headline figure. */

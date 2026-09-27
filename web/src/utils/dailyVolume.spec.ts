@@ -4,7 +4,7 @@ import { DateTime } from 'luxon'
 import { describe, expect, test } from 'vitest'
 
 import { WorkoutSchema } from '@/proto/api/v1/workout_service_pb'
-import { dailyVolume, totalVolume, volumeSeries, withinDays } from './dailyVolume'
+import { dailyVolume, rangeSeries, totalVolume, volumeSeries, withinRange } from './dailyVolume'
 
 const workout = (finishedAt: string | undefined, intensity: number) =>
   create(WorkoutSchema, {
@@ -44,18 +44,27 @@ describe('dailyVolume', () => {
   })
 })
 
-describe('withinDays', () => {
-  const now = DateTime.fromISO('2026-08-21T12:00:00Z')
+describe('withinRange', () => {
+  // A Friday afternoon, so a rolling "now minus seven days" would reach back
+  // into the morning of the eighth calendar day.
+  const now = DateTime.fromISO('2026-08-21T15:00:00')
 
   test('keeps only what finished inside the range', () => {
-    const recent = workout('2026-08-20T08:00:00Z', 100)
-    const old = workout('2026-06-01T08:00:00Z', 900)
+    const recent = workout('2026-08-20T08:00:00', 100)
+    const old = workout('2026-06-01T08:00:00', 900)
 
-    expect(withinDays([recent, old], 7, now)).toEqual([recent])
+    expect(withinRange([recent, old], '7D', now)).toEqual([recent])
+  })
+
+  test('spans seven calendar days, today included', () => {
+    const first = workout('2026-08-15T00:30:00', 100)
+    const eighth = workout('2026-08-14T23:30:00', 100)
+
+    expect(withinRange([first, eighth], '7D', now)).toEqual([first])
   })
 
   test('drops a workout that never finished', () => {
-    expect(withinDays([workout(undefined, 100)], 7, now)).toEqual([])
+    expect(withinRange([workout(undefined, 100)], '7D', now)).toEqual([])
   })
 })
 
@@ -134,5 +143,76 @@ describe('volumeSeries', () => {
 
   test('has nothing to draw for no workouts', () => {
     expect(volumeSeries([]).points).toEqual([])
+  })
+})
+
+// The grain is the range's, not the data's: how often somebody trained must
+// not decide whether 4W is drawn in days or weeks.
+describe('rangeSeries', () => {
+  const now = DateTime.fromISO('2026-08-21T15:00:00')
+
+  test.each([
+    ['7D', 'day', 7],
+    ['4W', 'week', 4],
+    ['3M', 'week', 13],
+    ['1Y', 'month', 12],
+  ] as const)('draws %s by the %s, %i bars', (range, granularity, count) => {
+    const series = rangeSeries([], range, now)
+
+    expect(series.granularity).toBe(granularity)
+    expect(series.points).toHaveLength(count)
+  })
+
+  // Squeezing out an empty week lets bars sit side by side that were a month
+  // apart, so the spacing stops tracking time.
+  test('keeps an empty bucket, at zero', () => {
+    const series = rangeSeries(
+      [workout('2026-08-21T08:00:00', 300), workout('2026-08-15T08:00:00', 100)],
+      '7D',
+      now,
+    )
+
+    expect(series.points.map((point) => point.volume)).toEqual([100, 0, 0, 0, 0, 0, 300])
+  })
+
+  test('ends the last day on today', () => {
+    expect(rangeSeries([], '7D', now).points.at(-1)?.label).toBe('21 Aug')
+  })
+
+  // Weeks count back from today, so every one is seven whole days and none
+  // is the fragment a calendar week would leave at the start.
+  test('buckets weeks in whole sevens ending today', () => {
+    const series = rangeSeries(
+      [
+        workout('2026-07-25T08:00:00', 100),
+        workout('2026-07-31T20:00:00', 200),
+        workout('2026-08-15T08:00:00', 400),
+        workout('2026-07-24T20:00:00', 900),
+      ],
+      '4W',
+      now,
+    )
+
+    expect(series.points.map((point) => point.label)).toEqual([
+      '25 Jul',
+      '1 Aug',
+      '8 Aug',
+      '15 Aug',
+    ])
+    expect(series.points.map((point) => point.volume)).toEqual([300, 0, 0, 400])
+  })
+
+  test('draws a year as the twelve months ending with this one', () => {
+    const series = rangeSeries([workout('2025-09-03T08:00:00', 700)], '1Y', now)
+
+    expect(series.points[0]?.label).toMatch(/^Sept? 2025$/)
+    expect(series.points.at(-1)?.label).toBe('Aug 2026')
+    expect(series.points[0]?.volume).toBe(700)
+  })
+
+  test('orders bars oldest first', () => {
+    const timestamps = rangeSeries([], '3M', now).points.map((point) => point.timestamp)
+
+    expect(timestamps).toEqual([...timestamps].sort((first, second) => first - second))
   })
 })

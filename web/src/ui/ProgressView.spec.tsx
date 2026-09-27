@@ -72,8 +72,8 @@ describe('ProgressView', () => {
     expect(screen.queryByText('Personal records')).not.toBeInTheDocument()
   })
 
-  // The chart coarsens its grain as the range grows, and the chip beside the
-  // total says which one is on screen.
+  // The grain is the range's, and the chip beside the total says which one is
+  // on screen.
   test('names the grain the chart is drawn at', async () => {
     seed([
       ...Array.from({ length: 3 }, (_, index) => workout(index + 1, 100)),
@@ -84,6 +84,9 @@ describe('ProgressView', () => {
 
     await userEvent.click(period('7D'))
     expect(screen.getByText('Daily totals')).toBeInTheDocument()
+
+    await userEvent.click(period('4W'))
+    expect(screen.getByText('Weekly totals')).toBeInTheDocument()
 
     await userEvent.click(period('3M'))
     expect(screen.getByText('Weekly totals')).toBeInTheDocument()
@@ -101,7 +104,20 @@ describe('ProgressView', () => {
 
     await userEvent.click(period('3M'))
     expect(screen.getByText('7,000 kg')).toBeInTheDocument()
-    expect(chartValues()).toEqual([5000, 600, 400, 1000])
+    expect(chartTotal()).toBe(7000)
+  })
+
+  // Two sessions in four weeks used to be two daily bars side by side, so the
+  // grain and the spacing said how often somebody trained, not when.
+  test('draws every bucket of the range, empty ones at zero', async () => {
+    seed([workout(1, 1000), workout(20, 400)])
+    renderWithProviders(<ProgressView />)
+
+    await waitFor(() => expect(chartValues()).toHaveLength(4))
+    expect(chartValues().filter((value) => value === 0)).toHaveLength(2)
+
+    await userEvent.click(period('3M'))
+    expect(chartValues()).toHaveLength(13)
   })
 
   // Returning to an earlier range, and picking the same one twice, must keep
