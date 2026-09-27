@@ -280,5 +280,8 @@ export const bestExerciseSet = <T extends Partial<Set>>(
     const field = fields.find((name) => Number(set[name] ?? 0) !== Number(best[name] ?? 0))
     return field !== undefined && Number(set[field] ?? 0) > Number(best[field] ?? 0)
   }
-  return sets.reduce<T | undefined>((best, set) => (!best || beats(set, best) ? set : best), undefined)
+  return sets.reduce<T | undefined>(
+    (best, set) => (!best || beats(set, best) ? set : best),
+    undefined,
+  )
 }
