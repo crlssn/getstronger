@@ -6,6 +6,7 @@ import { persist } from 'zustand/middleware'
 
 import { migratedStorage } from '@/stores/persistence'
 import { identifyUser, resetUser } from '@/posthog'
+import { clearListSnapshots } from '@/utils/usePagedList'
 
 interface AuthState {
   userId: string
@@ -45,6 +46,7 @@ export const useAuthStore = create<AuthState>()(
 
       logout: () => {
         if (selectAuthorised(get())) resetUser()
+        clearListSnapshots()
         set({ userId: '', accessToken: '' })
       },
     }),

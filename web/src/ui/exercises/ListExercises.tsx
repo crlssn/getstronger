@@ -1,7 +1,7 @@
 import type { Exercise } from '@/proto/api/v1/shared_pb'
 
 import { PlusIcon } from '@heroicons/react/24/outline'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { listExercises } from '@/http/requests'
@@ -17,42 +17,34 @@ import { AppPageHeader } from '@/ui/components/AppPageHeader'
 import { AppSearchField } from '@/ui/components/AppSearchField'
 import { AppSkeleton } from '@/ui/components/AppSkeleton'
 import { groupByActivity } from '@/utils/activityGroups'
-import { appendPage } from '@/utils/appendPage'
 import { measurementsForExercise } from '@/utils/exerciseMeasurements'
-import { usePagination } from '@/utils/usePagination'
+import { usePagedList } from '@/utils/usePagedList'
 import styles from './ListExercises.module.css'
 
 /** The exercise library, grouped by when each was last trained. */
 export const ListExercises = () => {
   const { t } = useTranslation()
-  const { hasMorePages, currentPageToken, setFromResponse } = usePagination()
+  const {
+    rows: exercises,
+    loaded,
+    failed,
+    hasMorePages,
+    fetchMore: fetchExercises,
+  } = usePagedList('exercises', async (pageToken) => {
+    const response = await listExercises(pageToken)
+    return response && { rows: response.exercises, pagination: response.pagination }
+  })
 
   const exerciseLastPerformed = useActivityStore((state) => state.exerciseLastPerformed)
-
-  const [exercises, setExercises] = useState<Exercise[]>([])
+  const activityLoaded = useActivityStore((state) => state.loaded)
   const [search, setSearch] = useState('')
-  const [loading, setLoading] = useState(true)
-  const [failed, setFailed] = useState(false)
-
-  const fetchExercises = useCallback(async () => {
-    setFailed(false)
-    const response = await listExercises(currentPageToken())
-    if (!response) {
-      setFailed(true)
-      return
-    }
-
-    setExercises((current) => appendPage(current, response.exercises))
-    setFromResponse(response.pagination)
-  }, [currentPageToken, setFromResponse])
 
   useEffect(() => {
-    const load = async () => {
-      await Promise.all([fetchExercises(), useActivityStore.getState().load()])
-      setLoading(false)
-    }
-    void load()
-  }, [fetchExercises])
+    void useActivityStore.getState().load()
+  }, [])
+
+  // The groups are drawn from both, so a list without its activity would jump.
+  const loading = !loaded || !activityLoaded
 
   const library = useExercisesWithPending(exercises)
   const pendingIds = usePendingExerciseIds()

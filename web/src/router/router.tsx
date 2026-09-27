@@ -2,7 +2,7 @@ import type { AppRoute } from '@/router/routes'
 import type { ScreenLoader } from '@/router/screens'
 import type { RouteObject } from 'react-router-dom'
 
-import { createBrowserRouter, redirect } from 'react-router-dom'
+import { createBrowserRouter, redirect, ScrollRestoration } from 'react-router-dom'
 
 import { App } from '@/App'
 import { applyPageTitle, fileTitle, onNavigate, redirectForRoute } from '@/router/guards'
@@ -55,7 +55,14 @@ export const buildRouteObjects = (
 }
 
 export const createRouter = () => {
-  const router = createBrowserRouter([{ element: <App />, children: buildRouteObjects() }])
+  // Back finds the offset it left, and a push starts at the top.
+  const element = (
+    <>
+      <App />
+      <ScrollRestoration />
+    </>
+  )
+  const router = createBrowserRouter([{ element, children: buildRouteObjects() }])
   router.subscribe(fileTitle)
   return router
 }

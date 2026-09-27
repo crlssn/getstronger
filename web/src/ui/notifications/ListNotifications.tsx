@@ -1,6 +1,6 @@
 import type { Notification } from '@/proto/api/v1/notification_service_pb'
 
-import { Fragment, useCallback, useEffect, useState } from 'react'
+import { Fragment, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { listNotifications, markNotificationAsRead } from '@/http/requests'
@@ -14,38 +14,23 @@ import { PageNavAction } from '@/ui/components/PageNavAction'
 import { NotificationUserFollow } from '@/ui/features/NotificationUserFollow'
 import { NotificationWorkoutComment } from '@/ui/features/NotificationWorkoutComment'
 import { NotificationWorkoutLike } from '@/ui/features/NotificationWorkoutLike'
-import { appendPage } from '@/utils/appendPage'
-import { usePagination } from '@/utils/usePagination'
+import { usePagedList } from '@/utils/usePagedList'
 
 /** Everything that happened while the user was away, newest first. */
 export const ListNotifications = () => {
   const { t } = useTranslation()
-  const { hasMorePages, currentPageToken, setFromResponse } = usePagination()
-
-  const [notifications, setNotifications] = useState<Notification[]>([])
-  const [loaded, setLoaded] = useState(false)
-  const [failed, setFailed] = useState(false)
+  const {
+    rows: notifications,
+    setRows: setNotifications,
+    loaded,
+    failed,
+    hasMorePages,
+    fetchMore: fetchNotifications,
+  } = usePagedList('notifications', async (pageToken) => {
+    const res = await listNotifications(pageToken)
+    return res && { rows: res.notifications, pagination: res.pagination }
+  })
   const [markingAllAsRead, setMarkingAllAsRead] = useState(false)
-
-  const fetchNotifications = useCallback(async () => {
-    setFailed(false)
-    const res = await listNotifications(currentPageToken())
-    if (!res) {
-      setFailed(true)
-      return
-    }
-
-    setNotifications((current) => appendPage(current, res.notifications))
-    setFromResponse(res.pagination)
-  }, [currentPageToken, setFromResponse])
-
-  useEffect(() => {
-    const load = async () => {
-      await fetchNotifications()
-      setLoaded(true)
-    }
-    void load()
-  }, [fetchNotifications])
 
   const hasUnread = notifications.some((notification) => !notification.read)
 

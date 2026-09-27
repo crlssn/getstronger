@@ -14,8 +14,8 @@ export const resolvePageToken = (res: PaginationResponse | undefined): Uint8Arra
  * scroll sentinel reads it during the same tick it was set, before React has
  * re-rendered with the new value.
  */
-export const usePagination = () => {
-  const [pageToken, setPageTokenState] = useState<Uint8Array>(emptyPageToken)
+export const usePagination = (initial: Uint8Array = emptyPageToken) => {
+  const [pageToken, setPageTokenState] = useState<Uint8Array>(initial)
   const latest = useRef(pageToken)
 
   const setPageToken = useCallback((token: Uint8Array) => {
