@@ -1,4 +1,4 @@
-import { CheckIcon, ChevronRightIcon, PlusIcon } from '@heroicons/react/24/outline'
+import { CheckIcon, ChevronRightIcon, PlayIcon, PlusIcon } from '@heroicons/react/24/outline'
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
@@ -15,6 +15,7 @@ import { AppErrorState } from '@/ui/components/AppErrorState'
 import { AppPageHeader } from '@/ui/components/AppPageHeader'
 import { AppSkeleton } from '@/ui/components/AppSkeleton'
 import { TrainingTabs } from '@/ui/features/TrainingTabs'
+import { workoutHref } from '@/utils/workoutHref'
 import styles from './PlansView.module.css'
 
 /** Every plan: which one is running, where it is, and what else is available. */
@@ -182,12 +183,23 @@ export const PlansView = () => {
 
               {nextRoutine && (
                 <div className={styles.nextRow}>
-                  <div>
+                  <div className={styles.nextRoutine}>
                     <small>{t('home.upNext')}</small>
                     <strong>{nextRoutine.name}</strong>
                     <small>
                       {t('home.exerciseCount', { count: nextRoutine.exercises.length })}
                     </small>
+                  </div>
+                  <div className={styles.nextActions}>
+                    <AppButton
+                      type="link"
+                      colour="primary"
+                      size="sm"
+                      width="auto"
+                      to={workoutHref(nextRoutine.id, activePlan.id)}
+                    >
+                      <PlayIcon className="size-5" aria-hidden="true" /> {t('workout.startRoutine')}
+                    </AppButton>
                   </div>
                 </div>
               )}
@@ -195,7 +207,7 @@ export const PlansView = () => {
               <footer>
                 <AppButton
                   type="link"
-                  colour="primary"
+                  colour="secondary"
                   size="sm"
                   width="auto"
                   to={`/plans/${activePlan.id}`}

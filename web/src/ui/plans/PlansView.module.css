@@ -100,8 +100,12 @@
   @apply mt-4 rounded-control bg-ink-surface p-4;
 }
 
-.nextRow div {
+.nextRoutine {
   @apply grid gap-1;
+}
+
+.nextActions {
+  @apply mt-4 flex flex-wrap gap-2;
 }
 
 .nextRow small {

@@ -124,6 +124,18 @@ describe('PlansView', () => {
     expect(screen.getByRole('link', { name: 'View plan' })).toHaveAttribute('href', '/plans/plan-1')
   })
 
+  // The plan is what says what to train next, so the card that says it is
+  // also where the session starts — and starts as the plan's.
+  test('starts the routine up next as part of the plan', async () => {
+    withPlans([plan({ active: true, currentPosition: 1 })])
+    render()
+
+    expect(await screen.findByRole('link', { name: 'Start routine' })).toHaveAttribute(
+      'href',
+      '/workouts/routine/pull?plan_id=plan-1',
+    )
+  })
+
   // The lead explained plans to someone already looking at theirs, and pushed
   // the running one down the screen to do it.
   test('opens on the title without an explainer under it', async () => {
