@@ -4,6 +4,10 @@
 <dict>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Record your workout route and interval distances, including while your phone is locked.</string>
+	<!-- A live session is shown on the Lock Screen. Nothing asks for it at
+	     launch: the activity is raised when a recording starts. -->
+	<key>NSSupportsLiveActivities</key>
+	<true/>
 	<key>UIBackgroundModes</key>
 	<array><string>location</string><string>audio</string></array>
   <key>CAPACITOR_DEBUG</key>

@@ -22,7 +22,36 @@
 		95C4A1212FEA10000072D4E8 /* AnnouncementVoice.swift in Sources */ = {isa = PBXBuildFile; fileRef = 95C4A1202FEA10000072D4E8 /* AnnouncementVoice.swift */; };
 		95C4A1222FEA10000072D4E8 /* PaceTones.swift in Sources */ = {isa = PBXBuildFile; fileRef = 95C4A1232FEA10000072D4E8 /* PaceTones.swift */; };
 		95A1F0012FE9A4010072D4E8 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 95A1F0002FE9A4010072D4E8 /* PrivacyInfo.xcprivacy */; };
+		96D1A0022FF0100000A1B2C3 /* LiveSessionActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96D1A0012FF0100000A1B2C3 /* LiveSessionActivity.swift */; };
+		96D1A0042FF0100000A1B2C3 /* LiveSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96D1A0032FF0100000A1B2C3 /* LiveSession.swift */; };
+		96D1A0052FF0100000A1B2C3 /* LiveSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96D1A0032FF0100000A1B2C3 /* LiveSession.swift */; };
+		96D1A0072FF0100000A1B2C3 /* LiveSessionWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96D1A0062FF0100000A1B2C3 /* LiveSessionWidget.swift */; };
+		96D1A00A2FF0100000A1B2C3 /* LiveSessionWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 96D1A0092FF0100000A1B2C3 /* LiveSessionWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		96D1A0112FF0100000A1B2C3 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 504EC2FC1FED79650016851F /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 96D1A00C2FF0100000A1B2C3;
+			remoteInfo = LiveSessionWidget;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		96D1A0102FF0100000A1B2C3 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				96D1A00A2FF0100000A1B2C3 /* LiveSessionWidget.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		138200002FEA10000072D4E8 /* TimedCircuitPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimedCircuitPlugin.swift; sourceTree = "<group>"; };
@@ -42,6 +71,11 @@
 		95C4A1232FEA10000072D4E8 /* PaceTones.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = PaceTones.swift; path = "AnnouncementVoice/Sources/PaceTones/PaceTones.swift"; sourceTree = SOURCE_ROOT; };
 		95A1F0002FE9A4010072D4E8 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		958DCC722DB07C7200EA8C5F /* debug.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = debug.xcconfig; path = ../debug.xcconfig; sourceTree = SOURCE_ROOT; };
+		96D1A0012FF0100000A1B2C3 /* LiveSessionActivity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveSessionActivity.swift; sourceTree = "<group>"; };
+		96D1A0032FF0100000A1B2C3 /* LiveSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = LiveSession.swift; path = "AnnouncementVoice/Sources/LiveSession/LiveSession.swift"; sourceTree = SOURCE_ROOT; };
+		96D1A0062FF0100000A1B2C3 /* LiveSessionWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveSessionWidget.swift; sourceTree = "<group>"; };
+		96D1A0082FF0100000A1B2C3 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		96D1A0092FF0100000A1B2C3 /* LiveSessionWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = LiveSessionWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -53,6 +87,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		96D1A00E2FF0100000A1B2C3 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -61,6 +102,7 @@
 			children = (
 				958DCC722DB07C7200EA8C5F /* debug.xcconfig */,
 				504EC3061FED79650016851F /* App */,
+				96D1A00B2FF0100000A1B2C3 /* LiveSessionWidget */,
 				504EC3051FED79650016851F /* Products */,
 			);
 			sourceTree = "<group>";
@@ -69,6 +111,7 @@
 			isa = PBXGroup;
 			children = (
 				504EC3041FED79650016851F /* App.app */,
+				96D1A0092FF0100000A1B2C3 /* LiveSessionWidget.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -81,6 +124,8 @@
 				95C4A1102FEA10000072D4E8 /* SwipeBackPlugin.swift */,
 				95C4A1202FEA10000072D4E8 /* AnnouncementVoice.swift */,
 				95C4A1232FEA10000072D4E8 /* PaceTones.swift */,
+				96D1A0032FF0100000A1B2C3 /* LiveSession.swift */,
+				96D1A0012FF0100000A1B2C3 /* LiveSessionActivity.swift */,
 				138200002FEA10000072D4E8 /* TimedCircuitPlugin.swift */,
 				50379B222058CBB4000EE86E /* capacitor.config.json */,
 				504EC3071FED79650016851F /* AppDelegate.swift */,
@@ -95,6 +140,15 @@
 			path = App;
 			sourceTree = "<group>";
 		};
+		96D1A00B2FF0100000A1B2C3 /* LiveSessionWidget */ = {
+			isa = PBXGroup;
+			children = (
+				96D1A0062FF0100000A1B2C3 /* LiveSessionWidget.swift */,
+				96D1A0082FF0100000A1B2C3 /* Info.plist */,
+			);
+			path = LiveSessionWidget;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -105,10 +159,12 @@
 				504EC3001FED79650016851F /* Sources */,
 				504EC3011FED79650016851F /* Frameworks */,
 				504EC3021FED79650016851F /* Resources */,
+				96D1A0102FF0100000A1B2C3 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				96D1A0122FF0100000A1B2C3 /* PBXTargetDependency */,
 			);
 			name = App;
 			packageProductDependencies = (
@@ -117,6 +173,23 @@
 			productName = App;
 			productReference = 504EC3041FED79650016851F /* App.app */;
 			productType = "com.apple.product-type.application";
+		};
+		96D1A00C2FF0100000A1B2C3 /* LiveSessionWidget */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 96D1A0152FF0100000A1B2C3 /* Build configuration list for PBXNativeTarget "LiveSessionWidget" */;
+			buildPhases = (
+				96D1A00D2FF0100000A1B2C3 /* Sources */,
+				96D1A00E2FF0100000A1B2C3 /* Frameworks */,
+				96D1A00F2FF0100000A1B2C3 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = LiveSessionWidget;
+			productName = LiveSessionWidget;
+			productReference = 96D1A0092FF0100000A1B2C3 /* LiveSessionWidget.appex */;
+			productType = "com.apple.product-type.app-extension";
 		};
 /* End PBXNativeTarget section */
 
@@ -130,6 +203,10 @@
 					504EC3031FED79650016851F = {
 						CreatedOnToolsVersion = 9.2;
 						LastSwiftMigration = 1100;
+						ProvisioningStyle = Automatic;
+					};
+					96D1A00C2FF0100000A1B2C3 = {
+						CreatedOnToolsVersion = 26.0;
 						ProvisioningStyle = Automatic;
 					};
 				};
@@ -151,6 +228,7 @@
 			projectRoot = "";
 			targets = (
 				504EC3031FED79650016851F /* App */,
+				96D1A00C2FF0100000A1B2C3 /* LiveSessionWidget */,
 			);
 		};
 /* End PBXProject section */
@@ -170,6 +248,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		96D1A00F2FF0100000A1B2C3 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
@@ -183,11 +268,30 @@
 				95C4A1112FEA10000072D4E8 /* SwipeBackPlugin.swift in Sources */,
 				95C4A1212FEA10000072D4E8 /* AnnouncementVoice.swift in Sources */,
 				95C4A1222FEA10000072D4E8 /* PaceTones.swift in Sources */,
+				96D1A0042FF0100000A1B2C3 /* LiveSession.swift in Sources */,
+				96D1A0022FF0100000A1B2C3 /* LiveSessionActivity.swift in Sources */,
 				138200012FEA10000072D4E8 /* TimedCircuitPlugin.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		96D1A00D2FF0100000A1B2C3 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				96D1A0072FF0100000A1B2C3 /* LiveSessionWidget.swift in Sources */,
+				96D1A0052FF0100000A1B2C3 /* LiveSession.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		96D1A0122FF0100000A1B2C3 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 96D1A00C2FF0100000A1B2C3 /* LiveSessionWidget */;
+			targetProxy = 96D1A0112FF0100000A1B2C3 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin PBXVariantGroup section */
 		504EC30B1FED79650016851F /* Main.storyboard */ = {
@@ -364,6 +468,50 @@
 			};
 			name = Release;
 		};
+		96D1A0132FF0100000A1B2C3 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				INFOPLIST_FILE = LiveSessionWidget/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.1;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = studio.getstronger.app.LiveSession;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		96D1A0142FF0100000A1B2C3 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				INFOPLIST_FILE = LiveSessionWidget/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.1;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = studio.getstronger.app.LiveSession;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -381,6 +529,15 @@
 			buildConfigurations = (
 				504EC3171FED79650016851F /* Debug */,
 				504EC3181FED79650016851F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		96D1A0152FF0100000A1B2C3 /* Build configuration list for PBXNativeTarget "LiveSessionWidget" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				96D1A0132FF0100000A1B2C3 /* Debug */,
+				96D1A0142FF0100000A1B2C3 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

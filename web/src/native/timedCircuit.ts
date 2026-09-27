@@ -1,5 +1,6 @@
 import { registerPlugin } from '@capacitor/core'
 import type { PaceWords } from '@/utils/halfwayCue'
+import type { LiveActivityLabels } from '@/utils/liveActivity'
 import type { PaceTone, Pacing } from '@/utils/pacing'
 import type { Phase, Recording } from '@/utils/timedCircuit'
 
@@ -42,6 +43,11 @@ interface TimedCircuitPlugin {
     pacing?: Pacing
     /** Whether the recorder holds itself while the athlete is standing still. */
     autoPause: boolean
+    /**
+     * What the iOS Lock Screen shows beside the session, in the athlete's
+     * language, and the route a tap on it opens.
+     */
+    liveActivity?: LiveActivityLabels
   }): Promise<void>
   read(options: { key: string }): Promise<{ recording?: Recording }>
   pause(options: { key: string }): Promise<void>

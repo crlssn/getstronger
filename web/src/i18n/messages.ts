@@ -68,6 +68,9 @@ export const en = {
     paceSecond: 'second',
     paceSeconds: 'seconds',
     completed: 'Workout completed',
+    // On the Lock Screen once the app has stopped keeping the session, which
+    // is an app that was closed mid-run.
+    liveStopped: 'Recording stopped — open the app to save it',
     pacedAgainstPrevious: 'Tones compare each interval with your last session',
     pacedAgainstBest: 'Tones compare each interval with your best session',
     // The live screen's own control, in the place Pause and Resume take: one
@@ -1071,6 +1074,7 @@ export const sv = {
     paceSecond: 'sekund',
     paceSeconds: 'sekunder',
     completed: 'Passet är klart',
+    liveStopped: 'Passet stoppades — öppna appen för att spara det',
     pacedAgainstPrevious: 'Tempoljuden jämför varje intervall med ditt senaste pass',
     pacedAgainstBest: 'Tempoljuden jämför varje intervall med ditt bästa pass',
     begin: 'Starta',
