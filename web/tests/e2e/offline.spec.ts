@@ -332,11 +332,14 @@ test.describe('offline mode', () => {
     const exerciseName = await startQuickWorkout(page)
     await logFirstSet(page, exerciseName)
 
-    // The server commits the save, and the reply is lost on the way back.
+    // The server commits the save, and the connection drops before its reply.
+    // Offline, the home screen's reads cannot report the backend reachable
+    // and replay the queue before the banner is read.
     await page.route(
       '**/api.v1.WorkoutService/CreateWorkout',
       async (route) => {
         await route.fetch()
+        await context.setOffline(true)
         await route.abort('failed')
       },
       { times: 1 },
@@ -349,7 +352,6 @@ test.describe('offline mode', () => {
     const synced = page.waitForResponse(
       (response) => response.url().includes('CreateWorkout') && response.ok(),
     )
-    await context.setOffline(true)
     await context.setOffline(false)
     await synced
     await expect(offlineBanner(page)).toHaveCount(0)
