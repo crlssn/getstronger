@@ -280,9 +280,8 @@ export const flows: Flow[] = [
           await stepRest(page, 'Rest after each round', 'Add')
           await closeSheet(page)
 
-          // Two blocks, since that is where the row runs out of width: the
-          // exercise name shares it with the prescription, the bin and the
-          // handle.
+          // Two blocks, since that is where the headers carry their letters
+          // and the rows sit under two different kinds of block.
           await page.getByRole('button', { name: 'Add block' }).click()
           await pickExercise(page, 0, 1)
         },
