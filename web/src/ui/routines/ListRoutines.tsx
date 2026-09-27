@@ -8,7 +8,7 @@ import { Link } from 'react-router-dom'
 
 import { listRoutines } from '@/http/requests'
 import { lastPerformedIn, useActivityStore } from '@/stores/activity'
-import { useDashboardStore } from '@/stores/dashboard'
+import { selectActivePlan, selectNextRoutine, useDashboardStore } from '@/stores/dashboard'
 import { AppEmptyState } from '@/ui/components/AppEmptyState'
 import { AppErrorState } from '@/ui/components/AppErrorState'
 import { AppButton } from '@/ui/components/AppButton'
@@ -25,6 +25,7 @@ import { appendPage } from '@/utils/appendPage'
 import { formatDateTime } from '@/utils/datetime'
 import { estimatedSessionMinutes } from '@/utils/sessionEstimate'
 import { usePagination } from '@/utils/usePagination'
+import { workoutHref } from '@/utils/workoutHref'
 import styles from './ListRoutines.module.css'
 
 // Enough to recognise the routine; past that the row is a wall of names.
@@ -36,6 +37,10 @@ export const ListRoutines = () => {
   const { hasMorePages, currentPageToken, setFromResponse } = usePagination()
 
   const preferredRoutineId = useDashboardStore((state) => state.preferredRoutineId)
+  const activePlan = useDashboardStore(selectActivePlan)
+  const plannedRoutineId = useDashboardStore((state) => selectNextRoutine(state)?.id)
+  // A plan decides what comes next; the athlete's own pick is for when none runs.
+  const upNextId = activePlan ? plannedRoutineId : preferredRoutineId
   const routineLastPerformed = useActivityStore((state) => state.routineLastPerformed)
 
   const [routines, setRoutines] = useState<Routine[]>([])
@@ -88,7 +93,7 @@ export const ListRoutines = () => {
 
   const routineActions = (routine: Routine): DropdownItem[] => [
     { title: t('routine.list.edit'), href: `/routines/${routine.id}/edit` },
-    ...(routine.id === preferredRoutineId
+    ...(activePlan || routine.id === upNextId
       ? []
       : [
           {
@@ -146,7 +151,7 @@ export const ListRoutines = () => {
         groups.map((group) => {
           // The one session the screen is really offering leads its group on
           // the canvas; the rest of the group follows in the card they share.
-          const upNext = group.items.find((routine) => routine.id === preferredRoutineId)
+          const upNext = group.items.find((routine) => routine.id === upNextId)
           const rest = group.items.filter((routine) => routine !== upNext)
 
           return (
@@ -163,7 +168,7 @@ export const ListRoutines = () => {
                     label={t('home.startNamedRoutine', { name: upNext.name })}
                     meta={routineMeta(upNext)}
                     name={upNext.name}
-                    to={`/workouts/routine/${upNext.id}`}
+                    to={workoutHref(upNext.id, activePlan?.id)}
                   />
                   {/* The two the card itself has no room for, under it. */}
                   <div className={styles.routineActions}>

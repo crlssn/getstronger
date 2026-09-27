@@ -110,7 +110,15 @@ const deleteExercise = async (page: Parameters<typeof logIn>[0], name: string) =
 const deleteRoutine = async (page: Parameters<typeof logIn>[0], name: string) => {
   await page.goto('/routines')
   await page.getByLabel('Search routines').fill(name)
-  await page.getByRole('heading', { name }).click()
+  const card = page.getByRole('article').filter({ has: page.getByRole('heading', { name }) })
+  await expect(card).toBeVisible()
+  // The routine a plan trains next is a card that starts it, so it opens from
+  // the button under it instead.
+  if (await card.getByRole('link', { name: `Start ${name}`, exact: true }).isVisible()) {
+    await card.getByRole('link', { name: 'View' }).click()
+  } else {
+    await page.getByRole('heading', { name }).click()
+  }
   await page.getByRole('button', { name: 'Delete', exact: true }).click()
   await acceptConfirmDialog(page, 'Delete')
   await expect(page.getByRole('status')).toContainText('Routine deleted')
@@ -449,6 +457,14 @@ test.describe('routine lifecycle', () => {
   // until the same three dots were tapped again, and its panel opened upward
   // inside a card that clipped it.
   test("opens, dismisses and acts from a routine row's menu", async ({ page }) => {
+    // A running plan decides what is up next, so the menu only offers to
+    // choose once the seeded rotation is paused.
+    await page.goto('/plans')
+    await openPlanActions(page)
+    await page.getByRole('menuitem', { name: 'Pause' }).click()
+    await acceptConfirmDialog(page, 'Pause')
+    await expect(page.getByRole('heading', { name: 'No active plan' })).toBeVisible()
+
     await page.goto('/routines')
 
     // The seed already marks a routine up next, and that card's menu has
