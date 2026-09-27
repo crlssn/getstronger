@@ -7,8 +7,8 @@
   @apply flex min-h-[calc(100dvh-9rem)] flex-col gap-3.5;
 }
 
-/* The pill says GPS and the dot says whether fixes are arriving; the sentence
-   behind it is left to a screen reader. */
+/* The pill's word carries the state and the dot only echoes it: green while
+   fixes are good, grey otherwise, since the palette has no amber for weak. */
 .gps {
   @apply flex h-11 shrink-0 items-center gap-2 rounded-pill bg-surface px-3 text-meta font-bold text-text shadow-raised;
 }

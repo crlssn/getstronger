@@ -1,7 +1,7 @@
 import type { Recording } from '@/utils/timedCircuit'
 
 import { create } from '@bufbuild/protobuf'
-import { act, screen, waitFor } from '@testing-library/react'
+import { act, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { Route, Routes, useNavigationType } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -113,6 +113,40 @@ describe('RecordSession', () => {
     expect(screen.getByText('Pace now').parentElement).toHaveTextContent('7:30/km')
     expect(screen.getByText('Speed').parentElement).toHaveTextContent('8km/h')
   })
+
+  // The pill is read at a glance while moving, so the state is in its words
+  // rather than only in the colour of a dot.
+  it.each([
+    ['no fix has arrived yet', { points: [] }, 'Waiting for GPS'],
+    ['the last fix is fresh and accurate', {}, 'GPS strong'],
+    [
+      'the last fix is too vague',
+      { points: [{ timestamp: 1_120_000, latitude: 0, longitude: 0, accuracy: 50 }] },
+      'GPS weak',
+    ],
+    [
+      'the last fix is stale',
+      { points: [{ timestamp: 1_100_000, latitude: 0, longitude: 0, accuracy: 5 }] },
+      'GPS weak',
+    ],
+    // A held session stores no fixes, so the last one going stale is not weak.
+    [
+      'the session is held',
+      {
+        points: [{ timestamp: 1_000_000, latitude: 0, longitude: 0, accuracy: 5 }],
+        pauses: [{ startedAt: 1_010_000 }],
+      },
+      'Paused',
+    ],
+  ] satisfies [string, Partial<Recording>, string][])(
+    'says in words when %s',
+    async (_, overrides, words) => {
+      vi.mocked(timedCircuit.read).mockResolvedValue({ recording: recorded(overrides) })
+      renderWithProviders(<RecordSession />)
+
+      expect(within(await screen.findByRole('status')).getByText(words)).toBeInTheDocument()
+    },
+  )
 
   it('asks what a blank session was and saves it as the chosen exercise', async () => {
     const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })

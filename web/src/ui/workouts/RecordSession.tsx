@@ -350,12 +350,23 @@ export const RecordSession = () => {
         eyebrow={t('record.eyebrow')}
         title={title}
         action={
-          /* The pill says GPS; the live region says what about it. It waits
-             for the session: nothing is being tracked before it. */
+          /* The pill names the state in a word; the live region says what it
+             means. It waits for the session: nothing is tracked before it. A
+             held session stores no fixes, so it reads paused rather than weak. */
           recording && (
             <p role="status" className={cn(styles.gps, gps && !openPause && styles.tracking)}>
               <span className={styles.dot} aria-hidden="true" />
-              <span aria-hidden="true">{t('timedCircuit.gps')}</span>
+              <span aria-hidden="true">
+                {t(
+                  openPause
+                    ? 'timedCircuit.pausedLabel'
+                    : !latest
+                      ? 'timedCircuit.gpsWaiting'
+                      : gps
+                        ? 'timedCircuit.gpsStrong'
+                        : 'timedCircuit.gpsWeak',
+                )}
+              </span>
               <span className="sr-only">
                 {t(
                   openPause
