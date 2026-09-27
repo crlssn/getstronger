@@ -5,7 +5,7 @@ import { timestampFromDate } from '@bufbuild/protobuf/wkt'
 import { DateTime } from 'luxon'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 
 import { isConnectivityError } from '@/http/offlineCache'
 import { createWorkout, getExercise } from '@/http/requests'
@@ -34,6 +34,7 @@ import { AppStat } from '@/ui/components/AppStat'
 import { RecordExerciseSheet } from '@/ui/workouts/RecordExerciseSheet'
 import { convertDistance, distanceUnitLabel } from '@/utils/distanceUnits'
 import { paceWords } from '@/utils/halfwayCue'
+import { liveActivityLabels } from '@/utils/liveActivity'
 import { randomUUID } from '@/utils/randomUUID'
 import { distanceIn, paceIn, speedIn } from '@/utils/exerciseMeasurements'
 import { DistanceUnit } from '@/proto/api/v1/shared_pb'
@@ -75,6 +76,7 @@ const gpsStaleMs = 15000
 export const RecordSession = () => {
   const { t, i18n } = useTranslation()
   const navigate = useNavigate()
+  const location = useLocation()
   const [searchParams] = useSearchParams()
 
   const distanceUnit = usePreferencesStore((state) => state.distanceUnit)
@@ -181,6 +183,7 @@ export const RecordSession = () => {
         paceWords: paceWords(t),
         completedPhrase: t('timedCircuit.completed'),
         autoPause,
+        liveActivity: liveActivityLabels(t, location.pathname + location.search),
       })
       const result = await timedCircuit.read({ key })
       setRecording(result.recording)
@@ -189,7 +192,7 @@ export const RecordSession = () => {
     } finally {
       setBusy(false)
     }
-  }, [key, title, exercise, i18n.language, cueLeadSeconds, distanceUnit, autoPause, t])
+  }, [key, title, exercise, i18n.language, cueLeadSeconds, distanceUnit, autoPause, location, t])
 
   // Opening the screen is the whole of asking for the session, so it runs from
   // the moment the screen appears. One the recorder is already keeping is

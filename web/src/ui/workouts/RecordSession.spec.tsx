@@ -79,6 +79,24 @@ describe('RecordSession', () => {
     vi.mocked(listWorkouts).mockResolvedValue({ workouts: [] } as never)
   })
 
+  // The Lock Screen has no message catalogue, and a tap on it has to land back
+  // on this screen rather than on the home screen.
+  it('hands the Live Activity its words and the way back to the session', async () => {
+    renderWithProviders(<RecordSession />, { route: '/record' })
+
+    await waitFor(() =>
+      expect(timedCircuit.start).toHaveBeenCalledWith(
+        expect.objectContaining({
+          liveActivity: expect.objectContaining({
+            paused: 'Paused',
+            stopped: 'Recording stopped — open the app to save it',
+            path: '/record',
+          }),
+        }),
+      ),
+    )
+  })
+
   it('starts an open interval and counts up without a countdown or a round', async () => {
     renderWithProviders(<RecordSession />)
 

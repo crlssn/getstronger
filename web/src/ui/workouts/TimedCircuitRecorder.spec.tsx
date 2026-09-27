@@ -102,6 +102,38 @@ describe('TimedCircuitRecorder', () => {
     )
   })
 
+  // The Lock Screen has no message catalogue, and a tap on it has to land back
+  // on this screen rather than on the home screen.
+  it('hands the Live Activity its words and the way back to the session', async () => {
+    vi.mocked(timedCircuit.start).mockResolvedValue(undefined)
+    renderWithProviders(
+      <TimedCircuitRecorder
+        recordingKey="athlete:routine"
+        pacing={pacingFor([phase])}
+        phases={[phase]}
+        onComplete={vi.fn()}
+        onCancel={vi.fn()}
+        onDiscard={vi.fn()}
+      />,
+      { route: '/workouts/routine/routine?plan_id=plan' },
+    )
+
+    await waitFor(() =>
+      expect(timedCircuit.start).toHaveBeenCalledWith(
+        expect.objectContaining({
+          liveActivity: {
+            paused: 'Paused',
+            intervalLeft: 'Interval left',
+            total: 'Active time',
+            pace: 'Pace now',
+            stopped: 'Recording stopped — open the app to save it',
+            path: '/workouts/routine/routine?plan_id=plan',
+          },
+        }),
+      ),
+    )
+  })
+
   // The phone owns the recording, so a screen reopened mid-session finds one
   // already running: starting again would lay a second recording over it.
   it('picks up a recording the phone is already keeping rather than starting another', async () => {

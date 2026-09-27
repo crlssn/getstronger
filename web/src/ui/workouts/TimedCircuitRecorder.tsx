@@ -1,6 +1,7 @@
 import { SpeakerWaveIcon, SpeakerXMarkIcon } from '@heroicons/react/24/outline'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useLocation } from 'react-router-dom'
 import { timedCircuit } from '@/native/timedCircuit'
 import {
   nextVolume,
@@ -20,6 +21,7 @@ import { AppStat } from '@/ui/components/AppStat'
 import { WorkoutRoute } from '@/ui/features/WorkoutRoute'
 import { distanceIn, paceIn, speedIn, type Measured } from '@/utils/exerciseMeasurements'
 import { halfwayPhrase, paceWords } from '@/utils/halfwayCue'
+import { liveActivityLabels } from '@/utils/liveActivity'
 import { hasPaceTargets, type Pacing } from '@/utils/pacing'
 import {
   buildTimeline,
@@ -83,6 +85,7 @@ export const TimedCircuitRecorder = ({
   saveError = '',
 }: Props) => {
   const { t, i18n } = useTranslation()
+  const location = useLocation()
   const unit = usePreferencesStore((state) => state.distanceUnit)
   const autoPause = usePreferencesStore((state) => state.autoPause)
   const volume = useAnnouncementsStore((state) => state.volume)
@@ -151,6 +154,7 @@ export const TimedCircuitRecorder = ({
             completedPhrase: t('timedCircuit.completed'),
             pacing,
             autoPause,
+            liveActivity: liveActivityLabels(t, location.pathname + location.search),
           })
         else await timedCircuit[kind]({ key })
         if (kind !== 'clear') {
@@ -176,6 +180,7 @@ export const TimedCircuitRecorder = ({
       unit,
       pacing,
       autoPause,
+      location,
       onComplete,
       t,
     ],

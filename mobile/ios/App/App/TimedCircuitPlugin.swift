@@ -89,6 +89,9 @@ public class TimedCircuitPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManagerD
     private let halfwayFloor = 60.0
     /// The ground the pace holds behind before it is a number, in metres.
     private let paceFloorMetres = 20.0
+    /// The trailing window "pace now" is read over, in seconds, mirroring
+    /// `currentPace` in `web/src/utils/timedCircuit.ts`.
+    private let livePaceWindow = 15.0
     // The session this one is paced against, as the web app settled it: a
     // target for each interval, and the three numbers that say when a
     // difference is worth hearing. Empty targets are a recording with nothing
@@ -109,6 +112,12 @@ public class TimedCircuitPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManagerD
     /// A shade under the synthesiser's own pace, which reads a short cue as
     /// though it were a sentence rather than a label.
     private let announcementRate = AVSpeechUtteranceDefaultSpeechRate * 0.95
+    /// The words and the way back the Live Activity is raised with; nil once
+    /// it has been asked for, so a phone that refused one is not asked again.
+    private var liveLabels: LiveSessionLabels?
+    private var liveLink: URL?
+    /// The `LiveSessionActivity` on show, untyped because it needs iOS 16.1.
+    private var live: AnyObject?
     private var permissionCall: CAPPluginCall?
     private var lastCheckpoint = 0.0
     private var now: Double { (Date().timeIntervalSince1970 * 1000).rounded() }
@@ -119,6 +128,9 @@ public class TimedCircuitPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManagerD
 
     public override func load() {
         DispatchQueue.main.async {
+            // Whatever a killed app left on the Lock Screen: the recording it
+            // showed is ended as interrupted below, if it was not already.
+            if #available(iOS 16.1, *) { LiveSessionActivity.endAll() }
             self.speech.delegate = self
             self.location.delegate = self
             self.location.desiredAccuracy = kCLLocationAccuracyBestForNavigation
@@ -187,6 +199,7 @@ public class TimedCircuitPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManagerD
         completedPhrase = call.getString("completedPhrase") ?? ""
         readPacing(call.getObject("pacing"))
         autoPauses = call.getBool("autoPause") ?? false
+        readLive(call.getObject("liveActivity"))
         fixes = []
         resetFilter()
         let start = now
@@ -398,6 +411,53 @@ public class TimedCircuitPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManagerD
         tonePlayer.scheduleBuffer(buffer, at: nil, options: [])
     }
 
+    private func readLive(_ options: [String: Any]?) {
+        liveLabels = nil
+        guard let options, let paused = options["paused"] as? String,
+              let intervalLeft = options["intervalLeft"] as? String, let total = options["total"] as? String,
+              let pace = options["pace"] as? String, let stopped = options["stopped"] as? String else { return }
+        liveLabels = LiveSessionLabels(paused: paused, intervalLeft: intervalLeft, total: total,
+                                       pace: pace, stopped: stopped)
+        // The path the recording is on, under the scheme the app registers.
+        liveLink = (options["path"] as? String).flatMap { URL(string: "getstronger:/" + $0) }
+    }
+
+    /// The recording at `time` as the Lock Screen shows it, with the pace the
+    /// live screen shows beside it.
+    private func liveState(at time: Double) -> LiveSessionState? {
+        guard let data = recording else { return nil }
+        let intervals = (data["phases"] as? [[String: Any]] ?? []).map {
+            LiveInterval(instruction: $0["instruction"] as? String ?? "",
+                         seconds: openInterval($0) ? nil : $0["durationSeconds"] as? Double ?? 0)
+        }
+        let pauses = (data["pauses"] as? [[String: Any]] ?? []).map {
+            LivePause(startedAt: $0["startedAt"] as? Double ?? time, endedAt: $0["endedAt"] as? Double)
+        }
+        guard var state = liveSessionState(intervals: intervals, startedAt: data["startedAt"] as? Double ?? time,
+                                           pauses: pauses, at: time) else { return nil }
+        let measuredAt = state.pausedAt.map { ($0.timeIntervalSince1970 * 1000).rounded() } ?? time
+        state.pace = currentPace(at: measuredAt, window: livePaceWindow, floorMetres: paceFloorMetres)
+            .map { paceLabel(secondsPerKilometre: $0, unit: paceUnit) }
+        return state
+    }
+
+    /// Shows the recording on the Lock Screen, raising the activity the first time.
+    private func showLive() {
+        guard #available(iOS 16.1, *), recording?["endedAt"] == nil, let state = liveState(at: now) else { return }
+        if let activity = live as? LiveSessionActivity {
+            activity.show(state)
+        } else if let labels = liveLabels {
+            liveLabels = nil
+            live = LiveSessionActivity(labels: labels, link: liveLink, state: state)
+        }
+    }
+
+    private func endLive() {
+        if #available(iOS 16.1, *) { (live as? LiveSessionActivity)?.end() }
+        live = nil
+        liveLabels = nil
+    }
+
     private func resetFilter() {
         smoothed = []
         filtered = 0
@@ -497,7 +557,7 @@ public class TimedCircuitPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManagerD
             metresRun += edgeMetres(a, b)
             seconds += (closed - (a["timestamp"] as? Double ?? closed)) / 1000
         }
-        return metresRun > 0 && metresRun >= floorMetres ? (seconds / metresRun) * 1000 : nil
+        return measuredPace(metres: metresRun, seconds: seconds, floorMetres: floorMetres)
     }
 
     /// Sounds the crossing where this interval leaves the band the reference
@@ -857,6 +917,7 @@ public class TimedCircuitPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManagerD
         location.stopUpdatingLocation()
         timer?.invalidate()
         timer = nil
+        endLive()
         if engine.isRunning { engine.stop() }
         // Said, the phrase holds the session until the synthesiser reports it
         // finished; cut off, the session goes now.
@@ -875,6 +936,7 @@ public class TimedCircuitPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManagerD
             location.stopUpdatingLocation()
             timer?.invalidate()
             recording?["endedAt"] = now
+            endLive()
         }
     }
     private func persist() throws {
@@ -889,5 +951,7 @@ public class TimedCircuitPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManagerD
         var values = URLResourceValues()
         values.isExcludedFromBackup = true
         try url.setResourceValues(values)
+        // Whatever changed the recording is what the Lock Screen has to show.
+        showLive()
     }
 }
