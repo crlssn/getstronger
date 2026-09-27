@@ -136,6 +136,22 @@ describe('PlansView', () => {
     )
   })
 
+  // The same question the Workout tab asks, since skipping logs nothing.
+  test('skips to the next routine, once confirmed', async () => {
+    const skip = vi.spyOn(usePlanStore.getState(), 'skip').mockResolvedValue(plan())
+    withPlans([plan({ active: true })])
+    render()
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Skip to next' }))
+    await waitFor(() =>
+      expect(useConfirmationStore.getState().confirmation?.title).toBe('Skip Push day?'),
+    )
+    useConfirmationStore.getState().accept()
+
+    await waitFor(() => expect(skip).toHaveBeenCalledWith('plan-1'))
+    await waitFor(() => expect(useDashboardStore.getState().load).toHaveBeenCalled())
+  })
+
   // The lead explained plans to someone already looking at theirs, and pushed
   // the running one down the screen to do it.
   test('opens on the title without an explainer under it', async () => {

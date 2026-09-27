@@ -1073,8 +1073,8 @@ test.describe('plan lifecycle', () => {
   })
 
   // The Plans tab follows a plan as well as managing it: the card saying what
-  // is up next is also where that session starts, as the plan's.
-  test('starts the routine up next from the Plans tab @mutation', async ({ page }) => {
+  // is up next is also where it is skipped, and where it starts as the plan's.
+  test('skips and starts the routine up next from the Plans tab @mutation', async ({ page }) => {
     const planName = uniqueName('E2E Follow Plan')
 
     await page.goto('/plans/create')
@@ -1103,6 +1103,11 @@ test.describe('plan lifecycle', () => {
     const card = page.locator('section').filter({ hasText: planName })
     await expect(card).toContainText('Routine 1 of 2')
     await expect(card).toContainText(routineNames[0])
+
+    await card.getByRole('button', { name: 'Skip to next' }).click()
+    await acceptConfirmDialog(page, 'Skip')
+    await expect(card).toContainText('Routine 2 of 2')
+    await expect(card).toContainText(routineNames[1])
 
     await card.getByRole('link', { name: 'Start routine' }).click()
     await expect(page).toHaveURL(new RegExp(`/workouts/routine/[0-9a-f-]{36}\\?plan_id=${planID}$`))

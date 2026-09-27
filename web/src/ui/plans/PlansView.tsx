@@ -77,6 +77,24 @@ export const PlansView = () => {
     setActionError(consumeRequestError() ?? t('common.somethingWentWrong'))
   }
 
+  const skip = async () => {
+    if (!activePlan || !nextRoutine) return
+
+    const confirmed = await useConfirmationStore.getState().confirm({
+      body: t('workout.skipConfirmBody'),
+      confirmLabel: t('workout.skip'),
+      title: t('workout.skipConfirmTitle', { name: nextRoutine.name }),
+    })
+    if (!confirmed) return
+
+    setActionError(undefined)
+    if (await usePlanStore.getState().skip(activePlan.id)) {
+      await useDashboardStore.getState().load()
+      return
+    }
+    setActionError(consumeRequestError() ?? t('common.somethingWentWrong'))
+  }
+
   return (
     <div className={styles.plansPage}>
       {actionError && <AppInlineError>{actionError}</AppInlineError>}
@@ -199,6 +217,15 @@ export const PlansView = () => {
                       to={workoutHref(nextRoutine.id, activePlan.id)}
                     >
                       <PlayIcon className="size-5" aria-hidden="true" /> {t('workout.startRoutine')}
+                    </AppButton>
+                    <AppButton
+                      type="button"
+                      colour="ghost"
+                      size="sm"
+                      width="auto"
+                      onClick={() => void skip()}
+                    >
+                      {t('training.skipToNext')}
                     </AppButton>
                   </div>
                 </div>
