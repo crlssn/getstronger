@@ -30,7 +30,20 @@
    be the h2 with an uppercase caption above it, which set a label and a value
    at two ranks that neither of them was. */
 .total {
-  @apply mt-1 text-display font-bold text-text;
+  @apply text-display font-bold text-text;
+}
+
+/* The change sits on the total's baseline, so it reads as a note on that figure. */
+.totalRow {
+  @apply mt-1 flex flex-wrap items-baseline gap-x-2;
+}
+
+.change {
+  @apply text-meta font-semibold text-text-subtle;
+}
+
+.change.gain {
+  @apply text-success;
 }
 
 .chartHeading > span {
@@ -42,7 +55,7 @@
 }
 
 .periodPicker {
-  @apply mt-4;
+  @apply mb-5;
 }
 
 /* Same height as the chart frame, so switching to an empty range does not

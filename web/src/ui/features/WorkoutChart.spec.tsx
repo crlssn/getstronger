@@ -23,6 +23,7 @@ vi.mock('react-chartjs-2', () => ({
 
 import { WorkoutSchema } from '@/proto/api/v1/workout_service_pb'
 import { renderWithProviders } from '@/ui/testing'
+import { volumeSeries } from '@/utils/dailyVolume'
 import { WorkoutChart } from './WorkoutChart'
 
 const workout = (finishedAt: string, intensity: number) =>
@@ -40,12 +41,12 @@ describe('WorkoutChart', () => {
   test('plots one bar per day, oldest first', () => {
     renderWithProviders(
       <WorkoutChart
-        workouts={[
+        series={volumeSeries([
           workout('2026-08-15T08:00:00Z', 200),
           workout('2026-08-14T08:00:00Z', 100),
           workout('2026-08-14T18:00:00Z', 50),
           workout('2026-08-16T08:00:00Z', 300),
-        ]}
+        ])}
       />,
     )
 
@@ -56,7 +57,7 @@ describe('WorkoutChart', () => {
   // The most recent day is the story the card is telling, so it is the one bar
   // that is not the default ink.
   test('picks the latest bar out from the rest', () => {
-    renderWithProviders(<WorkoutChart workouts={daily(3)} />)
+    renderWithProviders(<WorkoutChart series={volumeSeries(daily(3))} />)
 
     const colours = attribute('data-colours') as string[]
     expect(colours).toHaveLength(3)
@@ -64,23 +65,30 @@ describe('WorkoutChart', () => {
   })
 
   test('describes itself to a screen reader', () => {
-    renderWithProviders(<WorkoutChart workouts={daily(4)} />)
+    renderWithProviders(<WorkoutChart series={volumeSeries(daily(4))} />)
 
     expect(chart()).toHaveAccessibleName('Training volume by day')
+  })
+
+  test('names a monthly series by month', () => {
+    const points = [1, 2, 3].map((month) => ({ label: `${month}`, timestamp: month, volume: 100 }))
+    renderWithProviders(<WorkoutChart series={{ granularity: 'month', points }} />)
+
+    expect(chart()).toHaveAccessibleName('Training volume by month')
   })
 
   // A year of training is 52 daily bars in a phone-width card: slivers about
   // 4px wide under a fan of rotated labels.
   describe('once there are more days than bars will fit', () => {
     test('aggregates them into weeks', () => {
-      renderWithProviders(<WorkoutChart workouts={daily(28)} />)
+      renderWithProviders(<WorkoutChart series={volumeSeries(daily(28))} />)
 
       expect((attribute('data-values') as number[]).length).toBeLessThanOrEqual(6)
       expect((attribute('data-values') as number[]).reduce((a, b) => a + b, 0)).toBe(2800)
     })
 
     test('says which grain it is drawn at', () => {
-      renderWithProviders(<WorkoutChart workouts={daily(28)} />)
+      renderWithProviders(<WorkoutChart series={volumeSeries(daily(28))} />)
 
       expect(chart()).toHaveAccessibleName('Training volume by week')
     })
@@ -89,7 +97,9 @@ describe('WorkoutChart', () => {
   // One datum is a statistic, not a trend: a single bar filled the whole card.
   describe('with too few points to be a trend', () => {
     test('reads a lone day as a figure rather than a chart', () => {
-      renderWithProviders(<WorkoutChart workouts={[workout('2026-08-14T08:00:00Z', 29447)]} />)
+      renderWithProviders(
+        <WorkoutChart series={volumeSeries([workout('2026-08-14T08:00:00Z', 29447)])} />,
+      )
 
       expect(screen.queryByRole('img')).not.toBeInTheDocument()
       expect(screen.getByText(/29,447/)).toBeInTheDocument()
@@ -97,14 +107,14 @@ describe('WorkoutChart', () => {
     })
 
     test('still reads two days as figures', () => {
-      renderWithProviders(<WorkoutChart workouts={daily(2)} />)
+      renderWithProviders(<WorkoutChart series={volumeSeries(daily(2))} />)
 
       expect(screen.queryByRole('img')).not.toBeInTheDocument()
     })
 
     // Three points is a shape, so the chart comes back.
     test('draws the chart again at three', () => {
-      renderWithProviders(<WorkoutChart workouts={daily(3)} />)
+      renderWithProviders(<WorkoutChart series={volumeSeries(daily(3))} />)
 
       expect(chart()).toBeInTheDocument()
     })

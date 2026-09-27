@@ -1,40 +1,41 @@
-import type { Workout } from '@/proto/api/v1/workout_service_pb'
+import type { VolumeGranularity, VolumeSeries } from '@/utils/dailyVolume'
 import type { ChartOptions } from 'chart.js'
 
 import { BarElement, CategoryScale, Chart as ChartJS, LinearScale, Tooltip } from 'chart.js'
-import { useMemo } from 'react'
 import { Bar } from 'react-chartjs-2'
 import { useTranslation } from 'react-i18next'
 
 import { selectTheme, useLocaleStore } from '@/stores/locale'
 import { borderColor, chartBarColor, inkColor, subtleColor } from '@/ui/chartTokens'
 import { latestValueLabel } from '@/ui/features/latestValueLabel'
-import { volumeSeries } from '@/utils/dailyVolume'
 import { formatNumber } from '@/utils/numbers'
 import { usePrefersReducedMotion } from '@/utils/usePrefersReducedMotion'
 import styles from './WorkoutChart.module.css'
 
 ChartJS.register(Tooltip, BarElement, CategoryScale, LinearScale)
 
+const chartLabel: Record<VolumeGranularity, string> = {
+  day: 'progress.volumeChartAria',
+  week: 'progress.volumeChartWeeklyAria',
+  month: 'progress.volumeChartMonthlyAria',
+}
+
 /** Below this a bar chart is drawing a statistic, not a trend. */
 const minimumTrendPoints = 3
 
 interface Props {
-  workouts: Workout[]
+  series: VolumeSeries
 }
 
 /**
- * Training volume as bars, at whichever grain still reads.
+ * Training volume as bars, at the grain its series was bucketed to.
  *
- * Two things it refuses to draw. A year of daily bars is 52 slivers about 4px
- * wide in a phone-width card, so past a handful of days the series aggregates
- * to weeks. And one bar filling the whole card is a figure pretending to be a
- * trend, so under three points it is read out instead.
+ * One bar filling the whole card is a figure pretending to be a trend, so under
+ * three points it is read out instead.
  */
-export const WorkoutChart = ({ workouts }: Props) => {
+export const WorkoutChart = ({ series: { granularity, points } }: Props) => {
   const { t } = useTranslation()
 
-  const { granularity, points } = useMemo(() => volumeSeries(workouts), [workouts])
   const stillness = usePrefersReducedMotion()
   // Subscribed for the re-render alone: the token reads below answer in
   // whichever palette is on the root element by then.
@@ -122,11 +123,7 @@ export const WorkoutChart = ({ workouts }: Props) => {
         data={data}
         options={options}
         plugins={[latestValueLabel]}
-        aria-label={
-          granularity === 'week'
-            ? t('progress.volumeChartWeeklyAria')
-            : t('progress.volumeChartAria')
-        }
+        aria-label={t(chartLabel[granularity])}
         role="img"
       />
     </div>

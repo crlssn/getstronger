@@ -1,4 +1,5 @@
 import type { Workout } from '@/proto/api/v1/workout_service_pb'
+import type { VolumeRange } from '@/utils/dailyVolume'
 
 import { DateTime } from 'luxon'
 import { create } from 'zustand'
@@ -18,6 +19,10 @@ interface ProgressState {
   workouts: Workout[]
   loaded: boolean
   failed: boolean
+  // The chart's range, kept for the session so a visit resumes where the last
+  // one left off; never written to storage.
+  range: VolumeRange
+  setRange: (range: VolumeRange) => void
   load: () => Promise<void>
   reset: () => void
 }
@@ -73,6 +78,9 @@ export const useProgressStore = create<ProgressState>()((set, get) => {
     workouts: [],
     loaded: false,
     failed: false,
+    range: '4W',
+
+    setRange: (range) => set({ range }),
 
     // Cached for the session; reset after saving a workout.
     load: async () => {

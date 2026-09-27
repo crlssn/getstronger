@@ -1,7 +1,8 @@
 import { ArrowTrendingUpIcon, TrophyIcon } from '@heroicons/react/24/outline'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { dateLocale } from '@/i18n'
 import { useDashboardStore } from '@/stores/dashboard'
 import { useProgressStore } from '@/stores/progress'
 import { AppEmptyState } from '@/ui/components/AppEmptyState'
@@ -11,9 +12,17 @@ import { AppList } from '@/ui/components/AppList'
 import { AppSegmented } from '@/ui/components/AppSegmented'
 import { AppSkeleton } from '@/ui/components/AppSkeleton'
 import { PageNavAction } from '@/ui/components/PageNavAction'
+import { cn } from '@/ui/cn'
 import { RecordRow } from '@/ui/features/RecordRow'
 import { WorkoutChart } from '@/ui/features/WorkoutChart'
-import { totalVolume, volumeSeries, withinDays, type VolumeGranularity } from '@/utils/dailyVolume'
+import {
+  priorVolume,
+  rangeSeries,
+  totalVolume,
+  withinRange,
+  type VolumeGranularity,
+  type VolumeRange,
+} from '@/utils/dailyVolume'
 import { formatNumber } from '@/utils/numbers'
 import styles from './ProgressView.module.css'
 
@@ -25,12 +34,7 @@ const totalsLabel: Record<VolumeGranularity, string> = {
   month: 'progress.monthlyTotals',
 }
 
-const periodOptions = [
-  { days: 7, label: '7D' },
-  { days: 28, label: '4W' },
-  { days: 90, label: '3M' },
-  { days: 365, label: '1Y' },
-]
+const periodOptions: VolumeRange[] = ['7D', '4W', '3M', '1Y']
 
 /** Training volume over a chosen range, and the personal bests behind it. */
 export const ProgressView = () => {
@@ -42,17 +46,22 @@ export const ProgressView = () => {
   const failed = useProgressStore((state) => state.failed)
   const dashboardFailed = useDashboardStore((state) => state.failed)
 
-  const [periodDays, setPeriodDays] = useState(28)
+  const range = useProgressStore((state) => state.range)
+  const setRange = useProgressStore((state) => state.setRange)
 
   const load = () =>
     void Promise.all([useDashboardStore.getState().load(), useProgressStore.getState().load()])
 
   useEffect(load, [])
 
-  const filtered = useMemo(() => withinDays(workouts, periodDays), [workouts, periodDays])
-  // The chart aggregates to weeks once a range has more days than bars will
-  // fit, so the chip beside the total says which grain is on screen.
-  const granularity = useMemo(() => volumeSeries(filtered).granularity, [filtered])
+  const filtered = useMemo(() => withinRange(workouts, range), [workouts, range])
+  // The range picks the grain, and the chip beside the total names it.
+  const series = useMemo(() => rangeSeries(workouts, range), [workouts, range])
+  const total = totalVolume(filtered)
+  const prior = useMemo(() => priorVolume(workouts, range), [workouts, range])
+  // Rounded before it is judged, so a change too small to show says nothing
+  // rather than "0%"; and nothing is said about a period with no training.
+  const change = prior && filtered.length > 0 ? Math.round(((total - prior) / prior) * 100) : 0
   const personalBests = dashboard?.personalBests ?? []
   // Nothing to chart and nothing to list is not two empty sections, it is an
   // account with no training in it — and a "Personal records" card holding the
@@ -86,35 +95,44 @@ export const ProgressView = () => {
       ) : (
         workouts.length > 0 && (
           <section className={styles.chartCard}>
-            <div className={styles.chartHeading}>
-              <div>
-                <h2>{t('progress.trainingVolume')}</h2>
-                <p className={styles.total} id="training-volume">
-                  {formatNumber(totalVolume(filtered))} {t('common.kg')}
-                </p>
-              </div>
-              <span>
-                <ArrowTrendingUpIcon aria-hidden="true" /> {t(totalsLabel[granularity])}
-              </span>
-            </div>
-
-            {filtered.length > 0 ? (
-              <WorkoutChart workouts={filtered} />
-            ) : (
-              <p className={styles.chartEmpty}>{t('progress.emptyRange')}</p>
-            )}
-
             <AppSegmented
               className={styles.periodPicker}
               density="compact"
               label={t('progress.periodAria')}
-              options={periodOptions.map((option) => ({
-                label: option.label,
-                value: option.days,
-              }))}
-              value={periodDays}
-              onChange={setPeriodDays}
+              options={periodOptions.map((option) => ({ label: option, value: option }))}
+              value={range}
+              onChange={setRange}
             />
+
+            <div className={styles.chartHeading}>
+              <div>
+                <h2>{t('progress.trainingVolume')}</h2>
+                <div className={styles.totalRow}>
+                  <p className={styles.total} id="training-volume">
+                    {formatNumber(total)} {t('common.kg')}
+                  </p>
+                  {change !== 0 && (
+                    <span className={cn(styles.change, change > 0 && styles.gain)}>
+                      {t('progress.vsPrior', {
+                        delta: new Intl.NumberFormat(dateLocale(), {
+                          signDisplay: 'always',
+                          style: 'percent',
+                        }).format(change / 100),
+                      })}
+                    </span>
+                  )}
+                </div>
+              </div>
+              <span>
+                <ArrowTrendingUpIcon aria-hidden="true" /> {t(totalsLabel[series.granularity])}
+              </span>
+            </div>
+
+            {filtered.length > 0 ? (
+              <WorkoutChart series={series} />
+            ) : (
+              <p className={styles.chartEmpty}>{t('progress.emptyRange')}</p>
+            )}
           </section>
         )
       )}

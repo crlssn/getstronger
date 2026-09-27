@@ -61,7 +61,7 @@ describe('ProgressView', () => {
     // The screen loads on mount; the stores are seeded directly instead.
     vi.spyOn(useProgressStore.getState(), 'load').mockResolvedValue(undefined)
     vi.spyOn(useDashboardStore.getState(), 'load').mockResolvedValue(undefined)
-    useProgressStore.setState({ workouts: [], loaded: false, failed: false })
+    useProgressStore.setState({ workouts: [], loaded: false, failed: false, range: '4W' })
     useDashboardStore.setState({ dashboard: undefined, failed: false })
   })
 
@@ -72,8 +72,8 @@ describe('ProgressView', () => {
     expect(screen.queryByText('Personal records')).not.toBeInTheDocument()
   })
 
-  // The chart coarsens its grain as the range grows, and the chip beside the
-  // total says which one is on screen.
+  // The grain is the range's, and the chip beside the total says which one is
+  // on screen.
   test('names the grain the chart is drawn at', async () => {
     seed([
       ...Array.from({ length: 3 }, (_, index) => workout(index + 1, 100)),
@@ -84,6 +84,9 @@ describe('ProgressView', () => {
 
     await userEvent.click(period('7D'))
     expect(screen.getByText('Daily totals')).toBeInTheDocument()
+
+    await userEvent.click(period('4W'))
+    expect(screen.getByText('Weekly totals')).toBeInTheDocument()
 
     await userEvent.click(period('3M'))
     expect(screen.getByText('Weekly totals')).toBeInTheDocument()
@@ -101,7 +104,20 @@ describe('ProgressView', () => {
 
     await userEvent.click(period('3M'))
     expect(screen.getByText('7,000 kg')).toBeInTheDocument()
-    expect(chartValues()).toEqual([5000, 600, 400, 1000])
+    expect(chartTotal()).toBe(7000)
+  })
+
+  // Two sessions in four weeks used to be two daily bars side by side, so the
+  // grain and the spacing said how often somebody trained, not when.
+  test('draws every bucket of the range, empty ones at zero', async () => {
+    seed([workout(1, 1000), workout(20, 400)])
+    renderWithProviders(<ProgressView />)
+
+    await waitFor(() => expect(chartValues()).toHaveLength(4))
+    expect(chartValues().filter((value) => value === 0)).toHaveLength(2)
+
+    await userEvent.click(period('3M'))
+    expect(chartValues()).toHaveLength(13)
   })
 
   // Returning to an earlier range, and picking the same one twice, must keep
@@ -156,6 +172,67 @@ describe('ProgressView', () => {
     await userEvent.click(period('7D'))
     expect(period('7D')).toHaveAttribute('aria-pressed', 'true')
     expect(period('4W')).toHaveAttribute('aria-pressed', 'false')
+  })
+
+  // The range decides what the chart says, so it is read before the chart.
+  test('puts the range picker above the chart', async () => {
+    seed([workout(1, 100), workout(2, 100), workout(3, 100)])
+    renderWithProviders(<ProgressView />)
+
+    const chart = await screen.findByRole('img')
+    expect(period('4W').compareDocumentPosition(chart)).toBe(Node.DOCUMENT_POSITION_FOLLOWING)
+  })
+
+  // Somebody who reads their year leaves for a record and comes back to it.
+  test('keeps the chosen range for the rest of the session', async () => {
+    seed([workout(1, 1000)])
+    const view = renderWithProviders(<ProgressView />)
+    await userEvent.click(period('1Y'))
+    view.unmount()
+
+    renderWithProviders(<ProgressView />)
+
+    expect(period('1Y')).toHaveAttribute('aria-pressed', 'true')
+  })
+
+  describe('beside the total', () => {
+    test('says how much more than the period before', async () => {
+      seed([workout(1, 1500), workout(30, 1000)])
+      renderWithProviders(<ProgressView />)
+
+      expect(await screen.findByText('+50% vs prior')).toBeInTheDocument()
+    })
+
+    test('says how much less, too', async () => {
+      seed([workout(1, 800), workout(30, 1000)])
+      renderWithProviders(<ProgressView />)
+
+      expect(await screen.findByText(/^[-−]20% vs prior$/)).toBeInTheDocument()
+    })
+
+    // Anything from nothing is not a percentage, and 0% is not news.
+    test.each([
+      ['a prior period with no training', [workout(1, 1500)]],
+      ['an unchanged total', [workout(1, 1000), workout(30, 1000)]],
+      ['an empty range', [workout(30, 1000)]],
+    ])('says nothing for %s', async (_, workouts) => {
+      seed(workouts)
+      renderWithProviders(<ProgressView />)
+
+      await screen.findByText('Training volume')
+      expect(screen.queryByText(/vs prior/)).not.toBeInTheDocument()
+    })
+
+    // The year before 1Y was never fetched.
+    test('says nothing on a year', async () => {
+      seed([workout(1, 1500), workout(30, 1000)])
+      renderWithProviders(<ProgressView />)
+      await screen.findByText('+50% vs prior')
+
+      await userEvent.click(period('1Y'))
+
+      expect(screen.queryByText(/vs prior/)).not.toBeInTheDocument()
+    })
   })
 
   // An empty range keeps the picker on screen and says so, rather than
