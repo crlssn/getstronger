@@ -1,7 +1,7 @@
 import type { DistanceUnit } from '@/proto/api/v1/shared_pb'
 import type { DraftGroup } from '@/utils/routineGroups'
 
-import { Bars3Icon, MinusCircleIcon, PlusIcon } from '@heroicons/react/24/outline'
+import { Bars3Icon, PlusIcon } from '@heroicons/react/24/outline'
 import { useTranslation } from 'react-i18next'
 
 import { AppButton } from '@/ui/components/AppButton'
@@ -10,7 +10,7 @@ import { AppEmptyInline } from '@/ui/components/AppEmptyInline'
 import { AppIconButton } from '@/ui/components/AppIconButton'
 import { AppValueChip } from '@/ui/components/AppValueChip'
 import { formatMeasurementDuration } from '@/utils/exerciseMeasurements'
-import { moveEntry, removeEntry, reorderEntry } from '@/utils/routineGroups'
+import { moveEntry, reorderEntry } from '@/utils/routineGroups'
 import { prescriptionOf } from '@/utils/routinePrescription'
 import { useSortable } from '@/utils/useSortable'
 import styles from './RoutineBlockSection.module.css'
@@ -137,23 +137,16 @@ export const RoutineBlockSection = ({
                   <span className={styles.position}>{String(position + 1).padStart(2, '0')}</span>
                   <span className={styles.exerciseName}>{name}</span>
 
+                  {/* Removing lives in the sheet this opens, so the name has
+                      the row's width rather than sharing it with a bin. */}
                   <AppValueChip
+                    className={styles.prescription}
                     label={t('routine.form.blocks.exerciseSettings', { name })}
                     caption={chip.caption}
                     value={chip.value}
                     onClick={() => onOpenEntry(entry.key)}
                   />
 
-                  {/* A circled minus, which is what taking one row out of a
-                      list looks like everywhere in the app. Quiet, too:
-                      removing an exercise is undone by adding it again, and a
-                      column of red would shout the list down. */}
-                  <AppIconButton
-                    size="sm"
-                    icon={MinusCircleIcon}
-                    label={t('routine.form.blocks.removeExercise', { name })}
-                    onClick={() => onChange(removeEntry(groups, entry.key))}
-                  />
                   <AppIconButton
                     size="sm"
                     className={styles.dragHandle}

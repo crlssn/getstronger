@@ -377,7 +377,11 @@ describe('CreateRoutine', () => {
     await addExercise(/Bench press/)
     expect(screen.getByText('Bench press')).toBeInTheDocument()
 
-    await userEvent.click(screen.getByRole('button', { name: 'Remove Bench press' }))
+    // Removing is in the exercise's settings, so the row keeps its width for
+    // the name.
+    expect(screen.queryByRole('button', { name: 'Remove Bench press' })).not.toBeInTheDocument()
+    await openExercise('Bench press')
+    await userEvent.click(screen.getByRole('button', { name: 'Remove exercise' }))
     expect(screen.getByText('No exercises here yet.')).toBeInTheDocument()
   })
 
@@ -776,7 +780,8 @@ describe('EditRoutine', () => {
     await userEvent.clear(field)
     await userEvent.type(field, 'Upper body')
 
-    await userEvent.click(screen.getByRole('button', { name: 'Remove Dips' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Exercise settings: Dips' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Remove exercise' }))
     await userEvent.click(screen.getByRole('button', { name: 'Save changes' }))
 
     await waitFor(() =>
