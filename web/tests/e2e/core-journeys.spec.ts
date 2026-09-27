@@ -89,7 +89,11 @@ test.describe('authenticated journeys', () => {
     const updatedName = 'E2E Seated Cable Row'
 
     await page.goto('/exercises')
-    await page.getByRole('link', { name: 'New exercise' }).click()
+    await page
+      .getByRole('main')
+      .locator('header')
+      .getByRole('link', { name: 'New exercise' })
+      .click()
     await page.locator('form input[type="text"]').first().fill(exerciseName)
 
     await page.getByRole('button', { name: 'Add tags' }).click()
