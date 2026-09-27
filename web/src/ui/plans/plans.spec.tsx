@@ -199,15 +199,52 @@ describe('PlansView', () => {
     expect(await screen.findByText('No active plan')).toBeInTheDocument()
   })
 
-  test('pauses the running plan, once confirmed', async () => {
+  // Pausing, editing and deleting are occasional, so they wait behind the
+  // menu rather than sitting beside the session the card is there to start.
+  const openActions = async () =>
+    userEvent.click(await screen.findByRole('button', { name: 'Plan actions' }))
+
+  test('pauses the running plan from its menu, once confirmed', async () => {
     const pause = vi.spyOn(usePlanStore.getState(), 'pause').mockResolvedValue(true)
     withPlans([plan({ active: true })])
     render()
 
-    await userEvent.click(await screen.findByRole('button', { name: 'Pause' }))
+    await openActions()
+    await userEvent.click(screen.getByRole('menuitem', { name: 'Pause' }))
     await accept()
 
     await waitFor(() => expect(pause).toHaveBeenCalled())
+  })
+
+  test('edits the running plan from its menu', async () => {
+    withPlans([plan({ active: true })])
+    render()
+
+    await openActions()
+    expect(screen.getByRole('menuitem', { name: 'Edit plan' })).toHaveAttribute(
+      'href',
+      '/plans/plan-1/edit',
+    )
+  })
+
+  // The same warning the plan's own page gives, since it is the same delete.
+  test('deletes the running plan from its menu, once confirmed', async () => {
+    const remove = vi.spyOn(usePlanStore.getState(), 'remove').mockResolvedValue(true)
+    withPlans([plan({ active: true })])
+    render()
+
+    await openActions()
+    await userEvent.click(screen.getByRole('menuitem', { name: 'Delete plan' }))
+    await waitFor(() =>
+      expect(useConfirmationStore.getState().confirmation).toMatchObject({
+        destructive: true,
+        title: 'Delete this plan?',
+      }),
+    )
+    useConfirmationStore.getState().accept()
+
+    await waitFor(() => expect(remove).toHaveBeenCalledWith('plan-1'))
+    await waitFor(() => expect(useDashboardStore.getState().load).toHaveBeenCalled())
   })
 
   // A row that navigates says so, here as everywhere else.

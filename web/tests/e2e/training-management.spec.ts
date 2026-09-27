@@ -7,6 +7,7 @@ import {
   expectAccessible,
   logIn,
   openExerciseActions,
+  openPlanActions,
   resetSeedData,
   test,
   uniqueName,
@@ -1056,7 +1057,8 @@ test.describe('plan lifecycle', () => {
       .filter({ has: page.getByText('Active', { exact: true }) })
     await expect(activePlanCard).toContainText(planName)
     await expect(activePlanCard).toContainText(secondRoutineName)
-    await page.getByRole('button', { name: 'Pause' }).click()
+    await openPlanActions(page)
+    await page.getByRole('menuitem', { name: 'Pause' }).click()
     await acceptConfirmDialog(page, 'Pause')
     await expect(page.getByRole('heading', { name: 'No active plan' })).toBeVisible()
 

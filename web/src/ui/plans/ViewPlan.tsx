@@ -17,6 +17,7 @@ import { AppErrorState } from '@/ui/components/AppErrorState'
 import { AppInlineError } from '@/ui/components/AppInlineError'
 import { AppSkeleton } from '@/ui/components/AppSkeleton'
 import { useLeave } from '@/utils/useLeave'
+import { confirmPlanDelete } from './confirmPlanDelete'
 import styles from './ViewPlan.module.css'
 
 /** One plan: the loop of routines it runs, and where in the loop it is. */
@@ -93,13 +94,7 @@ export const ViewPlan = () => {
   }
 
   const remove = async () => {
-    const confirmed = await useConfirmationStore.getState().confirm({
-      body: t('training.planView.deleteConfirmBody'),
-      confirmLabel: t('training.planView.delete'),
-      destructive: true,
-      title: t('training.planView.deleteConfirmTitle'),
-    })
-    if (!confirmed) return
+    if (!(await confirmPlanDelete(t))) return
 
     setActionError(undefined)
     if (await usePlanStore.getState().remove(id)) {

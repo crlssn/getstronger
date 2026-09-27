@@ -14,8 +14,10 @@ import { AppEmptyState } from '@/ui/components/AppEmptyState'
 import { AppErrorState } from '@/ui/components/AppErrorState'
 import { AppPageHeader } from '@/ui/components/AppPageHeader'
 import { AppSkeleton } from '@/ui/components/AppSkeleton'
+import { DropdownButton } from '@/ui/components/DropdownButton'
 import { TrainingTabs } from '@/ui/features/TrainingTabs'
 import { workoutHref } from '@/utils/workoutHref'
+import { confirmPlanDelete } from './confirmPlanDelete'
 import styles from './PlansView.module.css'
 
 /** Every plan: which one is running, where it is, and what else is available. */
@@ -75,6 +77,17 @@ export const PlansView = () => {
 
     setActionError(undefined)
     if (await usePlanStore.getState().pause()) {
+      await useDashboardStore.getState().load()
+      return
+    }
+    setActionError(consumeRequestError() ?? t('common.somethingWentWrong'))
+  }
+
+  const remove = async (id: string) => {
+    if (!(await confirmPlanDelete(t))) return
+
+    setActionError(undefined)
+    if (await usePlanStore.getState().remove(id)) {
       await useDashboardStore.getState().load()
       return
     }
@@ -175,6 +188,21 @@ export const PlansView = () => {
             <section className={styles.activePlan}>
               <header>
                 <span>{t('training.active')}</span>
+                <DropdownButton
+                  label={t('training.planActionsAria')}
+                  items={[
+                    {
+                      title: t('training.planForm.editTitle'),
+                      href: `/plans/${activePlan.id}/edit`,
+                    },
+                    { title: t('training.pause'), func: pause },
+                    {
+                      title: t('training.planView.delete'),
+                      func: () => remove(activePlan.id),
+                      destructive: true,
+                    },
+                  ]}
+                />
               </header>
               <h2>{activePlan.name}</h2>
               <p>{t('training.routineCountRepeats', { count: activePlan.routines.length })}</p>
@@ -252,15 +280,6 @@ export const PlansView = () => {
                   to={`/plans/${activePlan.id}`}
                 >
                   {t('training.viewPlan')}
-                </AppButton>
-                <AppButton
-                  type="button"
-                  colour="secondary"
-                  size="sm"
-                  width="auto"
-                  onClick={() => void pause()}
-                >
-                  {t('training.pause')}
                 </AppButton>
               </footer>
             </section>

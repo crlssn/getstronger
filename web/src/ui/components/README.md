@@ -302,8 +302,8 @@ as a rendering fault rather than as something to swipe.
 
 ### `<DropdownButton>`
 
-The ⋯ menu. Items either navigate (`href`) or act (`func`); an item that acts is
-styled as destructive, because every one of them today is a delete.
+The ⋯ menu. Items either navigate (`href`) or act (`func`); an item marked
+`destructive` is drawn in the danger colour, since not every action is a delete.
 
 ## Lists and states
 

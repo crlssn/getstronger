@@ -7,6 +7,7 @@ import {
   logInAs,
   newUserEmail,
   openExerciseActions,
+  openPlanActions,
   resetSeedData,
   scrollToListEnd,
   seedPassword,
@@ -882,7 +883,8 @@ test.describe('planned workouts and history', () => {
     await expect(nextCard).toContainText('2 of 2')
 
     await page.goto('/plans')
-    await page.getByRole('button', { name: 'Pause' }).click()
+    await openPlanActions(page)
+    await page.getByRole('menuitem', { name: 'Pause' }).click()
     await acceptConfirmDialog(page, 'Pause')
     await expect(page.getByRole('heading', { name: 'No active plan' })).toBeVisible()
     await page.goto(planUrl)
