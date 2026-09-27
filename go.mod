@@ -8,11 +8,11 @@ require (
 	connectrpc.com/connect v1.21.0
 	connectrpc.com/cors v0.1.0
 	github.com/aarondl/opt v0.0.0-20250607033636-982744e1bd65
-	github.com/brianvoe/gofakeit/v7 v7.17.0
+	github.com/brianvoe/gofakeit/v7 v7.17.1
 	github.com/gofrs/uuid/v5 v5.5.1
 	github.com/golang-jwt/jwt/v5 v5.3.1
 	github.com/jackc/pgx/v5 v5.11.0
-	github.com/jaswdr/faker/v2 v2.9.1
+	github.com/jaswdr/faker/v2 v2.10.0
 	github.com/joho/godotenv v1.5.1
 	github.com/lib/pq v1.12.3
 	github.com/rs/cors v1.11.1
