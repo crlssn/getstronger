@@ -268,7 +268,9 @@ test.describe('quick workout lifecycle', () => {
     await expect(page.getByText(note, { exact: true })).toBeVisible()
     await expect(page.getByText(firstExercise, { exact: true })).toBeVisible()
     await expect(page.getByText('1 exercise', { exact: true })).toBeVisible()
-    await expect(page.getByText(/26\s*kg/)).toBeVisible()
+    await expect(page.getByRole('cell', { name: /26\s*kg/ })).toBeVisible()
+    // The collapsed row names the best set, so how it went reads without opening it.
+    await expect(page.getByRole('button', { name: firstExercise })).toContainText(/best 26\s*kg/)
 
     // The save confirmation spans the viewport rather than sitting inset.
     await expect(page.getByRole('status')).toContainText('Workout saved')
@@ -329,7 +331,7 @@ test.describe('quick workout lifecycle', () => {
     await page.getByRole('button', { name: 'Complete exercise' }).click()
     await finishAndSave(page)
     await expect(page).toHaveURL(/\/workouts\/[0-9a-f-]+$/)
-    await expect(page.getByText(/25\s*kg/)).toBeVisible()
+    await expect(page.getByRole('cell', { name: /25\s*kg/ })).toBeVisible()
   })
 
   test('promotes previous-session values into the set rows @mutation', async ({ page }) => {
@@ -382,7 +384,7 @@ test.describe('quick workout lifecycle', () => {
     await page.getByRole('button', { name: 'Complete exercise' }).click()
     await finishAndSave(page)
     await expect(page).toHaveURL(/\/workouts\/[0-9a-f-]+$/)
-    await expect(page.getByText(/25\s*kg/)).toBeVisible()
+    await expect(page.getByRole('cell', { name: /25\s*kg/ })).toBeVisible()
   })
 
   test('counts every logged workout on the profile @mutation', async ({ page }) => {
@@ -574,7 +576,7 @@ test.describe('quick workout lifecycle', () => {
 
     await expect(page).toHaveURL(/\/workouts\/[0-9a-f-]+$/)
     await expect(page.getByText('New personal record')).toBeVisible()
-    await expect(page.getByText('120 kg × 5')).toBeVisible()
+    await expect(page.getByText('120 kg × 5', { exact: true })).toBeVisible()
 
     // It ends on its own, on the workout with the record in it.
     await expect(page.getByText('New personal record')).toBeHidden()
@@ -610,7 +612,7 @@ test.describe('weight units', () => {
     await page.getByRole('button', { name: 'Complete exercise' }).click()
     await finishAndSave(page)
     await expect(page).toHaveURL(/\/workouts\/[0-9a-f-]+$/)
-    await expect(page.getByText(/60\s*kg/)).toBeVisible()
+    await expect(page.getByRole('cell', { name: /60\s*kg/ })).toBeVisible()
 
     // Switch the preference from the units settings screen.
     await page.goto('/settings/units')
@@ -654,7 +656,7 @@ test.describe('weight units', () => {
     await expect(page).toHaveURL(/\/workouts\/[0-9a-f-]+$/)
     // A first set is a record, so the save is celebrated rather than toasted.
     await expect(page.getByRole('status')).toHaveCount(0)
-    await expect(page.getByText(/330\.69\s*lbs/)).toBeVisible()
+    await expect(page.getByRole('cell', { name: /330\.69\s*lbs/ })).toBeVisible()
 
     await page.goto('/progress')
     await expect(
@@ -731,7 +733,7 @@ test.describe('weight units', () => {
     await page.getByRole('button', { name: 'Complete exercise' }).click()
     await finishAndSave(page)
     await expect(page).toHaveURL(/\/workouts\/[0-9a-f-]+$/)
-    await expect(page.getByText(/220\.46\s*lbs/)).toBeVisible()
+    await expect(page.getByRole('cell', { name: /220\.46\s*lbs/ })).toBeVisible()
 
     // Restore the seeded default so the preference does not leak into the
     // tests that follow.
@@ -813,7 +815,7 @@ test.describe('weight units', () => {
         page.getByRole('listitem').filter({ hasText: /^Time\s*12 min 30 sec$/ }),
       ).toBeVisible()
       await expect(page.getByRole('cell', { name: /3\.5\s*mi/ })).toBeVisible()
-      await expect(page.getByText('3:34 min/mi')).toBeVisible()
+      await expect(page.getByRole('cell', { name: '3:34 min/mi' })).toBeVisible()
 
       // Switching back to kilometers must not rewrite the set logged in
       // miles: historical display stays in the unit it was entered in.
@@ -822,7 +824,7 @@ test.describe('weight units', () => {
       await expect(page.getByRole('status')).toContainText('Distance unit updated')
 
       await page.goto(workoutUrl)
-      await expect(page.getByText(/3\.5\s*mi/)).toBeVisible()
+      await expect(page.getByRole('cell', { name: /3\.5\s*mi/ })).toBeVisible()
     } finally {
       await page.goto('/settings/units')
       const unit = page.getByRole('group', { name: 'Preferred distance unit' })

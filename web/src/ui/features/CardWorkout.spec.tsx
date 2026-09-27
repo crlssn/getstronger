@@ -414,8 +414,6 @@ describe('CardWorkout', () => {
       expect(screen.getByText('PR')).toBeInTheDocument()
     })
 
-    // The detail page always counts them; what a session with none does not
-    // get is the chip that celebrates them.
     test('says nothing about records when there were none', () => {
       render(<CardWorkout compact workout={workout()} />)
 
@@ -487,6 +485,19 @@ describe('CardWorkout', () => {
 
       expect(within(summaryMetric('Time')!).getByText('20 min')).toBeVisible()
       expect(summaryMetric('Duration')).toBeVisible()
+    })
+
+    test('counts the records a session set', () => {
+      render(<CardWorkout compact={false} workout={withSets()} />)
+
+      expect(within(summaryMetric('PRs')!).getByText('1')).toBeVisible()
+    })
+
+    // "PRs 0" reads as a score the session failed, not as nothing to report.
+    test('leaves the record count out when there were none', () => {
+      render(<CardWorkout compact={false} workout={ran()} />)
+
+      expect(summaryMetric('PRs')).toBeUndefined()
     })
 
     test('totals a sub-kilometre distance in metres', () => {

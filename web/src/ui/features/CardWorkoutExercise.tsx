@@ -12,8 +12,10 @@ import { AppChip } from '@/ui/components/AppChip'
 import { AppOptionRow } from '@/ui/components/AppOptionRow'
 import { distanceUnitLabel } from '@/utils/distanceUnits'
 import {
+  bestExerciseSet,
   exerciseMetrics,
   formatDurationDisplay,
+  formatExerciseSet,
   formatSetPace,
   isDistanceTimeExercise,
   measurementDefinitions,
@@ -66,6 +68,9 @@ export const CardWorkoutExercise = ({
   const measurements = measurementDefinitions.filter(({ metric }) => metrics.includes(metric))
   const showPace = isDistanceTimeExercise({ metrics })
   const hasPersonalBest = sets.some((set) => set.metadata?.personalBest)
+  const best = bestExerciseSet(sets, { metrics })
+  // A best of nothing but zeros names no set worth reading.
+  const hasBest = best && measurements.some(({ field }) => best[field] > 0)
 
   const columnLabel = (metric: ExerciseMetric) => {
     const definition = measurementDefinitions.find((measurement) => measurement.metric === metric)
@@ -92,16 +97,23 @@ export const CardWorkoutExercise = ({
         onClick={onToggle}
       >
         <span className={styles.summaryCopy}>
-          <span className={styles.name}>{name}</span>
-          {/* The marker is on the row rather than only inside it: what a reader
-              scans this list for is which exercises went well. */}
-          {hasPersonalBest && (
-            <AppChip tone="record" className={styles.recordChip}>
-              {t('workout.personalBest')}
-            </AppChip>
-          )}
+          <span className={styles.title}>
+            <span className={styles.name}>{name}</span>
+            {/* The marker is on the row rather than only inside it: what a reader
+                scans this list for is which exercises went well. */}
+            {hasPersonalBest && (
+              <AppChip tone="record" className={styles.recordChip}>
+                {t('workout.personalBest')}
+              </AppChip>
+            )}
+          </span>
           <span className={styles.setCount}>
-            {t('workout.setsCompact', { count: sets.length })}
+            {hasBest
+              ? t('workout.setsWithBest', {
+                  count: sets.length,
+                  set: formatExerciseSet(best, { metrics }),
+                })
+              : t('workout.setsCompact', { count: sets.length })}
           </span>
         </span>
       </AppOptionRow>

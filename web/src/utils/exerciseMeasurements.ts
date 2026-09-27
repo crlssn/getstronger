@@ -266,3 +266,22 @@ export const formatExerciseSet = (set: Partial<Set>, exercise?: Pick<Exercise, '
   const pace = isDistanceTimeExercise(exercise) ? formatSetPace(set) : undefined
   return pace ? `${formatted} (${pace})` : formatted
 }
+
+/**
+ * The best of an exercise's sets, ranked the way the server ranks personal
+ * bests: its measurements compared in order, the earliest set taking a tie.
+ */
+export const bestExerciseSet = <T extends Partial<Set>>(
+  sets: readonly T[],
+  exercise?: Pick<Exercise, 'metrics'>,
+): T | undefined => {
+  const fields = measurementsForExercise(exercise).map(({ field }) => field)
+  const beats = (set: T, best: T) => {
+    const field = fields.find((name) => Number(set[name] ?? 0) !== Number(best[name] ?? 0))
+    return field !== undefined && Number(set[field] ?? 0) > Number(best[field] ?? 0)
+  }
+  return sets.reduce<T | undefined>(
+    (best, set) => (!best || beats(set, best) ? set : best),
+    undefined,
+  )
+}

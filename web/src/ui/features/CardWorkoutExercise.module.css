@@ -10,7 +10,13 @@
   @apply min-h-(--size-control) rounded-none border-0 px-4 py-2.5 sm:px-5;
 }
 
+/* The counts go under the name rather than beside it: a best set beside it
+   left a long name a few letters. */
 .summaryCopy {
+  @apply flex min-w-0 flex-col;
+}
+
+.title {
   @apply flex min-w-0 items-center gap-2;
 }
 
@@ -19,7 +25,7 @@
 }
 
 .setCount {
-  @apply shrink-0 text-meta font-semibold tabular-nums text-text-subtle;
+  @apply truncate text-meta font-semibold tabular-nums text-text-subtle;
 }
 
 .caret {
