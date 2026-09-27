@@ -442,7 +442,6 @@ export const en = {
   },
   training: {
     heading: 'Training',
-    routinesDescription: 'Create reusable workout templates from your exercises.',
     newPlan: 'New plan',
     newRoutine: 'New routine',
     searchRoutines: 'Search routines',
@@ -652,7 +651,7 @@ export const en = {
     },
     list: {
       start: 'Start',
-      view: 'View',
+      view: 'View routine',
       actionsAria: 'Routine actions',
       edit: 'Edit routine',
       emptyBody: 'Create a routine to make your workouts repeatable.',
@@ -1452,7 +1451,6 @@ export const sv = {
   },
   training: {
     heading: 'Träning',
-    routinesDescription: 'Sätt ihop dina övningar till pass du kan träna om och om igen.',
     newPlan: 'Ny plan',
     newRoutine: 'Nytt pass',
     searchRoutines: 'Sök pass',
@@ -1662,7 +1660,7 @@ export const sv = {
     },
     list: {
       start: 'Starta',
-      view: 'Visa',
+      view: 'Visa pass',
       actionsAria: 'Passåtgärder',
       edit: 'Redigera pass',
       emptyBody: 'Skapa ett pass så kan du träna det om och om igen.',

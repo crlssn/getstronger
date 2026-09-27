@@ -890,7 +890,14 @@ test.describe('planned workouts and history', () => {
       .locator('section')
       .filter({ has: page.getByRole('link', { name: /^Start / }) })
     await expect(nextCard).toContainText('1 of 2')
-    await nextCard.getByRole('link', { name: /^Start / }).click()
+    const planned = await nextCard.getByRole('heading', { level: 2 }).innerText()
+
+    // The Routines tab offers the same session, and starting it there is what
+    // moves the plan on.
+    await page.goto('/routines')
+    const upNext = page.getByRole('link', { name: `Start ${planned}`, exact: true })
+    await expect(upNext).toHaveAttribute('href', /\?plan_id=/)
+    await upNext.click()
 
     const stations = stationHeaders(page)
     const stationCount = await stations.count()
@@ -919,6 +926,12 @@ test.describe('planned workouts and history', () => {
 
     await page.goto('/workout')
     await expect(nextCard).toContainText('2 of 2')
+    const second = await nextCard.getByRole('heading', { level: 2 }).innerText()
+    await page.goto('/routines')
+    await expect(page.getByRole('link', { name: `Start ${second}`, exact: true })).toHaveAttribute(
+      'href',
+      /\?plan_id=/,
+    )
 
     await page.goto('/plans')
     await openPlanActions(page)

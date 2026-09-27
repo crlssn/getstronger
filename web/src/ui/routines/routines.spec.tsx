@@ -23,6 +23,7 @@ import * as requests from '@/http/requests'
 import { ListExercisesResponseSchema } from '@/proto/api/v1/exercise_service_pb'
 import {
   CreateRoutineResponseSchema,
+  GetDashboardResponseSchema,
   GetRoutineResponseSchema,
   ListRoutinesResponseSchema,
   UpdateRoutineResponseSchema,
@@ -86,7 +87,7 @@ beforeEach(() => {
   mocked.getRoutine.mockResolvedValue(create(GetRoutineResponseSchema, { routine: push }))
   vi.spyOn(useDashboardStore.getState(), 'load').mockResolvedValue(undefined)
   vi.spyOn(useActivityStore.getState(), 'load').mockResolvedValue(undefined)
-  useDashboardStore.setState({ preferredRoutineId: '' })
+  useDashboardStore.setState({ preferredRoutineId: '', dashboard: undefined })
   useActivityStore.setState({ routineLastPerformed: {}, loaded: true, failed: false })
   useToastStore.getState().dismiss()
 })
@@ -108,10 +109,12 @@ describe('ListRoutines', () => {
       'href',
       '/workouts/routine/push',
     )
-    expect(within(card).getByRole('link', { name: 'View' })).toHaveAttribute(
+    // The name is the way in; a View button beside it went to the same place.
+    expect(within(card).getByRole('link', { name: /^Push day/ })).toHaveAttribute(
       'href',
       '/routines/push',
     )
+    expect(within(card).queryByRole('link', { name: 'View' })).not.toBeInTheDocument()
   })
 
   test('summarises what is in a routine', async () => {
@@ -169,12 +172,38 @@ describe('ListRoutines', () => {
       'href',
       '/workouts/routine/push',
     )
-    // The two things the card no longer has room for stay under it.
-    expect(within(card).getByRole('link', { name: 'View' })).toHaveAttribute(
+    // The whole card starts the session, so the routine itself opens from
+    // the menu under it.
+    await userEvent.click(within(card).getByRole('button', { name: 'Routine actions' }))
+    expect(screen.getByRole('menuitem', { name: 'View routine' })).toHaveAttribute(
       'href',
       '/routines/push',
     )
-    expect(within(card).getByRole('button', { name: 'Routine actions' })).toBeInTheDocument()
+  })
+
+  // A plan decides what comes next, so the athlete's own pick waits for it to
+  // end, and starting the planned routine is what moves the plan on.
+  test('offers the planned routine as up next while a plan runs', async () => {
+    useDashboardStore.setState({
+      preferredRoutineId: 'push',
+      dashboard: create(GetDashboardResponseSchema, {
+        activePlan: { id: 'plan-1' },
+        nextRoutine: pull,
+      }),
+    })
+    render()
+
+    expect(await screen.findByRole('link', { name: 'Start Pull day' })).toHaveAttribute(
+      'href',
+      '/workouts/routine/pull?plan_id=plan-1',
+    )
+    expect(
+      screen.getByRole('heading', { name: 'Push day', level: 3 }).closest('article'),
+    ).not.toHaveTextContent('Up next')
+
+    // Picking another would be arguing with the plan.
+    await openMenu('Push day')
+    expect(screen.queryByRole('menuitem', { name: 'Set as up next' })).not.toBeInTheDocument()
   })
 
   test('makes a routine up next from its menu', async () => {

@@ -1,14 +1,14 @@
 import type { Routine } from '@/proto/api/v1/routine_service_pb'
 import type { DropdownItem } from '@/types/dropdown'
 
-import { ChevronRightIcon, PlayIcon, PlusIcon } from '@heroicons/react/24/outline'
+import { PlayIcon, PlusIcon } from '@heroicons/react/24/outline'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 
 import { listRoutines } from '@/http/requests'
 import { lastPerformedIn, useActivityStore } from '@/stores/activity'
-import { useDashboardStore } from '@/stores/dashboard'
+import { selectActivePlan, selectNextRoutine, useDashboardStore } from '@/stores/dashboard'
 import { AppEmptyState } from '@/ui/components/AppEmptyState'
 import { AppErrorState } from '@/ui/components/AppErrorState'
 import { AppButton } from '@/ui/components/AppButton'
@@ -25,6 +25,7 @@ import { appendPage } from '@/utils/appendPage'
 import { formatDateTime } from '@/utils/datetime'
 import { estimatedSessionMinutes } from '@/utils/sessionEstimate'
 import { usePagination } from '@/utils/usePagination'
+import { workoutHref } from '@/utils/workoutHref'
 import styles from './ListRoutines.module.css'
 
 // Enough to recognise the routine; past that the row is a wall of names.
@@ -36,6 +37,10 @@ export const ListRoutines = () => {
   const { hasMorePages, currentPageToken, setFromResponse } = usePagination()
 
   const preferredRoutineId = useDashboardStore((state) => state.preferredRoutineId)
+  const activePlan = useDashboardStore(selectActivePlan)
+  const plannedRoutineId = useDashboardStore((state) => selectNextRoutine(state)?.id)
+  // A plan decides what comes next; the athlete's own pick is for when none runs.
+  const upNextId = activePlan ? plannedRoutineId : preferredRoutineId
   const routineLastPerformed = useActivityStore((state) => state.routineLastPerformed)
 
   const [routines, setRoutines] = useState<Routine[]>([])
@@ -88,7 +93,7 @@ export const ListRoutines = () => {
 
   const routineActions = (routine: Routine): DropdownItem[] => [
     { title: t('routine.list.edit'), href: `/routines/${routine.id}/edit` },
-    ...(routine.id === preferredRoutineId
+    ...(activePlan || routine.id === upNextId
       ? []
       : [
           {
@@ -130,7 +135,6 @@ export const ListRoutines = () => {
             <PlusIcon className="size-5" aria-hidden="true" /> {t('training.newRoutine')}
           </AppButton>
         }
-        lead={t('training.routinesDescription')}
         title={t('training.heading')}
       />
 
@@ -146,7 +150,7 @@ export const ListRoutines = () => {
         groups.map((group) => {
           // The one session the screen is really offering leads its group on
           // the canvas; the rest of the group follows in the card they share.
-          const upNext = group.items.find((routine) => routine.id === preferredRoutineId)
+          const upNext = group.items.find((routine) => routine.id === upNextId)
           const rest = group.items.filter((routine) => routine !== upNext)
 
           return (
@@ -163,22 +167,17 @@ export const ListRoutines = () => {
                     label={t('home.startNamedRoutine', { name: upNext.name })}
                     meta={routineMeta(upNext)}
                     name={upNext.name}
-                    to={`/workouts/routine/${upNext.id}`}
+                    to={workoutHref(upNext.id, activePlan?.id)}
                   />
-                  {/* The two the card itself has no room for, under it. */}
+                  {/* The card starts the session, so opening the routine is in
+                      the menu under it. */}
                   <div className={styles.routineActions}>
-                    <AppButton
-                      type="link"
-                      colour="secondary"
-                      size="sm"
-                      width="auto"
-                      to={`/routines/${upNext.id}`}
-                    >
-                      {t('routine.list.view')}
-                    </AppButton>
                     <div className={styles.routineMenu}>
                       <DropdownButton
-                        items={routineActions(upNext)}
+                        items={[
+                          { title: t('routine.list.view'), href: `/routines/${upNext.id}` },
+                          ...routineActions(upNext),
+                        ]}
                         label={t('routine.list.actionsAria')}
                       />
                     </div>
@@ -196,26 +195,23 @@ export const ListRoutines = () => {
 
                     return (
                       <article key={routine.id} className={styles.routineCard}>
-                        <div className={styles.routineHeading}>
-                          <Link to={`/routines/${routine.id}`}>
-                            <h3>{routine.name}</h3>
-                            {tags.length > 0 ? (
-                              <ExerciseTags compact tags={tags} />
-                            ) : (
-                              <p className={styles.routineExercises}>{exerciseSummary(routine)}</p>
-                            )}
-                            <p className={styles.routineMeta}>
-                              <span>
-                                {t('home.exerciseCount', { count: routine.exercises.length })}
-                              </span>
-                              <span>
-                                {t('home.aboutMinutes', { count: routineMinutes(routine) })}
-                              </span>
-                              {performed && <span>{performed}</span>}
-                            </p>
-                          </Link>
-                          <ChevronRightIcon aria-hidden="true" />
-                        </div>
+                        <Link className={styles.routineHeading} to={`/routines/${routine.id}`}>
+                          <h3>{routine.name}</h3>
+                          {tags.length > 0 ? (
+                            <ExerciseTags compact tags={tags} />
+                          ) : (
+                            <p className={styles.routineExercises}>{exerciseSummary(routine)}</p>
+                          )}
+                          <p className={styles.routineMeta}>
+                            <span>
+                              {t('home.exerciseCount', { count: routine.exercises.length })}
+                            </span>
+                            <span>
+                              {t('home.aboutMinutes', { count: routineMinutes(routine) })}
+                            </span>
+                            {performed && <span>{performed}</span>}
+                          </p>
+                        </Link>
 
                         <div className={styles.routineActions}>
                           <AppButton
@@ -227,15 +223,6 @@ export const ListRoutines = () => {
                           >
                             <PlayIcon className="size-5" aria-hidden="true" />{' '}
                             {t('routine.list.start')}
-                          </AppButton>
-                          <AppButton
-                            type="link"
-                            colour="secondary"
-                            size="sm"
-                            width="auto"
-                            to={`/routines/${routine.id}`}
-                          >
-                            {t('routine.list.view')}
                           </AppButton>
                           <div className={styles.routineMenu}>
                             <DropdownButton
