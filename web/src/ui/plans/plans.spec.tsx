@@ -120,8 +120,38 @@ describe('PlansView', () => {
 
     await screen.findByText('Push pull legs')
     expect(screen.getByText('Routine 2 of 2')).toBeInTheDocument()
-    expect(screen.getByText('Pull day')).toBeInTheDocument()
+    expect(screen.getByText('Up next').parentElement).toHaveTextContent('Pull day')
     expect(screen.getByRole('link', { name: 'View plan' })).toHaveAttribute('href', '/plans/plan-1')
+  })
+
+  // Numbered squares looked like buttons and said nothing a name would not.
+  test('shows the loop as named steps, marking where it is', async () => {
+    withPlans([plan({ active: true, currentPosition: 1, routines })])
+    render()
+
+    const steps = await screen.findByRole('list', { name: 'Routine 2 of 3' })
+    const rows = within(steps).getAllByRole('listitem')
+    expect(rows.map((row) => row.textContent)).toEqual(['Push day', 'Pull day', 'Leg day'])
+    expect(rows[1]).toHaveAttribute('aria-current', 'step')
+    expect(rows[0]).not.toHaveAttribute('aria-current')
+    expect(within(steps).queryByRole('button')).not.toBeInTheDocument()
+  })
+
+  // A long loop writes out only the current name; the rest are still read.
+  test('keeps every step named in a loop too long to label', async () => {
+    const long = Array.from({ length: 6 }, (_, index) => ({
+      id: `r${index}`,
+      name: `Routine ${index}`,
+    }))
+    withPlans([plan({ active: true, currentPosition: 2, routines: long })])
+    render()
+
+    const steps = await screen.findByRole('list', { name: 'Routine 3 of 6' })
+    expect(
+      within(steps)
+        .getAllByRole('listitem')
+        .map((row) => row.textContent),
+    ).toEqual(long.map((routine) => routine.name))
   })
 
   // The plan is what says what to train next, so the card that says it is

@@ -1,5 +1,5 @@
 import { CheckIcon, ChevronRightIcon, PlayIcon, PlusIcon } from '@heroicons/react/24/outline'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useId, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 
@@ -26,6 +26,7 @@ export const PlansView = () => {
   const activePlan = usePlanStore(selectActivePlan)
   const failed = usePlanStore((state) => state.failed)
 
+  const positionId = useId()
   const [loaded, setLoaded] = useState(false)
   const [actionError, setActionError] = useState<string>()
 
@@ -41,6 +42,9 @@ export const PlansView = () => {
 
   const otherPlans = plans.filter((plan) => !plan.active)
   const nextRoutine = activePlan?.routines[activePlan.currentPosition]
+  // Past four, the names no longer fit a phone's width side by side, so only
+  // the current one is written out and the rest are bars.
+  const crowded = (activePlan?.routines.length ?? 0) > 4
 
   // Only one plan runs at a time, so activating another one ends the first.
   const activate = async (id: string) => {
@@ -177,7 +181,7 @@ export const PlansView = () => {
 
               <div className={styles.positionRow}>
                 <span>{t('training.currentPosition')}</span>
-                <strong>
+                <strong id={positionId}>
                   {t('training.routinePosition', {
                     current: activePlan.currentPosition + 1,
                     total: activePlan.routines.length,
@@ -185,19 +189,27 @@ export const PlansView = () => {
                 </strong>
               </div>
 
-              <div className={styles.sequence} aria-label={t('training.planPositionAria')}>
-                {activePlan.routines.map((routine, index) => (
-                  <span
-                    key={routine.id}
-                    className={cn(
-                      index === activePlan.currentPosition && styles.current,
-                      index < activePlan.currentPosition && styles.done,
-                    )}
-                  >
-                    {index + 1}
-                  </span>
-                ))}
-              </div>
+              <ol
+                className={cn(styles.steps, crowded && styles.crowded)}
+                aria-labelledby={positionId}
+              >
+                {activePlan.routines.map((routine, index) => {
+                  const current = index === activePlan.currentPosition
+                  const done = index < activePlan.currentPosition
+                  return (
+                    <li
+                      key={routine.id}
+                      aria-current={current ? 'step' : undefined}
+                      className={cn(current && styles.current, done && styles.done)}
+                    >
+                      <span className={cn(styles.stepName, crowded && !current && 'sr-only')}>
+                        {done && <CheckIcon aria-hidden="true" />}
+                        <span>{routine.name}</span>
+                      </span>
+                    </li>
+                  )
+                })}
+              </ol>
 
               {nextRoutine && (
                 <div className={styles.nextRow}>

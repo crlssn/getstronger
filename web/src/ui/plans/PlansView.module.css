@@ -80,20 +80,56 @@
   @apply text-text-muted;
 }
 
-.sequence {
-  @apply mt-3 flex flex-wrap gap-2;
+/* A bar per routine with its name under it: done ticked, the current one in
+   ink, what is still to come muted. */
+.steps {
+  @apply mt-3 flex gap-1.5;
 }
 
-.sequence span {
-  @apply grid size-9 place-items-center rounded-control bg-info-surface text-sm font-semibold text-text-muted;
+.steps li {
+  @apply flex min-w-0 flex-1 flex-col gap-1.5 text-xs text-text-subtle;
 }
 
-.sequence span.done {
-  @apply bg-ink-tint text-ink-strong;
+.steps li::before {
+  content: '';
+  @apply h-1.5 rounded-full bg-info-surface;
 }
 
-.sequence span.current {
-  @apply bg-ink text-text-inverse;
+.steps li.done {
+  @apply text-text-muted;
+}
+
+.steps li.done::before {
+  @apply bg-ink-tint;
+}
+
+.steps li.current {
+  @apply font-semibold text-text;
+}
+
+.steps li.current::before {
+  @apply bg-ink;
+}
+
+.stepName {
+  @apply flex min-w-0 items-center gap-1;
+}
+
+.stepName svg {
+  @apply size-3.5 shrink-0;
+}
+
+.stepName span {
+  @apply truncate;
+}
+
+/* The current step takes the room its name needs, up to half the row. */
+.crowded li {
+  @apply min-w-2;
+}
+
+.crowded li.current {
+  @apply max-w-[50%] flex-none;
 }
 
 .nextRow {
