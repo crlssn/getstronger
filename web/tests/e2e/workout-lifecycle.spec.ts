@@ -576,7 +576,7 @@ test.describe('quick workout lifecycle', () => {
 
     await expect(page).toHaveURL(/\/workouts\/[0-9a-f-]+$/)
     await expect(page.getByText('New personal record')).toBeVisible()
-    await expect(page.getByText('120 kg × 5')).toBeVisible()
+    await expect(page.getByText('120 kg × 5', { exact: true })).toBeVisible()
 
     // It ends on its own, on the workout with the record in it.
     await expect(page.getByText('New personal record')).toBeHidden()
