@@ -256,8 +256,8 @@ describe('TimedCircuitRecorder', () => {
         onDiscard={vi.fn()}
       />,
     )
-    await screen.findByRole('heading', { name: 'Walk' })
-    await user.click(screen.getByRole('button', { name: /^Pause$/ }))
+    // Waits on Pause, not the heading: the phases draw that before the restore.
+    await user.click(await screen.findByRole('button', { name: /^Pause$/ }))
     expect(screen.getByRole('status')).toHaveTextContent('Paused')
     await user.click(screen.getByRole('button', { name: /^Resume$/ }))
     await user.click(screen.getByRole('button', { name: 'End session' }))
@@ -381,8 +381,7 @@ describe('TimedCircuitRecorder', () => {
       />,
     )
 
-    await screen.findByRole('heading', { name: 'Walk' })
-    const finished = screen.getAllByRole('listitem')
+    const finished = await screen.findAllByRole('listitem')
     expect(finished).toHaveLength(2)
     expect(finished[0]).toHaveTextContent('Run 1')
     expect(finished[1]).toHaveTextContent('Walk 1')
@@ -577,7 +576,7 @@ describe('TimedCircuitRecorder', () => {
         onDiscard={discard}
       />,
     )
-    await screen.findByRole('heading', { name: 'Walk' })
+    await screen.findByRole('button', { name: 'Discard' })
 
     await user.click(screen.getByRole('button', { name: 'Fill in manually' }))
     await waitFor(() => expect(cancel).toHaveBeenCalledOnce())
