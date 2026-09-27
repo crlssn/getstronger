@@ -73,4 +73,20 @@ describe('AppCarousel', () => {
     expect(screen.queryByRole('button')).not.toBeInTheDocument()
     expect(screen.getByRole('list', { name: 'Your routines' })).toBeInTheDocument()
   })
+
+  // The peek is the only reason a panel stops short of the row, and a lone
+  // panel has nothing to peek.
+  test('gives a lone panel the whole row', () => {
+    render(<AppCarousel label="Your routines" slides={slides.slice(0, 1)} />)
+
+    expect(screen.getByRole('listitem').className).toContain('lone')
+  })
+
+  test('keeps panels short of the row while the next can peek in', () => {
+    render(<AppCarousel label="Your routines" slides={slides} />)
+
+    screen.getAllByRole('listitem').forEach((panel) => {
+      expect(panel.className).not.toContain('lone')
+    })
+  })
 })

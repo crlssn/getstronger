@@ -45,7 +45,8 @@ const nearestSlide = (track: HTMLElement) => {
  * The row bleeds past the screen's gutters so the next panel peeks in from the
  * edge: a row that ends flush at its container reads as a card, and nobody
  * swipes a card. Snapping is what makes the peek a promise — a drag lands on a
- * panel rather than wherever the finger left off.
+ * panel rather than wherever the finger left off. A lone panel, with nothing to
+ * peek, takes the whole row.
  *
  * The dots are buttons rather than the decoration they look like, because the
  * peek is only an invitation on a touch screen; a pointer and a keyboard need
@@ -100,7 +101,7 @@ export const AppCarousel = ({ label, slides, className }: Props) => {
     <div className={cn(styles.carousel, className)}>
       <ul ref={track} aria-label={label} className={styles.track}>
         {slides.map((slide) => (
-          <li key={slide.key} className={styles.slide}>
+          <li key={slide.key} className={cn(styles.slide, slides.length === 1 && styles.lone)}>
             {slide.content}
           </li>
         ))}

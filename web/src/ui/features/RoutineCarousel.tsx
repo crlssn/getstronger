@@ -47,14 +47,11 @@ export const RoutineCarousel = ({
   const alternatives = activePlan ? [] : routines.filter(({ id }) => id !== nextRoutine.id)
   const shown = alternatives.slice(0, maxPanels - 1)
 
-  const meta = (routine: Routine, plan?: Plan) =>
+  const meta = (routine: Routine) =>
     [
-      plan?.name,
       t('home.exerciseCount', { count: routine.exercises.length }),
       t('home.aboutMinutes', { count: estimatedSessionMinutes(routine.exercises.length) }),
-    ]
-      .filter(Boolean)
-      .join(' · ')
+    ].join(' · ')
 
   const panel = (routine: Routine, planned: boolean): CarouselSlide => ({
     key: routine.id,
@@ -68,12 +65,14 @@ export const RoutineCarousel = ({
               <>
                 <span aria-hidden="true"> · </span>
                 {activePlan.currentPosition + 1} {t('common.of')} {activePlan.routines.length}
+                <span aria-hidden="true"> · </span>
+                {activePlan.name}
               </>
             )}
           </>
         }
         label={t('home.startNamedRoutine', { name: routine.name })}
-        meta={meta(routine, planned ? activePlan : undefined)}
+        meta={meta(routine)}
         name={routine.name}
         stepped={!planned}
         to={`/workouts/routine/${routine.id}${planned && activePlan ? `?plan_id=${activePlan.id}` : ''}`}

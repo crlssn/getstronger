@@ -266,7 +266,8 @@ Panels swiped one at a time, with dots saying where in the row you are. The row
 bleeds past the page's gutters so the next panel peeks in from the edge — a row
 that ends flush at its container reads as a card, and nobody swipes a card —
 and snapping is what makes that peek a promise: a drag lands on a panel rather
-than wherever the finger left off.
+than wherever the finger left off. A lone panel has nothing to peek, so it takes
+the whole row and lines up with the cards around it.
 
 `label` names the row, and each slide carries its own `label` because the dots
 are real buttons rather than the decoration they look like: the peek only

@@ -22,7 +22,7 @@
 }
 
 .eyebrow {
-  @apply text-eyebrow font-bold uppercase text-ink-tint;
+  @apply truncate text-eyebrow font-bold uppercase text-ink-tint;
 }
 
 /* Dimmer than the card it steps back from, but no dimmer than AA allows on a

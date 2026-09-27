@@ -3,7 +3,7 @@
 import type { MessageInitShape } from '@bufbuild/protobuf'
 
 import { create } from '@bufbuild/protobuf'
-import { screen } from '@testing-library/react'
+import { screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, test, vi } from 'vitest'
 
@@ -97,9 +97,13 @@ describe('RoutineCarousel', () => {
 
     const panels = screen.getAllByRole('listitem')
     expect(panels).toHaveLength(1)
-    expect(panels[0]).toHaveTextContent('Push pull legs')
+    // The plan rides with its position, so the line that truncates keeps the
+    // numbers.
+    const eyebrow = within(panels[0]).getByText(/Up next/)
+    expect(eyebrow).toHaveTextContent('Push pull legs')
     // Position is one-based on screen, zero-based in the message.
-    expect(panels[0]).toHaveTextContent('2 of 3')
+    expect(eyebrow).toHaveTextContent('2 of 3')
+    expect(within(panels[0]).getByText('2 exercises · About 30 min')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Start Lower body' })).toHaveAttribute(
       'href',
       '/workouts/routine/r1?plan_id=plan-1',

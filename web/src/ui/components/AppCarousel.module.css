@@ -27,6 +27,11 @@
   @apply w-[86%] max-w-96 shrink-0 snap-start;
 }
 
+/* Nothing peeks past a lone panel, so it lines up with the cards around it. */
+.lone {
+  @apply w-full max-w-none;
+}
+
 /* Dots are the tap-target floor square with the indicator drawn inside them,
  * so a 6px dot is still something a thumb can hit — and the row is pulled in
  * at both ends, because the empty half of that target is not spacing anybody
