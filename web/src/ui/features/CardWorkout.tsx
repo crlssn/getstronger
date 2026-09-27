@@ -232,12 +232,8 @@ export const CardWorkout = ({ workout, compact, unseen = false, celebrating = fa
         distinctSetTime && metric(t('common.time'), formatDurationDisplay(totalSetSeconds)),
         metric(t('common.duration'), `${durationMinutes}`, t('common.min')),
         metric(t('workout.setsLogged'), `${setCount}`),
-        metric(
-          t('workout.personalRecords'),
-          `${personalBestCount}`,
-          undefined,
-          personalBestCount > 0 ? 'record' : undefined,
-        ),
+        personalBestCount > 0 &&
+          metric(t('workout.personalRecords'), `${personalBestCount}`, undefined, 'record'),
       ].filter(Boolean)}
     </ul>
   )

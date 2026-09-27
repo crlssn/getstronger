@@ -140,7 +140,7 @@
 }
 
 /* An odd count of metrics spans the last cell rather than leaving a hole:
-   a lifting session reports five numbers and a run four. */
+   which numbers a session reports depends on what it logged and set. */
 .metricGrid li:last-child:nth-child(odd) {
   @apply col-span-2;
 }
