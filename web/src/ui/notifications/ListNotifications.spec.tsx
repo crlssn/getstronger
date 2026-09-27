@@ -3,7 +3,9 @@
 import type { MessageInitShape } from '@bufbuild/protobuf'
 
 import { create } from '@bufbuild/protobuf'
-import { screen, waitFor, within } from '@testing-library/react'
+import { act, render as renderRoot, screen, waitFor, within } from '@testing-library/react'
+import { I18nextProvider } from 'react-i18next'
+import { createMemoryRouter, RouterProvider } from 'react-router-dom'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
@@ -14,6 +16,7 @@ vi.mock('@/http/requests', async (importOriginal) => ({
 }))
 
 import * as requests from '@/http/requests'
+import { i18n } from '@/i18n'
 import {
   ListNotificationsResponseSchema,
   MarkNotificationsAsReadResponseSchema,
@@ -241,6 +244,31 @@ describe('ListNotifications', () => {
       finish()
       await waitFor(() => expect(useNotificationStore.getState().unreadCount).toBe(0))
     })
+  })
+
+  test('is still there, without a skeleton, when the reader comes back to it', async () => {
+    mocked.listNotifications.mockResolvedValueOnce(page([follow('n1')]))
+    const router = createMemoryRouter(
+      [
+        { path: '/notifications', element: <ListNotifications /> },
+        { path: '/users/:id', element: null },
+      ],
+      { initialEntries: ['/notifications'] },
+    )
+    renderRoot(
+      <I18nextProvider i18n={i18n}>
+        <RouterProvider router={router} />
+      </I18nextProvider>,
+    )
+    await screen.findByRole('link')
+
+    // The revalidation never answers, so the row can only be the snapshot.
+    mocked.listNotifications.mockReturnValue(new Promise(() => {}))
+    await act(() => router.navigate('/users/u2'))
+    await act(() => router.navigate(-1))
+
+    expect(screen.getByRole('link')).toHaveTextContent('@alex followed you')
+    expect(document.querySelector('.loading-card')).toBeNull()
   })
 
   test('follows the page token to the next page', async () => {

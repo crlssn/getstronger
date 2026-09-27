@@ -93,6 +93,68 @@ test.describe('social feed and discovery', () => {
     await expect(page.getByRole('heading', { name: 'Workout route' })).toBeVisible()
   })
 
+  // Back is a return, not an arrival: the reader finds every page they had
+  // scrolled through, at the offset they left, while the feed asks again.
+  test('keeps the feed and its scroll position across a trip into a workout', async ({ page }) => {
+    await waitForHome(page)
+    const cards = page.getByRole('link', { name: /workout details$/ })
+    // Past the first page, which is all a fresh load would show.
+    await expect
+      .poll(async () => {
+        await page.mouse.wheel(0, 5_000)
+        return cards.count()
+      })
+      .toBeGreaterThan(25)
+    // Up from the end, out of the sentinel's reach, and settled: no page is
+    // asked for or still landing once the feed is held and counted below.
+    await page.mouse.wheel(0, -1_500)
+    // A wheel scroll on a touch device eases to a stop rather than jumping.
+    let offset = -1
+    await expect
+      .poll(async () => {
+        const previous = offset
+        offset = await page.evaluate(() => window.scrollY)
+        return offset === previous
+      })
+      .toBe(true)
+    await expect(page.getByText('Loading more workouts…')).toHaveCount(0)
+
+    // Held back, so what shows on the way back before the feed answers can
+    // only be the snapshot.
+    let release = () => {}
+    const held = new Promise<void>((resolve) => (release = resolve))
+    await page.route('**/api.v1.FeedService/ListFeedItems', async (route) => {
+      await held
+      await route.continue()
+    })
+    const rowCount = await cards.count()
+
+    // A card on screen, opened without the scroll a pointer click may make.
+    const fold = (page.viewportSize()?.height ?? 0) / 2
+    let opened = cards.first()
+    for (const card of (await cards.all()).reverse()) {
+      const box = await card.boundingBox()
+      if (box && box.y > 0 && box.y < fold) {
+        opened = card
+        break
+      }
+    }
+    expect(offset).toBeGreaterThan(0)
+    await opened.dispatchEvent('click')
+    await expect(page).toHaveURL(/\/workouts\/[0-9a-f-]+$/)
+    await page.goBack()
+
+    await expect(cards).toHaveCount(rowCount)
+    await expect(page.locator('.loading-card')).toHaveCount(0)
+    expect(await page.evaluate(() => window.scrollY)).toBe(offset)
+
+    // The revalidation leaves the pages standing; the next one may follow it.
+    const revalidated = page.waitForResponse('**/api.v1.FeedService/ListFeedItems')
+    release()
+    await revalidated
+    expect(await cards.count()).toBeGreaterThanOrEqual(rowCount)
+  })
+
   test('opens a feed workout and posts a comment @mutation', async ({ page }) => {
     const card = page.getByRole('listitem').filter({ hasText: '@janedoe' }).first()
     await expect(card).toBeVisible()

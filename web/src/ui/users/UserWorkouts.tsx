@@ -1,6 +1,3 @@
-import type { Workout } from '@/proto/api/v1/workout_service_pb'
-
-import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useParams } from 'react-router-dom'
 
@@ -11,44 +8,23 @@ import { AppList } from '@/ui/components/AppList'
 import { AppSkeleton } from '@/ui/components/AppSkeleton'
 import { CardWorkout } from '@/ui/features/CardWorkout'
 import { useInfiniteScroll } from '@/utils/useInfiniteScroll'
-import { appendPage } from '@/utils/appendPage'
-import { usePagination } from '@/utils/usePagination'
+import { usePagedList } from '@/utils/usePagedList'
 
 /** This profile's finished workouts, newest first. */
 export const UserWorkouts = () => {
   const { t } = useTranslation()
   const { id = '' } = useParams()
-  const { hasMorePages, currentPageToken, setFromResponse } = usePagination()
-
-  const [workouts, setWorkouts] = useState<Workout[]>([])
-  const [loaded, setLoaded] = useState(false)
-  const [fetching, setFetching] = useState(false)
-  const [failed, setFailed] = useState(false)
-
-  const fetchWorkouts = useCallback(async () => {
-    setFetching(true)
-    setFailed(false)
-    try {
-      const res = await listWorkouts([id], currentPageToken())
-      if (!res) {
-        setFailed(true)
-        return
-      }
-
-      setWorkouts((current) => appendPage(current, res.workouts))
-      setFromResponse(res.pagination)
-    } finally {
-      setFetching(false)
-    }
-  }, [id, currentPageToken, setFromResponse])
-
-  useEffect(() => {
-    const load = async () => {
-      await fetchWorkouts()
-      setLoaded(true)
-    }
-    void load()
-  }, [fetchWorkouts])
+  const {
+    rows: workouts,
+    loaded,
+    fetching,
+    failed,
+    hasMorePages,
+    fetchMore: fetchWorkouts,
+  } = usePagedList('workouts', async (pageToken) => {
+    const res = await listWorkouts([id], pageToken)
+    return res && { rows: res.workouts, pagination: res.pagination }
+  })
 
   const sentinel = useInfiniteScroll<HTMLDivElement>(
     () => void fetchWorkouts(),

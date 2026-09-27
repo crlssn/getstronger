@@ -3,7 +3,7 @@ import type { Workout } from '@/proto/api/v1/workout_service_pb'
 import { timestampDate } from '@bufbuild/protobuf/wkt'
 import { CheckIcon, FireIcon } from '@heroicons/react/24/outline'
 import { DateTime } from 'luxon'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { listFeedItems, markFeedAsSeen } from '@/http/requests'
@@ -24,6 +24,7 @@ import { HomePageActions } from '@/ui/features/HomePageActions'
 import { RoutineCarousel } from '@/ui/features/RoutineCarousel'
 import { StreakCard } from '@/ui/features/StreakCard'
 import { useInfiniteScroll } from '@/utils/useInfiniteScroll'
+import { usePagedList } from '@/utils/usePagedList'
 import styles from './HomeView.module.css'
 
 // Far enough ahead that the next page is usually there by the time the reader
@@ -32,6 +33,7 @@ const feedPrefetchMargin = '500px 0px'
 
 /** A feed row, and whether it arrived since the reader last looked. */
 interface FeedEntry {
+  id: string
   workout: Workout
   unseen: boolean
 }
@@ -55,78 +57,50 @@ export const HomeView = () => {
   const [searchOpen, setSearchOpen] = useState(false)
   const [routinePickerOpen, setRoutinePickerOpen] = useState(false)
 
-  const [feedEntries, setFeedEntries] = useState<FeedEntry[]>([])
-  const [feedLoading, setFeedLoading] = useState(false)
-  const [feedLoaded, setFeedLoaded] = useState(false)
-  const [feedReachedEnd, setFeedReachedEnd] = useState(false)
-  const [feedError, setFeedError] = useState(false)
-
-  // Held in refs rather than state: neither is rendered, and reading them from
-  // state would put the loader's identity at the mercy of a render.
-  const pageToken = useRef<Uint8Array>(new Uint8Array(0))
-  const inFlight = useRef(false)
   // Where the feed draws its line between new and seen, as the first page
   // reported it: `at` is unset for a first look, which has nothing to catch up
   // on. Showing the first page moves the server's line to now, so the pages
   // after report a line that would hide what this visit is here to see.
   const seenLine = useRef<{ at?: Date }>(undefined)
 
-  const loadMoreFeed = useCallback(async () => {
-    if (inFlight.current) return
-    inFlight.current = true
-    setFeedLoading(true)
-    setFeedError(false)
+  const {
+    rows: feedEntries,
+    loaded: feedLoaded,
+    fetching: feedLoading,
+    failed: feedError,
+    hasMorePages: feedHasMore,
+    fetchMore: loadMoreFeed,
+  } = usePagedList<FeedEntry>('feed', async (pageToken) => {
+    const feed = await listFeedItems(pageToken, true)
+    if (!feed) return
 
-    try {
-      const firstPage = pageToken.current.length === 0
-      const feed = await listFeedItems(pageToken.current, true)
-      setFeedLoaded(true)
-
-      if (!feed) {
-        setFeedError(true)
-        return
-      }
-
-      if (firstPage) {
-        seenLine.current = { at: feed.seenAt && timestampDate(feed.seenAt) }
-        // Shown is seen: nothing has to be opened for the next visit to start
-        // from here.
-        void markFeedAsSeen()
-      }
-
-      // Read once here rather than subscribed to, so the loader's identity
-      // does not depend on the session.
-      const { userId } = useAuthStore.getState()
-      const line = seenLine.current?.at
-      const arrivedAfterLine = (item: (typeof feed.items)[number]) =>
-        line !== undefined && item.createdAt !== undefined && timestampDate(item.createdAt) > line
-
-      setFeedEntries((current) => {
-        const seen = new Set(current.map((entry) => entry.workout.id))
-        const fresh: FeedEntry[] = []
-        for (const item of feed.items) {
-          if (item.type.case !== 'workout' || seen.has(item.type.value.id)) continue
-          seen.add(item.type.value.id)
-          // Your own session is never news to you.
-          const unseen = arrivedAfterLine(item) && item.type.value.user?.id !== userId
-          fresh.push({ workout: item.type.value, unseen })
-        }
-        return fresh.length ? [...current, ...fresh] : current
-      })
-
-      const nextPageToken = feed.pagination?.nextPageToken ?? new Uint8Array(0)
-      pageToken.current = nextPageToken
-      setFeedReachedEnd(nextPageToken.length === 0)
-    } finally {
-      inFlight.current = false
-      setFeedLoading(false)
+    if (pageToken.length === 0) {
+      seenLine.current = { at: feed.seenAt && timestampDate(feed.seenAt) }
+      // Shown is seen: nothing has to be opened for the next visit to start
+      // from here.
+      void markFeedAsSeen()
     }
-  }, [])
+
+    // Read once here rather than subscribed to, so the loader's identity
+    // does not depend on the session.
+    const { userId } = useAuthStore.getState()
+    const line = seenLine.current?.at
+    const rows: FeedEntry[] = []
+    for (const item of feed.items) {
+      if (item.type.case !== 'workout') continue
+      const arrivedAfterLine =
+        line !== undefined && item.createdAt !== undefined && timestampDate(item.createdAt) > line
+      // Your own session is never news to you.
+      const unseen = arrivedAfterLine && item.type.value.user?.id !== userId
+      rows.push({ id: item.type.value.id, workout: item.type.value, unseen })
+    }
+    return { rows, pagination: feed.pagination }
+  })
+  const feedReachedEnd = feedLoaded && !feedHasMore
 
   useEffect(() => {
     void useDashboardStore.getState().load()
-    void loadMoreFeed()
-  }, [loadMoreFeed])
+  }, [])
 
   // Switching the observer back on after a page lands is what asks for the next
   // one while the sentinel is still in view. An error stops that, so a failing

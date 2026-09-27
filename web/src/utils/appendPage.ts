@@ -16,3 +16,22 @@ export const appendPage = <T extends { id: string }>(current: T[], page: readonl
 
   return fresh.length ? [...current, ...fresh] : current
 }
+
+/**
+ * Lays a fresh first page over a list that already holds several.
+ *
+ * The rows after it survive when the page still reaches them — its last row is
+ * one the list holds. Otherwise the list has moved on past what it held, and
+ * this returns undefined: the caller starts again from the page.
+ */
+export const refreshFirstPage = <T extends { id: string }>(
+  current: T[],
+  page: readonly T[],
+): T[] | undefined => {
+  const last = page.at(-1)
+  const end = last ? current.findIndex((entry) => entry.id === last.id) : -1
+  if (end < 0) return undefined
+
+  const fresh = new Set(page.map((entry) => entry.id))
+  return [...page, ...current.slice(end + 1).filter((entry) => !fresh.has(entry.id))]
+}
