@@ -437,7 +437,6 @@ export const en = {
   },
   training: {
     heading: 'Training',
-    plansDescription: 'Put routines in order and repeat them continuously—no schedule or end date.',
     routinesDescription: 'Create reusable workout templates from your exercises.',
     newPlan: 'New plan',
     newRoutine: 'New routine',
@@ -1440,7 +1439,6 @@ export const sv = {
   },
   training: {
     heading: 'Träning',
-    plansDescription: 'Ordna pass och upprepa dem löpande – utan schema eller slutdatum.',
     routinesDescription: 'Sätt ihop dina övningar till pass du kan träna om och om igen.',
     newPlan: 'Ny plan',
     newRoutine: 'Nytt pass',

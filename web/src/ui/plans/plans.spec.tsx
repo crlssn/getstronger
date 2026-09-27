@@ -124,6 +124,16 @@ describe('PlansView', () => {
     expect(screen.getByRole('link', { name: 'View plan' })).toHaveAttribute('href', '/plans/plan-1')
   })
 
+  // The lead explained plans to someone already looking at theirs, and pushed
+  // the running one down the screen to do it.
+  test('opens on the title without an explainer under it', async () => {
+    withPlans([plan({ active: true })])
+    render()
+
+    await screen.findByText('Push pull legs')
+    expect(screen.queryByText(/Put routines in order/)).not.toBeInTheDocument()
+  })
+
   test('says so when no plan is running', async () => {
     withPlans([plan()])
     render()

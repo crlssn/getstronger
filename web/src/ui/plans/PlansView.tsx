@@ -87,7 +87,6 @@ export const PlansView = () => {
             </AppButton>
           )
         }
-        lead={t('training.plansDescription')}
         title={t('training.heading')}
       />
 
