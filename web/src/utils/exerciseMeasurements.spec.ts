@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { DistanceUnit, ExerciseMetric, WeightUnit } from '@/proto/api/v1/shared_pb'
 import {
+  bestExerciseSet,
   formatDistanceIn,
   formatDurationDisplay,
   formatExerciseSet,
@@ -172,5 +173,40 @@ describe('formatExerciseSet', () => {
         { metrics: [ExerciseMetric.REPS, ExerciseMetric.DISTANCE, ExerciseMetric.TIME] },
       ),
     ).toBe('4 · 1 km · 1 min 30 sec')
+  })
+})
+
+// The same order the server ranks personal bests in (059_personal_bests), so the
+// best set a row names is never a different set from the one holding the record.
+describe('bestExerciseSet', () => {
+  const lift = { metrics: [ExerciseMetric.WEIGHT, ExerciseMetric.REPS] }
+
+  it('takes the heaviest set, then the most reps at that weight', () => {
+    const sets = [
+      { id: 'a', weight: 100, reps: 8 },
+      { id: 'b', weight: 110, reps: 2 },
+      { id: 'c', weight: 110, reps: 3 },
+    ]
+    expect(bestExerciseSet(sets, lift)?.id).toBe('c')
+  })
+
+  it('gives a tie to the earliest set', () => {
+    const sets = [
+      { id: 'a', weight: 100, reps: 5 },
+      { id: 'b', weight: 100, reps: 5 },
+    ]
+    expect(bestExerciseSet(sets, lift)?.id).toBe('a')
+  })
+
+  it('ranks only by what the exercise measures', () => {
+    const sets = [
+      { id: 'a', distance: 5, durationSeconds: 1500, weight: 0 },
+      { id: 'b', distance: 4, durationSeconds: 1800, weight: 20 },
+    ]
+    expect(bestExerciseSet(sets, distanceTime)?.id).toBe('a')
+  })
+
+  it('has no best set among none', () => {
+    expect(bestExerciseSet([], lift)).toBeUndefined()
   })
 })

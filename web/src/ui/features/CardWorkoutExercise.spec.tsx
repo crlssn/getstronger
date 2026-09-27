@@ -103,6 +103,22 @@ describe('CardWorkoutExercise', () => {
     render({ sets: [set({ id: 'set-1' }), set({ id: 'set-2' })] })
 
     expect(toggle()).toHaveTextContent('2 sets')
+    expect(toggle()).not.toHaveTextContent('best')
+  })
+
+  // What a reader scans the list for is how each exercise went, without
+  // opening every one of them.
+  test('names its best set on the row', () => {
+    render({
+      startOpen: false,
+      sets: [
+        set({ id: 'set-1', weight: 100, reps: 8 }),
+        set({ id: 'set-2', weight: 110, reps: 3 }),
+        set({ id: 'set-3', weight: 105, reps: 5 }),
+      ],
+    })
+
+    expect(toggle()).toHaveTextContent('3 sets · best 110 kg × 3')
   })
 
   // The columns follow what the exercise measures, so a run is never given a
