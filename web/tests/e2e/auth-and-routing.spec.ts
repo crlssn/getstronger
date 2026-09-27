@@ -28,6 +28,10 @@ test.describe('guest authentication and routing', () => {
     await expect(page.getByRole('heading', { name: 'Create your account' })).toBeVisible()
     await expect(page.getByText('Lift it. Log it. Beat it.')).toBeVisible()
     await expect(page.getByLabel('Username')).toBeVisible()
+    await expect(page.getByRole('link', { name: 'privacy policy' })).toHaveAttribute(
+      'href',
+      '/privacy',
+    )
 
     await page.getByRole('link', { name: 'Log in', exact: true }).click()
     await page.getByRole('link', { name: 'Forgot password?' }).click()
@@ -88,7 +92,6 @@ test.describe('guest authentication and routing', () => {
     await expect(page.getByLabel('Username')).toHaveValue('e2emember')
     await page.getByLabel('Email address').fill(email)
     await page.getByLabel('Password', { exact: true }).fill(password)
-    await page.getByLabel('Confirm password').fill(password)
 
     // Units are not asked for here; the account starts metric and is changed
     // in the profile.
@@ -120,7 +123,6 @@ test.describe('guest authentication and routing', () => {
     // internal error. The two render different catalogue messages.
     const tooLong = 'a'.repeat(73)
     await page.getByLabel('Password', { exact: true }).fill(tooLong)
-    await page.getByLabel('Confirm password').fill(tooLong)
     await page.getByRole('button', { name: 'Create an account' }).click()
     await expect(page.getByRole('alert')).toContainText(
       'That was not accepted. Check what you entered and try again.',
@@ -129,7 +131,6 @@ test.describe('guest authentication and routing', () => {
     await expect(page).toHaveURL(/\/signup$/)
 
     await page.getByLabel('Password', { exact: true }).fill(password)
-    await page.getByLabel('Confirm password').fill(password)
     await page.getByRole('button', { name: 'Create an account' }).click()
 
     // The notice says the link was sent, not that the account is verified.
@@ -199,7 +200,6 @@ test.describe('guest authentication and routing', () => {
     await page.getByLabel('Username').fill(username)
     await page.getByLabel('Email address').fill(mixedCase)
     await page.getByLabel('Password', { exact: true }).fill(password)
-    await page.getByLabel('Confirm password').fill(password)
     await page.getByRole('button', { name: 'Create an account' }).click()
     await expect(page).toHaveURL(/\/verify-email\/pending$/)
 
@@ -211,7 +211,6 @@ test.describe('guest authentication and routing', () => {
     await page.getByLabel('Username').fill(`${username}.twin`)
     await page.getByLabel('Email address').fill(mixedCase.toLowerCase())
     await page.getByLabel('Password', { exact: true }).fill('AnotherPassword123!')
-    await page.getByLabel('Confirm password').fill('AnotherPassword123!')
     await page.getByRole('button', { name: 'Create an account' }).click()
     await expect(page).toHaveURL(/\/verify-email\/pending$/)
 
@@ -305,7 +304,6 @@ test.describe('password reset', () => {
     await page.getByLabel('Username').fill(`e2e.resetter.${Date.now()}`)
     await page.getByLabel('Email address').fill(email)
     await page.getByLabel('Password', { exact: true }).fill(password)
-    await page.getByLabel('Confirm password').fill(password)
     await page.getByRole('button', { name: 'Create an account' }).click()
     await expect(page).toHaveURL(/\/verify-email\/pending$/)
 
@@ -371,7 +369,6 @@ test.describe('account deletion', () => {
     await page.getByLabel('Username').fill(`e2e.leaver.${Date.now()}`)
     await page.getByLabel('Email address').fill(email)
     await page.getByLabel('Password', { exact: true }).fill(password)
-    await page.getByLabel('Confirm password').fill(password)
     await page.getByRole('button', { name: 'Create an account' }).click()
     await expect(page).toHaveURL(/\/verify-email\/pending$/)
 
