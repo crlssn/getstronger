@@ -448,6 +448,7 @@ public class TimedCircuitPlugin: CAPPlugin, CAPBridgedPlugin, CLLocationManagerD
             activity.show(state)
         } else if let labels = liveLabels {
             liveLabels = nil
+            WorkoutActivityPlugin.endAll()
             live = LiveSessionActivity(labels: labels, link: liveLink, state: state)
         }
     }

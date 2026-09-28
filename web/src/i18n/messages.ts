@@ -323,6 +323,9 @@ export const en = {
     restTimer: 'Rest timer',
     restOverTitle: 'Rest over',
     restOverBody: 'Back to your workout.',
+    // On the Lock Screen once the app has stopped keeping the workout, which
+    // is an app that was closed or left for half an hour.
+    liveStopped: 'Workout stopped — open the app to carry on',
     resting: 'Resting',
     addSeconds: '+30 sec',
     skip: 'Skip',
@@ -1338,6 +1341,7 @@ export const sv = {
     restTimer: 'Vilotimer',
     restOverTitle: 'Vilan är slut',
     restOverBody: 'Tillbaka till träningspasset.',
+    liveStopped: 'Passet stoppades — öppna appen för att fortsätta',
     resting: 'Vilar',
     addSeconds: '+30 sek',
     skip: 'Hoppa över',

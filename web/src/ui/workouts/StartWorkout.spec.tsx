@@ -42,6 +42,12 @@ vi.mock('@/native/timedCircuit', () => ({
   },
 }))
 
+const liveWorkout = vi.hoisted(() => ({
+  showWorkoutActivity: vi.fn(),
+  endWorkoutActivity: vi.fn(),
+}))
+vi.mock('@/native/workoutActivity', () => liveWorkout)
+
 import * as requests from '@/http/requests'
 import { timedCircuit } from '@/native/timedCircuit'
 import { GetRoutineResponseSchema, RoutineSchema } from '@/proto/api/v1/routine_service_pb'
@@ -231,6 +237,8 @@ describe('StartWorkout', () => {
     Object.values(mocked).forEach((mock) => mock.mockReset())
     haptics.vibrateRestOver.mockReset()
     haptics.haptic.mockReset()
+    liveWorkout.showWorkoutActivity.mockReset()
+    liveWorkout.endWorkoutActivity.mockReset()
     mocked.getCurrentUser.mockResolvedValue(currentUser(WeightUnit.KILOGRAMS))
     mocked.getRoutine.mockResolvedValue(routineOf('Push Day'))
     mocked.getPreviousWorkoutSets.mockResolvedValue(
@@ -321,6 +329,70 @@ describe('StartWorkout', () => {
 
       expect(screen.getByText('workout tab, REPLACE')).toBeInTheDocument()
       expect(useWorkoutStore.getState().workouts[routineID]).toBeUndefined()
+    })
+  })
+
+  // The phone face down between sets still shows where the workout is.
+  describe('the Lock Screen', () => {
+    const shown = () => liveWorkout.showWorkoutActivity.mock.lastCall?.[0]
+
+    test('shows the workout from its first set, with the rest it starts', async () => {
+      const user = userEvent.setup()
+      await renderWorkout()
+      expect(liveWorkout.showWorkoutActivity).not.toHaveBeenCalled()
+
+      await logFirstSet(user)
+
+      expect(shown()).toEqual({
+        key: routineID,
+        name: 'Push Day',
+        exercise: 'Bench Press',
+        startedAt: Date.parse(useWorkoutStore.getState().workouts[routineID].startedAt!),
+        restEndsAt: Date.parse(useWorkoutStore.getState().workouts[routineID].restTimerEndsAt!),
+        restSeconds: 90,
+        labels: {
+          elapsed: 'Elapsed',
+          rest: 'Resting',
+          stopped: 'Workout stopped — open the app to carry on',
+        },
+        path: `/workouts/routine/${routineID}`,
+      })
+    })
+
+    test('follows the rest ending and the athlete moving on', async () => {
+      const user = userEvent.setup()
+      await renderWorkout()
+      await logFirstSet(user)
+
+      await user.click(within(restBanner()!).getByRole('button', { name: 'Skip' }))
+      expect(shown()?.restEndsAt).toBeUndefined()
+
+      await user.click(primaryAction())
+      expect(shown()?.exercise).toBe('Squat')
+    })
+
+    test('ends it when the workout is saved', async () => {
+      const user = userEvent.setup()
+      await renderWorkout()
+      await completeBothExercises(user)
+
+      await user.click(screen.getByRole('button', { name: 'Finish workout' }))
+      await user.click(screen.getByRole('button', { name: 'Finish and save' }))
+
+      expect(await screen.findByText('saved workout')).toBeInTheDocument()
+      expect(liveWorkout.endWorkoutActivity).toHaveBeenLastCalledWith(routineID)
+    })
+
+    test('ends it when the workout is discarded', async () => {
+      const user = userEvent.setup()
+      await renderWorkout()
+      await logFirstSet(user)
+
+      await user.click(screen.getByRole('button', { name: 'Leave workout?' }))
+      await user.click(screen.getByRole('button', { name: 'Discard workout' }))
+      await user.click(screen.getByRole('button', { name: 'Discard workout' }))
+
+      expect(liveWorkout.endWorkoutActivity).toHaveBeenLastCalledWith(routineID)
     })
   })
 
@@ -1378,6 +1450,17 @@ describe('StartWorkout', () => {
 
     afterEach(() => {
       native.enabled = false
+    })
+
+    // The recording has its own Lock Screen activity, and the two never show at once.
+    test('leaves the Lock Screen to the recording', async () => {
+      useWorkoutStore.setState({
+        workouts: { [routineID]: { startedAt: now.toISOString(), recording: finishedRecording() } },
+      })
+      mountWorkout()
+
+      await waitFor(() => expect(liveWorkout.endWorkoutActivity).toHaveBeenCalledWith(routineID))
+      expect(liveWorkout.showWorkoutActivity).not.toHaveBeenCalled()
     })
 
     // Rounds written in minutes are run against a clock, so the screen the

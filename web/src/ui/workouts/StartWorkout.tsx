@@ -14,6 +14,7 @@ import { create } from '@bufbuild/protobuf'
 import { Capacitor } from '@capacitor/core'
 import { haptic, vibrateRestOver } from '@/native/haptics'
 import { timedCircuit } from '@/native/timedCircuit'
+import { endWorkoutActivity, showWorkoutActivity } from '@/native/workoutActivity'
 import { pacingFor, paceReferenceRequested } from '@/utils/pacing'
 import { circuitPhases, parseRecording, type Recording } from '@/utils/timedCircuit'
 import { TimedCircuitRecorder } from '@/ui/workouts/TimedCircuitRecorder'
@@ -30,7 +31,7 @@ import {
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { flushSync } from 'react-dom'
 import { useTranslation } from 'react-i18next'
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 
 import { isConnectivityError } from '@/http/offlineCache'
 import {
@@ -268,6 +269,7 @@ const initialOpenRounds = (routineID: string, blocks: readonly SessionGroup[]) =
 export const StartWorkout = () => {
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const location = useLocation()
   const { routine_id: routineParam } = useParams()
   const [searchParams] = useSearchParams()
 
@@ -543,6 +545,53 @@ export const StartWorkout = () => {
 
   const activeStation = stations[activeStationIndex]
   const currentExercise = activeStation?.exercise
+
+  // A routine held against the clock is run live: its rounds are minutes
+  // rather than reps, so the screen it opens on is the one counting them down.
+  // Read as the screen renders rather than set once, so the session takes over
+  // the moment the routine lands rather than a frame after the form. A session
+  // already part-logged by hand is left where the athlete put it.
+  const liveByDefault = !declinedLive && phases.length > 0 && (!workout || !hasLoggedSet(workout))
+  const recorderShown =
+    Capacitor.isNativePlatform() && Boolean(guided || liveByDefault || workout?.recording)
+
+  // The Lock Screen follows the workout from its first set. A recording shows
+  // its own there, and leaving this screen leaves the workout running on it.
+  const sessionName = session?.name
+  const exerciseName = currentExercise?.name ?? ''
+  const livePath = location.pathname + location.search
+  useEffect(() => {
+    if (!sessionName) return
+    if (recorderShown || !startedAtMs) {
+      endWorkoutActivity(routineID)
+      return
+    }
+
+    showWorkoutActivity({
+      key: routineID,
+      name: sessionName,
+      exercise: exerciseName,
+      startedAt: startedAtMs,
+      ...(restEndsAtMs ? { restEndsAt: restEndsAtMs, restSeconds: restTotalSeconds } : {}),
+      labels: {
+        elapsed: t('workout.elapsed'),
+        rest: t('workout.resting'),
+        stopped: t('workout.liveStopped'),
+      },
+      path: livePath,
+    })
+  }, [
+    sessionName,
+    exerciseName,
+    recorderShown,
+    startedAtMs,
+    restEndsAtMs,
+    restTotalSeconds,
+    routineID,
+    livePath,
+    t,
+  ])
+
   const unfinishedCount = stations.filter((station) => !completed[station.key]).length
   const allExercisesComplete = unfinishedCount === 0
 
@@ -1226,14 +1275,7 @@ export const StartWorkout = () => {
     </div>
   )
 
-  // A routine held against the clock is run live: its rounds are minutes
-  // rather than reps, so the screen it opens on is the one counting them down.
-  // Read as the screen renders rather than set once, so the session takes over
-  // the moment the routine lands rather than a frame after the form. A session
-  // already part-logged by hand is left where the athlete put it.
-  const liveByDefault = !declinedLive && phases.length > 0 && (!workout || !hasLoggedSet(workout))
-
-  if (Capacitor.isNativePlatform() && (guided || liveByDefault || workout?.recording)) {
+  if (recorderShown) {
     return (
       <div className="space-y-5">
         <TimedCircuitRecorder

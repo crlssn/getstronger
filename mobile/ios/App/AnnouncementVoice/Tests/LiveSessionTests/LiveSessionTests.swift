@@ -107,3 +107,39 @@ final class WorthShowingTests: XCTestCase {
         XCTAssertLessThan(liveRenewSeconds, liveStaleSeconds)
     }
 }
+
+final class LiveWorkoutStateTests: XCTestCase {
+    func testCountsTheWorkoutUpFromItsStart() {
+        let state = liveWorkoutState(exercise: "Squat", startedAt: start, restEndsAt: nil, restSeconds: nil,
+                                     at: start + 600_000)
+
+        XCTAssertEqual(state.exercise, "Squat")
+        XCTAssertEqual(state.startedAt, date(start))
+        XCTAssertNil(state.rest)
+    }
+
+    // The countdown runs from where the rest began, so its bar and its clock
+    // both read the rest the athlete was given.
+    func testCountsARestDownFromItsLength() throws {
+        let rest = try XCTUnwrap(liveWorkoutState(exercise: "Squat", startedAt: start, restEndsAt: start + 700_000,
+                                                  restSeconds: 90, at: start + 650_000).rest)
+
+        XCTAssertEqual(rest.lowerBound, date(start + 610_000))
+        XCTAssertEqual(rest.upperBound, date(start + 700_000))
+    }
+
+    // A rest that ran out while the app was away is over, not one at zero.
+    func testLeavesOutARestAlreadyOver() {
+        XCTAssertNil(liveWorkoutState(exercise: "Squat", startedAt: start, restEndsAt: start + 700_000,
+                                      restSeconds: 90, at: start + 700_000).rest)
+    }
+
+    // A rest with no length recorded is read from now, never from before the
+    // workout began.
+    func testStartsARestOfUnknownLengthNow() {
+        let state = liveWorkoutState(exercise: "Squat", startedAt: start, restEndsAt: start + 700_000,
+                                     restSeconds: 0, at: start + 650_000)
+
+        XCTAssertEqual(state.rest?.lowerBound, date(start + 650_000))
+    }
+}

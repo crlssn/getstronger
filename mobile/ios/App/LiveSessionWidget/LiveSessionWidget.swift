@@ -4,7 +4,10 @@ import WidgetKit
 
 @main
 struct LiveSessionWidgets: WidgetBundle {
-    var body: some Widget { LiveSessionWidget() }
+    var body: some Widget {
+        LiveSessionWidget()
+        LiveWorkoutWidget()
+    }
 }
 
 /// A live session on the Lock Screen and in the Dynamic Island.
@@ -110,4 +113,95 @@ private func intervalClock(_ state: LiveSessionState) -> Text {
 /// A clock the system runs on its own, stopped where the recording was held.
 private func clock(from start: Date, to end: Date?, pausedAt: Date?) -> Text {
     Text(timerInterval: start...(end ?? .distantFuture), pauseTime: pausedAt, countsDown: end != nil)
+}
+
+/// A gym workout on the Lock Screen and in the Dynamic Island: the rest while
+/// one runs, and the workout's time otherwise.
+struct LiveWorkoutWidget: Widget {
+    var body: some WidgetConfiguration {
+        ActivityConfiguration(for: LiveWorkoutAttributes.self) { context in
+            WorkoutLockScreen(context: context)
+                .padding()
+                .widgetURL(context.attributes.link)
+        } dynamicIsland: { context in
+            let state = context.state
+            let labels = context.attributes.labels
+            return DynamicIsland {
+                DynamicIslandExpandedRegion(.leading) {
+                    Text(state.exercise).font(.headline).lineLimit(2).padding(.leading, 8)
+                }
+                DynamicIslandExpandedRegion(.trailing) {
+                    workoutClock(state).font(.title2.monospacedDigit()).multilineTextAlignment(.trailing)
+                        .padding(.trailing, 8)
+                }
+                DynamicIslandExpandedRegion(.bottom) {
+                    HStack {
+                        Text(context.attributes.name).font(.caption).foregroundStyle(.secondary).lineLimit(1)
+                        Spacer()
+                        Text(state.rest == nil ? labels.elapsed : labels.rest).font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    .padding(.horizontal, 8)
+                }
+            } compactLeading: {
+                Image(systemName: state.rest == nil ? "dumbbell.fill" : "timer")
+            } compactTrailing: {
+                workoutClock(state).monospacedDigit().frame(maxWidth: 56)
+            } minimal: {
+                Image(systemName: state.rest == nil ? "dumbbell.fill" : "timer")
+            }
+            .widgetURL(context.attributes.link)
+        }
+    }
+}
+
+private struct WorkoutLockScreen: View {
+    let context: ActivityViewContext<LiveWorkoutAttributes>
+
+    var body: some View {
+        let state = context.state
+        let labels = context.attributes.labels
+        if stale {
+            Text(labels.stopped).font(.headline).frame(maxWidth: .infinity, alignment: .leading)
+        } else {
+            VStack(alignment: .leading, spacing: 8) {
+                VStack(alignment: .leading, spacing: 0) {
+                    Text(context.attributes.name).font(.caption).foregroundStyle(.secondary).lineLimit(1)
+                    Text(state.exercise).font(.headline).lineLimit(2)
+                }
+                HStack(alignment: .lastTextBaseline) {
+                    VStack(alignment: .leading, spacing: 0) {
+                        Text(state.rest == nil ? labels.elapsed : labels.rest).font(.caption)
+                            .foregroundStyle(.secondary)
+                        workoutClock(state).font(.largeTitle.monospacedDigit().bold())
+                    }
+                    Spacer()
+                    // The workout's time stays in view beside a rest.
+                    if state.rest != nil {
+                        VStack(alignment: .trailing, spacing: 0) {
+                            Text(labels.elapsed).font(.caption).foregroundStyle(.secondary)
+                            // A timer takes all the width it is given, so it is set flush right.
+                            elapsedClock(state).font(.body.monospacedDigit()).multilineTextAlignment(.trailing)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /// Updates stopped arriving, which is an app that was killed mid-workout.
+    private var stale: Bool {
+        if #available(iOS 16.2, *) { return context.isStale }
+        return false
+    }
+}
+
+/// The rest left while one runs, else how long the workout has run.
+private func workoutClock(_ state: LiveWorkoutState) -> Text {
+    guard let rest = state.rest else { return elapsedClock(state) }
+    return Text(timerInterval: rest, countsDown: true)
+}
+
+private func elapsedClock(_ state: LiveWorkoutState) -> Text {
+    Text(timerInterval: state.startedAt...Date.distantFuture, countsDown: false)
 }

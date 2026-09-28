@@ -12,6 +12,7 @@ import { immer } from 'zustand/middleware/immer'
 import { persist } from 'zustand/middleware'
 
 import { cancelRestOver, scheduleRestOver } from '@/native/restNotification'
+import { endWorkoutActivity } from '@/native/workoutActivity'
 import { migratedStorage } from '@/stores/persistence'
 
 import { DistanceUnit, ExerciseMetric, WeightUnit } from '@/proto/api/v1/shared_pb'
@@ -389,6 +390,7 @@ export const useWorkoutStore = create<WorkoutState>()(
         // Finishing or cancelling ends the rest with the workout, and the
         // phone would otherwise still be holding its deadline.
         if (resting) cancelRestOver()
+        endWorkoutActivity(routineID)
       },
 
       startQuickWorkoutWithExercise: (exercise) => {

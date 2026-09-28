@@ -32,6 +32,7 @@ class AppBridgeViewController: CAPBridgeViewController {
         bridge?.registerPluginInstance(CanvasPlugin())
         bridge?.registerPluginInstance(SwipeBackPlugin())
         bridge?.registerPluginInstance(TimedCircuitPlugin())
+        bridge?.registerPluginInstance(WorkoutActivityPlugin())
     }
 }
 
