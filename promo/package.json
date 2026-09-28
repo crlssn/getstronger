@@ -1,0 +1,8 @@
+{
+  "name": "getstronger-promo",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "three": "^0.186.1"
+  }
+}
