@@ -36,7 +36,7 @@ permissions: {}
 jobs:
   screenshots:
     if: github.event_name == 'workflow_dispatch' || github.event.label.name == 'screenshots'
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.RUNNER_LINUX || 'ubuntu-latest' }}
     # Two full captures of every page, each with a Go build and a Vite server
     # behind it.
     timeout-minutes: 90
@@ -216,7 +216,7 @@ jobs:
   # same way.
   cleanup:
     needs: screenshots
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.RUNNER_LINUX || 'ubuntu-latest' }}
     timeout-minutes: 5
     if: always() && github.event_name == 'pull_request' && github.event.label.name == 'screenshots'
 
