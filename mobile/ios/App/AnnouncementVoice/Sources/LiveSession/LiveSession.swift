@@ -106,12 +106,56 @@ func worthShowing(_ next: LiveSessionState, over shown: LiveSessionState?, secon
     return next.pace != shown.pace && secondsSince >= livePaceRefreshSeconds
 }
 
+/// A gym workout's Live Activity content state: the clock counts up from the
+/// first logged set, and a rest counts down while one runs.
+struct LiveWorkoutState: Codable, Hashable {
+    var exercise: String
+    var startedAt: Date
+    var rest: ClosedRange<Date>?
+}
+
+/// The words a gym workout's Live Activity shows, handed over once when it is raised.
+struct LiveWorkoutLabels: Codable, Hashable {
+    let elapsed: String
+    let rest: String
+    /// Shown once updates have stopped arriving, which is an app that was killed.
+    let stopped: String
+}
+
+/// How long a gym workout's state stands before it reads as abandoned.
+///
+/// The app is suspended between sets, so updates arrive only as sets are
+/// logged; half an hour without one is a workout nobody is keeping.
+let liveWorkoutStaleSeconds = 30 * 60.0
+
+/// The workout at `time` as the Lock Screen shows it, from the web app's
+/// clocks in milliseconds since 1970.
+func liveWorkoutState(exercise: String, startedAt: Double, restEndsAt: Double?, restSeconds: Double?,
+                      at time: Double) -> LiveWorkoutState {
+    let rest = restEndsAt.flatMap { end -> ClosedRange<Date>? in
+        guard end > time else { return nil }
+        let length = (restSeconds ?? 0) * 1000
+        return date(length > 0 ? end - length : time)...date(end)
+    }
+    return LiveWorkoutState(exercise: exercise, startedAt: date(startedAt), rest: rest)
+}
+
 #if os(iOS)
 @available(iOS 16.1, *)
 struct LiveSessionAttributes: ActivityAttributes {
     typealias ContentState = LiveSessionState
     let labels: LiveSessionLabels
     /// Where a tap on the activity opens the app.
+    let link: URL?
+}
+
+@available(iOS 16.1, *)
+struct LiveWorkoutAttributes: ActivityAttributes, Hashable {
+    typealias ContentState = LiveWorkoutState
+    /// The draft the activity belongs to, so ending one leaves another alone.
+    let key: String
+    let name: String
+    let labels: LiveWorkoutLabels
     let link: URL?
 }
 #endif

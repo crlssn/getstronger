@@ -9,7 +9,10 @@ vi.mock('@/native/restNotification', () => ({
   cancelRestOver: vi.fn(),
 }))
 
+vi.mock('@/native/workoutActivity', () => ({ endWorkoutActivity: vi.fn() }))
+
 import * as native from '@/native/restNotification'
+import { endWorkoutActivity } from '@/native/workoutActivity'
 
 import { DistanceUnit, ExerciseMetric, ExerciseSchema, WeightUnit } from '@/proto/api/v1/shared_pb'
 import type { RoutineWorkout } from '@/types/workout'
@@ -467,6 +470,16 @@ describe('workout store', () => {
       store().removeWorkout('routine-id')
 
       expect(native.cancelRestOver).toHaveBeenCalledTimes(1)
+    })
+
+    // Saving and discarding both come through here, and the Lock Screen
+    // would otherwise go on showing a workout that is over.
+    it('ends the workout on the Lock Screen with it', () => {
+      store().initialiseWorkout('routine-id')
+
+      store().removeWorkout('routine-id')
+
+      expect(endWorkoutActivity).toHaveBeenCalledWith('routine-id')
     })
 
     it('leaves the notification alone when another draft is discarded', () => {
