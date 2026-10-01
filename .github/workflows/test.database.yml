@@ -57,7 +57,7 @@ jobs:
       # comment on a green branch is advice nobody has to take. A migration that
       # genuinely warrants an exception carries `-- squawk-ignore <rule>`.
       - name: Run Squawk
-        uses: sbdchd/squawk-action@8d113898e16c6cfd417ceba848b0edad97882be3 # v2.1.0
+        uses: sbdchd/squawk-action@f972c01c35289cf7611464dae9a214bb84cce5e4 # v2.2.0
         with:
           files: ${{ steps.migrations.outputs.file_names }}
           config: .squawk.toml
