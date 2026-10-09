@@ -25,12 +25,14 @@ permissions:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  # True on main as well: when several pull requests merge at once, only the
+  # last commit's run answers the question anyone is asking.
+  cancel-in-progress: true
 
 jobs:
   server:
     if: github.event.pull_request.draft == false
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.RUNNER_LINUX || 'ubuntu-latest' }}
     timeout-minutes: 20
 
     steps:
