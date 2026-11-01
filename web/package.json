@@ -45,7 +45,7 @@
     "@tailwindcss/postcss": "4.3.3",
     "chart.js": "4.5.1",
     "i18next": "26.4.2",
-    "immer": "11.1.18",
+    "immer": "11.2.9",
     "jwt-decode": "4.0.0",
     "luxon": "3.7.2",
     "maplibre-gl": "6.11.2",
