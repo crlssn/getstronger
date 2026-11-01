@@ -15,7 +15,7 @@
         "@capacitor/preferences": "8.0.1",
         "@capacitor/splash-screen": "8.0.2",
         "@capacitor/status-bar": "8.0.3",
-        "@connectrpc/connect": "2.2.0",
+        "@connectrpc/connect": "2.3.0",
         "@connectrpc/connect-web": "2.2.0",
         "@fontsource-variable/plus-jakarta-sans": "^5.3.0",
         "@headlessui/react": "2.2.10",
@@ -173,7 +173,7 @@
 
     "@codecov/vite-plugin": ["@codecov/vite-plugin@2.0.1", "", { "dependencies": { "@codecov/bundler-plugin-core": "^2.0.1", "unplugin": "^1.10.1" }, "peerDependencies": { "vite": "4.x || 5.x || 6.x" } }, "sha512-w7nGA9SSc0WECzn05yRrw3uN8293I620Kd9x97I0kyyxUjtWxCMmlgmAbS364gJZYvljd0A6iQyAigVV2dOX9A=="],
 
-    "@connectrpc/connect": ["@connectrpc/connect@2.2.0", "", { "peerDependencies": { "@bufbuild/protobuf": "^2.7.0" } }, "sha512-M63OQ1ZFcPUm85CuewJ9G9CMV8LjzGR9935xOnXNQGSazAbwMb3x2W7vXBYM1zqrP7XFD8uxp/dUAhirclgwnQ=="],
+    "@connectrpc/connect": ["@connectrpc/connect@2.3.0", "", { "peerDependencies": { "@bufbuild/protobuf": "^2.7.0" } }, "sha512-rjAn8L9KbAZrkwiB8m1qzDsLs74hkYmwwM2iSWuxTPVOTRm/EZw31smKbQqPU50AXqJC5eKKpEnA6Uf/swQOgQ=="],
 
     "@connectrpc/connect-web": ["@connectrpc/connect-web@2.2.0", "", { "peerDependencies": { "@bufbuild/protobuf": "^2.7.0", "@connectrpc/connect": "2.2.0" } }, "sha512-uuBUcBTYfb/r1o98LzCCZk1H90yx0vmZ5m21dpw/q4EUwsKwkCDGI8H0aEdjcZld+Q2jJ5A5ADvPqfb6lzQ/sg=="],
 
