@@ -80,7 +80,7 @@
     "@types/sortablejs": "1.15.9",
     "@vitejs/plugin-react": "6.1.1",
     "@vitest/coverage-v8": "5.0.2",
-    "@vitest/eslint-plugin": "1.6.27",
+    "@vitest/eslint-plugin": "1.6.28",
     "eslint": "10.11.0",
     "eslint-config-prettier": "10.1.8",
     "eslint-plugin-i18next": "6.1.5",
